@@ -27,6 +27,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const descriptionTranslations: Record<string, string> = {
+    en: "What can I help you with today? Use the input below or your voice to get started.",
+    hi: "आज मैं आपकी क्या मदद कर सकता हूँ? आरंभ करने के लिए नीचे दिए गए इनपुट या अपनी आवाज़ का उपयोग करें।",
+    bn: "আজ আমি আপনাকে কিভাবে সাহায্য করতে পারি? শুরু করতে নীচের ইনপুট বা আপনার ভয়েস ব্যবহার করুন।",
+    te: "ఈ రోజు నేను మీకు ఏమి సహాయం చేయగలను? ప్రారంభించడానికి దిగువ ఇన్‌పుట్ లేదా మీ వాయిస్‌ని ఉపయోగించండి.",
+    mr: "आज मी तुम्हाला कशी मदत करू शकेन? प्रारंभ करण्यासाठी खालील इनपुट किंवा तुमचा आवाज वापरा.",
+    ta: "இன்று நான் உங்களுக்கு என்ன உதவ முடியும்? தொடங்குவதற்கு கீழே உள்ள உள்ளீடு அல்லது உங்கள் குரலைப் பயன்படுத்தவும்.",
+    gu: "આજે હું તમને શું મદદ કરી શકું? શરૂ કરવા માટે નીચે આપેલ ઇનપુટ અથવા તમારા અવાજનો ઉપયોગ કરો.",
+    kn: "ಇಂದು ನಾನು ನಿಮಗೆ ಏನು ಸಹಾಯ ಮಾಡಲಿ? ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
+};
+
 const hintTranslations: Record<string, { title: string; body: string }> = {
     en: {
       title: "Make it relevant!",
@@ -89,6 +100,7 @@ export default function Home() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
+  const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
   const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
 
@@ -131,7 +143,7 @@ export default function Home() {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">AI Companion</CardTitle>
           <CardDescription>
-            What can I help you with today? Ask me to generate a lesson plan, or use your voice.
+            {description}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -244,3 +256,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
