@@ -26,6 +26,42 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const hintTranslations: Record<string, { title: string; body: string }> = {
+    en: {
+      title: "Make it relevant!",
+      body: "e.g., mention the river Ganga, Pongal for Tamil Nadu, or Durga Puja for Bengal.",
+    },
+    hi: {
+      title: "इसे प्रासंगिक बनाएं!",
+      body: "उदा., गंगा नदी का उल्लेख करें, तमिलनाडु के लिए पोंगल, या बंगाल के लिए दुर्गा पूजा।",
+    },
+    bn: {
+      title: "এটা প্রাসঙ্গিক করুন!",
+      body: "उदा., গঙ্গা নদীর উল্লেখ করুন, তামিলনাড়ুর জন্য পোঙ্গল, বা বাংলার জন্য দুর্গা পূজা।",
+    },
+    te: {
+      title: "దానిని సంబంధితంగా చేయండి!",
+      body: "ఉదా., గంగా నదిని ప్రస్తావించండి, తమిళనాడుకు పొంగల్, లేదా బెంగాల్‌కు దుర్గా పూజ.",
+    },
+    mr: {
+      title: "ते संबंधित बनवा!",
+      body: "उदा., गंगा नदीचा उल्लेख करा, तामिळनाडूसाठी पोंगल, किंवा बंगालसाठी दुर्गा पूजा.",
+    },
+    ta: {
+      title: "அதை தொடர்புடையதாக ஆக்குங்கள்!",
+      body: "உதா., கங்கை நதியைக் குறிப்பிடவும், தமிழ்நாட்டிற்கு பொங்கல், அல்லது வங்காளத்திற்கு துர்கா பூஜை.",
+    },
+    gu: {
+      title: "તેને સુસંગત બનાવો!",
+      body: "દા.ત., ગંગા નદીનો ઉલ્લેખ કરો, તમિલનાડુ માટે પોંગલ, અથવા બંગાળ માટે દુર્ગા પૂજા.",
+    },
+    kn: {
+      title: "ಅದನ್ನು ಸಂಬಂಧಿತಗೊಳಿಸಿ!",
+      body: "ಉದಾ., ಗಂಗಾ ನದಿಯನ್ನು ಉಲ್ಲೇಖಿಸಿ, ತಮಿಳುನಾಡಿಗೆ ಪೊಂಗಲ್, ಅಥವಾ ಬಂಗಾಳಕ್ಕೆ ದುರ್ಗಾ ಪೂಜೆ.",
+    },
+};
+
+
 export default function Home() {
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +77,8 @@ export default function Home() {
     },
   });
 
-  const selectedLanguage = form.watch("language");
+  const selectedLanguage = form.watch("language") || 'en';
+  const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -108,7 +145,7 @@ export default function Home() {
               
               <ExamplePrompts
                 onPromptClick={handlePromptClick}
-                selectedLanguage={selectedLanguage || 'en'}
+                selectedLanguage={selectedLanguage}
               />
 
               <MicrophoneInput onTranscriptChange={handleTranscript} />
@@ -147,10 +184,10 @@ export default function Home() {
                        <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
                           <div className="flex items-center gap-2 font-semibold">
                             <Lightbulb className="h-4 w-4" />
-                            <span>Make it relevant!</span>
+                            <span>{hint.title}</span>
                           </div>
                           <p>
-                            e.g., mention the river Ganga, Pongal for Tamil Nadu, or Durga Puja for Bengal.
+                           {hint.body}
                           </p>
                        </div>
                       <FormMessage />
