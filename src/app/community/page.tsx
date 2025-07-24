@@ -22,12 +22,15 @@ type Resource = {
 };
 
 const mockResources: Resource[] = [
-  { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 128 },
-  { id: '2', title: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 95 },
-  { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210 },
-  { id: '4', title: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 72 },
-  { id: '5', 'title': 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 350 },
-  { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 180 },
+    { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 128 },
+    { id: '2', title: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 95 },
+    { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210 },
+    { id: '4', title: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 72 },
+    { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 350 },
+    { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 180 },
+    { id: '7', title: 'Basic Algebra Worksheet', type: 'worksheet', author: 'Deepa Iyer', authorAvatar: 'https://placehold.co/40x40.png?text=DI', likes: 150 },
+    { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 450 },
+    { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 110 },
 ];
 
 
@@ -111,4 +114,3 @@ export default function CommunityPage() {
     </div>
   );
 }
-
