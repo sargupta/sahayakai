@@ -11,7 +11,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2 } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -121,6 +121,14 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/my-library')} tooltip="My Library">
+                  <Link href="/my-library">
+                    <FolderKanban />
+                    <span>My Library</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip="Impact Dashboard">
                   <Link href="/impact-dashboard">
