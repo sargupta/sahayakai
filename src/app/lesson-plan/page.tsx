@@ -132,7 +132,7 @@ export default function LessonPlanAgentPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Make content relevant. Ex: Pongal for Tamil Nadu, Durga Puja for Bengal.
+                        Make content relevant. e.g., mention the river Ganga, Pongal for Tamil Nadu, or Durga Puja for Bengal.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
