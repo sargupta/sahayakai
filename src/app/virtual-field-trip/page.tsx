@@ -149,7 +149,7 @@ export default function VirtualFieldTripPage() {
                     Generating Itinerary...
                   </>
                 ) : (
-                  "Generate Itinerary"
+                  "Generate"
                 )}
               </Button>
             </form>
