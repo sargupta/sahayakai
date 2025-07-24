@@ -191,6 +191,12 @@ export default function Home() {
               <div className="flex items-center justify-center">
                 <MicrophoneInput onTranscriptChange={handleTranscript} />
               </div>
+
+              <ExamplePrompts
+                onPromptClick={handlePromptClick}
+                selectedLanguage={selectedLanguage}
+                page="homeWithImage"
+              />
               
               <FormField
                   control={form.control}
@@ -211,13 +217,6 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-
-
-              <ExamplePrompts
-                onPromptClick={handlePromptClick}
-                selectedLanguage={selectedLanguage}
-                page="homeWithImage"
-              />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
