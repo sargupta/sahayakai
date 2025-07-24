@@ -102,15 +102,15 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "તમે સમજાવી શકો છો કે ચુંબક કેવી રીતે કાર્ય કરે છે અને મારા માટે એક સરળ પ્રયોગ વિડિઓ શોધી શકો છો?",
     kn: "ಆಯಸ್ಕಾಂತಗಳು ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತವೆ ಎಂಬುದನ್ನು ನೀವು ವಿವರಿಸಬಹುದೇ ಮತ್ತು ನನಗಾಗಿ ಸರಳ ಪ್ರಯೋಗದ ವೀಡಿಯೊವನ್ನು ಕಂಡುಹಿಡಿಯಬಹುದೇ?",
   },
-  mughalEmperor: {
-    en: "Who was the first Mughal emperor?",
-    hi: "पहला मुगल सम्राट कौन था?",
-    bn: "প্রথম মুঘল সম্রাট কে ছিলেন?",
-    te: "మొదటి మొఘల్ చక్రవర్తి ఎవరు?",
-    mr: "पहिला मुघल सम्राट कोण होता?",
-    ta: "முதல் முகலாயப் பேரரசர் யார்?",
-    gu: "પ્રથમ મુઘલ સમ્રાટ કોણ હતા?",
-    kn: "ಮೊದಲ ಮೊಘಲ್ ಚಕ್ರವರ್ತಿ ಯಾರು?",
+  nalandaHistory: {
+    en: "Tell me about the history of Nalanda University.",
+    hi: "नालंदा विश्वविद्यालय के इतिहास के बारे में बताएं।",
+    bn: "নালন্দা বিশ্ববিদ্যালয়ের ইতিহাস সম্পর্কে বলুন।",
+    te: "నలంద విశ్వవిద్యాలయం చరిత్ర గురించి చెప్పండి.",
+    mr: "नालंदा विद्यापीठाच्या इतिहासाबद्दल सांगा.",
+    ta: "நாலந்தா பல்கலைக்கழகத்தின் வரலாறு பற்றி சொல்லுங்கள்.",
+    gu: "નાલંદા વિશ્વવિદ્યાલયના ઇતિહાસ વિશે જણાવો.",
+    kn: "ನಳಂದ ವಿಶ್ವವಿದ್ಯಾಲಯದ ಇತಿಹಾಸದ ಬಗ್ಗೆ ಹೇಳಿ.",
   },
   indianRivers: {
     en: "What are the major rivers in India?",
@@ -138,7 +138,7 @@ const headerTranslations: Record<string, string> = {
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'skyBlue'],
-  'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'mughalEmperor', 'indianRivers'],
+  'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
