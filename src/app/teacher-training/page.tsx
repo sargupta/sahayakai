@@ -36,6 +36,17 @@ const descriptionTranslations: Record<string, string> = {
     kn: "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಎಐ ತರಬೇತುದಾರ, ಶಿಕ್ಷಣಾತ್ಮಕ ತತ್ವಗಳ ಮೇಲೆ ಆಧಾರಿತವಾದ ಸಲಹೆಯನ್ನು ನೀಡುತ್ತದೆ. ತಂತ್ರಗಳು, ತರಗತಿಯ ತಂತ್ರಗಳು, ಅಥವಾ ಪ್ರೇರಣೆಗಾಗಿ ಕೇಳಿ.",
 };
 
+const placeholderTranslations: Record<string, string> = {
+    en: "e.g., 'How can I get my students to be quiet without shouting?'",
+    hi: "उदा., 'मैं अपने छात्रों को बिना चिल्लाए शांत कैसे करा सकता हूँ?'",
+    bn: "উদা., 'চিৎকার না করে আমি কীভাবে আমার ছাত্রদের চুপ করাতে পারি?'",
+    te: "ఉదా., 'అరవకుండా నా విద్యార్థులను నిశ్శబ్దంగా ఉండేలా చేయడం ఎలా?'",
+    mr: "उदा., 'मी माझ्या विद्यार्थ्यांना न ओरडता शांत कसे करू शकेन?'",
+    ta: "உதா., 'கத்தாமல் என் மாணவர்களை அமைதியாக இருக்க வைப்பது எப்படி?'",
+    gu: "દા.ત., 'હું મારા વિદ્યાર્થીઓને બૂમો પાડ્યા વગર શાંત કેવી રીતે કરી શકું?'",
+    kn: "ಉದಾ., 'ನನ್ನ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಕೂಗದೆ ಸುಮ್ಮನಿರಿಸುವುದು ಹೇಗೆ?'",
+};
+
 
 export default function TeacherTrainingPage() {
   const [advice, setAdvice] = useState<Advice | null>(null);
@@ -52,6 +63,7 @@ export default function TeacherTrainingPage() {
   
   const selectedLanguage = form.watch("language") || 'en';
   const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
+  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -102,7 +114,7 @@ export default function TeacherTrainingPage() {
                     <FormLabel className="font-headline">Your Question or Challenge</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., 'How can I get my students to be quiet without shouting?'"
+                        placeholder={placeholder}
                         {...field}
                         className="bg-white/50 backdrop-blur-sm min-h-[100px]"
                       />
