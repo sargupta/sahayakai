@@ -11,9 +11,6 @@ import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { generateAvatar } from '@/ai/flows/avatar-generator';
-import { Skeleton } from '@/components/ui/skeleton';
-
 
 type Resource = {
   id: string;
@@ -64,7 +61,21 @@ const languageMap: Record<string, string> = {
   kn: 'Kannada',
 };
 
-const ResourceList = ({ resources, avatars }: { resources: Resource[]; avatars: Record<string, string> }) => (
+const authorAvatarMap: Record<string, string> = {
+  'Ravi Kumar': '/avatars/ravi_kumar.png',
+  'Priya Singh': '/avatars/priya_singh.png',
+  'Sameer Gupta': '/avatars/sameer_gupta.png',
+  'Aisha Khan': '/avatars/aisha_khan.png',
+  'S. Rao': '/avatars/s_rao.png',
+  'M. Devi': '/avatars/m_devi.png',
+  'A. Joshi': '/avatars/a_joshi.png',
+  'G. Gowda': '/avatars/g_gowda.png',
+  'Deepa Iyer': '/avatars/deepa_iyer.png',
+  'N. Shah': '/avatars/n_shah.png',
+  'Anjali Sharma': '/avatars/anjali_sharma.png', // Assuming you might want one for the "My Content" author too
+};
+
+const ResourceList = ({ resources }: { resources: Resource[] }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
     {resources.map((resource) => (
       <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
@@ -75,11 +86,7 @@ const ResourceList = ({ resources, avatars }: { resources: Resource[]; avatars: 
               <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                 <Avatar className="h-6 w-6">
-                  {avatars[resource.author] ? (
-                    <AvatarImage src={avatars[resource.author]} alt={resource.author} data-ai-hint="teacher profile"/>
-                  ) : (
-                    <Skeleton className="h-full w-full rounded-full" />
-                  )}
+                  <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} data-ai-hint="teacher profile"/>
                   <AvatarFallback>{resource.author.substring(0, 2)}</AvatarFallback>
                 </Avatar>
                 <span>{resource.author}</span>
@@ -114,40 +121,12 @@ export default function CommunityPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('trending');
     const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
-    const [avatars, setAvatars] = useState<Record<string, string>>({});
 
     const allResources = {
         trending: mockTrendingResources,
         following: mockFollowingResources,
         'my-content': mockMyContentResources,
     };
-    
-    useEffect(() => {
-        const allAuthors = [
-            ...mockTrendingResources.map(r => r.author),
-            ...mockFollowingResources.map(r => r.author),
-            ...mockMyContentResources.map(r => r.author)
-        ];
-        const uniqueAuthors = [...new Set(allAuthors)];
-
-        const fetchAvatars = async () => {
-            const newAvatars: Record<string, string> = {};
-            for (const author of uniqueAuthors) {
-                if (!avatars[author]) { // Fetch only if not already fetched
-                    try {
-                        const res = await generateAvatar({ name: author });
-                        newAvatars[author] = res.imageDataUri;
-                    } catch (error) {
-                        console.error(`Failed to generate avatar for ${author}`, error);
-                    }
-                }
-            }
-            setAvatars(prev => ({ ...prev, ...newAvatars }));
-        };
-
-        fetchAvatars();
-    }, []);
-
 
     useEffect(() => {
         // @ts-ignore
@@ -196,13 +175,13 @@ export default function CommunityPage() {
                     <TabsTrigger value="my-content">My Content</TabsTrigger>
                 </TabsList>
                 <TabsContent value="trending">
-                   <ResourceList resources={filteredResources} avatars={avatars} />
+                   <ResourceList resources={filteredResources} />
                 </TabsContent>
                 <TabsContent value="following">
-                    <ResourceList resources={filteredResources} avatars={avatars} />
+                    <ResourceList resources={filteredResources} />
                 </TabsContent>
                  <TabsContent value="my-content">
-                    <ResourceList resources={filteredResources} avatars={avatars} />
+                    <ResourceList resources={filteredResources} />
                 </TabsContent>
             </Tabs>
             

@@ -31,6 +31,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
 import { generateAvatar } from '@/ai/flows/avatar-generator';
 
+
 type Resource = {
   name: string;
   type: FileType;
