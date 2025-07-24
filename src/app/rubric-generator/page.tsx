@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { MicrophoneInput } from "@/components/microphone-input";
 
 const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -130,7 +131,7 @@ const translations: Record<string, Record<string, string>> = {
     dialogWhy: "ते महत्त्वाचे का आहेत?",
     dialogClarityText: "ते सुरू करण्यापूर्वी विद्यार्थ्यांना अपेक्षा स्पष्ट करून असाइनमेंटमधील रहस्य दूर करतात.",
     dialogConsistencyText: "ते सुनिश्चित करतात की सर्व विद्यार्थ्यांना समान निकषांवर ग्रेड दिले जातात, ज्यामुळे मूल्यांकन निष्पक्ष आणि वस्तुनिष्ठ होते.",
-    dialogFeedbackText: "ते विशिष्ट, तपशीलवार अभिप्रాయ देतात जे विद्यार्थ्यांना त्यांची शक्ती आणि सुधारणेची क्षेत्रे समजण्यास मदत करतात.",
+    dialogFeedbackText: "ते विशिष्ट, तपशीलवार अभिप्राय देतात जे विद्यार्थ्यांना त्यांची शक्ती आणि सुधारणेची क्षेत्रे समजण्यास मदत करतात.",
     dialogEfficiencyText: "ते शिक्षकांसाठी ग्रेडिंग प्रक्रिया जलद आणि अधिक सरळ करू शकतात.",
     formLabel: "असाइनमेंटचे वर्णन",
     formPlaceholder: "उदा., 6 वीच्या विद्यार्थ्यांसाठी सौर मंडळाचे मॉडेल तयार करण्याचा प्रकल्प.",
@@ -203,7 +204,7 @@ const translations: Record<string, Record<string, string>> = {
     gradeLevel: "ಗ್ರೇಡ್ ಮಟ್ಟ",
     language: "ಭಾಷೆ",
     buttonGenerate: "ರೂಬ್ರಿಕ್ ರಚಿಸಿ",
-    buttonGenerating: "ರೂಬ્રಿಕ್ ರಚಿಸಲಾಗುತ್ತಿದೆ...",
+    buttonGenerating: "ರೂಬ್ರಿಕ್ ರಚಿಸಲಾಗುತ್ತಿದೆ...",
     loadingText: "ನಿಮ್ಮ ರೂಬ್ರಿಕ್ ನಿರ್ಮಿಸಲಾಗುತ್ತಿದೆ...",
     strongClarity: "ಸ್ಪಷ್ಟತೆ:",
     strongConsistency: "ಸ್ಥಿರತೆ:",
@@ -250,6 +251,11 @@ export default function RubricGeneratorPage() {
 
   const handlePromptClick = (prompt: string) => {
     form.setValue("assignmentDescription", prompt);
+    form.trigger("assignmentDescription");
+  };
+  
+  const handleTranscript = (transcript: string) => {
+    form.setValue("assignmentDescription", transcript);
     form.trigger("assignmentDescription");
   };
 
@@ -309,6 +315,8 @@ export default function RubricGeneratorPage() {
                   </FormItem>
                 )}
               />
+
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
 
@@ -377,5 +385,3 @@ export default function RubricGeneratorPage() {
     </div>
   );
 }
-
-    
