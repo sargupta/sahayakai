@@ -41,50 +41,15 @@ const descriptionTranslations: Record<string, string> = {
     kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
 };
 
-const hintTranslations: Record<string, { title: string; body: string }> = {
-    en: {
-      title: "Make it relevant!",
-      body: "Provide a local city, festival, or landmark to make the content more personal.",
-    },
-    hi: {
-      title: "इसे प्रासंगिक बनाएं!",
-      body: "सामग्री को और अधिक व्यक्तिगत बनाने के लिए एक स्थानीय शहर, त्योहार या स्थल का उल्लेख करें।",
-    },
-    bn: {
-      title: "এটা প্রাসঙ্গিক করুন!",
-      body: "বিষয়বস্তু আরও ব্যক্তিগত করতে একটি স্থানীয় শহর, উৎসব বা ল্যান্ডমার্ক উল্লেখ করুন।",
-    },
-    te: {
-      title: "దానిని సంబంధితంగా చేయండి!",
-      body: "కంటెంట్‌ను మరింత వ్యక్తిగతంగా చేయడానికి స్థానిక నగరం, పండుగ లేదా ల్యాండ్‌మార్క్‌ను అందించండి.",
-    },
-    mr: {
-      title: "ते संबंधित बनवा!",
-      body: "सामग्री अधिक वैयक्तिक करण्यासाठी स्थानिक शहर, सण किंवा महत्त्वाची खूण सांगा.",
-    },
-    ta: {
-      title: "அதை தொடர்புடையதாக ஆக்குங்கள்!",
-      body: "உள்ளடக்கத்தை மேலும் தனிப்பட்டதாக மாற்ற உள்ளூர் நகரம், திருவிழா அல்லது முக்கிய இடத்தைக் குறிப்பிடவும்.",
-    },
-    gu: {
-      title: "તેને સુસંગત બનાવો!",
-      body: "સામગ્રીને વધુ વ્યક્તિગત બનાવવા માટે સ્થાનિક શહેર, તહેવાર અથવા સીમાચિહ્ન પ્રદાન કરો.",
-    },
-    kn: {
-      title: "ಅದನ್ನು ಸಂಬಂಧಿತಗೊಳಿಸಿ!",
-      body: "ವಿಷಯವನ್ನು ಹೆಚ್ಚು ವೈಯಕ್ತಿಕವಾಗಿಸಲು ಸ್ಥಳೀಯ ನಗರ, ಹಬ್ಬ ಅಥವಾ ಹೆಗ್ಗುರುತನ್ನು ಒದಗಿಸಿ.",
-    },
-};
-
 const placeholderTranslations: Record<string, string> = {
-    en: "e.g., 'A village in Kerala'",
-    hi: "उदा., 'केरल का एक गाँव'",
-    bn: "উদা., 'কেরালার একটি গ্রাম'",
-    te: "ఉదా., 'కేరళలోని ఒక గ్రామం'",
-    mr: "उदा., 'केरळमधील एक गाव'",
-    ta: "உதா., 'கேரளாவில் ஒரு கிராமம்'",
-    gu: "દા.ત., 'કેરળનું એક ગામ'",
-    kn: "ಉದಾ., 'ಕೇರಳದ ಒಂದು ಹಳ್ಳಿ'",
+    en: "Provide a local city, festival, or landmark to generate localised content",
+    hi: "स्थानीय सामग्री उत्पन्न करने के लिए एक स्थानीय शहर, त्योहार या स्थल प्रदान करें",
+    bn: "স্থানীয় বিষয়বস্তু তৈরি করতে একটি স্থানীয় শহর, উৎসব বা ল্যান্ডমার্ক প্রদান করুন",
+    te: "స్థానిక కంటెంట్‌ను రూపొందించడానికి స్థానిక నగరం, పండుగ లేదా ల్యాండ్‌మార్క్‌ను అందించండి",
+    mr: "स्थानिक सामग्री तयार करण्यासाठी स्थानिक शहर, सण किंवा महत्त्वाची खूण सांगा",
+    ta: "உள்ளூர் உள்ளடக்கத்தை உருவாக்க உள்ளூர் நகரம், திருவிழா அல்லது முக்கிய இடத்தைக் குறிப்பிடவும்",
+    gu: "સ્થાનિક સામગ્રી જનરેટ કરવા માટે સ્થાનિક શહેર, તહેવાર અથવા સીમાચિહ્ન પ્રદાન કરો",
+    kn: "ಸ್ಥಳೀಯ ವಿಷಯವನ್ನು ರಚಿಸಲು ಸ್ಥಳೀಯ ನಗರ, ಹಬ್ಬ ಅಥವಾ ಹೆಗ್ಗುರುತನ್ನು ಒದಗಿಸಿ",
 };
 
 const topicPlaceholderTranslations: Record<string, string> = {
@@ -116,7 +81,6 @@ export default function Home() {
 
   const selectedLanguage = form.watch("language") || 'en';
   const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
-  const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
   const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
@@ -202,34 +166,25 @@ export default function Home() {
                   )}
                 />
               </div>
-
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  control={form.control}
-                  name="localContext"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Local Context</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={placeholder}
-                          {...field}
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
-                          <div className="flex items-center gap-2 font-semibold">
-                            <Lightbulb className="h-4 w-4" />
-                            <span>{hint.title}</span>
-                          </div>
-                          <p>
-                          {hint.body}
-                          </p>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    control={form.control}
+                    name="localContext"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="font-headline">Local Context</FormLabel>
+                        <FormControl>
+                            <Input
+                            placeholder={placeholder}
+                            {...field}
+                            className="bg-white/50 backdrop-blur-sm"
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 <FormField
                   control={form.control}
                   name="imageDataUri"
@@ -250,6 +205,8 @@ export default function Home() {
                   )}
                 />
               </div>
+
+               <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <FormField
                 control={form.control}
@@ -278,8 +235,6 @@ export default function Home() {
                 selectedLanguage={selectedLanguage}
                 page="homeWithImage"
               />
-
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
             
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
