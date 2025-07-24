@@ -167,10 +167,6 @@ export default function Home() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
-              <div className="flex items-center justify-center">
-                <MicrophoneInput onTranscriptChange={handleTranscript} />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -237,6 +233,34 @@ export default function Home() {
               </div>
 
               <FormField
+                control={form.control}
+                name="topic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">How can I help you?</FormLabel>
+                    <FormControl>
+                        <AutoCompleteInput
+                          placeholder={topicPlaceholder}
+                          {...field}
+                          selectedLanguage={selectedLanguage}
+                          onSuggestionClick={(value) => {
+                              form.setValue("topic", value);
+                              form.trigger("topic");
+                          }}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <ExamplePrompts
+                onPromptClick={handlePromptClick}
+                selectedLanguage={selectedLanguage}
+                page="homeWithImage"
+              />
+
+              <FormField
                   control={form.control}
                   name="imageDataUri"
                   render={({ field }) => (
@@ -255,34 +279,11 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-            
-              <FormField
-                control={form.control}
-                name="topic"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">How can I help you?</FormLabel>
-                    <FormControl>
-                        <AutoCompleteInput
-                          placeholder={topicPlaceholder}
-                          {...field}
-                          selectedLanguage={selectedLanguage}
-                          onSuggestionClick={(value) => {
-                              form.setValue("topic", value);
-                              form.trigger("topic");
-                          }}
-                        />
-                    </FormControl>
-                     <ExamplePrompts
-                        onPromptClick={handlePromptClick}
-                        selectedLanguage={selectedLanguage}
-                        page="homeWithImage"
-                      />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
+              <div className="flex items-center justify-center">
+                <MicrophoneInput onTranscriptChange={handleTranscript} />
+              </div>
+            
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
                   <>
