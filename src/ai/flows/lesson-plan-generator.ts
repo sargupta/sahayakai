@@ -15,6 +15,8 @@ const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
   language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
   localizationContext: z.string().optional().describe('The district, state, or dialect for localization.'),
+  gradeLevel: z.string().optional().describe('The grade level for the lesson plan.'),
+  duration: z.string().optional().describe('The duration of the lesson plan (e.g., 45 minutes).'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -34,8 +36,12 @@ const lessonPlanPrompt = ai.definePrompt({
   prompt: `You are an expert teacher. Generate a lesson plan for the following topic, tailored to the specified language and localization context.
 
 Topic: {{{topic}}}
+Grade Level: {{{gradeLevel}}}
+Lesson Duration: {{{duration}}}
 Language: {{{language}}}
 Localization Context: {{{localizationContext}}}
+
+Please structure the output in markdown format with clear headings for each section (e.g., ## Objectives, ## Materials, ## Activities, ## Assessment).
 
 Lesson Plan:`,
 });

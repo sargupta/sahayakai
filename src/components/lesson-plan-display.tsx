@@ -5,8 +5,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText } from 'lucide-react';
+import { BookText, Download } from 'lucide-react';
 import type { FC, ReactNode } from 'react';
 
 type LessonPlanDisplayProps = {
@@ -37,15 +38,35 @@ const parseLessonPlan = (text: string): { title: string; content: ReactNode[] }[
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) => {
   const sections = parseLessonPlan(lessonPlan);
 
+  const handleDownload = () => {
+    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'lesson-plan.md';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const renderHeader = () => (
+    <CardHeader className="flex flex-row items-center justify-between">
+      <CardTitle className="font-headline text-2xl flex items-center gap-2">
+        <BookText />
+        {sections.length > 0 ? 'Your Generated Lesson Plan' : 'Your Lesson Plan'}
+      </CardTitle>
+      <Button variant="outline" size="icon" onClick={handleDownload}>
+        <Download className="h-4 w-4" />
+        <span className="sr-only">Download Lesson Plan</span>
+      </Button>
+    </CardHeader>
+  );
+
   if (sections.length === 0) {
     return (
       <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl flex items-center gap-2">
-            <BookText />
-            Your Lesson Plan
-          </CardTitle>
-        </CardHeader>
+        {renderHeader()}
         <CardContent>
           <p className="text-muted-foreground">The generated lesson plan is in an unstructured format. Here is the raw output:</p>
           <pre className="mt-4 whitespace-pre-wrap text-sm font-code bg-black/10 p-4 rounded-md">{lessonPlan}</pre>
@@ -56,12 +77,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
 
   return (
     <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl flex items-center gap-2">
-          <BookText />
-          Your Generated Lesson Plan
-        </CardTitle>
-      </CardHeader>
+      {renderHeader()}
       <CardContent>
         <Accordion type="single" collapsible className="w-full" defaultValue={sections[0]?.title}>
           {sections.map(({ title, content }) => (

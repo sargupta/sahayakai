@@ -20,6 +20,8 @@ import { MicrophoneInput } from "@/components/microphone-input";
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
+  gradeLevel: z.string().optional(),
+  duration: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -34,6 +36,8 @@ export default function Home() {
     defaultValues: {
       topic: "",
       language: "en",
+      gradeLevel: "6th Grade",
+      duration: "45 minutes",
     },
   });
 
@@ -45,6 +49,8 @@ export default function Home() {
         topic: values.topic,
         language: values.language,
         localizationContext: "India", // Example context
+        gradeLevel: values.gradeLevel,
+        duration: values.duration,
       });
       setLessonPlan(result.lessonPlan);
     } catch (error) {
@@ -77,7 +83,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="topic"
@@ -97,6 +103,43 @@ export default function Home() {
                 />
                 
                 <MicrophoneInput onTranscriptChange={handleTranscript} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="gradeLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline">Grade Level</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., '6th Grade'"
+                            {...field}
+                            className="bg-white/50 backdrop-blur-sm"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline">Lesson Duration</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., '45 minutes'"
+                            {...field}
+                            className="bg-white/50 backdrop-blur-sm"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
