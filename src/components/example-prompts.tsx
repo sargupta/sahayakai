@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip';
+  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip' | 'teacher-training';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -201,7 +201,47 @@ const promptTranslations: Record<string, Record<string, string>> = {
       ta: "இந்தியாவில் விவசாயம்: அசாமின் தேயிலை முதல் கேரளாவின் மசாலா வரை.",
       gu: "ભારતમાં ખેતી: આસામની ચાથી કેરળના મસાલા સુધી.",
       kn: "ಭಾರತದಲ್ಲಿ ಕೃಷಿ: ಅಸ್ಸಾಂನ ಚಹಾದಿಂದ ಕೇರಳದ ಮಸಾಲೆಗಳವರೆಗೆ.",
-  }
+  },
+  trainingQuietStudents: {
+    en: "How can I get my students to be quiet without shouting?",
+    hi: "मैं अपने छात्रों को बिना चिल्लाए शांत कैसे कर सकता हूँ?",
+    bn: "চিৎকার না করে আমি কীভাবে আমার ছাত্রদের চুপ করাতে পারি?",
+    te: "అరవకుండా నా విద్యార్థులను నిశ్శబ్దంగా ఉండేలా చేయడం ఎలా?",
+    mr: "मी माझ्या विद्यार्थ्यांना न ओरडता शांत कसे करू शकेन?",
+    ta: "கத்தாமல் என் மாணவர்களை அமைதியாக இருக்க வைப்பது எப்படி?",
+    gu: "હું મારા વિદ્યાર્થીઓને બૂમો પાડ્યા વગર શાંત કેવી રીતે કરી શકું?",
+    kn: "ನನ್ನ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಕೂಗದೆ ಸುಮ್ಮನಿರಿಸುವುದು ಹೇಗೆ?",
+  },
+  trainingThinkPairShare: {
+    en: "Explain the 'think-pair-share' method for a science lesson.",
+    hi: "विज्ञान के पाठ के लिए 'सोचें-जोड़ी-साझा करें' विधि की व्याख्या करें।",
+    bn: "একটি বিজ্ঞান পাঠের জন্য 'চিন্তা-জোড়া-শেয়ার' পদ্ধতি ব্যাখ্যা কর।",
+    te: "సైన్స్ పాఠం కోసం 'థింక్-పెయిర్-షేర్' పద్ధతిని వివరించండి.",
+    mr: "विज्ञान धड्यासाठी 'विचार-जोडी-शेअर' पद्धत स्पष्ट करा.",
+    ta: "ஒரு அறிவியல் பாடத்திற்கான 'சிந்தனை-இணை-பகிர்' முறையை விளக்கவும்.",
+    gu: "વિજ્ઞાન પાઠ માટે 'વિચારો-જોડી-શેર' પદ્ધતિ સમજાવો.",
+    kn: "ವಿಜ್ಞಾನ ಪಾಠಕ್ಕಾಗಿ 'ಯೋಚಿಸಿ-ಜೋಡಿ-ಹಂಚಿಕೊಳ್ಳಿ' ವಿಧಾನವನ್ನು ವಿವರಿಸಿ.",
+  },
+  trainingMotivation: {
+    en: "I'm feeling unmotivated. Can you give me some encouragement?",
+    hi: "मैं प्रेरणाहीन महसूस कर रहा हूँ। क्या आप मुझे कुछ प्रोत्साहन दे सकते हैं?",
+    bn: "আমি অনুপ্রাণিত বোধ করছি না। আপনি আমাকে কিছু উৎসাহ দিতে পারেন?",
+    te: "నేను ప్రేరణ లేకుండా ఉన్నాను. మీరు నాకు కొంత ప్రోత్సాహం ఇవ్వగలరా?",
+    mr: "मला प्रेरणाहीन वाटत आहे. तुम्ही मला थोडे प्रोत्साहन देऊ शकता का?",
+    ta: "நான் உந்துதல் இல்லாமல் உணர்கிறேன். நீங்கள் எனக்கு சில ஊக்கத்தை அளிக்க முடியுமா?",
+    gu: "મને પ્રેરણા નથી મળી રહી. શું તમે મને થોડું પ્રોત્સાહન આપી શકો છો?",
+    kn: "ನನಗೆ ಪ್ರೇರಣೆ ಇಲ್ಲ. ನೀವು ನನಗೆ ಸ್ವಲ್ಪ ಪ್ರೋತ್ಸಾಹ ನೀಡಬಹುದೇ?",
+  },
+  trainingTimeManagement: {
+    en: "How can I better manage my time teaching multiple grades?",
+    hi: "मैं कई ग्रेड पढ़ाते समय अपने समय का बेहतर प्रबंधन कैसे कर सकता हूँ?",
+    bn: "একাধিক গ্রেড পড়ানোর সময় আমি কীভাবে আমার সময়কে আরও ভালভাবে পরিচালনা করতে পারি?",
+    te: "బహుళ గ్రేడ్‌లను బోధిస్తున్నప్పుడు నా సమయాన్ని నేను ఎలా బాగా నిర్వహించగలను?",
+    mr: "एकाधिक श्रेणी शिकवताना मी माझ्या वेळेचे अधिक चांगले व्यवस्थापन कसे करू शकेन?",
+    ta: "பல வகுப்புகளுக்கு கற்பிக்கும்போது எனது நேரத்தை எவ்வாறு சிறப்பாக நிர்வகிப்பது?",
+    gu: "હું બહુવિધ ગ્રેડ ભણાવતી વખતે મારા સમયનું વધુ સારી રીતે સંચાલન કેવી રીતે કરી શકું?",
+    kn: "ಬಹು ದರ್ಜೆಗಳನ್ನು ಕಲಿಸುವಾಗ ನನ್ನ ಸಮಯವನ್ನು ನಾನು ಹೇಗೆ ಉತ್ತಮವಾಗಿ ನಿರ್ವಹಿಸಬಹುದು?",
+  },
 };
 
 const headerTranslations: Record<string, string> = {
@@ -222,6 +262,7 @@ const pagePrompts: Record<string, string[]> = {
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
   'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
+  'teacher-training': ['trainingQuietStudents', 'trainingThinkPairShare', 'trainingMotivation', 'trainingTimeManagement'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {

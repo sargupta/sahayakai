@@ -8,3 +8,4 @@ import '@/ai/flows/instant-answer.ts';
 import '@/ai/tools/google-search.ts';
 import '@/ai/flows/worksheet-wizard.ts';
 import '@/ai/flows/virtual-field-trip.ts';
+import '@/ai/flows/teacher-training.ts';
