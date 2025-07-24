@@ -358,7 +358,7 @@ const headerTranslations: Record<string, string> = {
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
   'homeWithImage': ['imageLessonPlan', 'skyBlue', 'multigradeFood', 'waterCycle'],
-  'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
+  'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'hibiscusDiagram'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
   'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
@@ -372,10 +372,12 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
   const promptKeys = pagePrompts[page] || pagePrompts['home'];
 
   const prompts = promptKeys.map(key => {
-    return promptTranslations[key][selectedLanguage] || promptTranslations[key]['en'];
-  }).slice(0, 4); // Limit to 4 prompts
+    return promptTranslations[key]?.[selectedLanguage] || promptTranslations[key]?.['en'] || '';
+  }).filter(Boolean).slice(0, 4); // Filter out any empty strings and limit to 4
   
   const headerText = headerTranslations[selectedLanguage] || headerTranslations['en'];
+
+  if (prompts.length === 0) return null;
 
   return (
     <div className="space-y-3 p-3 bg-accent/20 rounded-lg">
@@ -399,5 +401,3 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
     </div>
   );
 };
-
-    

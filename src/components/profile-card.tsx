@@ -31,7 +31,42 @@ const translations: Record<string, Record<string, string>> = {
     resources: "संसाधन",
     editProfile: "प्रोफ़ाइल संपादित करें",
   },
-  // Add other languages...
+  bn: {
+    followers: "অনুসারী",
+    following: "অনুসরণ করছেন",
+    resources: "সম্পদ",
+    editProfile: "প্রোফাইল সম্পাদনা করুন",
+  },
+  te: {
+    followers: "అనుచరులు",
+    following: "అనుసరిస్తున్నారు",
+    resources: "వనరులు",
+    editProfile: "ప్రొఫైల్‌ను సవరించండి",
+  },
+  mr: {
+    followers: "फॉलोअर्स",
+    following: "फॉलो करत आहे",
+    resources: "संसाधने",
+    editProfile: "प्रोफाइल संपादित करा",
+  },
+  ta: {
+    followers: "பின்தொடர்பவர்கள்",
+    following: "பின்தொடர்கிறார்கள்",
+    resources: "வளங்கள்",
+    editProfile: "சுயவிவரத்தைத் திருத்து",
+  },
+  gu: {
+    followers: "અનુયાયીઓ",
+    following: "અનુસરી રહ્યા છે",
+    resources: "સંસાધનો",
+    editProfile: "પ્રોફાઇલ સંપાદિત કરો",
+  },
+  kn: {
+    followers: "ಅನುಯಾಯಿಗಳು",
+    following: "ಅನುಸರಿಸುತ್ತಿದ್ದಾರೆ",
+    resources: "ಸಂಪನ್ಮೂಲಗಳು",
+    editProfile: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ",
+  },
 };
 
 export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, language }) => {

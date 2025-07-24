@@ -63,6 +63,10 @@ const translations: Record<string, Record<string, string>> = {
     worksheet: "Worksheet",
     image: "Image",
     other: "File",
+    open: "Open",
+    rename: "Rename",
+    move: "Move",
+    delete: "Delete",
   },
   hi: {
     pageTitle: "मेरी लाइब्रेरी",
@@ -79,8 +83,131 @@ const translations: Record<string, Record<string, string>> = {
     worksheet: "कार्यपत्रक",
     image: "छवि",
     other: "फ़ाइल",
+    open: "खोलें",
+    rename: "नाम बदलें",
+    move: "स्थानांतरित करें",
+    delete: "हटाएं",
   },
-  // Add other languages...
+  bn: {
+    pageTitle: "আমার লাইব্রেরি",
+    searchPlaceholder: "ফাইল অনুসন্ধান করুন...",
+    newFolder: "নতুন ফোল্ডার",
+    createNew: "নতুন তৈরি করুন",
+    name: "নাম",
+    type: "প্রকার",
+    modified: "পরিবর্তিত",
+    folder: "ফোল্ডার",
+    lessonPlan: "পাঠ পরিকল্পনা",
+    quiz: "কুইজ",
+    rubric: "রুব্রিক",
+    worksheet: "ওয়ার্কশীট",
+    image: "ছবি",
+    other: "ফাইল",
+    open: "খুলুন",
+    rename: "পুনঃনামকরণ",
+    move: "সরান",
+    delete: "মুছে ফেলুন",
+  },
+  te: {
+    pageTitle: "నా లైబ్రరీ",
+    searchPlaceholder: "ఫైల్‌లను శోధించండి...",
+    newFolder: "కొత్త ఫోల్డర్",
+    createNew: "క్రొత్తదాన్ని సృష్టించండి",
+    name: "పేరు",
+    type: "రకం",
+    modified: "సవరించబడింది",
+    folder: "ఫోల్డర్",
+    lessonPlan: "పాఠ్య ప్రణాళిక",
+    quiz: "క్విజ్",
+    rubric: "రూబ్రిక్",
+    worksheet: "వర్క్‌షీట్",
+    image: "చిత్రం",
+    other: "ఫైల్",
+    open: "తెరవండి",
+    rename: "పేరు మార్చండి",
+    move: "తరలించు",
+    delete: "తొలగించు",
+  },
+  mr: {
+    pageTitle: "माझी लायब्ररी",
+    searchPlaceholder: "फाइल्स शोधा...",
+    newFolder: "नवीन फोल्डर",
+    createNew: "नवीन तयार करा",
+    name: "नाव",
+    type: "प्रकार",
+    modified: "सुधारित",
+    folder: "फोल्डर",
+    lessonPlan: "पाठ योजना",
+    quiz: "क्विझ",
+    rubric: "रब्रिक",
+    worksheet: "वर्कशीट",
+    image: "प्रतिमा",
+    other: "फाइल",
+    open: "उघडा",
+    rename: "नाव बदला",
+    move: "हलवा",
+    delete: "हटवा",
+  },
+  ta: {
+    pageTitle: "எனது நூலகம்",
+    searchPlaceholder: "கோப்புகளைத் தேடு...",
+    newFolder: "புதிய கோப்புறை",
+    createNew: "புதிதாக உருவாக்கு",
+    name: "பெயர்",
+    type: "வகை",
+    modified: "மாற்றப்பட்டது",
+    folder: "கோப்புறை",
+    lessonPlan: "பாடம் திட்டம்",
+    quiz: "வினாடி வினா",
+    rubric: "ரூப்ரிக்",
+    worksheet: "பணித்தாள்",
+    image: "படம்",
+    other: "கோப்பு",
+    open: "திற",
+    rename: "பெயர் மாற்று",
+    move: "நகர்த்து",
+    delete: "நீக்கு",
+  },
+  gu: {
+    pageTitle: "મારી લાઇબ્રેરી",
+    searchPlaceholder: "ફાઇલો શોધો...",
+    newFolder: "નવું ફોલ્ડર",
+    createNew: "નવું બનાવો",
+    name: "નામ",
+    type: "પ્રકાર",
+    modified: "સુધારેલ",
+    folder: "ફોલ્ડર",
+    lessonPlan: "પાઠ યોજના",
+    quiz: "ક્વિઝ",
+    rubric: "રૂબ્રિક",
+    worksheet: "વર્કશીટ",
+    image: "છબી",
+    other: "ફાઇલ",
+    open: "ખોલો",
+    rename: "નામ બદલો",
+    move: "ખસેડો",
+    delete: "કાઢી નાખો",
+  },
+  kn: {
+    pageTitle: "ನನ್ನ ಗ್ರಂಥಾಲಯ",
+    searchPlaceholder: "ಫೈಲ್‌ಗಳನ್ನು ಹುಡುಕಿ...",
+    newFolder: "ಹೊಸ ಫೋಲ್ಡರ್",
+    createNew: "ಹೊಸದನ್ನು ರಚಿಸಿ",
+    name: "ಹೆಸರು",
+    type: "ಪ್ರಕಾರ",
+    modified: "ಮಾರ್ಪಡಿಸಲಾಗಿದೆ",
+    folder: "ಫೋಲ್ಡರ್",
+    lessonPlan: "ಪಾಠ ಯೋಜನೆ",
+    quiz: "ರಸಪ್ರಶ್ನೆ",
+    rubric: "ರೂಬ್ರಿಕ್",
+    worksheet: "ಕಾರ್ಯಪಟ್ಟಿ",
+    image: "ಚಿತ್ರ",
+    other: "ಫೈಲ್",
+    open: "ತೆರೆಯಿರಿ",
+    rename: "ಹೆಸರು ಬದಲಾಯಿಸಿ",
+    move: "ಸರಿಸಿ",
+    delete: "ಅಳಿಸಿ",
+  },
 };
 
 export default function MyLibraryPage() {
@@ -177,10 +304,10 @@ export default function MyLibraryPage() {
                                 </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Open</DropdownMenuItem>
-                                <DropdownMenuItem>Rename</DropdownMenuItem>
-                                <DropdownMenuItem>Move</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                <DropdownMenuItem>{t.open}</DropdownMenuItem>
+                                <DropdownMenuItem>{t.rename}</DropdownMenuItem>
+                                <DropdownMenuItem>{t.move}</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">{t.delete}</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             </TableCell>
@@ -194,4 +321,3 @@ export default function MyLibraryPage() {
     </div>
   );
 }
-
