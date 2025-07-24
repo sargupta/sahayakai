@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -7,14 +8,13 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
   SidebarFooter,
   SidebarTrigger,
-  SidebarMenuSubItem
+  SidebarGroup,
+  SidebarGroupLabel
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/logo"
-import { NotebookPen, PencilRuler, Images, Video, GraduationCap, Users, BotMessageSquare, Sparkles } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -24,79 +24,129 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Logo />
-        <SidebarTrigger className="ml-auto" />
-      </SidebarHeader>
-      <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip="Lesson Plan Generator">
-              <Link href="/lesson-plan">
-                <NotebookPen />
-                <span>Lesson Plan Generator</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip="Worksheet Wizard">
-              <Link href="/worksheet-wizard">
-                <PencilRuler />
-                <span>Worksheet Wizard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/visual-aid-creator')} tooltip="Visual Aid Creator">
-              <Link href="/visual-aid-creator">
-                <Images />
-                <span>Visual Aid Creator</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Video Clip Generator" disabled>
-              <Video />
-              <span>Video Clip Generator</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-           <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Intelligent Assessment" disabled>
-              <GraduationCap />
-              <span>Assessments</span>
-            </SidebarMenuButton>
-             <SidebarMenuSub>
-               <SidebarMenuSubItem>
-                <SidebarMenuSubButton href="#" disabled>Rubric Generator</SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton href="#" disabled>Grading Interface</SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-             </SidebarMenuSub>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Community Hub" disabled>
-              <Users />
-              <span>Community Hub</span>
-            </SidebarMenuButton>
+             <SidebarMenuButton href="#" tooltip="AI Companion" isActive={pathname.startsWith('/ai-companion')} variant="outline">
+                <Sparkles />
+                <span>AI Companion</span>
+              </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-         <SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
+          <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Teacher Coach" disabled>
-                <BotMessageSquare />
-                <span>Teacher Coach</span>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/content-creator')} tooltip="Content Creator">
+                <Link href="/content-creator">
+                  <BookOpen />
+                  <span>Content Creator</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="My Sahayak" disabled>
-                <Sparkles />
-                <span>My Sahayak</span>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip="Worksheet Wizard">
+                <Link href="/worksheet-wizard">
+                  <PencilRuler />
+                  <span>Worksheet Wizard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/instant-answer')} tooltip="Instant Answer">
+                <Link href="/instant-answer">
+                  <Wand2 />
+                  <span>Instant Answer</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/visual-aid-designer')} tooltip="Visual Aid Designer">
+                <Link href="/visual-aid-designer">
+                  <Images />
+                  <span>Visual Aid Designer</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/video-storyteller')} tooltip="Video Storyteller">
+                <Link href="/video-storyteller">
+                  <Video />
+                  <span>Video Storyteller</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan-agent')} tooltip="Lesson Plan Agent">
+                <Link href="/lesson-plan-agent">
+                  <CalendarDays />
+                  <span>Lesson Plan Agent</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/teacher-training')} tooltip="Teacher Training">
+                <Link href="/teacher-training">
+                  <GraduationCap />
+                  <span>Teacher Training</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/virtual-field-trip')} tooltip="Virtual Field Trip">
+                <Link href="/virtual-field-trip">
+                  <Globe2 />
+                  <span>Virtual Field Trip</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip="Impact Dashboard">
+                  <Link href="/impact-dashboard">
+                    <BarChart />
+                    <span>Impact Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/community-library')} tooltip="Community Library">
+                  <Link href="/community-library">
+                    <Library />
+                    <span>Community Library</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/submit-content')} tooltip="Submit Content">
+                  <Link href="/submit-content">
+                    <Upload />
+                    <span>Submit Content</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+         <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/review-panel')} tooltip="Review Panel">
+                  <Link href="/review-panel">
+                    <ShieldCheck />
+                    <span>Review Panel</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+         </SidebarGroup>
       </SidebarFooter>
     </Sidebar>
   )

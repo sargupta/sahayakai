@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -8,7 +9,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/lesson-plan');
+    router.replace('/lesson-plan-agent');
   }, [router]);
 
   return (
