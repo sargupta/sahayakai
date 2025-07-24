@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lightbulb, Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
+import { ExamplePrompts } from "@/components/example-prompts";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -28,14 +29,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const placeholderTranslations: Record<string, string> = {
-    en: "e.g., Delhi, Diwali, Ganges River",
-    hi: "उदा., दिल्ली, दिवाली, गंगा नदी",
-    bn: "उदा., দিল্লি, দিওয়ালি, গঙ্গা নদী",
-    te: "ఉదా., ఢిల్లీ, దీపావళి, గంగా నది",
-    mr: "उदा., दिल्ली, दिवाळी, गंगा नदी",
-    ta: "உதா., டெல்லி, தீபாவளி, கங்கை நதி",
-    gu: "દા.ત., દિલ્હી, દિવાળી, ગંગા નદી",
-    kn: "ಉದಾ., ದೆಹಲಿ, ದೀಪಾವಳಿ, ಗಂಗಾ ನದಿ",
+    en: "e.g., city, festival, or landmark",
+    hi: "उदा., शहर, त्योहार, या स्थल",
+    bn: "उदा., শহর, উৎসব, বা ল্যান্ডমার্ক",
+    te: "ఉదా., నగరం, పండుగ, లేదా మైలురాయి",
+    mr: "उदा., शहर, सण, किंवा महत्त्वाचे ठिकाण",
+    ta: "உதா., நகரம், திருவிழா, அல்லது முக்கிய இடம்",
+    gu: "દા.ત., શહેર, તહેવાર, અથવા સીમાચિહ્ન",
+    kn: "ಉದಾ., ನಗರ, ಹಬ್ಬ, ಅಥವಾ ಹೆಗ್ಗುರುತು",
 };
 
 const topicPlaceholderTranslations: Record<string, string> = {
@@ -97,6 +98,11 @@ export default function LessonPlanAgentPage() {
     form.trigger("topic");
   };
 
+  const handlePromptClick = (prompt: string) => {
+    form.setValue("topic", prompt);
+    form.trigger("topic");
+  };
+
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
@@ -109,40 +115,6 @@ export default function LessonPlanAgentPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="topic"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">Topic</FormLabel>
-                    <FormControl>
-                        <AutoCompleteInput
-                          placeholder={topicPlaceholder}
-                          {...field}
-                          selectedLanguage={selectedLanguage}
-                          onSuggestionClick={(value) => {
-                              form.setValue("topic", value);
-                              form.trigger("topic");
-                          }}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex items-center justify-center gap-4">
-                <MicrophoneInput onTranscriptChange={handleTranscript} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled
-                  className="h-20 w-20 rounded-full shadow-lg"
-                  aria-label="Upload a file"
-                >
-                  <Upload className="h-10 w-10" />
-                </Button>
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
@@ -178,26 +150,70 @@ export default function LessonPlanAgentPage() {
                     </FormItem>
                   )}
                 />
-                <div className="md:col-span-2">
-                    <FormField
-                    control={form.control}
-                    name="localContext"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="font-headline">Local Context</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder={placeholder}
-                            {...field}
-                            className="bg-white/50 backdrop-blur-sm"
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="localContext"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel className="font-headline">Local Context</FormLabel>
+                      <FormControl>
+                          <Input
+                          placeholder={placeholder}
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm"
+                          />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <div className="flex flex-col gap-2">
+                    <FormLabel className="font-headline">Add context (optional)</FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled
+                      className="w-full h-10 flex items-center justify-center gap-2 border-dashed"
+                      aria-label="Upload a file"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span>Upload Textbook Page</span>
+                    </Button>
+                  </div>
+              </div>
+              
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
+
+              <FormField
+                control={form.control}
+                name="topic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">How can I help you?</FormLabel>
+                    <FormControl>
+                        <AutoCompleteInput
+                          placeholder={topicPlaceholder}
+                          {...field}
+                          selectedLanguage={selectedLanguage}
+                          onSuggestionClick={(value) => {
+                              form.setValue("topic", value);
+                              form.trigger("topic");
+                          }}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <ExamplePrompts
+                onPromptClick={handlePromptClick}
+                selectedLanguage={selectedLanguage}
+                page="home"
+              />
 
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
