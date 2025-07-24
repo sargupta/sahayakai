@@ -39,6 +39,12 @@ const mockFollowingResources: Resource[] = [
     { id: 'f3', 'title': 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105 },
 ];
 
+const mockMyContentResources: Resource[] = [
+  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 15 },
+  { id: 'm2', title: 'My Fractions Quiz', type: 'quiz', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 3 },
+  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 22 },
+];
+
 
 export default function CommunityPage() {
     const [language, setLanguage] = useState('en');
@@ -65,9 +71,10 @@ export default function CommunityPage() {
             </div>
 
             <Tabs defaultValue="trending">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="trending">Trending</TabsTrigger>
                     <TabsTrigger value="following">Following</TabsTrigger>
+                    <TabsTrigger value="my-content">My Content</TabsTrigger>
                 </TabsList>
                 <TabsContent value="trending">
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
@@ -110,6 +117,44 @@ export default function CommunityPage() {
                 <TabsContent value="following">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                         {mockFollowingResources.map((resource) => (
+                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <div className="flex items-center gap-3">
+                                        <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
+                                        <div>
+                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
+                                                    <AvatarFallback>{resource.author.substring(0,2)}</AvatarFallback>
+                                                </Avatar>
+                                                <span>{resource.author}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                     {/* Can add a short description here */}
+                                </CardContent>
+                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                                            <ThumbsUp className="h-4 w-4" />
+                                            <span className="text-sm">{resource.likes}</span>
+                                        </Button>
+                                    </div>
+                                    <Button variant="outline" size="sm">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download
+                                    </Button>
+                                </CardFooter>
+                           </Card>
+                        ))}
+                   </div>
+                </TabsContent>
+                 <TabsContent value="my-content">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                        {mockMyContentResources.map((resource) => (
                            <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
