@@ -16,6 +16,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
+import { GradeLevelSelector } from "@/components/grade-level-selector";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -158,10 +159,10 @@ export default function Home() {
                     <FormItem>
                       <FormLabel className="font-headline">Grade Level</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g., '6th Grade'"
-                          {...field}
-                          className="bg-white/50 backdrop-blur-sm"
+                        <GradeLevelSelector
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          language={selectedLanguage}
                         />
                       </FormControl>
                       <FormMessage />
