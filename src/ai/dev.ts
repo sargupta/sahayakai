@@ -7,3 +7,4 @@ import '@/ai/flows/visual-aid-designer.ts';
 import '@/ai/flows/instant-answer.ts';
 import '@/ai/tools/google-search.ts';
 import '@/ai/flows/worksheet-wizard.ts';
+import '@/ai/flows/virtual-field-trip.ts';

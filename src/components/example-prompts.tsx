@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage';
+  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -162,6 +162,46 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "આ છબીમાંથી 5 પ્રશ્નો સાથે એક વર્કશીટ બનાવો.",
     kn: "ಈ ಚಿತ್ರದಿಂದ 5 ಪ್ರಶ್ನೆಗಳೊಂದಿಗೆ ಒಂದು ವರ್ಕ್‌ಶೀಟ್ ರಚಿಸಿ.",
   },
+  fieldTripHarappa: {
+      en: "A 4-stop tour of the major centers of the Harappan Civilization.",
+      hi: "हड़प्पा सभ्यता के प्रमुख केंद्रों का 4-स्टॉप दौरा।",
+      bn: "হরপ্পা সভ্যতার প্রধান কেন্দ্রগুলির একটি 4-স্টপ সফর।",
+      te: "హరప్పా నాగరికత యొక్క ప్రధాన కేంద్రాల 4-స్టాప్ పర్యటన.",
+      mr: "हडप्पा संस्कृतीच्या प्रमुख केंद्रांचा 4-थांबा दौरा.",
+      ta: "ஹரப்பா நாகரிகத்தின் முக்கிய மையங்களின் 4-நிறுத்த சுற்றுப்பயணம்.",
+      gu: "હડપ્પન સંસ્કૃતિના મુખ્ય કેન્દ્રોની 4-સ્ટોપ ટૂર.",
+      kn: "ಹರಪ್ಪ ನಾಗರಿಕತೆಯ ಪ್ರಮುಖ ಕೇಂದ್ರಗಳ 4-ನಿಲುಗಡೆ ಪ್ರವಾಸ.",
+  },
+  fieldTripKaveri: {
+      en: "Trace the journey of the river Kaveri from its source to the sea.",
+      hi: "कावेरी नदी की उसके स्रोत से समुद्र तक की यात्रा का पता लगाएं।",
+      bn: "কাবেরী নদীর উৎস থেকে সমুদ্র পর্যন্ত যাত্রাটি সন্ধান করুন।",
+      te: "కావేరి నది యొక్క మూలం నుండి సముద్రం వరకు ప్రయాణాన్ని కనుగొనండి.",
+      mr: "कावेरी नदीच्या उगमापासून समुद्रापर्यंतच्या प्रवासाचा मागोवा घ्या.",
+      ta: "காவிரி ஆற்றின் மூலத்திலிருந்து கடல் வரையிலான பயணத்தைக் கண்டறியவும்.",
+      gu: "કાવેરી નદીના સ્ત્રોતથી સમુદ્ર સુધીની મુસાફરીનો પત્તો લગાવો.",
+      kn: "ಕಾವೇರಿ ನದಿಯ ಮೂಲದಿಂದ ಸಮುದ್ರದವರೆಗೆ ಪ್ರಯಾಣವನ್ನು ಗುರುತಿಸಿ.",
+  },
+  fieldTripTigers: {
+      en: "A tour of the major national parks in India famous for tiger conservation.",
+      hi: "बाघ संरक्षण के लिए प्रसिद्ध भारत के प्रमुख राष्ट्रीय उद्यानों का दौरा।",
+      bn: "বাঘ সংরক্ষণের জন্য বিখ্যাত ভারতের প্রধান জাতীয় উদ্যানগুলির একটি সফর।",
+      te: "పులుల సంరక్షణకు ప్రసిద్ధి చెందిన భారతదేశంలోని ప్రధాన జాతీయ ఉద్యానవనాల పర్యటన.",
+      mr: "वाघ संवर्धनासाठी प्रसिद्ध असलेल्या भारतातील प्रमुख राष्ट्रीय उद्यानांचा दौरा.",
+      ta: "புலி பாதுகாப்புக்கு பெயர் பெற்ற இந்தியாவின் முக்கிய தேசிய பூங்காக்களுக்கு ஒரு சுற்றுப்பயணம்.",
+      gu: "વાઘ સંરક્ષણ માટે પ્રખ્યાત ભારતના મુખ્ય રાષ્ટ્રીય ઉદ્યાનોની મુલાકાત.",
+      kn: "ಹುಲಿ ಸಂರಕ್ಷಣೆಗೆ ಹೆಸರುವಾಸಿಯಾದ ಭಾರತದ ಪ್ರಮುಖ ರಾಷ್ಟ್ರೀಯ ಉದ್ಯಾನವನಗಳ ಪ್ರವಾಸ.",
+  },
+  fieldTripFarming: {
+      en: "Show me three different types of farming in India: tea plantations in Assam, wheat fields in Punjab, and spice gardens in Kerala.",
+      hi: "मुझे भारत में तीन अलग-अलग प्रकार की खेती दिखाएं: असम में चाय के बागान, पंजाब में गेहूं के खेत और केरल में मसालों के बगीचे।",
+      bn: "আমাকে ভারতে তিন ধরণের চাষ দেখান: আসামের চা বাগান, পাঞ্জাবের গমের ক্ষেত এবং কেরালার মশলার বাগান।",
+      te: "భారతదేశంలో మూడు విభిన్న రకాల వ్యవసాయాన్ని నాకు చూపించు: అస్సాంలో తేయాకు తోటలు, పంజాబ్‌లో గోధుమ పొలాలు మరియు కేరళలో సుగంధ ద్రవ్యాల తోటలు.",
+      mr: "मला भारतातील तीन वेगवेगळ्या प्रकारची शेती दाखवा: आसाममधील चहाचे मळे, पंजाबमधील गव्हाची शेतं आणि केरळमधील मसाल्याच्या बागा.",
+      ta: "இந்தியாவில் மூன்று வெவ்வேறு வகையான விவசாயத்தைக் காட்டுங்கள்: அஸ்ஸாமில் தேயிலைத் தோட்டங்கள், பஞ்சாபில் கோதுமை வயல்கள் மற்றும் கேரளாவில் மசாலா தோட்டங்கள்.",
+      gu: "મને ભારતમાં ત્રણ અલગ-અલગ પ્રકારની ખેતી બતાવો: આસામમાં ચાના બગીચા, પંજાબમાં ઘઉંના ખેતરો અને કેરળમાં મસાલાના બગીચા.",
+      kn: "ಭಾರತದಲ್ಲಿನ ಮೂರು ವಿಭಿನ್ನ ರೀತಿಯ ಕೃಷಿಯನ್ನು ನನಗೆ ತೋರಿಸಿ: ಅಸ್ಸಾಂನಲ್ಲಿ ಚಹಾ ತೋಟಗಳು, ಪಂಜಾಬ್‌ನಲ್ಲಿ ಗೋಧಿ ಹೊಲಗಳು ಮತ್ತು ಕೇರಳದಲ್ಲಿ ಮಸಾಲೆ ತೋಟಗಳು.",
+  }
 };
 
 const headerTranslations: Record<string, string> = {
@@ -181,6 +221,7 @@ const pagePrompts: Record<string, string[]> = {
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
+  'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
