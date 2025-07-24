@@ -139,7 +139,7 @@ const promptTranslations: Record<string, Record<string, string>> = {
     te: "3వ తరగతి కోసం, ఈ పేజీలోని కష్టమైన పదాలతో వర్డ్ సెర్చ్ పజిల్‌ను సృష్టించండి.",
     mr: "इयत्ता 3 साठी, या पृष्ठावरील कठीण शब्दांसह एक शब्द शोध कोडे तयार करा.",
     ta: "3 ஆம் வகுப்பிற்கு, இந்தப் பக்கத்தில் உள்ள கடினமான வார்த்தைகளைக் கொண்டு ஒரு வார்த்தை தேடல் புதிரை உருவாக்கவும்.",
-    gu: "ધોરણ 3 માટે, આ પૃષ્ઠ પરના મુશ્કેલ શબ્દો સાથે એક શબ્દ શોધ પઝલ બનાવો.",
+    gu: "ધોરણ 3 માટે, આ પૃષ્ઠ પરના મુશ્કેل શબ્દો સાથે એક શબ્દ શોધ પઝલ બનાવો.",
     kn: "3 ನೇ ತರಗತಿಗೆ, ಈ ಪುಟದಲ್ಲಿನ ಕಷ್ಟಕರವಾದ ಪದಗಳೊಂದಿಗೆ ಪದ ಹುಡುಕಾಟ ಒಗಟು ರಚಿಸಿ.",
   },
   imageLessonPlan: {
@@ -262,15 +262,15 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "હું બહુવિધ ગ્રેડ ભણાવતી વખતે મારા સમયનું વધુ સારી રીતે સંચાલન કેવી રીતે કરી શકું?",
     kn: "ಬಹು ದರ್ಜೆಗಳನ್ನು ಕಲಿಸುವಾಗ ನನ್ನ ಸಮಯವನ್ನು ನಾನು ಹೇಗೆ ಉತ್ತಮವಾಗಿ ನಿರ್ವಹಿಸಬಹುದು?",
   },
-  rubricMughalProject: {
-      en: "A research project on the Mughal Empire for 7th grade students.",
-      hi: "7वीं कक्षा के छात्रों के लिए मुगल साम्राज्य पर एक शोध परियोजना।",
-      bn: "সপ্তম শ্রেণীর ছাত্রদের জন্য মুঘল সাম্রাজ্যের উপর একটি গবেষণা প্রকল্প।",
-      te: "7వ తరగతి విద్యార్థుల కోసం మొఘల్ సామ్రాజ్యంపై ఒక పరిశోధన ప్రాజెక్ట్.",
-      mr: "इयत्ता 7वीच्या विद्यार्थ्यांसाठी मुघल साम्राज्यावर एक संशोधन प्रकल्प.",
-      ta: "7 ஆம் வகுப்பு மாணவர்களுக்கு முகலாயப் பேரரசு பற்றிய ஒரு ஆராய்ச்ச்த் திட்டம்.",
-      gu: "7મા ધોરણના વિદ્યાર્થીઓ માટે મુઘલ સામ્રાજ્ય પર એક સંશોધન પ્રોજેક્ટ.",
-      kn: "7 ನೇ ತರಗತಿಯ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಮೊಘಲ್ ಸಾಮ್ರಾಜ್ಯದ ಮೇಲೆ ಸಂಶೋಧನಾ ಯೋಜನೆ.",
+  rubricCholaProject: {
+      en: "A research project on the Chola Dynasty for 8th grade students.",
+      hi: "8वीं कक्षा के छात्रों के लिए चोल राजवंश पर एक शोध परियोजना।",
+      bn: "অষ্টম শ্রেণীর ছাত্রদের জন্য চোল রাজবংশের উপর একটি গবেষণা প্রকল্প।",
+      te: "8వ తరగతి విద్యార్థుల కోసం చోళ రాజవంశంపై ఒక పరిశోధన ప్రాజెక్ట్.",
+      mr: "इयत्ता 8वीच्या विद्यार्थ्यांसाठी चोळ राजवंशावर एक संशोधन प्रकल्प.",
+      ta: "8 ஆம் வகுப்பு மாணவர்களுக்கு சோழ வம்சம் பற்றிய ஒரு ஆராய்ச்ச்த் திட்டம்.",
+      gu: "8મા ધોરણના વિદ્યાર્થીઓ માટે ચોલ રાજવંશ પર એક સંશોધન પ્રોજેક્ટ.",
+      kn: "8 ನೇ ತರಗತಿಯ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಚೋಳ ರಾಜವಂಶದ ಮೇಲೆ ಸಂಶೋಧನಾ ಯೋಜನೆ.",
   },
   rubricStorytelling: {
       en: "A storytelling assignment for a 3rd grade class.",
@@ -290,7 +290,7 @@ const promptTranslations: Record<string, Record<string, string>> = {
       mr: "इयत्ता 10वीच्या विद्यार्थ्यांसाठी 'तंत्रज्ञान चांगले की वाईट?' यावर एक वादविवाद.",
       ta: "10 ஆம் வகுப்பு மாணவர்களுக்கு 'தொழில்நுட்பம் நல்லதா கெட்டதா?' என்ற தலைப்பில் ஒரு விவாதம்.",
       gu: "10મા ધોરણના વિદ્યાર્થીઓ માટે 'ટેકનોલોજી સારી છે કે ખરાબ?' પર એક ચર્ચા.",
-      kn: "10 ನೇ ತರಗತಿಯವರಿಗೆ 'ತಂತ್ರಜ್ಞาน ಒಳ್ಳೆಯದೋ ಕೆಟ್ಟದ್ದೋ?' ಎಂಬ ವಿಷಯದ ಮೇಲೆ ಚರ್ಚೆ.",
+      kn: "10 ನೇ ತರಗತಿಯವರಿಗೆ 'ತಂತ್ರಜ್ಞಾನ ಒಳ್ಳೆಯದೋ ಕೆಟ್ಟದ್ದೋ?' ಎಂಬ ವಿಷಯದ ಮೇಲೆ ಚರ್ಚೆ.",
   },
   rubricPoster: {
       en: "A poster-making activity on 'Save Water' for Class 5.",
@@ -323,7 +323,7 @@ const pagePrompts: Record<string, string[]> = {
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
   'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
   'teacher-training': ['trainingQuietStudents', 'trainingThinkPairShare', 'trainingMotivation', 'trainingTimeManagement'],
-  'rubric': ['rubricMughalProject', 'rubricStorytelling', 'rubricDebate', 'rubricPoster'],
+  'rubric': ['rubricCholaProject', 'rubricStorytelling', 'rubricDebate', 'rubricPoster'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
