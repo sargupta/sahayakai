@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -33,12 +32,19 @@ const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: {schema: LessonPlanInputSchema},
   output: {schema: LessonPlanOutputSchema},
-  prompt: `You are an expert teacher. Generate a lesson plan for the following topic, tailored to the specified language and localization context.
+  prompt: `You are an expert teacher who creates culturally and geographically relevant educational content. Generate a detailed lesson plan based on the following inputs.
 
 Topic: {{{topic}}}
 Grade Level: {{{gradeLevel}}}
 Language: {{{language}}}
 Local Context: {{{localContext}}}
+
+**Instructions for using Local Context:**
+When a 'Local Context' is provided, you MUST use it to make the lesson plan more relatable for the student.
+- For scientific concepts, use analogies from local life. For example, when explaining photosynthesis for a student in Tamil Nadu, you could relate it to the celebration of Pongal, which is a harvest festival.
+- For stories or examples, use names of local places, cities, or villages.
+- For cultural topics, reference local festivals, traditions, and customs. For instance, if the topic is 'festivals' for a student in Bengal, you must talk about Durga Puja.
+- The goal is to make the student feel that the content is created specifically for their environment.
 
 Please structure the output in markdown format with clear headings for each section (e.g., ## Objectives, ## Materials, ## Activities, ## Assessment).
 

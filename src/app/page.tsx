@@ -1,4 +1,3 @@
-
 "use client";
 
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
