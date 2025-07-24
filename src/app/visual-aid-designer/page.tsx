@@ -1,3 +1,4 @@
+
 "use client";
 
 import { generateVisualAid } from "@/ai/flows/visual-aid-designer";
@@ -156,7 +157,7 @@ export default function VisualAidDesignerPage() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
               
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (

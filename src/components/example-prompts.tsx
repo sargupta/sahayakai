@@ -8,6 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
+  page?: 'home' | 'visual-aid';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -95,15 +96,12 @@ const headerTranslations: Record<string, string> = {
 };
 
 
-export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage }) => {
+const homePagePrompts = ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'];
+const visualAidPagePrompts = ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'skyBlue'];
+
+export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
   
-  const allKeys = Object.keys(promptTranslations);
-  // A simple way to get a different set of prompts for different pages
-  const isVisualPage = (promptTranslations["visualAidFlower"][selectedLanguage] || "").length > 0;
-  
-  const promptKeys = isVisualPage
-    ? allKeys.filter(k => k.startsWith('visualAid'))
-    : allKeys.filter(k => !k.startsWith('visualAid'));
+  const promptKeys = page === 'visual-aid' ? visualAidPagePrompts : homePagePrompts;
 
   const prompts = promptKeys.map(key => {
     return promptTranslations[key][selectedLanguage] || promptTranslations[key]['en'];
