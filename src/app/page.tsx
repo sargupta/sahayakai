@@ -169,7 +169,6 @@ export default function Home() {
                   <FormItem>
                     <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
-                      <div className="relative flex items-center">
                         <AutoCompleteInput
                           placeholder={topicPlaceholder}
                           {...field}
@@ -178,12 +177,7 @@ export default function Home() {
                               form.setValue("topic", value);
                               form.trigger("topic");
                           }}
-                          className="pr-24"
                         />
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                          <MicrophoneInput onTranscriptChange={handleTranscript} />
-                        </div>
-                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,6 +188,8 @@ export default function Home() {
                 onPromptClick={handlePromptClick}
                 selectedLanguage={selectedLanguage}
               />
+              
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
