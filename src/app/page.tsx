@@ -21,7 +21,7 @@ const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
-  duration: z.string().optional(),
+  localContext: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,7 +37,7 @@ export default function Home() {
       topic: "",
       language: "en",
       gradeLevel: "6th Grade",
-      duration: "45 minutes",
+      localContext: "India",
     },
   });
 
@@ -50,9 +50,8 @@ export default function Home() {
       const result = await generateLessonPlan({
         topic: values.topic,
         language: values.language,
-        localizationContext: "India", // Example context
         gradeLevel: values.gradeLevel,
-        duration: values.duration,
+        localContext: values.localContext,
       });
       setLessonPlan(result.lessonPlan);
     } catch (error) {
@@ -134,13 +133,13 @@ export default function Home() {
                 />
                 <FormField
                   control={form.control}
-                  name="duration"
+                  name="localContext"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Lesson Duration</FormLabel>
+                      <FormLabel className="font-headline">Local Context</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., '45 minutes'"
+                          placeholder="e.g., 'Rural Bengal', 'Mumbai city schools'"
                           {...field}
                           className="bg-white/50 backdrop-blur-sm"
                         />
