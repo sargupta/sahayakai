@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid';
+  page?: 'home' | 'visual-aid' | 'instant-answer';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -82,6 +82,26 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "ચાર ચેમ્બર સાથે માનવ હૃદયની એક સરળ આકૃતિ.",
     kn: "ನಾಲ್ಕು ಕೋಣೆಗಳೊಂದಿಗೆ ಮಾನವ ಹೃದಯದ ಸರಳ ರೇಖಾಚಿತ್ರ.",
   },
+  explainPhotosynthesis: {
+    en: "Explain photosynthesis to a 10-year-old using a simple analogy.",
+    hi: "एक सरल सादृश्य का उपयोग करके 10 साल के बच्चे को प्रकाश संश्लेषण समझाएं।",
+    bn: "একটি সাধারণ উপমা ব্যবহার করে একটি 10 ​​বছর বয়সীকে সালোকসংশ্লেষণ ব্যাখ্যা কর।",
+    te: "ఒక సాధారణ సారూప్యతను ఉపయోగించి 10 ఏళ్ల పిల్లలకు కిరణజన్య సంయోగక్రియను వివరించండి.",
+    mr: "एका साध्या साधर्म्याचा वापर करून 10 वर्षांच्या मुलाला प्रकाशसंश्लेषण समजावून सांगा.",
+    ta: "ஒரு எளிய ஒப்பீட்டைப் பயன்படுத்தி 10 வயது குழந்தைக்கு ஒளிச்சேர்க்கையை விளக்கவும்.",
+    gu: "એક સરળ સામ્યતાનો ઉપયોગ કરીને 10 વર્ષના બાળકને પ્રકાશસંશ્લેષણ સમજાવો.",
+    kn: "ಸರಳವಾದ ಸಾದೃಶ್ಯವನ್ನು ಬಳಸಿಕೊಂಡು 10 ವರ್ಷದ ಮಗುವಿಗೆ ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆಯನ್ನು ವಿವರಿಸಿ.",
+  },
+   magnetVideo: {
+    en: "Can you explain how magnets work and find a simple experiment video for me?",
+    hi: "क्या आप बता सकते हैं कि चुंबक कैसे काम करते हैं और मेरे लिए एक सरल प्रयोग वीडियो ढूंढ सकते हैं?",
+    bn: "আপনি কি ব্যাখ্যা করতে পারেন কিভাবে চুম্বক কাজ করে এবং আমার জন্য একটি সহজ পরীক্ষার ভিডিও খুঁজে পেতে পারেন?",
+    te: "అయస్కాంతాలు ఎలా పనిచేస్తాయో మీరు వివరించగలరా మరియు నా కోసం ఒక సాధారణ ప్రయోగ వీడియోను కనుగొనగలరా?",
+    mr: "चुंबक कसे कार्य करतात हे तुम्ही समजावून सांगू शकता का आणि माझ्यासाठी एक साधा प्रायोगिक व्हिडिओ शोधू शकता का?",
+    ta: "காந்தங்கள் எவ்வாறு செயல்படுகின்றன என்பதை நீங்கள் விளக்க முடியுமா மற்றும் எனக்கு ஒரு எளிய பரிசோதனை வீடியோவைக் கண்டுபிடிக்க முடியுமா?",
+    gu: "તમે સમજાવી શકો છો કે ચુંબક કેવી રીતે કાર્ય કરે છે અને મારા માટે એક સરળ પ્રયોગ વિડિઓ શોધી શકો છો?",
+    kn: "ಆಯಸ್ಕಾಂತಗಳು ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತವೆ ಎಂಬುದನ್ನು ನೀವು ವಿವರಿಸಬಹುದೇ ಮತ್ತು ನನಗಾಗಿ ಸರಳ ಪ್ರಯೋಗದ ವೀಡಿಯೊವನ್ನು ಕಂಡುಹಿಡಿಯಬಹುದೇ?",
+  },
 };
 
 const headerTranslations: Record<string, string> = {
@@ -95,13 +115,15 @@ const headerTranslations: Record<string, string> = {
     kn: "ಇವುಗಳಲ್ಲಿ ಒಂದನ್ನು ಪ್ರಯತ್ನಿಸಿ",
 };
 
-
-const homePagePrompts = ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'];
-const visualAidPagePrompts = ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'skyBlue'];
+const pagePrompts: Record<string, string[]> = {
+  'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
+  'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'skyBlue'],
+  'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'magnetVideo', 'waterCycle'],
+};
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
   
-  const promptKeys = page === 'visual-aid' ? visualAidPagePrompts : homePagePrompts;
+  const promptKeys = pagePrompts[page] || pagePrompts['home'];
 
   const prompts = promptKeys.map(key => {
     return promptTranslations[key][selectedLanguage] || promptTranslations[key]['en'];
