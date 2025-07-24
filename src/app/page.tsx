@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lightbulb } from "lucide-react";
+import { Loader2, Lightbulb, Mic, Camera, Paperclip } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -169,15 +169,29 @@ export default function Home() {
                   <FormItem>
                     <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
-                        <AutoCompleteInput
-                          placeholder={topicPlaceholder}
-                          {...field}
-                          selectedLanguage={selectedLanguage}
-                          onSuggestionClick={(value) => {
-                              form.setValue("topic", value);
-                              form.trigger("topic");
-                          }}
-                        />
+                        <div className="relative flex items-center w-full">
+                            <AutoCompleteInput
+                              placeholder={topicPlaceholder}
+                              {...field}
+                              selectedLanguage={selectedLanguage}
+                              onSuggestionClick={(value) => {
+                                  form.setValue("topic", value);
+                                  form.trigger("topic");
+                              }}
+                              className="pr-24"
+                            />
+                            <div className="absolute right-1 flex items-center">
+                                <Button variant="ghost" size="icon" type="button" aria-label="Use microphone">
+                                    <Mic className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" type="button" aria-label="Use camera" disabled>
+                                    <Camera className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" type="button" aria-label="Upload file" disabled>
+                                    <Paperclip className="h-5 w-5" />
+                                </Button>
+                            </div>
+                        </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,8 +203,6 @@ export default function Home() {
                 selectedLanguage={selectedLanguage}
               />
               
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}

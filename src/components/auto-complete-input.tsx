@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FC, useEffect, useRef } from 'react';
@@ -6,11 +7,14 @@ import { cn } from '@/lib/utils';
 
 type AutoCompleteInputProps = {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSuggestionClick: (suggestion: string) => void;
   placeholder?: string;
   selectedLanguage: string;
   className?: string;
+  name?: string;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  ref: React.Ref<HTMLInputElement>;
 };
 
 const allSuggestions: Record<string, string[]> = {
@@ -113,7 +117,7 @@ const allSuggestions: Record<string, string[]> = {
 };
 
 
-export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange, onSuggestionClick, placeholder, selectedLanguage, className }) => {
+export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange, onSuggestionClick, placeholder, selectedLanguage, className, ...props }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -152,10 +156,11 @@ export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange,
       <Input
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         onFocus={() => setIsFocused(true)}
         className="bg-white/50 backdrop-blur-sm"
         autoComplete="off"
+        {...props}
       />
       {suggestions.length > 0 && isFocused && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
