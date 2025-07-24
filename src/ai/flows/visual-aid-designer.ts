@@ -13,6 +13,8 @@ import {z} from 'genkit';
 
 const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
+  language: z.string().optional().describe('The language for any text in the visual aid.'),
+  gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
 });
 export type VisualAidInput = z.infer<typeof VisualAidInputSchema>;
 
@@ -31,7 +33,7 @@ const visualAidFlow = ai.defineFlow(
     inputSchema: VisualAidInputSchema,
     outputSchema: VisualAidOutputSchema,
   },
-  async ({ prompt }) => {
+  async ({ prompt, gradeLevel, language }) => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
@@ -45,7 +47,10 @@ const visualAidFlow = ai.defineFlow(
         - **Composition:** Think carefully about the layout. The final image should be well-composed, balanced, and have a wonderful, clean finish.
         - **NO COLOR:** Strictly use white lines on a black background.
 
-        **Task:** Generate a visual aid for the following description:
+        **Context:**
+        - **Grade Level:** ${gradeLevel || 'any'}
+        - **Language for labels (if any):** ${language || 'English'}
+        - **Task:** Generate a visual aid for the following description, keeping the grade level in mind for complexity.
         "${prompt}"
       `,
       config: {
