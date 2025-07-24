@@ -29,14 +29,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const topicPlaceholderTranslations: Record<string, string> = {
-    en: "e.g., 'The Indian Monsoon'",
-    hi: "उदा., 'भारतीय मानसून'",
-    bn: "উদা., 'ভারতীয় বর্ষা'",
-    te: "ఉదా., 'భారత రుతుపవనాలు'",
-    mr: "उदा., 'भारतीय मान्सून'",
-    ta: "உதா., 'இந்திய பருவமழை'",
-    gu: "દા.ત., 'ભારતીય ચોમાસું'",
-    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್'",
+    en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
+    hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
+    bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
+    te: "ఉదా., 'భారతీయ రుతుపవనాల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
+    mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
+    ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
+    gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
+    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
 };
 
 
@@ -184,11 +184,13 @@ export default function LessonPlanAgentPage() {
                 )}
               />
 
-              <ExamplePrompts
-                onPromptClick={handlePromptClick}
-                selectedLanguage={selectedLanguage}
-                page="homeWithImage"
-              />
+              <div className="p-3 bg-accent/20 rounded-lg">
+                <ExamplePrompts
+                  onPromptClick={handlePromptClick}
+                  selectedLanguage={selectedLanguage}
+                  page="homeWithImage"
+                />
+              </div>
 
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
