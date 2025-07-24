@@ -10,13 +10,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type GradeLevelSelectorProps = {
   onValueChange: (value: string[]) => void;
   value?: string[];
   language: string;
+  isMulti?: boolean;
 };
 
 const allGradeLevels: Record<string, string[]> = {
@@ -45,30 +49,47 @@ const gradeLevelMap: Record<string, string> = {
   "12th Grade": "12th Grade", "बारहवीं कक्षा": "12th Grade", "দ্বাদশ শ্রেণী": "12th Grade", "పన్నెండవ తరగతి": "12th Grade", "इयत्ता बारावी": "12th Grade", "பன்னிரண்டாம் வகுப்பு": "12th Grade", "બારમું ધોરણ": "12th Grade", "ಹನ್ನೆರಡನೇ ತರಗತಿ": "12th Grade",
 };
 
-const translations: Record<string, { select: string; one: string; other: string; label: string }> = {
-    en: { select: "Select grade(s)", one: "grade selected", other: "grades selected", label: "Select Grade Levels" },
-    hi: { select: "कक्षा चुनें", one: "कक्षा चुनी गई", other: "कक्षाएं चुनी गईं", label: "कक्षा स्तर चुनें" },
-    bn: { select: "শ্রেণী নির্বাচন করুন", one: "টি শ্রেণী নির্বাচিত", other: "টি শ্রেণী নির্বাচিত", label: "শ্রেণী স্তর নির্বাচন করুন" },
-    te: { select: "తరగతి(ల)ను ఎంచుకోండి", one: "తరగతి ఎంచుకోబడింది", other: "తరగతులు ఎంచుకోబడ్డాయి", label: "గ్రేడ్ స్థాయిలను ఎంచుకోండి" },
-    mr: { select: "इयत्ता निवडा", one: "इयत्ता निवडली", other: "इयत्ता निवडल्या", label: "इयत्ता स्तर निवडा" },
-    ta: { select: "வகுப்புகளைத் தேர்ந்தெடுக்கவும்", one: "வகுப்பு தேர்ந்தெடுக்கப்பட்டது", other: "வகுப்புகள் தேர்ந்தெடுக்கப்பட்டன", label: "தர நிலைகளைத் தேர்ந்தெடுக்கவும்" },
-    gu: { select: "ધોરણ પસંદ કરો", one: "ધોરણ પસંદ કરેલ છે", other: "ધોરણો પસંદ કરેલ છે", label: "ધોરણ સ્તર પસંદ કરો" },
-    kn: { select: "ತರಗತಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ", one: "ತರಗತಿ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", other: "ತರಗತಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", label: "ಗ್ರೇಡ್ ಮಟ್ಟಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ" },
+const translations: Record<string, { select: string; one: string; other: string; label: string; placeholder: string }> = {
+    en: { select: "Select grade(s)", one: "grade selected", other: "grades selected", label: "Select Grade Levels", placeholder: "Select a grade" },
+    hi: { select: "कक्षा चुनें", one: "कक्षा चुनी गई", other: "कक्षाएं चुनी गईं", label: "कक्षा स्तर चुनें", placeholder: "कक्षा चुनें" },
+    bn: { select: "শ্রেণী নির্বাচন করুন", one: "টি শ্রেণী নির্বাচিত", other: "টি শ্রেণী নির্বাচিত", label: "শ্রেণী স্তর নির্বাচন করুন", placeholder: "একটি শ্রেণী নির্বাচন করুন" },
+    te: { select: "తరగతి(ల)ను ఎంచుకోండి", one: "తరగతి ఎంచుకోబడింది", other: "తరగతులు ఎంచుకోబడ్డాయి", label: "గ్రేడ్ స్థాయిలను ఎంచుకోండి", placeholder: "ఒక గ్రేడ్‌ను ఎంచుకోండి" },
+    mr: { select: "इयत्ता निवडा", one: "इयत्ता निवडली", other: "इयत्ता निवडल्या", label: "इयत्ता स्तर निवडा", placeholder: "एक इयत्ता निवडा" },
+    ta: { select: "வகுப்புகளைத் தேர்ந்தெடுக்கவும்", one: "வகுப்பு தேர்ந்தெடுக்கப்பட்டது", other: "வகுப்புகள் தேர்ந்தெடுக்கப்பட்டன", label: "தர நிலைகளைத் தேர்ந்தெடுக்கவும்", placeholder: "ஒரு தரத்தைத் தேர்ந்தெடுக்கவும்" },
+    gu: { select: "ધોરણ પસંદ કરો", one: "ધોરણ પસંદ કરેલ છે", other: "ધોરણો પસંદ કરેલ છે", label: "ધોરણ સ્તર પસંદ કરો", placeholder: "એક ગ્રેડ પસંદ કરો" },
+    kn: { select: "ತರಗತಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ", one: "ತರಗತಿ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", other: "ತರಗತಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", label: "ಗ್ರೇಡ್ ಮಟ್ಟಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ", placeholder: "ಒಂದು ದರ್ಜೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ" },
 };
 
 
 const getEnglishGrade = (translatedGrade: string) => gradeLevelMap[translatedGrade] || translatedGrade;
 const getTranslatedGrade = (englishGrade: string, lang: string) => {
-    const entry = Object.entries(gradeLevelMap).find(([_, val]) => val === englishGrade);
-    if (!entry) return englishGrade;
     const gradesInLang = allGradeLevels[lang] || allGradeLevels.en;
     const translated = gradesInLang.find(g => getEnglishGrade(g) === englishGrade);
     return translated || englishGrade;
 }
 
-export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange, value = [], language }) => {
+export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange, value = [], language, isMulti = true }) => {
   const currentGradeLevels = allGradeLevels[language] || allGradeLevels.en;
   const t = translations[language] || translations.en;
+
+  if (!isMulti) {
+    const singleValue = value[0] || '';
+    const translatedValue = getTranslatedGrade(singleValue, language);
+    return (
+      <Select onValueChange={(val) => onValueChange([getEnglishGrade(val)])} value={translatedValue}>
+        <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
+          <SelectValue placeholder={t.placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {currentGradeLevels.map((grade) => (
+            <SelectItem key={grade} value={grade}>
+              {grade}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    )
+  }
 
   const handleCheckedChange = (grade: string, checked: boolean) => {
     const englishGrade = getEnglishGrade(grade);

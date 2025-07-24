@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip' | 'teacher-training';
+  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip' | 'teacher-training' | 'rubric';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -262,6 +262,46 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "હું બહુવિધ ગ્રેડ ભણાવતી વખતે મારા સમયનું વધુ સારી રીતે સંચાલન કેવી રીતે કરી શકું?",
     kn: "ಬಹು ದರ್ಜೆಗಳನ್ನು ಕಲಿಸುವಾಗ ನನ್ನ ಸಮಯವನ್ನು ನಾನು ಹೇಗೆ ಉತ್ತಮವಾಗಿ ನಿರ್ವಹಿಸಬಹುದು?",
   },
+  rubricMughalProject: {
+      en: "A research project on the Mughal Empire for 7th grade students.",
+      hi: "7वीं कक्षा के छात्रों के लिए मुगल साम्राज्य पर एक शोध परियोजना।",
+      bn: "সপ্তম শ্রেণীর ছাত্রদের জন্য মুঘল সাম্রাজ্যের উপর একটি গবেষণা প্রকল্প।",
+      te: "7వ తరగతి విద్యార్థుల కోసం మొఘల్ సామ్రాజ్యంపై ఒక పరిశోధన ప్రాజెక్ట్.",
+      mr: "इयत्ता 7वीच्या विद्यार्थ्यांसाठी मुघल साम्राज्यावर एक संशोधन प्रकल्प.",
+      ta: "7 ஆம் வகுப்பு மாணவர்களுக்கு முகலாயப் பேரரசு பற்றிய ஒரு ஆராய்ச்ச்த் திட்டம்.",
+      gu: "7મા ધોરણના વિદ્યાર્થીઓ માટે મુઘલ સામ્રાજ્ય પર એક સંશોધન પ્રોજેક્ટ.",
+      kn: "7 ನೇ ತರಗತಿಯ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಮೊಘಲ್ ಸಾಮ್ರಾಜ್ಯದ ಮೇಲೆ ಸಂಶೋಧನಾ ಯೋಜನೆ.",
+  },
+  rubricStorytelling: {
+      en: "A storytelling assignment for a 3rd grade class.",
+      hi: "तीसरी कक्षा की कक्षा के लिए एक कहानी सुनाने का काम।",
+      bn: "তৃতীয় শ্রেণীর জন্য একটি গল্প বলার অ্যাসাইনমেন্ট।",
+      te: "3వ తరగతికి ఒక కథ చెప్పే అప్పగింత.",
+      mr: "इयत्ता तिसरीसाठी एक कथाकथन असाइनमेंट.",
+      ta: "3 ஆம் வகுப்புக்கு ஒரு கதைசொல்லல் பணி.",
+      gu: "ત્રીજા ધોરણના વર્ગ માટે વાર્તા કહેવાની સોંપણી.",
+      kn: "3 ನೇ ತರಗತಿಗೆ ಕಥೆ ಹೇಳುವ ನಿಯೋಜನೆ.",
+  },
+  rubricDebate: {
+      en: "A debate on 'Is technology good or bad?' for 10th graders.",
+      hi: "10वीं कक्षा के छात्रों के लिए 'प्रौद्योगिकी अच्छी है या बुरी?' पर एक बहस।",
+      bn: "দশম শ্রেণীর ছাত্রদের জন্য 'প্রযুক্তি ভালো না খারাপ?' নিয়ে একটি বিতর্ক।",
+      te: "10వ తరగతి విద్యార్థుల కోసం 'టెక్నాలజీ మంచిదా చెడ్డదా?' అనే అంశంపై ఒక చర్చ.",
+      mr: "इयत्ता 10वीच्या विद्यार्थ्यांसाठी 'तंत्रज्ञान चांगले की वाईट?' यावर एक वादविवाद.",
+      ta: "10 ஆம் வகுப்பு மாணவர்களுக்கு 'தொழில்நுட்பம் நல்லதா கெட்டதா?' என்ற தலைப்பில் ஒரு விவாதம்.",
+      gu: "10મા ધોરણના વિદ્યાર્થીઓ માટે 'ટેકનોલોજી સારી છે કે ખરાબ?' પર એક ચર્ચા.",
+      kn: "10 ನೇ ತರಗತಿಯವರಿಗೆ 'ತಂತ್ರಜ್ಞาน ಒಳ್ಳೆಯದೋ ಕೆಟ್ಟದ್ದೋ?' ಎಂಬ ವಿಷಯದ ಮೇಲೆ ಚರ್ಚೆ.",
+  },
+  rubricPoster: {
+      en: "A poster-making activity on 'Save Water' for Class 5.",
+      hi: "कक्षा 5 के लिए 'जल बचाओ' पर एक पोस्टर बनाने की गतिविधि।",
+      bn: "পঞ্চম শ্রেণীর জন্য 'জল বাঁচান' বিষয়ে একটি পোস্টার তৈরির কার্যকলাপ।",
+      te: "5వ తరగతికి 'నీటిని పొదుపు చేయండి' అనే అంశంపై ఒక పోస్టర్ తయారీ కార్యక్రమం.",
+      mr: "इयत्ता 5वी साठी 'पाणी वाचवा' यावर पोस्टर बनवण्याचा उपक्रम.",
+      ta: "5 ஆம் வகுப்புக்கு 'நீரைச் சேமி' என்ற தலைப்பில் ஒரு சுவரொட்டி உருவாக்கும் செயல்பாடு.",
+      gu: "ધોરણ 5 માટે 'પાણી બચાવો' પર પોસ્ટર બનાવવાની પ્રવૃત્તિ.",
+      kn: "5 ನೇ ತರಗತಿಗೆ 'ನೀರನ್ನು ಉಳಿಸಿ' ಎಂಬ ವಿಷಯದ ಮೇಲೆ ಪೋಸ್ಟರ್ ತಯಾರಿಸುವ ಚಟುವಟಿಕೆ.",
+  },
 };
 
 const headerTranslations: Record<string, string> = {
@@ -283,6 +323,7 @@ const pagePrompts: Record<string, string[]> = {
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
   'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
   'teacher-training': ['trainingQuietStudents', 'trainingThinkPairShare', 'trainingMotivation', 'trainingTimeManagement'],
+  'rubric': ['rubricMughalProject', 'rubricStorytelling', 'rubricDebate', 'rubricPoster'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
