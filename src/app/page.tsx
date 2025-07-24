@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lightbulb, Upload } from "lucide-react";
+import { Loader2, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,12 +18,14 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
+import { ImageUploader } from "@/components/image-uploader";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
   localContext: z.string().optional(),
+  imageDataUri: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,7 +38,7 @@ const descriptionTranslations: Record<string, string> = {
     mr: "प्रारंभ करण्यासाठी खालील इनपुट किंवा तुमचा आवाज वापरा.",
     ta: "தொடங்குவதற்கு கீழே உள்ள உள்ளீடு அல்லது உங்கள் குரலைப் பயன்படுத்தவும்.",
     gu: "શરૂ કરવા માટે નીચે આપેલ ઇનપુટ અથવા તમારા અવાજનો ઉપયોગ કરો.",
-    kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
+    kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುట్ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
 };
 
 const hintTranslations: Record<string, { title: string; body: string }> = {
@@ -108,6 +110,7 @@ export default function Home() {
       language: "en",
       gradeLevel: "6th Grade",
       localContext: "",
+      imageDataUri: "",
     },
   });
 
@@ -126,6 +129,7 @@ export default function Home() {
         language: values.language,
         gradeLevel: values.gradeLevel,
         localContext: values.localContext,
+        imageDataUri: values.imageDataUri,
       });
       setLessonPlan(result.lessonPlan);
     } catch (error) {
@@ -184,23 +188,35 @@ export default function Home() {
                 )}
               />
               
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center">
                 <MicrophoneInput onTranscriptChange={handleTranscript} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled
-                  className="h-20 w-20 rounded-full shadow-lg"
-                  aria-label="Upload a file"
-                >
-                  <Upload className="h-10 w-10" />
-                </Button>
               </div>
+              
+              <FormField
+                  control={form.control}
+                  name="imageDataUri"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline">Add context (optional image)</FormLabel>
+                      <FormControl>
+                        <ImageUploader
+                            onImageUpload={(dataUri) => {
+                                field.onChange(dataUri);
+                                form.trigger("imageDataUri");
+                            }}
+                            language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
 
               <ExamplePrompts
                 onPromptClick={handlePromptClick}
                 selectedLanguage={selectedLanguage}
+                page="homeWithImage"
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

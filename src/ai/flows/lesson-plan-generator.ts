@@ -16,6 +16,9 @@ const LessonPlanInputSchema = z.object({
   language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
   gradeLevel: z.string().optional().describe('The grade level for the lesson plan.'),
   localContext: z.string().optional().describe('The district, state, or dialect for localization.'),
+  imageDataUri: z.string().optional().describe(
+    "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -33,6 +36,12 @@ const lessonPlanPrompt = ai.definePrompt({
   input: {schema: LessonPlanInputSchema},
   output: {schema: LessonPlanOutputSchema},
   prompt: `You are an expert teacher who creates culturally and geographically relevant educational content. Generate a detailed lesson plan based on the following inputs.
+
+{{#if imageDataUri}}
+**Primary Context from Image:**
+Analyze the following image and use it as the primary source of information for creating the lesson plan. The user's topic should be used to refine the focus.
+{{media url=imageDataUri}}
+{{/if}}
 
 Topic: {{{topic}}}
 Grade Level: {{{gradeLevel}}}

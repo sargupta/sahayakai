@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet';
+  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -142,6 +142,26 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "ધોરણ 3 માટે, આ પૃષ્ઠ પરના મુશ્કેલ શબ્દો સાથે એક શબ્દ શોધ પઝલ બનાવો.",
     kn: "3 ನೇ ತರಗತಿಗೆ, ಈ ಪುಟದಲ್ಲಿನ ಕಷ್ಟಕರವಾದ ಪದಗಳೊಂದಿಗೆ ಪದ ಹುಡುಕಾಟ ಒಗಟು ರಚಿಸಿ.",
   },
+  imageLessonPlan: {
+    en: "Create a lesson plan based on this textbook page.",
+    hi: "इस पाठ्यपुस्तक पृष्ठ के आधार पर एक पाठ योजना बनाएं।",
+    bn: "এই পাঠ্যপুস্তক পৃষ্ঠার উপর ভিত্তি করে একটি পাঠ পরিকল্পনা তৈরি করুন।",
+    te: "ఈ పాఠ్యపుస్తకం పేజీ ఆధారంగా ఒక పాఠ్య ప్రణాళికను సృష్టించండి.",
+    mr: "या पाठ्यपुस्तक पृष्ठावर आधारित एक पाठ योजना तयार करा.",
+    ta: "இந்த பாடநூல் பக்கத்தின் அடிப்படையில் ஒரு பாடம் திட்டம் உருவாக்கவும்.",
+    gu: "આ પાઠ્યપુસ્તક પૃષ્ઠ પર આધારિત એક પાઠ યોજના બનાવો.",
+    kn: "ಈ ಪಠ್ಯಪುಸ್ತಕ ಪುಟವನ್ನು ಆಧರಿಸಿ ಒಂದು ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ.",
+  },
+  imageWorksheet: {
+    en: "Create a worksheet with 5 questions from this image.",
+    hi: "इस छवि से 5 प्रश्नों के साथ एक वर्कशीट बनाएं।",
+    bn: "এই ছবি থেকে 5টি প্রশ্ন সহ একটি ওয়ার্কশীট তৈরি করুন।",
+    te: "ఈ చిత్రం నుండి 5 ప్రశ్నలతో ఒక వర్క్‌షీట్‌ను సృష్టించండి.",
+    mr: "या प्रतिमेतून 5 प्रश्नांसह एक वर्कशीट तयार करा.",
+    ta: "இந்த படத்திலிருந்து 5 கேள்விகளுடன் ஒரு பணித்தாளை உருவாக்கவும்.",
+    gu: "આ છબીમાંથી 5 પ્રશ્નો સાથે એક વર્કશીટ બનાવો.",
+    kn: "ಈ ಚಿತ್ರದಿಂದ 5 ಪ್ರಶ್ನೆಗಳೊಂದಿಗೆ ಒಂದು ವರ್ಕ್‌ಶೀಟ್ ರಚಿಸಿ.",
+  },
 };
 
 const headerTranslations: Record<string, string> = {
@@ -157,6 +177,7 @@ const headerTranslations: Record<string, string> = {
 
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
+  'homeWithImage': ['imageLessonPlan', 'imageWorksheet', 'waterCycle', 'skyBlue'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
