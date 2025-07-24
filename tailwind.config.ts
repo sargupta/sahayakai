@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -98,7 +99,24 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
       },
+       typography: ({ theme }: { theme: any }) => ({
+        DEFAULT: {
+          css: {
+            'p': {
+                marginTop: theme('spacing.4'),
+                marginBottom: theme('spacing.4'),
+            },
+            'li': {
+              marginTop: theme('spacing.2'),
+              marginBottom: theme('spacing.2'),
+            },
+          },
+        },
+      }),
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+  ],
 } satisfies Config;

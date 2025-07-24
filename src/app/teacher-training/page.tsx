@@ -1,7 +1,7 @@
 
 "use client";
 
-import { getTeacherTrainingAdvice } from "@/ai/flows/teacher-training";
+import { getTeacherTrainingAdvice, TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -14,7 +14,7 @@ import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
-import ReactMarkdown from 'react-markdown';
+import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 
 
 const formSchema = z.object({
@@ -23,7 +23,7 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type Advice = { answer: string };
+
 
 const descriptionTranslations: Record<string, [string, string]> = {
     en: [
@@ -73,7 +73,7 @@ const placeholderTranslations: Record<string, string> = {
 
 
 export default function TeacherTrainingPage() {
-  const [advice, setAdvice] = useState<Advice | null>(null);
+  const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -124,9 +124,8 @@ export default function TeacherTrainingPage() {
             </div>
           <CardTitle className="font-headline text-3xl">Teacher Training</CardTitle>
           <CardDescription>
-            {descriptionLines[0]}
-            <br />
-            {descriptionLines[1]}
+            <p>{descriptionLines[0]}</p>
+            <p>{descriptionLines[1]}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -193,25 +192,7 @@ export default function TeacherTrainingPage() {
          </Card>
       )}
 
-      {advice && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                <GraduationCap />
-                Your Personalized Advice
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20 prose-p:my-4 prose-li:my-2">
-            <ReactMarkdown
-              components={{
-                strong({node, ...props}) {
-                  return <strong className="text-primary font-semibold" {...props} />
-                }
-              }}
-            >{advice.answer}</ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
+      {advice && <TeacherTrainingDisplay advice={advice} />}
     </div>
   );
 }
