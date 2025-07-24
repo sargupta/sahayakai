@@ -1,7 +1,8 @@
 
 "use client";
 
-import { generateQuiz, QuizGeneratorOutput } from "@/ai/flows/quiz-generator";
+import { generateQuiz } from "@/ai/flows/quiz-generator";
+import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
