@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Library, Search, User, ThumbsUp, Download } from "lucide-react";
+import { Library, Search, ThumbsUp, Download } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +27,7 @@ const mockResources: Resource[] = [
   { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210 },
   { id: '4', title: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 72 },
   { id: '5', 'title': 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 350 },
+  { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 180 },
 ];
 
 
@@ -62,12 +63,12 @@ export default function CommunityPage() {
                 <TabsContent value="trending">
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                         {mockResources.map((resource) => (
-                           <Card key={resource.id} className="flex flex-col">
+                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
                                         <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
                                         <div>
-                                            <CardTitle className="text-lg font-semibold">{resource.title}</CardTitle>
+                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                                                 <Avatar className="h-6 w-6">
                                                     <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
@@ -81,10 +82,12 @@ export default function CommunityPage() {
                                 <CardContent className="flex-grow">
                                      {/* Can add a short description here */}
                                 </CardContent>
-                                <CardFooter className="flex justify-between items-center">
+                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
                                     <div className="flex items-center gap-2 text-muted-foreground">
-                                        <ThumbsUp className="h-4 w-4" />
-                                        <span className="text-sm">{resource.likes}</span>
+                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                                            <ThumbsUp className="h-4 w-4" />
+                                            <span className="text-sm">{resource.likes}</span>
+                                        </Button>
                                     </div>
                                     <Button variant="outline" size="sm">
                                         <Download className="mr-2 h-4 w-4" />
@@ -96,8 +99,8 @@ export default function CommunityPage() {
                    </div>
                 </TabsContent>
                 <TabsContent value="following">
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>Content from teachers you follow will appear here.</p>
+                    <div className="text-center py-20 text-muted-foreground">
+                        <p className="mb-2">Content from teachers you follow will appear here.</p>
                         <Button variant="link">Find teachers to follow</Button>
                     </div>
                 </TabsContent>
@@ -108,3 +111,4 @@ export default function CommunityPage() {
     </div>
   );
 }
+

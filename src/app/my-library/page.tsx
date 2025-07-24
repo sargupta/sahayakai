@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -24,10 +25,10 @@ import {
   Search,
   ArrowUpDown,
   Sparkles,
-  FolderKanban,
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/language-selector';
 import { Card, CardContent } from '@/components/ui/card';
+import { ProfileCard } from '@/components/profile-card';
 
 type Resource = {
   name: string;
@@ -99,24 +100,31 @@ export default function MyLibraryPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+        <ProfileCard 
+            name="Anjali Sharma"
+            avatarUrl="https://placehold.co/100x100.png"
+            stats={{
+                followers: 1250,
+                following: 180,
+                resources: mockData.length,
+            }}
+            language={language}
+        />
         <Card className="bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
             <CardContent className="p-4 md:p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                         <FolderKanban className="h-8 w-8 text-primary"/>
-                        <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
-                    </div>
+                    <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
-                    <Button variant="outline">
-                        <FolderPlus className="mr-2 h-4 w-4" />
-                        {t.newFolder}
-                    </Button>
-                    <Button>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {t.createNew}
-                    </Button>
+                        <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
+                        <Button variant="outline">
+                            <FolderPlus className="mr-2 h-4 w-4" />
+                            {t.newFolder}
+                        </Button>
+                        <Button>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {t.createNew}
+                        </Button>
                     </div>
                 </div>
 
@@ -186,3 +194,4 @@ export default function MyLibraryPage() {
     </div>
   );
 }
+

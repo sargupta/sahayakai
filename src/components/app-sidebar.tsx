@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -11,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -129,6 +130,14 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip="Community Library">
+                  <Link href="/community">
+                    <Library />
+                    <span>Community Library</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip="Impact Dashboard">
                   <Link href="/impact-dashboard">
@@ -138,18 +147,18 @@ export function AppSidebar() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/community-library')} tooltip="Community Library">
-                  <Link href="/community-library">
-                    <Library />
-                    <span>Community Library</span>
-                  </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/submit-content')} tooltip="Submit Content">
                   <Link href="/submit-content">
                     <Upload />
                     <span>Submit Content</span>
+                  </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip="My Profile">
+                  <Link href="/my-library">
+                    <User />
+                    <span>My Profile</span>
                   </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
