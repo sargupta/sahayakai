@@ -10,6 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from './ui/button';
+import { Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 type RubricDisplayProps = {
   rubric: RubricGeneratorOutput;
@@ -20,16 +24,49 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
     return null;
   }
 
+  const handleDownload = () => {
+    const input = document.getElementById('rubric-pdf');
+    if (input) {
+        html2canvas(input, { scale: 2 }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const ratio = canvasWidth / canvasHeight;
+            let width = pdfWidth;
+            let height = width / ratio;
+            if (height > pdfHeight) {
+                height = pdfHeight;
+                width = height * ratio;
+            }
+
+            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+            pdf.save('rubric.pdf');
+        });
+    }
+  };
+
+
   const performanceLevels = rubric.criteria[0]?.levels.map(level => ({
       name: level.name,
       points: level.points
   })) || [];
 
   return (
-    <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+    <Card id="rubric-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">{rubric.title}</CardTitle>
-        {rubric.description && <CardDescription>{rubric.description}</CardDescription>}
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle className="font-headline text-2xl">{rubric.title}</CardTitle>
+                {rubric.description && <CardDescription>{rubric.description}</CardDescription>}
+            </div>
+            <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
