@@ -9,11 +9,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { Logo } from "@/components/logo"
 import { BarChart, BookOpen, CalendarDays, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -26,9 +24,11 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-             <SidebarMenuButton href="#" tooltip="AI Companion" isActive={pathname.startsWith('/ai-companion')} variant="outline">
-                <Sparkles />
-                <span>AI Companion</span>
+             <SidebarMenuButton href="/" asChild tooltip="AI Companion" isActive={pathname === '/'} variant="outline">
+                <Link href="/">
+                  <Sparkles />
+                  <span>AI Companion</span>
+                </Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
