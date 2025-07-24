@@ -120,13 +120,13 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ onImageUpload, className
         </div>
       ) : (
         <div
-            className="w-full h-48 border-2 border-dashed border-border rounded-lg flex flex-col justify-center items-center text-center p-4 cursor-pointer hover:border-primary transition-colors"
+            className="w-full h-24 border-2 border-dashed border-border rounded-lg flex flex-col justify-center items-center text-center p-4 cursor-pointer hover:border-primary transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
         >
-          <UploadCloud className="h-10 w-10 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground">
+          <UploadCloud className="h-8 w-8 text-muted-foreground mb-1" />
+          <p className="text-sm text-muted-foreground">
             {t.dragDrop}{' '}
             <span className="font-semibold text-primary">{t.browse}</span>
           </p>
