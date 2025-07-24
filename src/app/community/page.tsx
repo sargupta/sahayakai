@@ -21,7 +21,7 @@ type Resource = {
   likes: number;
 };
 
-const mockResources: Resource[] = [
+const mockTrendingResources: Resource[] = [
     { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 128 },
     { id: '2', title: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 95 },
     { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210 },
@@ -31,6 +31,12 @@ const mockResources: Resource[] = [
     { id: '7', title: 'Basic Algebra Worksheet', type: 'worksheet', author: 'Deepa Iyer', authorAvatar: 'https://placehold.co/40x40.png?text=DI', likes: 150 },
     { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 450 },
     { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 110 },
+];
+
+const mockFollowingResources: Resource[] = [
+    { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 42 },
+    { id: 'f2', title: 'Visual Aid: The Water Cycle', type: 'image', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 88 },
+    { id: 'f3', 'title': 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105 },
 ];
 
 
@@ -65,7 +71,7 @@ export default function CommunityPage() {
                 </TabsList>
                 <TabsContent value="trending">
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {mockResources.map((resource) => (
+                        {mockTrendingResources.map((resource) => (
                            <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
@@ -102,10 +108,42 @@ export default function CommunityPage() {
                    </div>
                 </TabsContent>
                 <TabsContent value="following">
-                    <div className="text-center py-20 text-muted-foreground">
-                        <p className="mb-2">Content from teachers you follow will appear here.</p>
-                        <Button variant="link">Find teachers to follow</Button>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                        {mockFollowingResources.map((resource) => (
+                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <div className="flex items-center gap-3">
+                                        <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
+                                        <div>
+                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
+                                                    <AvatarFallback>{resource.author.substring(0,2)}</AvatarFallback>
+                                                </Avatar>
+                                                <span>{resource.author}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                     {/* Can add a short description here */}
+                                </CardContent>
+                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                                            <ThumbsUp className="h-4 w-4" />
+                                            <span className="text-sm">{resource.likes}</span>
+                                        </Button>
+                                    </div>
+                                    <Button variant="outline" size="sm">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download
+                                    </Button>
+                                </CardFooter>
+                           </Card>
+                        ))}
+                   </div>
                 </TabsContent>
             </Tabs>
             
