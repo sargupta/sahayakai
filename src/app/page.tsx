@@ -233,6 +233,28 @@ export default function Home() {
               </div>
 
               <FormField
+                  control={form.control}
+                  name="imageDataUri"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline">Add context (optional image)</FormLabel>
+                      <FormControl>
+                        <ImageUploader
+                            onImageUpload={(dataUri) => {
+                                field.onChange(dataUri);
+                                form.trigger("imageDataUri");
+                            }}
+                            language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
+
+              <FormField
                 control={form.control}
                 name="topic"
                 render={({ field }) => (
@@ -259,30 +281,6 @@ export default function Home() {
                 selectedLanguage={selectedLanguage}
                 page="homeWithImage"
               />
-
-              <FormField
-                  control={form.control}
-                  name="imageDataUri"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Add context (optional image)</FormLabel>
-                      <FormControl>
-                        <ImageUploader
-                            onImageUpload={(dataUri) => {
-                                field.onChange(dataUri);
-                                form.trigger("imageDataUri");
-                            }}
-                            language={selectedLanguage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              <div className="flex items-center justify-center">
-                <MicrophoneInput onTranscriptChange={handleTranscript} />
-              </div>
             
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
