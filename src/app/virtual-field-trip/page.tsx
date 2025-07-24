@@ -102,7 +102,9 @@ export default function VirtualFieldTripPage() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
+              <div className="p-3 bg-accent/20 rounded-lg">
+                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
@@ -144,10 +146,10 @@ export default function VirtualFieldTripPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Planning Trip...
+                    Generating Itinerary...
                   </>
                 ) : (
-                  "Plan Virtual Trip"
+                  "Generate Itinerary"
                 )}
               </Button>
             </form>
