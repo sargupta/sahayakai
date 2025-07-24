@@ -11,11 +11,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { googleSearch } from '../tools/google-search';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
   language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
-  gradeLevel: z.string().optional().describe('The grade level for the lesson plan.'),
+  gradeLevels: z.array(z.string()).optional().describe('The grade levels for the lesson plan.'),
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
@@ -43,7 +44,8 @@ const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: {schema: LessonPlanInputSchema},
   output: {schema: LessonPlanOutputSchema, format: 'json'},
-  prompt: `You are an expert teacher who creates culturally and geographically relevant educational content. Generate a detailed lesson plan based on the following inputs.
+  tools: [googleSearch],
+  prompt: `You are an expert teacher who creates culturally and geographically relevant educational content, especially for multi-grade classrooms. Generate a detailed lesson plan based on the following inputs.
 
 You MUST follow the specified JSON output format.
 
@@ -54,9 +56,10 @@ Analyze the following image and use it as the primary source of information for 
 {{/if}}
 
 Topic: {{{topic}}}
-Grade Level: {{{gradeLevel}}}
+Grade Levels: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Language: {{{language}}}
 
+If the user asks for a video, use the googleSearch tool to find one.
 `,
 });
 

@@ -2,21 +2,24 @@
 "use client";
 
 import type { FC } from 'react';
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from 'lucide-react';
 
 type GradeLevelSelectorProps = {
-  onValueChange: (value: string) => void;
-  defaultValue?: string;
+  onValueChange: (value: string[]) => void;
+  value?: string[];
   language: string;
 };
 
-const gradeLevels: Record<string, string[]> = {
+const allGradeLevels: Record<string, string[]> = {
   en: ["1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade", "7th Grade", "8th Grade", "9th Grade", "10th Grade", "11th Grade", "12th Grade"],
   hi: ["पहली कक्षा", "दूसरी कक्षा", "तीसरी कक्षा", "चौथी कक्षा", "पांचवीं कक्षा", "छठी कक्षा", "सातवीं कक्षा", "आठवीं कक्षा", "नौवीं कक्षा", "दसवीं कक्षा", "ग्यारहवीं कक्षा", "बारहवीं कक्षा"],
   bn: ["প্রথম শ্রেণী", "দ্বিতীয় শ্রেণী", "তৃতীয় শ্রেণী", "চতুর্থ শ্রেণী", "পঞ্চম শ্রেণী", "ষষ্ঠ শ্রেণী", "সপ্তম শ্রেণী", "অষ্টম শ্রেণী", "নবম শ্রেণী", "দশম শ্রেণী", "একাদশ শ্রেণী", "দ্বাদশ শ্রেণী"],
@@ -42,29 +45,56 @@ const gradeLevelMap: Record<string, string> = {
   "12th Grade": "12th Grade", "बारहवीं कक्षा": "12th Grade", "দ্বাদশ শ্রেণী": "12th Grade", "పన్నెండవ తరగతి": "12th Grade", "इयत्ता बारावी": "12th Grade", "பன்னிரண்டாம் வகுப்பு": "12th Grade", "બારમું ધોરણ": "12th Grade", "ಹನ್ನೆರಡನೇ ತರಗತಿ": "12th Grade",
 };
 
-export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange, defaultValue, language }) => {
-  const currentGradeLevels = gradeLevels[language] || gradeLevels.en;
-  
-  const handleValueChange = (value: string) => {
-    onValueChange(gradeLevelMap[value] || value);
-  }
-  
-  const englishDefaultValue = Object.keys(gradeLevelMap).find(key => gradeLevelMap[key] === defaultValue);
-  const translatedDefault = currentGradeLevels.find(level => gradeLevelMap[level] === defaultValue) || englishDefaultValue || defaultValue;
+const getEnglishGrade = (translatedGrade: string) => gradeLevelMap[translatedGrade] || translatedGrade;
+const getTranslatedGrade = (englishGrade: string, lang: string) => {
+    const entry = Object.entries(gradeLevelMap).find(([_, val]) => val === englishGrade);
+    if (!entry) return englishGrade;
+    const gradesInLang = allGradeLevels[lang] || allGradeLevels.en;
+    const translated = gradesInLang.find(g => getEnglishGrade(g) === englishGrade);
+    return translated || englishGrade;
+}
 
+export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange, value = [], language }) => {
+  const currentGradeLevels = allGradeLevels[language] || allGradeLevels.en;
+
+  const handleCheckedChange = (grade: string, checked: boolean) => {
+    const englishGrade = getEnglishGrade(grade);
+    const newValue = checked 
+      ? [...value, englishGrade]
+      : value.filter(g => g !== englishGrade);
+    onValueChange(newValue);
+  };
+  
+  const selectedCount = value.length;
+  const displayValue = selectedCount > 0 
+    ? `${selectedCount} grade${selectedCount > 1 ? 's' : ''} selected`
+    : "Select grade(s)";
 
   return (
-    <Select onValueChange={handleValueChange} defaultValue={translatedDefault}>
-      <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
-        <SelectValue placeholder="Select a grade level" />
-      </SelectTrigger>
-      <SelectContent>
-        {currentGradeLevels.map((grade) => (
-          <SelectItem key={grade} value={grade}>
-            {grade}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="w-full bg-white/50 backdrop-blur-sm flex justify-between font-normal">
+          <span className="truncate">{displayValue}</span>
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-full">
+        <DropdownMenuLabel>Select Grade Levels</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {currentGradeLevels.map((grade) => {
+            const englishGrade = getEnglishGrade(grade);
+            return (
+                <DropdownMenuCheckboxItem
+                    key={grade}
+                    checked={value.includes(englishGrade)}
+                    onCheckedChange={(checked) => handleCheckedChange(grade, Boolean(checked))}
+                    onSelect={(e) => e.preventDefault()} // Prevent closing on select
+                >
+                    {grade}
+                </DropdownMenuCheckboxItem>
+            );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

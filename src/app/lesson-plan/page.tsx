@@ -22,7 +22,7 @@ import { ImageUploader } from "@/components/image-uploader";
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
-  gradeLevel: z.string().optional(),
+  gradeLevels: z.array(z.string()).optional(),
   imageDataUri: z.string().optional(),
 });
 
@@ -50,7 +50,7 @@ export default function LessonPlanAgentPage() {
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: "6th Grade",
+      gradeLevels: ["6th Grade"],
       imageDataUri: "",
     },
   });
@@ -65,7 +65,7 @@ export default function LessonPlanAgentPage() {
       const result = await generateLessonPlan({
         topic: values.topic,
         language: values.language,
-        gradeLevel: values.gradeLevel,
+        gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
       });
       setLessonPlan(result);
@@ -107,14 +107,14 @@ export default function LessonPlanAgentPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="gradeLevel"
+                  name="gradeLevels"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Grade Level</FormLabel>
+                      <FormLabel className="font-headline">Grade Level(s)</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
+                          value={field.value}
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
                           language={selectedLanguage}
                         />
                       </FormControl>

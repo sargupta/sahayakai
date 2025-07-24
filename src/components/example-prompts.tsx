@@ -162,6 +162,26 @@ const promptTranslations: Record<string, Record<string, string>> = {
     gu: "આ છબીમાંથી 5 પ્રશ્નો સાથે એક વર્કશીટ બનાવો.",
     kn: "ಈ ಚಿತ್ರದಿಂದ 5 ಪ್ರಶ್ನೆಗಳೊಂದಿಗೆ ಒಂದು ವರ್ಕ್‌ಶೀಟ್ ರಚಿಸಿ.",
   },
+   multigradeLesson: {
+    en: "A lesson on 'Indian currency' for grades 2 and 3.",
+    hi: "कक्षा 2 और 3 के लिए 'भारतीय मुद्रा' पर एक पाठ।",
+    bn: "দ্বিতীয় এবং তৃতীয় শ্রেণীর জন্য 'ভারতীয় মুদ্রা' নিয়ে একটি পাঠ।",
+    te: "2 మరియు 3 తరగతులకు 'భారత కరెన్సీ'పై ఒక పాఠం.",
+    mr: "इयत्ता 2री आणि 3री साठी 'भारतीय चलन' वर एक धडा.",
+    ta: "2 மற்றும் 3 ஆம் வகுப்புகளுக்கு 'இந்திய நாணயம்' பற்றிய பாடம்.",
+    gu: "ધોરણ 2 અને 3 માટે 'ભારતીય ચલણ' પર એક પાઠ.",
+    kn: "2 ಮತ್ತು 3 ನೇ ತರಗತಿಗಳಿಗೆ 'ಭಾರತೀಯ ಕರೆನ್ಸಿ' ಮೇಲೆ ಒಂದು ಪಾಠ.",
+  },
+  multigradeFood: {
+    en: "A lesson on 'Healthy Food' for grades 1, 2, and 3.",
+    hi: "कक्षा 1, 2 और 3 के लिए 'स्वस्थ भोजन' पर एक पाठ।",
+    bn: "প্রথম, দ্বিতীয় এবং তৃতীয় শ্রেণীর জন্য 'স্বাস্থ্যকর খাবার' নিয়ে একটি পাঠ।",
+    te: "1, 2 మరియు 3 తరగతులకు 'ఆరోగ్యకరమైన ఆహారం'పై ఒక పాఠం.",
+    mr: "इयत्ता 1 ली, 2 री आणि 3 री साठी 'निरोगी अन्न' वर एक धडा.",
+    ta: "1, 2 மற்றும் 3 ஆம் வகுப்புகளுக்கு 'ஆரோக்கியமான உணவு' பற்றிய பாடம்.",
+    gu: "ધોરણ 1, 2 અને 3 માટે 'સ્વસ્થ ખોરાક' પર એક પાઠ.",
+    kn: "1, 2 ಮತ್ತು 3 ನೇ ತರಗತಿಗಳಿಗೆ 'ಆರೋಗ್ಯಕರ ಆಹಾರ' ಮೇಲೆ ಒಂದು ಪಾಠ.",
+  },
   fieldTripHarappa: {
       en: "A 4-stop tour of the major centers of the Harappan Civilization.",
       hi: "हड़प्पा सभ्यता के प्रमुख केंद्रों का 4-स्टॉप दौरा।",
@@ -257,7 +277,7 @@ const headerTranslations: Record<string, string> = {
 
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
-  'homeWithImage': ['imageLessonPlan', 'imageWorksheet', 'waterCycle', 'skyBlue'],
+  'homeWithImage': ['imageLessonPlan', 'multigradeLesson', 'multigradeFood', 'waterCycle'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
