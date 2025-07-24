@@ -1,4 +1,3 @@
-
 "use client";
 
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
@@ -187,16 +186,16 @@ export default function Home() {
                   </FormItem>
                 )}
               />
-              
-              <div className="flex items-center justify-center">
-                <MicrophoneInput onTranscriptChange={handleTranscript} />
-              </div>
 
               <ExamplePrompts
                 onPromptClick={handlePromptClick}
                 selectedLanguage={selectedLanguage}
                 page="homeWithImage"
               />
+              
+              <div className="flex items-center justify-center">
+                <MicrophoneInput onTranscriptChange={handleTranscript} />
+              </div>
               
               <FormField
                   control={form.control}
