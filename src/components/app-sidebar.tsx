@@ -16,6 +16,7 @@ import {
 import { Logo } from "@/components/logo"
 import { NotebookPen, PencilRuler, Images, Video, GraduationCap, Users, BotMessageSquare, Sparkles } from "lucide-react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -29,21 +30,27 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton href="/lesson-plan" isActive={pathname.startsWith('/lesson-plan')} tooltip="Lesson Plan Generator">
-              <NotebookPen />
-              <span>Lesson Plan Generator</span>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip="Lesson Plan Generator">
+              <Link href="/lesson-plan">
+                <NotebookPen />
+                <span>Lesson Plan Generator</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="/worksheet-wizard" isActive={pathname.startsWith('/worksheet-wizard')} tooltip="Worksheet Wizard">
-              <PencilRuler />
-              <span>Worksheet Wizard</span>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip="Worksheet Wizard">
+              <Link href="/worksheet-wizard">
+                <PencilRuler />
+                <span>Worksheet Wizard</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="/visual-aid-creator" isActive={pathname.startsWith('/visual-aid-creator')} tooltip="Visual Aid Creator">
-              <Images />
-              <span>Visual Aid Creator</span>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/visual-aid-creator')} tooltip="Visual Aid Creator">
+              <Link href="/visual-aid-creator">
+                <Images />
+                <span>Visual Aid Creator</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
