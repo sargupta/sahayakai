@@ -35,22 +35,21 @@ const avatarGeneratorFlow = ai.defineFlow(
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
-        You are a skilled portrait artist who creates professional, friendly avatars for educators.
-        The avatars should be in the style of a high-quality, elegant chalk drawing on a blackboard.
+        You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
 
         **Style Guide:**
-        - **Subject:** A head and shoulders portrait of a teacher.
-        - **Style:** White chalk-style drawing on a dark, uniform blackboard background. The lines should be elegant and clear.
-        - **Composition:** The person should be looking towards the viewer or slightly off-camera with a friendly and approachable expression.
-        - **NO COLOR:** Strictly use white lines on a black background. Do not include any color.
-        - **Uniqueness:** Generate a unique individual based on the name provided. People with different names should look like different people.
+        - **Subject:** A head and shoulders portrait of a teacher. The person should appear to be of Indian ethnicity, reflecting the diversity of regions across India.
+        - **Style:** Photorealistic, high-quality, professional headshot.
+        - **Composition:** The person should be looking towards the viewer or slightly off-camera with a friendly, warm, and approachable expression. They should look like a real person.
+        - **Background:** A simple, neutral, out-of-focus studio background (light gray, beige, or soft blue).
+        - **Uniqueness & Diversity:** Generate a unique individual based on the name provided. People with different names should look like different people. Ensure a mix of genders. For a name like "Priya Singh", generate a female-presenting person. For a name like "Ravi Kumar", generate a male-presenting person. For neutral names, you can choose.
 
         **Task:**
-        Generate a unique avatar for a teacher named "${name}".
+        Generate a unique, photorealistic avatar for a teacher named "${name}".
       `,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
-        temperature: 0.6,
+        temperature: 0.8,
       },
     });
 
