@@ -317,7 +317,7 @@ const headerTranslations: Record<string, string> = {
 
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
-  'homeWithImage': ['imageLessonPlan', 'multigradeLesson', 'multigradeFood', 'waterCycle'],
+  'homeWithImage': ['imageLessonPlan', 'skyBlue', 'multigradeFood', 'waterCycle'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
@@ -358,3 +358,5 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
     </div>
   );
 };
+
+    
