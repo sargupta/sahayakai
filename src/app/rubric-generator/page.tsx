@@ -33,7 +33,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const translations: Record<string, Record<string, any>> = {
+const translations: Record<string, Record<string, string>> = {
   en: {
     pageTitle: "Rubric Generator",
     pageDescription: "Create clear and fair grading rubrics for any assignment.",
@@ -78,7 +78,6 @@ const translations: Record<string, Record<string, any>> = {
     strongFeedback: "फीडबैक:",
     strongEfficiency: "दक्षता:",
   },
-  // Add other languages here...
 };
 
 
@@ -246,4 +245,3 @@ export default function RubricGeneratorPage() {
     </div>
   );
 }
-
