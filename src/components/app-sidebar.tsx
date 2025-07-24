@@ -38,8 +38,8 @@ export function AppSidebar() {
           <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan-agent')} tooltip="Lesson Plan Agent">
-                <Link href="/lesson-plan-agent">
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip="Lesson Plan Agent">
+                <Link href="/lesson-plan">
                   <CalendarDays />
                   <span>Lesson Plan Agent</span>
                 </Link>

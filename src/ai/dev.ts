@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/voice-to-text.ts';
 import '@/ai/flows/lesson-plan-generator.ts';
+import '@/ai/flows/visual-aid-designer.ts';
