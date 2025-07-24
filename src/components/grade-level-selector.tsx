@@ -45,6 +45,18 @@ const gradeLevelMap: Record<string, string> = {
   "12th Grade": "12th Grade", "बारहवीं कक्षा": "12th Grade", "দ্বাদশ শ্রেণী": "12th Grade", "పన్నెండవ తరగతి": "12th Grade", "इयत्ता बारावी": "12th Grade", "பன்னிரண்டாம் வகுப்பு": "12th Grade", "બારમું ધોરણ": "12th Grade", "ಹನ್ನೆರಡನೇ ತರಗತಿ": "12th Grade",
 };
 
+const translations: Record<string, { select: string; one: string; other: string; label: string }> = {
+    en: { select: "Select grade(s)", one: "grade selected", other: "grades selected", label: "Select Grade Levels" },
+    hi: { select: "ग्रेड चुनें", one: "ग्रेड चुना गया", other: "ग्रेड चुने गए", label: "ग्रेड स्तर चुनें" },
+    bn: { select: "গ্রেড নির্বাচন করুন", one: "গ্রেড নির্বাচিত", other: "গ্রেড নির্বাচিত", label: "গ্রেড স্তর নির্বাচন করুন" },
+    te: { select: "గ్రేడ్‌లను ఎంచుకోండి", one: "గ్రేడ్ ఎంచుకోబడింది", other: "గ్రేడ్‌లు ఎంచుకోబడ్డాయి", label: "గ్రేడ్ స్థాయిలను ఎంచుకోండి" },
+    mr: { select: "ग्रेड निवडा", one: "ग्रेड निवडली", other: "ग्रेड निवडल्या", label: "ग्रेड स्तर निवडा" },
+    ta: { select: "தரங்களைத் தேர்ந்தெடுக்கவும்", one: "தரம் தேர்ந்தெடுக்கப்பட்டது", other: "தரங்கள் தேர்ந்தெடுக்கப்பட்டன", label: "தர நிலைகளைத் தேர்ந்தெடுக்கவும்" },
+    gu: { select: "ગ્રેડ પસંદ કરો", one: "ગ્રેડ પસંદ કરેલ છે", other: "ગ્રેડ પસંદ કરેલ છે", label: "ગ્રેડ સ્તર પસંદ કરો" },
+    kn: { select: "ಗ್ರೇಡ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ", one: "ಗ್ರೇಡ್ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", other: "ಗ್ರೇಡ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", label: "ಗ್ರೇಡ್ ಮಟ್ಟಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ" },
+};
+
+
 const getEnglishGrade = (translatedGrade: string) => gradeLevelMap[translatedGrade] || translatedGrade;
 const getTranslatedGrade = (englishGrade: string, lang: string) => {
     const entry = Object.entries(gradeLevelMap).find(([_, val]) => val === englishGrade);
@@ -56,6 +68,7 @@ const getTranslatedGrade = (englishGrade: string, lang: string) => {
 
 export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange, value = [], language }) => {
   const currentGradeLevels = allGradeLevels[language] || allGradeLevels.en;
+  const t = translations[language] || translations.en;
 
   const handleCheckedChange = (grade: string, checked: boolean) => {
     const englishGrade = getEnglishGrade(grade);
@@ -67,8 +80,8 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
   
   const selectedCount = value.length;
   const displayValue = selectedCount > 0 
-    ? `${selectedCount} grade${selectedCount > 1 ? 's' : ''} selected`
-    : "Select grade(s)";
+    ? `${selectedCount} ${selectedCount > 1 ? t.other : t.one}`
+    : t.select;
 
   return (
     <DropdownMenu>
@@ -79,7 +92,7 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
-        <DropdownMenuLabel>Select Grade Levels</DropdownMenuLabel>
+        <DropdownMenuLabel>{t.label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {currentGradeLevels.map((grade) => {
             const englishGrade = getEnglishGrade(grade);
