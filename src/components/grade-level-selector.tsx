@@ -47,9 +47,9 @@ const gradeLevelMap: Record<string, string> = {
 
 const translations: Record<string, { select: string; one: string; other: string; label: string }> = {
     en: { select: "Select grade(s)", one: "grade selected", other: "grades selected", label: "Select Grade Levels" },
-    hi: { select: "ग्रेड चुनें", one: "ग्रेड चुना गया", other: "ग्रेड चुने गए", label: "ग्रेड स्तर चुनें" },
+    hi: { select: "कक्षा चुनें", one: "कक्षा चुनी गई", other: "कक्षाएं चुनी गईं", label: "कक्षा स्तर चुनें" },
     bn: { select: "শ্রেণী নির্বাচন করুন", one: "টি শ্রেণী নির্বাচিত", other: "টি শ্রেণী নির্বাচিত", label: "শ্রেণী স্তর নির্বাচন করুন" },
-    te: { select: "గ్రేడ్‌లను ఎంచుకోండి", one: "గ్రేడ్ ఎంచుకోబడింది", other: "గ్రేడ్‌లు ఎంచుకోబడ్డాయి", label: "గ్రేడ్ స్థాయిలను ఎంచుకోండి" },
+    te: { select: "తరగతి(ల)ను ఎంచుకోండి", one: "తరగతి ఎంచుకోబడింది", other: "తరగతులు ఎంచుకోబడ్డాయి", label: "గ్రేడ్ స్థాయిలను ఎంచుకోండి" },
     mr: { select: "इयत्ता निवडा", one: "इयत्ता निवडली", other: "इयत्ता निवडल्या", label: "इयत्ता स्तर निवडा" },
     ta: { select: "வகுப்புகளைத் தேர்ந்தெடுக்கவும்", one: "வகுப்பு தேர்ந்தெடுக்கப்பட்டது", other: "வகுப்புகள் தேர்ந்தெடுக்கப்பட்டன", label: "தர நிலைகளைத் தேர்ந்தெடுக்கவும்" },
     gu: { select: "ધોરણ પસંદ કરો", one: "ધોરણ પસંદ કરેલ છે", other: "ધોરણો પસંદ કરેલ છે", label: "ધોરણ સ્તર પસંદ કરો" },
