@@ -1,3 +1,4 @@
+
 "use client";
 
 import { generateWorksheet } from "@/ai/flows/worksheet-wizard";
@@ -19,7 +20,7 @@ import { ImageUploader } from "@/components/image-uploader";
 
 
 const formSchema = z.object({
-  imageDataUri: z.string({ required_error: "Please upload an image." }),
+  imageDataUri: z.string({ required_error: "Please upload an image." }).min(1, { message: "Please upload an image." }),
   prompt: z.string().min(10, { message: "Prompt must be at least 10 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
@@ -103,7 +104,10 @@ export default function WorksheetWizardPage() {
                       <FormLabel className="font-headline">Textbook Page Image</FormLabel>
                       <FormControl>
                         <ImageUploader
-                            onImageUpload={field.onChange}
+                            onImageUpload={(dataUri) => {
+                                field.onChange(dataUri);
+                                form.trigger("imageDataUri");
+                            }}
                             language={selectedLanguage}
                         />
                       </FormControl>

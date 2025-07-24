@@ -96,11 +96,11 @@ const promptTranslations: Record<string, Record<string, string>> = {
     en: "Tell me about the history of Nalanda University.",
     hi: "नालंदा विश्वविद्यालय के इतिहास के बारे में बताएं।",
     bn: "নালন্দা বিশ্ববিদ্যালয়ের ইতিহাস সম্পর্কে বলুন।",
-    te: "నలంద విశ్వవిద్యాలయం చరిత్ర గురించి చెప్పండి.",
-    mr: "नालंदा विद्यापीठाच्या इतिहासाबद्दल सांगा.",
-    ta: "நாலந்தா பல்கலைக்கழகத்தின் வரலாறு பற்றி சொல்லுங்கள்.",
-    gu: "નાલંદા વિશ્વવિદ્યાલયના ઇતિહાસ વિશે જણાવો.",
-    kn: "ನಳಂದ ವಿಶ್ವವಿದ್ಯಾಲಯದ ಇತಿಹಾಸದ ಬಗ್ಗೆ ಹೇಳಿ.",
+    te: "నలంద విశ్వవిద్యాలయం చరిత్ర గురించి చెప్పండి。",
+    mr: "नालंदा विद्यापीठाच्या इतिहासाबद्दल सांगा।",
+    ta: "நாலந்தா பல்கலைக்கழகத்தின் வரலாறு பற்றி சொல்லுங்கள்।",
+    gu: "નાલંદા વિશ્વવિદ્યાલયના ઇતિહાસ વિશે જણાવો।",
+    kn: "ನಳಂದ ವಿಶ್ವವಿದ್ಯಾಲಯದ ಇತಿಹಾಸದ ಬಗ್ಗೆ ಹೇಳಿ।",
   },
   indianRivers: {
     en: "What are the major rivers in India?",
@@ -157,7 +157,7 @@ const headerTranslations: Record<string, string> = {
 
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
-  'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'skyBlue'],
+  'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'waterCycle'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
 };
