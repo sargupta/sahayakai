@@ -40,10 +40,10 @@ const translations: Record<string, Record<string, any>> = {
     dialogTitle: "What is a Rubric?",
     dialogDescription: "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.",
     dialogWhy: "Why are they important?",
-    dialogClarity: "Clarity: They demystify assignments by making expectations clear to students before they start.",
-    dialogConsistency: "Consistency: They ensure all students are graded with the same criteria, making assessment fair and objective.",
-    dialogFeedback: "Feedback: They provide specific, detailed feedback that helps students understand their strengths and areas for improvement.",
-    dialogEfficiency: "Efficiency: They can make the grading process faster and more straightforward for teachers.",
+    dialogClarityText: "They demystify assignments by making expectations clear to students before they start.",
+    dialogConsistencyText: "They ensure all students are graded with the same criteria, making assessment fair and objective.",
+    dialogFeedbackText: "They provide specific, detailed feedback that helps students understand their strengths and areas for improvement.",
+    dialogEfficiencyText: "They can make the grading process faster and more straightforward for teachers.",
     formLabel: "Assignment Description",
     formPlaceholder: "e.g., A project to build a model of the solar system for 6th graders.",
     gradeLevel: "Grade Level",
@@ -62,10 +62,10 @@ const translations: Record<string, Record<string, any>> = {
     dialogTitle: "रूब्रिक क्या है?",
     dialogDescription: "रूब्रिक एक स्कोरिंग उपकरण है जो किसी असाइनमेंट या काम के लिए प्रदर्शन अपेक्षाओं का स्पष्ट रूप से प्रतिनिधित्व करता है।",
     dialogWhy: "वे महत्वपूर्ण क्यों हैं?",
-    dialogClarity: "स्पष्टता: वे छात्रों को शुरू करने से पहले अपेक्षाओं को स्पष्ट करके असाइनमेंट को सरल बनाते हैं।",
-    dialogConsistency: "संगति: वे सुनिश्चित करते हैं कि सभी छात्रों को समान मानदंडों के साथ ग्रेड दिया जाए, जिससे मूल्यांकन निष्पक्ष और वस्तुनिष्ठ हो।",
-    dialogFeedback: "फीडबैक: वे विशिष्ट, विस्तृत फीडबैक प्रदान करते हैं जो छात्रों को उनकी ताकत और सुधार के क्षेत्रों को समझने में मदद करता है।",
-    dialogEfficiency: "दक्षता: वे शिक्षकों के लिए ग्रेडिंग प्रक्रिया को तेज और अधिक सीधा बना सकते हैं।",
+    dialogClarityText: "वे छात्रों को शुरू करने से पहले अपेक्षाओं को स्पष्ट करके असाइनमेंट को सरल बनाते हैं।",
+    dialogConsistencyText: "वे सुनिश्चित करते हैं कि सभी छात्रों को समान मानदंडों के साथ ग्रेड दिया जाए, जिससे मूल्यांकन निष्पक्ष और वस्तुनिष्ठ हो।",
+    dialogFeedbackText: "वे विशिष्ट, विस्तृत फीडबैक प्रदान करते हैं जो छात्रों को उनकी ताकत और सुधार के क्षेत्रों को समझने में मदद करता है।",
+    dialogEfficiencyText: "वे शिक्षकों के लिए ग्रेडिंग प्रक्रिया को तेज और अधिक सीधा बना सकते हैं।",
     formLabel: "असाइनमेंट विवरण",
     formPlaceholder: "उदा., छठी कक्षा के छात्रों के लिए सौर मंडल का एक मॉडल बनाने की एक परियोजना।",
     gradeLevel: "श्रेणी स्तर",
@@ -148,10 +148,10 @@ export default function RubricGeneratorPage() {
                 <div className="text-sm text-muted-foreground space-y-2">
                     <p><strong className="text-foreground">{t.dialogWhy}</strong></p>
                     <ul className="list-disc pl-5 space-y-1">
-                        <li><strong className="text-foreground/80">{t.strongClarity}</strong> {t.dialogClarity}</li>
-                        <li><strong className="text-foreground/80">{t.strongConsistency}</strong> {t.dialogConsistency}</li>
-                        <li><strong className="text-foreground/80">{t.strongFeedback}</strong> {t.dialogFeedback}</li>
-                         <li><strong className="text-foreground/80">{t.strongEfficiency}</strong> {t.dialogEfficiency}</li>
+                        <li><strong className="text-foreground/80">{t.strongClarity}</strong> {t.dialogClarityText}</li>
+                        <li><strong className="text-foreground/80">{t.strongConsistency}</strong> {t.dialogConsistencyText}</li>
+                        <li><strong className="text-foreground/80">{t.strongFeedback}</strong> {t.dialogFeedbackText}</li>
+                         <li><strong className="text-foreground/80">{t.strongEfficiency}</strong> {t.dialogEfficiencyText}</li>
                     </ul>
                 </div>
               </DialogContent>
