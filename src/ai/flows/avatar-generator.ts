@@ -1,0 +1,62 @@
+'use server';
+
+/**
+ * @fileOverview Generates unique, professional avatars for teachers.
+ *
+ * - generateAvatar - A function that takes a name and returns a generated avatar image.
+ * - AvatarGeneratorInput - The input type for the generateAvatar function.
+ * - AvatarGeneratorOutput - The return type for the generateAvatar function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+const AvatarGeneratorInputSchema = z.object({
+  name: z.string().describe("The name of the teacher for whom to generate an avatar."),
+});
+export type AvatarGeneratorInput = z.infer<typeof AvatarGeneratorInputSchema>;
+
+const AvatarGeneratorOutputSchema = z.object({
+  imageDataUri: z.string().describe("The generated avatar image as a data URI."),
+});
+export type AvatarGeneratorOutput = z.infer<typeof AvatarGeneratorOutputSchema>;
+
+export async function generateAvatar(input: AvatarGeneratorInput): Promise<AvatarGeneratorOutput> {
+  return avatarGeneratorFlow(input);
+}
+
+const avatarGeneratorFlow = ai.defineFlow(
+  {
+    name: 'avatarGeneratorFlow',
+    inputSchema: AvatarGeneratorInputSchema,
+    outputSchema: AvatarGeneratorOutputSchema,
+  },
+  async ({ name }) => {
+    const {media} = await ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: `
+        You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
+
+        **Style Guide:**
+        - **Subject:** A head and shoulders portrait of a teacher. The person should appear to be of Indian ethnicity, reflecting the diversity of regions across India.
+        - **Style:** Photorealistic, high-quality, professional headshot.
+        - **Composition:** The person should be looking towards the viewer or slightly off-camera with a friendly, warm, and approachable expression. They should look like a real person.
+        - **Background:** A simple, neutral, out-of-focus studio background (light gray, beige, or soft blue).
+        - **Uniqueness & Diversity:** Generate a unique individual based on the name provided. People with different names should look like different people. Ensure a mix of genders. For a name like "Priya Singh", generate a female-presenting person. For a name like "Ravi Kumar", generate a male-presenting person. For neutral names, you can choose.
+
+        **Task:**
+        Generate a unique, photorealistic avatar for a teacher named "${name}".
+      `,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        temperature: 0.8,
+      },
+    });
+
+    if (!media) {
+      throw new Error('Image generation failed to produce an avatar.');
+    }
+
+    return { imageDataUri: media.url };
+  }
+);
