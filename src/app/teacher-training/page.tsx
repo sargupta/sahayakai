@@ -201,8 +201,14 @@ export default function TeacherTrainingPage() {
                 Your Personalized Advice
             </CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20 prose-p:my-4">
-            <ReactMarkdown>{advice.answer}</ReactMarkdown>
+          <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20 prose-p:my-4 prose-li:my-2">
+            <ReactMarkdown
+              components={{
+                strong({node, ...props}) {
+                  return <strong className="text-primary font-semibold" {...props} />
+                }
+              }}
+            >{advice.answer}</ReactMarkdown>
           </CardContent>
         </Card>
       )}

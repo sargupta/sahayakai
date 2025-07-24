@@ -39,7 +39,7 @@ const teacherTrainingPrompt = ai.definePrompt({
 4.  **Use Analogies:** Where appropriate, use simple analogies relevant to the Indian context to explain concepts.
 5.  **Stay Positive and Motivational:** End your response with a word of encouragement. Remind the teacher of their value and the importance of their work.
 6.  **Language:** Respond in the specified \`language\`.
-7.  **Formatting**: The final output must be in well-formatted Markdown with appropriate spacing for readability.
+7.  **Formatting**: The final output must be in well-formatted Markdown with appropriate spacing for readability. Use bullet points for the main advice points.
 
 **Teacher's Request:**
 -   **Question/Concern:** {{{question}}}
