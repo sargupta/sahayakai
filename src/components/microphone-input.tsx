@@ -17,14 +17,14 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const { toast } = useToast();
 
   const drawWaveform = () => {
-    if (!canvasRef.current || !analyserRef.current) return;
+    if (!canvasRef.current || !analyserRef.current || !isRecording) return;
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     const canvasCtx = canvas.getContext("2d");
@@ -33,8 +33,14 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
+    
+    const parent = canvas.parentElement;
+    if (parent) {
+      canvas.width = parent.offsetWidth;
+      canvas.height = parent.offsetHeight;
+    }
 
-    canvasCtx.fillStyle = "rgba(245, 245, 245, 0.5)";
+    canvasCtx.fillStyle = "hsla(var(--card))";
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 2;
     canvasCtx.strokeStyle = `hsl(var(--primary))`;
@@ -62,9 +68,9 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setIsRecording(true);
       audioChunksRef.current = [];
       mediaRecorderRef.current = new MediaRecorder(stream);
+      setIsRecording(true);
 
       // Setup audio visualization
       if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
@@ -74,7 +80,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
       }
       const source = audioContextRef.current.createMediaStreamSource(stream);
       source.connect(analyserRef.current);
-      drawWaveform();
+      requestAnimationFrame(drawWaveform);
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
@@ -152,26 +158,36 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
         }
     }
   }, []);
+  
+  useEffect(() => {
+    if (isRecording) {
+      const handleResize = () => drawWaveform();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [isRecording])
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
-      <Button
-        type="button"
-        onClick={handleMicClick}
-        disabled={isTranscribing}
-        className={cn("h-20 w-20 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:scale-110", isRecording && "bg-destructive hover:bg-destructive/90")}
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
-      >
-        {isTranscribing ? (
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/50 border-t-white" />
-        ) : isRecording ? (
-          <StopCircle className="h-10 w-10" />
-        ) : (
-          <Mic className="h-10 w-10" />
-        )}
-      </Button>
-      <div className={cn("h-16 w-full overflow-hidden rounded-lg transition-opacity", isRecording ? "opacity-100" : "opacity-0")}>
-        <canvas ref={canvasRef} width="600" height="100" className="h-full w-full" />
+    <div className={cn("flex flex-col items-center justify-center w-20", className)}>
+      <div className="relative flex items-center justify-center w-full">
+         <div className={cn("absolute inset-0 -z-10 rounded-full transition-opacity duration-300 ease-in-out", isRecording ? "opacity-100" : "opacity-0")}>
+            <canvas ref={canvasRef} className="h-full w-full rounded-full" />
+        </div>
+        <Button
+            type="button"
+            onClick={handleMicClick}
+            disabled={isTranscribing}
+            className={cn("h-16 w-16 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:scale-110", isRecording && "bg-destructive hover:bg-destructive/90")}
+            aria-label={isRecording ? "Stop recording" : "Start recording"}
+        >
+            {isTranscribing ? (
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/50 border-t-white" />
+            ) : isRecording ? (
+            <StopCircle className="h-10 w-10" />
+            ) : (
+            <Mic className="h-10 w-10" />
+            )}
+        </Button>
       </div>
     </div>
   );

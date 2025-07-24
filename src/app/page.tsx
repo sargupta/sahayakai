@@ -169,15 +169,21 @@ export default function Home() {
                   <FormItem>
                     <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
-                      <AutoCompleteInput
-                        placeholder={topicPlaceholder}
-                        {...field}
-                        selectedLanguage={selectedLanguage}
-                        onSuggestionClick={(value) => {
-                            form.setValue("topic", value);
-                            form.trigger("topic");
-                        }}
-                      />
+                      <div className="relative flex items-center">
+                        <AutoCompleteInput
+                          placeholder={topicPlaceholder}
+                          {...field}
+                          selectedLanguage={selectedLanguage}
+                          onSuggestionClick={(value) => {
+                              form.setValue("topic", value);
+                              form.trigger("topic");
+                          }}
+                          className="pr-24"
+                        />
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                          <MicrophoneInput onTranscriptChange={handleTranscript} />
+                        </div>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -188,8 +194,6 @@ export default function Home() {
                 onPromptClick={handlePromptClick}
                 selectedLanguage={selectedLanguage}
               />
-
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
@@ -209,50 +213,52 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="localContext"
+                  name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Local Context</FormLabel>
+                      <FormLabel className="font-headline">Language</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder={placeholder}
-                          {...field}
-                          className="bg-white/50 backdrop-blur-sm"
+                        <LanguageSelector
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
                         />
                       </FormControl>
-                       <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
-                          <div className="flex items-center gap-2 font-semibold">
-                            <Lightbulb className="h-4 w-4" />
-                            <span>{hint.title}</span>
-                          </div>
-                          <p>
-                           {hint.body}
-                          </p>
-                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">Language</FormLabel>
-                    <FormControl>
-                      <LanguageSelector
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="md:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="localContext"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline">Local Context</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={placeholder}
+                            {...field}
+                            className="bg-white/50 backdrop-blur-sm"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
+                            <div className="flex items-center gap-2 font-semibold">
+                              <Lightbulb className="h-4 w-4" />
+                              <span>{hint.title}</span>
+                            </div>
+                            <p>
+                            {hint.body}
+                            </p>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
