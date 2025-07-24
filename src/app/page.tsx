@@ -62,6 +62,16 @@ const hintTranslations: Record<string, { title: string; body: string }> = {
     },
 };
 
+const placeholderTranslations: Record<string, string> = {
+    en: "e.g., 'A village in Kerala'",
+    hi: "उदा., 'केरल का एक गाँव'",
+    bn: "উদা., 'কেরালার একটি গ্রাম'",
+    te: "ఉదా., 'కేరళలోని ఒక గ్రామం'",
+    mr: "उदा., 'केरळमधील एक गाव'",
+    ta: "உதா., 'கேரளாவில் ஒரு கிராமம்'",
+    gu: "દા.ત., 'કેરળનું એક ગામ'",
+    kn: "ಉದಾ., 'ಕೇರಳದ ಒಂದು ಹಳ್ಳಿ'",
+};
 
 export default function Home() {
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
@@ -80,6 +90,7 @@ export default function Home() {
 
   const selectedLanguage = form.watch("language") || 'en';
   const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
+  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -177,7 +188,7 @@ export default function Home() {
                       <FormLabel className="font-headline">Local Context</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., 'A village in Kerala'"
+                          placeholder={placeholder}
                           {...field}
                           className="bg-white/50 backdrop-blur-sm"
                         />
