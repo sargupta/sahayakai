@@ -86,7 +86,7 @@ export default function RubricGeneratorPage() {
                     <FormLabel className="font-headline">Assignment Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., A research project on the Mughal Empire for 7th grade students..."
+                        placeholder="e.g., A project to build a model of the solar system for 6th graders."
                         {...field}
                         className="bg-white/50 backdrop-blur-sm min-h-[120px]"
                       />
