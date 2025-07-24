@@ -150,7 +150,7 @@ export default function TeacherTrainingPage() {
                 Your Personalized Advice
             </CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20">
+          <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20 prose-p:my-4">
             <ReactMarkdown>{advice.answer}</ReactMarkdown>
           </CardContent>
         </Card>
