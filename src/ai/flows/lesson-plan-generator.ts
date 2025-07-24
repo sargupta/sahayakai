@@ -17,13 +17,21 @@ const LessonPlanInputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for the lesson plan.'),
   localContext: z.string().optional().describe('The district, state, or dialect for localization.'),
   imageDataUri: z.string().optional().describe(
-    "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
 const LessonPlanOutputSchema = z.object({
-  lessonPlan: z.string().describe('The generated lesson plan.'),
+  title: z.string().describe('A concise and engaging title for the lesson plan.'),
+  objectives: z.array(z.string()).describe('A list of clear learning objectives for the lesson.'),
+  materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
+  activities: z.array(z.object({
+    name: z.string().describe('The name of the activity.'),
+    description: z.string().describe('A detailed description of the activity.'),
+    duration: z.string().describe('The estimated duration for the activity (e.g., "15 minutes").'),
+  })).describe('A list of activities to be performed during the lesson.'),
+  assessment: z.string().describe('A description of the assessment method to evaluate student learning.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
@@ -34,8 +42,10 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: {schema: LessonPlanInputSchema},
-  output: {schema: LessonPlanOutputSchema},
+  output: {schema: LessonPlanOutputSchema, format: 'json'},
   prompt: `You are an expert teacher who creates culturally and geographically relevant educational content. Generate a detailed lesson plan based on the following inputs.
+
+You MUST follow the specified JSON output format.
 
 {{#if imageDataUri}}
 **Primary Context from Image:**
@@ -54,10 +64,7 @@ When a 'Local Context' is provided, you MUST use it to make the lesson plan more
 - For stories or examples, use names of local places, cities, or villages.
 - For cultural topics, reference local festivals, traditions, and customs. For instance, if the topic is 'festivals' for a student in Bengal, you must talk about Durga Puja.
 - The goal is to make the student feel that the content is created specifically for their environment.
-
-Please structure the output in markdown format with clear headings for each section (e.g., ## Objectives, ## Materials, ## Activities, ## Assessment).
-
-Lesson Plan:`,
+`,
 });
 
 const lessonPlanFlow = ai.defineFlow(

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
+import { generateLessonPlan, LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -99,7 +99,7 @@ const topicPlaceholderTranslations: Record<string, string> = {
 };
 
 export default function Home() {
-  const [lessonPlan, setLessonPlan] = useState<string | null>(null);
+  const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -131,7 +131,7 @@ export default function Home() {
         localContext: values.localContext,
         imageDataUri: values.imageDataUri,
       });
-      setLessonPlan(result.lessonPlan);
+      setLessonPlan(result);
     } catch (error) {
       console.error("Failed to generate lesson plan:", error);
       toast({
