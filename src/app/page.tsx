@@ -75,7 +75,7 @@ export default function Home() {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">AI Companion</CardTitle>
           <CardDescription>
-            Create a comprehensive lesson plan using your voice or by typing a topic below.
+            What can I help you with today? Ask me to generate a lesson plan, or use your voice.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,10 +86,10 @@ export default function Home() {
                 name="topic"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-headline">Topic</FormLabel>
+                    <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., 'The Indian Monsoon' or use the mic"
+                        placeholder="e.g., 'Create a lesson plan for the Indian Monsoon'"
                         {...field}
                         className="bg-white/50 backdrop-blur-sm"
                       />
@@ -162,7 +162,7 @@ export default function Home() {
                     Generating...
                   </>
                 ) : (
-                  "Generate Lesson Plan"
+                  "Generate"
                 )}
               </Button>
             </form>
