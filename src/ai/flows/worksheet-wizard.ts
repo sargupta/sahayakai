@@ -1,0 +1,67 @@
+'use server';
+
+/**
+ * @fileOverview Creates worksheets from an image of a textbook page and a user prompt.
+ *
+ * - generateWorksheet - A function that takes an image and a prompt and returns a worksheet.
+ * - WorksheetWizardInput - The input type for the generateWorksheet function.
+ * - WorksheetWizardOutput - The return type for the generateWorksheet function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+const WorksheetWizardInputSchema = z.object({
+  imageDataUri: z
+    .string()
+    .describe(
+      "A photo of a textbook page, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+  prompt: z.string().describe('The user\'s request for what kind of worksheet to create.'),
+  language: z.string().optional().describe('The language for the worksheet.'),
+  gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
+});
+export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
+
+const WorksheetWizardOutputSchema = z.object({
+  worksheetContent: z.string().describe('The generated worksheet content in Markdown format.'),
+});
+export type WorksheetWizardOutput = z.infer<typeof WorksheetWizardOutputSchema>;
+
+export async function generateWorksheet(input: WorksheetWizardInput): Promise<WorksheetWizardOutput> {
+  return worksheetWizardFlow(input);
+}
+
+const worksheetWizardPrompt = ai.definePrompt({
+  name: 'worksheetWizardPrompt',
+  input: {schema: WorksheetWizardInputSchema},
+  output: {schema: WorksheetWizardOutputSchema},
+  prompt: `You are an expert educator who creates engaging and effective worksheets from textbook content.
+
+**Instructions:**
+1.  **Analyze the Image:** Carefully analyze the provided textbook page image.
+2.  **Follow the Prompt:** Adhere to the user's prompt to generate the worksheet.
+3.  **Contextualize:** Use the specified \`gradeLevel\` and \`language\` to tailor the content appropriately.
+4.  **Format:** Structure the entire output in clear, well-formatted Markdown. Use headings, lists, and other markdown elements to create a printable and easy-to-read worksheet.
+
+**Inputs:**
+-   **Textbook Page Image:** {{media url=imageDataUri}}
+-   **User's Request:** {{{prompt}}}
+-   **Grade Level:** {{{gradeLevel}}}
+-   **Language:** {{{language}}}
+
+**Generated Worksheet:**
+`,
+});
+
+const worksheetWizardFlow = ai.defineFlow(
+  {
+    name: 'worksheetWizardFlow',
+    inputSchema: WorksheetWizardInputSchema,
+    outputSchema: WorksheetWizardOutputSchema,
+  },
+  async input => {
+    const {output} = await worksheetWizardPrompt(input);
+    return output!;
+  }
+);
