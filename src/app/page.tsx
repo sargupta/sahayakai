@@ -4,11 +4,11 @@
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -144,9 +144,15 @@ export default function Home() {
                           className="bg-white/50 backdrop-blur-sm"
                         />
                       </FormControl>
-                       <FormDescription>
-                        Make content relevant. e.g., mention the river Ganga, Pongal for Tamil Nadu, or Durga Puja for Bengal.
-                      </FormDescription>
+                       <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
+                          <div className="flex items-center gap-2 font-semibold">
+                            <Lightbulb className="h-4 w-4" />
+                            <span>Make it relevant!</span>
+                          </div>
+                          <p>
+                            e.g., mention the river Ganga, Pongal for Tamil Nadu, or Durga Puja for Bengal.
+                          </p>
+                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
