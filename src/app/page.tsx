@@ -15,6 +15,7 @@ import { z } from "zod";
 import { LanguageSelector } from "@/components/language-selector";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
+import { ExamplePrompts } from "@/components/example-prompts";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -39,6 +40,8 @@ export default function Home() {
       duration: "45 minutes",
     },
   });
+
+  const selectedLanguage = form.watch("language");
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -66,6 +69,11 @@ export default function Home() {
 
   const handleTranscript = (transcript: string) => {
     form.setValue("topic", transcript);
+    form.trigger("topic");
+  };
+  
+  const handlePromptClick = (prompt: string) => {
+    form.setValue("topic", prompt);
     form.trigger("topic");
   };
 
@@ -99,6 +107,11 @@ export default function Home() {
                 )}
               />
               
+              <ExamplePrompts
+                onPromptClick={handlePromptClick}
+                selectedLanguage={selectedLanguage || 'en'}
+              />
+
               <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
