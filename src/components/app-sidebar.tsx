@@ -7,11 +7,11 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarFooter
+  SidebarFooter,
+  SidebarTrigger
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/logo"
 import { NotebookPen, PencilRuler, Microscope, Images, Video, GraduationCap, Users, BotMessageSquare, Sparkles } from "lucide-react"
@@ -32,40 +32,40 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Worksheet Wizard" isDisabled>
+            <SidebarMenuButton href="#" tooltip="Worksheet Wizard" disabled>
               <PencilRuler />
               <span>Worksheet Wizard</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Visual Aid Creator" isDisabled>
+            <SidebarMenuButton href="#" tooltip="Visual Aid Creator" disabled>
               <Images />
               <span>Visual Aid Creator</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Video Clip Generator" isDisabled>
+            <SidebarMenuButton href="#" tooltip="Video Clip Generator" disabled>
               <Video />
               <span>Video Clip Generator</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
            <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Intelligent Assessment" isDisabled>
+            <SidebarMenuButton href="#" tooltip="Intelligent Assessment" disabled>
               <GraduationCap />
               <span>Assessments</span>
             </SidebarMenuButton>
              <SidebarMenuSub>
                <SidebarMenuSubItem>
-                <SidebarMenuSubButton href="#" isDisabled>Rubric Generator</SidebarMenuSubButton>
+                <SidebarMenuSubButton href="#" disabled>Rubric Generator</SidebarMenuSubButton>
               </SidebarMenuSubItem>
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton href="#" isDisabled>Grading Interface</SidebarMenuSubButton>
+                <SidebarMenuSubButton href="#" disabled>Grading Interface</SidebarMenuSubButton>
               </SidebarMenuSubItem>
              </SidebarMenuSub>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#" tooltip="Community Hub" isDisabled>
+            <SidebarMenuButton href="#" tooltip="Community Hub" disabled>
               <Users />
               <span>Community Hub</span>
             </SidebarMenuButton>
@@ -75,13 +75,13 @@ export function AppSidebar() {
       <SidebarFooter>
          <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="Teacher Coach" isDisabled>
+              <SidebarMenuButton href="#" tooltip="Teacher Coach" disabled>
                 <BotMessageSquare />
                 <span>Teacher Coach</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" tooltip="My Sahayak" isDisabled>
+              <SidebarMenuButton href="#" tooltip="My Sahayak" disabled>
                 <Sparkles />
                 <span>My Sahayak</span>
               </SidebarMenuButton>
