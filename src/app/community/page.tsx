@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Library, Search, ThumbsUp, Download } from "lucide-react";
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from '@/components/ui/badge';
 
 
 type Resource = {
@@ -19,35 +20,108 @@ type Resource = {
   author: string;
   authorAvatar: string;
   likes: number;
+  language: string;
 };
 
 const mockTrendingResources: Resource[] = [
-    { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 128 },
-    { id: '2', title: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 95 },
-    { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210 },
-    { id: '4', title: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 72 },
-    { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 350 },
-    { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 180 },
-    { id: '7', title: 'Basic Algebra Worksheet', type: 'worksheet', author: 'Deepa Iyer', authorAvatar: 'https://placehold.co/40x40.png?text=DI', likes: 150 },
-    { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 450 },
-    { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 110 },
+    { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 128, language: 'en' },
+    { id: '2', title: 'भिन्न पर उन्नत प्रश्नोत्तरी (कक्षा 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 95, language: 'hi' },
+    { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 210, language: 'en' },
+    { id: '4', title: 'মোগল সাম্রাজ্য শব্দ অনুসন্ধান', type: 'worksheet', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 72, language: 'bn' },
+    { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 350, language: 'en' },
+    { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 180, language: 'en' },
+    { id: '7', title: 'बुनियादी बीजगणित वर्कशीट', type: 'worksheet', author: 'Deepa Iyer', authorAvatar: 'https://placehold.co/40x40.png?text=DI', likes: 150, language: 'hi' },
+    { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', authorAvatar: 'https://placehold.co/40x40.png?text=SG', likes: 450, language: 'en' },
+    { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', authorAvatar: 'https://placehold.co/40x40.png?text=AK', likes: 110, language: 'en' },
 ];
 
 const mockFollowingResources: Resource[] = [
-    { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 42 },
-    { id: 'f2', title: 'Visual Aid: The Water Cycle', type: 'image', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 88 },
-    { id: 'f3', 'title': 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105 },
+    { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 42, language: 'en' },
+    { id: 'f2', title: 'জল চক্রের ভিজ্যুয়াল এইড', type: 'image', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 88, language: 'bn' },
+    { id: 'f3', 'title': 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105, language: 'en' },
 ];
 
 const mockMyContentResources: Resource[] = [
-  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 15 },
-  { id: 'm2', title: 'My Fractions Quiz', type: 'quiz', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 3 },
-  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 22 },
+  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 15, language: 'en' },
+  { id: 'm2', 'title': 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 3, language: 'hi' },
+  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 22, language: 'en' },
 ];
+
+const languageMap: Record<string, string> = {
+  en: 'English',
+  hi: 'Hindi',
+  bn: 'Bengali',
+  te: 'Telugu',
+  mr: 'Marathi',
+  ta: 'Tamil',
+  gu: 'Gujarati',
+  kn: 'Kannada',
+};
+
+const ResourceList = ({ resources }: { resources: Resource[] }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+    {resources.map((resource) => (
+      <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
+            <div>
+              <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
+                  <AvatarFallback>{resource.author.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                <span>{resource.author}</span>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          {/* Can add a short description here */}
+        </CardContent>
+        <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+             <Badge variant="outline">{languageMap[resource.language] || 'English'}</Badge>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1">
+              <ThumbsUp className="h-4 w-4" />
+              <span className="text-sm">{resource.likes}</span>
+            </Button>
+          </div>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </CardFooter>
+      </Card>
+    ))}
+  </div>
+);
 
 
 export default function CommunityPage() {
-    const [language, setLanguage] = useState('en');
+    const [languageFilter, setLanguageFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('trending');
+    const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
+
+    const allResources = {
+        trending: mockTrendingResources,
+        following: mockFollowingResources,
+        'my-content': mockMyContentResources,
+    };
+
+    useEffect(() => {
+        // @ts-ignore
+        const currentList = allResources[activeTab] || [];
+        const filtered = currentList.filter(resource => {
+            const matchesLanguage = languageFilter === 'all' || resource.language === languageFilter;
+            const matchesSearch = searchTerm === '' || resource.title.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesLanguage && matchesSearch;
+        });
+        setFilteredResources(filtered);
+    }, [activeTab, languageFilter, searchTerm]);
+
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
@@ -65,130 +139,32 @@ export default function CommunityPage() {
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input placeholder="Search for lesson plans, quizzes, and more..." className="pl-10 bg-white/50" />
+                    <Input 
+                        placeholder="Search for lesson plans, quizzes, and more..." 
+                        className="pl-10 bg-white/50"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
-                <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
+                <div className="w-full sm:w-48">
+                    <LanguageSelector onValueChange={setLanguageFilter} defaultValue={languageFilter} />
+                </div>
             </div>
 
-            <Tabs defaultValue="trending">
+            <Tabs defaultValue="trending" onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="trending">Trending</TabsTrigger>
                     <TabsTrigger value="following">Following</TabsTrigger>
                     <TabsTrigger value="my-content">My Content</TabsTrigger>
                 </TabsList>
                 <TabsContent value="trending">
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {mockTrendingResources.map((resource) => (
-                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                                <CardHeader>
-                                    <div className="flex items-center gap-3">
-                                        <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
-                                        <div>
-                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
-                                                    <AvatarFallback>{resource.author.substring(0,2)}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{resource.author}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                     {/* Can add a short description here */}
-                                </CardContent>
-                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                            <ThumbsUp className="h-4 w-4" />
-                                            <span className="text-sm">{resource.likes}</span>
-                                        </Button>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Download
-                                    </Button>
-                                </CardFooter>
-                           </Card>
-                        ))}
-                   </div>
+                   <ResourceList resources={filteredResources} />
                 </TabsContent>
                 <TabsContent value="following">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {mockFollowingResources.map((resource) => (
-                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                                <CardHeader>
-                                    <div className="flex items-center gap-3">
-                                        <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
-                                        <div>
-                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
-                                                    <AvatarFallback>{resource.author.substring(0,2)}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{resource.author}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                     {/* Can add a short description here */}
-                                </CardContent>
-                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                            <ThumbsUp className="h-4 w-4" />
-                                            <span className="text-sm">{resource.likes}</span>
-                                        </Button>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Download
-                                    </Button>
-                                </CardFooter>
-                           </Card>
-                        ))}
-                   </div>
+                    <ResourceList resources={filteredResources} />
                 </TabsContent>
                  <TabsContent value="my-content">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {mockMyContentResources.map((resource) => (
-                           <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                                <CardHeader>
-                                    <div className="flex items-center gap-3">
-                                        <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
-                                        <div>
-                                            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
-                                                    <AvatarFallback>{resource.author.substring(0,2)}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{resource.author}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                     {/* Can add a short description here */}
-                                </CardContent>
-                                <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                            <ThumbsUp className="h-4 w-4" />
-                                            <span className="text-sm">{resource.likes}</span>
-                                        </Button>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Download
-                                    </Button>
-                                </CardFooter>
-                           </Card>
-                        ))}
-                   </div>
+                    <ResourceList resources={filteredResources} />
                 </TabsContent>
             </Tabs>
             
