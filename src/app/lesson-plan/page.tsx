@@ -4,7 +4,7 @@
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +36,7 @@ export default function LessonPlanAgentPage() {
       topic: "",
       language: "en",
       gradeLevel: "6th Grade",
-      localContext: "India",
+      localContext: "",
     },
   });
 
@@ -126,11 +126,14 @@ export default function LessonPlanAgentPage() {
                       <FormLabel className="font-headline">Local Context</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., 'Rural Bengal', 'Mumbai city schools'"
+                          placeholder="e.g., 'A village in Kerala'"
                           {...field}
                           className="bg-white/50 backdrop-blur-sm"
                         />
                       </FormControl>
+                      <FormDescription>
+                        Make content relevant. Ex: Pongal for Tamil Nadu, Durga Puja for Bengal.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
