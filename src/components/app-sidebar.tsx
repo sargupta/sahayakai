@@ -21,7 +21,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <Logo />
-        <SidebarTrigger />
+        <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

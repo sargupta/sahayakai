@@ -15,7 +15,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { Logo } from "@/components/logo";
 import { MicrophoneInput } from "@/components/microphone-input";
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
 
@@ -76,12 +76,11 @@ export default function Home() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <main className="flex min-h-screen w-full flex-col items-center p-4 md:p-8">
-          <SidebarHeader className="w-full max-w-2xl flex items-center justify-between">
-            <Logo />
-            <SidebarTrigger />
-          </SidebarHeader>
-          <div className="flex flex-col items-center gap-8 w-full max-w-2xl mt-8">
+        <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 md:p-8">
+          <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
+            <SidebarHeader className="w-full flex items-center justify-between md:hidden">
+              <Logo />
+            </SidebarHeader>
             <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
               <CardHeader className="text-center">
                 <CardTitle className="font-headline text-3xl">Lesson Plan Generator</CardTitle>
