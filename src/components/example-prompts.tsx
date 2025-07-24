@@ -8,7 +8,7 @@ import { Lightbulb } from 'lucide-react';
 type ExamplePromptsProps = {
   onPromptClick: (prompt: string) => void;
   selectedLanguage: string;
-  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip' | 'teacher-training' | 'rubric';
+  page?: 'home' | 'visual-aid' | 'instant-answer' | 'worksheet' | 'homeWithImage' | 'virtual-field-trip' | 'teacher-training' | 'rubric' | 'quiz';
 };
 
 const promptTranslations: Record<string, Record<string, string>> = {
@@ -302,6 +302,46 @@ const promptTranslations: Record<string, Record<string, string>> = {
       gu: "ધોરણ 5 માટે 'પાણી બચાવો' પર પોસ્ટર બનાવવાની પ્રવૃત્તિ.",
       kn: "5 ನೇ ತರಗತಿಗೆ 'ನೀರನ್ನು ಉಳಿಸಿ' ಎಂಬ ವಿಷಯದ ಮೇಲೆ ಪೋಸ್ಟರ್ ತಯಾರಿಸುವ ಚಟುವಟಿಕೆ.",
   },
+  quizSolarSystem: {
+    en: "A quiz about the planets in our solar system.",
+    hi: "हमारे सौर मंडल के ग्रहों के बारे में एक प्रश्नोत्तरी।",
+    bn: "আমাদের সৌরজগতের গ্রহ সম্পর্কে একটি কুইজ।",
+    te: "మన సౌర వ్యవస్థలోని గ్రహాల గురించి ఒక క్విజ్.",
+    mr: "आपल्या सूर्यमालेतील ग्रहांबद्दल एक प्रश्नमंजुषा.",
+    ta: "நமது சூரிய குடும்பத்தில் உள்ள கிரகங்கள் பற்றிய ஒரு வினாடி வினா.",
+    gu: "આપણા સૌરમંડળના ગ્રહો વિશે એક ક્વિઝ.",
+    kn: "ನಮ್ಮ ಸೌರವ್ಯೂಹದ ಗ್ರಹಗಳ ಬಗ್ಗೆ ಒಂದು ರಸಪ್ರಶ್ನೆ.",
+  },
+  quizIndianHistory: {
+    en: "A short quiz on the Indian independence movement.",
+    hi: "भारतीय स्वतंत्रता आंदोलन पर एक छोटी प्रश्नोत्तरी।",
+    bn: "ভারতীয় স্বাধীনতা আন্দোলনের উপর একটি সংক্ষিপ্ত কুইজ।",
+    te: "భారత స్వాతంత్ర్య ఉద్యమంపై ఒక చిన్న క్విజ్.",
+    mr: "भारतीय स्वातंत्र्य चळवळीवर एक छोटी प्रश्नमंजुषा.",
+    ta: "இந்திய சுதந்திர இயக்கம் பற்றிய ஒரு சிறிய வினாடி வினா.",
+    gu: "ભારતીય સ્વતંત્રતા ચળવળ પર એક ટૂંકી ક્વિઝ.",
+    kn: "ಭಾರತೀಯ ಸ್ವಾತಂತ್ರ್ಯ ಚಳವಳಿಯ ಮೇಲೆ ಒಂದು ಸಣ್ಣ ರಸಪ್ರಶ್ನೆ.",
+  },
+  quizHumanBody: {
+    en: "A quiz on the major organs of the human body for Grade 5.",
+    hi: "कक्षा 5 के लिए मानव शरीर के प्रमुख अंगों पर एक प्रश्नोत्तरी।",
+    bn: "পঞ্চম শ্রেণীর জন্য মানবদেহের প্রধান অঙ্গগুলির উপর একটি কুইজ।",
+    te: "5వ తరగతికి మానవ శరీరం యొక్క ప్రధాన అవయవాలపై ఒక క్విజ్.",
+    mr: "इयत्ता 5 वी साठी मानवी शरीराच्या प्रमुख अवयवांवर एक प्रश्नमंजुषा.",
+    ta: "5 ஆம் வகுப்புக்கு மனித உடலின் முக்கிய உறுப்புகள் பற்றிய ஒரு வினாடி வினா.",
+    gu: "ધોરણ 5 માટે માનવ શરીરના મુખ્ય અંગો પર એક ક્વિઝ.",
+    kn: "5 ನೇ ತರಗತಿಗೆ ಮಾನವ ದೇಹದ ಪ್ರಮುಖ ಅಂಗಗಳ ಮೇಲೆ ಒಂದು ರಸಪ್ರಶ್ನೆ.",
+  },
+  quizBasicMath: {
+    en: "A simple quiz on addition and subtraction for 1st graders.",
+    hi: "पहली कक्षा के छात्रों के लिए जोड़ और घटाव पर एक सरल प्रश्नोत्तरी।",
+    bn: "প্রথম শ্রেণীর ছাত্রদের জন্য যোগ এবং বিয়োগের উপর একটি সহজ কুইজ।",
+    te: "1వ తరగతి విద్యార్థుల కోసం కూడిక మరియు తీసివేతపై ఒక సాధారణ క్విజ్.",
+    mr: "पहिलीच्या विद्यार्थ्यांसाठी बेरीज आणि वजाबाकीवर एक सोपी प्रश्नमंजुषा.",
+    ta: "1 ஆம் வகுப்பு மாணவர்களுக்கு கூட்டல் மற்றும் கழித்தல் பற்றிய ஒரு எளிய வினாடி வினா.",
+    gu: "પહેલા ધોરણના વિદ્યાર્થીઓ માટે સરવાળા અને બાદબાકી પર એક સરળ ક્વિઝ.",
+    kn: "1 ನೇ ತರಗತಿಯವರಿಗೆ ಸಂಕಲನ ಮತ್ತು ವ್ಯವಕಲನದ ಮೇಲೆ ಒಂದು ಸರಳ ರಸಪ್ರಶ್ನೆ.",
+  },
 };
 
 const headerTranslations: Record<string, string> = {
@@ -324,6 +364,7 @@ const pagePrompts: Record<string, string[]> = {
   'virtual-field-trip': ['fieldTripHarappa', 'fieldTripKaveri', 'fieldTripTigers', 'fieldTripFarming'],
   'teacher-training': ['trainingQuietStudents', 'trainingThinkPairShare', 'trainingMotivation', 'trainingTimeManagement'],
   'rubric': ['rubricCholaProject', 'rubricStorytelling', 'rubricDebate', 'rubricPoster'],
+  'quiz': ['quizSolarSystem', 'quizIndianHistory', 'quizHumanBody', 'quizBasicMath'],
 };
 
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage, page = 'home' }) => {
