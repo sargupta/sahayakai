@@ -196,55 +196,33 @@ export default function QuizGeneratorPage() {
 
               <FormField
                 control={form.control}
-                name="topic"
+                name="questionTypes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t.topicPlaceholder}
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm"
-                      />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                      {questionTypesData.map((item) => (
+                         <SelectableCard
+                              key={item.id}
+                              icon={item.icon}
+                              label={t.questionTypes[item.id]}
+                              isSelected={field.value?.includes(item.id)}
+                              onSelect={() => {
+                                  const currentValues = field.value || [];
+                                  const newValues = currentValues.includes(item.id)
+                                  ? currentValues.filter((v) => v !== item.id)
+                                  : [...currentValues, item.id];
+                                  field.onChange(newValues);
+                              }}
+                          />
+                      ))}
+                      </div>
+                      <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
-
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
-
-                <FormField
-                  control={form.control}
-                  name="questionTypes"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                        {questionTypesData.map((item) => (
-                           <SelectableCard
-                                key={item.id}
-                                icon={item.icon}
-                                label={t.questionTypes[item.id]}
-                                isSelected={field.value?.includes(item.id)}
-                                onSelect={() => {
-                                    const currentValues = field.value || [];
-                                    const newValues = currentValues.includes(item.id)
-                                    ? currentValues.filter((v) => v !== item.id)
-                                    : [...currentValues, item.id];
-                                    field.onChange(newValues);
-                                }}
-                            />
-                        ))}
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
+              <FormField
                 control={form.control}
                 name="bloomsTaxonomyLevels"
                 render={() => (
@@ -345,6 +323,28 @@ export default function QuizGeneratorPage() {
                   )}
                 />
 
+              <FormField
+                control={form.control}
+                name="topic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t.topicPlaceholder}
+                        {...field}
+                        className="bg-white/50 backdrop-blur-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
+
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
+              
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
                   <>
