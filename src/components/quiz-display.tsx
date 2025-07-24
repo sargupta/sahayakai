@@ -68,7 +68,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
   const questionTypeLabel = (type: string) => {
     switch(type) {
         case 'multiple_choice': return 'Multiple Choice';
-        case 'true_false': return 'True/False';
+        case 'fill_in_the_blanks': return 'Fill in the Blanks';
         case 'short_answer': return 'Short Answer';
         default: return '';
     }
@@ -109,7 +109,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
                     <li>False</li>
                   </ul>
                 )}
-                {q.questionType === 'short_answer' && (
+                {(q.questionType === 'short_answer' || q.questionType === 'fill_in_the_blanks') && (
                     <div className="mt-2 pl-6">
                         <div className="border-b border-dashed border-gray-400 h-8 w-full"></div>
                     </div>
