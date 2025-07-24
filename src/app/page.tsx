@@ -1,3 +1,4 @@
+
 "use client";
 
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
@@ -7,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lightbulb } from "lucide-react";
+import { Loader2, Lightbulb, Upload } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -183,7 +184,19 @@ export default function Home() {
                 )}
               />
               
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
+              <div className="flex items-center justify-center gap-4">
+                <MicrophoneInput onTranscriptChange={handleTranscript} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  className="h-20 w-20 rounded-full shadow-lg"
+                  aria-label="Upload a file"
+                >
+                  <Upload className="h-10 w-10" />
+                </Button>
+              </div>
+
 
               <ExamplePrompts
                 onPromptClick={handlePromptClick}
