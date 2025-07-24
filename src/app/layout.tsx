@@ -1,6 +1,9 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Logo } from '@/components/logo';
 
 export const metadata: Metadata = {
   title: 'SahayakAI: Bharat Interface',
@@ -20,7 +23,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 md:p-8">
+              <SidebarHeader className="w-full flex items-center justify-between md:hidden mb-4">
+                <Logo />
+              </SidebarHeader>
+              {children}
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
         <Toaster />
       </body>
     </html>

@@ -1,3 +1,5 @@
+"use client";
+
 import { BookOpenCheck } from 'lucide-react';
 import type { FC } from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
