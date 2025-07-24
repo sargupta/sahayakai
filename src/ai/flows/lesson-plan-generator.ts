@@ -47,7 +47,7 @@ const lessonPlanPrompt = ai.definePrompt({
   tools: [googleSearch],
   prompt: `You are an expert teacher who creates culturally and geographically relevant educational content, especially for multi-grade classrooms. Generate a detailed lesson plan based on the following inputs.
 
-You MUST follow the specified JSON output format.
+You MUST follow the specified JSON output format. Your response must be a valid JSON object that adheres to the defined schema. Do not return null or any other non-JSON response.
 
 {{#if imageDataUri}}
 **Primary Context from Image:**
@@ -71,6 +71,11 @@ const lessonPlanFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await lessonPlanPrompt(input);
-    return output!;
+    
+    if (!output) {
+      throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
+    }
+
+    return output;
   }
 );
