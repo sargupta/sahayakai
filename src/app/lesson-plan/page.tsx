@@ -16,6 +16,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { AutoCompleteInput } from "@/components/auto-complete-input";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -72,6 +73,17 @@ const placeholderTranslations: Record<string, string> = {
     kn: "ಉದಾ., 'ಕೇರಳದ ಒಂದು ಹಳ್ಳಿ'",
 };
 
+const topicPlaceholderTranslations: Record<string, string> = {
+    en: "e.g., 'The Indian Monsoon'",
+    hi: "उदा., 'भारतीय मानसून'",
+    bn: "উদা., 'ভারতীয় বর্ষা'",
+    te: "ఉదా., 'భారత రుతుపవనాలు'",
+    mr: "उदा., 'भारतीय मान्सून'",
+    ta: "உதா., 'இந்திய பருவமழை'",
+    gu: "દા.ત., 'ભારતીય ચોમાસું'",
+    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್'",
+};
+
 
 export default function LessonPlanAgentPage() {
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
@@ -91,6 +103,7 @@ export default function LessonPlanAgentPage() {
   const selectedLanguage = form.watch("language") || 'en';
   const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
+  const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -139,10 +152,14 @@ export default function LessonPlanAgentPage() {
                   <FormItem>
                     <FormLabel className="font-headline">Topic</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="e.g., 'The Indian Monsoon' or use the mic"
+                       <AutoCompleteInput
+                        placeholder={topicPlaceholder}
                         {...field}
-                        className="bg-white/50 backdrop-blur-sm"
+                        selectedLanguage={selectedLanguage}
+                        onSuggestionClick={(value) => {
+                            form.setValue("topic", value);
+                            form.trigger("topic");
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

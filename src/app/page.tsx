@@ -1,3 +1,4 @@
+
 "use client";
 
 import { generateLessonPlan } from "@/ai/flows/lesson-plan-generator";
@@ -16,6 +17,7 @@ import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { AutoCompleteInput } from "@/components/auto-complete-input";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -83,6 +85,17 @@ const placeholderTranslations: Record<string, string> = {
     kn: "ಉದಾ., 'ಕೇರಳದ ಒಂದು ಹಳ್ಳಿ'",
 };
 
+const topicPlaceholderTranslations: Record<string, string> = {
+    en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
+    hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
+    bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
+    te: "ఉదా., 'భారతీయ రుతుపవనాల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
+    mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
+    ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
+    gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
+    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
+};
+
 export default function Home() {
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,6 +115,7 @@ export default function Home() {
   const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
   const hint = hintTranslations[selectedLanguage] || hintTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
+  const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -155,10 +169,14 @@ export default function Home() {
                   <FormItem>
                     <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="e.g., 'Create a lesson plan for the Indian Monsoon'"
+                      <AutoCompleteInput
+                        placeholder={topicPlaceholder}
                         {...field}
-                        className="bg-white/50 backdrop-blur-sm"
+                        selectedLanguage={selectedLanguage}
+                        onSuggestionClick={(value) => {
+                            form.setValue("topic", value);
+                            form.trigger("topic");
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
