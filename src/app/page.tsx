@@ -38,7 +38,7 @@ const descriptionTranslations: Record<string, string> = {
     mr: "प्रारंभ करण्यासाठी खालील इनपुट किंवा तुमचा आवाज वापरा.",
     ta: "தொடங்குவதற்கு கீழே உள்ள உள்ளீடு அல்லது உங்கள் குரலைப் பயன்படுத்தவும்.",
     gu: "શરૂ કરવા માટે નીચે આપેલ ઇનપુટ અથવા તમારા અવાજનો ઉપયોગ કરો.",
-    kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುట్ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
+    kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
 };
 
 const hintTranslations: Record<string, { title: string; body: string }> = {
@@ -201,38 +201,36 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-
-                <div className="md:col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="localContext"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-headline">Local Context</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={placeholder}
-                            {...field}
-                            className="bg-white/50 backdrop-blur-sm"
-                          />
-                        </FormControl>
-                        <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
-                            <div className="flex items-center gap-2 font-semibold">
-                              <Lightbulb className="h-4 w-4" />
-                              <span>{hint.title}</span>
-                            </div>
-                            <p>
-                            {hint.body}
-                            </p>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
 
-              <FormField
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="localContext"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline">Local Context</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={placeholder}
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm"
+                        />
+                      </FormControl>
+                      <div className="text-xs text-muted-foreground p-2 bg-accent/20 rounded-md border border-accent/30 space-y-1">
+                          <div className="flex items-center gap-2 font-semibold">
+                            <Lightbulb className="h-4 w-4" />
+                            <span>{hint.title}</span>
+                          </div>
+                          <p>
+                          {hint.body}
+                          </p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
                   control={form.control}
                   name="imageDataUri"
                   render={({ field }) => (
@@ -251,9 +249,8 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
-
+              </div>
+              
               <FormField
                 control={form.control}
                 name="topic"
@@ -281,6 +278,8 @@ export default function Home() {
                 selectedLanguage={selectedLanguage}
                 page="homeWithImage"
               />
+
+              <MicrophoneInput onTranscriptChange={handleTranscript} />
             
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
