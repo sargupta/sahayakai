@@ -107,7 +107,7 @@ export default function LessonPlanAgentPage() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl">Lesson Plan Agent</CardTitle>
+          <CardTitle className="font-headline text-3xl">Lesson Plan</CardTitle>
           <CardDescription>
             Create a comprehensive lesson plan using your voice or by typing a topic below.
           </CardDescription>
