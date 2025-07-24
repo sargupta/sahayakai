@@ -194,7 +194,7 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
   const headerText = headerTranslations[selectedLanguage] || headerTranslations['en'];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 p-3 bg-accent/20 rounded-lg">
       <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
         <Lightbulb className="h-4 w-4" />
         <span>{headerText}</span>
@@ -205,7 +205,7 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
             key={index}
             variant="outline"
             size="sm"
-            className="text-xs h-auto py-1 px-2.5"
+            className="text-xs h-auto py-1 px-2.5 bg-background/50"
             onClick={() => onPromptClick(prompt)}
           >
             {prompt}
