@@ -10,7 +10,7 @@ type ExamplePromptsProps = {
   selectedLanguage: string;
 };
 
-const translations: Record<string, Record<string, string>> = {
+const promptTranslations: Record<string, Record<string, string>> = {
   waterCycle: {
     en: "A lesson plan on the water cycle",
     hi: "जल चक्र पर एक पाठ योजना",
@@ -53,16 +53,30 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+const headerTranslations: Record<string, string> = {
+    en: "Try one of these",
+    hi: "इनमें से एक का प्रयास करें",
+    bn: "এইগুলির মধ্যে একটি চেষ্টা করুন",
+    te: "వీటిలో ఒకదాన్ని ప్రయత్నించండి",
+    mr: "यापैकी एक वापरून पहा",
+    ta: "இவற்றில் ஒன்றை முயற்சிக்கவும்",
+    gu: "આમાંથી એકનો પ્રયાસ કરો",
+    kn: "ಇವುಗಳಲ್ಲಿ ಒಂದನ್ನು ಪ್ರಯತ್ನಿಸಿ",
+};
+
+
 export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selectedLanguage }) => {
-  const prompts = Object.keys(translations).map(key => {
-    return translations[key][selectedLanguage] || translations[key]['en'];
+  const prompts = Object.keys(promptTranslations).map(key => {
+    return promptTranslations[key][selectedLanguage] || promptTranslations[key]['en'];
   });
+  
+  const headerText = headerTranslations[selectedLanguage] || headerTranslations['en'];
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
         <Lightbulb className="h-4 w-4" />
-        <span>Try one of these</span>
+        <span>{headerText}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {prompts.map((prompt, index) => (
