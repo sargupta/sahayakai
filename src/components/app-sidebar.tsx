@@ -12,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2 } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -38,10 +38,18 @@ export function AppSidebar() {
           <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/content-creator')} tooltip="Content Creator">
-                <Link href="/content-creator">
-                  <BookOpen />
-                  <span>Content Creator</span>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan-agent')} tooltip="Lesson Plan Agent">
+                <Link href="/lesson-plan-agent">
+                  <CalendarDays />
+                  <span>Lesson Plan Agent</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/rubric-generator')} tooltip="Rubric Generator">
+                <Link href="/rubric-generator">
+                  <ClipboardCheck />
+                  <span>Rubric Generator</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -54,10 +62,10 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/instant-answer')} tooltip="Instant Answer">
-                <Link href="/instant-answer">
-                  <Wand2 />
-                  <span>Instant Answer</span>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/quiz-generator')} tooltip="Quiz Generator">
+                <Link href="/quiz-generator">
+                  <FileSignature />
+                  <span>Quiz Generator</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -69,6 +77,22 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/instant-answer')} tooltip="Instant Answer">
+                <Link href="/instant-answer">
+                  <Wand2 />
+                  <span>Instant Answer</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/content-creator')} tooltip="Content Creator">
+                <Link href="/content-creator">
+                  <BookOpen />
+                  <span>Content Creator</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/video-storyteller')} tooltip="Video Storyteller">
                 <Link href="/video-storyteller">
@@ -77,15 +101,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan-agent')} tooltip="Lesson Plan Agent">
-                <Link href="/lesson-plan-agent">
-                  <CalendarDays />
-                  <span>Lesson Plan Agent</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/teacher-training')} tooltip="Teacher Training">
                 <Link href="/teacher-training">
                   <GraduationCap />
