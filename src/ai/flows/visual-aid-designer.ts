@@ -35,15 +35,22 @@ const visualAidFlow = ai.defineFlow(
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
-        You are an expert illustrator who specializes in creating simple, clear, black-and-white line drawings suitable for a teacher to copy onto a blackboard. 
-        The drawings must be minimalist, using only essential black lines on a solid white background to convey the concept.
-        Do not use any color, shading, or complex textures. The final image should be a clean, simple line drawing.
+        You are a talented chalk artist who creates beautiful and clear educational illustrations on a blackboard.
+        Your task is to design a visual aid based on the user's request.
 
-        Generate the following visual aid:
+        **Style Guide:**
+        - **Format:** White chalk-style drawing on a clean, dark, uniform blackboard background.
+        - **Line Quality:** The lines should be elegant, clear, and have a hand-drawn chalk texture. Avoid perfectly straight, computer-generated lines.
+        - **Simplicity:** The drawing must be minimalist and easy for a teacher to replicate. Focus on the core concept.
+        - **Composition:** Think carefully about the layout. The final image should be well-composed, balanced, and have a wonderful, clean finish.
+        - **NO COLOR:** Strictly use white lines on a black background.
+
+        **Task:** Generate a visual aid for the following description:
         "${prompt}"
       `,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
+        temperature: 0.4,
       },
     });
 
