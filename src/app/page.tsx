@@ -5,10 +5,9 @@ import { generateLessonPlan, LessonPlanOutput } from "@/ai/flows/lesson-plan-gen
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lightbulb } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,7 +23,6 @@ const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
-  localContext: z.string().optional(),
   imageDataUri: z.string().optional(),
 });
 
@@ -41,17 +39,6 @@ const descriptionTranslations: Record<string, string> = {
     kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ.",
 };
 
-const placeholderTranslations: Record<string, string> = {
-    en: "e.g., Delhi, Diwali, Ganges River",
-    hi: "उदा., दिल्ली, दिवाली, गंगा नदी",
-    bn: "उदा., দিল্লি, দিওয়ালি, গঙ্গা নদী",
-    te: "ఉదా., ఢిల్లీ, దీపావళి, గంగా నది",
-    mr: "उदा., दिल्ली, दिवाळी, गंगा नदी",
-    ta: "உதா., டெல்லி, தீபாவளி, கங்கை நதி",
-    gu: "દા.ત., દિલ્હી, દિવાળી, ગંગા નદી",
-    kn: "ಉದಾ., ದೆಹಲಿ, ದೀಪಾವಳಿ, ಗಂಗಾ ನದಿ",
-};
-
 const topicPlaceholderTranslations: Record<string, string> = {
     en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
     hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
@@ -60,7 +47,7 @@ const topicPlaceholderTranslations: Record<string, string> = {
     mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
     ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
     gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
-    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
+    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾన్ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
 };
 
 export default function Home() {
@@ -74,14 +61,12 @@ export default function Home() {
       topic: "",
       language: "en",
       gradeLevel: "6th Grade",
-      localContext: "",
       imageDataUri: "",
     },
   });
 
   const selectedLanguage = form.watch("language") || 'en';
   const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
-  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
   const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
@@ -92,7 +77,6 @@ export default function Home() {
         topic: values.topic,
         language: values.language,
         gradeLevel: values.gradeLevel,
-        localContext: values.localContext,
         imageDataUri: values.imageDataUri,
       });
       setLessonPlan(result);
@@ -167,44 +151,25 @@ export default function Home() {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                    control={form.control}
-                    name="localContext"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="font-headline">Local Context</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder={placeholder}
-                            {...field}
-                            className="bg-white/50 backdrop-blur-sm"
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                <FormField
-                  control={form.control}
-                  name="imageDataUri"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Add context (optional image)</FormLabel>
-                      <FormControl>
-                        <ImageUploader
-                            onImageUpload={(dataUri) => {
-                                field.onChange(dataUri);
-                                form.trigger("imageDataUri");
-                            }}
-                            language={selectedLanguage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="imageDataUri"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">Add Context (Optional Image)</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                          onImageUpload={(dataUri) => {
+                              field.onChange(dataUri);
+                              form.trigger("imageDataUri");
+                          }}
+                          language={selectedLanguage}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
                <MicrophoneInput onTranscriptChange={handleTranscript} />
 

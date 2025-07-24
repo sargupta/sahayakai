@@ -5,10 +5,9 @@ import { generateLessonPlan, LessonPlanOutput } from "@/ai/flows/lesson-plan-gen
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,26 +17,16 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
 import { ExamplePrompts } from "@/components/example-prompts";
+import { ImageUploader } from "@/components/image-uploader";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
-  localContext: z.string().optional(),
+  imageDataUri: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-const placeholderTranslations: Record<string, string> = {
-    en: "e.g., city, festival, or landmark",
-    hi: "उदा., शहर, त्योहार, या स्थल",
-    bn: "उदा., শহর, উৎসব, বা ল্যান্ডমার্ক",
-    te: "ఉదా., నగరం, పండుగ, లేదా మైలురాయి",
-    mr: "उदा., शहर, सण, किंवा महत्त्वाचे ठिकाण",
-    ta: "உதா., நகரம், திருவிழா, அல்லது முக்கிய இடம்",
-    gu: "દા.ત., શહેર, તહેવાર, અથવા સીમાચિહ્ન",
-    kn: "ಉದಾ., ನಗರ, ಹಬ್ಬ, ಅಥವಾ ಹೆಗ್ಗುರುತು",
-};
 
 const topicPlaceholderTranslations: Record<string, string> = {
     en: "e.g., 'The Indian Monsoon'",
@@ -62,12 +51,11 @@ export default function LessonPlanAgentPage() {
       topic: "",
       language: "en",
       gradeLevel: "6th Grade",
-      localContext: "",
+      imageDataUri: "",
     },
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
   const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
   const onSubmit = async (values: FormValues) => {
@@ -78,7 +66,7 @@ export default function LessonPlanAgentPage() {
         topic: values.topic,
         language: values.language,
         gradeLevel: values.gradeLevel,
-        localContext: values.localContext,
+        imageDataUri: values.imageDataUri,
       });
       setLessonPlan(result);
     } catch (error) {
@@ -152,38 +140,25 @@ export default function LessonPlanAgentPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="localContext"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel className="font-headline">Local Context</FormLabel>
-                      <FormControl>
-                          <Input
-                          placeholder={placeholder}
-                          {...field}
-                          className="bg-white/50 backdrop-blur-sm"
-                          />
-                      </FormControl>
-                      <FormMessage />
-                      </FormItem>
-                  )}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <FormLabel className="font-headline">Add context (optional)</FormLabel>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="w-full h-10 flex items-center justify-center gap-2 border-dashed"
-                      aria-label="Upload a file"
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span>Upload Textbook Page</span>
-                    </Button>
-                  </div>
-              </div>
+              <FormField
+                control={form.control}
+                name="imageDataUri"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">Add Context (Optional Image)</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                          onImageUpload={(dataUri) => {
+                              field.onChange(dataUri);
+                              form.trigger("imageDataUri");
+                          }}
+                          language={selectedLanguage}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <MicrophoneInput onTranscriptChange={handleTranscript} />
 
@@ -212,7 +187,7 @@ export default function LessonPlanAgentPage() {
               <ExamplePrompts
                 onPromptClick={handlePromptClick}
                 selectedLanguage={selectedLanguage}
-                page="home"
+                page="homeWithImage"
               />
 
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">

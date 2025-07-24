@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -15,7 +16,6 @@ const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
   language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
   gradeLevel: z.string().optional().describe('The grade level for the lesson plan.'),
-  localContext: z.string().optional().describe('The district, state, or dialect for localization.'),
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
@@ -56,14 +56,7 @@ Analyze the following image and use it as the primary source of information for 
 Topic: {{{topic}}}
 Grade Level: {{{gradeLevel}}}
 Language: {{{language}}}
-Local Context: {{{localContext}}}
 
-**Instructions for using Local Context:**
-When a 'Local Context' is provided, you MUST use it to make the lesson plan more relatable for the student.
-- For scientific concepts, use analogies from local life. For example, when explaining photosynthesis for a student in Tamil Nadu, you could relate it to the celebration of Pongal, which is a harvest festival.
-- For stories or examples, use names of local places, cities, or villages.
-- For cultural topics, reference local festivals, traditions, and customs. For instance, if the topic is 'festivals' for a student in Bengal, you must talk about Durga Puja.
-- The goal is to make the student feel that the content is created specifically for their environment.
 `,
 });
 
