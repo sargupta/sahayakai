@@ -1,3 +1,4 @@
+
 "use client";
 
 import { generateRubric, RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
@@ -32,6 +33,55 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const translations: Record<string, Record<string, any>> = {
+  en: {
+    pageTitle: "Rubric Generator",
+    pageDescription: "Create clear and fair grading rubrics for any assignment.",
+    dialogTitle: "What is a Rubric?",
+    dialogDescription: "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.",
+    dialogWhy: "Why are they important?",
+    dialogClarity: "Clarity: They demystify assignments by making expectations clear to students before they start.",
+    dialogConsistency: "Consistency: They ensure all students are graded with the same criteria, making assessment fair and objective.",
+    dialogFeedback: "Feedback: They provide specific, detailed feedback that helps students understand their strengths and areas for improvement.",
+    dialogEfficiency: "Efficiency: They can make the grading process faster and more straightforward for teachers.",
+    formLabel: "Assignment Description",
+    formPlaceholder: "e.g., A project to build a model of the solar system for 6th graders.",
+    gradeLevel: "Grade Level",
+    language: "Language",
+    buttonGenerate: "Generate Rubric",
+    buttonGenerating: "Generating Rubric...",
+    loadingText: "Building your rubric...",
+    strongClarity: "Clarity:",
+    strongConsistency: "Consistency:",
+    strongFeedback: "Feedback:",
+    strongEfficiency: "Efficiency:",
+  },
+  hi: {
+    pageTitle: "रूब्रिक जेनरेटर",
+    pageDescription: "किसी भी असाइनमेंट के लिए स्पष्ट और निष्पक्ष ग्रेडिंग रूब्रिक बनाएं।",
+    dialogTitle: "रूब्रिक क्या है?",
+    dialogDescription: "रूब्रिक एक स्कोरिंग उपकरण है जो किसी असाइनमेंट या काम के लिए प्रदर्शन अपेक्षाओं का स्पष्ट रूप से प्रतिनिधित्व करता है।",
+    dialogWhy: "वे महत्वपूर्ण क्यों हैं?",
+    dialogClarity: "स्पष्टता: वे छात्रों को शुरू करने से पहले अपेक्षाओं को स्पष्ट करके असाइनमेंट को सरल बनाते हैं।",
+    dialogConsistency: "संगति: वे सुनिश्चित करते हैं कि सभी छात्रों को समान मानदंडों के साथ ग्रेड दिया जाए, जिससे मूल्यांकन निष्पक्ष और वस्तुनिष्ठ हो।",
+    dialogFeedback: "फीडबैक: वे विशिष्ट, विस्तृत फीडबैक प्रदान करते हैं जो छात्रों को उनकी ताकत और सुधार के क्षेत्रों को समझने में मदद करता है।",
+    dialogEfficiency: "दक्षता: वे शिक्षकों के लिए ग्रेडिंग प्रक्रिया को तेज और अधिक सीधा बना सकते हैं।",
+    formLabel: "असाइनमेंट विवरण",
+    formPlaceholder: "उदा., छठी कक्षा के छात्रों के लिए सौर मंडल का एक मॉडल बनाने की एक परियोजना।",
+    gradeLevel: "श्रेणी स्तर",
+    language: "भाषा",
+    buttonGenerate: "रूब्रिक बनाएं",
+    buttonGenerating: "रूब्रिक बना रहा है...",
+    loadingText: "आपका रूब्रिक बन रहा है...",
+    strongClarity: "स्पष्टता:",
+    strongConsistency: "संगति:",
+    strongFeedback: "फीडबैक:",
+    strongEfficiency: "दक्षता:",
+  },
+  // Add other languages here...
+};
+
+
 export default function RubricGeneratorPage() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,12 +97,13 @@ export default function RubricGeneratorPage() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
+  const t = translations[selectedLanguage] || translations.en;
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setRubric(null);
     try {
-      const result = await generateRubric(values);
+      const result = await generateRubric({...values, language: selectedLanguage});
       setRubric(result);
     } catch (error) {
       console.error("Failed to generate rubric:", error);
@@ -78,9 +129,9 @@ export default function RubricGeneratorPage() {
           <div className="flex justify-center items-center mb-4">
             <ClipboardCheck className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Rubric Generator</CardTitle>
+          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription className="flex items-center justify-center gap-2">
-            <span>Create clear and fair grading rubrics for any assignment.</span>
+            <span>{t.pageDescription}</span>
              <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-5 w-5">
@@ -89,18 +140,18 @@ export default function RubricGeneratorPage() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle className="font-headline">What is a Rubric?</DialogTitle>
+                  <DialogTitle className="font-headline">{t.dialogTitle}</DialogTitle>
                   <DialogDescription>
-                   A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.
+                   {t.dialogDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="text-sm text-muted-foreground space-y-2">
-                    <p><strong className="text-foreground">Why are they important?</strong></p>
+                    <p><strong className="text-foreground">{t.dialogWhy}</strong></p>
                     <ul className="list-disc pl-5 space-y-1">
-                        <li><strong className="text-foreground/80">Clarity:</strong> They demystify assignments by making expectations clear to students before they start.</li>
-                        <li><strong className="text-foreground/80">Consistency:</strong> They ensure all students are graded with the same criteria, making assessment fair and objective.</li>
-                        <li><strong className="text-foreground/80">Feedback:</strong> They provide specific, detailed feedback that helps students understand their strengths and areas for improvement.</li>
-                         <li><strong className="text-foreground/80">Efficiency:</strong> They can make the grading process faster and more straightforward for teachers.</li>
+                        <li><strong className="text-foreground/80">{t.strongClarity}</strong> {t.dialogClarity}</li>
+                        <li><strong className="text-foreground/80">{t.strongConsistency}</strong> {t.dialogConsistency}</li>
+                        <li><strong className="text-foreground/80">{t.strongFeedback}</strong> {t.dialogFeedback}</li>
+                         <li><strong className="text-foreground/80">{t.strongEfficiency}</strong> {t.dialogEfficiency}</li>
                     </ul>
                 </div>
               </DialogContent>
@@ -115,10 +166,10 @@ export default function RubricGeneratorPage() {
                 name="assignmentDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-headline">Assignment Description</FormLabel>
+                    <FormLabel className="font-headline">{t.formLabel}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., A project to build a model of the solar system for 6th graders."
+                        placeholder={t.formPlaceholder}
                         {...field}
                         className="bg-white/50 backdrop-blur-sm min-h-[120px]"
                       />
@@ -136,7 +187,7 @@ export default function RubricGeneratorPage() {
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Grade Level</FormLabel>
+                      <FormLabel className="font-headline">{t.gradeLevel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={[field.value || "7th Grade"]}
@@ -154,7 +205,7 @@ export default function RubricGeneratorPage() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Language</FormLabel>
+                      <FormLabel className="font-headline">{t.language}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -171,10 +222,10 @@ export default function RubricGeneratorPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Generating Rubric...
+                    {t.buttonGenerating}
                   </>
                 ) : (
-                  "Generate Rubric"
+                  t.buttonGenerate
                 )}
               </Button>
             </form>
@@ -186,7 +237,7 @@ export default function RubricGeneratorPage() {
         <Card className="mt-8 w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">Building your rubric...</p>
+            <p className="text-muted-foreground">{t.loadingText}</p>
           </CardContent>
         </Card>
       )}
@@ -195,3 +246,4 @@ export default function RubricGeneratorPage() {
     </div>
   );
 }
+
