@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ClipboardCheck } from "lucide-react";
+import { Loader2, ClipboardCheck, Info } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,6 +15,14 @@ import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { RubricDisplay } from "@/components/rubric-display";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -71,8 +79,32 @@ export default function RubricGeneratorPage() {
             <ClipboardCheck className="w-12 h-12 text-primary" />
           </div>
           <CardTitle className="font-headline text-3xl">Rubric Generator</CardTitle>
-          <CardDescription>
-            Create clear and fair grading rubrics for any assignment.
+          <CardDescription className="flex items-center justify-center gap-2">
+            <span>Create clear and fair grading rubrics for any assignment.</span>
+             <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-5 w-5">
+                  <Info className="h-5 w-5 text-accent-foreground/50" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="font-headline">What is a Rubric?</DialogTitle>
+                  <DialogDescription>
+                   A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="text-sm text-muted-foreground space-y-2">
+                    <p><strong className="text-foreground">Why are they important?</strong></p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li><strong className="text-foreground/80">Clarity:</strong> They demystify assignments by making expectations clear to students before they start.</li>
+                        <li><strong className="text-foreground/80">Consistency:</strong> They ensure all students are graded with the same criteria, making assessment fair and objective.</li>
+                        <li><strong className="text-foreground/80">Feedback:</strong> They provide specific, detailed feedback that helps students understand their strengths and areas for improvement.</li>
+                         <li><strong className="text-foreground/80">Efficiency:</strong> They can make the grading process faster and more straightforward for teachers.</li>
+                    </ul>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,7 +140,7 @@ export default function RubricGeneratorPage() {
                       <FormControl>
                         <GradeLevelSelector
                           value={[field.value || "7th Grade"]}
-                          onValueChange={(values) => field.onChange(values[0])}
+                          onValueChange={(values) => field.onChange(values?.[0])}
                           language={selectedLanguage}
                           isMulti={false}
                         />

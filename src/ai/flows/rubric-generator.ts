@@ -20,6 +20,7 @@ export type RubricGeneratorInput = z.infer<typeof RubricGeneratorInputSchema>;
 
 const RubricGeneratorOutputSchema = z.object({
   title: z.string().describe("The title of the rubric (e.g., 'Science Project Rubric')."),
+  description: z.string().describe("A brief, one-sentence description of the assignment this rubric is for."),
   criteria: z.array(z.object({
     name: z.string().describe("The name of the criterion (e.g., 'Research and Content')."),
     description: z.string().describe("A brief description of what this criterion evaluates."),
@@ -43,7 +44,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
   prompt: `You are an expert educator specializing in assessment design. Create a detailed, fair, and clear grading rubric based on the user's request.
 
 **Instructions:**
-1.  **Title:** Create a clear title for the rubric based on the assignment.
+1.  **Title and Description:** Create a clear title and a one-sentence description for the rubric based on the assignment.
 2.  **Criteria:** Identify 4-5 key evaluation criteria from the assignment description. For each criterion, provide a brief description.
 3.  **Performance Levels:** For each criterion, define four performance levels:
     -   Exemplary (highest score)
