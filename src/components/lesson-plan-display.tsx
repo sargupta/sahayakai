@@ -47,7 +47,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
         </Button>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" collapsible className="w-full" defaultValue={['Objectives', 'Activities']}>
+        <Accordion type="multiple" className="w-full" defaultValue={['Objectives', 'Activities']}>
           
           <AccordionItem value="Objectives">
             <AccordionTrigger className="font-headline text-lg hover:no-underline text-left">
