@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList } from 'lucide-react';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
-
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
@@ -18,16 +19,47 @@ type LessonPlanDisplayProps = {
 
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) => {
   const handleDownload = () => {
-    const jsonString = JSON.stringify(lessonPlan, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'lesson-plan.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const input = document.getElementById('lesson-plan-pdf');
+    if (input) {
+      html2canvas(input, { scale: 2 }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+
+        let position = 0;
+        let remainingHeight = canvasHeight;
+
+        while (remainingHeight > 0) {
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvasWidth;
+            
+            // Calculate height for the current page
+            const pageHeight = Math.min(remainingHeight, canvasHeight * (pdfHeight / height));
+            pageCanvas.height = pageHeight;
+
+            const pageCtx = pageCanvas.getContext('2d');
+            pageCtx?.drawImage(canvas, 0, position, canvasWidth, pageHeight, 0, 0, canvasWidth, pageHeight);
+
+            const pageImgData = pageCanvas.toDataURL('image/png');
+            
+            if (position > 0) {
+                pdf.addPage();
+            }
+
+            pdf.addImage(pageImgData, 'PNG', 0, 0, width, height * (pageHeight/canvasHeight));
+            position += pageHeight;
+            remainingHeight -= pageHeight;
+        }
+
+        pdf.save('lesson-plan.pdf');
+      });
+    }
   };
 
   if (!lessonPlan) {
@@ -35,15 +67,15 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
   }
 
   return (
-    <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline text-2xl flex items-center gap-2">
           <BookText />
           {lessonPlan.title || 'Your Generated Lesson Plan'}
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={handleDownload}>
+        <Button variant="outline" size="sm" onClick={handleDownload} className="no-print">
           <Download className="mr-2 h-4 w-4" />
-          Download JSON
+          Download PDF
         </Button>
       </CardHeader>
       <CardContent>
