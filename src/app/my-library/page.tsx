@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,6 +29,7 @@ import {
 import { LanguageSelector } from '@/components/language-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
+import { generateAvatar } from '@/ai/flows/avatar-generator';
 
 type Resource = {
   name: string;
@@ -212,8 +213,15 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function MyLibraryPage() {
   const [language, setLanguage] = useState('en');
+  const [avatar, setAvatar] = useState<string | null>(null);
   const t = translations[language] || translations.en;
   
+  useEffect(() => {
+    generateAvatar({ name: 'Anjali Sharma' })
+        .then(res => setAvatar(res.imageDataUri))
+        .catch(console.error);
+  }, []);
+
   const getTranslatedFileType = (type: FileType): string => {
     switch (type) {
         case 'folder': return t.folder;
@@ -230,7 +238,7 @@ export default function MyLibraryPage() {
     <div className="w-full max-w-7xl mx-auto space-y-8">
         <ProfileCard 
             name="Anjali Sharma"
-            avatarUrl="https://placehold.co/100x100.png"
+            avatarUrl={avatar}
             stats={{
                 followers: 1250,
                 following: 180,

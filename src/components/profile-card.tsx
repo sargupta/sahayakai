@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from './ui/button';
 import { UserPlus, Pencil } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
 type ProfileCardProps = {
   name: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   stats: {
     followers: number;
     following: number;
@@ -77,7 +78,11 @@ export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, lang
       <div className="h-24 bg-gradient-to-r from-primary/50 to-accent/50" />
       <CardContent className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-6 pt-0">
         <Avatar className="-mt-12 h-24 w-24 border-4 border-background">
-          <AvatarImage src={avatarUrl} alt={name} data-ai-hint="teacher profile"/>
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="teacher profile"/>
+          ) : (
+            <Skeleton className="h-full w-full rounded-full" />
+          )}
           <AvatarFallback>{name.substring(0, 2)}</AvatarFallback>
         </Avatar>
         <div className="flex-grow text-center sm:text-left">
