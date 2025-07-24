@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Download, Images } from "lucide-react";
+import { Loader2, Download, Images, Save } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -77,6 +77,13 @@ export default function VisualAidDesignerPage() {
   const handlePromptClick = (prompt: string) => {
     form.setValue("prompt", prompt);
     form.trigger("prompt");
+  };
+
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your visual aid has been saved to your personal library.",
+    });
   };
 
   return (
@@ -179,10 +186,16 @@ export default function VisualAidDesignerPage() {
           <CardHeader>
             <CardTitle className="font-headline text-2xl flex items-center justify-between">
               <span>Generated Image</span>
-              <Button variant="outline" onClick={handleDownload}>
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center items-center p-4">

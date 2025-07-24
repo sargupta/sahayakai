@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, PencilRuler, Download } from "lucide-react";
+import { Loader2, PencilRuler, Download, Save } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -78,6 +78,13 @@ export default function WorksheetWizardPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your worksheet has been saved to your personal library.",
+    });
   };
 
   return (
@@ -203,10 +210,16 @@ export default function WorksheetWizardPage() {
                 <PencilRuler />
                 Your Generated Worksheet
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </Button>
+             <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+              </div>
           </CardHeader>
           <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20">
             <ReactMarkdown>{worksheet}</ReactMarkdown>

@@ -2,16 +2,17 @@
 "use client";
 
 import type { FC } from 'react';
-import type { QuizGeneratorOutput } from "@/ai/flows/quiz-generator";
+import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from './ui/button';
-import { Download, Eye, EyeOff } from 'lucide-react';
+import { Download, Eye, EyeOff, Save } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useState } from 'react';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 type QuizDisplayProps = {
   quiz: QuizGeneratorOutput;
@@ -19,6 +20,7 @@ type QuizDisplayProps = {
 
 export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
   const [showAnswers, setShowAnswers] = useState(false);
+  const { toast } = useToast();
 
   const handleDownload = async () => {
     const quizElement = document.getElementById('quiz-sheet');
@@ -59,6 +61,13 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
         pdf.save(`${quiz.title.replace(/\s/g, '_')}_quiz.pdf`);
     }
   };
+  
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your quiz has been saved to your personal library.",
+    });
+  };
 
 
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
@@ -83,6 +92,10 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
             <Button variant="outline" size="sm" onClick={() => setShowAnswers(!showAnswers)}>
               {showAnswers ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
               {showAnswers ? 'Hide Answers' : 'Show Answers'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" />

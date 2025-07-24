@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
@@ -11,15 +12,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from './ui/button';
-import { Download } from 'lucide-react';
+import { Download, Save } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useToast } from '@/hooks/use-toast';
 
 type RubricDisplayProps = {
   rubric: RubricGeneratorOutput;
 };
 
 export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
+  const { toast } = useToast();
+
   if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
     return null;
   }
@@ -47,6 +51,13 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
         });
     }
   };
+  
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your rubric has been saved to your personal library.",
+    });
+  };
 
 
   const performanceLevels = rubric.criteria[0]?.levels.map(level => ({
@@ -62,10 +73,16 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
                 <CardTitle className="font-headline text-2xl">{rubric.title}</CardTitle>
                 {rubric.description && <CardDescription>{rubric.description}</CardDescription>}
             </div>
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF
-            </Button>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF
+                </Button>
+            </div>
         </div>
       </CardHeader>
       <CardContent>

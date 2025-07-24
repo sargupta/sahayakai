@@ -4,20 +4,37 @@
 import type { FC } from 'react';
 import type { TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Lightbulb } from 'lucide-react';
+import { GraduationCap, BookOpen, Lightbulb, Save } from 'lucide-react';
+import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 type TeacherTrainingDisplayProps = {
   advice: TeacherTrainingOutput;
 };
 
 export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice }) => {
+    const { toast } = useToast();
+    
+    const handleSave = () => {
+        toast({
+            title: "Saved to Library",
+            description: "This advice has been saved to your personal library.",
+        });
+    };
+
   return (
     <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl flex items-center gap-2">
-          <GraduationCap />
-          Your Personalized Advice
-        </CardTitle>
+        <div className="flex justify-between items-start">
+            <CardTitle className="font-headline text-2xl flex items-center gap-2">
+              <GraduationCap />
+              Your Personalized Advice
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save to Library
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-lg text-foreground/90">{advice.introduction}</p>

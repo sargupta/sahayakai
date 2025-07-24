@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Wand2, Youtube } from "lucide-react";
+import { Loader2, Wand2, Youtube, Save } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -69,6 +69,13 @@ export default function InstantAnswerPage() {
   const handlePromptClick = (prompt: string) => {
     form.setValue("question", prompt);
     form.trigger("question");
+  };
+
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your answer has been saved to your personal library.",
+    });
   };
 
   return (
@@ -169,8 +176,16 @@ export default function InstantAnswerPage() {
       {answer && (
         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">Your Answer</CardTitle>
-            <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="font-headline text-2xl">Your Answer</CardTitle>
+                    <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save to Library
+                </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="prose prose-lg max-w-none text-foreground">

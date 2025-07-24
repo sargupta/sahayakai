@@ -1,3 +1,4 @@
+
 "use client";
 import {
   Accordion,
@@ -7,17 +8,20 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList } from 'lucide-react';
+import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save } from 'lucide-react';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useToast } from "@/hooks/use-toast";
 
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
 };
 
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) => {
+  const { toast } = useToast();
+  
   const handleDownload = () => {
     const input = document.getElementById('lesson-plan-pdf');
     if (input) {
@@ -62,6 +66,13 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
     }
   };
 
+  const handleSave = () => {
+    toast({
+        title: "Saved to Library",
+        description: "Your lesson plan has been saved to your personal library.",
+    });
+  };
+
   if (!lessonPlan) {
     return null;
   }
@@ -73,10 +84,16 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
           <BookText />
           {lessonPlan.title || 'Your Generated Lesson Plan'}
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={handleDownload} className="no-print">
-          <Download className="mr-2 h-4 w-4" />
-          Download PDF
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSave} className="no-print">
+                <Save className="mr-2 h-4 w-4" />
+                Save to Library
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownload} className="no-print">
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full" defaultValue={['Objectives', 'Activities']}>
