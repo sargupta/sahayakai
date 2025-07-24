@@ -23,7 +23,7 @@ const VirtualFieldTripOutputSchema = z.object({
   stops: z.array(z.object({
     name: z.string().describe('The name of the location or stop on the tour.'),
     description: z.string().describe('A brief, engaging description of the stop, suitable for the specified grade level.'),
-    googleEarthUrl: z.string().url().describe('A Google Earth URL for the location. This should be a direct link that opens the location in Google Earth (e.g., "https://earth.google.com/web/search/...")'),
+    googleEarthUrl: z.string().describe('A Google Earth URL for the location. This should be a direct link that opens the location in Google Earth (e.g., "https://earth.google.com/web/search/...")'),
   })).describe('An array of stops for the virtual field trip.'),
 });
 export type VirtualFieldTripOutput = z.infer<typeof VirtualFieldTripOutputSchema>;
