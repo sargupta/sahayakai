@@ -42,13 +42,13 @@ const mockTrendingResources: Resource[] = [
 
 const mockFollowingResources: Resource[] = [
     { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 42, language: 'en' },
-    { id: 'f2', title: 'জল চক্রের ভিজ্যুয়াল এইড', type: 'image', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 88, language: 'bn' },
-    { id: 'f3', 'title': 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105, language: 'en' },
+    { id: 'f2', title: 'गति पर वर्कशीट', type: 'worksheet', author: 'Priya Singh', authorAvatar: 'https://placehold.co/40x40.png?text=PS', likes: 88, language: 'hi' },
+    { id: 'f3', title: 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorAvatar: 'https://placehold.co/40x40.png?text=RK', likes: 105, language: 'en' },
 ];
 
 const mockMyContentResources: Resource[] = [
   { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 15, language: 'en' },
-  { id: 'm2', 'title': 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 3, language: 'hi' },
+  { id: 'm2', title: 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 3, language: 'hi' },
   { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', authorAvatar: 'https://placehold.co/40x40.png', likes: 22, language: 'en' },
 ];
 
