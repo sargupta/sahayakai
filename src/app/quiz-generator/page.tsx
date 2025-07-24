@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
@@ -256,31 +257,33 @@ export default function QuizGeneratorPage() {
                           control={form.control}
                           name="bloomsTaxonomyLevels"
                           render={({ field }) => {
+                            const isSelected = field.value?.includes(item.id);
                             return (
                               <FormItem key={item.id} className="flex flex-row items-center space-x-2 space-y-0">
                                 <FormControl>
-                                  <Button 
-                                    type="button"
-                                    variant={field.value?.includes(item.id) ? "default" : "outline"}
-                                    size="sm"
+                                  <Label
+                                    htmlFor={item.id}
                                     className={cn(
-                                        "rounded-full h-8 px-4 text-xs font-normal",
-                                        field.value?.includes(item.id) && "bg-blue-600 hover:bg-blue-700 text-white"
+                                        "flex items-center gap-2 cursor-pointer rounded-full h-8 px-4 text-xs font-normal border transition-colors",
+                                        isSelected
+                                        ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                                        : "border-border bg-background hover:bg-accent"
                                     )}
-                                    onClick={() => {
-                                       const currentValues = field.value || [];
-                                        const newValues = currentValues.includes(item.id)
-                                        ? currentValues.filter((v) => v !== item.id)
-                                        : [...currentValues, item.id];
-                                        field.onChange(newValues);
-                                    }}
                                   >
                                     <CheckboxUI
-                                        checked={field.value?.includes(item.id)}
+                                        id={item.id}
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                            const currentValues = field.value || [];
+                                            const newValues = checked
+                                            ? [...currentValues, item.id]
+                                            : currentValues.filter((v) => v !== item.id);
+                                            field.onChange(newValues);
+                                        }}
                                         className="mr-2 h-3 w-3 border-current"
                                     />
                                     {t.blooms[item.id]}
-                                  </Button>
+                                  </Label>
                                 </FormControl>
                               </FormItem>
                             )
