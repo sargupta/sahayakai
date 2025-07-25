@@ -77,6 +77,5 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(to top right, hsl(var(--accent)) 0%, hsl(var(--background)) 50%, hsl(var(--primary) / 0.3) 100%);
   }
 }
