@@ -12,6 +12,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '../tools/google-search';
+import { auth, db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -74,6 +76,19 @@ const lessonPlanFlow = ai.defineFlow(
     
     if (!output) {
       throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'lesson-plan',
+        topic: input.topic,
+        gradeLevels: input.gradeLevels,
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
     }
 
     return output;

@@ -11,6 +11,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
@@ -62,6 +64,23 @@ const teacherTrainingFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await teacherTrainingPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid training advice. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'teacher-training',
+        topic: input.question,
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

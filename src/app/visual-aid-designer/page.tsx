@@ -133,6 +133,7 @@ export default function VisualAidDesignerPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           language={selectedLanguage}
+                          isMulti={false}
                         />
                       </FormControl>
                       <FormMessage />

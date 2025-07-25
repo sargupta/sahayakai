@@ -5,14 +5,16 @@ import type { FC } from 'react';
 import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from './ui/button';
-import { Download, Eye, EyeOff, Save } from 'lucide-react';
+import { Download, Eye, EyeOff, Save, Share2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useState } from 'react';
-import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type QuizDisplayProps = {
   quiz: QuizGeneratorOutput;
@@ -21,6 +23,7 @@ type QuizDisplayProps = {
 export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleDownload = async () => {
     const quizElement = document.getElementById('quiz-sheet');
@@ -62,11 +65,48 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
     }
   };
   
-  const handleSave = () => {
-    toast({
-        title: "Saved to Library",
-        description: "Your quiz has been saved to your personal library.",
-    });
+  
+
+  const [isShared, setIsShared] = useState(false);
+
+  const handleShare = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to share content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'community'), {
+        originalContentId: '', // This would be the ID of the content document
+        contentType: 'quiz',
+        authorId: user.uid,
+        authorName: user.displayName,
+        authorPhotoURL: user.photoURL,
+        topic: quiz.title,
+        gradeLevels: [], // This should be populated from the quiz input
+        language: '', // This should be populated from the quiz input
+        likes: 0,
+        shares: 0,
+        createdAt: serverTimestamp(),
+        content: quiz,
+      });
+      toast({
+        title: "Shared Successfully",
+        description: "Your quiz is now available in the community library.",
+      });
+      setIsShared(true);
+    } catch (error) {
+      console.error("Error sharing content:", error);
+      toast({
+        title: "Sharing Failed",
+        description: "There was an error sharing your quiz. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -93,9 +133,10 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
               {showAnswers ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
               {showAnswers ? 'Hide Answers' : 'Show Answers'}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                Save
+            
+            <Button variant="outline" size="sm" onClick={handleShare} disabled={isShared}>
+                <Share2 className="mr-2 h-4 w-4" />
+                {isShared ? 'Shared' : 'Share'}
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" />
@@ -116,19 +157,14 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
                     {q.options?.map((opt, i) => <li key={i}>{opt}</li>)}
                   </ul>
                 )}
-                 {q.questionType === 'true_false' && (
-                  <ul className="pl-6 space-y-2 list-alpha">
-                    <li>True</li>
-                    <li>False</li>
-                  </ul>
-                )}
+                 
                 {(q.questionType === 'short_answer' || q.questionType === 'fill_in_the_blanks') && (
                     <div className="mt-2 pl-6">
                         <div className="border-b border-dashed border-gray-400 h-8 w-full"></div>
                     </div>
                 )}
                 <div className={cn("mt-2 pl-6 transition-opacity", showAnswers ? "opacity-100" : "opacity-0 h-0 overflow-hidden")}>
-                    <p className="text-sm text-green-700 font-bold">Answer: <span className="font-medium">{q.correctAnswer}</span></p>
+                    <p className="text-sm text-green-700 font-bold">Answer: <span className="font-medium">{quiz.answerKey.find(a => a.questionIndex === index)?.correctAnswer}</span></p>
                 </div>
               </div>
             ))}
@@ -139,11 +175,11 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
        <div id="answer-key-sheet" className="absolute -left-[9999px] top-auto p-4 bg-white" style={{ width: '800px'}}>
             <h2 className="text-xl font-bold mb-4">{quiz.title} - Answer Key</h2>
             <ol className="list-decimal list-inside space-y-2">
-                {quiz.questions.map((q, index) => (
+                {quiz.answerKey.map((a, index) => (
                     <li key={index}>
-                        <span className="font-semibold">{q.questionText}</span>
+                        <span className="font-semibold">{quiz.questions[a.questionIndex].questionText}</span>
                         <br />
-                        <span className="text-green-700">Correct Answer: {q.correctAnswer}</span>
+                        <span className="text-green-700">Correct Answer: {a.correctAnswer}</span>
                     </li>
                 ))}
             </ol>

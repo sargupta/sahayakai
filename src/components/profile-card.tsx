@@ -70,23 +70,35 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, language }) => {
+import { useAuth } from '@/hooks/use-auth';
+
+// ... (rest of the file is the same, but the component now uses the useAuth hook)
+
+export const ProfileCard: FC<Omit<ProfileCardProps, 'name' | 'avatarUrl'>> = ({ stats, language }) => {
+  const { user, loading } = useAuth();
   const t = translations[language] || translations.en;
+
+  if (loading) {
+    return <Skeleton className="h-48 w-full" />;
+  }
+
+  if (!user) {
+    return null; // Or a login prompt
+  }
 
   return (
     <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl overflow-hidden">
       <div className="h-24 bg-gradient-to-r from-primary/50 to-accent/50" />
       <CardContent className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-6 pt-0">
         <Avatar className="-mt-12 h-24 w-24 border-4 border-background">
-          {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="teacher profile"/>
+          {user.photoURL ? (
+            <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} data-ai-hint="teacher profile"/>
           ) : (
-            <Skeleton className="h-full w-full rounded-full" />
+            <AvatarFallback>{user.displayName?.substring(0, 2) || 'U'}</AvatarFallback>
           )}
-          <AvatarFallback>{name.substring(0, 2)}</AvatarFallback>
         </Avatar>
         <div className="flex-grow text-center sm:text-left">
-          <h2 className="text-2xl font-bold font-headline">{name}</h2>
+          <h2 className="text-2xl font-bold font-headline">{user.displayName || 'User'}</h2>
           <div className="flex justify-center sm:justify-start gap-6 text-muted-foreground mt-2">
             <div className="text-center">
               <p className="font-bold text-lg text-foreground">{stats.resources}</p>

@@ -10,6 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { auth, db, storage } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
@@ -61,6 +65,23 @@ const visualAidFlow = ai.defineFlow(
 
     if (!media) {
       throw new Error('Image generation failed to produce an image.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      const storageRef = ref(storage, `content/${user.uid}/${uuidv4()}.png`);
+      const uploadResult = await uploadString(storageRef, media.url, 'data_url');
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'visual-aid',
+        topic: prompt,
+        gradeLevels: [gradeLevel],
+        language: language,
+        storagePath: downloadURL,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
     }
 
     return { imageDataUri: media.url };

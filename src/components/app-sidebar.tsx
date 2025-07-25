@@ -12,19 +12,48 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, LogIn, LogOut } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+import { auth } from "@/lib/firebase"
+import { signOut } from "firebase/auth"
+import { Skeleton } from "./ui/skeleton"
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
+
+  if (loading) {
+    return (
+      <Sidebar>
+        <SidebarHeader>
+          <Skeleton className="h-10 w-full" />
+        </SidebarHeader>
+        <SidebarContent>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        </SidebarContent>
+        <SidebarFooter>
+          <Skeleton className="h-10 w-full" />
+        </SidebarFooter>
+      </Sidebar>
+    )
+  }
 
   return (
     <Sidebar>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-             <SidebarMenuButton href="/" asChild tooltip="AI Companion" isActive={pathname === '/'} variant="outline">
+             <SidebarMenuButton asChild tooltip="AI Companion" isActive={pathname === '/'} variant="outline">
                 <Link href="/">
                   <Sparkles />
                   <span>AI Companion</span>
@@ -166,6 +195,27 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        {user ? (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                <LogOut />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/login')} tooltip="Login">
+                <Link href="/login">
+                  <LogIn />
+                  <span>Login</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
          <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarMenu>

@@ -1,14 +1,12 @@
-
 "use client";
 
-import { generateQuiz } from "@/ai/flows/quiz-generator";
-import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
+import { generateQuiz, QuizGeneratorOutput } from "@/ai/flows/quiz-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, FileSignature, Checkbox, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
+import { Loader2, FileSignature, BarChart2, MessageSquare, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -20,7 +18,7 @@ import { ImageUploader } from "@/components/image-uploader";
 import { QuizDisplay } from "@/components/quiz-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Input } from "@/components/ui/input";
-import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -29,7 +27,7 @@ const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
   { id: 'fill_in_the_blanks', icon: Pencil },
   { id: 'short_answer', icon: MessageSquare },
-];
+] as const;
 
 const bloomsLevelsData = [
     { id: 'Remember', icon: Brain },
@@ -38,13 +36,13 @@ const bloomsLevelsData = [
     { id: 'Analyze', icon: BrainCircuit },
     { id: 'Evaluate', icon: CircleHelp },
     { id: 'Create', icon: BotMessageSquare },
-];
+] as const;
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   imageDataUri: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(20).default(5),
-  questionTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+  questionTypes: z.array(z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer'])).refine((value) => value.some((item) => item), {
     message: "You have to select at least one question type.",
   }),
   bloomsTaxonomyLevels: z.array(z.string()).optional(),
@@ -93,7 +91,7 @@ const translations: Record<string, Record<string, any>> = {
     questionTypesLabel: "प्रश्न प्रकार",
     bloomsLabel: "ब्लूम की टैक्सोनॉमी स्तर",
     gradeLevelLabel: "श्रेणी स्तर",
-    languageLabel: "भाषा",
+    languageLabel: "भाष�������������",
     submitButton: "क्विज़ बनाएं",
     submitButtonLoading: "क्विज़ बना रहा है...",
     loadingText: "आपके प्रश्न तैयार किए जा रहे हैं...",
@@ -146,8 +144,8 @@ const translations: Record<string, Record<string, any>> = {
     topicLabel: "అంశం",
     topicPlaceholder: "ఉదా., అప్‌లోడ్ చేసిన చిత్రాన్ని ఉపయోగించి సీతాకోకచిలుక జీవిత చక్రం.",
     numQuestionsLabel: "ప్రశ్నల సంఖ్య",
-    questionTypesLabel: "ప్రశ్న రకాలు",
-    bloomsLabel: "బ్లూమ్ యొక్క వర్గీకరణ స్థాయిలు",
+    questionTypesLabel: "ప్రశ్న రకా��ు",
+    bloomsLabel: "బ్లూమ్ యొక్క వర్గీకర�� స్థ���������య���లు",
     gradeLevelLabel: "గ్రేడ్ స్థాయి",
     languageLabel: "భాష",
     submitButton: "క్విజ్ సృష్టించు",
@@ -169,7 +167,7 @@ const translations: Record<string, Record<string, any>> = {
   },
   mr: {
     pageTitle: "क्विझ जनरेटर",
-    pageDescription: "कोणत्याही विषयावर, विविध प्रकारच्या प्रश्नांसह एक क्विझ तयार करा.",
+    pageDescription: "कोणत्याही विषया��र, विविध प्��कारच्या प्रश्नांसह एक क्विझ तयार करा.",
     contextLabel: "संदर्भ जोडा (पर्यायी प्रतिमा)",
     topicLabel: "विषय",
     topicPlaceholder: "उदा., अपलोड केलेल्या प्रतिमेचा वापर करून फुलपाखराचे जीवनचक्र.",
@@ -200,7 +198,7 @@ const translations: Record<string, Record<string, any>> = {
     pageDescription: "எந்தவொரு தலைப்பிலும், பல்வேறு வகையான கேள்விகளுடன் ஒரு வினாடி வினாவை உருவாக்கவும்.",
     contextLabel: "சூழலைச் சேர்க்கவும் (விருப்பப் படம்)",
     topicLabel: "தலைப்பு",
-    topicPlaceholder: "எ.கா., பதிவேற்றிய படத்தைப் பயன்படுத்தி ஒரு பட்டாம்பூச்சியின் வாழ்க்கைச் சுழற்சி.",
+    topicPlaceholder: "எ.கா., பதிவேற்றிய படத்தைப் பயன்படுத்தி ���ரு பட்டாம்பூச்சியின் வாழ்க்கைச் சுழற்சி.",
     numQuestionsLabel: "கேள்விகளின் எண்ணிக்கை",
     questionTypesLabel: "கேள்வி வகைகள்",
     bloomsLabel: "ப்ளூமின் வகைப்பாடு நிலைகள்",
@@ -235,7 +233,7 @@ const translations: Record<string, Record<string, any>> = {
     gradeLevelLabel: "ગ્રેડ સ્તર",
     languageLabel: "ભાષા",
     submitButton: "ક્વિઝ બનાવો",
-    submitButtonLoading: "ક્વિઝ બનાવી રહ્યું છે...",
+    submitButtonLoading: "ક્વિઝ બનાવી ર���્યું છે...",
     loadingText: "તમારા પ્રશ્નો તૈયાર કરવામાં આવી રહ્યા છે...",
     questionTypes: {
         multiple_choice: 'બહુવિધ પસંદગી',
@@ -267,11 +265,11 @@ const translations: Record<string, Record<string, any>> = {
     loadingText: "ನಿಮ್ಮ ಪ್ರಶ್ನೆಗಳನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ...",
     questionTypes: {
         multiple_choice: 'ಬಹು ಆಯ್ಕೆ',
-        fill_in_the_blanks: 'ಖಾಲಿ ಜಾಗಗಳನ್ನು ತುಂಬಿರಿ',
+        fill_in_the_blanks: 'ಖಾಲಿ ಜ���ಗಗಳನ್ನು ತುಂಬಿರಿ',
         short_answer: 'ಸಣ್ಣ ಉತ್ತರ',
     },
     blooms: {
-        'Remember': 'ನೆನಪಿಡಿ',
+        'Remember': '���ೆನಪಿಡಿ',
         'Understand': 'ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ',
         'Apply': 'ಅನ್ವಯಿಸಿ',
         'Analyze': 'ವಿಶ್ಲೇಷಿಸಿ',
@@ -307,7 +305,10 @@ export default function QuizGeneratorPage() {
     setQuiz(null);
     try {
       const result = await generateQuiz({ ...values, language: selectedLanguage });
-      setQuiz(result);
+      toast({
+        title: "Success!",
+        description: "Your quiz has been generated and saved to your library.",
+      });
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
@@ -415,7 +416,7 @@ export default function QuizGeneratorPage() {
                                         : "border-border bg-background hover:bg-accent"
                                     )}
                                   >
-                                    <CheckboxUI
+                                    <Checkbox
                                         id={item.id}
                                         checked={isSelected}
                                         onCheckedChange={(checked) => {

@@ -11,44 +11,8 @@ import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-
-type Resource = {
-  id: string;
-  title: string;
-  type: FileType;
-  author: string;
-  likes: number;
-  language: string;
-};
-
-const mockTrendingResources: Resource[] = [
-    { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', likes: 128, language: 'en' },
-    { id: '2', title: 'भिन्न पर उन्नत प्रश्नोत्तरी (कक्षा 7)', type: 'quiz', author: 'Priya Singh', likes: 95, language: 'hi' },
-    { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', likes: 210, language: 'en' },
-    { id: '4', title: 'মোগল সাম্রাজ্য শব্দ অনুসন্ধান', type: 'worksheet', author: 'Aisha Khan', likes: 72, language: 'bn' },
-    { id: 't1', title: 'శోషణ వ్యవస్థపై విజువల్ ఎయిడ్', type: 'image', author: 'S. Rao', likes: 190, language: 'te' },
-    { id: 't2', title: 'சுவாச அமைப்பு பற்றிய பாடம்', type: 'lesson-plan', author: 'M. Devi', likes: 250, language: 'ta' },
-    { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', likes: 350, language: 'en' },
-    { id: 't3', title: 'भारतीय स्वातंत्र्य चळवळीवर वर्कशीट', type: 'worksheet', author: 'A. Joshi', likes: 115, language: 'mr' },
-    { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', likes: 180, language: 'en' },
-    { id: 't4', title: 'ಬೆಳಕಿನ ರಸಪ್ರಶ್ನೆ', type: 'quiz', author: 'G. Gowda', likes: 85, language: 'kn' },
-    { id: '7', title: 'बुनियादी बीजगणित वर्कशीट', type: 'worksheet', author: 'Deepa Iyer', likes: 150, language: 'hi' },
-    { id: 't5', title: 'ગુજરાતના ઇતિહાસ પર નિબંધ માટે રૂબ્રિક', type: 'rubric', author: 'N. Shah', likes: 130, language: 'gu' },
-    { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', likes: 450, language: 'en' },
-    { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', likes: 110, language: 'en' },
-];
-
-const mockFollowingResources: Resource[] = [
-    { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', likes: 42, language: 'en' },
-    { id: 'f2', title: 'गति पर वर्कशीट', type: 'worksheet', author: 'Priya Singh', likes: 88, language: 'hi' },
-    { id: 'f3', title: 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', likes: 105, language: 'en' },
-];
-
-const mockMyContentResources: Resource[] = [
-  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', likes: 15, language: 'en' },
-  { id: 'm2', title: 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', likes: 3, language: 'hi' },
-  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', likes: 22, language: 'en' },
-];
+import { useFirestoreQuery } from '@/hooks/use-firestore-query';
+import { CommunityContent } from '@/lib/firestore-models';
 
 const languageMap: Record<string, string> = {
   en: 'English',
@@ -61,35 +25,21 @@ const languageMap: Record<string, string> = {
   kn: 'Kannada',
 };
 
-const authorAvatarMap: Record<string, string> = {
-  'Ravi Kumar': '/avatars/ravi_kumar.png',
-  'Priya Singh': '/avatars/priya_singh.png',
-  'Sameer Gupta': '/avatars/sameer_gupta.png',
-  'Aisha Khan': '/avatars/aisha_khan.png',
-  'S. Rao': '/avatars/s_rao.png',
-  'M. Devi': '/avatars/m_devi.png',
-  'A. Joshi': '/avatars/a_joshi.png',
-  'G. Gowda': '/avatars/g_gowda.png',
-  'Deepa Iyer': '/avatars/deepa_iyer.png',
-  'N. Shah': '/avatars/n_shah.png',
-  'Anjali Sharma': '/avatars/anjali_sharma.png', // Assuming you might want one for the "My Content" author too
-};
-
-const ResourceList = ({ resources }: { resources: Resource[] }) => (
+const ResourceList = ({ resources }: { resources: CommunityContent[] }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
     {resources.map((resource) => (
       <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
+            <FileTypeIcon type={resource.contentType as FileType} className="h-8 w-8 text-primary" />
             <div>
-              <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
+              <CardTitle className="text-lg font-semibold leading-tight">{resource.topic}</CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} data-ai-hint="teacher profile"/>
-                  <AvatarFallback>{resource.author.substring(0, 2)}</AvatarFallback>
+                  <AvatarImage src={resource.authorPhotoURL} alt={resource.authorName} data-ai-hint="teacher profile"/>
+                  <AvatarFallback>{resource.authorName?.substring(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span>{resource.author}</span>
+                <span>{resource.authorName}</span>
               </div>
             </div>
           </div>
@@ -120,24 +70,19 @@ export default function CommunityPage() {
     const [languageFilter, setLanguageFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('trending');
-    const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
+    const [filteredResources, setFilteredResources] = useState<CommunityContent[]>([]);
 
-    const allResources = {
-        trending: mockTrendingResources,
-        following: mockFollowingResources,
-        'my-content': mockMyContentResources,
-    };
+    const { data: trendingResources, loading: trendingLoading } = useFirestoreQuery<CommunityContent>('community');
 
     useEffect(() => {
-        // @ts-ignore
-        const currentList = allResources[activeTab] || [];
-        const filtered = currentList.filter(resource => {
+        const currentList = trendingResources || [];
+        const filtered = currentList.filter((resource: CommunityContent) => {
             const matchesLanguage = languageFilter === 'all' || resource.language === languageFilter;
-            const matchesSearch = searchTerm === '' || resource.title.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = searchTerm === '' || resource.topic.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesLanguage && matchesSearch;
         });
         setFilteredResources(filtered);
-    }, [activeTab, languageFilter, searchTerm]);
+    }, [activeTab, languageFilter, searchTerm, trendingResources]);
 
 
   return (
@@ -178,10 +123,15 @@ export default function CommunityPage() {
                    <ResourceList resources={filteredResources} />
                 </TabsContent>
                 <TabsContent value="following">
-                    <ResourceList resources={filteredResources} />
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>Content from teachers you follow will appear here.</p>
+                        <Button variant="link">Find teachers to follow</Button>
+                    </div>
                 </TabsContent>
                  <TabsContent value="my-content">
-                    <ResourceList resources={filteredResources} />
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>Your shared content will appear here.</p>
+                    </div>
                 </TabsContent>
             </Tabs>
             

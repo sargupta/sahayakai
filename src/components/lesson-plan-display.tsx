@@ -1,4 +1,3 @@
-
 "use client";
 import {
   Accordion,
@@ -8,12 +7,15 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save } from 'lucide-react';
-import type { FC } from 'react';
+import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Share2 } from 'lucide-react';
+import { FC, useState } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
@@ -21,7 +23,17 @@ type LessonPlanDisplayProps = {
 
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) => {
   const { toast } = useToast();
-  
+  const { user } = useAuth();
+  const [isShared, setIsShared] = useState(false);
+
+  const {
+    title = 'Your Generated Lesson Plan',
+    objectives = [],
+    materials = [],
+    activities = [],
+    assessment = '',
+  } = lessonPlan || {};
+
   const handleDownload = () => {
     const input = document.getElementById('lesson-plan-pdf');
     if (input) {
@@ -43,7 +55,6 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
             const pageCanvas = document.createElement('canvas');
             pageCanvas.width = canvasWidth;
             
-            // Calculate height for the current page
             const pageHeight = Math.min(remainingHeight, canvasHeight * (pdfHeight / height));
             pageCanvas.height = pageHeight;
 
@@ -66,11 +77,44 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
     }
   };
 
-  const handleSave = () => {
-    toast({
-        title: "Saved to Library",
-        description: "Your lesson plan has been saved to your personal library.",
-    });
+  const handleShare = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to share content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'community'), {
+        originalContentId: '', // This would be the ID of the content document
+        contentType: 'lesson-plan',
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous',
+        authorPhotoURL: user.photoURL,
+        topic: title,
+        gradeLevels: [], // This should be populated from the lesson plan input
+        language: '', // This should be populated from the lesson plan input
+        likes: 0,
+        shares: 0,
+        createdAt: serverTimestamp(),
+        content: lessonPlan,
+      });
+      toast({
+        title: "Shared Successfully",
+        description: "Your lesson plan is now available in the community library.",
+      });
+      setIsShared(true);
+    } catch (error) {
+      console.error("Error sharing content:", error);
+      toast({
+        title: "Sharing Failed",
+        description: "There was an error sharing your lesson plan. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!lessonPlan) {
@@ -82,12 +126,13 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline text-2xl flex items-center gap-2">
           <BookText />
-          {lessonPlan.title || 'Your Generated Lesson Plan'}
+          {title}
         </CardTitle>
         <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSave} className="no-print">
-                <Save className="mr-2 h-4 w-4" />
-                Save to Library
+            
+            <Button variant="outline" size="sm" onClick={handleShare} className="no-print" disabled={isShared}>
+                <Share2 className="mr-2 h-4 w-4" />
+                {isShared ? 'Shared' : 'Share'}
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownload} className="no-print">
               <Download className="mr-2 h-4 w-4" />
@@ -107,7 +152,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
             </AccordionTrigger>
             <AccordionContent className="text-foreground/80 space-y-2 pl-8">
               <ul className="list-disc space-y-2">
-                {lessonPlan.objectives.map((objective, index) => (
+                {objectives.map((objective, index) => (
                   <li key={index}>{objective}</li>
                 ))}
               </ul>
@@ -123,7 +168,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
             </AccordionTrigger>
             <AccordionContent className="text-foreground/80 space-y-2 pl-8">
               <ul className="list-disc space-y-2">
-                {lessonPlan.materials.map((material, index) => (
+                {materials.map((material, index) => (
                   <li key={index}>{material}</li>
                 ))}
               </ul>
@@ -138,7 +183,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
                 </div>
             </AccordionTrigger>
             <AccordionContent className="text-foreground/80 space-y-4 pt-4">
-              {lessonPlan.activities.map((activity, index) => (
+              {activities.map((activity, index) => (
                 <div key={index} className="pl-4 border-l-2 border-primary/50">
                     <h4 className="font-semibold text-foreground">{activity.name} ({activity.duration})</h4>
                     <p>{activity.description}</p>
@@ -155,7 +200,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
                 </div>
             </AccordionTrigger>
             <AccordionContent className="text-foreground/80 space-y-2 pt-2 pl-4">
-              <p>{lessonPlan.assessment}</p>
+              <p>{assessment}</p>
             </AccordionContent>
           </AccordionItem>
 

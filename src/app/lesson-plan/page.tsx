@@ -68,7 +68,10 @@ export default function LessonPlanAgentPage() {
         gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
       });
-      setLessonPlan(result);
+      toast({
+        title: "Success!",
+        description: "Your lesson plan has been generated and saved to your library.",
+      });
     } catch (error) {
       console.error("Failed to generate lesson plan:", error);
       toast({

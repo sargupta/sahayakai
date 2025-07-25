@@ -10,6 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
@@ -53,7 +55,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
     -   Beginning (lowest score)
 4.  **Points:** Assign points to each level. A common scale is 4 for Exemplary, 3 for Proficient, 2 for Developing, and 1 for Beginning.
 5.  **Descriptions:** Write clear, objective, and distinct descriptions for each performance level within each criterion. The descriptions should focus on observable behaviors and outcomes.
-6.  **Contextualize:** Tailor the language and complexity of the rubric to the specified \`gradeLevel\` and \`language\`.
+6.  **Contextualize:** Tailor the language and complexity of the rubric to the specified `gradeLevel` and `language`.
 7.  **JSON Output:** You MUST conform strictly to the required JSON output format.
 
 **User's Request:**
@@ -71,6 +73,24 @@ const rubricGeneratorFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await rubricGeneratorPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid rubric. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'rubric',
+        topic: input.assignmentDescription,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

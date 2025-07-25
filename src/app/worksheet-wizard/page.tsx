@@ -155,6 +155,7 @@ export default function WorksheetWizardPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           language={selectedLanguage}
+                          isMulti={false}
                         />
                       </FormControl>
                       <FormMessage />

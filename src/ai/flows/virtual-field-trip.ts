@@ -10,6 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const VirtualFieldTripInputSchema = z.object({
   topic: z.string().describe('The topic or theme for the virtual field trip.'),
@@ -48,7 +50,7 @@ const virtualFieldTripPrompt = ai.definePrompt({
 
 **User's Request:**
 -   **Topic:** {{{topic}}}
--   **Grade Level:** {{{gradeLevel}}}
+-   ****Grade Level:** {{{gradeLevel}}}
 -   **Language:** {{{language}}}
 `,
 });
@@ -61,6 +63,24 @@ const virtualFieldTripFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await virtualFieldTripPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid virtual field trip. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'virtual-field-trip',
+        topic: input.topic,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

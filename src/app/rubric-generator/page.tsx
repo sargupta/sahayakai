@@ -236,7 +236,10 @@ export default function RubricGeneratorPage() {
     setRubric(null);
     try {
       const result = await generateRubric({...values, language: selectedLanguage});
-      setRubric(result);
+      toast({
+        title: "Success!",
+        description: "Your rubric has been generated and saved to your library.",
+      });
     } catch (error) {
       console.error("Failed to generate rubric:", error);
       toast({

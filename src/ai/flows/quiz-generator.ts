@@ -9,6 +9,13 @@
 
 import {ai} from '@/ai/genkit';
 import { QuizGeneratorInput, QuizGeneratorInputSchema, QuizGeneratorOutput, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+export type { QuizGeneratorOutput } from '@/ai/schemas/quiz-generator-schemas';
+
+
+
+expor
 
 
 export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizGeneratorOutput> {
@@ -30,8 +37,8 @@ const quizGeneratorPrompt = ai.definePrompt({
     *   For **multiple_choice**, provide 3-4 plausible options and specify the single correct answer.
     *   For **fill_in_the_blanks**, provide a sentence with a clear blank (e.g., "The capital of France is ______.") and the correct word(s) for the answer.
     *   For **short_answer**, provide a model correct answer.
-6.  **Tailor Content:** Adjust the complexity and vocabulary for the specified \`gradeLevel\`.
-7.  **Language:** Generate the entire quiz (title, questions, options, answers) in the specified \`language\`.
+6.  **Tailor Content:** Adjust the complexity and vocabulary for the specified `gradeLevel`.
+7.  **Language:** Generate the entire quiz (title, questions, options, answers) in the specified `language`.
 8.  **Output Format:** You MUST conform strictly to the required JSON output format.
 
 **Inputs:**
@@ -56,6 +63,24 @@ const quizGeneratorFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await quizGeneratorPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid quiz. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'quiz',
+        topic: input.topic,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

@@ -125,6 +125,7 @@ export default function InstantAnswerPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           language={selectedLanguage}
+                          isMulti={false}
                         />
                       </FormControl>
                       <FormMessage />

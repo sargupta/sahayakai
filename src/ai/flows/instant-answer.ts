@@ -11,6 +11,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
@@ -59,6 +61,24 @@ const instantAnswerFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await instantAnswerPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'instant-answer',
+        topic: input.question,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

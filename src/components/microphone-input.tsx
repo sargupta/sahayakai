@@ -74,7 +74,9 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
         analyserRef.current.fftSize = 2048;
       }
       const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
+      if (analyserRef.current) {
+        source.connect(analyserRef.current);
+      }
       drawWaveform();
 
       mediaRecorderRef.current.ondataavailable = (event) => {

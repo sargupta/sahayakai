@@ -11,6 +11,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
@@ -63,6 +65,24 @@ const worksheetWizardFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await worksheetWizardPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid worksheet. The returned output was null.');
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'content'), {
+        type: 'worksheet',
+        topic: input.prompt,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        content: output,
+        createdAt: serverTimestamp(),
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

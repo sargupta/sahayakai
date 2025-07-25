@@ -17,10 +17,11 @@ import { ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type GradeLevelSelectorProps = {
-  onValueChange: (value: string[]) => void;
+  onValueChange: (value: string[] | string) => void;
   value?: string[];
   language: string;
   isMulti?: boolean;
+  defaultValue?: string | string[];
 };
 
 const allGradeLevels: Record<string, string[]> = {
@@ -73,10 +74,10 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
   const t = translations[language] || translations.en;
 
   if (!isMulti) {
-    const singleValue = value[0] || '';
+    const singleValue = value?.[0] || '';
     const translatedValue = getTranslatedGrade(singleValue, language);
     return (
-      <Select onValueChange={(val) => onValueChange([getEnglishGrade(val)])} value={translatedValue}>
+      <Select onValueChange={(val) => onValueChange(getEnglishGrade(val))} value={translatedValue}>
         <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
           <SelectValue placeholder={t.placeholder} />
         </SelectTrigger>

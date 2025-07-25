@@ -12,10 +12,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from './ui/button';
-import { Download, Save } from 'lucide-react';
+import { Download, Save, Share2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type RubricDisplayProps = {
   rubric: RubricGeneratorOutput;
@@ -23,6 +26,7 @@ type RubricDisplayProps = {
 
 export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
     return null;
@@ -52,11 +56,48 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
     }
   };
   
-  const handleSave = () => {
-    toast({
-        title: "Saved to Library",
-        description: "Your rubric has been saved to your personal library.",
-    });
+  
+
+  const [isShared, setIsShared] = useState(false);
+
+  const handleShare = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to share content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'community'), {
+        originalContentId: '', // This would be the ID of the content document
+        contentType: 'rubric',
+        authorId: user.uid,
+        authorName: user.displayName,
+        authorPhotoURL: user.photoURL,
+        topic: rubric.title,
+        gradeLevels: [], // This should be populated from the rubric input
+        language: '', // This should be populated from the rubric input
+        likes: 0,
+        shares: 0,
+        createdAt: serverTimestamp(),
+        content: rubric,
+      });
+      toast({
+        title: "Shared Successfully",
+        description: "Your rubric is now available in the community library.",
+      });
+      setIsShared(true);
+    } catch (error) {
+      console.error("Error sharing content:", error);
+      toast({
+        title: "Sharing Failed",
+        description: "There was an error sharing your rubric. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -74,9 +115,10 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
                 {rubric.description && <CardDescription>{rubric.description}</CardDescription>}
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
+                
+                <Button variant="outline" size="sm" onClick={handleShare} disabled={isShared}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    {isShared ? 'Shared' : 'Share'}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleDownload}>
                   <Download className="mr-2 h-4 w-4" />
