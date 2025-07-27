@@ -1,18 +1,30 @@
 // src/lib/firebase-admin.ts
-import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
+import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
 // Replace with your actual service account or environment-based config
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+if (!admin.apps.length) {
+  try {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountString) {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
+    }
+    
+    const serviceAccount = JSON.parse(serviceAccountString);
 
-const app = getApps().length === 0
-  ? initializeApp({
-      credential: cert(serviceAccount),
-    })
-  : getApp();
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    });
+  } catch (error: any) {
+    console.error('Firebase admin initialization error:', error);
+    // Re-throwing the error is important for server-side components to fail fast.
+    throw new Error(`Firebase admin initialization error: ${error.message}`);
+  }
+}
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+export const db = getFirestore();
+export const auth = getAuth();
+export const storage = getStorage();
