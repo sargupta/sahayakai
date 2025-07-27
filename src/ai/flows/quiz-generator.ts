@@ -9,7 +9,10 @@
 
 import {ai} from '@/ai/genkit';
 import { QuizGeneratorInput, QuizGeneratorInputSchema, QuizGeneratorOutput, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
-
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
+export type { QuizGeneratorOutput } from '@/ai/schemas/quiz-generator-schemas';
 
 export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizGeneratorOutput> {
   return quizGeneratorFlow(input);
@@ -56,6 +59,34 @@ const quizGeneratorFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await quizGeneratorPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid quiz. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/quizzes/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'quiz',
+        topic: input.topic,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

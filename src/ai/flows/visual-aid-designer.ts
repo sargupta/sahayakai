@@ -10,11 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
   language: z.string().optional().describe('The language for any text in the visual aid.'),
   gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
+  userId: z.string().optional().describe('The ID of the user for whom the visual aid is being generated.'),
 });
 export type VisualAidInput = z.infer<typeof VisualAidInputSchema>;
 
@@ -33,7 +37,8 @@ const visualAidFlow = ai.defineFlow(
     inputSchema: VisualAidInputSchema,
     outputSchema: VisualAidOutputSchema,
   },
-  async ({ prompt, gradeLevel, language }) => {
+  async (input) => {
+    const { prompt, gradeLevel, language, userId } = input;
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
@@ -61,6 +66,34 @@ const visualAidFlow = ai.defineFlow(
 
     if (!media) {
       throw new Error('Image generation failed to produce an image.');
+    }
+
+    if (userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.png`;
+      const filePath = `users/${userId}/visual-aids/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      // Convert data URI to buffer
+      const buffer = Buffer.from(media.url.split(',')[1], 'base64');
+
+      await file.save(buffer, {
+        metadata: {
+          contentType: 'image/png',
+        },
+      });
+
+      await db.collection('users').doc(userId).collection('content').doc(contentId).set({
+        type: 'visual-aid',
+        topic: prompt,
+        gradeLevels: [gradeLevel],
+        language: language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
     }
 
     return { imageDataUri: media.url };

@@ -10,9 +10,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const AvatarGeneratorInputSchema = z.object({
   name: z.string().describe("The name of the teacher for whom to generate an avatar."),
+  userId: z.string().optional().describe('The ID of the user for whom the avatar is being generated.'),
 });
 export type AvatarGeneratorInput = z.infer<typeof AvatarGeneratorInputSchema>;
 
@@ -31,7 +35,8 @@ const avatarGeneratorFlow = ai.defineFlow(
     inputSchema: AvatarGeneratorInputSchema,
     outputSchema: AvatarGeneratorOutputSchema,
   },
-  async ({ name }) => {
+  async (input) => {
+    const { name, userId } = input;
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
@@ -55,6 +60,29 @@ const avatarGeneratorFlow = ai.defineFlow(
 
     if (!media) {
       throw new Error('Image generation failed to produce an avatar.');
+    }
+
+    if (userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.png`;
+      const filePath = `users/${userId}/avatars/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      // Convert data URI to buffer
+      const buffer = Buffer.from(media.url.split(',')[1], 'base64');
+
+      await file.save(buffer, {
+        metadata: {
+          contentType: 'image/png',
+        },
+      });
+
+      // Save the path to the user's profile
+      await db.collection('users').doc(userId).set({
+        avatarUrl: filePath,
+      }, { merge: true });
     }
 
     return { imageDataUri: media.url };

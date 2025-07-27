@@ -122,9 +122,10 @@ export default function VirtualFieldTripPage() {
                       <FormLabel className="font-headline">Grade Level</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value ? [field.value] : []}
+                          onValueChange={(values) => field.onChange(values?.[0])}
                           language={selectedLanguage}
+                          isMulti={false}
                         />
                       </FormControl>
                       <FormMessage />

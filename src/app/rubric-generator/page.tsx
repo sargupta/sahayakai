@@ -329,7 +329,7 @@ export default function RubricGeneratorPage() {
                       <FormLabel className="font-headline">{t.gradeLevel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
-                          value={[field.value || "7th Grade"]}
+                          value={field.value ? [field.value] : []}
                           onValueChange={(values) => field.onChange(values?.[0])}
                           language={selectedLanguage}
                           isMulti={false}

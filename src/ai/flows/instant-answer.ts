@@ -11,11 +11,15 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
   language: z.string().optional().describe('The language for the answer.'),
   gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
+  userId: z.string().optional().describe('The ID of the user for whom the answer is being generated.'),
 });
 export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
 
@@ -59,6 +63,34 @@ const instantAnswerFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await instantAnswerPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/instant-answers/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'instant-answer',
+        topic: input.question,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

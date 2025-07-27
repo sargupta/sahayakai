@@ -11,6 +11,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
@@ -21,7 +24,9 @@ const WorksheetWizardInputSchema = z.object({
   prompt: z.string().describe('The user\'s request for what kind of worksheet to create.'),
   language: z.string().optional().describe('The language for the worksheet.'),
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
+  userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
 });
+
 export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
 
 const WorksheetWizardOutputSchema = z.object({
@@ -63,6 +68,34 @@ const worksheetWizardFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await worksheetWizardPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid worksheet. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.md`;
+      const filePath = `users/${input.userId}/worksheets/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(output.worksheetContent, {
+        contentType: 'text/markdown',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'worksheet',
+        topic: input.prompt,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );
