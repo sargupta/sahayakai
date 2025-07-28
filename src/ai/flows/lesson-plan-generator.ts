@@ -80,7 +80,7 @@ const lessonPlanFlow = ai.defineFlow(
       throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
     }
 
-    if (input.userId) {
+    /* if (input.userId) {
       const now = new Date();
       const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
       const contentId = uuidv4();
@@ -101,7 +101,7 @@ const lessonPlanFlow = ai.defineFlow(
         createdAt: now,
         isPublic: false,
       });
-    }
+    } */
 
     return output;
   }
