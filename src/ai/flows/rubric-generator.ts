@@ -10,11 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
   gradeLevel: z.string().optional().describe('The grade level for which the rubric is intended.'),
   language: z.string().optional().describe('The language for the rubric.'),
+  userId: z.string().optional().describe('The ID of the user for whom the rubric is being generated.'),
 });
 export type RubricGeneratorInput = z.infer<typeof RubricGeneratorInputSchema>;
 
@@ -71,6 +75,34 @@ const rubricGeneratorFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await rubricGeneratorPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid rubric. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/rubrics/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'rubric',
+        topic: input.assignmentDescription,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

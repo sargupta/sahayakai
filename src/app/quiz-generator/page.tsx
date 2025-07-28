@@ -450,7 +450,7 @@ export default function QuizGeneratorPage() {
                       <FormLabel className="font-headline">{t.gradeLevelLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
-                          value={[field.value || "5th Grade"]}
+                          value={field.value ? [field.value] : []}
                           onValueChange={(values) => field.onChange(values?.[0])}
                           language={selectedLanguage}
                           isMulti={false}

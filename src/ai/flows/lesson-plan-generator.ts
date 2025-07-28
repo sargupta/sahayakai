@@ -12,6 +12,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '../tools/google-search';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -20,6 +23,7 @@ const LessonPlanInputSchema = z.object({
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
+  userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -74,6 +78,29 @@ const lessonPlanFlow = ai.defineFlow(
     
     if (!output) {
       throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/lesson-plans/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'lesson-plan',
+        topic: input.topic,
+        gradeLevels: input.gradeLevels,
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
     }
 
     return output;

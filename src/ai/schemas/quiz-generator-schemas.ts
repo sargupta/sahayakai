@@ -18,6 +18,7 @@ export const QuizGeneratorInputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for which the quiz is intended.'),
   language: z.string().optional().describe('The language for the quiz.'),
   bloomsTaxonomyLevels: z.array(z.string()).optional().describe("A list of Bloom's Taxonomy levels to target."),
+  userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 

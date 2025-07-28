@@ -10,11 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const VirtualFieldTripInputSchema = z.object({
   topic: z.string().describe('The topic or theme for the virtual field trip.'),
   language: z.string().optional().describe('The language for the trip descriptions.'),
   gradeLevel: z.string().optional().describe('The grade level the trip should be tailored for.'),
+  userId: z.string().optional().describe('The ID of the user for whom the trip is being generated.'),
 });
 export type VirtualFieldTripInput = z.infer<typeof VirtualFieldTripInputSchema>;
 
@@ -61,6 +65,34 @@ const virtualFieldTripFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await virtualFieldTripPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid virtual field trip. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/virtual-field-trips/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'virtual-field-trip',
+        topic: input.topic,
+        gradeLevels: [input.gradeLevel],
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );

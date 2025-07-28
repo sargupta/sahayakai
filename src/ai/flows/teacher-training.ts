@@ -11,10 +11,14 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { storage, db } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
   language: z.string().optional().describe('The language for the response.'),
+  userId: z.string().optional().describe('The ID of the user for whom the advice is being generated.'),
 });
 export type TeacherTrainingInput = z.infer<typeof TeacherTrainingInputSchema>;
 
@@ -62,6 +66,33 @@ const teacherTrainingFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await teacherTrainingPrompt(input);
-    return output!;
+
+    if (!output) {
+      throw new Error('The AI model failed to generate a valid training advice. The returned output was null.');
+    }
+
+    if (input.userId) {
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const contentId = uuidv4();
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/teacher-training/${fileName}`;
+      const file = storage.bucket().file(filePath);
+
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
+
+      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+        type: 'teacher-training',
+        topic: input.question,
+        language: input.language,
+        storagePath: filePath,
+        createdAt: now,
+        isPublic: false,
+      });
+    }
+
+    return output;
   }
 );
