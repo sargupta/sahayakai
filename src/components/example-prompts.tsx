@@ -83,14 +83,14 @@ const promptTranslations: Record<string, Record<string, string>> = {
     kn: "ನಾಲ್ಕು ಕೋಣೆಗಳೊಂದಿಗೆ ಮಾನವ ಹೃದಯದ ಸರಳ ರೇಖಾಚಿತ್ರ.",
   },
   explainPhotosynthesis: {
-    en: "Explain photosynthesis to a 10-year-old using a simple analogy.",
-    hi: "एक सरल सादृश्य का उपयोग करके 10 साल के बच्चे को प्रकाश संश्लेषण समझाएं।",
-    bn: "একটি সাধারণ উপমা ব্যবহার করে একটি 10 ​​বছর বয়সীকে সালোকসংশ্লেষণ ব্যাখ্যা কর।",
-    te: "ఒక సాధారణ సారూప్యతను ఉపయోగించి 10 ఏళ్ల పిల్లలకు కిరణజన్య సంయోగక్రియను వివరించండి.",
-    mr: "एका साध्या साधर्म्याचा वापर करून 10 वर्षांच्या मुलाला प्रकाशसंश्लेषण समजावून सांगा.",
-    ta: "ஒரு எளிய ஒப்பீட்டைப் பயன்படுத்தி 10 வயது குழந்தைக்கு ஒளிச்சேர்க்கையை விளக்கவும்.",
-    gu: "એક સરળ સામ્યતાનો ઉપયોગ કરીને 10 વર્ષના બાળકને પ્રકાશસંશ્લેષણ સમજાવો.",
-    kn: "ಸರಳವಾದ ಸಾದೃಶ್ಯವನ್ನು ಬಳಸಿಕೊಂಡು 10 ವರ್ಷದ ಮಗುವಿಗೆ ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆಯನ್ನು ವಿವರಿಸಿ.",
+    en: "Explain photosynthesis using the example of how Pongal is made.",
+    hi: "पोंगल कैसे बनता है, इसका उदाहरण देते हुए प्रकाश संश्लेषण की प्रक्रिया समझाएं।",
+    bn: "पोंगल কিভাবে তৈরি হয় তার উদাহরণ দিয়ে সালোকসংশ্লেষণ ব্যাখ্যা কর।",
+    te: "పొంగల్ ఎలా తయారవుతుందో ఉదాహరణగా తీసుకుని కిరణజన్య సంయోగక్రియను వివరించండి.",
+    mr: "पोंगल कसा बनवतात याचे उदाहरण देऊन प्रकाशसंश्लेषण स्पष्ट करा.",
+    ta: "பொங்கல் எப்படி செய்யப்படுகிறது என்பதை உதாரணமாகக் கொண்டு ஒளிச்சேர்க்கையை விளக்கவும்.",
+    gu: "પોંગલ કેવી રીતે બને છે તેના ઉદાહરણનો ઉપયોગ કરીને પ્રકાશસંશ્લેષણ સમજાવો.",
+    kn: "ಪೊಂಗಲ್ ಹೇಗೆ ತಯಾರಿಸಲಾಗುತ್ತದೆ ಎಂಬುದರ ಉದಾಹರಣೆಯನ್ನು ಬಳಸಿಕೊಂಡು ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆಯನ್ನು ವಿವರಿಸಿ.",
   },
   nalandaHistory: {
     en: "Tell me about the history of Nalanda University.",
@@ -357,7 +357,7 @@ const headerTranslations: Record<string, string> = {
 
 const pagePrompts: Record<string, string[]> = {
   'home': ['waterCycle', 'skyBlue', 'hibiscusDiagram', 'braveMouse'],
-  'homeWithImage': ['imageLessonPlan', 'skyBlue', 'multigradeFood', 'waterCycle'],
+  'homeWithImage': ['explainPhotosynthesis', 'skyBlue', 'multigradeFood', 'waterCycle'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'hibiscusDiagram'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],
   'worksheet': ['worksheetFillInBlanks', 'worksheetMatchFollowing', 'worksheetWordSearch', 'braveMouse'],
