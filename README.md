@@ -30,7 +30,7 @@ SahayakAI is a web-based application designed to assist teachers in India with l
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/your-username/sahayakai-feature.git
+    git clone https://github.com/sargupta/sahayakai-feature.git
     ```
 2.  Navigate to the project directory:
     ```bash
