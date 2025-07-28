@@ -1,7 +1,9 @@
 
 "use client";
 
-import { generateLessonPlan, LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
+import { agentRouter, AgentRouterOutput } from "@/ai/flows/agent-router";
+import { QuizDisplay } from "@/components/quiz-display";
+import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -51,7 +53,7 @@ const topicPlaceholderTranslations: Record<string, string> = {
 };
 
 export default function Home() {
-  const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
+  const [generationResult, setGenerationResult] = useState<AgentRouterOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -71,20 +73,20 @@ export default function Home() {
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
-    setLessonPlan(null);
+    setGenerationResult(null);
     try {
-      const result = await generateLessonPlan({
-        topic: values.topic,
+      const result = await agentRouter({
+        prompt: values.topic,
         language: values.language,
         gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
       });
-      setLessonPlan(result);
+      setGenerationResult(result);
     } catch (error) {
-      console.error("Failed to generate lesson plan:", error);
+      console.error("Failed to generate content:", error);
       toast({
         title: "Generation Failed",
-        description: "There was an error generating the lesson plan. Please try again.",
+        description: "There was an error generating the content. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -216,7 +218,32 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {lessonPlan && <LessonPlanDisplay lessonPlan={lessonPlan} />}
+      {generationResult && (
+        <div className="w-full">
+          {generationResult.type === 'lessonPlan' && <LessonPlanDisplay lessonPlan={generationResult.result} />}
+          {generationResult.type === 'quiz' && <QuizDisplay quiz={generationResult.result} />}
+          {generationResult.type === 'instantAnswer' && (
+            <Card className="w-full bg-white/50 backdrop-blur-md border-white/60 shadow-lg">
+              <CardHeader>
+                <CardTitle>Answer</CardTitle>
+              </CardHeader>
+              <CardContent className="prose">
+                <ReactMarkdown>{generationResult.result.answer}</ReactMarkdown>
+              </CardContent>
+            </Card>
+          )}
+          {generationResult.type === 'unknown' && (
+            <Card className="w-full bg-destructive/10 border-destructive/30">
+              <CardHeader>
+                <CardTitle className="text-destructive">Sorry!</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{generationResult.result.error}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }
