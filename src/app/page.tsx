@@ -86,7 +86,7 @@ const localContextLabelTranslations: Record<string, string> = {
 
 const localContextPlaceholderTranslations: Record<string, string> = {
     en: "e.g., Village name, local festival, specific historical event...",
-    hi: "उदा., गांव का नाम, स्था���ीय त्योहार, विशिष्ट ऐतिहासिक घटना...",
+    hi: "उदा., गांव का नाम, स्थानीय त्योहार, विशिष्ट ऐतिहासिक घटना...",
     bn: "উদাঃ, গ্রামের নাম, স্থানীয় উৎসব, নির্দিষ্ট ঐতিহাসিক ঘটনা...",
     te: "ఉదా., గ్రామ పేరు, స్థానిక పండుగ, నిర్దిష్ట చారిత్రక సంఘటన...",
     mr: "उदा., गावाचे नाव, स्थानिक सण, विशिष्ट ऐतिहासिक घटना...",
