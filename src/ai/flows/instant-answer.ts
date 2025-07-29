@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
-import { storage, db } from '@/lib/firebase-admin';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -69,6 +69,9 @@ const instantAnswerFlow = ai.defineFlow(
     }
 
     if (input.userId) {
+      const storage = await getStorageInstance();
+      const db = await getDb();
+
       const now = new Date();
       const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
       const contentId = uuidv4();

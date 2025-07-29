@@ -17,20 +17,21 @@ async function getSecret(secretName: string): Promise<string> {
   return payload;
 }
 
-async function initializeFirebase() {
-  if (!admin.apps.length) {
+let firebaseInitialized = false;
+
+export async function initializeFirebase() {
+  if (!admin.apps.length && !firebaseInitialized) {
     try {
       const serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY');
       const serviceAccount = JSON.parse(serviceAccountString);
 
-      // Also fetch the Google API key and set it as an environment variable
-      // so the Genkit/GoogleAI plugin can access it.
       process.env.GOOGLE_API_KEY = await getSecret('GOOGLE_API_KEY');
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
+      firebaseInitialized = true;
     } catch (error: any) {
       console.error('Firebase admin initialization error:', error);
       throw new Error(`Firebase admin initialization error: ${error.message}`);
@@ -38,11 +39,18 @@ async function initializeFirebase() {
   }
 }
 
-// Initialize and then export.
-// Note: This makes the initialization asynchronous.
-// You may need to handle this promise in the parts of your app that use db, auth, or storage.
-initializeFirebase();
+// We will export functions to get the services, which will ensure initialization
+export async function getDb() {
+  await initializeFirebase();
+  return getFirestore();
+}
 
-export const db = getFirestore();
-export const auth = getAuth();
-export const storage = getStorage();
+export async function getAuthInstance() {
+  await initializeFirebase();
+  return getAuth();
+}
+
+export async function getStorageInstance() {
+  await initializeFirebase();
+  return getStorage();
+}
