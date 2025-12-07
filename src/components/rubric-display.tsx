@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from './ui/button';
-import { Download, Save } from 'lucide-react';
+import { Download, Save, Copy, ClipboardCheck } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
@@ -31,58 +31,93 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
   const handleDownload = () => {
     const input = document.getElementById('rubric-pdf');
     if (input) {
-        html2canvas(input, { scale: 2 }).then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const ratio = canvasWidth / canvasHeight;
-            let width = pdfWidth;
-            let height = width / ratio;
-            if (height > pdfHeight) {
-                height = pdfHeight;
-                width = height * ratio;
-            }
+      html2canvas(input, { scale: 2 }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        let width = pdfWidth;
+        let height = width / ratio;
+        if (height > pdfHeight) {
+          height = pdfHeight;
+          width = height * ratio;
+        }
 
-            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-            pdf.save('rubric.pdf');
-        });
+        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+        pdf.save('rubric.pdf');
+      });
     }
   };
-  
+
   const handleSave = () => {
     toast({
-        title: "Saved to Library",
-        description: "Your rubric has been saved to your personal library.",
+      title: "Saved to Library",
+      description: "Your rubric has been saved to your personal library.",
+    });
+  };
+
+  const handleCopy = () => {
+    // Format rubric as text
+    const rubricText = `
+${rubric.title}
+${rubric.description}
+
+${rubric.criteria.map((criterion, idx) => `
+${idx + 1}. ${criterion.name}
+   ${criterion.description}
+   
+   Performance Levels:
+${criterion.levels.map(level => `   • ${level.name} (${level.points} pts): ${level.description}`).join('\n')}
+`).join('\n')}
+    `.trim();
+
+    navigator.clipboard.writeText(rubricText);
+    toast({
+      title: "Copied to Clipboard",
+      description: "Rubric has been copied to your clipboard.",
     });
   };
 
 
   const performanceLevels = rubric.criteria[0]?.levels.map(level => ({
-      name: level.name,
-      points: level.points
+    name: level.name,
+    points: level.points
   })) || [];
 
   return (
     <Card id="rubric-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-            <div>
-                <CardTitle className="font-headline text-2xl">{rubric.title}</CardTitle>
-                {rubric.description && <CardDescription>{rubric.description}</CardDescription>}
-            </div>
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-            </div>
+      <CardHeader className="space-y-3">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 space-y-2">
+            <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
+              <ClipboardCheck className="h-7 w-7 text-primary" />
+              {rubric.title}
+            </CardTitle>
+            {rubric.description && (
+              <CardDescription className="text-base">
+                {rubric.description}
+              </CardDescription>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-start gap-2 no-print">
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSave}>
+              <Save className="mr-2 h-4 w-4" />
+              Save
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Download className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
