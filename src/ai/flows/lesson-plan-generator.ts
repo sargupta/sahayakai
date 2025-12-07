@@ -32,6 +32,7 @@ const LessonPlanInputSchema = z.object({
     subject: z.string().optional(),
     learningOutcomes: z.array(z.string()),
   }).optional().describe('Specific NCERT chapter details to align the lesson plan with.'),
+  resourceLevel: z.enum(['low', 'medium', 'high']).optional().describe('The level of resources available in the classroom. low=chalk&talk, medium=basic aids, high=tech enabled. Defaults to low.'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -79,8 +80,26 @@ You MUST follow the specified JSON output format. Your response must be a valid 
 - Consider agricultural context - many students' families are farmers
 - Use simple, relatable scenarios from rural Indian life
 - Reference Indian heroes and historical figures (Gandhi, APJ Kalam, etc.)
-- Assume minimal resources: chalk, blackboard, locally available materials
-- Activities should work without computers, projectors, or lab equipment
+
+**RESOURCE CONSTRAINTS (Level: {{resourceLevel}}):**
+{{#if (equals resourceLevel "low")}}
+- **STRICTLY LIMIT resources to: Chalk, Blackboard, Textbook.**
+- Do NOT suggest posters, chart papers, or bringing objects from home unless extremely common (like a stone or leaf).
+- Activities must be doable with oral discussion, blackboard drawing, and student notebooks.
+- NO technology, NO printed worksheets, NO lab equipment.
+{{/if}}
+{{#if (equals resourceLevel "medium")}}
+- Resources allowed: Chalk, Blackboard, Textbook, Chart paper, Sketch pens, Local objects (stones, leaves, sticks).
+- Simple group activities are encouraged.
+- NO technology (projectors/computers).
+{{/if}}
+{{#if (equals resourceLevel "high")}}
+- Resources allowed: Projector, Computer, Internet (for teacher), Lab equipment.
+- You can suggest showing a short video or using a digital simulation.
+{{/if}}
+{{#unless resourceLevel}}
+- Assume minimal resources: chalk, blackboard, locally available materials.
+{{/unless}}
 {{/if}}
 
 {{#if ncertChapter}}

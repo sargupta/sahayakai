@@ -21,6 +21,7 @@ import { ImageUploader } from "@/components/image-uploader";
 
 import { NCERTChapterSelector } from "@/components/ncert-chapter-selector";
 import { type NCERTChapter } from "@/data/ncert";
+import { ResourceSelector, type ResourceLevel } from "@/components/resource-selector";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -47,6 +48,7 @@ export default function LessonPlanAgentPage() {
   const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<NCERTChapter | null>(null);
+  const [resourceLevel, setResourceLevel] = useState<ResourceLevel>('low');
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -82,6 +84,7 @@ export default function LessonPlanAgentPage() {
         gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
         useRuralContext: true, // Enable Indian rural context by default
+        resourceLevel: resourceLevel,
         // Pass selected NCERT chapter if available
         ncertChapter: selectedChapter ? {
           title: selectedChapter.title,
@@ -159,6 +162,14 @@ export default function LessonPlanAgentPage() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+
+              {/* Resource Level Selector */}
+              <div className="animate-fade-in-up">
+                <ResourceSelector
+                  value={resourceLevel}
+                  onValueChange={setResourceLevel}
                 />
               </div>
 
