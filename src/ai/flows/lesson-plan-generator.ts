@@ -9,8 +9,8 @@
  * - LessonPlanOutput - The return type for the generateLessonPlan function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import { googleSearch } from '../tools/google-search';
 import { storage, db } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,6 +29,9 @@ export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
 const LessonPlanOutputSchema = z.object({
   title: z.string().describe('A concise and engaging title for the lesson plan.'),
+  gradeLevel: z.string().optional().describe('The grade level for this lesson (e.g., "5th Grade").'),
+  duration: z.string().optional().describe('The total estimated duration for the lesson (e.g., "45 minutes").'),
+  subject: z.string().optional().describe('The subject area (e.g., "Science", "Mathematics", "Social Studies").'),
   objectives: z.array(z.string()).describe('A list of clear learning objectives for the lesson.'),
   materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
   activities: z.array(z.object({
@@ -46,8 +49,8 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
 
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
-  input: {schema: LessonPlanInputSchema},
-  output: {schema: LessonPlanOutputSchema, format: 'json'},
+  input: { schema: LessonPlanInputSchema },
+  output: { schema: LessonPlanOutputSchema, format: 'json' },
   tools: [googleSearch],
   prompt: `You are an expert teacher who creates culturally and geographically relevant educational content, especially for multi-grade classrooms. Generate a detailed lesson plan based on the following inputs.
 
@@ -74,8 +77,8 @@ const lessonPlanFlow = ai.defineFlow(
     outputSchema: LessonPlanOutputSchema,
   },
   async input => {
-    const {output} = await lessonPlanPrompt(input);
-    
+    const { output } = await lessonPlanPrompt(input);
+
     if (!output) {
       throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
     }
