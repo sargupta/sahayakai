@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader } from "@/components/ui/sidebar";
@@ -8,6 +8,11 @@ import { Logo } from '@/components/logo';
 export const metadata: Metadata = {
   title: 'SahayakAI: Bharat Interface',
   description: 'AI-powered lesson planning for teachers in Bharat.',
+  manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#f97316',
 };
 
 export default function RootLayout({
