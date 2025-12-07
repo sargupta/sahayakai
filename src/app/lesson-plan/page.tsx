@@ -19,6 +19,9 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { ImageUploader } from "@/components/image-uploader";
 
+import { NCERTChapterSelector } from "@/components/ncert-chapter-selector";
+import { type NCERTChapter } from "@/data/ncert";
+
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
@@ -43,6 +46,7 @@ const topicPlaceholderTranslations: Record<string, string> = {
 export default function LessonPlanAgentPage() {
   const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState<NCERTChapter | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -56,7 +60,17 @@ export default function LessonPlanAgentPage() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
+  const selectedGradeLevels = form.watch("gradeLevels");
   const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
+
+  // Extract numeric grade from string (e.g., "6th Grade" -> 6)
+  const getNumericGrade = (grades?: string[]) => {
+    if (!grades || grades.length === 0) return undefined;
+    const match = grades[0].match(/(\d+)/);
+    return match ? parseInt(match[1]) : undefined;
+  };
+
+  const currentGrade = getNumericGrade(selectedGradeLevels);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -68,6 +82,12 @@ export default function LessonPlanAgentPage() {
         gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
         useRuralContext: true, // Enable Indian rural context by default
+        // Pass selected NCERT chapter if available
+        ncertChapter: selectedChapter ? {
+          title: selectedChapter.title,
+          number: selectedChapter.number,
+          learningOutcomes: selectedChapter.learningOutcomes,
+        } : undefined,
       });
       setLessonPlan(result);
     } catch (error) {
@@ -111,10 +131,10 @@ export default function LessonPlanAgentPage() {
                   name="gradeLevels"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Grade Level(s)</FormLabel>
+                      <FormLabel className="font-headline">Grade Level</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
-                          value={field.value}
+                          value={field.value || []}
                           onValueChange={field.onChange}
                           language={selectedLanguage}
                         />
@@ -123,6 +143,7 @@ export default function LessonPlanAgentPage() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="language"
@@ -140,6 +161,24 @@ export default function LessonPlanAgentPage() {
                   )}
                 />
               </div>
+
+              {/* NCERT Chapter Selector */}
+              {currentGrade && (
+                <div className="animate-fade-in-up">
+                  <NCERTChapterSelector
+                    selectedGrade={currentGrade}
+                    onChapterSelect={(chapter) => {
+                      setSelectedChapter(chapter);
+                      // Auto-fill topic if chapter is selected
+                      if (chapter) {
+                        form.setValue("topic", `Lesson plan for ${chapter.title}`);
+                      }
+                    }}
+                  />
+                </div>
+              )}
+
+
 
               <FormField
                 control={form.control}

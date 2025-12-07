@@ -26,6 +26,12 @@ const LessonPlanInputSchema = z.object({
   ),
   userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
+  ncertChapter: z.object({
+    title: z.string(),
+    number: z.number(),
+    subject: z.string().optional(),
+    learningOutcomes: z.array(z.string()),
+  }).optional().describe('Specific NCERT chapter details to align the lesson plan with.'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -75,6 +81,17 @@ You MUST follow the specified JSON output format. Your response must be a valid 
 - Reference Indian heroes and historical figures (Gandhi, APJ Kalam, etc.)
 - Assume minimal resources: chalk, blackboard, locally available materials
 - Activities should work without computers, projectors, or lab equipment
+{{/if}}
+
+{{#if ncertChapter}}
+**NCERT CURRICULUM ALIGNMENT:**
+- This lesson MUST align with NCERT Chapter {{ncertChapter.number}}: "{{ncertChapter.title}}"
+- Ensure the following learning outcomes are addressed:
+  {{#each ncertChapter.learningOutcomes}}
+  - {{this}}
+  {{/each}}
+- Use terminology consistent with the NCERT textbook for this chapter.
+- Structure the lesson to help students achieve these specific outcomes.
 {{/if}}
 
 {{#if imageDataUri}}
