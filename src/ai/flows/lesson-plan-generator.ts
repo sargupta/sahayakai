@@ -33,6 +33,7 @@ const LessonPlanInputSchema = z.object({
     learningOutcomes: z.array(z.string()),
   }).optional().describe('Specific NCERT chapter details to align the lesson plan with.'),
   resourceLevel: z.enum(['low', 'medium', 'high']).optional().describe('The level of resources available in the classroom. low=chalk&talk, medium=basic aids, high=tech enabled. Defaults to low.'),
+  difficultyLevel: z.enum(['remedial', 'standard', 'advanced']).optional().describe('The difficulty level for the lesson content. remedial=simplified, standard=grade-level, advanced=challenging. Defaults to standard.'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -99,6 +100,25 @@ You MUST follow the specified JSON output format. Your response must be a valid 
 {{/if}}
 {{#unless resourceLevel}}
 - Assume minimal resources: chalk, blackboard, locally available materials.
+{{/unless}}
+
+**DIFFERENTIATION (Level: {{difficultyLevel}}):**
+{{#if (equals difficultyLevel "remedial")}}
+- **Focus on FOUNDATIONAL concepts.**
+- Use very simple language and concrete examples.
+- Break down complex tasks into small, manageable steps.
+- Provide extra scaffolding and guided practice.
+- Focus on "must-know" vocabulary.
+{{/if}}
+{{#if (equals difficultyLevel "advanced")}}
+- **Focus on EXTENSION and CRITICAL THINKING.**
+- Challenge students with open-ended questions.
+- Encourage independent research or complex problem-solving.
+- Connect concepts to broader real-world issues.
+- Use more sophisticated vocabulary.
+{{/if}}
+{{#unless difficultyLevel}}
+- Target grade-level expectations (Standard).
 {{/unless}}
 {{/if}}
 

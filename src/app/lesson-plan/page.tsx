@@ -22,28 +22,7 @@ import { ImageUploader } from "@/components/image-uploader";
 import { NCERTChapterSelector } from "@/components/ncert-chapter-selector";
 import { type NCERTChapter } from "@/data/ncert";
 import { ResourceSelector, type ResourceLevel } from "@/components/resource-selector";
-
-const formSchema = z.object({
-  topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
-  language: z.string().optional(),
-  gradeLevels: z.array(z.string()).optional(),
-  imageDataUri: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-const topicPlaceholderTranslations: Record<string, string> = {
-  en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
-  hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
-  bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
-  te: "ఉదా., 'భారతీయ రుతుపవనాల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
-  mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
-  ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
-  gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
-  kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
-};
-
-
+import { DifficultySelector, type DifficultyLevel } from "@/components/difficulty-selector";
 import { QuickTemplates } from "@/components/quick-templates";
 import { type QuickTemplate } from "@/data/quick-templates";
 
@@ -52,6 +31,7 @@ export default function LessonPlanAgentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<NCERTChapter | null>(null);
   const [resourceLevel, setResourceLevel] = useState<ResourceLevel>('low');
+  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('standard');
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -88,6 +68,7 @@ export default function LessonPlanAgentPage() {
         imageDataUri: values.imageDataUri,
         useRuralContext: true, // Enable Indian rural context by default
         resourceLevel: resourceLevel,
+        difficultyLevel: difficultyLevel,
         // Pass selected NCERT chapter if available
         ncertChapter: selectedChapter ? {
           title: selectedChapter.title,
@@ -186,6 +167,14 @@ export default function LessonPlanAgentPage() {
                 <ResourceSelector
                   value={resourceLevel}
                   onValueChange={setResourceLevel}
+                />
+              </div>
+
+              {/* Difficulty Level Selector */}
+              <div className="animate-fade-in-up">
+                <DifficultySelector
+                  value={difficultyLevel}
+                  onValueChange={setDifficultyLevel}
                 />
               </div>
 
