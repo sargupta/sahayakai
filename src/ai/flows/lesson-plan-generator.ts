@@ -56,6 +56,11 @@ const lessonPlanPrompt = ai.definePrompt({
 
 You MUST follow the specified JSON output format. Your response must be a valid JSON object that adheres to the defined schema. Do not return null or any other non-JSON response.
 
+**IMPORTANT: You MUST include the following metadata in your response:**
+- gradeLevel: The primary grade level for this lesson (e.g., "5th Grade", "6th Grade")
+- duration: The total estimated time for the complete lesson (e.g., "45 minutes", "1 hour", "2 class periods")
+- subject: The primary subject area (e.g., "Science", "Mathematics", "Social Studies", "Language Arts", "History")
+
 {{#if imageDataUri}}
 **Primary Context from Image:**
 Analyze the following image and use it as the primary source of information for creating the lesson plan. The user's topic should be used to refine the focus.
