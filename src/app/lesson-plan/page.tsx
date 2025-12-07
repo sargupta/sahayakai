@@ -44,6 +44,9 @@ const topicPlaceholderTranslations: Record<string, string> = {
 };
 
 
+import { QuickTemplates } from "@/components/quick-templates";
+import { type QuickTemplate } from "@/data/quick-templates";
+
 export default function LessonPlanAgentPage() {
   const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -113,6 +116,19 @@ export default function LessonPlanAgentPage() {
   const handlePromptClick = (prompt: string) => {
     form.setValue("topic", prompt);
     form.trigger("topic");
+  };
+
+  const handleTemplateSelect = (template: QuickTemplate) => {
+    form.setValue("topic", template.topic);
+    form.setValue("gradeLevels", [template.gradeLevel]);
+    // Reset other specific selections to avoid conflicts
+    setSelectedChapter(null);
+    form.trigger("topic");
+
+    toast({
+      title: "Template Selected",
+      description: `Loaded template: ${template.title}`,
+    });
   };
 
   return (
@@ -212,6 +228,11 @@ export default function LessonPlanAgentPage() {
               />
 
               <MicrophoneInput onTranscriptChange={handleTranscript} />
+
+              {/* Quick Templates */}
+              <div className="animate-fade-in-up">
+                <QuickTemplates onTemplateSelect={handleTemplateSelect} />
+              </div>
 
               <FormField
                 control={form.control}
