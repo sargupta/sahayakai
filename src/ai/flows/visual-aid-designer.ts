@@ -8,9 +8,9 @@
  * - VisualAidOutput - The return type for the generateVisualAid function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -39,7 +39,7 @@ const visualAidFlow = ai.defineFlow(
   },
   async (input) => {
     const { prompt, gradeLevel, language, userId } = input;
-    const {media} = await ai.generate({
+    const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
         You are a talented chalk artist who creates beautiful and clear educational illustrations on a blackboard.
@@ -69,6 +69,8 @@ const visualAidFlow = ai.defineFlow(
     }
 
     if (userId) {
+      const storage = await getStorageInstance();
+      const db = await getDb();
       const now = new Date();
       const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
       const contentId = uuidv4();

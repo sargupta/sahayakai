@@ -12,9 +12,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleSearch } from '../tools/google-search';
-import { storage, db } from '@/lib/firebase-admin';
-import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 
 const LessonPlanInputSchema = z.object({

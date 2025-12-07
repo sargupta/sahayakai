@@ -9,9 +9,9 @@
  * - WorksheetWizardOutput - The return type for the generateWorksheet function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -40,8 +40,8 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
-  input: {schema: WorksheetWizardInputSchema},
-  output: {schema: WorksheetWizardOutputSchema},
+  input: { schema: WorksheetWizardInputSchema },
+  output: { schema: WorksheetWizardOutputSchema },
   prompt: `You are an expert educator who creates engaging and effective worksheets from textbook content.
 
 **Instructions:**
@@ -67,13 +67,15 @@ const worksheetWizardFlow = ai.defineFlow(
     outputSchema: WorksheetWizardOutputSchema,
   },
   async input => {
-    const {output} = await worksheetWizardPrompt(input);
+    const { output } = await worksheetWizardPrompt(input);
 
     if (!output) {
       throw new Error('The AI model failed to generate a valid worksheet. The returned output was null.');
     }
 
     if (input.userId) {
+      const storage = await getStorageInstance();
+      const db = await getDb();
       const now = new Date();
       const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
       const contentId = uuidv4();
