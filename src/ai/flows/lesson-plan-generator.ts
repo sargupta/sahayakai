@@ -15,6 +15,7 @@ import { googleSearch } from '../tools/google-search';
 import { storage, db } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { getIndianContextPrompt } from '@/lib/indian-context';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -24,6 +25,7 @@ const LessonPlanInputSchema = z.object({
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
   userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
+  useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
 });
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
@@ -60,6 +62,20 @@ You MUST follow the specified JSON output format. Your response must be a valid 
 - gradeLevel: The primary grade level for this lesson (e.g., "5th Grade", "6th Grade")
 - duration: The total estimated time for the complete lesson (e.g., "45 minutes", "1 hour", "2 class periods")
 - subject: The primary subject area (e.g., "Science", "Mathematics", "Social Studies", "Language Arts", "History")
+
+{{#if useRuralContext}}
+**INDIAN RURAL CONTEXT - VERY IMPORTANT:**
+- Use examples from Indian daily life (farming, local markets, festivals like Diwali, Holi, Eid)
+- Reference Indian geography (Ganga, Himalayas, monsoon, Indian states and cities)
+- Use Indian currency (₹) in all money-related examples
+- Include culturally relevant examples (roti, dal, rice, cricket, kabaddi, etc.)
+- Avoid Western examples (pizza, snow, dollars, hamburgers, etc.)
+- Consider agricultural context - many students' families are farmers
+- Use simple, relatable scenarios from rural Indian life
+- Reference Indian heroes and historical figures (Gandhi, APJ Kalam, etc.)
+- Assume minimal resources: chalk, blackboard, locally available materials
+- Activities should work without computers, projectors, or lab equipment
+{{/if}}
 
 {{#if imageDataUri}}
 **Primary Context from Image:**

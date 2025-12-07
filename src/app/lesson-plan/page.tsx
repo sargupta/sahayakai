@@ -29,14 +29,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const topicPlaceholderTranslations: Record<string, string> = {
-    en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
-    hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
-    bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
-    te: "ఉదా., 'భారతీయ రుతుపవనాల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
-    mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
-    ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
-    gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
-    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
+  en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
+  hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
+  bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
+  te: "ఉదా., 'భారతీయ రుతుపవనాల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
+  mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
+  ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
+  gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
+  kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
 };
 
 
@@ -67,6 +67,7 @@ export default function LessonPlanAgentPage() {
         language: values.language,
         gradeLevels: values.gradeLevels,
         imageDataUri: values.imageDataUri,
+        useRuralContext: true, // Enable Indian rural context by default
       });
       setLessonPlan(result);
     } catch (error) {
@@ -122,7 +123,7 @@ export default function LessonPlanAgentPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
@@ -148,18 +149,18 @@ export default function LessonPlanAgentPage() {
                     <FormLabel className="font-headline">Add Context (Optional Image)</FormLabel>
                     <FormControl>
                       <ImageUploader
-                          onImageUpload={(dataUri) => {
-                              field.onChange(dataUri);
-                              form.trigger("imageDataUri");
-                          }}
-                          language={selectedLanguage}
+                        onImageUpload={(dataUri) => {
+                          field.onChange(dataUri);
+                          form.trigger("imageDataUri");
+                        }}
+                        language={selectedLanguage}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <MicrophoneInput onTranscriptChange={handleTranscript} />
 
               <FormField
@@ -169,15 +170,15 @@ export default function LessonPlanAgentPage() {
                   <FormItem>
                     <FormLabel className="font-headline">How can I help you?</FormLabel>
                     <FormControl>
-                        <AutoCompleteInput
-                          placeholder={topicPlaceholder}
-                          {...field}
-                          selectedLanguage={selectedLanguage}
-                          onSuggestionClick={(value) => {
-                              form.setValue("topic", value);
-                              form.trigger("topic");
-                          }}
-                        />
+                      <AutoCompleteInput
+                        placeholder={topicPlaceholder}
+                        {...field}
+                        selectedLanguage={selectedLanguage}
+                        onSuggestionClick={(value) => {
+                          form.setValue("topic", value);
+                          form.trigger("topic");
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
