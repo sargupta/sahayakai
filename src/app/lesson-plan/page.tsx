@@ -26,6 +26,9 @@ import { DifficultySelector, type DifficultyLevel } from "@/components/difficult
 import { QuickTemplates } from "@/components/quick-templates";
 import { type QuickTemplate } from "@/data/quick-templates";
 
+import { offlineLessonPlans } from "@/data/offline-lesson-plans";
+import { useEffect } from "react";
+
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   language: z.string().optional(),
@@ -52,7 +55,32 @@ export default function LessonPlanAgentPage() {
   const [selectedChapter, setSelectedChapter] = useState<NCERTChapter | null>(null);
   const [resourceLevel, setResourceLevel] = useState<ResourceLevel>('low');
   const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('standard');
+  const [isOffline, setIsOffline] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check initial status
+    if (typeof window !== 'undefined') {
+      setIsOffline(!navigator.onLine);
+    }
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast({ title: "Back Online", description: "You are connected to the internet." });
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast({ title: "You are Offline", description: "Using offline mode. AI features limited.", variant: "destructive" });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [toast]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,6 +108,31 @@ export default function LessonPlanAgentPage() {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setLessonPlan(null);
+
+    // OFFLINE MODE HANDLER
+    if (isOffline) {
+      if (selectedChapter && offlineLessonPlans[selectedChapter.id]) {
+        // Simulate a short delay for better UX
+        setTimeout(() => {
+          setLessonPlan(offlineLessonPlans[selectedChapter.id]);
+          setIsLoading(false);
+          toast({
+            title: "Offline Plan Loaded",
+            description: "Loaded pre-written lesson plan from device.",
+          });
+        }, 500);
+        return;
+      } else {
+        setIsLoading(false);
+        toast({
+          title: "Offline Mode",
+          description: "No pre-downloaded plan found for this chapter. Please connect to internet to generate new plans.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       const result = await generateLessonPlan({
         topic: values.topic,

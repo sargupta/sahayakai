@@ -3,62 +3,48 @@
  * Central export for all NCERT subject data
  */
 
-import NCERTMathematics from './mathematics';
-import NCERTScience from './science';
-import type { NCERTGrade, NCERTChapter } from './mathematics';
+import { mathematicsChapters } from './mathematics';
+import { scienceChapters } from './science';
+import { socialStudiesChapters } from './social-studies';
+import { englishChapters } from './english';
+import { hindiChapters } from './hindi';
 
-export { NCERTMathematics, NCERTScience };
-export type { NCERTGrade, NCERTChapter };
+export interface NCERTChapter {
+    id: string;
+    title: string;
+    titleHindi?: string;
+    subject: 'Mathematics' | 'Science' | 'Social Studies' | 'English' | 'Hindi';
+    grade: number;
+    number: number;
+    learningOutcomes: string[];
+    keywords: string[];
+    estimatedPeriods: number;
+}
 
-export const NCERTSubjects = {
-    mathematics: NCERTMathematics,
-    science: NCERTScience,
+export const allNCERTChapters: NCERTChapter[] = [
+    ...mathematicsChapters,
+    ...scienceChapters,
+    ...socialStudiesChapters,
+    ...englishChapters,
+    ...hindiChapters,
+];
+
+export const getChaptersForGrade = (grade: number, subject?: string) => {
+    let chapters = allNCERTChapters.filter(c => c.grade === grade);
+    if (subject) {
+        chapters = chapters.filter(c => c.subject === subject);
+    }
+    return chapters;
 };
 
-export type SubjectKey = keyof typeof NCERTSubjects;
+export const getChapterById = (id: string) => {
+    return allNCERTChapters.find(c => c.id === id);
+};
 
-/**
- * Get chapters for a specific grade and subject
- */
-export function getChaptersForGrade(subject: SubjectKey, grade: number): NCERTChapter[] {
-    const subjectData = NCERTSubjects[subject];
-    const gradeData = subjectData.find(g => g.grade === grade);
-    return gradeData?.chapters || [];
-}
-
-/**
- * Get a specific chapter by ID
- */
-export function getChapterById(chapterId: string): NCERTChapter | null {
-    for (const subject of Object.values(NCERTSubjects)) {
-        for (const grade of subject) {
-            const chapter = grade.chapters.find(c => c.id === chapterId);
-            if (chapter) return chapter;
-        }
-    }
-    return null;
-}
-
-/**
- * Search chapters by keyword
- */
-export function searchChapters(keyword: string): NCERTChapter[] {
-    const results: NCERTChapter[] = [];
-    const lowerKeyword = keyword.toLowerCase();
-
-    for (const subject of Object.values(NCERTSubjects)) {
-        for (const grade of subject) {
-            for (const chapter of grade.chapters) {
-                if (
-                    chapter.title.toLowerCase().includes(lowerKeyword) ||
-                    chapter.keywords.some(k => k.toLowerCase().includes(lowerKeyword)) ||
-                    chapter.learningOutcomes.some(lo => lo.toLowerCase().includes(lowerKeyword))
-                ) {
-                    results.push(chapter);
-                }
-            }
-        }
-    }
-
-    return results;
-}
+export const searchChapters = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    return allNCERTChapters.filter(c =>
+        c.title.toLowerCase().includes(lowerQuery) ||
+        c.keywords.some(k => k.toLowerCase().includes(lowerQuery))
+    );
+};

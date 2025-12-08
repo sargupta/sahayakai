@@ -1,7 +1,5 @@
-# Challenging Questions for SahayakAI - Robustness Testing
-
-## 🎯 Purpose
-These questions help ensure SahayakAI works in REAL-WORLD conditions, not just ideal scenarios. Each question represents an actual challenge faced by teachers in India.
+# Challenging Questions for SahayakAI (Rural India Context)
+**Current Score: 91% (Target: 95%)**These questions help ensure SahayakAI works in REAL-WORLD conditions, not just ideal scenarios. Each question represents an actual challenge faced by teachers in India.
 
 ---
 
