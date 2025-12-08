@@ -204,7 +204,7 @@
 ### Reliability
 34. **"If 1000 teachers try to use this during exam time, will it still work?"**
     - Tests: Scalability, server capacity, performance
-    - Current Answer: ✅ Yes (Offline mode reduces server load significantly)
+    - Current Answer: ✅ Yes (Offline mode + Semantic Caching reduces server/AI load significantly)
     - Target: ✅ Yes
 
 35. **"Can a teacher rely on this for an inspection or demonstration lesson?"**
