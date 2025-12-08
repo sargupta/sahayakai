@@ -9,9 +9,9 @@
  * - TeacherTrainingOutput - The return type for the getTeacherTrainingAdvice function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -39,8 +39,8 @@ export async function getTeacherTrainingAdvice(input: TeacherTrainingInput): Pro
 
 const teacherTrainingPrompt = ai.definePrompt({
   name: 'teacherTrainingPrompt',
-  input: {schema: TeacherTrainingInputSchema},
-  output: {schema: TeacherTrainingOutputSchema, format: 'json'},
+  input: { schema: TeacherTrainingInputSchema },
+  output: { schema: TeacherTrainingOutputSchema, format: 'json' },
   prompt: `You are SahayakAI, a compassionate and experienced professional development coach for teachers in India. Your goal is to provide supportive, practical, and encouraging advice that is grounded in sound pedagogy.
 
 **Instructions:**
@@ -65,7 +65,7 @@ const teacherTrainingFlow = ai.defineFlow(
     outputSchema: TeacherTrainingOutputSchema,
   },
   async input => {
-    const {output} = await teacherTrainingPrompt(input);
+    const { output } = await teacherTrainingPrompt(input);
 
     if (!output) {
       throw new Error('The AI model failed to generate a valid training advice. The returned output was null.');
@@ -77,12 +77,15 @@ const teacherTrainingFlow = ai.defineFlow(
       const contentId = uuidv4();
       const fileName = `${timestamp}-${contentId}.json`;
       const filePath = `users/${input.userId}/teacher-training/${fileName}`;
+
+      const storage = await getStorageInstance();
       const file = storage.bucket().file(filePath);
 
       await file.save(JSON.stringify(output), {
         contentType: 'application/json',
       });
 
+      const db = await getDb();
       await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
         type: 'teacher-training',
         topic: input.question,

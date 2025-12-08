@@ -8,9 +8,9 @@
  * - RubricGeneratorOutput - The return type for the generateRubric function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -43,8 +43,8 @@ export async function generateRubric(input: RubricGeneratorInput): Promise<Rubri
 
 const rubricGeneratorPrompt = ai.definePrompt({
   name: 'rubricGeneratorPrompt',
-  input: {schema: RubricGeneratorInputSchema},
-  output: {schema: RubricGeneratorOutputSchema},
+  input: { schema: RubricGeneratorInputSchema },
+  output: { schema: RubricGeneratorOutputSchema },
   prompt: `You are an expert educator specializing in assessment design. Create a detailed, fair, and clear grading rubric based on the user's request.
 
 **Instructions:**
@@ -74,7 +74,7 @@ const rubricGeneratorFlow = ai.defineFlow(
     outputSchema: RubricGeneratorOutputSchema,
   },
   async input => {
-    const {output} = await rubricGeneratorPrompt(input);
+    const { output } = await rubricGeneratorPrompt(input);
 
     if (!output) {
       throw new Error('The AI model failed to generate a valid rubric. The returned output was null.');
@@ -86,12 +86,15 @@ const rubricGeneratorFlow = ai.defineFlow(
       const contentId = uuidv4();
       const fileName = `${timestamp}-${contentId}.json`;
       const filePath = `users/${input.userId}/rubrics/${fileName}`;
+
+      const storage = await getStorageInstance();
       const file = storage.bucket().file(filePath);
 
       await file.save(JSON.stringify(output), {
         contentType: 'application/json',
       });
 
+      const db = await getDb();
       await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
         type: 'rubric',
         topic: input.assignmentDescription,

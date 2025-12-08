@@ -8,9 +8,9 @@
  * - VirtualFieldTripOutput - The return type for the planVirtualFieldTrip function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -38,8 +38,8 @@ export async function planVirtualFieldTrip(input: VirtualFieldTripInput): Promis
 
 const virtualFieldTripPrompt = ai.definePrompt({
   name: 'virtualFieldTripPrompt',
-  input: {schema: VirtualFieldTripInputSchema},
-  output: {schema: VirtualFieldTripOutputSchema},
+  input: { schema: VirtualFieldTripInputSchema },
+  output: { schema: VirtualFieldTripOutputSchema },
   prompt: `You are an expert curriculum designer who creates exciting virtual field trips for students using Google Earth.
 
 **Instructions:**
@@ -64,7 +64,7 @@ const virtualFieldTripFlow = ai.defineFlow(
     outputSchema: VirtualFieldTripOutputSchema,
   },
   async input => {
-    const {output} = await virtualFieldTripPrompt(input);
+    const { output } = await virtualFieldTripPrompt(input);
 
     if (!output) {
       throw new Error('The AI model failed to generate a valid virtual field trip. The returned output was null.');
@@ -76,12 +76,15 @@ const virtualFieldTripFlow = ai.defineFlow(
       const contentId = uuidv4();
       const fileName = `${timestamp}-${contentId}.json`;
       const filePath = `users/${input.userId}/virtual-field-trips/${fileName}`;
+
+      const storage = await getStorageInstance();
       const file = storage.bucket().file(filePath);
 
       await file.save(JSON.stringify(output), {
         contentType: 'application/json',
       });
 
+      const db = await getDb();
       await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
         type: 'virtual-field-trip',
         topic: input.topic,

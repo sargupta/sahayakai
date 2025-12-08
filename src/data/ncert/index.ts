@@ -3,8 +3,8 @@
  * Central export for all NCERT subject data
  */
 
-import { mathematicsChapters } from './mathematics';
-import { scienceChapters } from './science';
+import { NCERTMathematics } from './mathematics';
+import { NCERTScience } from './science';
 import { socialStudiesChapters } from './social-studies';
 import { englishChapters } from './english';
 import { hindiChapters } from './hindi';
@@ -20,6 +20,24 @@ export interface NCERTChapter {
     keywords: string[];
     estimatedPeriods: number;
 }
+
+// Flatten Math
+const mathematicsChapters: NCERTChapter[] = NCERTMathematics.flatMap(g =>
+    g.chapters.map(c => ({
+        ...c,
+        grade: g.grade,
+        subject: 'Mathematics',
+    }))
+);
+
+// Flatten Science
+const scienceChapters: NCERTChapter[] = NCERTScience.flatMap(g =>
+    g.chapters.map(c => ({
+        ...c,
+        grade: g.grade,
+        subject: 'Science',
+    }))
+);
 
 export const allNCERTChapters: NCERTChapter[] = [
     ...mathematicsChapters,

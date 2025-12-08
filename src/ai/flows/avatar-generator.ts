@@ -8,9 +8,9 @@
  * - AvatarGeneratorOutput - The return type for the generateAvatar function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { storage, db } from '@/lib/firebase-admin';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -37,7 +37,7 @@ const avatarGeneratorFlow = ai.defineFlow(
   },
   async (input) => {
     const { name, userId } = input;
-    const {media} = await ai.generate({
+    const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `
         You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
@@ -68,6 +68,8 @@ const avatarGeneratorFlow = ai.defineFlow(
       const contentId = uuidv4();
       const fileName = `${timestamp}-${contentId}.png`;
       const filePath = `users/${userId}/avatars/${fileName}`;
+
+      const storage = await getStorageInstance();
       const file = storage.bucket().file(filePath);
 
       // Convert data URI to buffer
@@ -80,6 +82,7 @@ const avatarGeneratorFlow = ai.defineFlow(
       });
 
       // Save the path to the user's profile
+      const db = await getDb();
       await db.collection('users').doc(userId).set({
         avatarUrl: filePath,
       }, { merge: true });
