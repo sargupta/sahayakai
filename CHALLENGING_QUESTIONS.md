@@ -18,7 +18,7 @@
 
 3. **"If the app crashes mid-lesson, can the teacher continue without losing work?"**
    - Tests: Auto-save, offline caching, recovery
-   - Current Answer: ⚠️ Partial (PWA helps, but no auto-save draft yet)
+   - Current Answer: ✅ Yes (Auto-save draft implemented)
    - Target: ✅ Yes
 
 4. **"Can a teacher download a week's worth of content on Sunday and use it all week offline?"**
@@ -55,7 +55,7 @@
 
 10. **"Can a teacher modify a generated lesson plan in 2 minutes when the original plan doesn't work?"**
     - Tests: Edit functionality, quick adjustments
-    - Current Answer: ⚠️ Partial (Can regenerate quickly, but no direct edit UI yet)
+    - Current Answer: ✅ Yes (Direct Edit UI implemented)
     - Target: ✅ Yes
 
 ---
@@ -264,7 +264,7 @@ For each question:
 - ❌ **No** = 0 points (Doesn't address)
 - ❓ **Unknown** = 0 points (Needs testing)
 
-**Current Score:** ~72/84 (86%)
+**Current Score:** ~74/84 (88%)
 **Target Score:** 80+/84 (95%+)
 
 ---

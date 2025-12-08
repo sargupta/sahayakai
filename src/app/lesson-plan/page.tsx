@@ -105,6 +105,38 @@ export default function LessonPlanAgentPage() {
 
   const currentGrade = getNumericGrade(selectedGradeLevels);
 
+  // Auto-save draft
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("lessonPlanDraft", JSON.stringify(value));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+  // Load draft
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem("lessonPlanDraft");
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          // Only restore if it looks valid
+          if (parsed.topic) {
+            form.reset(parsed);
+            toast({
+              title: "Draft Restored",
+              description: "We restored your previous work.",
+            });
+          }
+        } catch (e) {
+          console.error("Failed to parse draft", e);
+        }
+      }
+    }
+  }, []);
+
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setLessonPlan(null);
