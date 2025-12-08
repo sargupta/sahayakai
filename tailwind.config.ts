@@ -1,5 +1,5 @@
 
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -11,8 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"PT Sans"', 'sans-serif'],
-        headline: ['"Space Grotesk"', 'sans-serif'],
+        body: ['"Inter"', 'sans-serif'],
+        headline: ['"Outfit"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -99,12 +99,12 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
       },
-       typography: ({ theme }: { theme: any }) => ({
+      typography: ({ theme }: { theme: any }) => ({
         DEFAULT: {
           css: {
             'p': {
-                marginTop: theme('spacing.4'),
-                marginBottom: theme('spacing.4'),
+              marginTop: theme('spacing.4'),
+              marginBottom: theme('spacing.4'),
             },
             'li': {
               marginTop: theme('spacing.2'),

@@ -79,44 +79,35 @@ You MUST follow the specified JSON output format. Your response must be a valid 
 - Use simple, relatable scenarios from rural Indian life
 - Reference Indian heroes and historical figures (Gandhi, APJ Kalam, etc.)
 
-**RESOURCE CONSTRAINTS (Level: {{resourceLevel}}):**
-{{#if (equals resourceLevel "low")}}
-- **STRICTLY LIMIT resources to: Chalk, Blackboard, Textbook.**
-- Do NOT suggest posters, chart papers, or bringing objects from home unless extremely common (like a stone or leaf).
-- Activities must be doable with oral discussion, blackboard drawing, and student notebooks.
-- NO technology, NO printed worksheets, NO lab equipment.
-{{/if}}
-{{#if (equals resourceLevel "medium")}}
-- Resources allowed: Chalk, Blackboard, Textbook, Chart paper, Sketch pens, Local objects (stones, leaves, sticks).
-- Simple group activities are encouraged.
-- NO technology (projectors/computers).
-{{/if}}
-{{#if (equals resourceLevel "high")}}
-- Resources allowed: Projector, Computer, Internet (for teacher), Lab equipment.
-- You can suggest showing a short video or using a digital simulation.
-{{/if}}
-{{#unless resourceLevel}}
-- Assume minimal resources: chalk, blackboard, locally available materials.
-{{/unless}}
+**RESOURCE CONSTRAINTS (Current Level: {{resourceLevel}}):**
+- **If Level is 'low' (or unspecified):**
+  - **STRICTLY LIMIT resources to: Chalk, Blackboard, Textbook.**
+  - Do NOT suggest posters, chart papers, or bringing objects from home unless extremely common (like a stone or leaf).
+  - Activities must be doable with oral discussion, blackboard drawing, and student notebooks.
+  - NO technology, NO printed worksheets, NO lab equipment.
+- **If Level is 'medium':**
+  - Resources allowed: Chalk, Blackboard, Textbook, Chart paper, Sketch pens, Local objects (stones, leaves, sticks).
+  - Simple group activities are encouraged.
+  - NO technology (projectors/computers).
+- **If Level is 'high':**
+  - Resources allowed: Projector, Computer, Internet (for teacher), Lab equipment.
+  - You can suggest showing a short video or using a digital simulation.
 
-**DIFFERENTIATION (Level: {{difficultyLevel}}):**
-{{#if (equals difficultyLevel "remedial")}}
-- **Focus on FOUNDATIONAL concepts.**
-- Use very simple language and concrete examples.
-- Break down complex tasks into small, manageable steps.
-- Provide extra scaffolding and guided practice.
-- Focus on "must-know" vocabulary.
-{{/if}}
-{{#if (equals difficultyLevel "advanced")}}
-- **Focus on EXTENSION and CRITICAL THINKING.**
-- Challenge students with open-ended questions.
-- Encourage independent research or complex problem-solving.
-- Connect concepts to broader real-world issues.
-- Use more sophisticated vocabulary.
-{{/if}}
-{{#unless difficultyLevel}}
-- Target grade-level expectations (Standard).
-{{/unless}}
+**DIFFERENTIATION (Current Level: {{difficultyLevel}}):**
+- **If Level is 'remedial':**
+  - **Focus on FOUNDATIONAL concepts.**
+  - Use very simple language and concrete examples.
+  - Break down complex tasks into small, manageable steps.
+  - Provide extra scaffolding and guided practice.
+  - Focus on "must-know" vocabulary.
+- **If Level is 'advanced':**
+  - **Focus on EXTENSION and CRITICAL THINKING.**
+  - Challenge students with open-ended questions.
+  - Encourage independent research or complex problem-solving.
+  - Connect concepts to broader real-world issues.
+  - Use more sophisticated vocabulary.
+- **If Level is 'standard' (or unspecified):**
+  - Target grade-level expectations.
 {{/if}}
 
 {{#if ncertChapter}}

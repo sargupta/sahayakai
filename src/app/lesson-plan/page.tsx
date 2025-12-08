@@ -321,140 +321,156 @@ export default function LessonPlanAgentPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="gradeLevels"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Grade Level</FormLabel>
-                      <FormControl>
-                        <GradeLevelSelector
-                          value={field.value || []}
-                          onValueChange={field.onChange}
-                          language={selectedLanguage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Language</FormLabel>
-                      <FormControl>
-                        <LanguageSelector
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Resource Level Selector */}
-              <div className="animate-fade-in-up">
-                <ResourceSelector
-                  value={resourceLevel}
-                  onValueChange={setResourceLevel}
-                />
-              </div>
-
-              {/* Difficulty Level Selector */}
-              <div className="animate-fade-in-up">
-                <DifficultySelector
-                  value={difficultyLevel}
-                  onValueChange={setDifficultyLevel}
-                />
-              </div>
-
-              {/* NCERT Chapter Selector */}
-              {currentGrade && (
-                <div className="animate-fade-in-up">
-                  <NCERTChapterSelector
-                    selectedGrade={currentGrade}
-                    onChapterSelect={(chapter) => {
-                      setSelectedChapter(chapter);
-                      // Auto-fill topic if chapter is selected
-                      if (chapter) {
-                        form.setValue("topic", `Lesson plan for ${chapter.title}`);
-                      }
-                    }}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* LEFT COLUMN: Main Input Area (7 cols) */}
+                <div className="lg:col-span-7 space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="topic"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline text-lg">What do you want to teach?</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <AutoCompleteInput
+                              placeholder={topicPlaceholder}
+                              {...field}
+                              selectedLanguage={selectedLanguage}
+                              onSuggestionClick={(value) => {
+                                form.setValue("topic", value);
+                                form.trigger("topic");
+                              }}
+                            />
+                            <MicrophoneInput onTranscriptChange={handleTranscript} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="imageDataUri"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-headline">Add Context (Image)</FormLabel>
+                          <FormControl>
+                            <ImageUploader
+                              onImageUpload={(dataUri) => {
+                                field.onChange(dataUri);
+                                form.trigger("imageDataUri");
+                              }}
+                              language={selectedLanguage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-2">
+                      <FormLabel className="font-headline">Quick Ideas</FormLabel>
+                      <div className="h-[120px] overflow-y-auto pr-2 border rounded-md p-2 bg-slate-50/50">
+                        <ExamplePrompts
+                          onPromptClick={handlePromptClick}
+                          selectedLanguage={selectedLanguage}
+                          page="homeWithImage"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Templates - Horizontal Scroll */}
+                  <div className="space-y-2">
+                    <FormLabel className="font-headline">Popular Topics</FormLabel>
+                    <div className="overflow-x-auto pb-2">
+                      <QuickTemplates onTemplateSelect={handleTemplateSelect} />
+                    </div>
+                  </div>
                 </div>
-              )}
 
+                {/* RIGHT COLUMN: Configuration Sidebar (5 cols) */}
+                <div className="lg:col-span-5 space-y-4 bg-slate-50/80 p-5 rounded-xl border border-slate-100 h-fit">
+                  <h3 className="font-headline text-sm uppercase tracking-wider text-slate-500 mb-2">Lesson Settings</h3>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="gradeLevels"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">Grade</FormLabel>
+                          <FormControl>
+                            <GradeLevelSelector
+                              value={field.value || []}
+                              onValueChange={field.onChange}
+                              language={selectedLanguage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-              <FormField
-                control={form.control}
-                name="imageDataUri"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">Add Context (Optional Image)</FormLabel>
-                    <FormControl>
-                      <ImageUploader
-                        onImageUpload={(dataUri) => {
-                          field.onChange(dataUri);
-                          form.trigger("imageDataUri");
+                    <FormField
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">Language</FormLabel>
+                          <FormControl>
+                            <LanguageSelector
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-slate-600">Resources</FormLabel>
+                    <ResourceSelector
+                      value={resourceLevel}
+                      onValueChange={setResourceLevel}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-slate-600">Difficulty</FormLabel>
+                    <DifficultySelector
+                      value={difficultyLevel}
+                      onValueChange={setDifficultyLevel}
+                    />
+                  </div>
+
+                  {/* NCERT Chapter Selector */}
+                  {currentGrade && (
+                    <div className="space-y-1 pt-2 border-t border-slate-200">
+                      <FormLabel className="text-xs font-semibold text-slate-600">NCERT Chapter (Optional)</FormLabel>
+                      <NCERTChapterSelector
+                        selectedGrade={currentGrade}
+                        onChapterSelect={(chapter) => {
+                          setSelectedChapter(chapter);
+                          if (chapter) {
+                            form.setValue("topic", `Lesson plan for ${chapter.title}`);
+                          }
                         }}
-                        language={selectedLanguage}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
-
-              {/* Quick Templates */}
-              <div className="animate-fade-in-up">
-                <QuickTemplates onTemplateSelect={handleTemplateSelect} />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <FormField
-                control={form.control}
-                name="topic"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">How can I help you?</FormLabel>
-                    <FormControl>
-                      <AutoCompleteInput
-                        placeholder={topicPlaceholder}
-                        {...field}
-                        selectedLanguage={selectedLanguage}
-                        onSuggestionClick={(value) => {
-                          form.setValue("topic", value);
-                          form.trigger("topic");
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="p-3 bg-accent/20 rounded-lg">
-                <ExamplePrompts
-                  onPromptClick={handlePromptClick}
-                  selectedLanguage={selectedLanguage}
-                  page="homeWithImage"
-                />
-              </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Generating...
+                    Generating Lesson Plan...
                   </>
                 ) : (
                   "Generate Lesson Plan"
