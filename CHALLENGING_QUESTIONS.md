@@ -204,20 +204,20 @@
 ### Reliability
 34. **"If 1000 teachers try to use this during exam time, will it still work?"**
     - Tests: Scalability, server capacity, performance
-    - Current Answer: ✅ Yes (Offline mode + Semantic Caching reduces server/AI load significantly)
+    - Current Answer: ✅ Yes (Offline mode + Semantic Caching + Firestore + IndexedDB)
     - Target: ✅ Yes
 
 35. **"Can a teacher rely on this for an inspection or demonstration lesson?"**
-    - Tests: Quality consistency, reliability, trust
-    - Current Answer: ✅ Yes (Pre-written offline plans are curated and high quality)
+    - Tests: Quality, formatting, alignment
+    - Current Answer: ✅ Yes (NCERT aligned, professional PDF output)
+    - Target: ✅ Yes
+
+36. **"How do we know if the lesson plan actually worked in the classroom?"**
+    - Tests: Feedback loop, analytics
+    - Current Answer: ✅ Yes (Feedback Loop & Telemetry implemented)
     - Target: ✅ Yes
 
 ### Data & Privacy
-36. **"Is student/teacher data safe if the school has no IT security?"**
-    - Tests: Privacy, data protection, security
-    - Current Answer: ✅ Yes (Local-first/Offline approach keeps data on device)
-    - Target: ✅ Yes (privacy-first design)
-
 37. **"Can this work without collecting personal data from students?"**
     - Tests: Privacy, COPPA compliance, minimal data
     - Current Answer: ✅ Yes

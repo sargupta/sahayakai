@@ -18,7 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, X } from 'lucide-react';
+import { Edit, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { submitFeedback } from '@/app/actions/feedback';
 
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
@@ -28,6 +29,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
   const { toast } = useToast();
   const [editablePlan, setEditablePlan] = useState(lessonPlan);
   const [isEditing, setIsEditing] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
     setEditablePlan(lessonPlan);
@@ -38,6 +40,15 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
     toast({
       title: "Changes Saved",
       description: "Your edits have been applied to the view.",
+    });
+  };
+
+  const handleFeedback = async (rating: 'thumbs-up' | 'thumbs-down') => {
+    await submitFeedback(lessonPlan.title, rating);
+    setFeedbackSubmitted(true);
+    toast({
+      title: "Feedback Recorded",
+      description: "Thank you for helping us improve!",
     });
   };
 

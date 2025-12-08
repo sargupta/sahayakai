@@ -29,6 +29,8 @@ import { type QuickTemplate } from "@/data/quick-templates";
 import { offlineLessonPlans } from "@/data/offline-lesson-plans";
 import { useEffect } from "react";
 import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson-plan";
+import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent } from "@/lib/indexed-db";
+import { syncTelemetryEvents } from "@/app/actions/telemetry";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -65,13 +67,33 @@ export default function LessonPlanAgentPage() {
       setIsOffline(!navigator.onLine);
     }
 
-    const handleOnline = () => {
+    const handleOnline = async () => {
       setIsOffline(false);
       toast({ title: "Back Online", description: "You are connected to the internet." });
+
+      // Sync Telemetry
+      try {
+        const pending = await getPendingEvents();
+        if (pending.length > 0) {
+          const events = pending.map(p => p.value);
+          const result = await syncTelemetryEvents(events);
+          if (result.success) {
+            // Clear synced events
+            await Promise.all(pending.map(p => clearEvent(p.key)));
+            console.log(`Synced ${pending.length} telemetry events`);
+          }
+        }
+      } catch (e) {
+        console.error("Sync failed", e);
+      }
     };
+
     const handleOffline = () => {
       setIsOffline(true);
       toast({ title: "You are Offline", description: "Using offline mode. AI features limited.", variant: "destructive" });
+
+      // Log offline event
+      logEvent({ type: 'offline_mode_active', timestamp: Date.now() });
     };
 
     window.addEventListener('online', handleOnline);
@@ -106,69 +128,69 @@ export default function LessonPlanAgentPage() {
 
   const currentGrade = getNumericGrade(selectedGradeLevels);
 
-  // Auto-save draft
+  // Auto-save draft (IndexedDB)
   useEffect(() => {
-    const subscription = form.watch((value) => {
+    const subscription = form.watch(async (value) => {
       if (typeof window !== 'undefined') {
-        localStorage.setItem("lessonPlanDraft", JSON.stringify(value));
+        try {
+          await saveDraft("lessonPlanDraft", value);
+        } catch (e) {
+          console.error("Failed to save draft", e);
+        }
       }
     });
     return () => subscription.unsubscribe();
   }, [form.watch]);
 
-  // Load draft
+  // Load draft (IndexedDB)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedDraft = localStorage.getItem("lessonPlanDraft");
-      if (savedDraft) {
+    const loadDraft = async () => {
+      if (typeof window !== 'undefined') {
         try {
-          const parsed = JSON.parse(savedDraft);
-          // Only restore if it looks valid
-          if (parsed.topic) {
-            form.reset(parsed);
+          const savedDraft = await getDraft("lessonPlanDraft");
+          if (savedDraft && savedDraft.topic) {
+            form.reset(savedDraft);
             toast({
               title: "Draft Restored",
-              description: "We restored your previous work.",
+              description: "We restored your previous work from secure storage.",
             });
           }
         } catch (e) {
           console.error("Failed to parse draft", e);
         }
       }
-    }
+    };
+    loadDraft();
   }, []);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setLessonPlan(null);
 
-    // 1. SEMANTIC CACHE CHECK (Economic Sustainability)
-    // Check if we have already generated this exact lesson plan locally
+    // 1. SEMANTIC CACHE CHECK (IndexedDB - Layer 1)
     const cacheKey = `cache_lp_${values.topic.trim().toLowerCase()}_${values.gradeLevels?.[0] || 'default'}_${values.language || 'en'}`;
     if (typeof window !== 'undefined') {
-      const cachedPlan = localStorage.getItem(cacheKey);
-      if (cachedPlan) {
-        try {
-          const parsedPlan = JSON.parse(cachedPlan);
+      try {
+        const cachedPlan = await getCache(cacheKey);
+        if (cachedPlan) {
           // Simulate a tiny delay for UX so it doesn't feel glitchy
           setTimeout(() => {
-            setLessonPlan(parsedPlan);
+            setLessonPlan(cachedPlan);
             setIsLoading(false);
             toast({
               title: "⚡ Instant Load",
-              description: "Loaded from local cache.",
+              description: "Loaded from local DB cache.",
               className: "bg-green-50 border-green-200 text-green-800",
             });
           }, 300);
           return;
-        } catch (e) {
-          console.error("Cache parse error", e);
-          localStorage.removeItem(cacheKey);
         }
+      } catch (e) {
+        console.error("Cache fetch error", e);
       }
     }
 
-    // 2. CLOUD CACHE CHECK (Community Cache)
+    // 2. CLOUD CACHE CHECK (Community Cache - Layer 2)
     if (!isOffline) {
       try {
         const cloudCachedPlan = await getCachedLessonPlan(
@@ -187,7 +209,7 @@ export default function LessonPlanAgentPage() {
           });
           // Save to local for next time
           if (typeof window !== 'undefined') {
-            localStorage.setItem(cacheKey, JSON.stringify(cloudCachedPlan));
+            await saveCache(cacheKey, cloudCachedPlan);
           }
           return;
         }
@@ -238,12 +260,12 @@ export default function LessonPlanAgentPage() {
       });
       setLessonPlan(result);
 
-      // Save to semantic cache (Local)
+      // Save to semantic cache (Local - IndexedDB)
       if (typeof window !== 'undefined') {
-        localStorage.setItem(cacheKey, JSON.stringify(result));
+        await saveCache(cacheKey, result);
       }
 
-      // Save to semantic cache (Cloud)
+      // Save to semantic cache (Cloud - Firestore)
       if (!isOffline) {
         saveLessonPlanToCache(
           result,
