@@ -141,6 +141,32 @@ export default function LessonPlanAgentPage() {
     setIsLoading(true);
     setLessonPlan(null);
 
+    // 1. SEMANTIC CACHE CHECK (Economic Sustainability)
+    // Check if we have already generated this exact lesson plan locally
+    const cacheKey = `cache_lp_${values.topic.trim().toLowerCase()}_${values.gradeLevels?.[0] || 'default'}_${values.language || 'en'}`;
+    if (typeof window !== 'undefined') {
+      const cachedPlan = localStorage.getItem(cacheKey);
+      if (cachedPlan) {
+        try {
+          const parsedPlan = JSON.parse(cachedPlan);
+          // Simulate a tiny delay for UX so it doesn't feel glitchy
+          setTimeout(() => {
+            setLessonPlan(parsedPlan);
+            setIsLoading(false);
+            toast({
+              title: "⚡ Instant Load",
+              description: "Loaded from cache. No AI credits used!",
+              className: "bg-green-50 border-green-200 text-green-800",
+            });
+          }, 300);
+          return;
+        } catch (e) {
+          console.error("Cache parse error", e);
+          localStorage.removeItem(cacheKey);
+        }
+      }
+    }
+
     // OFFLINE MODE HANDLER
     if (isOffline) {
       if (selectedChapter && offlineLessonPlans[selectedChapter.id]) {
@@ -182,6 +208,11 @@ export default function LessonPlanAgentPage() {
         } : undefined,
       });
       setLessonPlan(result);
+
+      // Save to semantic cache
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(cacheKey, JSON.stringify(result));
+      }
     } catch (error) {
       console.error("Failed to generate lesson plan:", error);
       toast({
