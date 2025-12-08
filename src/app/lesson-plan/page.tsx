@@ -28,6 +28,7 @@ import { type QuickTemplate } from "@/data/quick-templates";
 
 import { offlineLessonPlans } from "@/data/offline-lesson-plans";
 import { useEffect } from "react";
+import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson-plan";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -155,7 +156,7 @@ export default function LessonPlanAgentPage() {
             setIsLoading(false);
             toast({
               title: "⚡ Instant Load",
-              description: "Loaded from cache. No AI credits used!",
+              description: "Loaded from local cache.",
               className: "bg-green-50 border-green-200 text-green-800",
             });
           }, 300);
@@ -164,6 +165,34 @@ export default function LessonPlanAgentPage() {
           console.error("Cache parse error", e);
           localStorage.removeItem(cacheKey);
         }
+      }
+    }
+
+    // 2. CLOUD CACHE CHECK (Community Cache)
+    if (!isOffline) {
+      try {
+        const cloudCachedPlan = await getCachedLessonPlan(
+          values.topic,
+          values.gradeLevels?.[0] || 'default',
+          values.language || 'en'
+        );
+
+        if (cloudCachedPlan) {
+          setLessonPlan(cloudCachedPlan);
+          setIsLoading(false);
+          toast({
+            title: "☁️ Community Cache",
+            description: "Found a plan shared by another teacher!",
+            className: "bg-blue-50 border-blue-200 text-blue-800",
+          });
+          // Save to local for next time
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(cacheKey, JSON.stringify(cloudCachedPlan));
+          }
+          return;
+        }
+      } catch (e) {
+        console.error("Cloud cache check failed", e);
       }
     }
 
@@ -209,9 +238,19 @@ export default function LessonPlanAgentPage() {
       });
       setLessonPlan(result);
 
-      // Save to semantic cache
+      // Save to semantic cache (Local)
       if (typeof window !== 'undefined') {
         localStorage.setItem(cacheKey, JSON.stringify(result));
+      }
+
+      // Save to semantic cache (Cloud)
+      if (!isOffline) {
+        saveLessonPlanToCache(
+          result,
+          values.topic,
+          values.gradeLevels?.[0] || 'default',
+          values.language || 'en'
+        );
       }
     } catch (error) {
       console.error("Failed to generate lesson plan:", error);
