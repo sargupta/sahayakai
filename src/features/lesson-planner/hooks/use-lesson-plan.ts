@@ -12,6 +12,7 @@ import { type QuickTemplate } from "@/data/quick-templates";
 import { offlineLessonPlans } from "@/data/offline-lesson-plans";
 import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson-plan";
 import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent } from "@/lib/indexed-db";
+import { logger } from "@/lib/logger";
 import { syncTelemetryEvents } from "@/app/actions/telemetry";
 import { formSchema, FormValues, topicPlaceholderTranslations } from "../types";
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
