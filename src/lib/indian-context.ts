@@ -154,7 +154,7 @@ export const exampleReplacements: Record<string, string> = {
 
     // Animals
     reindeer: 'camel',
-    polar bear: 'elephant',
+    'polar bear': 'elephant',
 };
 
 /**

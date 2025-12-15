@@ -19,8 +19,16 @@ const config: Config = {
     collectCoverageFrom: [
         'src/lib/safety.ts',
         'src/lib/logger.ts',
+        'src/lib/indian-context.ts',
         'src/components/lesson-plan/lesson-plan-input-section.tsx',
-        // 'src/features/lesson-planner/hooks/use-lesson-plan.ts', // Temporarily excluded due to test harness issues
+        'src/components/feedback-dialog.tsx',
+        'src/data/ncert/**/*.ts',
+        'src/features/lesson-planner/hooks/use-lesson-plan.ts',
+        'src/hooks/use-toast.ts',
+        'src/app/page.tsx',
+    ],
+    transformIgnorePatterns: [
+        '/node_modules/(?!(jose|firebase-admin|@genkit-ai|@google-cloud|lucide-react)/)',
     ],
     coverageThreshold: {
         global: {

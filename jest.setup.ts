@@ -1,4 +1,7 @@
 import '@testing-library/jest-dom'
+import { TextEncoder, TextDecoder } from 'util';
+
+Object.assign(global, { TextDecoder, TextEncoder });
 
 // Mocking global window functions if needed
 Object.defineProperty(window, 'matchMedia', {
