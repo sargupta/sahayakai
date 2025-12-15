@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { LessonPlanInputSection } from './lesson-plan-input-section';
+import { LessonPlanInputSection } from '@/components/lesson-plan/lesson-plan-input-section';
 import { FormProvider, useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 

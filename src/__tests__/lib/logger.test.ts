@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import { logger } from '@/lib/logger';
 
 describe('Logger', () => {
     // Spy on console methods

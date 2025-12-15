@@ -1,4 +1,4 @@
-import { validateTopicSafety, checkRateLimit, SAFETY_CONFIG } from './safety';
+import { validateTopicSafety, checkRateLimit, SAFETY_CONFIG } from '@/lib/safety';
 
 describe('Safety Utilities', () => {
 
