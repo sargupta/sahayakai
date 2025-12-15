@@ -1,14 +1,29 @@
+// 'use server' is implied by file location if configured or explicit at top
 'use server';
 
-import { getDb } from '@/lib/firebase-admin';
-import { LessonPlanOutput } from '@/ai/flows/lesson-plan-generator';
+import type { LessonPlanOutput } from '@/ai/flows/lesson-plan-generator';
+import { validateTopicSafety } from '@/lib/safety';
+
+// Dynamic imports are used for server-only modules to prevents client-bundle errors
+// when this Action is imported by Client Components.
 
 /**
  * Normalizes the topic string for consistent cache keys.
- * e.g., "  Photosynthesis  " -> "photosynthesis"
+ * Removes common stopwords to increase cache hits.
+ * e.g., "Teach me about Gravity" -> "gravity"
  */
 function normalizeKey(str: string): string {
-    return str.trim().toLowerCase().replace(/\s+/g, ' ');
+    const stopWords = ['teach', 'me', 'about', 'how', 'to', 'explain', 'lesson', 'plan', 'for', 'the', 'a', 'an'];
+    let normalized = str.trim().toLowerCase();
+
+    // Remove punctuation
+    normalized = normalized.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+
+    // Remove stop words
+    const words = normalized.split(/\s+/);
+    const filtered = words.filter(w => !stopWords.includes(w));
+
+    return filtered.join(' ') || normalized; // Fallback to original if everything was a stopword
 }
 
 /**
@@ -40,6 +55,10 @@ function generateCacheId(topic: string, grade: string, language: string): string
     return `${normTopic}-${normGrade}-${normLang}`.replace(/[^a-z0-9-]/g, '-');
 }
 
+// This file primarily handles Caching logic.
+// The actual generation is in @/ai/flows/lesson-plan-generator.ts
+// We will apply the caching logic improvements here.
+
 /**
  * Checks Firestore for a cached lesson plan.
  */
@@ -54,6 +73,7 @@ export async function getCachedLessonPlan(
         // If PII was detected, cacheId is null. Return null immediately.
         if (!cacheId) return null;
 
+        const { getDb } = await import('@/lib/firebase-admin');
         const db = await getDb();
         const docRef = db.collection('cached_lesson_plans').doc(cacheId);
         const doc = await docRef.get();
@@ -89,6 +109,7 @@ export async function saveLessonPlanToCache(
             return;
         }
 
+        const { getDb } = await import('@/lib/firebase-admin');
         const db = await getDb();
         await db.collection('cached_lesson_plans').doc(cacheId).set({
             ...plan,

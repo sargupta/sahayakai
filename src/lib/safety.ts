@@ -42,9 +42,10 @@ export function checkRateLimit(): { allowed: boolean; waitTime?: number } {
  */
 export function validateTopicSafety(topic: string): { safe: boolean; reason?: string } {
     const unsafePatterns = [
+        // ... existing patterns ...
         /bomb/i, /explosive/i, /terror/i, /suicide/i, /kill/i,
         /porn/i, /sex/i, /nude/i, /gambl/i,
-        /cheat exam/i, /hack/i
+        /cheat exam/i, /hack/i, /ignore previous/i, /override system/i, /you are not/i
     ];
 
     for (const pattern of unsafePatterns) {
@@ -54,3 +55,5 @@ export function validateTopicSafety(topic: string): { safe: boolean; reason?: st
     }
     return { safe: true };
 }
+
+// Server-side logic moved to src/lib/server-safety.ts to avoid client bundle errors.

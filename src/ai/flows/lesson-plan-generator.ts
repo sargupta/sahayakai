@@ -13,6 +13,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleSearch } from '../tools/google-search';
 import { getIndianContextPrompt } from '@/lib/indian-context';
+import { validateTopicSafety } from '@/lib/safety';
+// import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -51,6 +53,23 @@ const LessonPlanOutputSchema = z.object({
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
 export async function generateLessonPlan(input: LessonPlanInput): Promise<LessonPlanOutput> {
+  // 1. Server-Side Safety Check
+  const safety = validateTopicSafety(input.topic);
+  if (!safety.safe) {
+    throw new Error(`Safety Violation: ${safety.reason}`);
+  }
+
+  // 2. Server-Side Rate Limiting
+  // Use input.userId or fallback to "anonymous" (IP-based limits not implemented yet in this scope)
+  const uid = input.userId || 'anonymous_user';
+  if (uid !== 'anonymous_user') {
+    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    await checkServerRateLimit(uid);
+  } else {
+    // Optional: limit anonymous globally? For now, skip to avoid blocking legitimate first-time users without IDs.
+    // In production, we'd use IP.
+  }
+
   return lessonPlanFlow(input);
 }
 
