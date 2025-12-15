@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node"],
+  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node", "firebase-admin", "@google-cloud/secret-manager"],
 };
 
 export default withPWA(nextConfig);

@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, X, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { submitFeedback } from '@/app/actions/feedback';
+import { Edit, X, Save as SaveIcon } from 'lucide-react'; // Removing ThumbsUp/Down imports if they conflict or keep if reusable icons
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
@@ -58,54 +58,64 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
   };
 
   const handleDownload = () => {
-    const input = document.getElementById('lesson-plan-pdf');
-    if (input) {
-      html2canvas(input, { scale: 2 }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
+    // Better Naming for PDF
+    const originalTitle = document.title;
+    const cleanTitle = (lessonPlan.title || 'Lesson Plan').replace(/[^a-z0-9]/gi, '_');
+    const filename = `Sahayak_Lesson_${cleanTitle}_${lessonPlan.gradeLevel || ''}`;
 
-        let position = 0;
-        let remainingHeight = canvasHeight;
+    document.title = filename; // Sets the default filename in Print Dialog
+    window.print();
 
-        while (remainingHeight > 0) {
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvasWidth;
+    // Restore title after a small delay (to ensure print dialog picks it up)
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
 
-          // Calculate height for the current page
-          const pageHeight = Math.min(remainingHeight, canvasHeight * (pdfHeight / height));
-          pageCanvas.height = pageHeight;
-
-          const pageCtx = pageCanvas.getContext('2d');
-          pageCtx?.drawImage(canvas, 0, position, canvasWidth, pageHeight, 0, 0, canvasWidth, pageHeight);
-
-          const pageImgData = pageCanvas.toDataURL('image/png');
-
-          if (position > 0) {
-            pdf.addPage();
-          }
-
-          pdf.addImage(pageImgData, 'PNG', 0, 0, width, height * (pageHeight / canvasHeight));
-          position += pageHeight;
-          remainingHeight -= pageHeight;
-        }
-
-        pdf.save('lesson-plan.pdf');
-      });
-    }
+    toast({
+      title: "Print to PDF",
+      description: "Select 'Save as PDF' to save.",
+    });
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Saved to Library",
-      description: "Your lesson plan has been saved to your personal library.",
-    });
+  const handleSave = async () => {
+    try {
+      const { auth, db } = await import('@/lib/firebase');
+      const { signInAnonymously } = await import('firebase/auth');
+      const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+
+      let user = auth.currentUser;
+      if (!user) {
+        const userCred = await signInAnonymously(auth);
+        user = userCred.user;
+      }
+
+      // meaningful title for the DB entry
+      const saveTitle = lessonPlan.title && lessonPlan.title !== 'Lesson Plan'
+        ? lessonPlan.title
+        : `${lessonPlan.subject || 'General'} Lesson - ${lessonPlan.gradeLevel || 'Unspecified'}`;
+
+      await addDoc(collection(db, 'content'), {
+        userId: user.uid,
+        type: 'lesson-plan',
+        title: saveTitle,
+        data: lessonPlan,
+        createdAt: serverTimestamp(),
+        gradeLevel: lessonPlan.gradeLevel,
+        subject: lessonPlan.subject
+      });
+
+      toast({
+        title: "Saved to Library",
+        description: `Saved as "${saveTitle}"`,
+      });
+    } catch (error) {
+      console.error("Save Error:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save to library. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCopy = () => {
@@ -339,6 +349,17 @@ ${lessonPlan.assessment}
 
         </Accordion>
       </CardContent>
+      <div className="p-6 border-t border-slate-100 flex justify-end">
+        <FeedbackDialog
+          page="lesson-plan"
+          feature="lesson-plan-result"
+          context={{
+            topic: lessonPlan.title,
+            grade: lessonPlan.gradeLevel,
+            subject: lessonPlan.subject
+          }}
+        />
+      </div>
     </Card>
   );
 };

@@ -134,3 +134,43 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @media print {
+
+    /* Hide everything by default */
+    body * {
+      visibility: hidden;
+    }
+
+    /* Show only the Lesson Plan Card and its children */
+    #lesson-plan-pdf,
+    #lesson-plan-pdf * {
+      visibility: visible;
+    }
+
+    /* Position the card at top left */
+    #lesson-plan-pdf {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      padding: 20px;
+      box-shadow: none;
+      border: none;
+      background: white !important;
+    }
+
+    /* Hide buttons within the card */
+    .no-print {
+      display: none !important;
+    }
+
+    /* Ensure text is black for printing */
+    * {
+      color: black !important;
+      text-shadow: none !important;
+    }
+  }
+}
