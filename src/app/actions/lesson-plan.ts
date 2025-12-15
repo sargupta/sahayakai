@@ -12,9 +12,27 @@ function normalizeKey(str: string): string {
 }
 
 /**
- * Generates a unique cache ID based on inputs.
+ * Detects potential PII (Email, Phone, generic Name patterns)
  */
-function generateCacheId(topic: string, grade: string, language: string): string {
+function containsPII(text: string): boolean {
+    // Basic email regex
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    // Basic phone regex (Indian context: 10 digits, maybe +91)
+    const phoneRegex = /(\+91[\-\s]?)?[6-9]\d{9}/;
+
+    return emailRegex.test(text) || phoneRegex.test(text);
+}
+
+/**
+ * Generates a unique cache ID based on inputs.
+ * Returns null if PII is detected to prevent unsafe caching.
+ */
+function generateCacheId(topic: string, grade: string, language: string): string | null {
+    if (containsPII(topic)) {
+        console.warn(`[Privacy] PII detected in topic: "${topic}". Skipping cache generation.`);
+        return null; // Do not generate a cache ID for PII content
+    }
+
     const normTopic = normalizeKey(topic);
     const normGrade = normalizeKey(grade);
     const normLang = normalizeKey(language);
@@ -31,10 +49,12 @@ export async function getCachedLessonPlan(
     language: string
 ): Promise<LessonPlanOutput | null> {
     try {
-        const db = await getDb();
         const cacheId = generateCacheId(topic, grade, language);
 
-        // Try to fetch by exact ID first (fastest)
+        // If PII was detected, cacheId is null. Return null immediately.
+        if (!cacheId) return null;
+
+        const db = await getDb();
         const docRef = db.collection('cached_lesson_plans').doc(cacheId);
         const doc = await docRef.get();
 
@@ -43,8 +63,6 @@ export async function getCachedLessonPlan(
             return doc.data() as LessonPlanOutput;
         }
 
-        // Optional: We could search by 'topic' field if we wanted fuzzy matching,
-        // but for now, exact normalized match is safer and cheaper.
         console.log(`Cache MISS for: ${cacheId}`);
         return null;
     } catch (error) {
@@ -63,9 +81,15 @@ export async function saveLessonPlanToCache(
     language: string
 ): Promise<void> {
     try {
-        const db = await getDb();
         const cacheId = generateCacheId(topic, grade, language);
 
+        // If PII detected, do NOT save.
+        if (!cacheId) {
+            console.log(`[Privacy] Skipping cache save for sensitive topic.`);
+            return;
+        }
+
+        const db = await getDb();
         await db.collection('cached_lesson_plans').doc(cacheId).set({
             ...plan,
             _metadata: {

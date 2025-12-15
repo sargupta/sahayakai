@@ -1,377 +1,160 @@
 "use client";
 
-import { processAgentRequest, AgentRouterOutput } from "@/ai/flows/agent-router";
-import { QuizDisplay } from "@/components/quiz-display";
-import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { LanguageSelector } from "@/components/language-selector";
-import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { MicrophoneInput } from "@/components/microphone-input";
-import { ExamplePrompts } from "@/components/example-prompts";
-import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
-import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
-  language: z.string().optional(),
-  gradeLevels: z.array(z.string()).optional(),
-  localContext: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const descriptionTranslations: Record<string, string> = {
-    en: "Use the input below or your voice to get started.",
-    hi: "आरंभ करने के लिए नीचे दिए गए इनपुट या अपनी आवाज़ का उपयोग करें।",
-    bn: "শুরু করতে নীচের ইনপুট বা আপনার ভয়েস ব্যবহার করুন।",
-    te: "ప్రారంభించడానికి దిగువ ఇన్‌పుట్ లేదా మీ వాయిస్‌ని ఉపయోగించండి।",
-    mr: "प्रार���भ करण्यासाठी खालील इनपुट किंवा तुमचा आवाज वापरा।",
-    ta: "தொடங்குவதற்கு கீழே உள்ள உள்ளீடு அல்லது உங்கள் குரலைப் பயன்படுத்தவும்।",
-    gu: "શરૂ કરવા માટે નીચે આપેલ ઇનપુટ અથવા તમારા અવાજનો ઉપયોગ કરો।",
-    kn: "ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗಿನ ಇನ್‌ಪುಟ್ ಅಥವಾ ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಬಳಸಿ।",
-};
-
-const topicPlaceholderTranslations: Record<string, string> = {
-    en: "e.g., 'Create a lesson plan for the Indian Monsoon'",
-    hi: "उदा., 'भारतीय मानसून के लिए एक पाठ योजना बनाएं'",
-    bn: "উদা., 'ভারতীয় বর্ষার জন্য একটি পাঠ পরিকল্পনা তৈরি করুন'",
-    te: "ఉదా., 'భారతీయ రుతుపవన���ల కోసం ఒక పాఠ్య ప్రణాళికను సృష్టించండి'",
-    mr: "उदा., 'भारतीय मान्सूनसाठी एक पाठ योजना तयार करा'",
-    ta: "உதா., 'இந்திய பருவமழைக்கு ஒரு பாடம் திட்டம் உருவாக்கவும்'",
-    gu: "દા.ત., 'ભારતીય ચોમાસા માટે એક પાઠ યોજના બનાવો'",
-    kn: "ಉದಾ., 'ಭಾರತೀಯ ಮಾನ್ಸೂನ್‌ಗಾಗಿ ಪಾಠ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ'",
-};
-
-const gradeLevelLabelTranslations: Record<string, string> = {
-    en: "Grade Level(s)",
-    hi: "श्रेणी स्तर",
-    bn: "শ্রেণী স্তর(গুলি)",
-    te: "గ్రేడ్ స్థాయి(లు)",
-    mr: "ग्रेड स्तर",
-    ta: "வகுப்பு நிலை(கள்)",
-    gu: "ગ્રેડ સ્તર",
-    kn: "ಗ್ರೇಡ್ ಮಟ್ಟ(ಗಳು)",
-};
-
-const languageLabelTranslations: Record<string, string> = {
-    en: "Language",
-    hi: "भाषा",
-    bn: "ভাষা",
-    te: "భాష",
-    mr: "भाषा",
-    ta: "மொழி",
-    gu: "ભાષા",
-    kn: "ಭಾಷೆ",
-};
-
-const localContextLabelTranslations: Record<string, string> = {
-    en: "Add Local Context",
-    hi: "स्थानीय संदर्भ जोड़ें",
-    bn: "স্থানীয় প্রসঙ্গ যোগ করুন",
-    te: "స్థానిక సందర్భాన్ని జోడించండి",
-    mr: "स्थानिक संदर्भ జోडा",
-    ta: "உள்ளூர் சூழலைச் சேர்க்கவும்",
-    gu: "સ્થાનિક સંદર્ભ ઉમેરો",
-    kn: "ಸ್ಥಳೀಯ ಸಂದರ್ಭವನ್ನು ಸೇರಿಸಿ",
-};
-
-const localContextPlaceholderTranslations: Record<string, string> = {
-    en: "e.g., Village name, local festival, specific historical event...",
-    hi: "उदा., गांव का नाम, स्थानीय त्योहार, विशिष्ट ऐतिहासिक घटना...",
-    bn: "উদাঃ, গ্রামের নাম, স্থানীয় উৎসব, নির্দিষ্ট ঐতিহাসিক ঘটনা...",
-    te: "ఉదా., గ్రామ పేరు, స్థానిక పండుగ, నిర్దిష్ట చారిత్రక సంఘటన...",
-    mr: "उदा., गावाचे नाव, स्थानिक सण, विशिष्ट ऐतिहासिक घटना...",
-    ta: "எ.கா., கிராமத்தின் பெயர், உள்ளூர் திருவிழா, குறிப்பிட்ட வரலாற்று நிகழ்வு...",
-    gu: "દા.ત., ગામનું નામ, સ્થાનિક તહેવાર, ચોક્કસ ઐતિહાસિક ઘટના...",
-    kn: "ಉದಾ., ಗ್ರಾಮದ ಹೆಸರು, ಸ್ಥಳೀಯ ಹಬ್ಬ, ನಿರ್ದಿಷ್ಟ ಐತಿಹಾಸಿಕ ಘಟನೆ...",
-};
-
-const helpLabelTranslations: Record<string, string> = {
-    en: "How can I help you?",
-    hi: "मैं आपकी कैसे मदद कर सकता हूँ?",
-    bn: "আমি আপনাকে কিভাবে সাহায্য করতে পারি?",
-    te: "నేను మీకు ఎలా సహాయం చేయగలను?",
-    mr: "मी तुम्हाला कशी मदत करू शकतो?",
-    ta: "நான் உங்களுக்கு எப்படி உதவ முடியும்?",
-    gu: "હું તમને કેવી રીતે મદદ કરી શકું?",
-    kn: "ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
-};
-
-const generatingButtonTranslations: Record<string, string> = {
-    en: "Generating...",
-    hi: "उत्पन्न हो रहा है...",
-    bn: "জেনারেট করা হচ্ছে...",
-    te: "జనరేట్ చేస్తోంది...",
-    mr: "तयार करत आहे...",
-    ta: "உருவாக்குகிறது...",
-    gu: "જનરેટ કરી રહ્યું છે...",
-    kn: "ರಚಿಸಲಾಗುತ್ತಿದೆ...",
-};
-
-const generateButtonTranslations: Record<string, string> = {
-    en: "Generate",
-    hi: "उत्पन्न करें",
-    bn: "জেনারেট করুন",
-    te: "సృష్టించు",
-    mr: "तयार करा",
-    ta: "உருவாக்கு",
-    gu: "જનરેટ કરો",
-    kn: "ರಚಿಸಿ",
-};
-
-const generationFailedToastTitleTranslations: Record<string, string> = {
-    en: "Generation Failed",
-    hi: "उत्पादन विफल",
-    bn: "জেনারেট ব্যর্থ হয়েছে",
-    te: "జనరేషన్ విఫలమైంది",
-    mr: "निर्मिती अयशस्वी",
-    ta: "உருவாக்கம் தோல்வியுற்றது",
-    gu: "જનરેશન નિષ્ફળ",
-    kn: "ಜನರೇಷನ್ ವಿಫಲವಾಗಿದೆ",
-};
-
-const generationFailedToastDescTranslations: Record<string, string> = {
-    en: "There was an error generating the content. Please try again.",
-    hi: "सामग्री उत्पन्न करने में एक त्रुटि हुई। कृपया पुन: प्रयास करें।",
-    bn: "বিষয়বস্তু তৈরি করার সময় একটি ত্রুটি ছিল। আবার চেষ্টা করুন.",
-    te: "కంటెంట్‌ను రూపొందించడంలో లోపం ఏర్పడింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
-    mr: "सामग्री तयार करताना एक त्रुटी आली. कृपया पुन्हा प्रयत्न करा.",
-    ta: "உள்ளடக்கத்தை உருவாக்குவதில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
-    gu: "સામગ્રી જનરેટ કરવામાં ભૂલ ��તી. કૃપા કરીને ફરી પ્રયાસ કરો.",
-    kn: "ವಿಷಯವನ್ನು ರಚಿಸುವಲ್ಲಿ ದೋಷವಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-};
-
-const answerCardTitleTranslations: Record<string, string> = {
-    en: "Answer",
-    hi: "उत्तर",
-    bn: "উত্তর",
-    te: "సమాధానం",
-    mr: "उत्तर",
-    ta: "பதில்",
-    gu: "જવાબ",
-    kn: "ಉತ್ತರ",
-};
-
-const sorryCardTitleTranslations: Record<string, string> = {
-    en: "Sorry!",
-    hi: "माफ़ करें!",
-    bn: "দুঃখিত!",
-    te: "క్షమించండి!",
-    mr: "माफ करा!",
-    ta: "மன்னிக்கவும்!",
-    gu: "માફ કરશો!",
-    kn: "ಕ್ಷಮಿಸಿ!",
-};
-
 export default function Home() {
-  const [generationResult, setGenerationResult] = useState<AgentRouterOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [greeting, setGreeting] = useState("Namaste");
+  const router = useRouter();
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good Morning");
+    else if (hour < 18) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
-      language: "en",
-      gradeLevels: ["6th Grade"],
-      localContext: "",
     },
   });
 
-  const selectedLanguage = form.watch("language") || 'en';
-  const description = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
-  const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
-  const gradeLevelLabel = gradeLevelLabelTranslations[selectedLanguage] || gradeLevelLabelTranslations.en;
-  const languageLabel = languageLabelTranslations[selectedLanguage] || languageLabelTranslations.en;
-  const localContextLabel = localContextLabelTranslations[selectedLanguage] || localContextLabelTranslations.en;
-  const localContextPlaceholder = localContextPlaceholderTranslations[selectedLanguage] || localContextPlaceholderTranslations.en;
-  const helpLabel = helpLabelTranslations[selectedLanguage] || helpLabelTranslations.en;
-  const generatingButton = generatingButtonTranslations[selectedLanguage] || generatingButtonTranslations.en;
-  const generateButton = generateButtonTranslations[selectedLanguage] || generateButtonTranslations.en;
-  const generationFailedToastTitle = generationFailedToastTitleTranslations[selectedLanguage] || generationFailedToastTitleTranslations.en;
-  const generationFailedToastDesc = generationFailedToastDescTranslations[selectedLanguage] || generationFailedToastDescTranslations.en;
-  const answerCardTitle = answerCardTitleTranslations[selectedLanguage] || answerCardTitleTranslations.en;
-  const sorryCardTitle = sorryCardTitleTranslations[selectedLanguage] || sorryCardTitleTranslations.en;
-
   const onSubmit = async (values: FormValues) => {
-    setIsLoading(true);
-    setGenerationResult(null);
-    try {
-      const result = await processAgentRequest({
-        prompt: values.topic,
-        language: values.language,
-        gradeLevels: values.gradeLevels,
-        localContext: values.localContext,
-      });
-      setGenerationResult(result);
-    } catch (error) {
-      console.error("Failed to generate content:", error);
-      toast({
-        title: generationFailedToastTitle,
-        description: generationFailedToastDesc,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Navigate using client-side routing to preserve state and app-feel
+    router.push(`/lesson-plan?topic=${encodeURIComponent(values.topic)}`);
   };
 
   const handleTranscript = (transcript: string) => {
     form.setValue("topic", transcript);
-    form.trigger("topic");
-  };
-  
-  const handlePromptClick = (prompt: string) => {
-    form.setValue("topic", prompt);
-    form.trigger("topic");
+    form.handleSubmit(onSubmit)();
   };
 
-  return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl">SahayakAI</CardTitle>
-          <CardDescription>
-            {description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="gradeLevels"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">{gradeLevelLabel}</FormLabel>
-                       <FormControl>
-                        <GradeLevelSelector
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          language={selectedLanguage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">{languageLabel}</FormLabel>
-                      <FormControl>
-                        <LanguageSelector
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="localContext"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">{localContextLabel}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={localContextPlaceholder}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-               <MicrophoneInput onTranscriptChange={handleTranscript} />
-
-              <FormField
-                control={form.control}
-                name="topic"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">{helpLabel}</FormLabel>
-                    <FormControl>
-                        <AutoCompleteInput
-                          placeholder={topicPlaceholder}
-                          {...field}
-                          selectedLanguage={selectedLanguage}
-                          onSuggestionClick={(value) => {
-                              form.setValue("topic", value);
-                              form.trigger("topic");
-                          }}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <ExamplePrompts
-                onPromptClick={handlePromptClick}
-                selectedLanguage={selectedLanguage}
-                page="homeWithImage"
-              />
-            
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    {generatingButton}
-                  </>
-                ) : (
-                  generateButton
-                )}
-              </Button>
-            </form>
-          </Form>
+  const QuickActionCard = ({ title, icon: Icon, href, color, description }: { title: string, icon: any, href: string, color: string, description: string }) => (
+    <Link href={href} className="group">
+      <Card className="h-full border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
+          <div className={cn("p-3 md:p-4 rounded-full bg-slate-50 group-hover:scale-110 transition-transform duration-300", color)}>
+            <Icon className="h-6 w-6 md:h-8 md:w-8" />
+          </div>
+          <div className="space-y-1 md:space-y-2">
+            <h3 className="font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight">{title}</h3>
+            <p className="text-xs md:text-sm text-slate-500 leading-relaxed md:line-clamp-none line-clamp-2">{description}</p>
+          </div>
+          <div className="mt-auto pt-2 md:pt-4 text-primary font-medium text-xs md:text-sm flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            Start <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
+          </div>
         </CardContent>
       </Card>
+    </Link>
+  );
 
-      {generationResult && (
-        <div className="w-full">
-          {generationResult.type === 'lessonPlan' && <LessonPlanDisplay lessonPlan={generationResult.result} />}
-          {generationResult.type === 'quiz' && <QuizDisplay quiz={generationResult.result} />}
-          {generationResult.type === 'instantAnswer' && (
-            <Card className="w-full bg-white/50 backdrop-blur-md border-white/60 shadow-lg">
-              <CardHeader>
-                <CardTitle>{answerCardTitle}</CardTitle>
-              </CardHeader>
-              <CardContent className="prose">
-                <ReactMarkdown>{generationResult.result.answer}</ReactMarkdown>
-              </CardContent>
-            </Card>
-          )}
-          {generationResult.type === 'unknown' && (
-            <Card className="w-full bg-destructive/10 border-destructive/30">
-              <CardHeader>
-                <CardTitle className="text-destructive">{sorryCardTitle}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>{generationResult.result.error}</p>
-              </CardContent>
-            </Card>
-          )}
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12">
+
+      {/* Hero Section */}
+      <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4">
+          <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
+          <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
-      )}
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
+          {greeting}, <span className="text-primary">Teacher.</span>
+        </h1>
+        <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          I am Sahayak, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
+        </p>
+      </div>
+
+      {/* Main Input Section */}
+      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
+        <Card className="border-none shadow-2xl bg-white/95 ring-1 ring-slate-200/50">
+          <CardContent className="p-2">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
+                <div className="relative flex-1">
+                  <AutoCompleteInput
+                    placeholder="Topic (e.g., 'Photosynthesis')"
+                    {...form.register("topic")}
+                    value={form.watch("topic")}
+                    selectedLanguage="en"
+                    onSuggestionClick={(value) => {
+                      form.setValue("topic", value);
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    className="border-none shadow-none focus-visible:ring-0 text-base md:text-lg py-4 md:py-6 pl-4 md:pl-6 pr-12 md:pr-14 bg-transparent"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <MicrophoneInput onTranscriptChange={handleTranscript} variant="ghost" size="sm" />
+                  </div>
+                </div>
+                <Button type="submit" size="lg" className="rounded-xl px-4 md:px-8 h-10 md:h-12 mr-1 shadow-md hover:shadow-lg transition-all text-sm md:text-base">
+                  Generate
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <p className="text-center text-xs md:text-sm text-slate-500 font-medium px-4 line-clamp-1">
+            Try asking: "Create a quiz on Fractions" or "Lesson plan for Solar System"
+          </p>
+          <p className="text-[10px] text-slate-400">
+            Sahayak can make mistakes. Please review generated content.
+          </p>
+        </div>
+      </div>
+
+      {/* Quick Actions Grid - UPDATED GRID COLS */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
+        <QuickActionCard
+          title="Lesson Plan"
+          icon={BookOpen}
+          href="/lesson-plan"
+          color="text-orange-600 bg-orange-50"
+          description="NCERT-aligned plans."
+        />
+        <QuickActionCard
+          title="Quiz Generator"
+          icon={BrainCircuit}
+          href="/quiz-generator"
+          color="text-blue-600 bg-blue-50"
+          description="Instant quizzes & worksheets."
+        />
+        <QuickActionCard
+          title="Content Creator"
+          icon={PenTool}
+          href="/content-creator"
+          color="text-green-600 bg-green-50"
+          description="Stories & visual aids."
+        />
+        <QuickActionCard
+          title="Teacher Training"
+          icon={GraduationCap}
+          href="/teacher-training"
+          color="text-purple-600 bg-purple-50"
+          description="Professional development."
+        />
+      </div>
     </div>
   );
 }

@@ -32,12 +32,12 @@ const questionTypesData = [
 ];
 
 const bloomsLevelsData = [
-    { id: 'Remember', icon: Brain },
-    { id: 'Understand', icon: Search },
-    { id: 'Apply', icon: DraftingCompass },
-    { id: 'Analyze', icon: BrainCircuit },
-    { id: 'Evaluate', icon: CircleHelp },
-    { id: 'Create', icon: BotMessageSquare },
+  { id: 'Remember', icon: Brain },
+  { id: 'Understand', icon: Search },
+  { id: 'Apply', icon: DraftingCompass },
+  { id: 'Analyze', icon: BrainCircuit },
+  { id: 'Evaluate', icon: CircleHelp },
+  { id: 'Create', icon: BotMessageSquare },
 ];
 
 const formSchema = z.object({
@@ -74,13 +74,13 @@ const translations: Record<string, Record<string, any>> = {
       fill_in_the_blanks: 'Fill in the Blanks',
       short_answer: 'Short Answer',
     },
-     blooms: {
-        'Remember': 'Remember',
-        'Understand': 'Understand',
-        'Apply': 'Apply',
-        'Analyze': 'Analyze',
-        'Evaluate': 'Evaluate',
-        'Create': 'Create',
+    blooms: {
+      'Remember': 'Remember',
+      'Understand': 'Understand',
+      'Apply': 'Apply',
+      'Analyze': 'Analyze',
+      'Evaluate': 'Evaluate',
+      'Create': 'Create',
     }
   },
   hi: {
@@ -103,12 +103,12 @@ const translations: Record<string, Record<string, any>> = {
       short_answer: 'संक्षिप्त उत्तर',
     },
     blooms: {
-        'Remember': 'याद रखें',
-        'Understand': 'समझें',
-        'Apply': 'लागू करें',
-        'Analyze': 'विश्लेषण करें',
-        'Evaluate': 'मूल्यांकन करें',
-        'Create': 'बनाएं',
+      'Remember': 'याद रखें',
+      'Understand': 'समझें',
+      'Apply': 'लागू करें',
+      'Analyze': 'विश्लेषण करें',
+      'Evaluate': 'मूल्यांकन करें',
+      'Create': 'बनाएं',
     }
   },
   bn: {
@@ -126,17 +126,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "কুইজ তৈরি করা হচ্ছে...",
     loadingText: "আপনার প্রশ্ন প্রস্তুত করা হচ্ছে...",
     questionTypes: {
-        multiple_choice: 'বহু নির্বাচনী',
-        fill_in_the_blanks: 'শূন্যস্থান পূরণ করুন',
-        short_answer: 'সংক্ষিপ্ত উত্তর',
+      multiple_choice: 'বহু নির্বাচনী',
+      fill_in_the_blanks: 'শূন্যস্থান পূরণ করুন',
+      short_answer: 'সংক্ষিপ্ত উত্তর',
     },
     blooms: {
-        'Remember': 'মনে রাখবেন',
-        'Understand': 'বুঝুন',
-        'Apply': 'প্রয়োগ করুন',
-        'Analyze': 'বিশ্লেষণ করুন',
-        'Evaluate': 'মূল্যায়ন করুন',
-        'Create': 'তৈরি করুন',
+      'Remember': 'মনে রাখবেন',
+      'Understand': 'বুঝুন',
+      'Apply': 'প্রয়োগ করুন',
+      'Analyze': 'বিশ্লেষণ করুন',
+      'Evaluate': 'মূল্যায়ন করুন',
+      'Create': 'তৈরি করুন',
     },
   },
   te: {
@@ -154,17 +154,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "క్విజ్ సృష్టిస్తోంది...",
     loadingText: "మీ ప్రశ్నలు సిద్ధమవుతున్నాయి...",
     questionTypes: {
-        multiple_choice: 'బహుళ ఎంపిక',
-        fill_in_the_blanks: 'ఖాళీలను పూరించండి',
-        short_answer: 'చిన్న సమాధానం',
+      multiple_choice: 'బహుళ ఎంపిక',
+      fill_in_the_blanks: 'ఖాళీలను పూరించండి',
+      short_answer: 'చిన్న సమాధానం',
     },
     blooms: {
-        'Remember': 'గుర్తుంచుకోండి',
-        'Understand': 'అర్థం చేసుకోండి',
-        'Apply': 'వర్తించు',
-        'Analyze': 'విశ్లేషించండి',
-        'Evaluate': 'మూల్యాంకనం చేయండి',
-        'Create': 'సృష్టించండి',
+      'Remember': 'గుర్తుంచుకోండి',
+      'Understand': 'అర్థం చేసుకోండి',
+      'Apply': 'వర్తించు',
+      'Analyze': 'విశ్లేషించండి',
+      'Evaluate': 'మూల్యాంకనం చేయండి',
+      'Create': 'సృష్టించండి',
     },
   },
   mr: {
@@ -182,17 +182,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "क्विझ तयार करत आहे...",
     loadingText: "तुमचे प्रश्न तयार होत आहेत...",
     questionTypes: {
-        multiple_choice: 'बहुपर्यायी',
-        fill_in_the_blanks: 'रिकाम्या जागा भरा',
-        short_answer: 'थोडक्यात उत्तर',
+      multiple_choice: 'बहुपर्यायी',
+      fill_in_the_blanks: 'रिकाम्या जागा भरा',
+      short_answer: 'थोडक्यात उत्तर',
     },
     blooms: {
-        'Remember': 'लक्षात ठेवा',
-        'Understand': 'समजून घ्या',
-        'Apply': 'लागू करा',
-        'Analyze': 'विश्लेषण करा',
-        'Evaluate': 'मूल्यांकन करा',
-        'Create': 'तयार करा',
+      'Remember': 'लक्षात ठेवा',
+      'Understand': 'समजून घ्या',
+      'Apply': 'लागू करा',
+      'Analyze': 'विश्लेषण करा',
+      'Evaluate': 'मूल्यांकन करा',
+      'Create': 'तयार करा',
     },
   },
   ta: {
@@ -210,17 +210,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "வினாடி வினாவை உருவாக்குகிறது...",
     loadingText: "உங்கள் கேள்விகள் தயாரிக்கப்படுகின்றன...",
     questionTypes: {
-        multiple_choice: 'பல தேர்வு',
-        fill_in_the_blanks: 'வெற்றிடங்களை நிரப்புக',
-        short_answer: 'குறுகிய பதில்',
+      multiple_choice: 'பல தேர்வு',
+      fill_in_the_blanks: 'வெற்றிடங்களை நிரப்புக',
+      short_answer: 'குறுகிய பதில்',
     },
     blooms: {
-        'Remember': 'நினைவில் கொள்ளுங்கள்',
-        'Understand': ' புரிந்து கொள்ளுங்கள்',
-        'Apply': 'விண்ணப்பிக்கவும்',
-        'Analyze': 'பகுப்பாய்வு செய்யுங்கள்',
-        'Evaluate': 'மதிப்பிடுங்கள்',
-        'Create': 'உருவாக்கு',
+      'Remember': 'நினைவில் கொள்ளுங்கள்',
+      'Understand': ' புரிந்து கொள்ளுங்கள்',
+      'Apply': 'விண்ணப்பிக்கவும்',
+      'Analyze': 'பகுப்பாய்வு செய்யுங்கள்',
+      'Evaluate': 'மதிப்பிடுங்கள்',
+      'Create': 'உருவாக்கு',
     },
   },
   gu: {
@@ -238,17 +238,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "ક્વિઝ બનાવી રહ્યું છે...",
     loadingText: "તમારા પ્રશ્નો તૈયાર કરવામાં આવી રહ્યા છે...",
     questionTypes: {
-        multiple_choice: 'બહુવિધ પસંદગી',
-        fill_in_the_blanks: 'ખાલી જગ્યા ભરો',
-        short_answer: 'ટૂંકો જવાબ',
+      multiple_choice: 'બહુવિધ પસંદગી',
+      fill_in_the_blanks: 'ખાલી જગ્યા ભરો',
+      short_answer: 'ટૂંકો જવાબ',
     },
     blooms: {
-        'Remember': 'યાદ રાખો',
-        'Understand': 'સમજો',
-        'Apply': 'લાગુ કરો',
-        'Analyze': 'વિશ્લેષણ કરો',
-        'Evaluate': 'મૂલ્યાંકન કરો',
-        'Create': 'બનાવો',
+      'Remember': 'યાદ રાખો',
+      'Understand': 'સમજો',
+      'Apply': 'લાગુ કરો',
+      'Analyze': 'વિશ્લેષણ કરો',
+      'Evaluate': 'મૂલ્યાંકન કરો',
+      'Create': 'બનાવો',
     },
   },
   kn: {
@@ -266,17 +266,17 @@ const translations: Record<string, Record<string, any>> = {
     submitButtonLoading: "ರಸಪ್ರಶ್ನೆ ರಚಿಸಲಾಗುತ್ತಿದೆ...",
     loadingText: "ನಿಮ್ಮ ಪ್ರಶ್ನೆಗಳನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ...",
     questionTypes: {
-        multiple_choice: 'ಬಹು ಆಯ್ಕೆ',
-        fill_in_the_blanks: 'ಖಾಲಿ ಜಾಗಗಳನ್ನು ತುಂಬಿರಿ',
-        short_answer: 'ಸಣ್ಣ ಉತ್ತರ',
+      multiple_choice: 'ಬಹು ಆಯ್ಕೆ',
+      fill_in_the_blanks: 'ಖಾಲಿ ಜಾಗಗಳನ್ನು ತುಂಬಿರಿ',
+      short_answer: 'ಸಣ್ಣ ಉತ್ತರ',
     },
     blooms: {
-        'Remember': 'ನೆನಪಿಡಿ',
-        'Understand': 'ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ',
-        'Apply': 'ಅನ್ವಯಿಸಿ',
-        'Analyze': 'ವಿಶ್ಲೇಷಿಸಿ',
-        'Evaluate': 'ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ',
-        'Create': 'ರಚಿಸಿ',
+      'Remember': 'ನೆನಪಿಡಿ',
+      'Understand': 'ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ',
+      'Apply': 'ಅನ್ವಯಿಸಿ',
+      'Analyze': 'ವಿಶ್ಲೇಷಿಸಿ',
+      'Evaluate': 'ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ',
+      'Create': 'ರಚಿಸಿ',
     },
   },
 };
@@ -332,11 +332,13 @@ export default function QuizGeneratorPage() {
 
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <FileSignature className="w-12 h-12 text-primary" />
+            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
+              <FileSignature className="w-8 h-8" />
+            </div>
           </div>
           <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>{t.pageDescription}</CardDescription>
@@ -344,175 +346,195 @@ export default function QuizGeneratorPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="imageDataUri"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">{t.contextLabel}</FormLabel>
-                    <FormControl>
-                      <ImageUploader
-                        onImageUpload={(dataUri) => field.onChange(dataUri)}
-                        language={selectedLanguage}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              <FormField
-                control={form.control}
-                name="questionTypes"
-                render={({ field }) => (
-                  <FormItem>
-                      <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                      {questionTypesData.map((item) => (
-                         <SelectableCard
+                {/* LEFT COLUMN: Main Content (7 cols) */}
+                <div className="lg:col-span-7 space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="topic"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline text-lg">{t.topicLabel}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Textarea
+                              placeholder={t.topicPlaceholder}
+                              {...field}
+                              className="bg-white/50 backdrop-blur-sm min-h-[100px] pr-12 resize-none"
+                            />
+                            <div className="absolute right-2 bottom-2">
+                              <MicrophoneInput onTranscriptChange={handleTranscript} variant="ghost" size="sm" />
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="imageDataUri"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline">{t.contextLabel}</FormLabel>
+                        <FormControl>
+                          <ImageUploader
+                            onImageUpload={(dataUri) => field.onChange(dataUri)}
+                            language={selectedLanguage}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="questionTypes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                          {questionTypesData.map((item) => (
+                            <SelectableCard
                               key={item.id}
                               icon={item.icon}
                               label={t.questionTypes[item.id]}
                               isSelected={field.value?.includes(item.id)}
                               onSelect={() => {
-                                  const currentValues = field.value || [];
-                                  const newValues = currentValues.includes(item.id)
+                                const currentValues = field.value || [];
+                                const newValues = currentValues.includes(item.id)
                                   ? currentValues.filter((v) => v !== item.id)
                                   : [...currentValues, item.id];
-                                  field.onChange(newValues);
+                                field.onChange(newValues);
                               }}
-                          />
-                      ))}
-                      </div>
-                      <FormMessage />
-                  </FormItem>
-                )}
-              />
+                              className="h-24"
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="bloomsTaxonomyLevels"
-                render={() => (
-                  <FormItem>
-                    <FormLabel className="font-headline">{t.bloomsLabel}</FormLabel>
-                     <div className="flex flex-wrap gap-3 pt-2">
-                      {bloomsLevelsData.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="bloomsTaxonomyLevels"
-                          render={({ field }) => {
-                            const isSelected = field.value?.includes(item.id);
-                            return (
-                              <FormItem key={item.id} className="flex flex-row items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <Label
-                                    htmlFor={item.id}
-                                    className={cn(
-                                        "flex items-center gap-2 cursor-pointer rounded-full h-8 px-4 text-xs font-normal border transition-colors",
-                                        isSelected
-                                        ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                                        : "border-border bg-background hover:bg-accent"
-                                    )}
-                                  >
-                                    <CheckboxUI
-                                        id={item.id}
-                                        checked={isSelected}
-                                        onCheckedChange={(checked) => {
+                  <div className="space-y-2">
+                    <FormLabel className="font-headline">Quick Ideas</FormLabel>
+                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
+                <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
+                  <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Quiz Settings</h3>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="gradeLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">{t.gradeLevelLabel}</FormLabel>
+                          <FormControl>
+                            <GradeLevelSelector
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(values) => field.onChange(values?.[0])}
+                              language={selectedLanguage}
+                              isMulti={false}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                          <FormControl>
+                            <LanguageSelector
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="numQuestions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" max="20" {...field} className="bg-white border-slate-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="bloomsTaxonomyLevels"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {bloomsLevelsData.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="bloomsTaxonomyLevels"
+                              render={({ field }) => {
+                                const isSelected = field.value?.includes(item.id);
+                                return (
+                                  <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
+                                    <FormControl>
+                                      <Label
+                                        htmlFor={item.id}
+                                        className={cn(
+                                          "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
+                                          isSelected
+                                            ? "bg-blue-100 text-blue-700 border-blue-200"
+                                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                        )}
+                                      >
+                                        <CheckboxUI
+                                          id={item.id}
+                                          checked={isSelected}
+                                          onCheckedChange={(checked) => {
                                             const currentValues = field.value || [];
                                             const newValues = checked
-                                            ? [...currentValues, item.id]
-                                            : currentValues.filter((v) => v !== item.id);
+                                              ? [...currentValues, item.id]
+                                              : currentValues.filter((v) => v !== item.id);
                                             field.onChange(newValues);
-                                        }}
-                                        className="mr-2 h-3 w-3 border-current"
-                                    />
-                                    {t.blooms[item.id]}
-                                  </Label>
-                                </FormControl>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="gradeLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLevelLabel}</FormLabel>
-                      <FormControl>
-                        <GradeLevelSelector
-                          value={field.value ? [field.value] : []}
-                          onValueChange={(values) => field.onChange(values?.[0])}
-                          language={selectedLanguage}
-                          isMulti={false}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
-                      <FormControl>
-                        <LanguageSelector
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                                          }}
+                                          className="sr-only" // Hide actual checkbox, style the label
+                                        />
+                                        {/* Custom Check Indicator */}
+                                        <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
+                                        {t.blooms[item.id]}
+                                      </Label>
+                                    </FormControl>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-               <FormField
-                  control={form.control}
-                  name="numQuestions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">{t.numQuestionsLabel}</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" max="20" {...field} className="bg-white/50 backdrop-blur-sm" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              <FormField
-                control={form.control}
-                name="topic"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t.topicPlaceholder}
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
-
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
-              
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />

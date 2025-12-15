@@ -2,7 +2,7 @@
 "use client";
 
 import { voiceToText } from "@/ai/flows/voice-to-text";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Mic, StopCircle } from "lucide-react";
@@ -11,9 +11,16 @@ import { useEffect, useRef, useState, type FC } from "react";
 type MicrophoneInputProps = {
   onTranscriptChange: (transcript: string) => void;
   className?: string;
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
 };
 
-export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, className }) => {
+export const MicrophoneInput: FC<MicrophoneInputProps> = ({
+  onTranscriptChange,
+  className,
+  variant = "default",
+  size = "default"
+}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -35,8 +42,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
 
-    canvasCtx.fillStyle = "rgba(245, 245, 245, 0.5)";
-    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 2;
     canvasCtx.strokeStyle = `hsl(var(--primary))`;
     canvasCtx.beginPath();
@@ -124,7 +130,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close().then(() => {
           audioContextRef.current = null;
         });
@@ -139,41 +145,50 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({ onTranscriptChange, 
       startRecording();
     }
   };
-  
+
   useEffect(() => {
     return () => {
-        if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
-        }
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-            mediaRecorderRef.current.stop();
-        }
-        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-            audioContextRef.current.close();
-        }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
     }
   }, []);
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
+    <div className={cn("flex flex-col items-center gap-2", className)}>
       <Button
         type="button"
         onClick={handleMicClick}
         disabled={isTranscribing}
-        className={cn("h-20 w-20 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:scale-110", isRecording && "bg-destructive hover:bg-destructive/90")}
+        variant={variant}
+        size={size}
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          isRecording && "bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse",
+          !isRecording && variant === 'default' && "rounded-full shadow-lg hover:scale-110 h-16 w-16"
+        )}
         aria-label={isRecording ? "Stop recording" : "Start recording"}
       >
         {isTranscribing ? (
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/50 border-t-white" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : isRecording ? (
-          <StopCircle className="h-10 w-10" />
+          <StopCircle className={cn(size === 'sm' ? "h-4 w-4" : "h-6 w-6")} />
         ) : (
-          <Mic className="h-10 w-10" />
+          <Mic className={cn(size === 'sm' ? "h-4 w-4" : "h-6 w-6")} />
         )}
       </Button>
-      <div className={cn("h-16 w-full overflow-hidden rounded-lg transition-opacity", isRecording ? "opacity-100" : "opacity-0")}>
-        <canvas ref={canvasRef} width="600" height="100" className="h-full w-full" />
-      </div>
+      {/* Only show waveform if recording and not in compact mode (optional, or just hide it for now to keep it clean) */}
+      {isRecording && size !== 'sm' && (
+        <div className="h-12 w-full overflow-hidden rounded-lg bg-slate-100/50">
+          <canvas ref={canvasRef} width="300" height="50" className="h-full w-full" />
+        </div>
+      )}
     </div>
   );
 };

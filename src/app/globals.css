@@ -10,91 +10,118 @@
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Deep Warmth */
-    --secondary: 35 90% 55%;
-    --secondary-foreground: 222 47% 11%;
+    /* ========================================
+       SAFFRON DESIGN SYSTEM - SahayakAI
+       For Rural Indian Teachers
+       ======================================== */
 
-    /* Background - Warm Cream */
-    --background: 40 30% 98%;
-    --foreground: 20 14% 4%;
-    /* Warm Black */
+    /* Primary - Saffron Theme (Indian Flag Orange) */
+    --primary: 28 70% 59%;
+    /* #FF9933 - Saffron */
+    --primary-foreground: 0 0% 100%;
+    /* White text on Saffron */
 
-    /* Cards - Pure White */
+    /* Secondary - Warm Green (Indian Flag) */
+    --secondary: 123 37% 25%;
+    /* #2C5F2D - Deep Green */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent - Navy Blue (Indian Flag) */
+    --accent: 240 100% 25%;
+    /* #000080 - Navy */
+    --accent-foreground: 0 0% 100%;
+
+    /* Background - Warm, Welcoming */
+    --background: 0 0% 100%;
+    /* Pure White */
+    --foreground: 222 47% 11%;
+    /* Dark Gray #1F2937 */
+
+    /* Card - Glassmorphism with Saffron accent */
     --card: 0 0% 100%;
-    --card-foreground: 20 14% 4%;
+    --card-foreground: 222 47% 11%;
 
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 4%;
+    --popover-foreground: 222 47% 11%;
 
-    --muted: 30 20% 96%;
-    --muted-foreground: 25 5% 45%;
+    /* Muted - Warm Neutrals */
+    --muted: 210 40% 96%;
+    /* #F9FAFB */
+    --muted-foreground: 215 16% 47%;
+    /* #6B7280 */
 
-    --accent: 30 30% 96%;
-    --accent-foreground: 27 96% 61%;
+    /* Borders - Saffron accent */
+    --border: 214 32% 91%;
+    /* #E5E7EB - Light */
+    --input: 214 32% 91%;
+    --ring: 28 70% 59%;
+    /* Saffron focus ring */
 
-    --border: 30 10% 90%;
-    --input: 30 10% 90%;
-    --ring: 27 96% 61%;
+    /* Status Colors */
+    --destructive: 0 84% 60%;
+    /* #EF4444 - Red */
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 1rem;
-    /* 16px - Modern & Friendly */
+    /* Radius - Soft, friendly */
+    --radius: 0.75rem;
+    /* 12px - Rounded corners */
 
-    /* Chart Colors */
-    --chart-1: 222 47% 31%;
-    --chart-2: 35 90% 55%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart Colors - Indian-friendly palette */
+    --chart-1: 28 70% 59%;
+    /* Saffron */
+    --chart-2: 123 37% 25%;
+    /* Green */
+    --chart-3: 240 100% 25%;
+    /* Navy */
+    --chart-4: 43 96% 56%;
+    /* Gold */
+    --chart-5: 340 82% 52%;
+    /* Rose */
   }
 
   .dark {
+    /* Dark mode with Saffron accents */
     --background: 222 47% 11%;
+    /* Dark Gray */
     --foreground: 210 40% 98%;
+    /* Off-white */
 
-    --card: 222 47% 13%;
+    --card: 217 33% 17%;
+    /* Dark Card */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 13%;
+    --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 222 47% 41%;
-    /* Lighter Indigo */
-    --primary-foreground: 210 40% 98%;
+    --primary: 28 70% 59%;
+    /* Keep Saffron bright */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 90% 55%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 123 37% 35%;
+    /* Lighter green for dark mode */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 100% 35%;
+    /* Lighter navy */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 28 70% 59%;
+    /* Saffron focus ring */
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --chart-1: 28 70% 59%;
+    --chart-2: 123 37% 45%;
+    --chart-3: 240 100% 45%;
+    --chart-4: 43 96% 66%;
+    --chart-5: 340 82% 62%;
   }
 }
 

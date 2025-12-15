@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node"],
 };
 
 export default withPWA(nextConfig);
