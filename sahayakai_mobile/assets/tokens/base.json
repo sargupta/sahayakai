@@ -1,0 +1,10 @@
+{
+    "color": {
+        "primary": "#FF9933",
+        "surface": "#F9FAFB",
+        "background": "#FFFFFF",
+        "success": "#2E7D32",
+        "warning": "#FFCC00",
+        "error": "#B3261E"
+    }
+}

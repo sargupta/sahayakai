@@ -1,0 +1,85 @@
+FAIL src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /Users/sargupta/SahayakAIV2/sahayakai/node_modules/jose/dist/browser/index.js:1
+    export { compactDecrypt } from './jwe/compact/decrypt.js';
+    ^^^^^^
+
+    SyntaxError: Unexpected token 'export'
+
+      25 |
+      26 | export async function initializeFirebase() {
+    > 27 |   if (!admin.apps.length && !firebaseInitialized) {
+         |               ^
+      28 |     try {
+      29 |       let serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+      30 |
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1318:40)
+      at Object.<anonymous> (node_modules/jwks-rsa/src/utils.js:1:14)
+      at Object.<anonymous> (node_modules/jwks-rsa/src/JwksClient.js:2:33)
+      at Object.<anonymous> (node_modules/jwks-rsa/src/index.js:1:24)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/utils/jwt.js:24:14)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/auth/token-verifier.js:26:15)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/auth/base-auth.js:26:26)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/auth/tenant-manager.js:23:21)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/auth/auth.js:22:26)
+      at Object.<anonymous> (node_modules/firebase-admin/lib/auth/index.js:27:16)
+      at Object.<anonymous> (src/lib/firebase-admin.ts:27:15)
+      at Object.<anonymous> (src/app/actions/lesson-plan.ts:20:24)
+      at Object.<anonymous> (src/features/lesson-planner/hooks/use-lesson-plan.ts:18:21)
+      at Object.<anonymous> (src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts:28:24)
+
+--------------------------------|---------|----------|---------|---------|-------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+--------------------------------|---------|----------|---------|---------|-------------------
+All files                       |       0 |        0 |       0 |       0 |                   
+ components                     |       0 |        0 |       0 |       0 |                   
+  feedback-dialog.tsx           |       0 |        0 |       0 |       0 | 1-150             
+ components/lesson-plan         |       0 |        0 |       0 |       0 |                   
+  lesson-plan-input-section.tsx |       0 |        0 |       0 |       0 | 1-135             
+ data/ncert                     |       0 |        0 |       0 |       0 |                   
+  english.ts                    |       0 |        0 |       0 |       0 | 1-69              
+  hindi.ts                      |       0 |        0 |       0 |       0 | 1-69              
+  index.ts                      |       0 |        0 |       0 |       0 | 1-68              
+  mathematics.ts                |       0 |        0 |       0 |       0 | 1-503             
+  science.ts                    |       0 |        0 |       0 |       0 | 1-483             
+  social-studies.ts             |       0 |        0 |       0 |       0 | 1-103             
+ features/lesson-planner/hooks  |       0 |        0 |       0 |       0 |                   
+  use-lesson-plan.ts            |       0 |        0 |       0 |       0 | 1-321             
+ lib                            |       0 |        0 |       0 |       0 |                   
+  indian-context.ts             |       0 |        0 |       0 |       0 | 1-179             
+  logger.ts                     |       0 |        0 |       0 |       0 | 1-70              
+  safety.ts                     |       0 |        0 |       0 |       0 | 1-56              
+--------------------------------|---------|----------|---------|---------|-------------------
+Jest: "global" coverage threshold for statements (85%) not met: 0%
+Jest: "global" coverage threshold for branches (85%) not met: 0%
+Jest: "global" coverage threshold for lines (85%) not met: 0%
+Jest: "global" coverage threshold for functions (85%) not met: 0%
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.364 s
+Ran all test suites matching src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts.

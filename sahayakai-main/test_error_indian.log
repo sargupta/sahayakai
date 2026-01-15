@@ -1,0 +1,66 @@
+FAIL src/__tests__/lib/indian-context.test.ts
+  ● Test suite failed to run
+
+      [31mx[0m Unexpected token `bear`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+         ,-[[36;1;4m/Users/sargupta/SahayakAIV2/sahayakai/src/lib/indian-context.ts[0m:157:1]
+     [2m154[0m | 
+     [2m155[0m |     // Animals
+     [2m156[0m |     reindeer: 'camel',
+     [2m157[0m |     polar bear: 'elephant',
+         : [35;1m          ^^^^[0m
+     [2m158[0m | };
+     [2m159[0m | 
+     [2m160[0m | /**
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      3 | describe('Indian Context Utilities', () => {
+      4 |
+    > 5 |     describe('IndianContext Data', () => {
+        |                        ^
+      6 |         it('should have required categories', () => {
+      7 |             expect(IndianContext.food).toBeDefined();
+      8 |             expect(IndianContext.agriculture).toBeDefined();
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1374:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1477:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:105:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/index.js:422:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/index.js:519:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/index.js:558:19)
+      at Object.<anonymous> (src/__tests__/lib/indian-context.test.ts:5:24)
+
+--------------------------------|---------|----------|---------|---------|-------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+--------------------------------|---------|----------|---------|---------|-------------------
+All files                       |       0 |        0 |       0 |       0 |                   
+ components                     |       0 |        0 |       0 |       0 |                   
+  feedback-dialog.tsx           |       0 |        0 |       0 |       0 | 1-150             
+ components/lesson-plan         |       0 |        0 |       0 |       0 |                   
+  lesson-plan-input-section.tsx |       0 |        0 |       0 |       0 | 1-135             
+ data/ncert                     |       0 |        0 |       0 |       0 |                   
+  english.ts                    |       0 |        0 |       0 |       0 | 1-69              
+  hindi.ts                      |       0 |        0 |       0 |       0 | 1-69              
+  index.ts                      |       0 |        0 |       0 |       0 | 1-68              
+  mathematics.ts                |       0 |        0 |       0 |       0 | 1-503             
+  science.ts                    |       0 |        0 |       0 |       0 | 1-483             
+  social-studies.ts             |       0 |        0 |       0 |       0 | 1-103             
+ features/lesson-planner/hooks  |       0 |        0 |       0 |       0 |                   
+  use-lesson-plan.ts            |       0 |        0 |       0 |       0 | 1-321             
+ lib                            |       0 |        0 |       0 |       0 |                   
+  indian-context.ts             |       0 |        0 |       0 |       0 | 1-179             
+  logger.ts                     |       0 |        0 |       0 |       0 | 1-70              
+  safety.ts                     |       0 |        0 |       0 |       0 | 1-56              
+--------------------------------|---------|----------|---------|---------|-------------------
+Jest: "global" coverage threshold for statements (85%) not met: 0%
+Jest: "global" coverage threshold for branches (85%) not met: 0%
+Jest: "global" coverage threshold for lines (85%) not met: 0%
+Jest: "global" coverage threshold for functions (85%) not met: 0%
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.752 s
+Ran all test suites matching src/__tests__/lib/indian-context.test.ts.

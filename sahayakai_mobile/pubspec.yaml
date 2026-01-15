@@ -1,0 +1,64 @@
+name: sahayakai_mobile
+description: "SahayakAI: A personal AI companion for rural educators in Bharat."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Architecture & State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+  
+  # Navigation
+  go_router: ^13.0.0
+  
+  # Networking
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.2
+  
+  # Local Storage (Offline First)
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.2
+  
+  # Auth
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.16.0
+  
+  # UI Components & Utilities
+  flutter_animate: ^4.5.0
+  google_fonts: ^6.1.0
+  flutter_markdown_plus: ^1.0.0  # Dependency fix
+  intl: ^0.19.0
+  glassmorphism: ^3.0.0
+  
+  # Audio/Voice
+  flutter_sound: ^9.2.13
+  uuid: ^4.2.1
+  permission_handler: ^11.1.0
+
+  # Sharing & PDF
+  share_plus: ^10.0.0
+  pdf: ^3.11.0
+  printing: ^5.13.0
+  fl_chart: ^0.65.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+  isar_generator: ^3.1.0+1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/tokens/
+    - assets/icons/

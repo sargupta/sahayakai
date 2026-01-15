@@ -1,0 +1,19 @@
+{
+    "color": {
+        "primary": "#FF7A00",
+        "accent": "#FFB703"
+    },
+    "radius": {
+        "card": 20,
+        "sheet": 28
+    },
+    "aiGradient": {
+        "start": "#FF7A00",
+        "end": "#FFD166"
+    },
+    "glass": {
+        "tint": "#FFF5E6",
+        "blur": 22,
+        "opacity": 0.12
+    }
+}
