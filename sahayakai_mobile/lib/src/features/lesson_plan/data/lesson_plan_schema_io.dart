@@ -3,7 +3,7 @@ import 'package:isar/isar.dart';
 part 'lesson_plan_schema.g.dart';
 
 @collection
-class LessonPlanEntity {
+class LessonPlanRecord {
   Id id = Isar.autoIncrement;
 
   @Index(type: IndexType.value)
@@ -12,7 +12,7 @@ class LessonPlanEntity {
   late String subject;
   late String gradeLevel;
   late String contentJson; // Store the full output as JSON string
-  
+
   @Index()
   late DateTime createdAt;
 

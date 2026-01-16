@@ -3,15 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Architecture Imports
-import '../../../../core/theme/widgets/studio_scaffold.dart';
+// Glassmorphic Design System
+import '../../../../core/theme/widgets/mesh_background.dart';
+import '../../../../core/theme/widgets/glass_card.dart';
+import '../../../../core/theme/widgets/selection_card.dart';
+import '../../../../core/theme/widgets/premium_fab.dart';
 import '../../../../core/theme/extensions/sahayak_theme.dart';
-import '../../../../core/theme/widgets/glass_container.dart';
-import '../../../../core/theme/studio_theme_resolver.dart'; // For StudioType enum
 
 // Feature Imports
 import '../../domain/lesson_plan_models.dart';
-import '../../data/lesson_plan_repository.dart';
 import '../widgets/voice_input_widget.dart';
 import 'lesson_result_screen.dart';
 import '../providers/lesson_plan_provider.dart';
@@ -60,214 +60,252 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
     });
 
     final isLoading = ref.watch(lessonPlanLoadingProvider);
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
 
-    // Using StudioScaffold to provide the ambient SahayakTheme
-    return StudioScaffold(
-      studio: StudioType.wizard,
-      title: "Lesson Planner",
-      child: Builder(builder: (context) {
-        // Now we can access the localized and studio-specific tokens!
-        final theme = Theme.of(context).extension<SahayakTheme>()!;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildLanguageSelector(theme),
-                const SizedBox(height: 32),
-
-                // 1. Topic Section
-                Text("What's the topic today?",
-                    style: GoogleFonts.outfit(
-                        fontSize: 20,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: MeshBackground(
+        child: SafeArea(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  // App Bar
+                  SliverAppBar(
+                    floating: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    title: Text(
+                      'Lesson Planner',
+                      style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-                const SizedBox(height: 12),
+                      ),
+                    ),
+                    actions: [
+                      _buildLanguageSelector(theme),
+                    ],
+                  ),
 
-                // GLASS INPUT FIELD
-                GlassContainer(
-                  radius: BorderRadius.circular(16),
-                  tint: Colors.white,
-                  opacity: 0.5,
-                  blur: 10,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _topicController,
-                            style: GoogleFonts.inter(fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText:
-                                  "e.g., Photosynthesis, The French Revolution...",
-                              border: InputBorder.none,
-                              hintStyle: GoogleFonts.inter(
-                                  color: Colors.grey.shade500),
-                            ),
-                            validator: (value) =>
-                                value!.isEmpty ? 'Please enter a topic' : null,
+                  // Content
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Section Title
+                              Text(
+                                "What's the topic today?",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Topic Input Card
+                              GlassCard(
+                                padding: const EdgeInsets.all(4),
+                                borderRadius: 20,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _topicController,
+                                        style: GoogleFonts.inter(fontSize: 16),
+                                        decoration: InputDecoration(
+                                          hintText:
+                                              "e.g., Photosynthesis, Mughal Architecture...",
+                                          border: InputBorder.none,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 16,
+                                          ),
+                                          hintStyle: GoogleFonts.inter(
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                        validator: (value) => value!.isEmpty
+                                            ? 'Please enter a topic'
+                                            : null,
+                                      ),
+                                    ),
+                                    Container(
+                                      margin: const EdgeInsets.only(right: 4),
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF14B8A6)
+                                            .withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: VoiceInputWidget(
+                                        onResult: (text) {
+                                          setState(() {
+                                            _topicController.text = text;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 32),
+
+                              // Grade Section
+                              Text(
+                                "For which grade?",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Grade Cards
+                              ..._grades.map((grade) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: SelectionCard(
+                                      icon: Icons.school,
+                                      iconColor: _selectedGrade == grade
+                                          ? theme.primary
+                                          : const Color(0xFF14B8A6),
+                                      title: grade,
+                                      subtitle: 'Primary/Secondary Education',
+                                      isSelected: _selectedGrade == grade,
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedGrade = grade;
+                                        });
+                                      },
+                                    ),
+                                  )),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        VoiceInputWidget(
-                          onResult: (text) {
-                            setState(() {
-                              _topicController.text = text;
-                            });
-                          },
-                        ),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Floating Bottom Button
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Theme.of(context)
+                            .scaffoldBackgroundColor
+                            .withOpacity(0),
+                        Theme.of(context).scaffoldBackgroundColor,
                       ],
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // 2. Grade Section
-                Text("For which grade?",
-                    style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: _grades
-                      .map((grade) => _buildGradeChip(grade, theme))
-                      .toList(),
-                ),
-
-                const SizedBox(height: 48),
-
-                // 3. Action Button
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 4,
-                      shadowColor: theme.primary.withOpacity(0.4),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: isLoading
-                        ? const Row(
+                  child: isLoading
+                      ? GlassCard(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          borderRadius: 9999,
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2)),
-                              SizedBox(width: 12),
-                              Text("Designing Lesson...",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.auto_awesome),
-                              SizedBox(width: 8),
-                              Text("Generate Lesson Plan",
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                "Designing Lesson...",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ],
                           ),
-                  ),
+                        )
+                      : PremiumFAB(
+                          label: 'Generate Lesson Plan',
+                          icon: Icons.auto_awesome,
+                          backgroundColor: theme.primary,
+                          onPressed: _submit,
+                        ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
-
-  // Not strictly needed with StudioScaffold's AppBar, but kept if sub-header logic changes
-  // Widget _buildHeader() ... removed as StudioScaffold handles AppBar
 
   Widget _buildLanguageSelector(SahayakTheme theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.accent.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.primary.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.language, color: theme.primary, size: 20),
-          const SizedBox(width: 8),
-          Text("Language:",
-              style: GoogleFonts.inter(
-                  color: theme.primary, fontWeight: FontWeight.w600)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedLanguage,
-                isDense: true,
-                icon: Icon(Icons.keyboard_arrow_down, color: theme.primary),
-                style: GoogleFonts.inter(
-                    color: Colors.black87, fontWeight: FontWeight.w500),
-                items: supportedLanguages
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) => setState(() {
-                  _selectedLanguage = v!;
-                  // ref.read(languageProvider.notifier).setLanguage(v);
-                }),
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: PopupMenuButton<String>(
+        initialValue: _selectedLanguage,
+        icon: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.language,
+                size: 18,
+                color: theme.primary,
               ),
-            ),
+              const SizedBox(width: 4),
+              Text(
+                _selectedLanguage == 'en' ? 'EN' : 'हि',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        onSelected: (String lang) {
+          setState(() {
+            _selectedLanguage = lang;
+          });
+          ref.read(languageProvider.notifier).state = lang;
+        },
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+          const PopupMenuItem<String>(
+            value: 'en',
+            child: Text('English'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'hi',
+            child: Text('हिन्दी (Hindi)'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGradeChip(String grade, SahayakTheme theme) {
-    final isSelected = _selectedGrade == grade;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() => _selectedGrade = grade);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: isSelected ? theme.primary : Colors.grey.shade300),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                      color: theme.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4))
-                ]
-              : [],
-        ),
-        child: Text(
-          grade,
-          style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
       ),
     );
   }
@@ -275,14 +313,22 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
+
       final input = LessonPlanInput(
         topic: _topicController.text,
+        language: _selectedLanguage,
         gradeLevels: [_selectedGrade],
         resourceLevel: 'low',
         useRuralContext: true,
-        language: _selectedLanguage,
       );
+
       ref.read(lessonPlanControllerProvider).generate(input);
     }
+  }
+
+  @override
+  void dispose() {
+    _topicController.dispose();
+    super.dispose();
   }
 }

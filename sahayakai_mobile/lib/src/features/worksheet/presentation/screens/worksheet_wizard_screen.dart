@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 import '../../../tools/data/tool_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
@@ -79,6 +79,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   }
 
   Widget _buildInputForm() {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -140,11 +141,11 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
                           }
                         });
                       },
-                      selectedColor: AppColors.primary.withOpacity(0.2),
-                      checkmarkColor: AppColors.primary,
+                      selectedColor: theme.primary.withOpacity(0.2),
+                      checkmarkColor: theme.primary,
                       labelStyle: GoogleFonts.inter(
                           color:
-                              isSelected ? AppColors.primary : Colors.black87),
+                              isSelected ? theme.primary : Colors.black87),
                     );
                   }).toList(),
                 ),
@@ -154,7 +155,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
                       style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                   value: _includeAnswerKey,
                   onChanged: (v) => setState(() => _includeAnswerKey = v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: theme.primary,
                   contentPadding: EdgeInsets.zero,
                 ),
               ],
@@ -164,7 +165,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
           ElevatedButton(
             onPressed: _isGenerating ? null : _generateWorksheet,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: theme.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(

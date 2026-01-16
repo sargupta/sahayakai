@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/providers/lesson_plan_provider.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/screens/lesson_result_screen.dart';
 
@@ -11,6 +11,7 @@ class MyLibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(lessonHistoryProvider);
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
 
     return Scaffold(
       appBar: AppBar(
@@ -20,11 +21,11 @@ class MyLibraryScreen extends ConsumerWidget {
         length: 2,
         child: Column(
           children: [
-            const TabBar(
-              labelColor: AppColors.primary,
+            TabBar(
+              labelColor: theme.primary,
               unselectedLabelColor: Colors.grey,
-              indicatorColor: AppColors.primary,
-              tabs: [
+              indicatorColor: theme.primary,
+              tabs: const [
                 Tab(text: "Lesson Plans"),
                 Tab(text: "Quizzes"),
               ],
@@ -49,8 +50,8 @@ class MyLibraryScreen extends ConsumerWidget {
                               contentPadding: const EdgeInsets.all(12),
                               leading: Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                                child: const Icon(Icons.book, color: AppColors.primary),
+                                decoration: BoxDecoration(color: theme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                                child: Icon(Icons.book, color: theme.primary),
                               ),
                               title: Text(plan.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text("${plan.subject} • ${plan.gradeLevel}"),

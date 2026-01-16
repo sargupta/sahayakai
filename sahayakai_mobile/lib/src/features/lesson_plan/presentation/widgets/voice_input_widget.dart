@@ -54,12 +54,20 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget> {
   }
 
   Future<void> _simulateTranscription() async {
-    ScaffoldMessenger.of(context).showSnackBar(
+    // Capture the context before the async gap.
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Processing Audio...')),
     );
+
     await Future.delayed(const Duration(seconds: 2));
+
+    // Check if the widget is still in the tree before using the context again.
+    if (!mounted) return;
+
     widget.onResult("Photosynthesis in Plants");
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    scaffoldMessenger.hideCurrentSnackBar();
   }
 
   @override

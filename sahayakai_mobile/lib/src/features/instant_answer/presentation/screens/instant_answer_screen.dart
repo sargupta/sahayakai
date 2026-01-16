@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 import '../../../chat/data/chat_repository.dart';
 
 class InstantAnswerScreen extends ConsumerStatefulWidget {
@@ -77,6 +77,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Scaffold(
       appBar: AppBar(
         title: Text("Instant Answer",
@@ -96,11 +97,11 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: theme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_awesome,
-                    size: 48, color: AppColors.primary),
+                child: Icon(Icons.auto_awesome,
+                    size: 48, color: theme.primary),
               ),
             ),
             const SizedBox(height: 24),
@@ -146,7 +147,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                               color: Colors.black87)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedGrade,
+                        initialValue: _selectedGrade,
                         items: _grades
                             .map((g) =>
                                 DropdownMenuItem(value: g, child: Text(g)))
@@ -175,7 +176,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                               color: Colors.black87)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedLanguage,
+                        initialValue: _selectedLanguage,
                         items: _languages
                             .map((l) =>
                                 DropdownMenuItem(value: l, child: Text(l)))
@@ -201,7 +202,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             ElevatedButton(
               onPressed: _isLoading ? null : _getAnswer,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: theme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

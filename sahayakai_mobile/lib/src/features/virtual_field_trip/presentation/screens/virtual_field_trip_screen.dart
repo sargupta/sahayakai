@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 
 class VirtualFieldTripScreen extends StatefulWidget {
   const VirtualFieldTripScreen({super.key});
@@ -46,6 +46,7 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Scaffold(
       appBar: AppBar(
         title: Text("Virtual Field Trip", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black)),
@@ -65,13 +66,13 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
                 Text("Select Destination", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _selectedDestination,
+                  initialValue: _selectedDestination,
                   items: _destinations.keys.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                   onChanged: _isLoading ? null : _changeDestination,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    prefixIcon: const Icon(Icons.public, color: AppColors.primary),
+                    prefixIcon: Icon(Icons.public, color: theme.primary),
                   ),
                 ),
               ],

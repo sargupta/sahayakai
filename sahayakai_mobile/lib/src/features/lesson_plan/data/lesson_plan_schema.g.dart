@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'lesson_plan_schema.dart';
+part of 'lesson_plan_schema_io.dart';
 
 // **************************************************************************
 // IsarCollectionGenerator
@@ -9,13 +9,13 @@ part of 'lesson_plan_schema.dart';
 // coverage:ignore-file
 // ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
-extension GetLessonPlanEntityCollection on Isar {
-  IsarCollection<LessonPlanEntity> get lessonPlanEntitys => this.collection();
+extension GetLessonPlanRecordCollection on Isar {
+  IsarCollection<LessonPlanRecord> get lessonPlanRecords => this.collection();
 }
 
-const LessonPlanEntitySchema = CollectionSchema(
-  name: r'LessonPlanEntity',
-  id: -6458732686841207906,
+const LessonPlanRecordSchema = CollectionSchema(
+  name: r'LessonPlanRecord',
+  id: -7492552463678933894,
   properties: {
     r'contentJson': PropertySchema(
       id: 0,
@@ -48,10 +48,10 @@ const LessonPlanEntitySchema = CollectionSchema(
       type: IsarType.string,
     )
   },
-  estimateSize: _lessonPlanEntityEstimateSize,
-  serialize: _lessonPlanEntitySerialize,
-  deserialize: _lessonPlanEntityDeserialize,
-  deserializeProp: _lessonPlanEntityDeserializeProp,
+  estimateSize: _lessonPlanRecordEstimateSize,
+  serialize: _lessonPlanRecordSerialize,
+  deserialize: _lessonPlanRecordDeserialize,
+  deserializeProp: _lessonPlanRecordDeserializeProp,
   idName: r'id',
   indexes: {
     r'title': IndexSchema(
@@ -83,14 +83,14 @@ const LessonPlanEntitySchema = CollectionSchema(
   },
   links: {},
   embeddedSchemas: {},
-  getId: _lessonPlanEntityGetId,
-  getLinks: _lessonPlanEntityGetLinks,
-  attach: _lessonPlanEntityAttach,
+  getId: _lessonPlanRecordGetId,
+  getLinks: _lessonPlanRecordGetLinks,
+  attach: _lessonPlanRecordAttach,
   version: '3.1.0+1',
 );
 
-int _lessonPlanEntityEstimateSize(
-  LessonPlanEntity object,
+int _lessonPlanRecordEstimateSize(
+  LessonPlanRecord object,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
@@ -102,8 +102,8 @@ int _lessonPlanEntityEstimateSize(
   return bytesCount;
 }
 
-void _lessonPlanEntitySerialize(
-  LessonPlanEntity object,
+void _lessonPlanRecordSerialize(
+  LessonPlanRecord object,
   IsarWriter writer,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
@@ -116,13 +116,13 @@ void _lessonPlanEntitySerialize(
   writer.writeString(offsets[5], object.title);
 }
 
-LessonPlanEntity _lessonPlanEntityDeserialize(
+LessonPlanRecord _lessonPlanRecordDeserialize(
   Id id,
   IsarReader reader,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = LessonPlanEntity();
+  final object = LessonPlanRecord();
   object.contentJson = reader.readString(offsets[0]);
   object.createdAt = reader.readDateTime(offsets[1]);
   object.gradeLevel = reader.readString(offsets[2]);
@@ -133,7 +133,7 @@ LessonPlanEntity _lessonPlanEntityDeserialize(
   return object;
 }
 
-P _lessonPlanEntityDeserializeProp<P>(
+P _lessonPlanRecordDeserializeProp<P>(
   IsarReader reader,
   int propertyId,
   int offset,
@@ -157,28 +157,28 @@ P _lessonPlanEntityDeserializeProp<P>(
   }
 }
 
-Id _lessonPlanEntityGetId(LessonPlanEntity object) {
+Id _lessonPlanRecordGetId(LessonPlanRecord object) {
   return object.id;
 }
 
-List<IsarLinkBase<dynamic>> _lessonPlanEntityGetLinks(LessonPlanEntity object) {
+List<IsarLinkBase<dynamic>> _lessonPlanRecordGetLinks(LessonPlanRecord object) {
   return [];
 }
 
-void _lessonPlanEntityAttach(
-    IsarCollection<dynamic> col, Id id, LessonPlanEntity object) {
+void _lessonPlanRecordAttach(
+    IsarCollection<dynamic> col, Id id, LessonPlanRecord object) {
   object.id = id;
 }
 
-extension LessonPlanEntityQueryWhereSort
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QWhere> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhere> anyId() {
+extension LessonPlanRecordQueryWhereSort
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QWhere> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhere> anyTitle() {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhere> anyTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'title'),
@@ -186,7 +186,7 @@ extension LessonPlanEntityQueryWhereSort
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhere> anyCreatedAt() {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhere> anyCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'createdAt'),
@@ -195,9 +195,9 @@ extension LessonPlanEntityQueryWhereSort
   }
 }
 
-extension LessonPlanEntityQueryWhere
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QWhereClause> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause> idEqualTo(
+extension LessonPlanRecordQueryWhere
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QWhereClause> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause> idEqualTo(
       Id id) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IdWhereClause.between(
@@ -207,7 +207,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       idNotEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -230,7 +230,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       idGreaterThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -239,7 +239,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       idLessThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -248,7 +248,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause> idBetween(
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause> idBetween(
     Id lowerId,
     Id upperId, {
     bool includeLower = true,
@@ -264,7 +264,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleEqualTo(String title) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
@@ -274,7 +274,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleNotEqualTo(String title) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -309,7 +309,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleGreaterThan(
     String title, {
     bool include = false,
@@ -324,7 +324,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleLessThan(
     String title, {
     bool include = false,
@@ -339,7 +339,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleBetween(
     String lowerTitle,
     String upperTitle, {
@@ -357,7 +357,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleStartsWith(String TitlePrefix) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
@@ -368,7 +368,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
@@ -378,7 +378,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       titleIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -405,7 +405,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       createdAtEqualTo(DateTime createdAt) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
@@ -415,7 +415,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       createdAtNotEqualTo(DateTime createdAt) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -450,7 +450,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       createdAtGreaterThan(
     DateTime createdAt, {
     bool include = false,
@@ -465,7 +465,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       createdAtLessThan(
     DateTime createdAt, {
     bool include = false,
@@ -480,7 +480,7 @@ extension LessonPlanEntityQueryWhere
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterWhereClause>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterWhereClause>
       createdAtBetween(
     DateTime lowerCreatedAt,
     DateTime upperCreatedAt, {
@@ -499,9 +499,9 @@ extension LessonPlanEntityQueryWhere
   }
 }
 
-extension LessonPlanEntityQueryFilter
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QFilterCondition> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+extension LessonPlanRecordQueryFilter
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QFilterCondition> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -515,7 +515,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonGreaterThan(
     String value, {
     bool include = false,
@@ -531,7 +531,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonLessThan(
     String value, {
     bool include = false,
@@ -547,7 +547,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonBetween(
     String lower,
     String upper, {
@@ -567,7 +567,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonStartsWith(
     String value, {
     bool caseSensitive = true,
@@ -581,7 +581,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonEndsWith(
     String value, {
     bool caseSensitive = true,
@@ -595,7 +595,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
@@ -606,7 +606,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
@@ -617,7 +617,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -627,7 +627,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       contentJsonIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
@@ -637,7 +637,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       createdAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -647,7 +647,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       createdAtGreaterThan(
     DateTime value, {
     bool include = false,
@@ -661,7 +661,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       createdAtLessThan(
     DateTime value, {
     bool include = false,
@@ -675,7 +675,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       createdAtBetween(
     DateTime lower,
     DateTime upper, {
@@ -693,7 +693,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -707,7 +707,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelGreaterThan(
     String value, {
     bool include = false,
@@ -723,7 +723,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelLessThan(
     String value, {
     bool include = false,
@@ -739,7 +739,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelBetween(
     String lower,
     String upper, {
@@ -759,7 +759,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelStartsWith(
     String value, {
     bool caseSensitive = true,
@@ -773,7 +773,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelEndsWith(
     String value, {
     bool caseSensitive = true,
@@ -787,7 +787,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
@@ -798,7 +798,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
@@ -809,7 +809,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -819,7 +819,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       gradeLevelIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
@@ -829,7 +829,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -839,7 +839,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       idGreaterThan(
     Id value, {
     bool include = false,
@@ -853,7 +853,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       idLessThan(
     Id value, {
     bool include = false,
@@ -867,7 +867,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       idBetween(
     Id lower,
     Id upper, {
@@ -885,7 +885,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       isSyncedEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -895,7 +895,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -909,7 +909,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectGreaterThan(
     String value, {
     bool include = false,
@@ -925,7 +925,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectLessThan(
     String value, {
     bool include = false,
@@ -941,7 +941,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectBetween(
     String lower,
     String upper, {
@@ -961,7 +961,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectStartsWith(
     String value, {
     bool caseSensitive = true,
@@ -975,7 +975,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectEndsWith(
     String value, {
     bool caseSensitive = true,
@@ -989,7 +989,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
@@ -1000,7 +1000,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
@@ -1011,7 +1011,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1021,7 +1021,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       subjectIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
@@ -1031,7 +1031,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1045,7 +1045,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleGreaterThan(
     String value, {
     bool include = false,
@@ -1061,7 +1061,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleLessThan(
     String value, {
     bool include = false,
@@ -1077,7 +1077,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleBetween(
     String lower,
     String upper, {
@@ -1097,7 +1097,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleStartsWith(
     String value, {
     bool caseSensitive = true,
@@ -1111,7 +1111,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleEndsWith(
     String value, {
     bool caseSensitive = true,
@@ -1125,7 +1125,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
@@ -1136,7 +1136,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
@@ -1147,7 +1147,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1157,7 +1157,7 @@ extension LessonPlanEntityQueryFilter
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterFilterCondition>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterFilterCondition>
       titleIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
@@ -1168,91 +1168,91 @@ extension LessonPlanEntityQueryFilter
   }
 }
 
-extension LessonPlanEntityQueryObject
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QFilterCondition> {}
+extension LessonPlanRecordQueryObject
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QFilterCondition> {}
 
-extension LessonPlanEntityQueryLinks
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QFilterCondition> {}
+extension LessonPlanRecordQueryLinks
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QFilterCondition> {}
 
-extension LessonPlanEntityQuerySortBy
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QSortBy> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+extension LessonPlanRecordQuerySortBy
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QSortBy> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByContentJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'contentJson', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByContentJsonDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'contentJson', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByGradeLevel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'gradeLevel', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByGradeLevelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'gradeLevel', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByIsSyncedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortBySubject() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subject', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortBySubjectDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subject', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy> sortByTitle() {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy> sortByTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       sortByTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.desc);
@@ -1260,98 +1260,98 @@ extension LessonPlanEntityQuerySortBy
   }
 }
 
-extension LessonPlanEntityQuerySortThenBy
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QSortThenBy> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+extension LessonPlanRecordQuerySortThenBy
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QSortThenBy> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByContentJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'contentJson', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByContentJsonDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'contentJson', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByGradeLevel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'gradeLevel', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByGradeLevelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'gradeLevel', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy> thenById() {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByIsSyncedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenBySubject() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subject', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenBySubjectDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subject', Sort.desc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy> thenByTitle() {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy> thenByTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.asc);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QAfterSortBy>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QAfterSortBy>
       thenByTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.desc);
@@ -1359,44 +1359,44 @@ extension LessonPlanEntityQuerySortThenBy
   }
 }
 
-extension LessonPlanEntityQueryWhereDistinct
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct> {
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct>
+extension LessonPlanRecordQueryWhereDistinct
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct> {
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct>
       distinctByContentJson({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'contentJson', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct>
       distinctByGradeLevel({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'gradeLevel', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct>
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct>
       distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct> distinctBySubject(
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct> distinctBySubject(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'subject', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<LessonPlanEntity, LessonPlanEntity, QDistinct> distinctByTitle(
+  QueryBuilder<LessonPlanRecord, LessonPlanRecord, QDistinct> distinctByTitle(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'title', caseSensitive: caseSensitive);
@@ -1404,48 +1404,48 @@ extension LessonPlanEntityQueryWhereDistinct
   }
 }
 
-extension LessonPlanEntityQueryProperty
-    on QueryBuilder<LessonPlanEntity, LessonPlanEntity, QQueryProperty> {
-  QueryBuilder<LessonPlanEntity, int, QQueryOperations> idProperty() {
+extension LessonPlanRecordQueryProperty
+    on QueryBuilder<LessonPlanRecord, LessonPlanRecord, QQueryProperty> {
+  QueryBuilder<LessonPlanRecord, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, String, QQueryOperations>
+  QueryBuilder<LessonPlanRecord, String, QQueryOperations>
       contentJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'contentJson');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, DateTime, QQueryOperations>
+  QueryBuilder<LessonPlanRecord, DateTime, QQueryOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, String, QQueryOperations>
+  QueryBuilder<LessonPlanRecord, String, QQueryOperations>
       gradeLevelProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'gradeLevel');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, bool, QQueryOperations> isSyncedProperty() {
+  QueryBuilder<LessonPlanRecord, bool, QQueryOperations> isSyncedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSynced');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, String, QQueryOperations> subjectProperty() {
+  QueryBuilder<LessonPlanRecord, String, QQueryOperations> subjectProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'subject');
     });
   }
 
-  QueryBuilder<LessonPlanEntity, String, QQueryOperations> titleProperty() {
+  QueryBuilder<LessonPlanRecord, String, QQueryOperations> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'title');
     });

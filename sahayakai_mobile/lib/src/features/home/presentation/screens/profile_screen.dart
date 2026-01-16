@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -36,14 +36,14 @@ class ProfileScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset:const Offset(0, 2))],
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset:Offset(0, 2))],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                  children: [
-                   _buildStat("128", "Lessons"),
-                   _buildStat("1.2k", "Students"),
-                   _buildStat("45", "Hours Saved"),
+                   _buildStat(context, "128", "Lessons"),
+                   _buildStat(context, "1.2k", "Students"),
+                   _buildStat(context, "45", "Hours Saved"),
                  ],
               ),
             ),
@@ -71,10 +71,11 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(String value, String label) {
+  Widget _buildStat(BuildContext context, String value, String label) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Column(
       children: [
-        Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary)),
+        Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: theme.primary)),
         Text(label, style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
       ],
     );

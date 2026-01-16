@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/extensions/sahayak_theme.dart';
 import '../../../../features/lesson_plan/presentation/screens/create_lesson_screen.dart';
 import '../../../../features/quiz/presentation/screens/quiz_config_screen.dart';
 // Still keep this as "Sahayak AI" or replace? Image says "AI Companion" at top.
@@ -25,19 +25,20 @@ class AppDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Drawer(
       child: Column(
         children: [
           // 1. User Profile Header - Styled like "AI Companion" or just generic helpful header
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
+            decoration: BoxDecoration(
+              color: theme.primary,
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Text("SG",
                   style: TextStyle(
-                      color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      color: theme.primary, fontWeight: FontWeight.bold)),
             ),
             accountName: const Text("Sargupta",
                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -49,7 +50,7 @@ class AppDrawer extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildSectionHeader("AI Tools"),
+                _buildSectionHeader(context, "AI Tools"),
                 _buildDrawerItem(context,
                     icon: Icons.calendar_today,
                     title: "Lesson Plan",
@@ -93,7 +94,7 @@ class AppDrawer extends ConsumerWidget {
                 // Keep generic chat if needed or hidden? Image doesn't show "Sahayak Assistant" explicitly in list, but "AI Companion" is header.
                 // We can keep it or hide it. I'll add it as "AI Chat" if desired, but user list is specific. I'll stick to list.
 
-                _buildSectionHeader("Platform"),
+                _buildSectionHeader(context, "Platform"),
                 _buildDrawerItem(context,
                     icon: Icons.folder_open,
                     title: "My Library",
@@ -115,7 +116,7 @@ class AppDrawer extends ConsumerWidget {
                     title: "My Profile",
                     onTap: () => _nav(context, const ProfileScreen())),
 
-                _buildSectionHeader("Admin"),
+                _buildSectionHeader(context, "Admin"),
                 _buildDrawerItem(context,
                     icon: Icons.admin_panel_settings_outlined,
                     title: "Review Panel",
@@ -127,7 +128,7 @@ class AppDrawer extends ConsumerWidget {
           // 3. Footer
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.settings, color: AppColors.textLight),
+            leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
             title: const Text("Settings"),
             onTap: () {},
           ),
@@ -137,14 +138,14 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding:
           const EdgeInsets.fromLTRB(16, 24, 16, 8), // Increased top padding
       child: Text(
         title, // Case sensitive match to image? Image uses "AI Tools", "Platform", "Admin"
-        style: const TextStyle(
-          color: AppColors.textLight, // Grey color
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), // Grey color
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),

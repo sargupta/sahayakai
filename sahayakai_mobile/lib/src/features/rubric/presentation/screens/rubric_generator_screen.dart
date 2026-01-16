@@ -210,10 +210,11 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
                 selected: isSelected,
                 onSelected: (selected) {
                   setState(() {
-                    if (selected)
+                    if (selected) {
                       _selectedCriteria.add(opt);
-                    else
+                    } else {
                       _selectedCriteria.remove(opt);
+                    }
                   });
                 },
                 selectedColor: Colors.indigo.withOpacity(0.2),

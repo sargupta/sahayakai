@@ -5,6 +5,19 @@
         "background": "#FFFFFF",
         "success": "#2E7D32",
         "warning": "#FFCC00",
-        "error": "#B3261E"
+        "error": "#B3261E",
+        "teal_accent": "#14B8A6",
+        "teal_glass": "#10B98110",
+        "glass_tint_light": "#FFFFFF66",
+        "glass_tint_dark": "#064E3B66",
+        "glass_border_light": "#FFFFFF4D",
+        "glass_border_dark": "#FFFFFF1A",
+        "mesh_bg_light": "#F0FDF4",
+        "mesh_bg_dark": "#022C22"
+    },
+    "blur": {
+        "glass": 12,
+        "mesh": 40,
+        "heavy": 20
     }
 }

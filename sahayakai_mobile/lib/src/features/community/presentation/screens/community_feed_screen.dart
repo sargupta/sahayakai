@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/extensions/sahayak_theme.dart';
 import 'submit_content_screen.dart';
 
 class CommunityPost {
@@ -72,6 +72,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
@@ -99,7 +100,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
           Navigator.push(context,
               MaterialPageRoute(builder: (_) => const SubmitContentScreen()));
         },
-        backgroundColor: AppColors.primary,
+        backgroundColor: theme.primary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text("New Post",
             style: GoogleFonts.outfit(

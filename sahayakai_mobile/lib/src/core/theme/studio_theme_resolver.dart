@@ -34,7 +34,6 @@ class StudioThemeMap {
         secondary: studioColors.accent,
         surface: studioColors.studioSurface,
         onSurface: studioColors.onStudioSurface,
-        background: studioColors.studioSurface,
       ),
       scaffoldBackgroundColor: studioColors.studioSurface,
 

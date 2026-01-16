@@ -18,7 +18,6 @@ class LessonPlanInput {
       'topic': topic,
       'language': language,
       'gradeLevels': gradeLevels,
-      'resourceLevel': resourceLevel,
       'useRuralContext': useRuralContext,
       // Default hardcoded for MVP
       'resourceLevel': 'low',

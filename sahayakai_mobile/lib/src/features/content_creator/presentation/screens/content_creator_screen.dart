@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../tools/data/tool_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
@@ -174,12 +173,12 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
             child: TextField(
               controller: _subjectController,
               style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: "e.g., Annual Sports Day",
                 hintStyle: TextStyle(color: Colors.white38),
                 border: InputBorder.none,
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -201,12 +200,12 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
                   controller: _promptController,
                   maxLines: 6,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText:
                         "Draft a polite email to parents reminding them about...",
                     hintStyle: TextStyle(color: Colors.white38),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
+                    contentPadding: EdgeInsets.all(16),
                   ),
                 ),
                 Container(

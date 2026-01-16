@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'src/features/home/presentation/home_screen.dart';
 import 'src/core/theme/providers/theme_provider.dart';
 import 'src/core/theme/app_theme.dart';
@@ -16,8 +17,9 @@ import 'src/features/virtual_field_trip/presentation/screens/virtual_field_trip_
 import 'src/features/content_creator/presentation/screens/content_creator_screen.dart';
 import 'src/features/training/presentation/screens/teacher_training_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const ProviderScope(child: SahayakApp()));
 }
 

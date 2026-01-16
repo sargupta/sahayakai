@@ -37,6 +37,12 @@ lib/src/
 *   **Domain Layer:** Pure Dart classes defining `Models` and business logic entities.
 *   **Data Layer:** `Repositories` that handle data fetching from the API (`Dio`) or local database (`Isar`).
 
+### Visual Physics & Magic Layer
+*   **Light Engine:** Time-of-day aware lighting provider (`LightEngine`) that tints the UI (Safe Day, Energetic Noon, Calm Night).
+*   **Motion Semantics:** `StudioMotionProfile` defines physics-based curves (bouncy vs. cinematic) per studio.
+*   **Cultural Intelligence:** `FestivalConfig` overrides themes based on the Indian calendar (e.g., Saffron/Gold for Diwali).
+*   **Magical Feedback:** `MagicalLoadingOrb` (Breathing AI) and Haptic patterns (`lightImpact`, `mediumImpact`) for tactile assurance.
+
 ---
 
 ## 3. Feature Specifications (The "Sahayak Studio" Suite)
@@ -98,7 +104,12 @@ Each major feature is designed as a distinct "Studio" with a unique theme and op
 *   **Core Infrastructure:** App scaffolding, Navigation, Theme, Database, API Client.
 *   **UX Redesign (Phase 1-6):** All 9 major screens have been redesigned to "Premium" standards.
 *   **Voice Integration:** Global voice input implemented across creation tools.
+*   **UX Redesign (Phase 1-6):** All 9 major screens have been redesigned to "Premium" standards.
+*   **Voice Integration:** Global voice input implemented across creation tools.
 *   **Community Features:** Feed and Training screens operational.
+*   **Visual Physics Layer:** Time-aware lighting, Motion Semantics, and Glassmorphism optimizations implemented.
+*   **Cultural Intelligence:** Festival Theming Framework active (Diwali, Holi, Pongal).
+*   **"Magic" & Tactile:** Breathing AI Orb, Haptic Feedback, and Dynamic Motion profiles.
 
 ### 🚧 In Progress / Next Steps
 *   **Production Hardening:**

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/extensions/sahayak_theme.dart';
 
 class SubmitContentScreen extends StatefulWidget {
   const SubmitContentScreen({super.key});
@@ -40,6 +40,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Scaffold(
       appBar: AppBar(
         title: Text("Submit Resource", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black)),
@@ -87,7 +88,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Category"),
                       DropdownButtonFormField<String>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v!),
                         decoration: _inputDecoration(""),
@@ -102,7 +103,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Language"),
                       DropdownButtonFormField<String>(
-                        value: _selectedLanguage,
+                        initialValue: _selectedLanguage,
                         items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
                         onChanged: (v) => setState(() => _selectedLanguage = v!),
                         decoration: _inputDecoration(""),
@@ -147,7 +148,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
             ElevatedButton(
               onPressed: _isUploading ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: theme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

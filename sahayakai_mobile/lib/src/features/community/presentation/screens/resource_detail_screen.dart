@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/extensions/sahayak_theme.dart';
 
 class ResourceDetailScreen extends StatelessWidget {
   final Map<String, dynamic> resource; // Passing mock map for simplicity
@@ -9,6 +9,7 @@ class ResourceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).extension<SahayakTheme>()!;
     return Scaffold(
       appBar: AppBar(title: Text(resource['title'] ?? 'Resource Detail')),
       body: SingleChildScrollView(
@@ -22,11 +23,11 @@ class ResourceDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: const Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
               ),
               child: Column(
                 children: [
-                  Icon(Icons.description, size: 64, color: AppColors.primary.withOpacity(0.8)),
+                  Icon(Icons.description, size: 64, color: theme.primary.withOpacity(0.8)),
                   const SizedBox(height: 16),
                   Text(
                     resource['title'] ?? "Untitled Resource",
@@ -76,7 +77,7 @@ class ResourceDetailScreen extends StatelessWidget {
                 },
                 icon: const Icon(Icons.download),
                 label: const Text("Download Resource"),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(backgroundColor: theme.primary, foregroundColor: Colors.white),
               ),
             ),
           ],
