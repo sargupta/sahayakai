@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 import 'submit_content_screen.dart';
 
 class CommunityPost {
@@ -14,15 +14,16 @@ class CommunityPost {
   final int comments;
   final List<String> tags;
 
-  CommunityPost(
-      {required this.author,
-      required this.role,
-      required this.timeAgo,
-      required this.title,
-      required this.content,
-      this.likes = 0,
-      this.comments = 0,
-      required this.tags});
+  CommunityPost({
+    required this.author,
+    required this.role,
+    required this.timeAgo,
+    required this.title,
+    required this.content,
+    this.likes = 0,
+    this.comments = 0,
+    required this.tags,
+  });
 }
 
 class CommunityFeedScreen extends ConsumerStatefulWidget {
@@ -72,158 +73,221 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
-      appBar: AppBar(
-        title: Text("Teacher Hub",
-            style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.search, color: Colors.black),
-              onPressed: () {}),
-          IconButton(
-              icon: const Icon(Icons.notifications_none, color: Colors.black),
-              onPressed: () {}),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: GlassColors.warmBackgroundGradient,
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(GlassSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Connect & Share',
+                      style: GlassTypography.decorativeLabel(),
+                    ),
+                    const SizedBox(height: GlassSpacing.xs),
+                    Text(
+                      'Teacher Hub',
+                      style: GlassTypography.headline1(),
+                    ),
+                    const SizedBox(height: GlassSpacing.sm),
+                    Container(
+                      width: 60,
+                      height: 2,
+                      color: GlassColors.textTertiary.withOpacity(0.3),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Posts List
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GlassSpacing.xl,
+                  ),
+                  itemCount: _posts.length,
+                  itemBuilder: (context, index) => _buildPostCard(_posts[index]),
+                ),
+              ),
+            ],
+          ),
+
+          // FAB
+          Positioned(
+            bottom: GlassSpacing.xl,
+            right: GlassSpacing.xl,
+            child: GlassFloatingButton(
+              label: 'New Post',
+              icon: Icons.add_rounded,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SubmitContentScreen()),
+                );
+              },
+            ),
+          ),
         ],
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _posts.length,
-        itemBuilder: (context, index) => _buildPostCard(_posts[index]),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const SubmitContentScreen()));
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text("New Post",
-            style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold, color: Colors.white)),
-        elevation: 4,
       ),
     );
   }
 
   Widget _buildPostCard(CommunityPost post) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.orange.shade100,
-                  foregroundColor: Colors.orange.shade800,
-                  child: Text(post.author[0],
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(post.author,
-                          style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text("${post.role} • ${post.timeAgo}",
-                          style: GoogleFonts.inter(
-                              color: Colors.grey, fontSize: 12)),
-                    ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: GlassSpacing.lg),
+      child: GlassCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(GlassSpacing.lg),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: GlassColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        post.author[0],
+                        style: GlassTypography.headline3(
+                          color: GlassColors.primary,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                Icon(Icons.more_horiz, color: Colors.grey.shade400),
-              ],
+                  const SizedBox(width: GlassSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.author,
+                          style: GlassTypography.labelLarge(),
+                        ),
+                        Text(
+                          '${post.role} • ${post.timeAgo}',
+                          style: GlassTypography.bodySmall(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.more_horiz_rounded,
+                    color: GlassColors.textTertiary,
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const Divider(height: 1),
+            Divider(height: 1, color: GlassColors.divider),
 
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(post.title,
-                    style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 8),
-                Text(post.content,
-                    style: GoogleFonts.inter(
-                        fontSize: 15, height: 1.5, color: Colors.black87)),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  children: post.tags
-                      .map((tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(20)),
-                            child: Text("#$tag",
-                                style: GoogleFonts.inter(
-                                    fontSize: 12, color: Colors.grey.shade700)),
-                          ))
-                      .toList(),
-                ),
-              ],
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(GlassSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.title,
+                    style: GlassTypography.headline3(),
+                  ),
+                  const SizedBox(height: GlassSpacing.sm),
+                  Text(
+                    post.content,
+                    style: GlassTypography.bodyMedium(
+                      color: GlassColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: GlassSpacing.lg),
+                  Wrap(
+                    spacing: GlassSpacing.sm,
+                    runSpacing: GlassSpacing.sm,
+                    children: post.tags
+                        .map((tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: GlassSpacing.md,
+                                vertical: GlassSpacing.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: GlassColors.inputBackground,
+                                borderRadius: BorderRadius.circular(GlassRadius.pill),
+                              ),
+                              child: Text(
+                                '#$tag',
+                                style: GlassTypography.labelSmall(),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const Divider(height: 1),
+            Divider(height: 1, color: GlassColors.divider),
 
-          // Actions
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildAction(
-                    Icons.favorite_border, "${post.likes}", Colors.pink),
-                _buildAction(
-                    Icons.chat_bubble_outline, "${post.comments}", Colors.blue),
-                _buildAction(Icons.bookmark_border, "Save", Colors.grey),
-                _buildAction(Icons.share, "Share", Colors.grey),
-              ],
+            // Actions
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: GlassSpacing.lg,
+                vertical: GlassSpacing.md,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildAction(
+                    Icons.favorite_border_rounded,
+                    '${post.likes}',
+                    const Color(0xFFEC4899),
+                  ),
+                  _buildAction(
+                    Icons.chat_bubble_outline_rounded,
+                    '${post.comments}',
+                    const Color(0xFF3B82F6),
+                  ),
+                  _buildAction(
+                    Icons.bookmark_border_rounded,
+                    'Save',
+                    GlassColors.textSecondary,
+                  ),
+                  _buildAction(
+                    Icons.share_rounded,
+                    'Share',
+                    GlassColors.textSecondary,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAction(IconData icon, String label, Color color) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {},
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          Icon(icon, size: 20, color: color),
           const SizedBox(width: 6),
-          Text(label,
-              style: GoogleFonts.inter(
-                  color: Colors.grey.shade600,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: GlassTypography.labelSmall(color: color),
+          ),
         ],
       ),
     );

@@ -1,80 +1,138 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 
 class ToolsGridScreen extends StatelessWidget {
   const ToolsGridScreen({super.key});
 
-  final List<Map<String, dynamic>> _tools = const [
-    {'title': 'Lesson Planner', 'icon': Icons.edit_note, 'color': Colors.blue, 'route': '/create-lesson'},
-    {'title': 'Quiz Generator', 'icon': Icons.quiz, 'color': Colors.orange, 'route': '/quiz-config'},
-    {'title': 'Worksheet Wizard', 'icon': Icons.assignment, 'color': Colors.green, 'route': '/worksheet-wizard'},
-    {'title': 'Rubric Maker', 'icon': Icons.grid_on, 'color': Colors.purple, 'route': '/rubric-generator'},
-    {'title': 'Visual Aid', 'icon': Icons.image, 'color': Colors.pink, 'route': '/visual-aid-creator'},
-    {'title': 'Instant Answer', 'icon': Icons.flash_on, 'color': Colors.amber, 'route': '/instant-answer'},
-    {'title': 'Video Story', 'icon': Icons.video_camera_back, 'color': Colors.red, 'route': '/video-storyteller'},
-    {'title': 'Field Trip', 'icon': Icons.public, 'color': Colors.teal, 'route': '/virtual-field-trip'},
-    {'title': 'Content Creator', 'icon': Icons.create, 'color': Colors.indigo, 'route': '/content-creator'},
-    {'title': 'Training', 'icon': Icons.school, 'color': Colors.brown, 'route': '/teacher-training'},
+  static const List<Map<String, dynamic>> _tools = [
+    {
+      'title': 'Lesson Planner',
+      'icon': Icons.edit_note_rounded,
+      'route': '/create-lesson'
+    },
+    {
+      'title': 'Quiz Generator',
+      'icon': Icons.extension_rounded,
+      'route': '/quiz-config'
+    },
+    {
+      'title': 'Worksheet Wizard',
+      'icon': Icons.assignment_rounded,
+      'route': '/worksheet-wizard'
+    },
+    {
+      'title': 'Rubric Maker',
+      'icon': Icons.grid_on_rounded,
+      'route': '/rubric-generator'
+    },
+    {
+      'title': 'Visual Aid',
+      'icon': Icons.image_rounded,
+      'route': '/visual-aid-creator'
+    },
+    {
+      'title': 'Instant Answer',
+      'icon': Icons.flash_on_rounded,
+      'route': '/instant-answer'
+    },
+    {
+      'title': 'Video Story',
+      'icon': Icons.video_camera_back_rounded,
+      'route': '/video-storyteller'
+    },
+    {
+      'title': 'Field Trip',
+      'icon': Icons.public_rounded,
+      'route': '/virtual-field-trip'
+    },
+    {
+      'title': 'Content Creator',
+      'icon': Icons.create_rounded,
+      'route': '/content-creator'
+    },
+    {
+      'title': 'Training',
+      'icon': Icons.school_rounded,
+      'route': '/teacher-training'
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("AI Tools", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false, // Hide back button if on bottom nav
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.1,
+    return Stack(
+      children: [
+        // Background Image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/app_background.png',
+            fit: BoxFit.cover,
+          ),
         ),
-        itemCount: _tools.length,
-        itemBuilder: (context, index) {
-          final tool = _tools[index];
-          return Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                // Handle navigation logic here (GoRouter or Navigator)
-                try {
-                  context.push(tool['route']);
-                } catch (e) {
-                   Navigator.of(context).pushNamed(tool['route']);
-                }
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: (tool['color'] as Color).withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(tool['icon'], size: 32, color: tool['color']),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    tool['title'],
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
-              ),
+        // Content
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(GlassSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Creative Studio',
+                  style: GlassTypography.decorativeLabel(),
+                ),
+                const SizedBox(height: GlassSpacing.xs),
+                Text(
+                  'AI Tools',
+                  style: GlassTypography.headline1(),
+                ),
+                const SizedBox(height: GlassSpacing.sm),
+                Container(
+                  width: 60,
+                  height: 2,
+                  color: GlassColors.textTertiary.withOpacity(0.3),
+                ),
+              ],
             ),
-          );
-        },
+          ),
+          
+          // Grid
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(
+                horizontal: GlassSpacing.xl,
+                vertical: GlassSpacing.sm,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: GlassSpacing.lg,
+                mainAxisSpacing: GlassSpacing.lg,
+                childAspectRatio: 1.0,
+              ),
+              itemCount: _tools.length,
+              itemBuilder: (context, index) {
+                final tool = _tools[index];
+                return GlassToolCard(
+                  title: tool['title'],
+                  icon: tool['icon'],
+                  // Using default orange iconColor from GlassColors.primary
+                  height: double.infinity,
+                  onTap: () {
+                    try {
+                      context.push(tool['route']);
+                    } catch (e) {
+                      Navigator.of(context).pushNamed(tool['route']);
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
+      ],
     );
   }
 }

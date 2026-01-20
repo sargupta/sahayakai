@@ -1,70 +1,142 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("My Profile", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.settings, color: Colors.black))
-        ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: GlassColors.warmBackgroundGradient,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(GlassSpacing.xl),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.orange,
-              backgroundImage: NetworkImage('https://i.pravatar.cc/300?img=12'),
-            ),
-            const SizedBox(height: 16),
-            Text("Sarthak Gupta", style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text("Teacher • Grade 6-10", style: GoogleFonts.inter(color: Colors.grey, fontSize: 16)),
-            const SizedBox(height: 32),
-
-            // Use Impact Dashboard as a widget or just stats
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset:const Offset(0, 2))],
+            const SizedBox(height: GlassSpacing.lg),
+            
+            // Profile Header Card
+            GlassCard(
+              child: Column(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: GlassColors.primary,
+                        width: 3,
+                      ),
+                      image: const DecorationImage(
+                        image: NetworkImage('https://i.pravatar.cc/300?img=12'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: GlassSpacing.lg),
+                  Text(
+                    'Sarthak Gupta',
+                    style: GlassTypography.headline2(),
+                  ),
+                  const SizedBox(height: GlassSpacing.xs),
+                  Text(
+                    'Teacher • Grade 6-10',
+                    style: GlassTypography.bodyMedium(
+                      color: GlassColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
+            ),
+            const SizedBox(height: GlassSpacing.xl),
+
+            // Stats Card
+            GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                 children: [
-                   _buildStat("128", "Lessons"),
-                   _buildStat("1.2k", "Students"),
-                   _buildStat("45", "Hours Saved"),
-                 ],
+                children: [
+                  _buildStat('128', 'Lessons'),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: GlassColors.divider,
+                  ),
+                  _buildStat('1.2k', 'Students'),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: GlassColors.divider,
+                  ),
+                  _buildStat('45', 'Hours Saved'),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: GlassSpacing.xl),
 
-            // Settings List
-            _buildSettingItem(Icons.person_outline, "Edit Profile"),
-            _buildSettingItem(Icons.notifications_outlined, "Notifications"),
-            _buildSettingItem(Icons.language, "App Language"),
-            _buildSettingItem(Icons.help_outline, "Help & Support"),
-            const SizedBox(height: 32),
-            
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
-              ),
-              child: const Text("Log Out"),
+            // Settings Section
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SETTINGS',
+                  style: GlassTypography.sectionHeader(),
+                ),
+                const SizedBox(height: GlassSpacing.md),
+                _buildSettingItem(
+                  Icons.person_outline_rounded,
+                  'Edit Profile',
+                  onTap: () {},
+                ),
+                const SizedBox(height: GlassSpacing.sm),
+                _buildSettingItem(
+                  Icons.notifications_outlined,
+                  'Notifications',
+                  onTap: () {},
+                ),
+                const SizedBox(height: GlassSpacing.sm),
+                _buildSettingItem(
+                  Icons.language_rounded,
+                  'App Language',
+                  trailing: Text(
+                    'English',
+                    style: GlassTypography.bodySmall(
+                      color: GlassColors.primary,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                const SizedBox(height: GlassSpacing.sm),
+                _buildSettingItem(
+                  Icons.color_lens_outlined,
+                  'Theme',
+                  trailing: Text(
+                    'Light',
+                    style: GlassTypography.bodySmall(
+                      color: GlassColors.primary,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                const SizedBox(height: GlassSpacing.sm),
+                _buildSettingItem(
+                  Icons.help_outline_rounded,
+                  'Help & Support',
+                  onTap: () {},
+                ),
+              ],
             ),
+            const SizedBox(height: GlassSpacing.xxl),
+
+            // Log Out Button
+            GlassSecondaryButton(
+              label: 'Log Out',
+              icon: Icons.logout_rounded,
+              onPressed: () {},
+            ),
+            
+            const SizedBox(height: GlassSpacing.xxxl),
           ],
         ),
       ),
@@ -74,22 +146,56 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildStat(String value, String label) {
     return Column(
       children: [
-        Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary)),
-        Text(label, style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
+        Text(
+          value,
+          style: GlassTypography.headline2(color: GlassColors.primary),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GlassTypography.bodySmall(),
+        ),
       ],
     );
   }
 
-  Widget _buildSettingItem(IconData icon, String title) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: Colors.black87),
+  Widget _buildSettingItem(
+    IconData icon,
+    String title, {
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    return GlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: GlassSpacing.lg,
+        vertical: GlassSpacing.md,
       ),
-      title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-      onTap: () {},
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: GlassColors.inputBackground,
+              borderRadius: BorderRadius.circular(GlassRadius.sm),
+            ),
+            child: Icon(icon, color: GlassColors.textPrimary, size: 20),
+          ),
+          const SizedBox(width: GlassSpacing.lg),
+          Expanded(
+            child: Text(title, style: GlassTypography.labelLarge()),
+          ),
+          if (trailing != null) ...[
+            trailing,
+            const SizedBox(width: GlassSpacing.sm),
+          ],
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: GlassColors.textTertiary,
+          ),
+        ],
+      ),
     );
   }
 }

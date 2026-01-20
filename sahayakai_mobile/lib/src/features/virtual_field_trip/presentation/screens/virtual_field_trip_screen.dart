@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 
 class VirtualFieldTripScreen extends StatefulWidget {
   const VirtualFieldTripScreen({super.key});
@@ -34,10 +33,9 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
       _selectedDestination = newValue;
       _isLoading = true;
     });
-    
-    // Simulate network load
+
     await Future.delayed(const Duration(seconds: 1));
-    
+
     setState(() {
       _currentImage = _destinations[newValue];
       _isLoading = false;
@@ -46,110 +44,149 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Virtual Field Trip", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
+    return GlassScaffold(
+      title: 'Virtual Field Trip',
+      showBackButton: true,
+      actions: [GlassMenuButton(onPressed: () {})],
       body: Column(
         children: [
-          // 1. Controls
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
+          // Destination Selector
+          Padding(
+            padding: const EdgeInsets.all(GlassSpacing.xl),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Select Destination", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
+                // Decorative Header
+                Text(
+                  'Exploring the World...',
+                  style: GlassTypography.decorativeLabel(),
+                ),
+                const SizedBox(height: GlassSpacing.xs),
+                Text(
+                  'Choose Destination',
+                  style: GlassTypography.headline2(),
+                ),
+                const SizedBox(height: GlassSpacing.lg),
+
+                // Destination Dropdown
+                GlassDropdown<String>(
+                  labelText: 'Select Destination',
                   value: _selectedDestination,
-                  items: _destinations.keys.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                  items: _destinations.keys
+                      .map((dest) => DropdownMenuItem(
+                            value: dest,
+                            child: Text(dest),
+                          ))
+                      .toList(),
                   onChanged: _isLoading ? null : _changeDestination,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    prefixIcon: const Icon(Icons.public, color: AppColors.primary),
-                  ),
                 ),
               ],
             ),
           ),
 
-          // 2. Viewer
+          // Image Viewer
           Expanded(
-            child: Stack(
-              children: [
-                if (_currentImage != null)
-                  Positioned.fill(
-                    child: InteractiveViewer(
-                      minScale: 1.0,
-                      maxScale: 4.0,
-                      child: Image.network(
-                        _currentImage!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(child: CircularProgressIndicator());
-                        },
-                      ),
-                    ),
-                  ),
-                
-                if (_isLoading)
-                  Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(color: Colors.white),
-                          SizedBox(height: 16),
-                          Text("Traveling...", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Overlay Controls
-                Positioned(
-                  bottom: 24,
-                  right: 24,
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("VR Mode coming soon!")));
-                    },
-                    backgroundColor: Colors.white,
-                    child: const Icon(Icons.vrpano, color: Colors.black),
-                  ),
-                ),
-                
-                Positioned(
-                  bottom: 24,
-                  left: 24,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.white, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Pinch to Zoom • Drag to Pan",
-                          style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(GlassRadius.lg),
+                child: Stack(
+                  children: [
+                    if (_currentImage != null)
+                      Positioned.fill(
+                        child: InteractiveViewer(
+                          minScale: 1.0,
+                          maxScale: 4.0,
+                          child: Image.network(
+                            _currentImage!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: GlassLoadingIndicator(
+                                  message: 'Loading...',
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ],
+                      ),
+
+                    if (_isLoading)
+                      Container(
+                        color: Colors.black54,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: GlassSpacing.lg),
+                              Text(
+                                'Traveling...',
+                                style: GlassTypography.labelLarge(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // Overlay Controls
+                    Positioned(
+                      bottom: GlassSpacing.lg,
+                      right: GlassSpacing.lg,
+                      child: GlassIconButton(
+                        icon: Icons.vrpano_rounded,
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('VR Mode coming soon!'),
+                            ),
+                          );
+                        },
+                        backgroundColor: Colors.white,
+                      ),
                     ),
-                  ),
+
+                    Positioned(
+                      bottom: GlassSpacing.lg,
+                      left: GlassSpacing.lg,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: GlassSpacing.lg,
+                          vertical: GlassSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(GlassRadius.pill),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: GlassSpacing.sm),
+                            Text(
+                              'Pinch to Zoom • Drag to Pan',
+                              style: GlassTypography.labelSmall(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
+          const SizedBox(height: GlassSpacing.xxl),
         ],
       ),
     );

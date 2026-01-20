@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
+
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/providers/lesson_plan_provider.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/screens/lesson_result_screen.dart';
 
@@ -12,23 +12,66 @@ class MyLibraryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(lessonHistoryProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Library"),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: GlassColors.warmBackgroundGradient,
       ),
-      body: DefaultTabController(
+      child: DefaultTabController(
         length: 2,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const TabBar(
-              labelColor: AppColors.primary,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppColors.primary,
-              tabs: [
-                Tab(text: "Lesson Plans"),
-                Tab(text: "Quizzes"),
-              ],
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(GlassSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Collection',
+                    style: GlassTypography.decorativeLabel(),
+                  ),
+                  const SizedBox(height: GlassSpacing.xs),
+                  Text(
+                    'My Library',
+                    style: GlassTypography.headline1(),
+                  ),
+                  const SizedBox(height: GlassSpacing.sm),
+                  Container(
+                    width: 60,
+                    height: 2,
+                    color: GlassColors.textTertiary.withOpacity(0.3),
+                  ),
+                ],
+              ),
             ),
+
+            // Tab Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+              child: GlassCard(
+                padding: const EdgeInsets.all(GlassSpacing.xs),
+                child: TabBar(
+                  labelColor: Colors.white,
+                  unselectedLabelColor: GlassColors.textSecondary,
+                  labelStyle: GlassTypography.labelMedium(),
+                  unselectedLabelStyle: GlassTypography.labelMedium(),
+                  indicator: BoxDecoration(
+                    color: GlassColors.primary,
+                    borderRadius: BorderRadius.circular(GlassRadius.sm),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  tabs: const [
+                    Tab(text: "Lesson Plans"),
+                    Tab(text: "Quizzes"),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: GlassSpacing.lg),
+
+            // Tab Content
             Expanded(
               child: TabBarView(
                 children: [
@@ -36,39 +79,58 @@ class MyLibraryScreen extends ConsumerWidget {
                   historyAsync.when(
                     data: (plans) {
                       if (plans.isEmpty) {
-                        return Center(child: Text("No plans yet. Create one!", style: GoogleFonts.inter()));
+                        return GlassEmptyState(
+                          icon: Icons.menu_book_rounded,
+                          title: 'No Lesson Plans Yet',
+                          message: 'Create your first lesson plan to see it here.',
+                        );
                       }
                       return ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: GlassSpacing.xl,
+                        ),
                         itemCount: plans.length,
                         itemBuilder: (context, index) {
                           final plan = plans[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(12),
-                              leading: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                                child: const Icon(Icons.book, color: AppColors.primary),
-                              ),
-                              title: Text(plan.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text("${plan.subject} • ${plan.gradeLevel}"),
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: GlassSpacing.md,
+                            ),
+                            child: GlassListItem(
+                              icon: Icons.book_rounded,
+                              iconColor: const Color(0xFFDC2626),
+                              iconBackgroundColor: const Color(0xFFFEF2F2),
+                              title: plan.title,
+                              subtitle: '${plan.subject} • ${plan.gradeLevel}',
                               onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (c) => LessonResultScreen(plan: plan)));
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (c) => LessonResultScreen(plan: plan),
+                                  ),
+                                );
                               },
                             ),
                           );
                         },
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, stack) => Center(child: Text('Error: $err')),
+                    loading: () => Center(
+                      child: GlassLoadingIndicator(message: 'Loading...'),
+                    ),
+                    error: (err, stack) => GlassEmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Error Loading',
+                      message: err.toString(),
+                    ),
                   ),
 
-                  // 2. Quizzes Tab (Placeholder)
-                  Center(child: Text("No quizzes saved yet.", style: GoogleFonts.inter())),
+                  // 2. Quizzes Tab
+                  GlassEmptyState(
+                    icon: Icons.extension_rounded,
+                    title: 'No Quizzes Yet',
+                    message: 'Create your first quiz to see it here.',
+                  ),
                 ],
               ),
             ),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
-import 'package:sahayakai_mobile/src/core/theme/app_theme.dart';
+import 'package:sahayakai_mobile/src/core/theme/glassmorphic/glass_components.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/screens/create_lesson_screen.dart';
 import 'package:sahayakai_mobile/src/features/quiz/presentation/screens/quiz_config_screen.dart';
 import 'package:sahayakai_mobile/src/features/chat/presentation/screens/chat_screen.dart';
-import 'package:sahayakai_mobile/src/features/home/presentation/screens/my_library_screen.dart'; // Import for tabs
-import 'package:sahayakai_mobile/src/features/community/presentation/screens/community_feed_screen.dart'; // Import for tabs
+import 'package:sahayakai_mobile/src/features/home/presentation/screens/my_library_screen.dart';
+import 'package:sahayakai_mobile/src/features/community/presentation/screens/community_feed_screen.dart';
 import 'widgets/app_drawer.dart';
 
 import 'package:sahayakai_mobile/src/features/home/presentation/screens/tools_grid_screen.dart';
@@ -24,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Set status bar style
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    );
+
     // Define pages for the bottom nav
     final List<Widget> pages = [
       _buildDashboard(context), // 0: Home
@@ -37,29 +46,55 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       drawer: const AppDrawer(),
       appBar: _buildCustomAppBar(context),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFFF7ED), // Orange-ish white
-              Colors.white,
-              Color(0xFFF0FDF4), // Green-ish white
-            ],
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/app_background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          // Only wrap body in SafeArea if it's the dashboard?
-          // Actually, standard SafeArea is good, but for the bottom nav we might need adjustment.
-          // Let's keep it simple.
-          child: IndexedStack(
-            index: _currentIndex,
-            children: pages,
+          // Content
+          SafeArea(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: pages,
+            ),
           ),
-        ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: GlassBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          GlassNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_filled,
+            label: 'Home',
+          ),
+          GlassNavItem(
+            icon: Icons.grid_view_outlined,
+            activeIcon: Icons.grid_view_rounded,
+            label: 'Tools',
+          ),
+          GlassNavItem(
+            icon: Icons.people_outline_rounded,
+            activeIcon: Icons.people_rounded,
+            label: 'Community',
+          ),
+          GlassNavItem(
+            icon: Icons.book_outlined,
+            activeIcon: Icons.book_rounded,
+            label: 'Library',
+          ),
+          GlassNavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+          ),
+        ],
+      ),
     );
   }
 
@@ -67,460 +102,267 @@ class _HomeScreenState extends State<HomeScreen> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(70),
       child: Container(
-        padding: const EdgeInsets.only(top: 8, bottom: 8, left: 8, right: 16),
         decoration: BoxDecoration(
-            color: AppColors.background.withOpacity(0.8), // Semi-transparent
-            border: const Border(
-              bottom: BorderSide(
-                color: Color(
-                    0x1A000000), // Very light black/grey for transparency effect
-                width: 1,
-              ),
+          gradient: GlassColors.warmBackgroundGradient,
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GlassSpacing.lg,
+              vertical: GlassSpacing.sm,
             ),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2)),
-            ]),
-        child: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.textMain, size: 28),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          centerTitle: true,
-          title: Text(
-            "SahayakAI",
-            style: GoogleFonts.outfit(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textMain,
-            ),
-          ),
-          actions: [
-            Stack(
-              alignment: Alignment.topRight,
+            child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_none_outlined,
-                      color: AppColors.textMain, size: 28),
-                  onPressed: () {},
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
+                Builder(
+                  builder: (context) => GlassIconButton(
+                    icon: Icons.menu_rounded,
+                    onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
+                ),
+                const Spacer(),
+                Text(
+                  'SahayakAI',
+                  style: GlassTypography.headline2(),
+                ),
+                const Spacer(),
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    GlassIconButton(
+                      icon: Icons.notifications_outlined,
+                      onPressed: () {},
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: GlassColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
           ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        selectedLabelStyle:
-            GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: GoogleFonts.inter(fontSize: 12),
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Tools"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.people_alt_outlined), label: "Community"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.book_outlined), label: "Library"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: "Profile"),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildDashboard(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Hero Card - Enhanced
-          _buildHeroCard(),
-          const SizedBox(height: 20), // Reduced from 32
+          const SizedBox(height: GlassSpacing.lg),
+          
+          // 1. Hero Card
+          GlassHeroCard(
+            title: 'Namaste,\nTeacher!',
+            subtitle: 'Ready to inspire your students today?',
+            illustration: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(GlassRadius.lg),
+                bottomRight: Radius.circular(GlassRadius.lg),
+              ),
+              child: Image.asset(
+                'assets/images/hero_illustration.png',
+                fit: BoxFit.contain,
+                width: 160,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 160,
+                    color: Colors.transparent,
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: GlassSpacing.xxl),
 
           // 2. Quick Actions Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Quick Actions",
-                style: GoogleFonts.outfit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF111827) // Darker grey for contrast
-                    ),
+                'Quick Actions',
+                style: GlassTypography.headline2(),
               ),
               TextButton(
                 onPressed: () => setState(() => _currentIndex = 1),
-                child: Text("View All",
-                    style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                        color:
-                            const Color(0xFFFF9933) // Saffron accent for link
-                        )),
+                child: Text(
+                  'View All',
+                  style: GlassTypography.labelMedium(
+                    color: GlassColors.primary,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12), // Reduced from 16
-          _buildQuickActionsGrid(context),
-
-          const SizedBox(height: 20), // Reduced from 32
-
-          // 3. Recent Activity Header
-          Text(
-            "Recent Activity",
-            style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF111827)),
-          ),
-          const SizedBox(height: 12), // Reduced from 16
-          _buildRecentActivityItem(
-              "Photosynthesis Lesson Plan",
-              "Today, 10:30 AM",
-              Icons.book,
-              const Color(0xFFFEF2F2),
-              const Color(0xFFDC2626)),
-          _buildRecentActivityItem("Class 7 Science Quiz", "Yesterday",
-              Icons.quiz, const Color(0xFFF3E8FF), const Color(0xFF7C3AED)),
-
-          const SizedBox(height: 20), // Reduced from 32
-
-          // 4. Teaching Insight (Tip of the Day)
-          _buildTeachingInsightCard(),
-
-          const SizedBox(height: 80), // Bottom padding
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroCard() {
-    return Container(
-      width: double.infinity,
-      height: 220, // Slightly taller
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32), // More rounded
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFAD66), // Rich Saffron
-            Color(0xFFFFD1A3), // Soft Peach
-            Color(0xFFFFF7ED), // Fade to white tint
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: [0.0, 0.6, 1.0],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF9933).withOpacity(0.3), // Colored shadow
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-            spreadRadius: -4,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Use the generated vector asset
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(32),
-                  bottomRight: Radius.circular(32)),
-              child: Image.asset(
-                'assets/images/hero_illustration.png',
-                fit: BoxFit.cover,
-                width: 200, // Adjust overlap
-                alignment: Alignment.centerRight,
-                color: Colors.white.withOpacity(
-                    0.9), // Blend slightly if needed, or stick to raw
-                colorBlendMode: BlendMode.modulate,
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Namaste,\nTeacher!",
-                  style: GoogleFonts.dmSerifDisplay(
-                      fontSize: 40, // Larger
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1F2937), // Dark text contrast
-                      height: 1.1,
-                      shadows: [
-                        Shadow(
-                            color: Colors.white.withOpacity(0.5),
-                            offset: const Offset(1, 1),
-                            blurRadius: 2)
-                      ]),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: 180,
-                  child: Text(
-                    "Ready to inspire your students today?",
-                    style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF4B5563)),
+          const SizedBox(height: GlassSpacing.lg),
+          
+          // Quick Actions Grid
+          Row(
+            children: [
+              Expanded(
+                child: GlassToolCard(
+                  title: 'Plan\nLesson',
+                  icon: Icons.menu_book_rounded,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreateLessonScreen()),
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: GlassSpacing.lg),
+              Expanded(
+                child: GlassToolCard(
+                  title: 'Create\nQuiz',
+                  icon: Icons.extension_rounded,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const QuizConfigScreen()),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: GlassSpacing.lg),
 
-  Widget _buildQuickActionsGrid(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                context,
-                "Plan \nLesson",
-                Icons.menu_book_rounded,
-                const Color(0xFFFFF1F2), // Pink-50
-                const Color(0xFFBE123C), // Rose-700
-                () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CreateLessonScreen())),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildActionCard(
-                context,
-                "Create \nQuiz",
-                Icons.extension_rounded,
-                const Color(0xFFF3E8FF), // Purple-50
-                const Color(0xFF7E22CE), // Purple-700
-                () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const QuizConfigScreen())),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // AI Assistant - Glass/Gradient Effect
-        GestureDetector(
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (_) => const ChatScreen())),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE0F2FE), Color(0xFFDBEAFE)], // Sky to Blue
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                    color: const Color(0xFF3B82F6).withOpacity(0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                    spreadRadius: -2),
-              ],
-              border:
-                  Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+          // AI Assistant Card
+          GlassCard(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ChatScreen()),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 4))
-                      ]),
-                  child: const Icon(Icons.auto_awesome,
-                      color: Color(0xFF2563EB), size: 30),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F2FE),
+                    borderRadius: BorderRadius.circular(GlassRadius.md),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFF2563EB),
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Ask Sahayak",
-                        style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E40AF) // Dark Blue
-                            )),
-                    Text("Your AI teaching assistant",
-                        style: GoogleFonts.inter(
-                            fontSize: 13, color: const Color(0xFF3B82F6))),
-                  ],
+                const SizedBox(width: GlassSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ask Sahayak',
+                        style: GlassTypography.headline3(
+                          color: const Color(0xFF1E40AF),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Your AI teaching assistant',
+                        style: GlassTypography.bodySmall(
+                          color: const Color(0xFF3B82F6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                const Icon(Icons.mic_none_rounded,
-                    color: Color(0xFF2563EB), size: 28),
+                Icon(
+                  Icons.mic_none_rounded,
+                  color: const Color(0xFF2563EB),
+                  size: 24,
+                ),
               ],
             ),
           ),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: GlassSpacing.xxl),
 
-  Widget _buildActionCard(BuildContext context, String title, IconData icon,
-      Color bgColor, Color iconColor, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 160,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: bgColor.withOpacity(0.8), // Deep cool shadow matching bg
-              blurRadius: 0, // Solid crisp shadow or none? Let's go soft
-              offset: const Offset(0, 0),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 6,
-                        offset: Offset(0, 2))
-                  ]),
-              child: Icon(icon, color: iconColor, size: 28),
-            ),
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1F2937)),
-            ),
-          ],
-        ),
+          // 3. Recent Activity Header
+          Text(
+            'Recent Activity',
+            style: GlassTypography.headline2(),
+          ),
+          const SizedBox(height: GlassSpacing.lg),
+          
+          _buildRecentActivityItem(
+            'Photosynthesis Lesson Plan',
+            'Today, 10:30 AM',
+            Icons.book_rounded,
+            const Color(0xFFFEF2F2),
+            const Color(0xFFDC2626),
+          ),
+          const SizedBox(height: GlassSpacing.md),
+          _buildRecentActivityItem(
+            'Class 7 Science Quiz',
+            'Yesterday',
+            Icons.quiz_rounded,
+            const Color(0xFFF3E8FF),
+            const Color(0xFF7C3AED),
+          ),
+          const SizedBox(height: GlassSpacing.xxl),
+
+          // 4. Teaching Insight
+          _buildTeachingInsightCard(),
+          
+          const SizedBox(height: 100), // Bottom padding
+        ],
       ),
     );
   }
 
   Widget _buildRecentActivityItem(
-      String title, String time, IconData icon, Color bg, Color iconColor) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4)),
-        ],
-      ),
+    String title,
+    String time,
+    IconData icon,
+    Color bgColor,
+    Color iconColor,
+  ) {
+    return GlassCard(
+      padding: const EdgeInsets.all(GlassSpacing.lg),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: bg, borderRadius: BorderRadius.circular(16)),
-            child: Icon(icon, color: iconColor),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(GlassRadius.md),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: GlassSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600, fontSize: 16)),
-                const SizedBox(height: 4),
-                Text(time,
-                    style: GoogleFonts.inter(fontSize: 13, color: Colors.grey)),
+                Text(title, style: GlassTypography.labelLarge()),
+                const SizedBox(height: 2),
+                Text(time, style: GlassTypography.bodySmall()),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: Colors.grey.shade50, shape: BoxShape.circle),
-            child: const Icon(Icons.arrow_forward_ios_rounded,
-                size: 14, color: Colors.grey),
-          )
+              color: GlassColors.inputBackground,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 12,
+              color: GlassColors.textTertiary,
+            ),
+          ),
         ],
       ),
     );
@@ -530,91 +372,71 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("TEACHING INSIGHT",
-            style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: AppColors.textLight)),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                  spreadRadius: -2),
-            ],
-          ),
+        Text(
+          'TEACHING INSIGHT',
+          style: GlassTypography.sectionHeader(),
+        ),
+        const SizedBox(height: GlassSpacing.md),
+        GlassCard(
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image Placeholder with Badge
+              // Image Section
               Stack(
                 children: [
                   Container(
-                    height: 180,
+                    height: 160,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(28)),
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                              "https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"),
-                          fit: BoxFit.cover,
-                        )),
-                  ),
-                  Positioned(
-                    left: 20,
-                    bottom: 20,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFFF9933),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2))
-                          ]),
-                      child: Text(
-                        "TIP OF THE DAY",
-                        style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5),
+                      color: GlassColors.inputBackground,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(GlassRadius.lg),
+                      ),
+                      image: const DecorationImage(
+                        image: NetworkImage(
+                          'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                        ),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                  )
+                  ),
+                  Positioned(
+                    left: GlassSpacing.lg,
+                    bottom: GlassSpacing.lg,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: GlassSpacing.md,
+                        vertical: GlassSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: GlassColors.primary,
+                        borderRadius: BorderRadius.circular(GlassRadius.pill),
+                      ),
+                      child: Text(
+                        'TIP OF THE DAY',
+                        style: GlassTypography.labelSmall(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ],
               ),
+              // Content Section
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(GlassSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Connect math to harvest",
-                      style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1F2937)),
+                      'Connect math to harvest',
+                      style: GlassTypography.headline3(),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: GlassSpacing.sm),
                     Text(
-                      "Use local crop yields to explain percentages. It helps students relate abstract concepts to their daily lives.",
-                      style: GoogleFonts.inter(
-                          fontSize: 15,
-                          color: const Color(0xFF4B5563),
-                          height: 1.6),
+                      'Use local crop yields to explain percentages. It helps students relate abstract concepts to their daily lives.',
+                      style: GlassTypography.bodyMedium(
+                        color: GlassColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),

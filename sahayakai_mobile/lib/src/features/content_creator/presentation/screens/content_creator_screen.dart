@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import '../../../../core/theme/app_theme.dart';
+
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 import '../../../tools/data/tool_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
@@ -31,8 +32,19 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
     "Worksheet Plan"
   ];
 
+  String _selectedTone = "Professional";
+  final List<String> _tones = ["Professional", "Friendly", "Formal", "Casual"];
+
   Future<void> _generateContent() async {
-    if (_promptController.text.trim().isEmpty) return;
+    if (_promptController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter key points'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -64,202 +76,141 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final language = ref.watch(languageProvider);
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text("Editor's Desk",
-            style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Theme(
-              data: Theme.of(context)
-                  .copyWith(canvasColor: Colors.blueGrey.shade900),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: language,
-                  icon: const Icon(Icons.language, color: Colors.white70),
-                  style: GoogleFonts.inter(
-                      color: Colors.white, fontWeight: FontWeight.w500),
-                  onChanged: (v) =>
-                      ref.read(languageProvider.notifier).setLanguage(v!),
-                  items: supportedLanguages
-                      .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                      .toList(),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F172A), Color(0xFF334155)], // Slate 900 to 700
-          ),
-        ),
-        child: SafeArea(
-          child: _generatedContent != null
-              ? _buildResultView()
-              : _buildInputForm(language),
-        ),
-      ),
+    return GlassScaffold(
+      title: 'Editor\'s Desk',
+      showBackButton: true,
+      actions: [GlassMenuButton(onPressed: () {})],
+      floatingActionButton: _generatedContent == null
+          ? GlassFloatingButton(
+              label: 'Generate Draft',
+              icon: Icons.edit_document,
+              onPressed: _isLoading ? null : _generateContent,
+              isLoading: _isLoading,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: _generatedContent != null ? _buildResultView() : _buildInputForm(),
     );
   }
 
-  Widget _buildInputForm(String language) {
+  Widget _buildInputForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(
+        left: GlassSpacing.xl,
+        right: GlassSpacing.xl,
+        top: GlassSpacing.sm,
+        bottom: 120,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          // Decorative Header
           Text(
-            "Draft Professional Content",
-            style: GoogleFonts.outfit(
-                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            'Drafting Professionally...',
+            style: GlassTypography.decorativeLabel(),
           ),
+          const SizedBox(height: GlassSpacing.xs),
           Text(
-            "Select a format and let AI draft it for you in $language.",
-            style: GoogleFonts.inter(
-                color: Colors.blueGrey.shade200, fontSize: 16),
+            'Professional Content',
+            style: GlassTypography.headline1(),
           ),
-
-          const SizedBox(height: 32),
-
-          // Type Selector
-          Text("Document Type",
-              style: GoogleFonts.inter(
-                  color: Colors.white70, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: _contentTypes.map((type) {
-              final isSelected = _selectedType == type;
-              return ChoiceChip(
-                label: Text(type),
-                selected: isSelected,
-                onSelected: (selected) => setState(() => _selectedType = type),
-                selectedColor: Colors.cyan,
-                backgroundColor: Colors.white.withOpacity(0.1),
-                labelStyle: TextStyle(
-                    color: isSelected ? Colors.black87 : Colors.white),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide.none),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Subject Input
-          Text("Subject / Context",
-              style: GoogleFonts.inter(
-                  color: Colors.white70, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const SizedBox(height: GlassSpacing.sm),
           Container(
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12)),
-            child: TextField(
-              controller: _subjectController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "e.g., Annual Sports Day",
-                hintStyle: TextStyle(color: Colors.white38),
-                border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
+            width: 60,
+            height: 2,
+            color: GlassColors.textTertiary.withOpacity(0.3),
           ),
+          const SizedBox(height: GlassSpacing.xxl),
 
-          const SizedBox(height: 32),
-
-          // Main Input
-          Text("Key Points",
-              style: GoogleFonts.inter(
-                  color: Colors.white70, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16)),
+          // Document Type Card
+          GlassIconCard(
+            icon: Icons.description_outlined,
+            iconColor: GlassColors.primary,
+            title: 'Document Type',
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: _promptController,
-                  maxLines: 6,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText:
-                        "Draft a polite email to parents reminding them about...",
-                    hintStyle: TextStyle(color: Colors.white38),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
+                Text(
+                  'SELECT FORMAT',
+                  style: GlassTypography.sectionHeader(),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                        top: BorderSide(color: Colors.white.withOpacity(0.1))),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      VoiceInputWidget(
-                          onResult: (val) => setState(
-                              () => _promptController.text += " $val")),
-                    ],
-                  ),
-                )
+                const SizedBox(height: GlassSpacing.md),
+                Wrap(
+                  spacing: GlassSpacing.sm,
+                  runSpacing: GlassSpacing.sm,
+                  children: _contentTypes.map((type) {
+                    final isSelected = _selectedType == type;
+                    return GlassChip(
+                      label: type,
+                      isSelected: isSelected,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _selectedType = type);
+                      },
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
+          const SizedBox(height: GlassSpacing.xl),
 
-          const SizedBox(height: 48),
+          // Content Details Card
+          GlassIconCard(
+            icon: Icons.edit_rounded,
+            iconColor: GlassColors.primary,
+            title: 'Content Details',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GlassTextField(
+                  controller: _subjectController,
+                  labelText: 'Subject / Context',
+                  hintText: 'e.g. Annual Sports Day, Parent Meeting...',
+                ),
+                const SizedBox(height: GlassSpacing.xl),
 
-          ElevatedButton(
-            onPressed: _isLoading ? null : _generateContent,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.cyan,
-              foregroundColor: Colors.black87,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 8,
-              shadowColor: Colors.cyan.withOpacity(0.4),
+                GlassTextField(
+                  controller: _promptController,
+                  labelText: 'Key Points',
+                  hintText: 'Draft a polite email to parents reminding them about...',
+                  maxLines: 4,
+                  suffixIcon: VoiceInputWidget(
+                    onResult: (val) =>
+                        setState(() => _promptController.text += " $val"),
+                  ),
+                ),
+                const SizedBox(height: GlassSpacing.xl),
+
+                // Tone Selection
+                Text(
+                  'TONE',
+                  style: GlassTypography.sectionHeader(),
+                ),
+                const SizedBox(height: GlassSpacing.md),
+                Wrap(
+                  spacing: GlassSpacing.sm,
+                  runSpacing: GlassSpacing.sm,
+                  children: _tones.map((tone) {
+                    final isSelected = _selectedTone == tone;
+                    return GlassChip(
+                      label: tone,
+                      isSelected: isSelected,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _selectedTone = tone);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
-            child: _isLoading
-                ? const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.black87)),
-                      SizedBox(width: 12),
-                      Text("Drafting...",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                : Text("GENERATE DRAFT",
-                    style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1)),
+          ),
+          const SizedBox(height: GlassSpacing.xl),
+
+          // Preview Card
+          GlassPreviewCard(
+            label: 'The Editor\'s Theme',
           ),
         ],
       ),
@@ -267,72 +218,106 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
   }
 
   Widget _buildResultView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(children: [
-            IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => setState(() => _generatedContent = null))
-          ]),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(2),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20)
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MarkdownBody(
-                  data: _generatedContent!,
-                  styleSheet: MarkdownStyleSheet(
-                    p: GoogleFonts.merriweather(
-                        fontSize: 16, height: 1.8, color: Colors.black87),
-                    h1: GoogleFonts.merriweather(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+    return Column(
+      children: [
+        // Action Bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: Row(
+            children: [
+              GlassIconButton(
+                icon: Icons.arrow_back_rounded,
+                onPressed: () => setState(() => _generatedContent = null),
+              ),
+              const Spacer(),
+              GlassIconButton(
+                icon: Icons.copy_rounded,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: _generatedContent!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Copied to clipboard')),
+                  );
+                },
+              ),
+              const SizedBox(width: GlassSpacing.sm),
+              GlassIconButton(
+                icon: Icons.share_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _selectedType,
+                style: GlassTypography.headline1(),
+              ),
+              if (_subjectController.text.isNotEmpty) ...[
+                const SizedBox(height: GlassSpacing.xs),
+                Text(
+                  'Subject: ${_subjectController.text}',
+                  style: GlassTypography.bodySmall(),
                 ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.copy),
-                  label: const Text("Copy"),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Generated Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+            child: GlassCard(
+              padding: const EdgeInsets.all(GlassSpacing.xxl),
+              child: MarkdownBody(
+                data: _generatedContent!,
+                styleSheet: MarkdownStyleSheet(
+                  h1: GlassTypography.headline1(),
+                  h2: GlassTypography.headline2(),
+                  h3: GlassTypography.headline3(),
+                  p: GlassTypography.bodyLarge().copyWith(height: 1.8),
                 ),
               ),
-              const SizedBox(width: 16),
+            ),
+          ),
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Action Buttons
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GlassSpacing.xl,
+            vertical: GlassSpacing.lg,
+          ),
+          child: Row(
+            children: [
               Expanded(
-                child: ElevatedButton.icon(
+                child: GlassSecondaryButton(
+                  label: 'New Draft',
+                  icon: Icons.refresh_rounded,
+                  onPressed: () => setState(() => _generatedContent = null),
+                ),
+              ),
+              const SizedBox(width: GlassSpacing.lg),
+              Expanded(
+                child: GlassPrimaryButton(
+                  label: 'Export',
+                  icon: Icons.send_rounded,
                   onPressed: () {},
-                  icon: const Icon(Icons.send),
-                  label: const Text("Export"),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.cyan,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 48),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

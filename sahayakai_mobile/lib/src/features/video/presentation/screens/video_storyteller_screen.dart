@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 import '../../../tools/data/tool_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
@@ -15,14 +16,35 @@ class VideoStorytellerScreen extends ConsumerStatefulWidget {
       _VideoStorytellerScreenState();
 }
 
-class _VideoStorytellerScreenState
-    extends ConsumerState<VideoStorytellerScreen> {
+class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen> {
   final _scriptController = TextEditingController();
   bool _isGenerating = false;
   String? _generatedScript;
 
+  String _selectedBoard = 'CBSE';
+  String _selectedGrade = 'Class 8';
+  final List<String> _boards = ['CBSE', 'ICSE', 'State Board', 'Cambridge'];
+  final List<String> _grades = [
+    'Class 5', 'Class 6', 'Class 7', 'Class 8',
+    'Class 9', 'Class 10', 'Class 11', 'Class 12'
+  ];
+
+  String _selectedDuration = '3-5 mins';
+  final List<String> _durations = ['1-2 mins', '3-5 mins', '5-10 mins', '10+ mins'];
+
+  String _selectedTone = 'Educational';
+  final List<String> _tones = ['Educational', 'Fun & Engaging', 'Storytelling', 'Documentary'];
+
   Future<void> _generateVideoScript() async {
-    if (_scriptController.text.trim().isEmpty) return;
+    if (_scriptController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a video topic'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isGenerating = true);
 
@@ -51,178 +73,177 @@ class _VideoStorytellerScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Current language from global provider
-    final language = ref.watch(languageProvider);
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text("Director's Studio",
-            style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Theme(
-              data: Theme.of(context).copyWith(canvasColor: Colors.black87),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: language,
-                  icon: const Icon(Icons.language, color: Colors.white),
-                  style: GoogleFonts.inter(
-                      color: Colors.white, fontWeight: FontWeight.w600),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      ref.read(languageProvider.notifier).setLanguage(newValue);
-                    }
-                  },
-                  items: supportedLanguages
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF2E0249),
-              Color(0xFFA80038)
-            ], // Deep Purple to Red
-          ),
-        ),
-        child: SafeArea(
-          // Use SafeArea to respect notches
-          child: _generatedScript != null
-              ? _buildResultView()
-              : _buildInputForm(language),
-        ),
-      ),
+    return GlassScaffold(
+      title: 'Video Storyteller',
+      showBackButton: true,
+      actions: [GlassMenuButton(onPressed: () {})],
+      floatingActionButton: _generatedScript == null
+          ? GlassFloatingButton(
+              label: 'Create Script',
+              icon: Icons.movie_creation_rounded,
+              onPressed: _isGenerating ? null : _generateVideoScript,
+              isLoading: _isGenerating,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: _generatedScript != null ? _buildResultView() : _buildInputForm(),
     );
   }
 
-  Widget _buildInputForm(String language) {
+  Widget _buildInputForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(
+        left: GlassSpacing.xl,
+        right: GlassSpacing.xl,
+        top: GlassSpacing.sm,
+        bottom: 120,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white24, width: 2),
-              ),
-              child: const Icon(Icons.movie_filter_outlined,
-                  size: 60, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 32),
+          // Decorative Header
           Text(
-            "Lights, Camera, Action!",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
-                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            'Lights, Camera, Action!',
+            style: GlassTypography.decorativeLabel(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: GlassSpacing.xs),
           Text(
-            "Enter a topic, and SahayakAI will write a compelling video script in $language, complete with scene directions and dialogue.",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-                color: Colors.white70, fontSize: 16, height: 1.5),
+            'Director\'s Studio',
+            style: GlassTypography.headline1(),
           ),
-          const SizedBox(height: 48),
-
-          // Input Card
+          const SizedBox(height: GlassSpacing.sm),
           Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10)),
-              ],
-            ),
-            child: Row(
+            width: 60,
+            height: 2,
+            color: GlassColors.textTertiary.withOpacity(0.3),
+          ),
+          const SizedBox(height: GlassSpacing.xxl),
+
+          // Video Topic Card
+          GlassIconCard(
+            icon: Icons.videocam_rounded,
+            iconColor: GlassColors.primary,
+            title: 'Video Topic',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _scriptController,
-                    maxLines: 5,
-                    style:
-                        GoogleFonts.inter(fontSize: 16, color: Colors.black87),
-                    decoration: InputDecoration(
-                      hintText:
-                          "e.g., Explain Gravity using a falling apple...",
-                      hintStyle: GoogleFonts.inter(color: Colors.grey.shade400),
-                      contentPadding: const EdgeInsets.all(20),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: VoiceInputWidget(
+                GlassTextField(
+                  controller: _scriptController,
+                  labelText: 'What\'s Your Video About?',
+                  hintText: 'e.g. Explain Gravity using a falling apple...',
+                  maxLines: 3,
+                  suffixIcon: VoiceInputWidget(
                     onResult: (val) =>
                         setState(() => _scriptController.text = val),
                   ),
                 ),
+                const SizedBox(height: GlassSpacing.xl),
+
+                // Board and Grade Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: GlassDropdown<String>(
+                        labelText: 'Board',
+                        value: _selectedBoard,
+                        items: _boards
+                            .map((board) => DropdownMenuItem(
+                                  value: board,
+                                  child: Text(board),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedBoard = value);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: GlassSpacing.lg),
+                    Expanded(
+                      child: GlassDropdown<String>(
+                        labelText: 'Grade',
+                        value: _selectedGrade,
+                        items: _grades
+                            .map((grade) => DropdownMenuItem(
+                                  value: grade,
+                                  child: Text(grade),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedGrade = value);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
+          const SizedBox(height: GlassSpacing.xl),
 
-          const SizedBox(height: 32),
+          // Script Settings Card
+          GlassIconCard(
+            icon: Icons.tune_rounded,
+            iconColor: GlassColors.primary,
+            title: 'Script Settings',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Duration
+                Text(
+                  'VIDEO DURATION',
+                  style: GlassTypography.sectionHeader(),
+                ),
+                const SizedBox(height: GlassSpacing.md),
+                Wrap(
+                  spacing: GlassSpacing.sm,
+                  runSpacing: GlassSpacing.sm,
+                  children: _durations.map((duration) {
+                    final isSelected = _selectedDuration == duration;
+                    return GlassChip(
+                      label: duration,
+                      isSelected: isSelected,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _selectedDuration = duration);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: GlassSpacing.xl),
 
-          ElevatedButton(
-            onPressed: _isGenerating ? null : _generateVideoScript,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700), // Gold
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              shadowColor: Colors.black38,
-              elevation: 8,
+                // Tone
+                Text(
+                  'VIDEO TONE',
+                  style: GlassTypography.sectionHeader(),
+                ),
+                const SizedBox(height: GlassSpacing.md),
+                Wrap(
+                  spacing: GlassSpacing.sm,
+                  runSpacing: GlassSpacing.sm,
+                  children: _tones.map((tone) {
+                    final isSelected = _selectedTone == tone;
+                    return GlassChip(
+                      label: tone,
+                      isSelected: isSelected,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _selectedTone = tone);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
-            child: _isGenerating
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.black87, strokeWidth: 2)),
-                      const SizedBox(width: 12),
-                      Text("Writing Script...",
-                          style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87)),
-                    ],
-                  )
-                : Text("CREATE SCRIPT",
-                    style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                        letterSpacing: 1.2)),
+          ),
+          const SizedBox(height: GlassSpacing.xl),
+
+          // Preview Card
+          GlassPreviewCard(
+            label: 'The Director\'s Theme',
           ),
         ],
       ),
@@ -230,107 +251,127 @@ class _VideoStorytellerScreenState
   }
 
   Widget _buildResultView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+    return Column(
+      children: [
+        // Action Bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              GlassIconButton(
+                icon: Icons.arrow_back_rounded,
                 onPressed: () => setState(() => _generatedScript = null),
               ),
-              const Expanded(child: SizedBox()),
+              const Spacer(),
+              GlassIconButton(
+                icon: Icons.copy_rounded,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: _generatedScript!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Copied to clipboard')),
+                  );
+                },
+              ),
+              const SizedBox(width: GlassSpacing.sm),
+              GlassIconButton(
+                icon: Icons.picture_as_pdf_rounded,
+                onPressed: () {},
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            "Video Script",
-            style: GoogleFonts.outfit(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Video Script',
+                style: GlassTypography.headline1(),
+              ),
+              const SizedBox(height: GlassSpacing.xs),
+              Text(
+                'Topic: ${_scriptController.text}',
+                style: GlassTypography.bodySmall(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16)
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text("SCENE 1",
-                          style: GoogleFonts.courierPrime(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12)),
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Generated Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+            child: GlassCard(
+              padding: const EdgeInsets.all(GlassSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Scene badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: GlassSpacing.md,
+                      vertical: GlassSpacing.xs,
                     ),
-                    const Spacer(),
-                    Icon(Icons.video_camera_front,
-                        color: Colors.grey.shade400, size: 20),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                MarkdownBody(
-                  data: _generatedScript!,
-                  styleSheet: MarkdownStyleSheet(
-                    p: GoogleFonts.courierPrime(
-                        fontSize: 14, height: 1.5, color: Colors.black87),
-                    h1: GoogleFonts.outfit(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                    h2: GoogleFonts.outfit(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    decoration: BoxDecoration(
+                      color: GlassColors.textPrimary,
+                      borderRadius: BorderRadius.circular(GlassRadius.xs),
+                    ),
+                    child: Text(
+                      'SCENE 1',
+                      style: GlassTypography.labelSmall(color: Colors.white),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: GlassSpacing.lg),
+                  MarkdownBody(
+                    data: _generatedScript!,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: GlassTypography.headline1(),
+                      h2: GlassTypography.headline2(),
+                      h3: GlassTypography.headline3(),
+                      p: GlassTypography.bodyMedium(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
+        ),
+        const SizedBox(height: GlassSpacing.lg),
+
+        // Action Buttons
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GlassSpacing.xl,
+            vertical: GlassSpacing.lg,
+          ),
+          child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: GlassSecondaryButton(
+                  label: 'New Script',
+                  icon: Icons.refresh_rounded,
                   onPressed: () => setState(() => _generatedScript = null),
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  label: const Text("New Script",
-                      style: TextStyle(color: Colors.white)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white54),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: GlassSpacing.lg),
               Expanded(
-                child: ElevatedButton.icon(
+                child: GlassPrimaryButton(
+                  label: 'Export PDF',
+                  icon: Icons.download_rounded,
                   onPressed: () {},
-                  icon: const Icon(Icons.download, color: Colors.black87),
-                  label: const Text("Export PDF",
-                      style: TextStyle(
-                          color: Colors.black87, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD700), // Gold
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 48),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
