@@ -214,7 +214,7 @@ class GlassFloatingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(
-        horizontal: GlassSpacing.xxl,
+        horizontal: GlassSpacing.lg,
         vertical: GlassSpacing.lg,
       ),
       child: GlassPrimaryButton(
@@ -222,6 +222,7 @@ class GlassFloatingButton extends StatelessWidget {
         icon: icon,
         onPressed: onPressed,
         isLoading: isLoading,
+        isExpanded: false, // Don't expand to avoid layout issues in Positioned
       ),
     );
   }

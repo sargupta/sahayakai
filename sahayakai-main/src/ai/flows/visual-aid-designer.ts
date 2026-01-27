@@ -40,7 +40,7 @@ const visualAidFlow = ai.defineFlow(
   async (input) => {
     const { prompt, gradeLevel, language, userId } = input;
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: 'googleai/gemini-1.5-flash',
       prompt: `
         You are a talented chalk artist who creates beautiful and clear educational illustrations on a blackboard.
         Your task is to design a visual aid based on the user's request.
