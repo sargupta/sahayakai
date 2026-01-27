@@ -8,12 +8,13 @@ import { NCERTScience } from './science';
 import { socialStudiesChapters } from './social-studies';
 import { englishChapters } from './english';
 import { hindiChapters } from './hindi';
+import { kannadaChapters } from './kannada';
 
 export interface NCERTChapter {
     id: string;
     title: string;
     titleHindi?: string;
-    subject: 'Mathematics' | 'Science' | 'Social Studies' | 'English' | 'Hindi';
+    subject: 'Mathematics' | 'Science' | 'Social Studies' | 'English' | 'Hindi' | 'Kannada';
     grade: number;
     number: number;
     learningOutcomes: string[];
@@ -45,6 +46,7 @@ export const allNCERTChapters: NCERTChapter[] = [
     ...socialStudiesChapters,
     ...englishChapters,
     ...hindiChapters,
+    ...kannadaChapters,
 ];
 
 export const getChaptersForGrade = (grade: number, subject?: string) => {
