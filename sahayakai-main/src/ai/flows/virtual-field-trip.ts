@@ -25,10 +25,12 @@ export type VirtualFieldTripInput = z.infer<typeof VirtualFieldTripInputSchema>;
 const VirtualFieldTripOutputSchema = z.object({
   title: z.string().describe('An engaging title for the virtual field trip.'),
   stops: z.array(z.object({
-    name: z.string().describe('The name of the location or stop on the tour.'),
-    description: z.string().describe('A brief, engaging description of the stop, suitable for the specified grade level.'),
-    googleEarthUrl: z.string().describe('A Google Earth URL for the location. This should be a direct link that opens the location in Google Earth (e.g., "https://earth.google.com/web/search/...")'),
-  })).describe('An array of stops for the virtual field trip.'),
+    name: z.string().describe('The name of the location.'),
+    description: z.string().describe('A brief, engaging description of the stop.'),
+    educationalFact: z.string().describe('A "wow-factor" educational fact about this location.'),
+    reflectionPrompt: z.string().describe('A critical thinking question for students to answer at this stop.'),
+    googleEarthUrl: z.string().describe('A valid Google Earth search URL.'),
+  })).describe('An array of stops.'),
 });
 export type VirtualFieldTripOutput = z.infer<typeof VirtualFieldTripOutputSchema>;
 
@@ -40,20 +42,21 @@ const virtualFieldTripPrompt = ai.definePrompt({
   name: 'virtualFieldTripPrompt',
   input: { schema: VirtualFieldTripInputSchema },
   output: { schema: VirtualFieldTripOutputSchema },
-  prompt: `You are an expert curriculum designer who creates exciting virtual field trips for students using Google Earth.
+  prompt: `You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
 
 **Instructions:**
-1.  **Create a Title:** Generate a short, engaging title for the field trip based on the user's topic.
-2.  **Plan Stops:** Identify 3-5 key locations relevant to the topic.
-3.  **Write Descriptions:** For each stop, write a concise, age-appropriate description (for the given \`gradeLevel\`) that highlights its significance.
-4.  **Generate Google Earth URLs:** For each location, you MUST create a valid Google Earth search URL. The format is \`https://earth.google.com/web/search/YOUR_LOCATION_HERE\`, where spaces in the location name are replaced with \`+\`. For example, for "The Taj Mahal", the URL would be "https://earth.google.com/web/search/The+Taj+Mahal".
-5.  **Language:** Respond in the specified \`language\`.
-6.  **JSON Output:** You MUST conform to the required JSON output format.
+1.  **Title**: Create an adventurous and educational title.
+2.  **Curated Stops**: Identify 3-5 locations that perfectly illustrate the topic.
+3.  **Content per Stop**:
+    - **Description**: Age-appropriate narrative of what students are seeing.
+    - **Educational Fact**: A specific, high-value fact that isn't common knowledge.
+    - **Reflection Prompt**: A question that forces students to observe and think critically about the landscape or site.
+4.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`.
+5.  **Language**: Respond in \`{{{language}}}\`.
 
-**User's Request:**
--   **Topic:** {{{topic}}}
--   **Grade Level:** {{{gradeLevel}}}
--   **Language:** {{{language}}}
+**Context:**
+- **Topic**: {{{topic}}}
+- **Grade**: {{{gradeLevel}}}
 `,
 });
 

@@ -45,25 +45,23 @@ const rubricGeneratorPrompt = ai.definePrompt({
   name: 'rubricGeneratorPrompt',
   input: { schema: RubricGeneratorInputSchema },
   output: { schema: RubricGeneratorOutputSchema },
-  prompt: `You are an expert educator specializing in assessment design. Create a detailed, fair, and clear grading rubric based on the user's request.
+  prompt: `You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
 
-**Instructions:**
-1.  **Title and Description:** Create a clear title and a one-sentence description for the rubric based on the assignment.
-2.  **Criteria:** Identify 4-5 key evaluation criteria from the assignment description. For each criterion, provide a brief description.
-3.  **Performance Levels:** For each criterion, define four performance levels:
-    -   Exemplary (highest score)
-    -   Proficient
-    -   Developing
-    -   Beginning (lowest score)
-4.  **Points:** Assign points to each level. A common scale is 4 for Exemplary, 3 for Proficient, 2 for Developing, and 1 for Beginning.
-5.  **Descriptions:** Write clear, objective, and distinct descriptions for each performance level within each criterion. The descriptions should focus on observable behaviors and outcomes.
-6.  **Contextualize:** Tailor the language and complexity of the rubric to the specified \`gradeLevel\` and \`language\`.
-7.  **JSON Output:** You MUST conform strictly to the required JSON output format.
+**Standardized Structure:**
+1. **Title & Description**: Clear title and one-sentence goal.
+2. **Criteria**: Identify 4-5 core evaluation areas.
+3. **Mandatory Levels**: Use these 4 levels for every criterion:
+    - **Exemplary (4 pts)**: Exceeds all expectations.
+    - **Proficient (3 pts)**: Meets all standard expectations.
+    - **Developing (2 pts)**: Shows some understanding but lacks consistency.
+    - **Beginning (1 pt)**: Minimal evidence of the required skill.
+4. **Precision**: Descriptions MUST be objective and measurable (e.g., "Contains 0-1 errors" instead of "Few errors").
+5. **Teacher Guidance**: Add a note on how the teacher should use this specific rubric to provide feedback.
 
-**User's Request:**
--   **Assignment Description:** {{{assignmentDescription}}}
--   **Grade Level:** {{{gradeLevel}}}
--   **Language:** {{{language}}}
+**Context:**
+- **Assignment**: {{{assignmentDescription}}}
+- **Grade**: {{{gradeLevel}}}
+- **Language**: {{{language}}}
 `,
 });
 

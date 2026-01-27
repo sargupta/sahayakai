@@ -23,7 +23,9 @@ const VisualAidInputSchema = z.object({
 export type VisualAidInput = z.infer<typeof VisualAidInputSchema>;
 
 const VisualAidOutputSchema = z.object({
-  imageDataUri: z.string().describe("The generated image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  imageDataUri: z.string().describe("The generated image as a data URI."),
+  pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
+  discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
 });
 export type VisualAidOutput = z.infer<typeof VisualAidOutputSchema>;
 
@@ -39,34 +41,36 @@ const visualAidFlow = ai.defineFlow(
   },
   async (input) => {
     const { prompt, gradeLevel, language, userId } = input;
-    const { media } = await ai.generate({
+    const { output } = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
+      output: { schema: VisualAidOutputSchema },
       prompt: `
-        You are a talented chalk artist who creates beautiful and clear educational illustrations on a blackboard.
-        Your task is to design a visual aid based on the user's request.
+        You are a talented chalk artist and master teacher. You create beautiful educational illustrations on blackboards.
 
-        **Style Guide:**
-        - **Format:** White chalk-style drawing on a clean, dark, uniform blackboard background.
-        - **Line Quality:** The lines should be elegant, clear, and have a hand-drawn chalk texture. Avoid perfectly straight, computer-generated lines.
-        - **Simplicity:** The drawing must be minimalist and easy for a teacher to replicate. Focus on the core concept.
-        - **Composition:** Think carefully about the layout. The final image should be well-composed, balanced, and have a wonderful, clean finish.
-        - **NO COLOR:** Strictly use white lines on a black background.
+        **1. The Image (Blackboard Chalk Style):**
+        - White chalk-style drawing on a clean, dark blackboard background.
+        - Elegant, clear, hand-drawn lines. Minimalist and easy to replicate.
+        - NO COLOR. Only white on black.
 
-        **Context:**
-        - **Grade Level:** ${gradeLevel || 'any'}
-        - **Language for labels (if any):** ${language || 'English'}
-        - **Task:** Generate a visual aid for the following description, keeping the grade level in mind for complexity.
-        "${prompt}"
+        **2. Teacher Metadata (Crucial):**
+        - **pedagogicalContext**: Explain *why* this specific illustration works for teaching this topic.
+        - **discussionSpark**: Provide one powerful "Look at this... what do you think?" question.
+
+        **Task Context:**
+        - **Grade**: ${gradeLevel || 'any'}
+        - **Topic**: "${prompt}"
+        - **Language**: ${language || 'English'}
       `,
       config: {
-        responseModalities: ['TEXT', 'IMAGE'],
         temperature: 0.4,
       },
     });
 
-    if (!media) {
+    if (!output || !output.imageDataUri) {
       throw new Error('Image generation failed to produce an image.');
     }
+
+    const mediaUrl = output.imageDataUri;
 
     if (userId) {
       const storage = await getStorageInstance();
@@ -79,7 +83,7 @@ const visualAidFlow = ai.defineFlow(
       const file = storage.bucket().file(filePath);
 
       // Convert data URI to buffer
-      const buffer = Buffer.from(media.url.split(',')[1], 'base64');
+      const buffer = Buffer.from(mediaUrl.split(',')[1], 'base64');
 
       await file.save(buffer, {
         metadata: {
@@ -93,11 +97,13 @@ const visualAidFlow = ai.defineFlow(
         gradeLevels: [gradeLevel],
         language: language,
         storagePath: filePath,
+        pedagogicalContext: output.pedagogicalContext,
+        discussionSpark: output.discussionSpark,
         createdAt: now,
         isPublic: false,
       });
     }
 
-    return { imageDataUri: media.url };
+    return output;
   }
 );

@@ -42,21 +42,37 @@ const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
-  prompt: `You are an expert educator who creates engaging and effective worksheets from textbook content.
+  prompt: `You are an expert educator who creates engaging and effective worksheets.
+ 
+ **Instructions:**
+ 1.  **Analyze the Image:** carefully use the textbook image as the basis for all content.
+ 2.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\`.
+ 3.  **Strict Markdown Template:** You MUST structure the worksheet exactly like this:
+     # [Worksheet Title]
+     **Grade**: [Level] | **Subject**: [Subject]
+     
+     ## I. Learning Objectives
+     - [Clear objective 1]
+     - [Clear objective 2]
+     
+     ## II. Student Instructions
+     [Clear, step-by-step instructions for the student]
+     
+     ---
+     
+     ## III. Activities
+     [The main worksheet content: questions, puzzles, or creative tasks based on the image]
+     
+     ---
+     
+     ## IV. Teacher's Answer Key (FOR TEACHER USE ONLY)
+     [Clear answers and explanations for all activities above]
 
-**Instructions:**
-1.  **Analyze the Image:** Carefully analyze the provided textbook page image.
-2.  **Follow the Prompt:** Adhere to the user's prompt to generate the worksheet.
-3.  **Contextualize:** Use the specified \`gradeLevel\` and \`language\` to tailor the content appropriately.
-4.  **Format:** Structure the entire output in clear, well-formatted Markdown. Use headings, lists, and other markdown elements to create a printable and easy-to-read worksheet.
-
-**Inputs:**
--   **Textbook Page Image:** {{media url=imageDataUri}}
--   **User's Request:** {{{prompt}}}
--   **Grade Level:** {{{gradeLevel}}}
--   **Language:** {{{language}}}
-
-**Generated Worksheet:**
+**Context:**
+- **Textbook Image:** {{media url=imageDataUri}}
+- **Request:** {{{prompt}}}
+- **Grade**: {{{gradeLevel}}}
+- **Language**: {{{language}}}
 `,
 });
 

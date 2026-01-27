@@ -1,11 +1,13 @@
 
-import {z} from 'genkit';
+import { z } from 'genkit';
 
 const QuestionSchema = z.object({
   questionText: z.string().describe('The full text of the question.'),
   questionType: z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer']).describe('The type of the question.'),
   options: z.array(z.string()).optional().describe('For multiple-choice questions, the list of possible answers.'),
-  correctAnswer: z.string().describe('The correct answer. For short answer, this can be a model answer.'),
+  correctAnswer: z.string().describe('The correct answer.'),
+  explanation: z.string().describe('A clear explanation of why the answer is correct and why other options are incorrect.'),
+  difficultyLevel: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of this specific question.'),
 });
 
 export const QuizGeneratorInputSchema = z.object({
@@ -25,5 +27,6 @@ export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 export const QuizGeneratorOutputSchema = z.object({
   title: z.string().describe('A suitable title for the quiz.'),
   questions: z.array(QuestionSchema).describe('The list of generated quiz questions.'),
+  teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz and interpret results.'),
 });
 export type QuizGeneratorOutput = z.infer<typeof QuizGeneratorOutputSchema>;

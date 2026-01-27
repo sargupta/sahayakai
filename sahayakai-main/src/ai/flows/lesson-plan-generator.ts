@@ -41,14 +41,22 @@ const LessonPlanOutputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for this lesson (e.g., "5th Grade").'),
   duration: z.string().optional().describe('The total estimated duration for the lesson (e.g., "45 minutes").'),
   subject: z.string().optional().describe('The subject area (e.g., "Science", "Mathematics", "Social Studies").'),
-  objectives: z.array(z.string()).describe('A list of clear learning objectives for the lesson.'),
+  objectives: z.array(z.string()).describe('A list of clear, measurable learning objectives (e.g., "SWBAT identify...").'),
+  keyVocabulary: z.array(z.object({
+    term: z.string(),
+    definition: z.string().describe('A simple, student-friendly definition.'),
+  })).optional().describe('Key terms with definitions.'),
   materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
   activities: z.array(z.object({
+    phase: z.enum(['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate']).describe('The 5E model phase.'),
     name: z.string().describe('The name of the activity.'),
     description: z.string().describe('A detailed description of the activity.'),
-    duration: z.string().describe('The estimated duration for the activity (e.g., "15 minutes").'),
-  })).describe('A list of activities to be performed during the lesson.'),
-  assessment: z.string().describe('A description of the assessment method to evaluate student learning.'),
+    duration: z.string().describe('The estimated duration (e.g., "15 minutes").'),
+    teacherTips: z.string().optional().describe('Crucial advice for the teacher on how to execute this specific activity effectively.'),
+    understandingCheck: z.string().optional().describe('A quick question for the teacher to check if students followed this phase.'),
+  })).describe('A list of structured activities following the 5E model.'),
+  assessment: z.string().describe('A description of the summative assessment method.'),
+  homework: z.string().optional().describe('A relevant follow-up activity for home.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
@@ -78,79 +86,54 @@ const lessonPlanPrompt = ai.definePrompt({
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
   tools: [googleSearch],
-  prompt: `You are an expert teacher who creates culturally and geographically relevant educational content, especially for multi-grade classrooms. Generate a detailed lesson plan based on the following inputs.
+  prompt: `You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
 
-You MUST follow the specified JSON output format. Your response must be a valid JSON object that adheres to the defined schema. Do not return null or any other non-JSON response.
+**Your Goal:** Generate a lesson plan that is exactly right for the teacher—not too complex, not too simple, but deeply informative.
 
-**IMPORTANT: You MUST include the following metadata in your response:**
-- gradeLevel: The primary grade level for this lesson (e.g., "5th Grade", "6th Grade")
-- duration: The total estimated time for the complete lesson (e.g., "45 minutes", "1 hour", "2 class periods")
-- subject: The primary subject area (e.g., "Science", "Mathematics", "Social Studies", "Language Arts", "History")
+**Structural Instructions (5E Model):**
+You MUST organize the activities into the 5E Instructional Model:
+1. **Engage**: Catch student interest, connect to prior knowledge (e.g., a story, a riddle, or a real-life scenario).
+2. **Explore**: Hands-on experience or guided inquiry where students investigate.
+3. **Explain**: Direct instruction where the core concept is clarified.
+4. **Elaborate**: Applying the concept to new situations or connecting to local Indian context.
+5. **Evaluate**: Check for understanding (formative).
+
+**Metadata Requirements:**
+- **gradeLevel**: (e.g., "5th Grade")
+- **duration**: (e.g., "45 minutes")
+- **subject**: (e.g., "Science")
+- **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").
+- **understandingCheck**: A simple focus question for the teacher to ask at the end of each phase.
 
 {{#if useRuralContext}}
-**INDIAN RURAL CONTEXT - VERY IMPORTANT:**
-- Use examples from Indian daily life (farming, local markets, festivals like Diwali, Holi, Eid)
-- Reference Indian geography (Ganga, Himalayas, monsoon, Indian states and cities)
-- Use Indian currency (₹) in all money-related examples
-- Include culturally relevant examples (roti, dal, rice, cricket, kabaddi, etc.)
-- Avoid Western examples (pizza, snow, dollars, hamburgers, etc.)
-- Consider agricultural context - many students' families are farmers
-- Use simple, relatable scenarios from rural Indian life
-- Reference Indian heroes and historical figures (Gandhi, APJ Kalam, etc.)
-
-**RESOURCE CONSTRAINTS (Current Level: {{resourceLevel}}):**
-- **If Level is 'low' (or unspecified):**
-  - **STRICTLY LIMIT resources to: Chalk, Blackboard, Textbook.**
-  - Do NOT suggest posters, chart papers, or bringing objects from home unless extremely common (like a stone or leaf).
-  - Activities must be doable with oral discussion, blackboard drawing, and student notebooks.
-  - NO technology, NO printed worksheets, NO lab equipment.
-- **If Level is 'medium':**
-  - Resources allowed: Chalk, Blackboard, Textbook, Chart paper, Sketch pens, Local objects (stones, leaves, sticks).
-  - Simple group activities are encouraged.
-  - NO technology (projectors/computers).
-- **If Level is 'high':**
-  - Resources allowed: Projector, Computer, Internet (for teacher), Lab equipment.
-  - You can suggest showing a short video or using a digital simulation.
-
-**DIFFERENTIATION (Current Level: {{difficultyLevel}}):**
-- **If Level is 'remedial':**
-  - **Focus on FOUNDATIONAL concepts.**
-  - Use very simple language and concrete examples.
-  - Break down complex tasks into small, manageable steps.
-  - Provide extra scaffolding and guided practice.
-  - Focus on "must-know" vocabulary.
-- **If Level is 'advanced':**
-  - **Focus on EXTENSION and CRITICAL THINKING.**
-  - Challenge students with open-ended questions.
-  - Encourage independent research or complex problem-solving.
-  - Connect concepts to broader real-world issues.
-  - Use more sophisticated vocabulary.
-- **If Level is 'standard' (or unspecified):**
-  - Target grade-level expectations.
+**INDIAN RURAL CONTEXT - CRITICAL:**
+- Examples MUST be from Indian daily life (farming, seasons, local markets, festivals like Diwali, Eid, Baisakhi).
+- Use Indian currency (₹) and metrics.
+- Avoid all Western-specific references (pizza, burgers, snow-themed Christmas, miles).
+- Use names of Indian rivers, mountains, and local foods (roti, khichdi, etc.).
+- Resource Constraint (Level: {{resourceLevel}}): 
+  - **low**: Only Chalk, Blackboard, and local items (leaves, stones).
+  - **medium**: Adds chart papers, pens, basic local objects.
+  - **high**: Adds projector/internet.
 {{/if}}
 
 {{#if ncertChapter}}
-**NCERT CURRICULUM ALIGNMENT:**
-- This lesson MUST align with NCERT Chapter {{ncertChapter.number}}: "{{ncertChapter.title}}"
-- Ensure the following learning outcomes are addressed:
-  {{#each ncertChapter.learningOutcomes}}
-  - {{this}}
-  {{/each}}
-- Use terminology consistent with the NCERT textbook for this chapter.
-- Structure the lesson to help students achieve these specific outcomes.
+**NCERT ALIGNMENT:**
+- Align with Chapter {{ncertChapter.number}}: "{{ncertChapter.title}}"
+- Address these outcomes: {{#each ncertChapter.learningOutcomes}}- {{this}} {{/each}}
 {{/if}}
 
 {{#if imageDataUri}}
-**Primary Context from Image:**
-Analyze the following image and use it as the primary source of information for creating the lesson plan. The user's topic should be used to refine the focus.
-{{media url=imageDataUri}}
+**Visual Context:**
+Primary content is in the provided textbook image: {{media url=imageDataUri}}
 {{/if}}
 
 Topic: {{{topic}}}
 Grade Levels: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Language: {{{language}}}
+Difficulty: {{{difficultyLevel}}}
 
-If the user asks for a video, use the googleSearch tool to find one.
+Respond ONLY with valid JSON following the schema.
 `,
 });
 
