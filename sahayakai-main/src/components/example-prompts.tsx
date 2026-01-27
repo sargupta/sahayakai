@@ -365,7 +365,7 @@ const headerTranslations: Record<string, string> = {
 };
 
 const pagePrompts: Record<string, string[]> = {
-  'home': ['waterCycle', 'skyBlue', 'quizAboutIndia', 'braveMouse'],
+  'home': ['waterCycle', 'sanskritShloka', 'itBinary', 'braveMouse'],
   'homeWithImage': ['explainPhotosynthesis', 'skyBlue', 'multigradeFood', 'quizAboutIndia'],
   'visual-aid': ['visualAidFlower', 'visualAidWaterCycle', 'visualAidHeart', 'hibiscusDiagram'],
   'instant-answer': ['skyBlue', 'explainPhotosynthesis', 'nalandaHistory', 'indianRivers'],

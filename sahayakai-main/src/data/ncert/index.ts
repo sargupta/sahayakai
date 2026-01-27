@@ -9,12 +9,14 @@ import { socialStudiesChapters } from './social-studies';
 import { englishChapters } from './english';
 import { hindiChapters } from './hindi';
 import { kannadaChapters } from './kannada';
+import { sanskritChapters } from './sanskrit';
+import { itChapters } from './it';
 
 export interface NCERTChapter {
     id: string;
     title: string;
     titleHindi?: string;
-    subject: 'Mathematics' | 'Science' | 'Social Studies' | 'English' | 'Hindi' | 'Kannada';
+    subject: 'Mathematics' | 'Science' | 'Social Studies' | 'English' | 'Hindi' | 'Kannada' | 'Sanskrit' | 'Information Technology';
     grade: number;
     number: number;
     learningOutcomes: string[];
@@ -40,6 +42,12 @@ const scienceChapters: NCERTChapter[] = NCERTScience.flatMap(g =>
     }))
 );
 
+// Flatten IT
+const informationTechnologyChapters: NCERTChapter[] = itChapters.map(c => ({
+    ...c,
+    subject: 'Information Technology',
+}));
+
 export const allNCERTChapters: NCERTChapter[] = [
     ...mathematicsChapters,
     ...scienceChapters,
@@ -47,6 +55,8 @@ export const allNCERTChapters: NCERTChapter[] = [
     ...englishChapters,
     ...hindiChapters,
     ...kannadaChapters,
+    ...sanskritChapters,
+    ...informationTechnologyChapters,
 ];
 
 export const getChaptersForGrade = (grade: number, subject?: string) => {
