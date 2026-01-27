@@ -13,7 +13,7 @@ async function getSecret(secretName: string): Promise<string> {
   }
 
   const [version] = await secretManager.accessSecretVersion({
-    name: `projects/sahayakai-f69e0/secrets/${secretName}/versions/latest`,
+    name: `projects/sahayakai-b4248/secrets/${secretName}/versions/latest`,
   });
   const payload = version.payload?.data?.toString();
   if (!payload) {
