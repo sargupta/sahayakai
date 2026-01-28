@@ -16,6 +16,7 @@ import { logger } from "@/lib/logger";
 import { syncTelemetryEvents } from "@/app/actions/telemetry";
 import { formSchema, FormValues, topicPlaceholderTranslations } from "../types";
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
+import { useSearchParams } from "next/navigation";
 
 export function useLessonPlan() {
     const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
@@ -125,6 +126,20 @@ export function useLessonPlan() {
         };
         loadDraft();
     }, []);
+
+    const searchParams = useSearchParams();
+
+    // Auto-Execution from URL
+    useEffect(() => {
+        const topicParam = searchParams.get("topic");
+        if (topicParam) {
+            form.setValue("topic", topicParam);
+            // Wait for form state update
+            setTimeout(() => {
+                form.handleSubmit(onSubmit)();
+            }, 0);
+        }
+    }, [searchParams, form]);
 
     const onSubmit = async (values: FormValues) => {
         setIsLoading(true);

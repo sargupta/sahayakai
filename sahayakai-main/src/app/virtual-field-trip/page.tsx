@@ -8,10 +8,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Globe2, Send, MapPin, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
+import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
@@ -39,8 +41,19 @@ export default function VirtualFieldTripPage() {
       gradeLevel: "8th Grade",
     },
   });
-  
+
   const selectedLanguage = form.watch("language") || 'en';
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    if (topicParam) {
+      form.setValue("topic", topicParam);
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 0);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -63,7 +76,7 @@ export default function VirtualFieldTripPage() {
       setIsLoading(false);
     }
   };
-  
+
   const handlePromptClick = (prompt: string) => {
     form.setValue("topic", prompt);
     form.trigger("topic");
@@ -71,8 +84,8 @@ export default function VirtualFieldTripPage() {
 
   const handleSave = () => {
     toast({
-        title: "Saved to Library",
-        description: "Your virtual field trip has been saved to your personal library.",
+      title: "Saved to Library",
+      description: "Your virtual field trip has been saved to your personal library.",
     });
   };
 
@@ -80,9 +93,9 @@ export default function VirtualFieldTripPage() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-              <Globe2 className="w-12 h-12 text-primary" />
-            </div>
+          <div className="flex justify-center items-center mb-4">
+            <Globe2 className="w-12 h-12 text-primary" />
+          </div>
           <CardTitle className="font-headline text-3xl">Virtual Field Trip</CardTitle>
           <CardDescription>
             Plan exciting virtual tours for your students using Google Earth.
@@ -97,13 +110,23 @@ export default function VirtualFieldTripPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-headline">Trip Topic</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., 'A tour of the major centers of the Harappan Civilization...'"
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                    <div className="flex flex-col gap-4">
+                      <MicrophoneInput
+                        onTranscriptChange={(transcript) => {
+                          field.onChange(transcript);
+                        }}
+                        iconSize="lg"
+                        label="Speak your trip idea..."
+                        className="bg-white/50 backdrop-blur-sm"
                       />
-                    </FormControl>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g., 'A tour of the major centers of the Harappan Civilization...'"
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -132,7 +155,7 @@ export default function VirtualFieldTripPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
@@ -149,7 +172,7 @@ export default function VirtualFieldTripPage() {
                   )}
                 />
               </div>
-              
+
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
                   <>
@@ -166,45 +189,45 @@ export default function VirtualFieldTripPage() {
       </Card>
 
       {isLoading && (
-         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">Planning your virtual adventure...</p>
-            </CardContent>
-         </Card>
+        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">Planning your virtual adventure...</p>
+          </CardContent>
+        </Card>
       )}
 
       {trip && (
         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardHeader>
             <div className="flex justify-between items-start">
-                <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                    <Globe2 />
-                    {trip.title}
-                </CardTitle>
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save to Library
-                </Button>
+              <CardTitle className="font-headline text-2xl flex items-center gap-2">
+                <Globe2 />
+                {trip.title}
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save to Library
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {trip.stops.map((stop, index) => (
-                <div key={index} className="flex gap-4 items-start p-4 rounded-lg bg-accent/20">
-                    <div className="flex-shrink-0">
-                        <MapPin className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="flex-grow">
-                        <h3 className="font-bold text-lg">{stop.name}</h3>
-                        <p className="text-sm text-foreground/80 mb-2">{stop.description}</p>
-                        <Button asChild size="sm" variant="outline">
-                            <Link href={stop.googleEarthUrl} target="_blank" rel="noopener noreferrer">
-                                <Send className="mr-2 h-4 w-4" />
-                                Visit on Google Earth
-                            </Link>
-                        </Button>
-                    </div>
+              <div key={index} className="flex gap-4 items-start p-4 rounded-lg bg-accent/20">
+                <div className="flex-shrink-0">
+                  <MapPin className="h-8 w-8 text-primary" />
                 </div>
+                <div className="flex-grow">
+                  <h3 className="font-bold text-lg">{stop.name}</h3>
+                  <p className="text-sm text-foreground/80 mb-2">{stop.description}</p>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={stop.googleEarthUrl} target="_blank" rel="noopener noreferrer">
+                      <Send className="mr-2 h-4 w-4" />
+                      Visit on Google Earth
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             ))}
           </CardContent>
         </Card>

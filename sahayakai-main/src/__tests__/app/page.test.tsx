@@ -68,7 +68,7 @@ describe('Home Page', () => {
         const input = screen.getByTestId('topic-input');
         fireEvent.change(input, { target: { value: 'Photosynthesis' } });
 
-        const submitBtn = screen.getByText('Generate');
+        const submitBtn = screen.getByRole('button', { name: /generate/i });
         fireEvent.click(submitBtn);
 
         await waitFor(() => {

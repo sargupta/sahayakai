@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
+import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
@@ -73,8 +74,8 @@ export default function InstantAnswerPage() {
 
   const handleSave = () => {
     toast({
-        title: "Saved to Library",
-        description: "Your answer has been saved to your personal library.",
+      title: "Saved to Library",
+      description: "Your answer has been saved to your personal library.",
     });
   };
 
@@ -100,11 +101,21 @@ export default function InstantAnswerPage() {
                   <FormItem>
                     <FormLabel className="font-headline">Your Question</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="e.g., 'Explain photosynthesis to a 10-year-old...'"
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm min-h-[100px]"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <MicrophoneInput
+                          onTranscriptChange={(transcript) => {
+                            field.onChange(transcript);
+                          }}
+                          iconSize="lg"
+                          label="Speak your question..."
+                          className="bg-white/50 backdrop-blur-sm"
+                        />
+                        <Textarea
+                          placeholder="e.g., 'Explain photosynthesis to a 10-year-old...'"
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,30 +189,30 @@ export default function InstantAnswerPage() {
         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardHeader>
             <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="font-headline text-2xl">Your Answer</CardTitle>
-                    <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save to Library
-                </Button>
+              <div>
+                <CardTitle className="font-headline text-2xl">Your Answer</CardTitle>
+                <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save to Library
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="prose prose-lg max-w-none text-foreground">
-                <ReactMarkdown>{answer.answer}</ReactMarkdown>
+              <ReactMarkdown>{answer.answer}</ReactMarkdown>
             </div>
 
             {answer.videoSuggestionUrl && (
               <div className="border-t border-primary/20 pt-4">
                 <h3 className="font-headline text-lg mb-2">Recommended Video</h3>
                 <Link href={answer.videoSuggestionUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
-                    <Youtube className="h-10 w-10 text-red-600" />
-                    <div className="flex-1">
-                        <p className="font-semibold">Watch on YouTube</p>
-                        <p className="text-xs text-muted-foreground truncate">{answer.videoSuggestionUrl}</p>
-                    </div>
+                  <Youtube className="h-10 w-10 text-red-600" />
+                  <div className="flex-1">
+                    <p className="font-semibold">Watch on YouTube</p>
+                    <p className="text-xs text-muted-foreground truncate">{answer.videoSuggestionUrl}</p>
+                  </div>
                 </Link>
               </div>
             )}

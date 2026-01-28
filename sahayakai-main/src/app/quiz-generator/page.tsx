@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, FileSignature, Checkbox, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
-import { useState } from "react";
+import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +30,7 @@ const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
   { id: 'fill_in_the_blanks', icon: Pencil },
   { id: 'short_answer', icon: MessageSquare },
-];
+] as const;
 
 const bloomsLevelsData = [
   { id: 'Remember', icon: Brain },
@@ -44,7 +45,7 @@ const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   imageDataUri: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(20).default(5),
-  questionTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+  questionTypes: z.array(z.enum(["multiple_choice", "fill_in_the_blanks", "short_answer"])).min(1, {
     message: "You have to select at least one question type.",
   }),
   bloomsTaxonomyLevels: z.array(z.string()).optional(),
@@ -286,6 +287,8 @@ export default function QuizGeneratorPage() {
   const [quiz, setQuiz] = useState<QuizGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -298,6 +301,17 @@ export default function QuizGeneratorPage() {
       bloomsTaxonomyLevels: ['Remember', 'Understand'],
     },
   });
+
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    if (topicParam) {
+      form.setValue("topic", topicParam);
+      // We need to wait a tick for the form value to be registered before submitting
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 0);
+    }
+  }, [searchParams, form]);
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
@@ -355,17 +369,21 @@ export default function QuizGeneratorPage() {
                     name="topic"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-headline text-lg">{t.topicLabel}</FormLabel>
                         <FormControl>
-                          <div className="relative">
+                          <div className="flex flex-col gap-4">
+                            <MicrophoneInput
+                              onTranscriptChange={(transcript) => {
+                                field.onChange(transcript);
+                              }}
+                              iconSize="lg"
+                              label={t.topicLabel + " (Speak)"}
+                              className="bg-white/50 backdrop-blur-sm"
+                            />
                             <Textarea
                               placeholder={t.topicPlaceholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[100px] pr-12 resize-none"
+                              className="bg-white/50 backdrop-blur-sm min-h-[140px] resize-none text-base p-4"
                             />
-                            <div className="absolute right-2 bottom-2">
-                              <MicrophoneInput onTranscriptChange={handleTranscript} variant="ghost" size="sm" />
-                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -549,16 +567,18 @@ export default function QuizGeneratorPage() {
         </CardContent>
       </Card>
 
-      {isLoading && (
-        <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardContent className="p-6 flex flex-col items-center justify-center">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t.loadingText}</p>
-          </CardContent>
-        </Card>
-      )}
+      {
+        isLoading && (
+          <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">{t.loadingText}</p>
+            </CardContent>
+          </Card>
+        )
+      }
 
       {quiz && <QuizDisplay quiz={quiz} />}
-    </div>
+    </div >
   );
 }

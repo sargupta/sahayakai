@@ -5,11 +5,8 @@
  * This file acts as a server component to determine intent and route requests.
  */
 
-import { generateLessonPlan } from './lesson-plan-generator';
-import { generateQuiz } from './quiz-generator';
 import { instantAnswer } from './instant-answer';
 import { agentRouterFlow, AgentRouterInput, AgentRouterOutput } from './agent-definitions';
-import { instrument } from '@genkit-ai/core';
 
 export async function processAgentRequest(input: AgentRouterInput): Promise<AgentRouterOutput> {
   const { type: intent } = await agentRouterFlow(input);
@@ -18,38 +15,38 @@ export async function processAgentRequest(input: AgentRouterInput): Promise<Agen
 
   switch (intent) {
     case 'lessonPlan':
-      result = await instrument('lesson-plan-generator', async () => {
-        return await generateLessonPlan({
-          topic: input.prompt,
-          language: input.language,
-          gradeLevels: input.gradeLevels,
-          imageDataUri: input.imageDataUri,
-          userId: input.userId,
-        });
-      });
+      result = { action: 'NAVIGATE', url: `/lesson-plan?topic=${encodeURIComponent(input.prompt)}` };
       break;
     case 'quiz':
-      result = await instrument('quiz-generator', async () => {
-        return await generateQuiz({
-          topic: input.prompt,
-          language: input.language,
-          gradeLevels: input.gradeLevels,
-          numQuestions: 5, // Default, can be customized
-          questionTypes: ['multiple_choice'], // Default
-          userId: input.userId,
-        });
-      });
+      result = { action: 'NAVIGATE', url: `/quiz-generator?topic=${encodeURIComponent(input.prompt)}` };
+      break;
+    case 'visualAid':
+      result = { action: 'NAVIGATE', url: `/visual-aid-designer?topic=${encodeURIComponent(input.prompt)}` };
+      break;
+    case 'worksheet':
+      result = { action: 'NAVIGATE', url: `/worksheet-wizard?topic=${encodeURIComponent(input.prompt)}` };
+      break;
+    case 'virtualFieldTrip':
+      result = { action: 'NAVIGATE', url: `/virtual-field-trip?topic=${encodeURIComponent(input.prompt)}` };
+      break;
+    case 'teacherTraining':
+      result = { action: 'NAVIGATE', url: `/teacher-training?topic=${encodeURIComponent(input.prompt)}` };
+      break;
+    case 'rubric':
+      result = { action: 'NAVIGATE', url: `/rubric-generator?topic=${encodeURIComponent(input.prompt)}` };
       break;
     case 'instantAnswer':
-      result = await instrument('instant-answer', async () => {
-        return await instantAnswer({
-          question: input.prompt,
-          language: input.language,
-          userId: input.userId,
-        });
+      // Direct call to instantAnswer, skipping extra instrumentation wrapper for now to avoid import issues
+      const answer = await instantAnswer({
+        question: input.prompt,
+        language: input.language,
+        userId: input.userId,
       });
+      // The instantAnswer flow returns an object. We'll pass the text answer.
+      result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };
       break;
     default:
+      // Fallback
       result = { error: "I'm not sure how to help with that. Please try rephrasing your request." };
       break;
   }

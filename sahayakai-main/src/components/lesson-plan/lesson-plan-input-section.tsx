@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { MicrophoneInput } from "@/components/microphone-input";
-import { ImageUploader } from "@/components/image-uploader";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { QuickTemplates } from "@/components/quick-templates";
 import { useFormContext } from "react-hook-form";
@@ -38,16 +37,20 @@ export function LessonPlanInputSection({
         render={({ field }) => (
           <FormItem>
             <div className="space-y-1">
-              <FormLabel className="font-headline">
-                1. Topic
-              </FormLabel>
+              {/* <FormLabel> removed, redundant or can be kept if needed but usually standard hides it or makes it subtle */}
             </div>
             <FormControl>
-              <div className="relative">
+              <div className="flex flex-col gap-4">
+                <MicrophoneInput
+                  onTranscriptChange={onTranscriptChange}
+                  iconSize="lg"
+                  label="Speak your lesson topic..."
+                  className="bg-white/50 backdrop-blur-sm"
+                />
                 <Textarea
                   value={field.value}
                   onChange={field.onChange}
-                  className="bg-white/50 backdrop-blur-sm min-h-[120px] text-base border-slate-300 shadow-sm focus:border-primary focus:ring-primary/10 rounded-lg placeholder:text-slate-400 font-normal"
+                  className="bg-white/50 backdrop-blur-sm min-h-[140px] text-base border-slate-300 shadow-sm focus:border-primary focus:ring-primary/10 rounded-lg placeholder:text-slate-400 font-normal p-4 resize-none"
                   placeholder="e.g., A lesson on 'Healthy Food' for grades 1, 2, and 3."
                 />
               </div>
@@ -56,10 +59,6 @@ export function LessonPlanInputSection({
           </FormItem>
         )}
       />
-
-      <div className="flex justify-center my-4">
-        <MicrophoneInput onTranscriptChange={onTranscriptChange} />
-      </div>
 
       {/* GENERATE BUTTON (High Priority) */}
       {generateButton && (
@@ -70,45 +69,20 @@ export function LessonPlanInputSection({
 
       {/* Secondary Inputs (Below Fold) */}
       <div className="space-y-4 pt-2 border-t border-slate-100">
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            control={control}
-            name="imageDataUri"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-headline text-sm font-medium text-gray-700">
-                  Add Context Image (Optional)
-                </FormLabel>
-                <FormControl>
-                  <ImageUploader
-                    onImageUpload={(dataUri) => {
-                      field.onChange(dataUri);
-                      trigger("imageDataUri");
-                    }}
-                    language={selectedLanguage}
-                    compact={true}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-none">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-blue-100 text-blue-700 p-0.5 rounded-md">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </span>
-              <h4 className="font-semibold text-slate-700 text-xs">Quick Ideas</h4>
-            </div>
-            <ExamplePrompts
-              onPromptClick={onPromptClick}
-              selectedLanguage={selectedLanguage}
-              page="homeWithImage"
-            />
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-none">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="bg-blue-100 text-blue-700 p-0.5 rounded-md">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </span>
+            <h4 className="font-semibold text-slate-700 text-xs">Quick Ideas</h4>
           </div>
+          <ExamplePrompts
+            onPromptClick={onPromptClick}
+            selectedLanguage={selectedLanguage}
+            page="homeWithImage"
+          />
         </div>
 
         {/* Quick Templates */}

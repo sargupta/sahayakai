@@ -32,7 +32,7 @@ export function LessonPlanView({
     loadingMessage,
 }: LessonPlanViewProps) {
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8 md:py-12">
+        <div className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12">
 
             <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                 {/* Clean Top Bar */}
@@ -42,9 +42,9 @@ export function LessonPlanView({
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <div className="flex flex-col lg:flex-row gap-4">
-                                {/* LEFT COLUMN: Primary Task (Flexible width) */}
-                                <div className="flex-1 space-y-4 min-w-0">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                {/* LEFT COLUMN: Primary Task (7 cols) */}
+                                <div className="lg:col-span-7 space-y-4 min-w-0">
                                     <LessonPlanInputSection
                                         topicPlaceholder={topicPlaceholder}
                                         selectedLanguage={selectedLanguage}
@@ -64,16 +64,10 @@ export function LessonPlanView({
                                             </Button>
                                         }
                                     />
-
-                                    {/* Mobile: Generate Button is INSIDE InputSection now (via prop) or below it. 
-                                        Wait, passing it as a prop allows placing it TIGHTLY against the input. 
-                                        Let's try placing it directly below InputSection first without prop drift if possible.
-                                        Actually, user wants it "One Screen". Compacting InputSection is key.
-                                    */}
                                 </div>
 
-                                {/* RIGHT COLUMN: Secondary Context (Fixed width) */}
-                                <div className="lg:w-[320px] shrink-0 pt-4 lg:pt-0">
+                                {/* RIGHT COLUMN: Secondary Context (5 cols) */}
+                                <div className="lg:col-span-5 shrink-0 pt-4 lg:pt-0">
                                     <LessonPlanSidebar
                                         selectedLanguage={selectedLanguage}
                                         resourceLevel={resourceLevel}

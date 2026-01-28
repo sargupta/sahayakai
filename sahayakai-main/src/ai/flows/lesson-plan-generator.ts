@@ -44,8 +44,8 @@ const LessonPlanOutputSchema = z.object({
   objectives: z.array(z.string()).describe('A list of clear, measurable learning objectives (e.g., "SWBAT identify...").'),
   keyVocabulary: z.array(z.object({
     term: z.string(),
-    definition: z.string().describe('A simple, student-friendly definition.'),
-  })).optional().describe('Key terms with definitions.'),
+    meaning: z.string().describe('A simple, student-friendly definition.'),
+  })).optional().describe('Key terms with meanings.'),
   materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
   activities: z.array(z.object({
     phase: z.enum(['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate']).describe('The 5E model phase.'),

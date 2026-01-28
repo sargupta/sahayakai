@@ -14,6 +14,7 @@ const config: Config = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^jose$': '<rootDir>/node_modules/jose/dist/node/cjs/index.js',
     },
     collectCoverage: true,
     collectCoverageFrom: [

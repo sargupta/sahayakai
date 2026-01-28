@@ -8,8 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PencilRuler, Download, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
@@ -17,6 +18,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import ReactMarkdown from 'react-markdown';
 import { ImageUploader } from "@/components/image-uploader";
+import { MicrophoneInput } from "@/components/microphone-input";
 
 
 const formSchema = z.object({
@@ -41,8 +43,22 @@ export default function WorksheetWizardPage() {
       gradeLevel: "4th Grade",
     },
   });
-  
+
   const selectedLanguage = form.watch("language") || 'en';
+  const searchParams = useSearchParams();
+
+  // Auto-fill prompt from URL. Note: Works best if an image is already uploaded or optional.
+  // Ideally, the router would handle image parsing too, but for now we auto-fill the text prompt.
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt");
+    if (promptParam) {
+      form.setValue("prompt", promptParam);
+      // Auto-submit might fail if image is required but missing.
+      // We'll skip auto-submit for Worksheet Wizard to let user upload image first,
+      // UNLESS we want to support text-only worksheets later.
+      // For now, let's just pre-fill the prompt.
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -61,7 +77,7 @@ export default function WorksheetWizardPage() {
       setIsLoading(false);
     }
   };
-  
+
   const handlePromptClick = (prompt: string) => {
     form.setValue("prompt", prompt);
     form.trigger("prompt");
@@ -82,8 +98,8 @@ export default function WorksheetWizardPage() {
 
   const handleSave = () => {
     toast({
-        title: "Saved to Library",
-        description: "Your worksheet has been saved to your personal library.",
+      title: "Saved to Library",
+      description: "Your worksheet has been saved to your personal library.",
     });
   };
 
@@ -91,9 +107,9 @@ export default function WorksheetWizardPage() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-              <PencilRuler className="w-12 h-12 text-primary" />
-            </div>
+          <div className="flex justify-center items-center mb-4">
+            <PencilRuler className="w-12 h-12 text-primary" />
+          </div>
           <CardTitle className="font-headline text-3xl">Worksheet Wizard</CardTitle>
           <CardDescription>
             Upload a textbook page and describe the worksheet you want to create.
@@ -102,26 +118,26 @@ export default function WorksheetWizardPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
+
               <FormField
-                  control={form.control}
-                  name="imageDataUri"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-headline">Textbook Page Image</FormLabel>
-                      <FormControl>
-                        <ImageUploader
-                            onImageUpload={(dataUri) => {
-                                field.onChange(dataUri);
-                                form.trigger("imageDataUri");
-                            }}
-                            language={selectedLanguage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                control={form.control}
+                name="imageDataUri"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-headline">Textbook Page Image</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                        onImageUpload={(dataUri) => {
+                          field.onChange(dataUri);
+                          form.trigger("imageDataUri");
+                        }}
+                        language={selectedLanguage}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -130,11 +146,21 @@ export default function WorksheetWizardPage() {
                   <FormItem>
                     <FormLabel className="font-headline">Worksheet Instructions</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="e.g., Create 5 fill-in-the-blank questions for Grade 2..."
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm min-h-[100px]"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <MicrophoneInput
+                          onTranscriptChange={(transcript) => {
+                            field.onChange(transcript);
+                          }}
+                          iconSize="lg"
+                          label="Describe the worksheet..."
+                          className="bg-white/50 backdrop-blur-sm"
+                        />
+                        <Textarea
+                          placeholder="e.g., Create 5 fill-in-the-blank questions for Grade 2..."
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -162,7 +188,7 @@ export default function WorksheetWizardPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
@@ -179,7 +205,7 @@ export default function WorksheetWizardPage() {
                   )}
                 />
               </div>
-              
+
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
                   <>
@@ -196,31 +222,31 @@ export default function WorksheetWizardPage() {
       </Card>
 
       {isLoading && (
-         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">The wizard is working its magic...</p>
-            </CardContent>
-         </Card>
+        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">The wizard is working its magic...</p>
+          </CardContent>
+        </Card>
       )}
 
       {worksheet && (
         <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                <PencilRuler />
-                Your Generated Worksheet
+              <PencilRuler />
+              Your Generated Worksheet
             </CardTitle>
-             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Save
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="prose prose-lg max-w-none text-foreground p-6 border-t border-primary/20">
             <ReactMarkdown>{worksheet}</ReactMarkdown>

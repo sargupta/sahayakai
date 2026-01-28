@@ -8,8 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, GraduationCap } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
@@ -89,6 +90,17 @@ export default function TeacherTrainingPage() {
   const selectedLanguage = form.watch("language") || 'en';
   const descriptionLines = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const questionParam = searchParams.get("question");
+    if (questionParam) {
+      form.setValue("question", questionParam);
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 0);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -150,15 +162,20 @@ export default function TeacherTrainingPage() {
                       <FormItem>
                         <FormLabel className="font-headline text-lg">Your Question or Challenge</FormLabel>
                         <FormControl>
-                          <div className="relative">
+                          <div className="flex flex-col gap-4">
+                            <MicrophoneInput
+                              onTranscriptChange={(transcript) => {
+                                field.onChange(transcript);
+                              }}
+                              iconSize="lg"
+                              label="Speak your question..."
+                              className="bg-white/50 backdrop-blur-sm"
+                            />
                             <Textarea
                               placeholder={placeholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[150px] pr-12 resize-none text-lg"
+                              className="bg-white/50 backdrop-blur-sm min-h-[150px] resize-none text-lg"
                             />
-                            <div className="absolute right-2 bottom-2">
-                              <MicrophoneInput onTranscriptChange={handleTranscript} variant="ghost" size="sm" />
-                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />

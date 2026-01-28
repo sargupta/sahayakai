@@ -41,36 +41,64 @@ const visualAidFlow = ai.defineFlow(
   },
   async (input) => {
     const { prompt, gradeLevel, language, userId } = input;
-    const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      output: { schema: VisualAidOutputSchema },
+
+    // Step 1: Generate the Image
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-3-pro-image-preview',
       prompt: `
-        You are a talented chalk artist and master teacher. You create beautiful educational illustrations on blackboards.
-
-        **1. The Image (Blackboard Chalk Style):**
-        - White chalk-style drawing on a clean, dark blackboard background.
-        - Elegant, clear, hand-drawn lines. Minimalist and easy to replicate.
-        - NO COLOR. Only white on black.
-
-        **2. Teacher Metadata (Crucial):**
-        - **pedagogicalContext**: Explain *why* this specific illustration works for teaching this topic.
-        - **discussionSpark**: Provide one powerful "Look at this... what do you think?" question.
-
-        **Task Context:**
-        - **Grade**: ${gradeLevel || 'any'}
-        - **Topic**: "${prompt}"
-        - **Language**: ${language || 'English'}
+        Create a blackboard chalk-style educational illustration.
+        Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
+        
+        Style: 
+        - High-fidelity white chalk lines on a dark black background.
+        - Professional, textbook-quality diagram.
+        
+        Labels:
+        - Accurately label the key parts of the diagram. 
+        - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
+        - Use simple block letters.
       `,
       config: {
+        responseModalities: ['IMAGE'],
         temperature: 0.4,
       },
     });
 
-    if (!output || !output.imageDataUri) {
+    if (!media) {
       throw new Error('Image generation failed to produce an image.');
     }
 
-    const mediaUrl = output.imageDataUri;
+    // Step 2: Generate the Metadata (Text)
+    const MetadataSchema = z.object({
+      pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
+      discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
+    });
+
+    const { output: textOutput } = await ai.generate({
+      model: 'googleai/gemini-2.5-flash',
+      output: { schema: MetadataSchema },
+      prompt: `
+        You are a master teacher.
+        Topic: "${prompt}"
+        Grade: ${gradeLevel || 'any'}
+        Language: ${language || 'English'}
+
+        Provide:
+        1. Context: How to use a blackboard drawing of this topic to teach.
+        2. Spark: A question to ask students about the drawing.
+      `,
+    });
+
+    if (!textOutput) {
+      throw new Error('Metadata generation failed.');
+    }
+
+    // Combine results
+    const finalOutput: VisualAidOutput = {
+      imageDataUri: media.url,
+      pedagogicalContext: textOutput.pedagogicalContext,
+      discussionSpark: textOutput.discussionSpark
+    };
 
     if (userId) {
       const storage = await getStorageInstance();
@@ -83,7 +111,7 @@ const visualAidFlow = ai.defineFlow(
       const file = storage.bucket().file(filePath);
 
       // Convert data URI to buffer
-      const buffer = Buffer.from(mediaUrl.split(',')[1], 'base64');
+      const buffer = Buffer.from(finalOutput.imageDataUri.split(',')[1], 'base64');
 
       await file.save(buffer, {
         metadata: {
@@ -97,13 +125,13 @@ const visualAidFlow = ai.defineFlow(
         gradeLevels: [gradeLevel],
         language: language,
         storagePath: filePath,
-        pedagogicalContext: output.pedagogicalContext,
-        discussionSpark: output.discussionSpark,
+        pedagogicalContext: finalOutput.pedagogicalContext,
+        discussionSpark: finalOutput.discussionSpark,
         createdAt: now,
         isPublic: false,
       });
     }
 
-    return output;
+    return finalOutput;
   }
 );

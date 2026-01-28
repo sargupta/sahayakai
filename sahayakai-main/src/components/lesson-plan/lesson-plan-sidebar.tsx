@@ -8,6 +8,7 @@ import { DifficultySelector, type DifficultyLevel } from "@/components/difficult
 import { NCERTChapterSelector } from "@/components/ncert-chapter-selector";
 import { type NCERTChapter } from "@/data/ncert";
 import { useFormContext } from "react-hook-form";
+import { ImageUploader } from "@/components/image-uploader";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
@@ -42,6 +43,31 @@ export function LessonPlanSidebar({
         2. Configuration
       </h3>
       <p className="text-sm text-slate-500 mb-4">Customize the output.</p>
+
+      {/* Context Image (Moved from Main Area) */}
+      <div className="mb-4">
+        <FormField
+          control={control}
+          name="imageDataUri"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-headline text-xs font-semibold text-slate-600">
+                Add Context Image (Optional)
+              </FormLabel>
+              <FormControl>
+                <ImageUploader
+                  onImageUpload={(dataUri) => {
+                    field.onChange(dataUri);
+                  }}
+                  language={selectedLanguage}
+                  compact={true}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <FormField

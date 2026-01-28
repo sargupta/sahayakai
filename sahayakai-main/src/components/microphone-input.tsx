@@ -13,13 +13,19 @@ type MicrophoneInputProps = {
   className?: string;
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
+  isFloating?: boolean;
+  label?: string;
+  iconSize?: "sm" | "md" | "lg" | "xl";
 };
 
 export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   onTranscriptChange,
   className,
   variant = "default",
-  size = "default"
+  size = "default",
+  isFloating = false,
+  label,
+  iconSize = "md"
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -80,8 +86,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         analyserRef.current.fftSize = 2048;
       }
       const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
-      drawWaveform();
+      if (analyserRef.current) {
+        source.connect(analyserRef.current);
+        drawWaveform();
+      }
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
@@ -160,33 +168,71 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     }
   }, []);
 
+  const getIconSize = () => {
+    switch (iconSize) {
+      case "sm": return "h-4 w-4";
+      case "lg": return "h-10 w-10";
+      case "xl": return "h-16 w-16";
+      default: return "h-6 w-6";
+    }
+  };
+
+  const getButtonSize = () => {
+    if (isFloating) return "h-20 w-20 md:h-24 md:w-24";
+    if (iconSize === 'xl') return "h-32 w-32";
+    if (iconSize === 'lg') return "h-20 w-20";
+    return ""; // use size prop
+  };
+
   return (
-    <div className={cn("flex flex-col items-center gap-2", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-3",
+        isFloating && "fixed bottom-8 right-8 z-[100] animate-bounce-subtle",
+        className
+      )}
+    >
       <Button
         type="button"
         onClick={handleMicClick}
         disabled={isTranscribing}
-        variant={variant}
-        size={size}
+        variant={isRecording ? "destructive" : variant}
+        size={isFloating || iconSize === 'lg' || iconSize === 'xl' ? "icon" : size}
         className={cn(
-          "transition-all duration-300 ease-in-out",
-          isRecording && "bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse",
-          !isRecording && variant === 'default' && "rounded-full shadow-lg hover:scale-110 h-16 w-16"
+          "transition-all duration-300 ease-in-out shadow-xl",
+          getButtonSize(),
+          isRecording && "animate-pulse scale-110",
+          !isRecording && variant === 'default' && "rounded-full hover:scale-110",
+          isFloating && "bg-primary text-primary-foreground hover:bg-primary/90 border-4 border-white dark:border-slate-900"
         )}
         aria-label={isRecording ? "Stop recording" : "Start recording"}
       >
         {isTranscribing ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent" />
         ) : isRecording ? (
-          <StopCircle className={cn(size === 'sm' ? "h-4 w-4" : "h-6 w-6")} />
+          <StopCircle className={getIconSize()} />
         ) : (
-          <Mic className={cn(size === 'sm' ? "h-4 w-4" : "h-6 w-6")} />
+          <Mic className={getIconSize()} />
         )}
       </Button>
-      {/* Only show waveform if recording and not in compact mode (optional, or just hide it for now to keep it clean) */}
-      {isRecording && size !== 'sm' && (
-        <div className="h-12 w-full overflow-hidden rounded-lg bg-slate-100/50">
-          <canvas ref={canvasRef} width="300" height="50" className="h-full w-full" />
+
+      {(label || isRecording) && (
+        <div className={cn(
+          "px-4 py-2 rounded-full backdrop-blur-md shadow-sm border transition-all duration-300",
+          isRecording ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse" : "bg-white/80 text-slate-700 border-slate-200"
+        )}>
+          <span className="text-sm font-bold whitespace-nowrap">
+            {isTranscribing ? "Transcribing..." : isRecording ? "Speaking..." : label}
+          </span>
+        </div>
+      )}
+
+      {isRecording && (
+        <div className={cn(
+          "overflow-hidden rounded-xl bg-slate-100/50 backdrop-blur-sm border border-slate-200",
+          isFloating ? "fixed bottom-40 right-8 w-64 h-24" : "h-16 w-full"
+        )}>
+          <canvas ref={canvasRef} width="300" height="80" className="h-full w-full" />
         </div>
       )}
     </div>

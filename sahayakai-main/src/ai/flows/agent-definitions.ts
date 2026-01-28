@@ -2,7 +2,17 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 // Define the possible agent types
-const AgentTypeSchema = z.enum(['lessonPlan', 'quiz', 'instantAnswer', 'unknown']);
+const AgentTypeSchema = z.enum([
+  'lessonPlan',
+  'quiz',
+  'visualAid',
+  'worksheet',
+  'virtualFieldTrip',
+  'teacherTraining',
+  'rubric',
+  'instantAnswer',
+  'unknown'
+]);
 
 // Input schema for the router
 export const AgentRouterInputSchema = z.object({
@@ -38,10 +48,15 @@ export const agentRouterFlow = ai.defineFlow(
         output: { schema: z.object({ intent: AgentTypeSchema }) },
         prompt: `Analyze the user prompt and determine which tool is most appropriate.
 
-        - If the user is asking to create a lesson, lesson plan, or similar educational activity, choose 'lessonPlan'.
-        - If the user is asking to create a quiz, test, or set of questions, choose 'quiz'.
-        - If the user is asking a direct question or seeking information, choose 'instantAnswer'.
-        - If the intent is unclear, choose 'unknown'.
+        - 'lessonPlan': Creating lessons, lesson plans, unit plans.
+        - 'quiz': Creating quizzes, tests, assessments, exam questions.
+        - 'visualAid': finding/creating images, diagrams, flashcards, visual learning materials.
+        - 'worksheet': Creating worksheets, exercises, assignments.
+        - 'virtualFieldTrip': Planning virtual field trips, exploring locations, "take me to...".
+        - 'teacherTraining': Professional development, classroom management advice, teaching strategies.
+        - 'rubric': Creating grading rubrics, assessment criteria.
+        - 'instantAnswer': Direct questions (What is...), definitions, quick facts.
+        - 'unknown': If the intent is unclear or doesn't match above.
 
         Prompt: {{{prompt}}}
         `,
@@ -51,28 +66,13 @@ export const agentRouterFlow = ai.defineFlow(
     const { output: intentOutput } = await intentPrompt({ prompt: input.prompt });
     const intent = intentOutput?.intent || 'unknown';
 
-    // The actual calls to generateLessonPlan, generateQuiz, and instantAnswer
-    // will be handled in the server component (agent-router.ts) which imports this flow.
-    // This file only defines the flow structure and intent routing logic.
-    let result: any;
-    switch (intent) {
-      case 'lessonPlan':
-        result = { /* Placeholder for lesson plan result */ };
-        break;
-      case 'quiz':
-        result = { /* Placeholder for quiz result */ };
-        break;
-      case 'instantAnswer':
-        result = { /* Placeholder for instant answer result */ };
-        break;
-      default:
-        result = { error: "I'm not sure how to help with that. Please try rephrasing your request." };
-        break;
-    }
+    // The actual execution or navigation logic will be handled by the server action
+    // that calls this flow (or by the client using the returned type).
+    // For now, this flow just returns the intent.
 
     return {
       type: intent,
-      result: result,
+      result: null,
     };
   }
 );

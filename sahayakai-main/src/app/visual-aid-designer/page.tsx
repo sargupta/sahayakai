@@ -11,11 +11,14 @@ import { Loader2, Download, Images, Save } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useSearchParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
+import { MicrophoneInput } from "@/components/microphone-input";
 import Image from "next/image";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { useEffect } from "react";
 
 
 const formSchema = z.object({
@@ -39,8 +42,19 @@ export default function VisualAidDesignerPage() {
       gradeLevel: "6th Grade",
     },
   });
-  
+
   const selectedLanguage = form.watch("language") || 'en';
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt");
+    if (promptParam) {
+      form.setValue("prompt", promptParam);
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 0);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
@@ -73,7 +87,7 @@ export default function VisualAidDesignerPage() {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handlePromptClick = (prompt: string) => {
     form.setValue("prompt", prompt);
     form.trigger("prompt");
@@ -81,8 +95,8 @@ export default function VisualAidDesignerPage() {
 
   const handleSave = () => {
     toast({
-        title: "Saved to Library",
-        description: "Your visual aid has been saved to your personal library.",
+      title: "Saved to Library",
+      description: "Your visual aid has been saved to your personal library.",
     });
   };
 
@@ -90,9 +104,9 @@ export default function VisualAidDesignerPage() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-              <Images className="w-12 h-12 text-primary" />
-            </div>
+          <div className="flex justify-center items-center mb-4">
+            <Images className="w-12 h-12 text-primary" />
+          </div>
           <CardTitle className="font-headline text-3xl">Visual Aid Designer</CardTitle>
           <CardDescription>
             Create simple black-and-white line drawings for your lessons.
@@ -107,13 +121,23 @@ export default function VisualAidDesignerPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-headline">Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., A simple diagram of the water cycle..."
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                    <div className="flex flex-col gap-4">
+                      <MicrophoneInput
+                        onTranscriptChange={(transcript) => {
+                          field.onChange(transcript);
+                        }}
+                        iconSize="lg"
+                        label="Speak your description..."
+                        className="bg-white/50 backdrop-blur-sm"
                       />
-                    </FormControl>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g., A simple diagram of the water cycle..."
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -140,7 +164,7 @@ export default function VisualAidDesignerPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
@@ -157,7 +181,7 @@ export default function VisualAidDesignerPage() {
                   )}
                 />
               </div>
-              
+
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
                 {isLoading ? (
                   <>
@@ -174,12 +198,12 @@ export default function VisualAidDesignerPage() {
       </Card>
 
       {isLoading && (
-         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">Generating your visual aid... this may take a moment.</p>
-            </CardContent>
-         </Card>
+        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">Generating your visual aid... this may take a moment.</p>
+          </CardContent>
+        </Card>
       )}
 
       {imageData && (
@@ -189,12 +213,12 @@ export default function VisualAidDesignerPage() {
               <span>Generated Image</span>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
+                  <Save className="mr-2 h-4 w-4" />
+                  Save
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleDownload}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
                 </Button>
               </div>
             </CardTitle>

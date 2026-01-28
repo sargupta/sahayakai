@@ -8,8 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ClipboardCheck, Info } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
@@ -230,12 +231,23 @@ export default function RubricGeneratorPage() {
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const descParam = searchParams.get("assignmentDescription");
+    if (descParam) {
+      form.setValue("assignmentDescription", descParam);
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 0);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setRubric(null);
     try {
-      const result = await generateRubric({...values, language: selectedLanguage});
+      const result = await generateRubric({ ...values, language: selectedLanguage });
       setRubric(result);
     } catch (error) {
       console.error("Failed to generate rubric:", error);
@@ -253,7 +265,7 @@ export default function RubricGeneratorPage() {
     form.setValue("assignmentDescription", prompt);
     form.trigger("assignmentDescription");
   };
-  
+
   const handleTranscript = (transcript: string) => {
     form.setValue("assignmentDescription", transcript);
     form.trigger("assignmentDescription");
@@ -269,7 +281,7 @@ export default function RubricGeneratorPage() {
           <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription className="flex items-center justify-center gap-2">
             <span>{t.pageDescription}</span>
-             <Dialog>
+            <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-5 w-5">
                   <Info className="h-5 w-5 text-accent-foreground/50" />
@@ -279,17 +291,17 @@ export default function RubricGeneratorPage() {
                 <DialogHeader>
                   <DialogTitle className="font-headline">{t.dialogTitle}</DialogTitle>
                   <DialogDescription>
-                   {t.dialogDescription}
+                    {t.dialogDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="text-sm text-muted-foreground space-y-2">
-                    <p><strong className="text-foreground">{t.dialogWhy}</strong></p>
-                    <ul className="list-disc pl-5 space-y-1">
-                        <li><strong className="text-foreground/80">{t.strongClarity}</strong> {t.dialogClarityText}</li>
-                        <li><strong className="text-foreground/80">{t.strongConsistency}</strong> {t.dialogConsistencyText}</li>
-                        <li><strong className="text-foreground/80">{t.strongFeedback}</strong> {t.dialogFeedbackText}</li>
-                         <li><strong className="text-foreground/80">{t.strongEfficiency}</strong> {t.dialogEfficiencyText}</li>
-                    </ul>
+                  <p><strong className="text-foreground">{t.dialogWhy}</strong></p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><strong className="text-foreground/80">{t.strongClarity}</strong> {t.dialogClarityText}</li>
+                    <li><strong className="text-foreground/80">{t.strongConsistency}</strong> {t.dialogConsistencyText}</li>
+                    <li><strong className="text-foreground/80">{t.strongFeedback}</strong> {t.dialogFeedbackText}</li>
+                    <li><strong className="text-foreground/80">{t.strongEfficiency}</strong> {t.dialogEfficiencyText}</li>
+                  </ul>
                 </div>
               </DialogContent>
             </Dialog>
@@ -305,18 +317,28 @@ export default function RubricGeneratorPage() {
                   <FormItem>
                     <FormLabel className="font-headline">{t.formLabel}</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder={t.formPlaceholder}
-                        {...field}
-                        className="bg-white/50 backdrop-blur-sm min-h-[120px]"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <MicrophoneInput
+                          onTranscriptChange={(transcript) => {
+                            field.onChange(transcript);
+                          }}
+                          iconSize="lg"
+                          label="Describe the assignment..."
+                          className="bg-white/50 backdrop-blur-sm"
+                        />
+                        <Textarea
+                          placeholder={t.formPlaceholder}
+                          {...field}
+                          className="bg-white/50 backdrop-blur-sm min-h-[120px]"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <MicrophoneInput onTranscriptChange={handleTranscript} />
+
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
 

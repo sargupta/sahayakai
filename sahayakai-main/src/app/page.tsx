@@ -14,6 +14,8 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { processAgentRequest } from "@/ai/flows/agent-router";
+import { Loader2, X } from "lucide-react";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -23,14 +25,25 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function Home() {
   const [greeting, setGreeting] = useState("Namaste");
+  const [isThinking, setIsThinking] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
   const router = useRouter();
+
+  const { toast } = useToast();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const voiceTranscript = searchParams?.get("voice_transcript");
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
-  }, []);
+
+    if (voiceTranscript) {
+      form.setValue("topic", voiceTranscript);
+      form.handleSubmit(onSubmit)();
+    }
+  }, [voiceTranscript]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -40,8 +53,37 @@ export default function Home() {
   });
 
   const onSubmit = async (values: FormValues) => {
-    // Navigate using client-side routing to preserve state and app-feel
-    router.push(`/lesson-plan?topic=${encodeURIComponent(values.topic)}`);
+    // Determine intent using the Smart Router
+    setIsThinking(true);
+    setAnswer(null);
+
+    try {
+      const response = await processAgentRequest({ prompt: values.topic });
+      const { result } = response;
+
+      if (result?.action === 'NAVIGATE' && result.url) {
+        router.push(result.url);
+      } else if (result?.action === 'ANSWER') {
+        setAnswer(result.content);
+        setIsThinking(false);
+      } else {
+        // Fallback or error
+        toast({
+          title: "Not sure how to help",
+          description: result?.error || "Please try asking to create a lesson plan, quiz, or visual aid.",
+          variant: "destructive"
+        });
+        setIsThinking(false);
+      }
+    } catch (error) {
+      console.error("Router Error:", error);
+      toast({
+        title: "Connection Error",
+        description: "Could not reach Sahayak. Please try again.",
+        variant: "destructive"
+      });
+      setIsThinking(false);
+    }
   };
 
   const handleTranscript = (transcript: string) => {
@@ -85,42 +127,85 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Main Input Section */}
-      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
-        <Card className="border-none shadow-2xl bg-white/95 ring-1 ring-slate-200/50">
-          <CardContent className="p-2">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
-                <div className="relative flex-1">
-                  <AutoCompleteInput
-                    placeholder="Topic (e.g., 'Photosynthesis')"
-                    {...form.register("topic")}
-                    value={form.watch("topic")}
-                    selectedLanguage="en"
-                    onSuggestionClick={(value) => {
-                      form.setValue("topic", value);
-                      form.handleSubmit(onSubmit)();
-                    }}
-                    className="border-none shadow-none focus-visible:ring-0 text-base md:text-lg py-4 md:py-6 pl-4 md:pl-6 pr-12 md:pr-14 bg-transparent"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <MicrophoneInput onTranscriptChange={handleTranscript} variant="ghost" size="sm" />
+      {/* Main Voice-First Input Section */}
+      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 flex flex-col items-center gap-8">
+
+        {/* BIG MIC BUTTON */}
+        <div className="flex flex-col items-center gap-4">
+          <MicrophoneInput
+            onTranscriptChange={handleTranscript}
+            iconSize="xl"
+            label="ಪಠ್ಯದ ಬಗ್ಗೆ ಹೇಳಿ / ಕಲ್ಪನೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ (Speak your topic)"
+            className="hover:scale-105 transition-transform"
+          />
+          <p className="text-slate-500 font-medium text-sm md:text-base animate-pulse">
+            Tap the microphone and tell Sahayak what you want to teach today
+          </p>
+        </div>
+
+        {/* OR TEXT INPUT (SECONDARY) */}
+        <div className="w-full">
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/50">
+            <CardContent className="p-1">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
+                  <div className="relative flex-1">
+                    <AutoCompleteInput
+                      placeholder="Or type here (e.g. 'Photosynthesis')"
+                      {...form.register("topic")}
+                      value={form.watch("topic")}
+                      selectedLanguage="en"
+                      onSuggestionClick={(value) => {
+                        form.setValue("topic", value);
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-3 pl-4 bg-transparent"
+                    />
                   </div>
-                </div>
-                <Button type="submit" size="lg" className="rounded-xl px-4 md:px-8 h-10 md:h-12 mr-1 shadow-md hover:shadow-lg transition-all text-sm md:text-base">
-                  Generate
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-        <div className="flex flex-col items-center gap-2 mt-4">
+                  <Button type="submit" size="sm" variant="ghost" className="mr-1 h-8" aria-label="Generate Lesson Plan">
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex flex-col items-center gap-2">
           <p className="text-center text-xs md:text-sm text-slate-500 font-medium px-4 line-clamp-1">
-            Try asking: "Create a quiz on Fractions" or "Lesson plan for Solar System"
+            try: "Quiz about photosynthesis" or "Lesson plan for solar system"
           </p>
           <p className="text-[10px] text-slate-400">
             Sahayak can make mistakes. Please review generated content.
           </p>
+
+          {/* Thinking Indicator */}
+          {isThinking && (
+            <div className="flex items-center gap-2 text-primary font-medium mt-2 animate-pulse">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Thinking...</span>
+            </div>
+          )}
+
+          {/* Instant Answer Card */}
+          {answer && (
+            <Card className="w-full max-w-2xl mt-4 border-primary/20 bg-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+              <CardContent className="p-4 md:p-6 relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 h-6 w-6 text-slate-400 hover:text-slate-600"
+                  onClick={() => setAnswer(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <div className="prose prose-sm max-w-none text-slate-700">
+                  <h3 className="text-primary font-bold mb-2 text-lg">Answer</h3>
+                  <div className="whitespace-pre-wrap">{answer}</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

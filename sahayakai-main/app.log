@@ -1,0 +1,322 @@
+
+> nextn@0.1.0 dev
+> node_modules/.bin/next dev
+
+   ▲ Next.js 15.4.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.101:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 2.2s
+ ✓ Compiled /middleware in 117ms (153 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1479ms (1066 modules)
+ GET / 200 in 1731ms
+ ✓ Compiled in 340ms (389 modules)
+ GET / 200 in 34ms
+ POST / 200 in 5014ms
+ ○ Compiling /lesson-plan ...
+ ✓ Compiled /lesson-plan in 904ms (1452 modules)
+ GET /lesson-plan?topic=A+general+quiz+for+class+5+for+science+chapter+2. 200 in 1007ms
+ GET / 200 in 15ms
+ ○ Compiling /teacher-training ...
+ ✓ Compiled /teacher-training in 535ms (1260 modules)
+ GET /teacher-training 200 in 641ms
+ ○ Compiling /instant-answer ...
+ ✓ Compiled /instant-answer in 519ms (1637 modules)
+ GET /instant-answer 200 in 612ms
+ ✓ Compiled /virtual-field-trip in 414ms (1445 modules)
+ GET /virtual-field-trip 200 in 517ms
+ POST /virtual-field-trip 200 in 12125ms
+ ✓ Compiled in 377ms (701 modules)
+ ✓ Compiled in 105ms (687 modules)
+ ✓ Compiled /teacher-training in 151ms (752 modules)
+ GET /teacher-training 200 in 247ms
+ ✓ Compiled /content-creator in 210ms (1449 modules)
+ GET /content-creator 200 in 268ms
+ ✓ Compiled /video-storyteller in 266ms (1458 modules)
+ GET /video-storyteller 200 in 327ms
+ ✓ Compiled /instant-answer in 448ms (971 modules)
+ GET /instant-answer 200 in 528ms
+ ✓ Compiled /visual-aid-designer in 396ms (1695 modules)
+ GET /visual-aid-designer 200 in 509ms
+ ○ Compiling /quiz-generator ...
+ ✓ Compiled /quiz-generator in 631ms (2114 modules)
+ GET /quiz-generator 200 in 750ms
+ ○ Compiling /worksheet-wizard ...
+ ✓ Compiled /worksheet-wizard in 541ms (2127 modules)
+ GET /worksheet-wizard 200 in 614ms
+ ✓ Compiled /rubric-generator in 474ms (2149 modules)
+ GET /rubric-generator 200 in 538ms
+ GET /visual-aid-designer 200 in 26ms
+ ✓ Compiled / in 372ms (803 modules)
+ GET / 200 in 507ms
+ POST / 200 in 5784ms
+ ✓ Compiled /lesson-plan in 436ms (1018 modules)
+ GET /lesson-plan?topic=Generate+a+quiz+for+class+5+chapter+7. 200 in 524ms
+ GET / 200 in 22ms
+ POST / 200 in 4841ms
+ GET /lesson-plan?topic=Give+me+a+diagram+of+photosynthesis+for+class+five. 200 in 9ms
+ ✓ Compiled in 634ms (925 modules)
+ ✓ Compiled in 140ms (925 modules)
+ ✓ Compiled in 134ms (925 modules)
+ GET /lesson-plan?topic=Give%20me%20a%20diagram%20of%20photosynthesis%20for%20class%20five. 200 in 434ms
+ ✓ Compiled /rubric-generator in 230ms (1184 modules)
+ GET /rubric-generator 200 in 319ms
+ ✓ Compiled /content-creator in 157ms (1191 modules)
+ GET /content-creator 200 in 266ms
+ ✓ Compiled /instant-answer in 436ms (1376 modules)
+ GET /instant-answer 200 in 512ms
+ ✓ Compiled /visual-aid-designer in 134ms (1385 modules)
+ GET /visual-aid-designer 200 in 192ms
+ ✓ Compiled /quiz-generator in 443ms (1417 modules)
+ GET /quiz-generator 200 in 565ms
+ ✓ Compiled /worksheet-wizard in 333ms (1426 modules)
+ GET /worksheet-wizard 200 in 417ms
+ GET /rubric-generator 200 in 22ms
+ ✓ Compiled in 842ms (2127 modules)
+ GET /rubric-generator 200 in 92ms
+ ✓ Compiled in 664ms (2127 modules)
+ GET /rubric-generator 200 in 74ms
+ GET /rubric-generator 200 in 398ms
+ ✓ Compiled /worksheet-wizard in 164ms (1211 modules)
+ GET /worksheet-wizard 200 in 232ms
+ ○ Compiling / ...
+ ✓ Compiled / in 516ms (1225 modules)
+ GET / 200 in 581ms
+ ✓ Compiled in 851ms (2136 modules)
+ POST / 200 in 6636ms
+ GET / 200 in 87ms
+ POST / 200 in 1529ms
+ GET /quiz-generator?topic=generate+a+quiz+for+class+five+grade+seven.+No%2C+class+five+chapter+seven. 200 in 28ms
+ GET /quiz-generator?topic=generate+a+quiz+for+class+five+grade+seven.+No%2C+class+five+chapter+seven. 200 in 15ms
+ GET / 200 in 9ms
+ ✓ Compiled in 590ms (2136 modules)
+ GET / 200 in 61ms
+ POST / 200 in 5150ms
+ POST / 200 in 1424ms
+ GET /quiz-generator?topic=Generate+a+quiz+for+class+five+chapter+seven. 200 in 22ms
+ GET /quiz-generator?topic=Generate+a+quiz+for+class+five+chapter+seven. 200 in 10ms
+ GET / 200 in 13ms
+ POST / 200 in 4023ms
+WARNING: /prompt/intentClassifier already has an entry in the registry. Overwriting.
+WARNING: /executable-prompt/intentClassifier already has an entry in the registry. Overwriting.
+ POST / 200 in 1471ms
+ GET /quiz-generator?topic=General+quiz+for+class+5+chapter+7. 200 in 67ms
+ GET /quiz-generator?topic=General+quiz+for+class+5+chapter+7. 200 in 57ms
+ GET / 200 in 20ms
+ POST / 200 in 4534ms
+WARNING: /prompt/intentClassifier already has an entry in the registry. Overwriting.
+WARNING: /executable-prompt/intentClassifier already has an entry in the registry. Overwriting.
+Performing mock Google search for: Who is the Prime Minister of India?
+ POST / 200 in 5824ms
+ POST / 200 in 6386ms
+WARNING: /prompt/intentClassifier already has an entry in the registry. Overwriting.
+WARNING: /executable-prompt/intentClassifier already has an entry in the registry. Overwriting.
+Performing mock Google search for: বাংলার ইতিহাসের পাঁচজন স্বাধীনতা সংগ্রামীর নাম
+ POST / 200 in 4866ms
+ ✓ Compiled in 769ms (2136 modules)
+ GET / 200 in 211ms
+ ✓ Compiled in 269ms (2136 modules)
+ GET / 200 in 85ms
+ ✓ Compiled in 433ms (2136 modules)
+ GET / 200 in 74ms
+ ○ Compiling /lesson-plan ...
+ ✓ Compiled /lesson-plan in 604ms (1418 modules)
+ GET /lesson-plan 200 in 680ms
+ ✓ Compiled /rubric-generator in 444ms (1424 modules)
+ GET /rubric-generator 200 in 506ms
+ ✓ Compiled in 638ms (2335 modules)
+ ✓ Compiled in 206ms (2326 modules)
+ GET /quiz-generator 200 in 66ms
+ ✓ Compiled in 270ms (925 modules)
+ GET /quiz-generator 200 in 28ms
+ ✓ Compiled in 112ms (925 modules)
+ GET /quiz-generator 200 in 12ms
+ ✓ Compiled in 114ms (925 modules)
+ GET /quiz-generator 200 in 25ms
+ ✓ Compiled in 236ms (925 modules)
+ GET /quiz-generator 200 in 12ms
+ ✓ Compiled in 131ms (925 modules)
+ GET /quiz-generator 200 in 10ms
+ ✓ Compiled in 675ms (2340 modules)
+ GET /quiz-generator 200 in 147ms
+ ✓ Compiled in 259ms (2340 modules)
+ GET /quiz-generator 200 in 66ms
+ ✓ Compiled in 596ms (2340 modules)
+ GET /quiz-generator 200 in 63ms
+ ✓ Compiled in 271ms (2340 modules)
+ GET /quiz-generator 200 in 69ms
+ ✓ Compiled in 210ms (925 modules)
+ GET /quiz-generator 200 in 17ms
+ ✓ Compiled in 123ms (925 modules)
+ GET /quiz-generator 200 in 10ms
+ GET / 200 in 30ms
+ POST / 200 in 4828ms
+ POST / 200 in 1437ms
+ GET /quiz-generator?topic=generate+a+quiz+for+class+seven+chapter+five+for+science. 200 in 9ms
+ GET /quiz-generator?topic=generate+a+quiz+for+class+seven+chapter+five+for+science. 200 in 10ms
+ POST /quiz-generator?topic=generate%20a%20quiz%20for%20class%20seven%20chapter%20five%20for%20science. 200 in 10064ms
+ POST /quiz-generator?topic=generate%20a%20quiz%20for%20class%20seven%20chapter%20five%20for%20science. 200 in 10774ms
+ ○ Compiling /visual-aid-designer ...
+ ✓ Compiled /visual-aid-designer in 612ms (1424 modules)
+ GET /visual-aid-designer 200 in 702ms
+ GET /rubric-generator 200 in 20ms
+ GET /lesson-plan 200 in 26ms
+ ✓ Compiled in 1247ms (2304 modules)
+ ✓ Compiled in 667ms (2318 modules)
+ GET /lesson-plan 200 in 296ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error fetching from cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async getCachedLessonPlan (src/app/actions/lesson-plan.ts:77:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+(node:97635) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan 200 in 385ms
+ ○ Compiling /my-library ...
+ ✓ Compiled /my-library in 870ms (2349 modules)
+ GET /my-library 200 in 956ms
+ GET /my-library 200 in 22ms
+ POST /lesson-plan 200 in 17469ms
+ POST /my-library 200 in 6818ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error saving to cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async saveLessonPlanToCache (src/app/actions/lesson-plan.ts:113:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+(node:97635) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan 200 in 169ms
+ POST /my-library 200 in 179ms
+ POST /my-library 200 in 7558ms
+ ✓ Compiled /community in 473ms (2179 modules)
+ GET /community 200 in 534ms
+ ○ Compiling /impact-dashboard ...
+ ✓ Compiled /impact-dashboard in 510ms (2172 modules)
+ GET /impact-dashboard 200 in 570ms
+ ✓ Compiled /submit-content in 214ms (2181 modules)
+ GET /submit-content 200 in 272ms
+ GET /my-library 200 in 17ms
+ GET /impact-dashboard 200 in 18ms
+ GET /lesson-plan 200 in 15ms
+ GET /lesson-plan 200 in 28ms
+ POST /my-library 200 in 7486ms
+ POST /my-library 200 in 7997ms
+ POST /impact-dashboard 200 in 8006ms
+ GET /rubric-generator 200 in 46ms
+ ○ Compiling /worksheet-wizard ...
+ ✓ Compiled /worksheet-wizard in 733ms (1400 modules)
+ GET /worksheet-wizard 200 in 939ms
+ ✓ Compiled / in 153ms (1416 modules)
+ GET / 200 in 219ms
+ ✓ Compiled in 1759ms (2352 modules)
+ GET / 200 in 79ms
+ ✓ Compiled in 550ms (2352 modules)
+ GET / 200 in 64ms
+ GET /lesson-plan 200 in 32ms
+ GET /lesson-plan 200 in 354ms
+ ✓ Compiled in 655ms (2168 modules)
+ GET /lesson-plan 200 in 143ms
+ ✓ Compiled in 340ms (2168 modules)
+ GET /lesson-plan 200 in 67ms
+ POST /lesson-plan 200 in 4312ms
+ GET /?voice_transcript=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 272ms
+ POST /?voice_transcript=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 1448ms
+ GET /lesson-plan?topic=generate+a+lesson+plan+for+grade+five+of+subject+science.+Chapter+three. 200 in 9ms
+ GET /lesson-plan?topic=generate+a+lesson+plan+for+grade+five+of+subject+science.+Chapter+three. 200 in 11ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error fetching from cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async getCachedLessonPlan (src/app/actions/lesson-plan.ts:77:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+(node:97635) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 162ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error fetching from cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async getCachedLessonPlan (src/app/actions/lesson-plan.ts:77:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 146ms
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 22725ms
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 16263ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error saving to cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async saveLessonPlanToCache (src/app/actions/lesson-plan.ts:113:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 120ms
+Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.
+Firebase admin initialization error: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+Error saving to cache: Error: Firebase Init Failed: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at initializeFirebase (src/lib/firebase-admin.ts:60:12)
+    at async getDb (src/lib/firebase-admin.ts:74:2)
+    at async saveLessonPlanToCache (src/app/actions/lesson-plan.ts:113:19)
+  58 |       // We must throw here or let the subsequent checks fail. 
+  59 |       // Throwing here is better to understand WHY it failed during init.
+> 60 |       throw new Error(`Firebase Init Failed: ${error.message}`);
+     |            ^
+  61 |     }
+  62 |   }
+  63 | }
+[Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection: [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ ⨯ unhandledRejection:  [Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.]
+ POST /lesson-plan?topic=generate%20a%20lesson%20plan%20for%20grade%20five%20of%20subject%20science.%20Chapter%20three. 200 in 91ms
