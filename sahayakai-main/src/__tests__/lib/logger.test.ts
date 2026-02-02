@@ -12,7 +12,7 @@ describe('Logger', () => {
     });
 
     it('should log info messages', () => {
-        logger.info('Test Info', { key: 'value' });
+        logger.info('Test Info', 'TEST_CTX', { key: 'value' });
         // In test env, info might be suppressed by our logger logic ("Don't clutter test output")
         // Check implementation: if (process.env.NODE_ENV === 'test' && entry.level !== 'error') return;
         // So actually, it should NOT log.
@@ -42,7 +42,7 @@ describe('Logger', () => {
     it('should format entries correctly', () => {
         const error = new Error('Test Error');
         // We force an error log because that bypasses the test-env suppression
-        logger.error('Message', error, { meta: 'data' });
+        logger.error('Message', error, 'TEST_CTX', { meta: 'data' });
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             expect.stringContaining('[ERROR]'),

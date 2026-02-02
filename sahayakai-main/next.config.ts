@@ -25,8 +25,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
   experimental: {
+    serverComponentsExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
     serverActions: {
       bodySizeLimit: '25mb',
     },
