@@ -64,9 +64,9 @@ const avatarGeneratorFlow = ai.defineFlow(
 
     if (userId) {
       const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+      const timestamp = format(now, 'yyyyMMdd_HHmmss');
       const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.png`;
+      const fileName = `${timestamp}_${contentId}.png`;
       const filePath = `users/${userId}/avatars/${fileName}`;
 
       const storage = await getStorageInstance();
@@ -75,9 +75,14 @@ const avatarGeneratorFlow = ai.defineFlow(
       // Convert data URI to buffer
       const buffer = Buffer.from(media.url.split(',')[1], 'base64');
 
+      const downloadToken = uuidv4();
       await file.save(buffer, {
+        resumable: false,
         metadata: {
           contentType: 'image/png',
+          metadata: {
+            firebaseStorageDownloadTokens: downloadToken,
+          }
         },
       });
 

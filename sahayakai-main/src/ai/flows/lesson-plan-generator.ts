@@ -16,7 +16,7 @@ import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
-import { GRADE_LEVELS, LANGUAGES } from '@/types';
+import { GRADE_LEVELS, LANGUAGES } from '@/types/index';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
