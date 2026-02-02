@@ -16,10 +16,15 @@ import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
+import { GRADE_LEVELS, LANGUAGES } from '@/types';
+import { getStorageInstance } from '@/lib/firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
+
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
-  language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
-  gradeLevels: z.array(z.string()).optional().describe('The grade levels for the lesson plan.'),
+  language: z.enum([...LANGUAGES] as [string, ...string[]]).optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
+  gradeLevels: z.array(z.enum([...GRADE_LEVELS] as [string, ...string[]])).optional().describe('The grade levels for the lesson plan.'),
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
@@ -55,7 +60,7 @@ const LessonPlanOutputSchema = z.object({
     teacherTips: z.string().optional().describe('Crucial advice for the teacher on how to execute this specific activity effectively.'),
     understandingCheck: z.string().optional().describe('A quick question for the teacher to check if students followed this phase.'),
   })).describe('A list of structured activities following the 5E model.'),
-  assessment: z.string().describe('A description of the summative assessment method.'),
+  assessment: z.string().optional().describe('A description of the summative assessment method.'),
   homework: z.string().optional().describe('A relevant follow-up activity for home.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
@@ -104,6 +109,7 @@ You MUST organize the activities into the 5E Instructional Model:
 - **subject**: (e.g., "Science")
 - **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").
 - **understandingCheck**: A simple focus question for the teacher to ask at the end of each phase.
+- **Assessment**: A brief description of how to assess student learning at the end of the lesson.
 
 {{#if useRuralContext}}
 **INDIAN RURAL CONTEXT - CRITICAL:**
@@ -144,35 +150,72 @@ const lessonPlanFlow = ai.defineFlow(
     outputSchema: LessonPlanOutputSchema,
   },
   async input => {
-    const { output } = await lessonPlanPrompt(input);
+    const { logger } = await import('@/lib/logger');
+    const Sentry = await import('@sentry/nextjs');
 
-    if (!output) {
-      throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
-    }
-
-    /* if (input.userId) {
-      const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-      const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.json`;
-      const filePath = `users/${input.userId}/lesson-plans/${fileName}`;
-      const file = storage.bucket().file(filePath);
-
-      await file.save(JSON.stringify(output), {
-        contentType: 'application/json',
+    return Sentry.withServerActionInstrumentation('lessonPlanFlow', { recordResponse: true }, async () => {
+      // 1. AI Generation Phase
+      const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: input.topic });
+      const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
+        return await lessonPlanPrompt(input);
       });
+      genTimer.stop();
 
-      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
-        type: 'lesson-plan',
-        topic: input.topic,
-        gradeLevels: input.gradeLevels,
-        language: input.language,
-        storagePath: filePath,
-        createdAt: now,
-        isPublic: false,
-      });
-    } */
+      if (!output) {
+        throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
+      }
 
-    return output;
+      const userId = input.userId;
+      if (userId) {
+        await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
+          const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
+          const storage = await getStorageInstance();
+          const now = new Date();
+          const timestamp = format(now, 'yyyyMMdd_HHmmss');
+          const contentId = uuidv4();
+          const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+          const fileName = `${timestamp}_${safeTitle}.json`;
+          const filePath = `users/${userId}/lesson-plans/${fileName}`;
+          const file = storage.bucket().file(filePath);
+
+          const downloadToken = uuidv4();
+          await Sentry.startSpan({ name: 'GCP Storage Write', op: 'storage.write' }, async () => {
+            await file.save(JSON.stringify(output), {
+              resumable: false,
+              metadata: {
+                contentType: 'application/json',
+                metadata: {
+                  firebaseStorageDownloadTokens: downloadToken,
+                }
+              },
+            });
+          });
+
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
+            await dbAdapter.saveContent(userId, {
+              id: contentId,
+              type: 'lesson-plan',
+              title: output.title || `Lesson Plan: ${input.topic}`,
+              gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
+              subject: output.subject as any || 'Science',
+              topic: input.topic,
+              language: input.language as any || 'English',
+              storagePath: filePath,
+              isPublic: false,
+              isDraft: false,
+              createdAt: Timestamp.fromDate(now),
+              updatedAt: Timestamp.fromDate(now),
+              data: output,
+            });
+          });
+          persistTimer.stop();
+        });
+      }
+
+      return output;
+    });
   }
 );
