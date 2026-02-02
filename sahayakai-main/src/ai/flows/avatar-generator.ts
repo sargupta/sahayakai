@@ -38,7 +38,7 @@ const avatarGeneratorFlow = ai.defineFlow(
   async (input) => {
     const { name, userId } = input;
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-image',
+      model: 'googleai/gemini-2.0-flash',
       prompt: `
         You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
 

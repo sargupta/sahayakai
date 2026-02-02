@@ -58,7 +58,7 @@ const visualAidFlow = ai.defineFlow(
 
     // Step 1: Generate the Image
     const { media } = await ai.generate({
-      model: 'googleai/gemini-3-pro-image-preview',
+      model: 'googleai/gemini-2.0-flash',
       prompt: `
         Create a blackboard chalk-style educational illustration.
         Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
@@ -89,7 +89,7 @@ const visualAidFlow = ai.defineFlow(
     });
 
     const { output: textOutput } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-1.5-flash',
       output: { schema: MetadataSchema },
       prompt: `
         You are a master teacher.
