@@ -9,7 +9,7 @@
  * - LessonPlanOutput - The return type for the generateLessonPlan function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleSearch } from '../tools/google-search';
 import { getIndianContextPrompt } from '@/lib/indian-context';
@@ -18,7 +18,6 @@ import { validateTopicSafety } from '@/lib/safety';
 
 import { GRADE_LEVELS, LANGUAGES } from '@/types/index';
 import { getStorageInstance } from '@/lib/firebase-admin';
-import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
 const LessonPlanInputSchema = z.object({
@@ -157,7 +156,9 @@ const lessonPlanFlow = ai.defineFlow(
       // 1. AI Generation Phase
       const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: input.topic });
       const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
-        return await lessonPlanPrompt(input);
+        return await runResiliently(async (resilienceConfig) => {
+          return await lessonPlanPrompt(input, resilienceConfig);
+        });
       });
       genTimer.stop();
 
@@ -167,52 +168,57 @@ const lessonPlanFlow = ai.defineFlow(
 
       const userId = input.userId;
       if (userId) {
-        await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
-          const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
-          const storage = await getStorageInstance();
-          const now = new Date();
-          const timestamp = format(now, 'yyyyMMdd_HHmmss');
-          const contentId = uuidv4();
-          const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
-          const fileName = `${timestamp}_${safeTitle}.json`;
-          const filePath = `users/${userId}/lesson-plans/${fileName}`;
-          const file = storage.bucket().file(filePath);
+        try {
+          await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
+            const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
+            const storage = await getStorageInstance();
+            const now = new Date();
+            const timestamp = format(now, 'yyyyMMdd_HHmmss');
+            const contentId = crypto.randomUUID();
+            const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+            const fileName = `${timestamp}_${safeTitle}.json`;
+            const filePath = `users/${userId}/lesson-plans/${fileName}`;
+            const file = storage.bucket().file(filePath);
 
-          const downloadToken = uuidv4();
-          await Sentry.startSpan({ name: 'GCP Storage Write', op: 'storage.write' }, async () => {
-            await file.save(JSON.stringify(output), {
-              resumable: false,
-              metadata: {
-                contentType: 'application/json',
+            const downloadToken = crypto.randomUUID();
+            await Sentry.startSpan({ name: 'GCP Storage Write', op: 'storage.write' }, async () => {
+              await file.save(JSON.stringify(output), {
+                resumable: false,
                 metadata: {
-                  firebaseStorageDownloadTokens: downloadToken,
-                }
-              },
+                  contentType: 'application/json',
+                  metadata: {
+                    firebaseStorageDownloadTokens: downloadToken,
+                  }
+                },
+              });
             });
-          });
 
-          const { dbAdapter } = await import('@/lib/db/adapter');
-          const { Timestamp } = await import('firebase-admin/firestore');
+            const { dbAdapter } = await import('@/lib/db/adapter');
+            const { Timestamp } = await import('firebase-admin/firestore');
 
-          await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
-            await dbAdapter.saveContent(userId, {
-              id: contentId,
-              type: 'lesson-plan',
-              title: output.title || `Lesson Plan: ${input.topic}`,
-              gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
-              subject: output.subject as any || 'Science',
-              topic: input.topic,
-              language: input.language as any || 'English',
-              storagePath: filePath,
-              isPublic: false,
-              isDraft: false,
-              createdAt: Timestamp.fromDate(now),
-              updatedAt: Timestamp.fromDate(now),
-              data: output,
+            await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
+              await dbAdapter.saveContent(userId, {
+                id: contentId,
+                type: 'lesson-plan',
+                title: output.title || `Lesson Plan: ${input.topic}`,
+                gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
+                subject: output.subject as any || 'Science',
+                topic: input.topic,
+                language: input.language as any || 'English',
+                storagePath: filePath,
+                isPublic: false,
+                isDraft: false,
+                createdAt: Timestamp.fromDate(now),
+                updatedAt: Timestamp.fromDate(now),
+                data: output,
+              });
             });
+            persistTimer.stop();
           });
-          persistTimer.stop();
-        });
+        } catch (persistenceError) {
+          console.error("[Persistence Error] Failed to save lesson plan:", persistenceError);
+          // Non-blocking error
+        }
       }
 
       return output;

@@ -283,7 +283,17 @@ const translations: Record<string, Record<string, any>> = {
 };
 
 
+import { Suspense } from "react";
+
 export default function QuizGeneratorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <QuizGeneratorContent />
+    </Suspense>
+  );
+}
+
+function QuizGeneratorContent() {
   const [quiz, setQuiz] = useState<QuizGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

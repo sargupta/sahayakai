@@ -7,14 +7,14 @@ import { SAFETY_CONFIG } from './safety';
  * ONLY import this file in Server Components or Server Actions.
  */
 export async function checkServerRateLimit(userId: string): Promise<void> {
-    const { getDb } = await import('./firebase-admin');
-    const db = await getDb();
-
-    const limitRef = db.collection('rate_limits').doc(userId);
-    const now = Date.now();
-    const windowStart = now - SAFETY_CONFIG.WINDOW_MS;
-
     try {
+        const { getDb } = await import('./firebase-admin');
+        const db = await getDb();
+
+        const limitRef = db.collection('rate_limits').doc(userId);
+        const now = Date.now();
+        const windowStart = now - SAFETY_CONFIG.WINDOW_MS;
+
         const doc = await limitRef.get();
         let requests: number[] = [];
 
@@ -35,8 +35,10 @@ export async function checkServerRateLimit(userId: string): Promise<void> {
         await limitRef.set({ requests }, { merge: true });
 
     } catch (error: any) {
-        if (error.message.includes("Rate limit")) throw error;
-        // Fail open if DB error (don't block user due to infrastructure)
-        console.error("Rate limit check failed:", error);
+        // Re-throw if it's a legitimate rate limit error
+        if (error.message?.includes("Rate limit exceeded")) throw error;
+
+        // Fail open if anything else fails (init error, permission error, etc.)
+        console.error("[Rate Limit] Check failed (failing open):", error.message);
     }
 }

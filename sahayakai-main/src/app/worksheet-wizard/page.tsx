@@ -30,7 +30,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+import { Suspense } from "react";
+
 export default function WorksheetWizardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WorksheetWizardContent />
+    </Suspense>
+  );
+}
+
+function WorksheetWizardContent() {
   const [worksheet, setWorksheet] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

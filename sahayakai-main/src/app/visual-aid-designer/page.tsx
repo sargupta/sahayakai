@@ -29,7 +29,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+import { Suspense } from "react";
+
 export default function VisualAidDesignerPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VisualAidContent />
+    </Suspense>
+  );
+}
+
+function VisualAidContent() {
   const [imageData, setImageData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

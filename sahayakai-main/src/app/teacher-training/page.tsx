@@ -74,7 +74,17 @@ const placeholderTranslations: Record<string, string> = {
 };
 
 
+import { Suspense } from "react";
+
 export default function TeacherTrainingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TeacherTrainingContent />
+    </Suspense>
+  );
+}
+
+function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

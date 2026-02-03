@@ -7,19 +7,25 @@ import { getStorage } from 'firebase-admin/storage';
 let secretManager: any = null;
 
 async function getSecret(secretName: string): Promise<string> {
-  if (!secretManager) {
-    const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
-    secretManager = new SecretManagerServiceClient();
-  }
+  try {
+    if (!secretManager) {
+      const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
+      secretManager = new SecretManagerServiceClient();
+    }
 
-  const [version] = await secretManager.accessSecretVersion({
-    name: `projects/sahayakai-b4248/secrets/${secretName}/versions/latest`,
-  });
-  const payload = version.payload?.data?.toString();
-  if (!payload) {
-    throw new Error(`Secret ${secretName} has no payload.`);
+    const [version] = await secretManager.accessSecretVersion({
+      name: `projects/sahayakai-b4248/secrets/${secretName}/versions/latest`,
+    });
+    const payload = version.payload?.data?.toString();
+    if (!payload) {
+      throw new Error(`Secret ${secretName} has no payload.`);
+    }
+    return payload;
+  } catch (error: any) {
+    // If we can't load credentials, or secret doesn't exist, we log and throw a clean error
+    console.warn(`[getSecret] Could not fetch ${secretName}: ${error.message}`);
+    throw error;
   }
-  return payload;
 }
 
 let firebaseInitialized = false;
@@ -33,8 +39,12 @@ export async function initializeFirebase() {
       if (!serviceAccountString) {
         try {
           serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY');
-        } catch (secretError) {
-          console.warn("Details: Failed to fetch from Secret Manager. Ensure you have GCP credentials or a local .env file.");
+        } catch (secretError: any) {
+          if (secretError.message?.includes('Could not load the default credentials')) {
+            console.warn("Details: Failed to load default credentials for Secret Manager.");
+          }
+          // If we can't get the service account, we can't initialize Admin SDK.
+          // This is a terminal error for DB-related features.
           throw secretError;
         }
       }
@@ -45,8 +55,15 @@ export async function initializeFirebase() {
 
       const serviceAccount = JSON.parse(serviceAccountString);
 
-      // Environment variable > Secret Manager for API Key too
-      process.env.GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || await getSecret('GOOGLE_API_KEY').catch(() => "");
+      // Align with Maintenance Guide: Use GOOGLE_GENAI_API_KEY
+      if (!process.env.GOOGLE_GENAI_API_KEY) {
+        try {
+          process.env.GOOGLE_GENAI_API_KEY = await getSecret('GOOGLE_GENAI_API_KEY');
+        } catch (e) {
+          // Fallback to legacy name if new name fails
+          process.env.GOOGLE_GENAI_API_KEY = await getSecret('GOOGLE_API_KEY').catch(() => "");
+        }
+      }
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -54,9 +71,8 @@ export async function initializeFirebase() {
       });
       firebaseInitialized = true;
     } catch (error: any) {
-      console.error('Firebase admin initialization error:', error);
-      // We must throw here or let the subsequent checks fail. 
-      // Throwing here is better to understand WHY it failed during init.
+      console.error('Firebase admin initialization error:', error.message);
+      // We throw a descriptive error so the caller can handle it or report it.
       throw new Error(`Firebase Init Failed: ${error.message}`);
     }
   }

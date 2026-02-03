@@ -215,7 +215,17 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 
+import { Suspense } from "react";
+
 export default function RubricGeneratorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RubricGeneratorContent />
+    </Suspense>
+  );
+}
+
+function RubricGeneratorContent() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

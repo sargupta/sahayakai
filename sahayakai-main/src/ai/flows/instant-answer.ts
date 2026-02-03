@@ -8,17 +8,19 @@
  * - InstantAnswerOutput - The return type for the instantAnswer function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai, runResiliently } from '@/ai/genkit';
+import { z } from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
-import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+
+import { validateTopicSafety } from '@/lib/safety';
+import { GRADE_LEVELS, LANGUAGES } from '@/types';
 
 const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
-  language: z.string().optional().describe('The language for the answer.'),
-  gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
+  language: z.enum([...LANGUAGES] as [string, ...string[]]).optional().describe('The language for the answer.'),
+  gradeLevel: z.enum([...GRADE_LEVELS] as [string, ...string[]]).optional().describe('The grade level the answer should be tailored for.'),
   userId: z.string().optional().describe('The ID of the user for whom the answer is being generated.'),
 });
 export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
@@ -30,13 +32,24 @@ const InstantAnswerOutputSchema = z.object({
 export type InstantAnswerOutput = z.infer<typeof InstantAnswerOutputSchema>;
 
 export async function instantAnswer(input: InstantAnswerInput): Promise<InstantAnswerOutput> {
+  // 1. Safety Check
+  const safety = validateTopicSafety(input.question);
+  if (!safety.safe) throw new Error(`Safety Violation: ${safety.reason}`);
+
+  // 2. Rate Limit
+  const uid = input.userId || 'anonymous_user';
+  if (uid !== 'anonymous_user') {
+    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    await checkServerRateLimit(uid);
+  }
+
   return instantAnswerFlow(input);
 }
 
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
-  input: {schema: InstantAnswerInputSchema},
-  output: {schema: InstantAnswerOutputSchema},
+  input: { schema: InstantAnswerInputSchema },
+  output: { schema: InstantAnswerOutputSchema },
   tools: [googleSearch],
   prompt: `You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
 
@@ -45,7 +58,7 @@ const instantAnswerPrompt = ai.definePrompt({
 2.  **Tailor the Answer:** Adjust the complexity and vocabulary of your answer based on the provided \`gradeLevel\`. If no grade level is given, answer for a general audience.
 3.  **Language:** Respond in the specified \`language\`.
 4.  **Analogies:** For complex topics, use simple analogies, especially for younger grade levels.
-5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, use the \`googleSearch\` tool to find a relevant educational video on YouTube and include the URL in the \`videoSuggestionUrl\` field. Otherwise, leave it blank.
+5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, provide a YouTube Search URL in the \`videoSuggestionUrl\` field. The format MUST be: \`https://www.youtube.com/results?search_query=\` followed by a concise, relevant search query (e.g., "photosynthesis for class 5"). Do NOT try to guess a specific video ID (like watch?v=xyz) as it might be fake. Always use the search results URL.
 6.  **Be Direct:** Provide the answer directly without conversational filler.
 
 **User's Question:**
@@ -62,36 +75,58 @@ const instantAnswerFlow = ai.defineFlow(
     outputSchema: InstantAnswerOutputSchema,
   },
   async input => {
-    const {output} = await instantAnswerPrompt(input);
+    const { output } = await runResiliently(async (resilienceConfig) => {
+      return await instantAnswerPrompt(input, resilienceConfig);
+    });
 
     if (!output) {
       throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
     }
 
     if (input.userId) {
-      const storage = await getStorageInstance();
-      const db = await getDb();
+      try {
+        const storage = await getStorageInstance();
+        const now = new Date();
+        const timestamp = format(now, 'yyyyMMdd_HHmmss');
+        const contentId = crypto.randomUUID();
+        const safeTitle = input.question.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+        const fileName = `${timestamp}_${safeTitle}.json`;
+        const filePath = `users/${input.userId}/instant-answers/${fileName}`;
+        const file = storage.bucket().file(filePath);
 
-      const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-      const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.json`;
-      const filePath = `users/${input.userId}/instant-answers/${fileName}`;
-      const file = storage.bucket().file(filePath);
+        const downloadToken = crypto.randomUUID();
+        await file.save(JSON.stringify(output), {
+          resumable: false,
+          metadata: {
+            contentType: 'application/json',
+            metadata: {
+              firebaseStorageDownloadTokens: downloadToken,
+            }
+          },
+        });
 
-      await file.save(JSON.stringify(output), {
-        contentType: 'application/json',
-      });
+        const { dbAdapter } = await import('@/lib/db/adapter');
+        const { Timestamp } = await import('firebase-admin/firestore');
 
-      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
-        type: 'instant-answer',
-        topic: input.question,
-        gradeLevels: [input.gradeLevel],
-        language: input.language,
-        storagePath: filePath,
-        createdAt: now,
-        isPublic: false,
-      });
+        await dbAdapter.saveContent(input.userId, {
+          id: contentId,
+          type: 'instant-answer',
+          title: input.question,
+          gradeLevel: input.gradeLevel as any || 'Class 5',
+          subject: 'General', // Instant answer can be anything
+          topic: input.question,
+          language: input.language as any || 'English',
+          storagePath: filePath,
+          isPublic: false,
+          isDraft: false,
+          createdAt: Timestamp.fromDate(now),
+          updatedAt: Timestamp.fromDate(now),
+          data: output,
+        });
+      } catch (persistenceError) {
+        console.error("[Persistence Error] Failed to save instant answer:", persistenceError);
+        // We don't throw here, so the user still gets the answer
+      }
     }
 
     return output;

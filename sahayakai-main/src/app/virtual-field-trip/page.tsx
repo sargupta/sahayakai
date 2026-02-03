@@ -28,7 +28,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+import { Suspense } from "react";
+
 export default function VirtualFieldTripPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VirtualFieldTripContent />
+    </Suspense>
+  );
+}
+
+function VirtualFieldTripContent() {
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
