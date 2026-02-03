@@ -7,11 +7,11 @@
 # It deploys the current source code directly to Cloud Run
 # as a SEPARATE service ("shadow"), ensuring NO IMPACT on production.
 
-SERVICE_NAME="sahayak-shadow-manual"
+SERVICE_NAME="sahayakai-hotfix-resilience"
 REGION="asia-southeast1" # Matching your existing region
 PROJECT_ID="sahayakai-b4248"
 
-echo "🚀 Starting Manual Shadow Deployment to Cloud Run..."
+echo "🚀 Starting Manual Hotfix Deployment to Cloud Run..."
 echo "Service: $SERVICE_NAME"
 echo "Project: $PROJECT_ID"
 echo "Region:  $REGION"
@@ -19,7 +19,7 @@ echo "---------------------------------------------------"
 
 # 1. Deploy directly from source (uses Google Cloud Buildpacks)
 # We map the secrets from Secret Manager to Environment Variables
-gcloud run deploy "$SERVICE_NAME" \
+/Users/sargupta/google-cloud-sdk/bin/gcloud run deploy "$SERVICE_NAME" \
   --source . \
   --project "$PROJECT_ID" \
   --region "$REGION" \

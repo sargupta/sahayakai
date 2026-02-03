@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Profiles: Everyone can read, only owner can write
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    // Posts: Everyone can read public posts, only author can write
+    match /posts/{postId} {
+      allow read: if resource.data.visibility == 'public' || isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      
+      // Sub-collections: Interactions
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+      
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    // Connections: Followers/Following
+    match /connections/{connectionId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+    }
+  }
+}

@@ -42,25 +42,25 @@ export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
 const LessonPlanOutputSchema = z.object({
   title: z.string().describe('A concise and engaging title for the lesson plan.'),
-  gradeLevel: z.string().optional().describe('The grade level for this lesson (e.g., "5th Grade").'),
-  duration: z.string().optional().describe('The total estimated duration for the lesson (e.g., "45 minutes").'),
-  subject: z.string().optional().describe('The subject area (e.g., "Science", "Mathematics", "Social Studies").'),
+  gradeLevel: z.string().nullable().optional().describe('The grade level for this lesson (e.g., "5th Grade").'),
+  duration: z.string().nullable().optional().describe('The total estimated duration for the lesson (e.g., "45 minutes").'),
+  subject: z.string().nullable().optional().describe('The subject area (e.g., "Science", "Mathematics", "Social Studies").'),
   objectives: z.array(z.string()).describe('A list of clear, measurable learning objectives (e.g., "SWBAT identify...").'),
   keyVocabulary: z.array(z.object({
     term: z.string(),
     meaning: z.string().describe('A simple, student-friendly definition.'),
-  })).optional().describe('Key terms with meanings.'),
+  })).nullable().optional().describe('Key terms with meanings.'),
   materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
   activities: z.array(z.object({
     phase: z.enum(['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate']).describe('The 5E model phase.'),
     name: z.string().describe('The name of the activity.'),
     description: z.string().describe('A detailed description of the activity.'),
     duration: z.string().describe('The estimated duration (e.g., "15 minutes").'),
-    teacherTips: z.string().optional().describe('Crucial advice for the teacher on how to execute this specific activity effectively.'),
-    understandingCheck: z.string().optional().describe('A quick question for the teacher to check if students followed this phase.'),
+    teacherTips: z.string().nullable().optional().describe('Crucial advice for the teacher on how to execute this specific activity effectively.'),
+    understandingCheck: z.string().nullable().optional().describe('A quick question for the teacher to check if students followed this phase.'),
   })).describe('A list of structured activities following the 5E model.'),
-  assessment: z.string().optional().describe('A description of the summative assessment method.'),
-  homework: z.string().optional().describe('A relevant follow-up activity for home.'),
+  assessment: z.string().nullable().optional().describe('A description of the summative assessment method.'),
+  homework: z.string().nullable().optional().describe('A relevant follow-up activity for home.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
