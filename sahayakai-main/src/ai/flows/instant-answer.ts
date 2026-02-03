@@ -27,7 +27,7 @@ export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
 
 const InstantAnswerOutputSchema = z.object({
   answer: z.string().describe('The generated answer to the question.'),
-  videoSuggestionUrl: z.string().optional().describe('A URL to a relevant YouTube video.'),
+  videoSuggestionUrl: z.string().nullable().optional().describe('A URL to a relevant YouTube video.'),
 });
 export type InstantAnswerOutput = z.infer<typeof InstantAnswerOutputSchema>;
 
@@ -83,6 +83,12 @@ const instantAnswerFlow = ai.defineFlow(
       throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
     }
 
+    // Validate and sanitize output to ensure it matches schema
+    const sanitizedOutput: InstantAnswerOutput = {
+      answer: output.answer || 'Unable to generate an answer at this time.',
+      videoSuggestionUrl: output.videoSuggestionUrl || null,
+    };
+
     if (input.userId) {
       try {
         const storage = await getStorageInstance();
@@ -95,7 +101,7 @@ const instantAnswerFlow = ai.defineFlow(
         const file = storage.bucket().file(filePath);
 
         const downloadToken = crypto.randomUUID();
-        await file.save(JSON.stringify(output), {
+        await file.save(JSON.stringify(sanitizedOutput), {
           resumable: false,
           metadata: {
             contentType: 'application/json',
@@ -121,7 +127,7 @@ const instantAnswerFlow = ai.defineFlow(
           isDraft: false,
           createdAt: Timestamp.fromDate(now),
           updatedAt: Timestamp.fromDate(now),
-          data: output,
+          data: sanitizedOutput,
         });
       } catch (persistenceError) {
         console.error("[Persistence Error] Failed to save instant answer:", persistenceError);
@@ -129,6 +135,6 @@ const instantAnswerFlow = ai.defineFlow(
       }
     }
 
-    return output;
+    return sanitizedOutput;
   }
 );
