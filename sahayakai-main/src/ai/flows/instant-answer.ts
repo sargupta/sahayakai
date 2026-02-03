@@ -75,66 +75,114 @@ const instantAnswerFlow = ai.defineFlow(
     outputSchema: InstantAnswerOutputSchema,
   },
   async input => {
-    const { output } = await runResiliently(async (resilienceConfig) => {
-      return await instantAnswerPrompt(input, resilienceConfig);
-    });
+    try {
+      console.log('[Instant Answer Flow] Starting execution', {
+        timestamp: new Date().toISOString(),
+        hasQuestion: !!input.question,
+        questionLength: input.question?.length,
+        language: input.language,
+        gradeLevel: input.gradeLevel
+      });
 
-    if (!output) {
-      throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
-    }
+      const { output } = await runResiliently(async (resilienceConfig) => {
+        return await instantAnswerPrompt(input, resilienceConfig);
+      });
 
-    // Validate and sanitize output to ensure it matches schema
-    const sanitizedOutput: InstantAnswerOutput = {
-      answer: output.answer || 'Unable to generate an answer at this time.',
-      videoSuggestionUrl: output.videoSuggestionUrl || null,
-    };
+      // LOG THE RAW OUTPUT - This is critical for debugging schema issues
+      console.log('[Instant Answer Flow] Raw AI output received', {
+        timestamp: new Date().toISOString(),
+        outputExists: !!output,
+        outputType: typeof output,
+        outputKeys: output ? Object.keys(output) : [],
+        outputAnswerType: output?.answer ? typeof output.answer : 'missing',
+        outputVideoType: output?.videoSuggestionUrl ? typeof output.videoSuggestionUrl : 'missing',
+        rawOutput: JSON.stringify(output, null, 2)
+      });
 
-    if (input.userId) {
-      try {
-        const storage = await getStorageInstance();
-        const now = new Date();
-        const timestamp = format(now, 'yyyyMMdd_HHmmss');
-        const contentId = crypto.randomUUID();
-        const safeTitle = input.question.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
-        const fileName = `${timestamp}_${safeTitle}.json`;
-        const filePath = `users/${input.userId}/instant-answers/${fileName}`;
-        const file = storage.bucket().file(filePath);
-
-        const downloadToken = crypto.randomUUID();
-        await file.save(JSON.stringify(sanitizedOutput), {
-          resumable: false,
-          metadata: {
-            contentType: 'application/json',
-            metadata: {
-              firebaseStorageDownloadTokens: downloadToken,
-            }
-          },
-        });
-
-        const { dbAdapter } = await import('@/lib/db/adapter');
-        const { Timestamp } = await import('firebase-admin/firestore');
-
-        await dbAdapter.saveContent(input.userId, {
-          id: contentId,
-          type: 'instant-answer',
-          title: input.question,
-          gradeLevel: input.gradeLevel as any || 'Class 5',
-          subject: 'General', // Instant answer can be anything
-          topic: input.question,
-          language: input.language as any || 'English',
-          storagePath: filePath,
-          isPublic: false,
-          isDraft: false,
-          createdAt: Timestamp.fromDate(now),
-          updatedAt: Timestamp.fromDate(now),
-          data: sanitizedOutput,
-        });
-      } catch (persistenceError) {
-        console.error("[Persistence Error] Failed to save instant answer:", persistenceError);
-        // We don't throw here, so the user still gets the answer
+      if (!output) {
+        throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
       }
-    }
 
-    return sanitizedOutput;
-  }
-);
+      // Validate and sanitize output to ensure it matches schema
+      const sanitizedOutput: InstantAnswerOutput = {
+        answer: output.answer || 'Unable to generate an answer at this time.',
+        videoSuggestionUrl: output.videoSuggestionUrl || null,
+      };
+
+      console.log('[Instant Answer Flow] Output sanitized successfully', {
+        timestamp: new Date().toISOString(),
+        hasAnswer: !!sanitizedOutput.answer,
+        hasVideo: !!sanitizedOutput.videoSuggestionUrl
+      });
+
+      if (input.userId) {
+        try {
+          const storage = await getStorageInstance();
+          const now = new Date();
+          const timestamp = format(now, 'yyyyMMdd_HHmmss');
+          const contentId = crypto.randomUUID();
+          const safeTitle = input.question.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+          const fileName = `${timestamp}_${safeTitle}.json`;
+          const filePath = `users/${input.userId}/instant-answers/${fileName}`;
+          const file = storage.bucket().file(filePath);
+
+          const downloadToken = crypto.randomUUID();
+          await file.save(JSON.stringify(sanitizedOutput), {
+            resumable: false,
+            metadata: {
+              contentType: 'application/json',
+              metadata: {
+                firebaseStorageDownloadTokens: downloadToken,
+              }
+            },
+          });
+
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
+            type: 'instant-answer',
+            title: input.question,
+            gradeLevel: input.gradeLevel as any || 'Class 5',
+            subject: 'General', // Instant answer can be anything
+            topic: input.question,
+            language: input.language as any || 'English',
+            storagePath: filePath,
+            isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: sanitizedOutput,
+          });
+        } catch (persistenceError) {
+          console.error("[Persistence Error] Failed to save instant answer:", persistenceError);
+          // We don't throw here, so the user still gets the answer
+        }
+      }
+
+      return sanitizedOutput;
+    } catch (flowError: any) {
+      // CRITICAL ERROR LOGGING - Capture flow execution failures
+      console.error('[Instant Answer Flow] EXECUTION FAILED', {
+        timestamp: new Date().toISOString(),
+        errorType: flowError.constructor?.name || 'Unknown',
+        errorName: flowError.name,
+        errorMessage: flowError.message,
+        errorCode: flowError.code,
+        errorStatus: flowError.status,
+        errorDetail: flowError.detail,
+        parseErrors: flowError.detail?.parseErrors,
+        errorStack: flowError.stack,
+        input: {
+          question: input.question,
+          language: input.language,
+          gradeLevel: input.gradeLevel
+        },
+        fullError: JSON.stringify(flowError, Object.getOwnPropertyNames(flowError), 2)
+      });
+
+      // Re-throw to propagate the error
+      throw flowError;
+    }
+  });

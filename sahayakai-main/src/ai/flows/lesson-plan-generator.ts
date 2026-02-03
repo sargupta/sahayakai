@@ -162,6 +162,19 @@ const lessonPlanFlow = ai.defineFlow(
       });
       genTimer.stop();
 
+      // LOG THE RAW OUTPUT - Critical for debugging schema issues
+      console.log('[Lesson Plan Flow] Raw AI output received', {
+        timestamp: new Date().toISOString(),
+        outputExists: !!output,
+        outputType: typeof output,
+        outputKeys: output ? Object.keys(output) : [],
+        hasTitle: !!output?.title,
+        hasObjectives: !!output?.objectives,
+        hasActivities: !!output?.activities,
+        activitiesCount: output?.activities?.length,
+        rawOutput: JSON.stringify(output, null, 2)
+      });
+
       if (!output) {
         throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
       }

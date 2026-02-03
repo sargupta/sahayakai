@@ -46,6 +46,27 @@ export async function runResiliently<T>(fn: (overrideConfig: { config: { apiKey?
     } catch (error: any) {
       lastError = error;
 
+      // COMPREHENSIVE ERROR LOGGING - Capture ALL error details
+      console.error('[AI Resilience Error - Full Details]', {
+        timestamp: new Date().toISOString(),
+        keyIndex: currentIndex,
+        attemptNumber: i + 1,
+        maxAttempts,
+        errorType: error.constructor?.name || 'Unknown',
+        errorName: error.name,
+        errorMessage: error.message,
+        errorCode: error.code,
+        errorStatus: error.status,
+        // CRITICAL: Genkit puts schema validation details here
+        errorDetail: error.detail,
+        parseErrors: error.detail?.parseErrors,
+        validationErrors: error.detail?.validationErrors,
+        // Full stack trace
+        errorStack: error.stack,
+        // Serialize the entire error object to catch any hidden properties
+        fullErrorObject: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      });
+
       const status = error.status ||
         (error.message?.includes('429') ? 429 :
           error.message?.includes('401') ? 401 : null);
@@ -56,6 +77,7 @@ export async function runResiliently<T>(fn: (overrideConfig: { config: { apiKey?
       }
 
       // For safety filters, bad requests, or other logic errors, don't retry with a new key
+      console.error('[AI Resilience] Non-retryable error encountered. Throwing immediately.');
       throw error;
     }
   }
