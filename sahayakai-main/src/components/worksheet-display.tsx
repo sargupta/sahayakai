@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from './ui/button';
 import { Download, Copy, FileText, Printer, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { useToast } from '@/hooks/use-toast';
 
 import jsPDF from 'jspdf';
@@ -27,60 +30,24 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
         });
     };
 
-    const handleDownload = async () => {
-        const input = document.getElementById('worksheet-pdf');
-        if (input) {
-            try {
-                const canvas = await html2canvas(input, {
-                    scale: 1.5,
-                    useCORS: true
-                });
-                const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const canvasWidth = canvas.width;
-                const canvasHeight = canvas.height;
-                const ratio = canvasWidth / canvasHeight;
-                let width = pdfWidth;
-                let height = width / ratio;
-                if (height > pdfHeight) {
-                    height = pdfHeight;
-                    width = height * ratio;
-                }
+    const handleDownload = () => {
+        // Better Naming for PDF
+        const originalTitle = document.title;
+        const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
+        const filename = `Sahayak_Worksheet_${cleanTitle}`;
 
-                pdf.addImage(imgData, 'JPEG', 0, 0, width, height);
-                const now = new Date();
-                const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
-                const filename = `${timestamp}_${cleanTitle}.pdf`;
+        document.title = filename; // Sets the default filename in Print Dialog
+        window.print();
 
-                // Save locally
-                pdf.save(filename);
+        // Restore title after a small delay
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 1000);
 
-                // Record to storage
-                const { recordPdfDownload } = await import('@/app/actions/content');
-                const userId = 'user-123'; // TO DO: Get from Auth
-                const pdfBase64 = pdf.output('datauristring');
-                const result = await recordPdfDownload(userId, title || 'Worksheet', pdfBase64, 'worksheet');
-
-                if (result.success) {
-                    toast({
-                        title: "PDF Saved to Library",
-                        description: "A copy of this worksheet has been saved to your Cloud Storage.",
-                    });
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                console.error("PDF Error:", error);
-                toast({
-                    title: "Download Recorded Locally",
-                    description: "PDF downloaded, but could not sync to Cloud Storage.",
-                    variant: "destructive"
-                });
-            }
-        }
+        toast({
+            title: "Print to PDF",
+            description: "Select 'Save as PDF'. Your worksheet is optimized for high quality.",
+        });
     };
 
     const handleSave = async () => {
@@ -136,7 +103,12 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 </div>
             </CardHeader>
             <CardContent className="p-8 prose prose-slate max-w-none prose-headings:font-headline prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl">
-                <ReactMarkdown>{worksheet.worksheetContent}</ReactMarkdown>
+                <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                >
+                    {worksheet.worksheetContent}
+                </ReactMarkdown>
             </CardContent>
         </Card>
     );

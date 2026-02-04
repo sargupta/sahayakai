@@ -22,44 +22,24 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const { toast } = useToast();
 
-  const handleDownload = async () => {
-    const quizElement = document.getElementById('quiz-sheet');
-    const answersElement = document.getElementById('answer-key-sheet');
+  const handleDownload = () => {
+    // Better Naming for PDF
+    const originalTitle = document.title;
+    const cleanTitle = (quiz.title || 'Quiz').replace(/[^a-z0-9]/gi, '_');
+    const filename = `Sahayak_Quiz_${cleanTitle}`;
 
-    if (quizElement && answersElement) {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+    document.title = filename; // Sets the default filename in Print Dialog
+    window.print();
 
-      // --- Process Quiz Sheet ---
-      const quizCanvas = await html2canvas(quizElement, { scale: 2 });
-      const quizImgData = quizCanvas.toDataURL('image/png');
-      const quizCanvasRatio = quizCanvas.width / quizCanvas.height;
-      let quizPdfWidth = pdfWidth - 20;
-      let quizPdfHeight = quizPdfWidth / quizCanvasRatio;
-      if (quizPdfHeight > pdfHeight - 20) {
-        quizPdfHeight = pdfHeight - 20;
-        quizPdfWidth = quizPdfHeight * quizCanvasRatio;
-      }
-      pdf.text(quiz.title, 10, 10);
-      pdf.addImage(quizImgData, 'PNG', 10, 20, quizPdfWidth, quizPdfHeight);
+    // Restore title after a small delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
 
-      // --- Process Answer Key Sheet ---
-      pdf.addPage();
-      const answersCanvas = await html2canvas(answersElement, { scale: 2 });
-      const answersImgData = answersCanvas.toDataURL('image/png');
-      const answersCanvasRatio = answersCanvas.width / answersCanvas.height;
-      let answersPdfWidth = pdfWidth - 20;
-      let answersPdfHeight = answersPdfWidth / answersCanvasRatio;
-      if (answersPdfHeight > pdfHeight - 20) {
-        answersPdfHeight = pdfHeight - 20;
-        answersPdfWidth = answersPdfHeight * answersCanvasRatio;
-      }
-      pdf.text("Answer Key", 10, 10);
-      pdf.addImage(answersImgData, 'PNG', 10, 20, answersPdfWidth, answersPdfHeight);
-
-      pdf.save(`${quiz.title.replace(/\s/g, '_')}_quiz.pdf`);
-    }
+    toast({
+      title: "Print to PDF",
+      description: "Select 'Save as PDF'. Both the quiz and answer key are included.",
+    });
   };
 
   const handleSave = () => {

@@ -103,12 +103,15 @@ function TeacherTrainingContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const questionParam = searchParams.get("question");
+    // Router sends 'topic', internal links might use 'question'
+    const questionParam = searchParams.get("question") || searchParams.get("topic");
+
     if (questionParam) {
       form.setValue("question", questionParam);
+      // Determine intent: if it's a direct handoff, trigger submit
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 100);
     }
   }, [searchParams, form]);
 

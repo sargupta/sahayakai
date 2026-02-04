@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Download, Images, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSearchParams } from "next/navigation";
@@ -56,13 +56,22 @@ function VisualAidContent() {
   const selectedLanguage = form.watch("language") || 'en';
   const searchParams = useSearchParams();
 
+  // Ref to prevent double-submission in StrictMode or re-renders
+  const hasAutoSubmitted = useRef(false);
+
   useEffect(() => {
-    const promptParam = searchParams.get("prompt");
-    if (promptParam) {
+    // Router sends 'topic', internal links might use 'prompt'
+    const promptParam = searchParams.get("prompt") || searchParams.get("topic");
+
+    if (promptParam && !hasAutoSubmitted.current) {
       form.setValue("prompt", promptParam);
+      hasAutoSubmitted.current = true;
+
+      // Determine intent: if it's a direct handoff, trigger submit
+      // Use a small delay to ensure form state is ready
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 100);
     }
   }, [searchParams, form]);
 

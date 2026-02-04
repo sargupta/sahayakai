@@ -72,7 +72,9 @@ export async function runResiliently<T>(fn: (overrideConfig: { config: { apiKey?
           error.message?.includes('401') ? 401 : null);
 
       if (status === 429 || status === 401) {
-        console.warn(`[AI Resilience] Failover triggered: Key ${currentIndex} failed with ${status}. Retrying with next key...`);
+        const delay = 1000 * Math.pow(2, i); // Exponential backoff: 1s, 2s, 4s
+        console.warn(`[AI Resilience] Failover triggered: Key ${currentIndex} failed with ${status}. Waiting ${delay}ms before retrying with next key...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
 

@@ -22,8 +22,8 @@ import { format } from 'date-fns';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
-  language: z.enum([...LANGUAGES] as [string, ...string[]]).optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
-  gradeLevels: z.array(z.enum([...GRADE_LEVELS] as [string, ...string[]])).optional().describe('The grade levels for the lesson plan.'),
+  language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
+  gradeLevels: z.array(z.string()).optional().describe('The grade levels for the lesson plan.'),
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
@@ -38,6 +38,31 @@ const LessonPlanInputSchema = z.object({
   resourceLevel: z.enum(['low', 'medium', 'high']).optional().describe('The level of resources available in the classroom. low=chalk&talk, medium=basic aids, high=tech enabled. Defaults to low.'),
   difficultyLevel: z.enum(['remedial', 'standard', 'advanced']).optional().describe('The difficulty level for the lesson content. remedial=simplified, standard=grade-level, advanced=challenging. Defaults to standard.'),
 });
+
+function normalizeInput(input: LessonPlanInput): LessonPlanInput {
+  let { language, gradeLevels } = input;
+
+  if (language) {
+    const langMap: Record<string, string> = {
+      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
+      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
+    };
+    language = langMap[language.toLowerCase()] || language;
+  }
+
+  if (gradeLevels?.length) {
+    gradeLevels = gradeLevels.map(g => {
+      const match = g.match(/(\d+)/);
+      if (match) return `Class ${match[1]}`;
+      if (g.toLowerCase().includes('nursery')) return 'Nursery';
+      if (g.toLowerCase().includes('lkg')) return 'LKG';
+      if (g.toLowerCase().includes('ukg')) return 'UKG';
+      return g;
+    });
+  }
+
+  return { ...input, language, gradeLevels };
+}
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
 
 const LessonPlanOutputSchema = z.object({
@@ -149,92 +174,190 @@ const lessonPlanFlow = ai.defineFlow(
     outputSchema: LessonPlanOutputSchema,
   },
   async input => {
-    const { logger } = await import('@/lib/logger');
+    const { logger } = await import('@/lib/logger'); // Keep old logger if needed for timers, or migrate? Sentry is here.
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
     const Sentry = await import('@sentry/nextjs');
+    const { v4: uuidv4 } = await import('uuid');
 
     return Sentry.withServerActionInstrumentation('lessonPlanFlow', { recordResponse: true }, async () => {
-      // 1. AI Generation Phase
-      const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: input.topic });
-      const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
-        return await runResiliently(async (resilienceConfig) => {
-          return await lessonPlanPrompt(input, resilienceConfig);
+      const requestId = uuidv4();
+      const startTime = Date.now();
+
+      const normalizedInput = normalizeInput(input);
+
+      try {
+        StructuredLogger.info('Starting lesson plan generation flow', {
+          service: 'lesson-plan-flow',
+          operation: 'generateLessonPlan',
+          userId: normalizedInput.userId,
+          requestId,
+          input: {
+            topic: normalizedInput.topic,
+            language: normalizedInput.language,
+            gradeLevels: normalizedInput.gradeLevels,
+            resourceLevel: normalizedInput.resourceLevel
+          }
         });
-      });
-      genTimer.stop();
 
-      // LOG THE RAW OUTPUT - Critical for debugging schema issues
-      console.log('[Lesson Plan Flow] Raw AI output received', {
-        timestamp: new Date().toISOString(),
-        outputExists: !!output,
-        outputType: typeof output,
-        outputKeys: output ? Object.keys(output) : [],
-        hasTitle: !!output?.title,
-        hasObjectives: !!output?.objectives,
-        hasActivities: !!output?.activities,
-        activitiesCount: output?.activities?.length,
-        rawOutput: JSON.stringify(output, null, 2)
-      });
+        // 1. AI Generation Phase
+        const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: normalizedInput.topic }); // Legacy logger
 
-      if (!output) {
-        throw new Error("The AI model failed to generate a valid lesson plan. The returned output was null.");
-      }
-
-      const userId = input.userId;
-      if (userId) {
-        try {
-          await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
-            const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
-            const storage = await getStorageInstance();
-            const now = new Date();
-            const timestamp = format(now, 'yyyyMMdd_HHmmss');
-            const contentId = crypto.randomUUID();
-            const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
-            const fileName = `${timestamp}_${safeTitle}.json`;
-            const filePath = `users/${userId}/lesson-plans/${fileName}`;
-            const file = storage.bucket().file(filePath);
-
-            const downloadToken = crypto.randomUUID();
-            await Sentry.startSpan({ name: 'GCP Storage Write', op: 'storage.write' }, async () => {
-              await file.save(JSON.stringify(output), {
-                resumable: false,
-                metadata: {
-                  contentType: 'application/json',
-                  metadata: {
-                    firebaseStorageDownloadTokens: downloadToken,
-                  }
-                },
-              });
-            });
-
-            const { dbAdapter } = await import('@/lib/db/adapter');
-            const { Timestamp } = await import('firebase-admin/firestore');
-
-            await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
-              await dbAdapter.saveContent(userId, {
-                id: contentId,
-                type: 'lesson-plan',
-                title: output.title || `Lesson Plan: ${input.topic}`,
-                gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
-                subject: output.subject as any || 'Science',
-                topic: input.topic,
-                language: input.language as any || 'English',
-                storagePath: filePath,
-                isPublic: false,
-                isDraft: false,
-                createdAt: Timestamp.fromDate(now),
-                updatedAt: Timestamp.fromDate(now),
-                data: output,
-              });
-            });
-            persistTimer.stop();
+        const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
+          return await runResiliently(async (resilienceConfig) => {
+            return await lessonPlanPrompt(normalizedInput, resilienceConfig);
           });
-        } catch (persistenceError) {
-          console.error("[Persistence Error] Failed to save lesson plan:", persistenceError);
-          // Non-blocking error
-        }
-      }
+        });
+        genTimer.stop();
 
-      return output;
+        if (!output) {
+          throw new FlowExecutionError(
+            'AI model returned null output',
+            {
+              modelUsed: 'gemini-2.0-flash',
+              input: input.topic
+            }
+          );
+        }
+
+        // Validate schema explicitly to catch issues early and with detail
+        try {
+          LessonPlanOutputSchema.parse(output);
+        } catch (validationError: any) {
+          throw new SchemaValidationError(
+            `Schema validation failed: ${validationError.message}`,
+            {
+              parseErrors: validationError.errors,
+              rawOutput: output,
+              expectedSchema: 'LessonPlanOutputSchema'
+            }
+          );
+        }
+
+        // LOG THE RAW OUTPUT - Enhanced logging
+        StructuredLogger.info('AI output received and validated', {
+          service: 'lesson-plan-flow',
+          operation: 'generateLessonPlan',
+          requestId,
+          metadata: {
+            hasTitle: !!output?.title,
+            hasObjectives: !!output?.objectives,
+            hasActivities: !!output?.activities,
+            activitiesCount: output?.activities?.length
+          }
+        });
+
+
+        const userId = input.userId;
+        if (userId) {
+          try {
+            await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
+              const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
+              const storage = await getStorageInstance();
+              const now = new Date();
+              const timestamp = format(now, 'yyyyMMdd_HHmmss');
+              const contentId = crypto.randomUUID();
+              const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+              const fileName = `${timestamp}_${safeTitle}.json`;
+              const filePath = `users/${userId}/lesson-plans/${fileName}`;
+              const file = storage.bucket().file(filePath);
+
+              const downloadToken = crypto.randomUUID();
+              await Sentry.startSpan({ name: 'GCP Storage Write', op: 'storage.write' }, async () => {
+                await file.save(JSON.stringify(output), {
+                  resumable: false,
+                  metadata: {
+                    contentType: 'application/json',
+                    metadata: {
+                      firebaseStorageDownloadTokens: downloadToken,
+                    }
+                  },
+                });
+              });
+
+              const { dbAdapter } = await import('@/lib/db/adapter');
+              const { Timestamp } = await import('firebase-admin/firestore');
+
+              await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
+                await dbAdapter.saveContent(userId, {
+                  id: contentId,
+                  type: 'lesson-plan',
+                  title: output.title || `Lesson Plan: ${input.topic}`,
+                  gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
+                  subject: output.subject as any || 'Science',
+                  topic: input.topic,
+                  language: input.language as any || 'English',
+                  storagePath: filePath,
+                  isPublic: false,
+                  isDraft: false,
+                  createdAt: Timestamp.fromDate(now),
+                  updatedAt: Timestamp.fromDate(now),
+                  data: output,
+                });
+              });
+              persistTimer.stop();
+
+              StructuredLogger.info('Content persisted successfully', {
+                service: 'lesson-plan-flow',
+                operation: 'persistContent',
+                userId,
+                requestId,
+                metadata: { contentId }
+              });
+
+            });
+          } catch (persistenceError: any) {
+            StructuredLogger.error(
+              'Failed to persist lesson plan',
+              {
+                service: 'lesson-plan-flow',
+                operation: 'persistContent',
+                userId,
+                requestId
+              },
+              new PersistenceError('Persistence failed', 'saveContent')
+            );
+            // Non-blocking error
+          }
+        }
+
+        const duration = Date.now() - startTime;
+        StructuredLogger.info('Lesson plan flow completed successfully', {
+          service: 'lesson-plan-flow',
+          operation: 'generateLessonPlan',
+          requestId,
+          duration
+        });
+
+        return output;
+
+      } catch (flowError: any) {
+        const duration = Date.now() - startTime;
+
+        const errorId = StructuredLogger.error(
+          'Lesson plan flow execution failed',
+          {
+            service: 'lesson-plan-flow',
+            operation: 'generateLessonPlan',
+            userId: input.userId,
+            requestId,
+            input: {
+              topic: input.topic
+            },
+            duration,
+            metadata: {
+              errorType: flowError.constructor?.name,
+              errorCode: flowError.errorCode
+            }
+          },
+          flowError
+        );
+
+        if (typeof flowError === 'object' && flowError !== null) {
+          flowError.errorId = errorId;
+        }
+        throw flowError;
+      }
     });
   }
 );

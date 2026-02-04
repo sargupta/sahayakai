@@ -36,11 +36,94 @@ export const quizGeneratorFlow = ai.defineFlow(
     outputSchema: QuizGeneratorOutputSchema,
   },
   async input => {
-    const { output } = await quizGeneratorPrompt(input);
+    const { runResiliently } = await import('@/ai/genkit');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError } = await import('@/lib/errors');
+    const { v4: uuidv4 } = await import('uuid');
 
-    if (!output) {
-      throw new Error('The AI model failed to generate a valid quiz. The returned output was null.');
+    const requestId = uuidv4();
+    const startTime = Date.now();
+
+    try {
+      StructuredLogger.info('Starting quiz generation flow', {
+        service: 'quiz-generator-flow',
+        operation: 'generateQuiz',
+        requestId,
+        input: {
+          topic: input.topic,
+          numQuestions: input.numQuestions,
+          gradeLevel: input.gradeLevel,
+          questionTypes: input.questionTypes
+        }
+      });
+
+      const { output } = await runResiliently(async (resilienceConfig) => {
+        return await quizGeneratorPrompt(input, resilienceConfig);
+      });
+
+      if (!output) {
+        throw new FlowExecutionError(
+          'AI model returned null output',
+          {
+            modelUsed: 'gemini-2.0-flash',
+            input: input.topic
+          }
+        );
+      }
+
+      // Validate schema explicitly
+      try {
+        QuizGeneratorOutputSchema.parse(output);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: output,
+            expectedSchema: 'QuizGeneratorOutputSchema'
+          }
+        );
+      }
+
+      const duration = Date.now() - startTime;
+
+      StructuredLogger.info('Quiz generation completed successfully', {
+        service: 'quiz-generator-flow',
+        operation: 'generateQuiz',
+        requestId,
+        duration,
+        metadata: {
+          questionsCount: output.questions?.length
+        }
+      });
+
+      return output;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Quiz generation flow execution failed',
+        {
+          service: 'quiz-generator-flow',
+          operation: 'generateQuiz',
+          requestId,
+          input: {
+            topic: input.topic
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
+      throw flowError;
     }
-    return output;
   }
 );

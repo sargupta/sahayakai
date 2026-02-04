@@ -40,7 +40,16 @@ export function AuthButton() {
             setUser(currentUser);
             setLoading(false);
         });
-        return () => unsubscribe();
+
+        // Safety timeout: If Firebase takes too long, just show the sign-in button
+        const safetyTimer = setTimeout(() => {
+            setLoading(false);
+        }, 2000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(safetyTimer);
+        };
     }, []);
 
     const handleSignIn = async () => {

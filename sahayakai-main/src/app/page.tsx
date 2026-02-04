@@ -30,20 +30,24 @@ export default function Home() {
   const router = useRouter();
 
   const { toast } = useToast();
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const voiceTranscript = searchParams?.get("voice_transcript");
-
   useEffect(() => {
+    // Client-side only logic
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
 
-    if (voiceTranscript) {
-      form.setValue("topic", voiceTranscript);
-      form.handleSubmit(onSubmit)();
+    // Handle voice transcript from URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const voiceTranscript = params.get("voice_transcript");
+
+      if (voiceTranscript) {
+        form.setValue("topic", voiceTranscript);
+        form.handleSubmit(onSubmit)();
+      }
     }
-  }, [voiceTranscript]);
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

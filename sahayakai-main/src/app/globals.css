@@ -181,24 +181,80 @@
 @layer utilities {
   @media print {
 
+    /* Standardize Print Quality: Remove all glassmorphism/blur/transparency */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    [class*="bg-white/30"],
+    [class*="backdrop-blur"] {
+      background-color: white !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+
     /* Hide everything by default */
     body * {
       visibility: hidden;
     }
 
-    /* Show only the Lesson Plan Card and its children */
+    /* Show only the targeted content cards and their children */
     #lesson-plan-pdf,
-    #lesson-plan-pdf * {
+    #lesson-plan-pdf *,
+    #rubric-pdf,
+    #rubric-pdf *,
+    #quiz-sheet,
+    #quiz-sheet *,
+    #answer-key-sheet,
+    #answer-key-sheet *,
+    #worksheet-pdf,
+    #worksheet-pdf * {
       visibility: visible;
     }
 
-    /* Position the card at top left */
-    #lesson-plan-pdf {
+    /* Remove specific UI elements that shouldn't be in print */
+    .no-print,
+    .no-print *,
+    [role="tablist"],
+    button[variant="outline"] {
+      display: none !important;
+    }
+
+    /* Layout Corrections for Print */
+    #lesson-plan-pdf,
+    #rubric-pdf,
+    #quiz-sheet,
+    #answer-key-sheet,
+    #worksheet-pdf {
       position: absolute;
       left: 0;
       top: 0;
       width: 100%;
       margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      background: white !important;
+    }
+
+    #quiz-sheet {
+      page-break-after: always !important;
+    }
+
+    #answer-key-sheet {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      page-break-before: always !important;
+    }
+
+    /* Ensure table content is legible */
+    table {
+      border-collapse: collapse !important;
     }
   }
 }

@@ -72,38 +72,145 @@ const rubricGeneratorFlow = ai.defineFlow(
     outputSchema: RubricGeneratorOutputSchema,
   },
   async input => {
-    const { output } = await rubricGeneratorPrompt(input);
+    const { runResiliently } = await import('@/ai/genkit');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
 
-    if (!output) {
-      throw new Error('The AI model failed to generate a valid rubric. The returned output was null.');
-    }
+    // Persistence imports
+    const { getStorageInstance } = await import('@/lib/firebase-admin');
+    const { format } = await import('date-fns');
+    const { v4: uuidv4 } = await import('uuid');
 
-    if (input.userId) {
-      const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-      const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.json`;
-      const filePath = `users/${input.userId}/rubrics/${fileName}`;
+    const requestId = uuidv4();
+    const startTime = Date.now();
 
-      const storage = await getStorageInstance();
-      const file = storage.bucket().file(filePath);
-
-      await file.save(JSON.stringify(output), {
-        contentType: 'application/json',
+    try {
+      StructuredLogger.info('Starting rubric generation flow', {
+        service: 'rubric-generator-flow',
+        operation: 'generateRubric',
+        userId: input.userId,
+        requestId,
+        input: {
+          assignmentDescription: input.assignmentDescription,
+          language: input.language,
+          gradeLevel: input.gradeLevel
+        }
       });
 
-      const db = await getDb();
-      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
-        type: 'rubric',
-        topic: input.assignmentDescription,
-        gradeLevels: [input.gradeLevel],
-        language: input.language,
-        storagePath: filePath,
-        createdAt: now,
-        isPublic: false,
+      const { output } = await runResiliently(async (resilienceConfig) => {
+        return await rubricGeneratorPrompt(input, resilienceConfig);
       });
-    }
 
-    return output;
+      if (!output) {
+        throw new FlowExecutionError(
+          'AI model returned null output',
+          {
+            modelUsed: 'gemini-2.0-flash',
+            input: input.assignmentDescription
+          }
+        );
+      }
+
+      // Validate schema explicitly
+      try {
+        RubricGeneratorOutputSchema.parse(output);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: output,
+            expectedSchema: 'RubricGeneratorOutputSchema'
+          }
+        );
+      }
+
+      if (input.userId) {
+        try {
+          const storage = await getStorageInstance();
+          const now = new Date();
+          const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+          const contentId = uuidv4();
+          const fileName = `${timestamp}-${contentId}.json`;
+          const filePath = `users/${input.userId}/rubrics/${fileName}`;
+          const file = storage.bucket().file(filePath);
+
+          await file.save(JSON.stringify(output), {
+            contentType: 'application/json',
+          });
+
+          const { getDb } = await import('@/lib/firebase-admin');
+          const db = await getDb();
+          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+            type: 'rubric',
+            topic: input.assignmentDescription,
+            gradeLevels: [input.gradeLevel],
+            language: input.language,
+            storagePath: filePath,
+            createdAt: now,
+            isPublic: false,
+          });
+
+          StructuredLogger.info('Content persisted successfully', {
+            service: 'rubric-generator-flow',
+            operation: 'persistContent',
+            userId: input.userId,
+            requestId,
+            metadata: { contentId }
+          });
+
+        } catch (persistenceError: any) {
+          StructuredLogger.error(
+            'Failed to persist rubric',
+            {
+              service: 'rubric-generator-flow',
+              operation: 'persistContent',
+              userId: input.userId,
+              requestId
+            },
+            new PersistenceError('Persistence failed', 'saveContent')
+          );
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      StructuredLogger.info('Rubric generation flow completed successfully', {
+        service: 'rubric-generator-flow',
+        operation: 'generateRubric',
+        requestId,
+        duration,
+        metadata: {
+          criteriaCount: output.criteria.length
+        }
+      });
+
+      return output;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Rubric generation flow execution failed',
+        {
+          service: 'rubric-generator-flow',
+          operation: 'generateRubric',
+          requestId,
+          input: {
+            assignment: input.assignmentDescription
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
+      throw flowError;
+    }
   }
 );

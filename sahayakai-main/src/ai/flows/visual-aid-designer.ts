@@ -19,10 +19,37 @@ import { validateTopicSafety } from '@/lib/safety';
 
 const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
-  language: z.enum([...LANGUAGES] as [string, ...string[]]).optional().describe('The language for any text in the visual aid.'),
-  gradeLevel: z.enum([...GRADE_LEVELS] as [string, ...string[]]).optional().describe('The grade level for which the visual aid is intended.'),
+  language: z.string().optional().describe('The language for any text in the visual aid.'),
+  gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the visual aid is being generated.'),
 });
+
+function normalizeInput(input: VisualAidInput): VisualAidInput {
+  let { language, gradeLevel } = input;
+
+  if (language) {
+    const langMap: Record<string, string> = {
+      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
+      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
+    };
+    language = langMap[language.toLowerCase()] || language;
+  }
+
+  if (gradeLevel) {
+    const match = gradeLevel.match(/(\d+)/);
+    if (match) {
+      gradeLevel = `Class ${match[1]}`;
+    } else if (gradeLevel.toLowerCase().includes('nursery')) {
+      gradeLevel = 'Nursery';
+    } else if (gradeLevel.toLowerCase().includes('lkg')) {
+      gradeLevel = 'LKG';
+    } else if (gradeLevel.toLowerCase().includes('ukg')) {
+      gradeLevel = 'UKG';
+    }
+  }
+
+  return { ...input, language, gradeLevel };
+}
 export type VisualAidInput = z.infer<typeof VisualAidInputSchema>;
 
 const VisualAidOutputSchema = z.object({
@@ -54,120 +81,334 @@ const visualAidFlow = ai.defineFlow(
     outputSchema: VisualAidOutputSchema,
   },
   async (input) => {
-    const { prompt, gradeLevel, language, userId } = input;
+    const { runResiliently } = await import('@/ai/genkit');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
 
-    // Step 1: Generate the Image
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      prompt: `
-        Create a blackboard chalk-style educational illustration.
-        Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
-        
-        Style: 
-        - High-fidelity white chalk lines on a dark black background.
-        - Professional, textbook-quality diagram.
-        
-        Labels:
-        - Accurately label the key parts of the diagram. 
-        - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
-        - Use simple block letters.
-      `,
-      config: {
-        responseModalities: ['IMAGE'],
-        temperature: 0.4,
-      },
-    });
+    // Persistence imports
+    const { getStorageInstance } = await import('@/lib/firebase-admin');
+    const { format } = await import('date-fns');
+    const { v4: uuidv4 } = await import('uuid');
 
-    if (!media) {
-      throw new Error('Image generation failed to produce an image.');
-    }
+    const requestId = uuidv4();
+    const startTime = Date.now();
+    const normalizedInput = normalizeInput(input);
+    const { prompt, gradeLevel, language, userId } = normalizedInput;
 
-    // Step 2: Generate the Metadata (Text)
-    const MetadataSchema = z.object({
-      pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
-      discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
-    });
-
-    const { output: textOutput } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      output: { schema: MetadataSchema },
-      prompt: `
-        You are a master teacher.
-        Topic: "${prompt}"
-        Grade: ${gradeLevel || 'any'}
-        Language: ${language || 'English'}
-
-        Provide:
-        1. Context: How to use a blackboard drawing of this topic to teach.
-        2. Spark: A question to ask students about the drawing.
-      `,
-    });
-
-    if (!textOutput) {
-      throw new Error('Metadata generation failed.');
-    }
-
-    // Combine results
-    const finalOutput: VisualAidOutput = {
-      imageDataUri: media.url,
-      pedagogicalContext: textOutput.pedagogicalContext,
-      discussionSpark: textOutput.discussionSpark
-    };
-
-    if (userId) {
-      const storage = await getStorageInstance();
-      const now = new Date();
-      const timestamp = format(now, 'yyyyMMdd_HHmmss');
-      const contentId = uuidv4();
-      const safeTitle = prompt.substring(0, 30).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
-      const fileName = `${timestamp}_${safeTitle}.png`;
-      const filePath = `users/${userId}/visual-aids/${fileName}`;
-      const file = storage.bucket().file(filePath);
-
-      // Convert data URI to buffer
-      const buffer = Buffer.from(finalOutput.imageDataUri.split(',')[1], 'base64');
-
-      const downloadToken = uuidv4();
-      await file.save(buffer, {
-        resumable: false,
-        metadata: {
-          contentType: 'image/png',
-          metadata: {
-            firebaseStorageDownloadTokens: downloadToken,
-          }
-        },
+    try {
+      StructuredLogger.info('Starting visual aid generation flow', {
+        service: 'visual-aid-designer',
+        operation: 'generateVisualAid',
+        userId,
+        requestId,
+        input: { prompt, gradeLevel, language }
       });
 
-      // Get a signed URL for the saved file (valid for 1 year for simplicity, or use client-side fetching)
-      // Alternatively, just save the path and let the client handle it. 
-      // For this user's immediate "View" need, let's keep the return value as is, but optimize the DB storage.
+      // Step 1: Generate a Detailed Image Prompt & Text Plan (Structured Mode)
+      // We use Gemini to create a high-quality prompt and explicitly plan the text annotations.
+      const promptRefinement = await runResiliently(async () => {
+        const result = await ai.generate({
+          model: 'googleai/gemini-2.0-flash',
+          prompt: `
+            You are an expert visual designer for educational materials.
+            Create a blackboard chalk-style educational illustration.
+            Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
+            
+            Style: 
+            - High-fidelity white chalk lines on a dark black background.
+            - Professional, textbook-quality diagram.
 
-      const dbPayload = {
-        ...finalOutput,
-        imageDataUri: undefined, // Don't save Base64 to Firestore (too big)
-        storageRef: filePath    // Save reference instead
+            You must output a JSON object with three fields:
+            1. "visualDescription": A detailed description of the image.
+               CRITICAL: Use a "High-Fidelity Chalkboard Art" style.
+            2. "spatialMap": An array of objects mapping labels to relative positions.
+               Example: { "label": "Torso", "location": "Middle center of the board", "anatomicalReference": "chest/chest cavity" }
+            3. "textLabels": An array of strings representing the EXACT text annotations. CHECK SPELLING CAREFULLY.
+
+            Constraint: Output ONLY the raw JSON object. No markdown.
+          `,
+          config: {
+            temperature: 0.4,
+            responseMimeType: 'application/json',
+          },
+        });
+        return result.output ? result.output : JSON.parse(result.text);
+      });
+
+      // Step 2: Annotation Reviewer Removed per user request (Direct Handoff)
+      // We rely on the initial high-quality prompt and the image model's capabilities.
+
+      const spatialMap = promptRefinement.spatialMap || [];
+      const labelsString = spatialMap.length > 0
+        ? `\n\nSPATIAL ANNOTATIONS (Place these EXACT labels at these locations):
+          ${spatialMap.map((m: any) => `- Label "${m.label}" must be placed at: ${m.location} (${m.anatomicalReference})`).join('\n')}`
+        : '';
+
+      const styleInstruction = 'STYLE: Photorealistic white chalk on clean black slate, high contrast, elegant lines, educational textbook quality, no smudges.';
+
+      const optimizedPrompt = `${promptRefinement.visualDescription}${labelsString}
+      
+      CRITICAL VALIDATION:
+      1. NO PROMPT LEAKAGE: Do NOT include meta-words like "REQUIRED", "LABEL", or "STEP" in the actual image text.
+      2. SPATIAL HONESTY: Ensure "Torso" is in the midsection, "Ankle" at the bottom, etc. Labels must point to the CORRECT anatomical or geographic feature.
+      3. ${styleInstruction}`;
+
+      // Step 2: Generate the Image (Image Mode)
+      // We use a dedicated image model with fallback logic
+      const imageResult = await runResiliently(async () => {
+        try {
+          // Tier 1: Imagen 4.0 (High Quality)
+          // Model confirmed available via list-models
+          return await ai.generate({
+            model: 'googleai/imagen-4.0-generate-001',
+            prompt: optimizedPrompt
+          });
+        } catch (tier1Error: any) {
+          StructuredLogger.warn('Tier 1 (Imagen 4.0) failed', {
+            service: 'visual-aid-designer',
+            operation: 'generateVisualAid',
+            metadata: { model: 'googleai/imagen-4.0-generate-001', error: tier1Error.message }
+          });
+
+          try {
+            // Tier 2: Gemini 3 Pro (High-End Multimodal Fallback)
+            return await ai.generate({
+              model: 'googleai/gemini-3-pro-image-preview',
+              prompt: optimizedPrompt
+            });
+          } catch (tier2Error: any) {
+            StructuredLogger.warn('Tier 2 (Gemini 3 Pro) failed', {
+              service: 'visual-aid-designer',
+              operation: 'generateVisualAid',
+              metadata: { model: 'googleai/gemini-3-pro-image-preview', error: tier2Error.message }
+            });
+
+            try {
+              // Tier 3: Gemini 2.5 Flash (Fast Multimodal Fallback)
+              return await ai.generate({
+                model: 'googleai/gemini-2.5-flash-image',
+                prompt: optimizedPrompt
+              });
+            } catch (tier3Error: any) {
+              StructuredLogger.warn('Tier 3 (Gemini 2.5 Flash Image) failed, attempting Tier 4 (SVG Fallback)', {
+                service: 'visual-aid-designer',
+                operation: 'generateVisualAid',
+                metadata: { model: 'googleai/gemini-2.5-flash-image', error: tier3Error.message }
+              });
+
+              // Tier 4: SVG Generation (Gemini Flash Text Model)
+              // If image models fail, we ask the text model to draw us a diagram in code.
+              try {
+                const svgResult = await ai.generate({
+                  model: 'googleai/gemini-2.0-flash',
+                  prompt: `
+            You are an expert visual designer for educational materials.
+            Create a blackboard chalk-style educational illustration.
+            Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
+            
+            Style: 
+            - High-fidelity white chalk lines on a dark black background.
+            - Professional, textbook-quality diagram.
+
+            You must output a JSON object with two fields:
+            1. "visualDescription": A detailed description of the image.
+               CRITICAL: Use a "High-Fidelity Chalkboard Art" style.
+               - IF PROCESS/CYCLE: Specify "Clockwise circular layout" and SPATIAL POSITIONS (Top - Center, Right - Middle, etc).
+               - IF MAP: Specify "Accurate map outline drawn in chalk".
+            2. "textLabels": An array of strings representing the EXACT text annotations. CHECK SPELLING CAREFULLY.
+
+            Constraint: Output ONLY the raw JSON object. No markdown.
+          `,
+                  config: {
+                    temperature: 0.3
+                  }
+                });
+
+                let svgCode = svgResult.text.trim();
+                if (svgCode.startsWith('```')) {
+                  svgCode = svgCode.replace(/^```(svg)?/, '').replace(/```$/, '').trim();
+                }
+
+                const base64Svg = Buffer.from(svgCode).toString('base64');
+                const dataUri = `data:image/svg+xml;base64,${base64Svg}`;
+
+                return {
+                  media: { url: dataUri }
+                };
+
+              } catch (tier4Error: any) {
+                StructuredLogger.error('Tier 4 (SVG) failed', {
+                  service: 'visual-aid-designer',
+                  operation: 'generateVisualAid',
+                  metadata: { error: tier4Error.message }
+                });
+                // Only throw if even the SVG fallback fails
+                throw new FlowExecutionError('Visual aid generation failed across all strategies (Imagen, Gemini Image, & SVG)', { step: 'tier-4-fallback' });
+              }
+            }
+          }
+        }
+      });
+
+      if (!imageResult.media) {
+        // Should be unreachable due to placeholder, but safe guard
+        throw new FlowExecutionError('Image generation failed completely', { step: 'image-generation' });
+      }
+
+      // Step 2: Generate the Metadata (Text)
+      const MetadataSchema = z.object({
+        pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
+        discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
+      });
+
+      const textResult = await runResiliently(async () => {
+        return await ai.generate({
+          model: 'googleai/gemini-2.0-flash',
+          output: { schema: MetadataSchema },
+          prompt: `
+            You are an expert educator and visual designer.
+            Provide pedagogical context and a discussion spark for a visual aid about "${prompt}" intended for a ${gradeLevel || 'general'} classroom.
+            
+            The visual aid is a blackboard-style chalk drawing.
+            
+            1. Pedagogical Context: Explain exactly how a teacher should use this diagram to explain the concepts.
+            2. Discussion Spark: Provide one thought-provoking question to ask students.
+          `,
+        });
+      });
+
+      if (!textResult.output) {
+        throw new FlowExecutionError('Metadata generation failed.', { step: 'metadata-generation' });
+      }
+
+      // Combine results
+      const finalOutput: VisualAidOutput = {
+        imageDataUri: imageResult.media.url,
+        pedagogicalContext: textResult.output.pedagogicalContext,
+        discussionSpark: textResult.output.discussionSpark
       };
 
-      const { dbAdapter } = await import('@/lib/db/adapter');
-      const { Timestamp } = await import('firebase-admin/firestore');
+      // Validate outgoing schema
+      try {
+        VisualAidOutputSchema.parse(finalOutput);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: finalOutput,
+            expectedSchema: 'VisualAidOutputSchema'
+          }
+        );
+      }
 
-      await dbAdapter.saveContent(userId, {
-        id: contentId,
-        type: 'visual-aid',
-        title: prompt,
-        gradeLevel: gradeLevel as any || 'Class 5',
-        subject: 'Science', // Fallback as input schema doesn't have subject
-        topic: prompt,
-        language: language as any || 'English',
-        storagePath: filePath,
-        isPublic: false,
-        isDraft: false,
-        createdAt: Timestamp.fromDate(now),
-        updatedAt: Timestamp.fromDate(now),
-        data: dbPayload,
+      if (userId) {
+        try {
+          const storage = await getStorageInstance();
+          const now = new Date();
+          const timestamp = format(now, 'yyyyMMdd_HHmmss');
+          const contentId = uuidv4();
+          const safeTitle = prompt.substring(0, 30).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+          const fileName = `${timestamp}_${safeTitle}.png`;
+          const filePath = `users/${userId}/visual-aids/${fileName}`;
+          const file = storage.bucket().file(filePath);
+
+          // Convert data URI to buffer
+          const buffer = Buffer.from(finalOutput.imageDataUri.split(',')[1], 'base64');
+
+          const downloadToken = uuidv4();
+          await file.save(buffer, {
+            resumable: false,
+            metadata: {
+              contentType: 'image/png',
+              metadata: {
+                firebaseStorageDownloadTokens: downloadToken,
+              }
+            },
+          });
+
+          const dbPayload = {
+            ...finalOutput,
+            imageDataUri: undefined, // Don't save Base64 to Firestore (too big)
+            storageRef: filePath    // Save reference instead
+          };
+
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(userId, {
+            id: contentId,
+            type: 'visual-aid',
+            title: prompt,
+            gradeLevel: gradeLevel as any || 'Class 5',
+            subject: 'Science', // Fallback as input schema doesn't have subject
+            topic: prompt,
+            language: language as any || 'English',
+            storagePath: filePath,
+            isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: dbPayload,
+          });
+
+          StructuredLogger.info('Content persisted successfully', {
+            service: 'visual-aid-designer',
+            operation: 'persistContent',
+            userId,
+            requestId,
+            metadata: { contentId }
+          });
+
+        } catch (persistenceError: any) {
+          StructuredLogger.error(
+            'Failed to persist visual aid',
+            {
+              service: 'visual-aid-designer',
+              operation: 'persistContent',
+              userId,
+              requestId
+            },
+            new PersistenceError('Persistence failed', 'saveContent')
+          );
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      StructuredLogger.info('Visual aid generation completed successfully', {
+        service: 'visual-aid-designer',
+        operation: 'generateVisualAid',
+        requestId,
+        duration
       });
-    }
 
-    return finalOutput;
+      return finalOutput;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Visual aid generation flow execution failed',
+        {
+          service: 'visual-aid-designer',
+          operation: 'generateVisualAid',
+          requestId,
+          input: {
+            prompt: prompt
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
+      throw flowError;
+    }
   }
 );

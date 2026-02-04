@@ -67,38 +67,147 @@ const virtualFieldTripFlow = ai.defineFlow(
     outputSchema: VirtualFieldTripOutputSchema,
   },
   async input => {
-    const { output } = await virtualFieldTripPrompt(input);
+    const { runResiliently } = await import('@/ai/genkit');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
 
-    if (!output) {
-      throw new Error('The AI model failed to generate a valid virtual field trip. The returned output was null.');
-    }
+    // Persistence imports
+    const { getStorageInstance } = await import('@/lib/firebase-admin');
+    const { format } = await import('date-fns');
+    const { v4: uuidv4 } = await import('uuid');
 
-    if (input.userId) {
-      const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-      const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.json`;
-      const filePath = `users/${input.userId}/virtual-field-trips/${fileName}`;
+    const requestId = uuidv4();
+    const startTime = Date.now();
 
-      const storage = await getStorageInstance();
-      const file = storage.bucket().file(filePath);
-
-      await file.save(JSON.stringify(output), {
-        contentType: 'application/json',
+    try {
+      StructuredLogger.info('Starting virtual field trip generation flow', {
+        service: 'virtual-field-trip-flow',
+        operation: 'planVirtualFieldTrip',
+        userId: input.userId,
+        requestId,
+        input: {
+          topic: input.topic,
+          language: input.language,
+          gradeLevel: input.gradeLevel
+        }
       });
 
-      const db = await getDb();
-      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
-        type: 'virtual-field-trip',
-        topic: input.topic,
-        gradeLevels: [input.gradeLevel],
-        language: input.language,
-        storagePath: filePath,
-        createdAt: now,
-        isPublic: false,
+      const { output } = await runResiliently(async (resilienceConfig) => {
+        return await virtualFieldTripPrompt(input, resilienceConfig);
       });
-    }
 
-    return output;
+      if (!output) {
+        throw new FlowExecutionError(
+          'AI model returned null output',
+          {
+            modelUsed: 'gemini-2.0-flash',
+            input: input.topic
+          }
+        );
+      }
+
+      // Validate schema explicitly
+      try {
+        VirtualFieldTripOutputSchema.parse(output);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: output,
+            expectedSchema: 'VirtualFieldTripOutputSchema'
+          }
+        );
+      }
+
+      if (input.userId) {
+        try {
+          const now = new Date();
+          const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+          const contentId = uuidv4();
+          const fileName = `${timestamp}-${contentId}.json`;
+          const filePath = `users/${input.userId}/virtual-field-trips/${fileName}`;
+
+          const storage = await getStorageInstance();
+          const file = storage.bucket().file(filePath);
+
+          await file.save(JSON.stringify(output), {
+            contentType: 'application/json',
+          });
+
+          // Use getDb for consistency with original file but wrap in try/catch 
+          const { getDb } = await import('@/lib/firebase-admin');
+          const db = await getDb();
+          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+            type: 'virtual-field-trip',
+            topic: input.topic,
+            gradeLevels: [input.gradeLevel],
+            language: input.language,
+            storagePath: filePath,
+            createdAt: now,
+            isPublic: false,
+          });
+
+          StructuredLogger.info('Content persisted successfully', {
+            service: 'virtual-field-trip-flow',
+            operation: 'persistContent',
+            userId: input.userId,
+            requestId,
+            metadata: { contentId }
+          });
+
+        } catch (persistenceError: any) {
+          StructuredLogger.error(
+            'Failed to persist virtual field trip',
+            {
+              service: 'virtual-field-trip-flow',
+              operation: 'persistContent',
+              userId: input.userId,
+              requestId
+            },
+            new PersistenceError('Persistence failed', 'saveContent')
+          );
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      StructuredLogger.info('Virtual field trip flow completed successfully', {
+        service: 'virtual-field-trip-flow',
+        operation: 'planVirtualFieldTrip',
+        requestId,
+        duration,
+        metadata: {
+          stopsCount: output.stops.length
+        }
+      });
+
+      return output;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Virtual field trip flow execution failed',
+        {
+          service: 'virtual-field-trip-flow',
+          operation: 'planVirtualFieldTrip',
+          requestId,
+          input: {
+            topic: input.topic
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
+      throw flowError;
+    }
   }
 );

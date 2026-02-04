@@ -15,14 +15,42 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 
 import { validateTopicSafety } from '@/lib/safety';
-import { GRADE_LEVELS, LANGUAGES } from '@/types';
-
 const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
-  language: z.enum([...LANGUAGES] as [string, ...string[]]).optional().describe('The language for the answer.'),
-  gradeLevel: z.enum([...GRADE_LEVELS] as [string, ...string[]]).optional().describe('The grade level the answer should be tailored for.'),
+  language: z.string().optional().describe('The language for the answer (e.g. English, Hindi).'),
+  gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
   userId: z.string().optional().describe('The ID of the user for whom the answer is being generated.'),
 });
+
+// Helper for normalizing inputs
+function normalizeInput(input: InstantAnswerInput): InstantAnswerInput {
+  let { language, gradeLevel } = input;
+
+  // Normalize Language
+  if (language) {
+    const langMap: Record<string, string> = {
+      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
+      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
+    };
+    language = langMap[language.toLowerCase()] || language;
+  }
+
+  // Normalize Grade
+  if (gradeLevel) {
+    const gradeMatch = gradeLevel.match(/(\d+)/);
+    if (gradeMatch) {
+      gradeLevel = `Class ${gradeMatch[1]}`;
+    } else if (gradeLevel.toLowerCase().includes('nursery')) {
+      gradeLevel = 'Nursery';
+    } else if (gradeLevel.toLowerCase().includes('lkg')) {
+      gradeLevel = 'LKG';
+    } else if (gradeLevel.toLowerCase().includes('ukg')) {
+      gradeLevel = 'UKG';
+    }
+  }
+
+  return { ...input, language, gradeLevel };
+}
 export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
 
 const InstantAnswerOutputSchema = z.object({
@@ -75,52 +103,72 @@ const instantAnswerFlow = ai.defineFlow(
     outputSchema: InstantAnswerOutputSchema,
   },
   async input => {
+    const { v4: uuidv4 } = await import('uuid');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
+
+    const startTime = Date.now();
+    const requestId = uuidv4();
+
+    // Normalize input before processing
+    const normalizedInput = normalizeInput(input);
+
     try {
-      console.log('[Instant Answer Flow] Starting execution', {
-        timestamp: new Date().toISOString(),
-        hasQuestion: !!input.question,
-        questionLength: input.question?.length,
-        language: input.language,
-        gradeLevel: input.gradeLevel
+      StructuredLogger.info('Starting instant answer flow', {
+        service: 'instant-answer-flow',
+        operation: 'generateAnswer',
+        userId: normalizedInput.userId,
+        requestId,
+        input: {
+          questionLength: normalizedInput.question.length,
+          language: normalizedInput.language,
+          gradeLevel: normalizedInput.gradeLevel
+        }
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await instantAnswerPrompt(input, resilienceConfig);
-      });
-
-      // LOG THE RAW OUTPUT - This is critical for debugging schema issues
-      console.log('[Instant Answer Flow] Raw AI output received', {
-        timestamp: new Date().toISOString(),
-        outputExists: !!output,
-        outputType: typeof output,
-        outputKeys: output ? Object.keys(output) : [],
-        outputAnswerType: output?.answer ? typeof output.answer : 'missing',
-        outputVideoType: output?.videoSuggestionUrl ? typeof output.videoSuggestionUrl : 'missing',
-        rawOutput: JSON.stringify(output, null, 2)
+        return await instantAnswerPrompt(normalizedInput, resilienceConfig);
       });
 
       if (!output) {
-        throw new Error('The AI model failed to generate an instant answer. The returned output was null.');
+        throw new FlowExecutionError(
+          'AI model returned null output',
+          {
+            modelUsed: 'gemini-2.0-flash',
+            input: input.question
+          }
+        );
       }
 
-      // Validate and sanitize output to ensure it matches schema
+      // Validate schema explicitly (Genkit might do this, but we double check or catch Genkit's error)
+      // Note: Genkit validation happens before this if strict mode, but here we handle the result.
+      try {
+        InstantAnswerOutputSchema.parse(output);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: output,
+            expectedSchema: 'InstantAnswerOutputSchema'
+          }
+        );
+      }
+
+      // Sanitize output
       const sanitizedOutput: InstantAnswerOutput = {
         answer: output.answer || 'Unable to generate an answer at this time.',
         videoSuggestionUrl: output.videoSuggestionUrl || null,
       };
 
-      console.log('[Instant Answer Flow] Output sanitized successfully', {
-        timestamp: new Date().toISOString(),
-        hasAnswer: !!sanitizedOutput.answer,
-        hasVideo: !!sanitizedOutput.videoSuggestionUrl
-      });
-
+      // Persistence with error handling
       if (input.userId) {
         try {
           const storage = await getStorageInstance();
           const now = new Date();
           const timestamp = format(now, 'yyyyMMdd_HHmmss');
           const contentId = crypto.randomUUID();
+          // Re-implement safety and file naming logic from previous version
           const safeTitle = input.question.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
           const fileName = `${timestamp}_${safeTitle}.json`;
           const filePath = `users/${input.userId}/instant-answers/${fileName}`;
@@ -145,7 +193,7 @@ const instantAnswerFlow = ai.defineFlow(
             type: 'instant-answer',
             title: input.question,
             gradeLevel: input.gradeLevel as any || 'Class 5',
-            subject: 'General', // Instant answer can be anything
+            subject: 'General',
             topic: input.question,
             language: input.language as any || 'English',
             storagePath: filePath,
@@ -155,34 +203,72 @@ const instantAnswerFlow = ai.defineFlow(
             updatedAt: Timestamp.fromDate(now),
             data: sanitizedOutput,
           });
-        } catch (persistenceError) {
-          console.error("[Persistence Error] Failed to save instant answer:", persistenceError);
-          // We don't throw here, so the user still gets the answer
+
+          StructuredLogger.info('Content persisted successfully', {
+            service: 'instant-answer-flow',
+            operation: 'persistContent',
+            userId: input.userId,
+            requestId,
+            metadata: { contentId }
+          });
+        } catch (persistenceError: any) {
+          // Log but don't throw - user still gets the answer
+          StructuredLogger.error(
+            'Failed to persist instant answer',
+            {
+              service: 'instant-answer-flow',
+              operation: 'persistContent',
+              userId: input.userId,
+              requestId
+            },
+            new PersistenceError('Persistence failed', 'saveContent')
+          );
         }
       }
 
-      return sanitizedOutput;
-    } catch (flowError: any) {
-      // CRITICAL ERROR LOGGING - Capture flow execution failures
-      console.error('[Instant Answer Flow] EXECUTION FAILED', {
-        timestamp: new Date().toISOString(),
-        errorType: flowError.constructor?.name || 'Unknown',
-        errorName: flowError.name,
-        errorMessage: flowError.message,
-        errorCode: flowError.code,
-        errorStatus: flowError.status,
-        errorDetail: flowError.detail,
-        parseErrors: flowError.detail?.parseErrors,
-        errorStack: flowError.stack,
-        input: {
-          question: input.question,
-          language: input.language,
-          gradeLevel: input.gradeLevel
-        },
-        fullError: JSON.stringify(flowError, Object.getOwnPropertyNames(flowError), 2)
+      const duration = Date.now() - startTime;
+
+      StructuredLogger.info('Instant answer flow completed successfully', {
+        service: 'instant-answer-flow',
+        operation: 'generateAnswer',
+        userId: input.userId,
+        requestId,
+        duration,
+        metadata: {
+          hasVideo: !!sanitizedOutput.videoSuggestionUrl
+        }
       });
 
-      // Re-throw to propagate the error
+      return sanitizedOutput;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Instant answer flow execution failed',
+        {
+          service: 'instant-answer-flow',
+          operation: 'generateAnswer',
+          userId: input.userId,
+          requestId,
+          input: {
+            question: input.question,
+            language: input.language,
+            gradeLevel: input.gradeLevel
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      // Attach error ID for tracing if it's an object
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
       throw flowError;
     }
   });

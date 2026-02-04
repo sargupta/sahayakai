@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from './ui/button';
 import { Download, Save, Copy, ClipboardCheck } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 
 type RubricDisplayProps = {
@@ -29,27 +27,23 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
   }
 
   const handleDownload = () => {
-    const input = document.getElementById('rubric-pdf');
-    if (input) {
-      html2canvas(input, { scale: 2 }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        let width = pdfWidth;
-        let height = width / ratio;
-        if (height > pdfHeight) {
-          height = pdfHeight;
-          width = height * ratio;
-        }
+    // Better Naming for PDF
+    const originalTitle = document.title;
+    const cleanTitle = (rubric.title || 'Rubric').replace(/[^a-z0-9]/gi, '_');
+    const filename = `Sahayak_Rubric_${cleanTitle}`;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        pdf.save('rubric.pdf');
-      });
-    }
+    document.title = filename; // Sets the default filename in Print Dialog
+    window.print();
+
+    // Restore title after a small delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+
+    toast({
+      title: "Print to PDF",
+      description: "Select 'Save as PDF' to save in high quality.",
+    });
   };
 
   const handleSave = () => {
