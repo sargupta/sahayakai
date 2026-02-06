@@ -26,8 +26,7 @@ echo "---------------------------------------------------"
   --allow-unauthenticated \
   --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest" \
   --set-secrets="FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest" \
-  --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID" \
-  --set-env-vars="NODE_ENV=production"
+  --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NODE_ENV=production"
 
 echo "---------------------------------------------------"
 if [ $? -eq 0 ]; then

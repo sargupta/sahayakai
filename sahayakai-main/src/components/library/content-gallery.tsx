@@ -27,7 +27,7 @@ interface ContentGalleryProps {
 export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { openAuthModal } = useAuth();
+    const { user, loading: authLoading, openAuthModal } = useAuth();
     const [items, setItems] = useState<BaseContent[]>([]);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState("");
@@ -35,21 +35,22 @@ export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const fetchContent = async () => {
+        if (authLoading) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const url = new URL("/api/content/list", window.location.origin);
             if (typeFilter !== "all") url.searchParams.append("type", typeFilter);
 
-            const token = await auth.currentUser?.getIdToken();
+            const token = await user.getIdToken();
             const headers: Record<string, string> = {
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
             };
-
-            if (token) {
-                headers["Authorization"] = `Bearer ${token}`;
-            } else if (userId === "dev-user") {
-                headers["x-user-id"] = "dev-user";
-            }
 
             const response = await fetch(url.toString(), {
                 headers: headers
@@ -78,8 +79,10 @@ export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
     };
 
     useEffect(() => {
-        fetchContent();
-    }, [typeFilter, userId]);
+        if (!authLoading) {
+            fetchContent();
+        }
+    }, [typeFilter, userId, authLoading, user]);
 
     const filteredItems = items.filter(item =>
         (item.title || "").toLowerCase().includes(query.toLowerCase()) ||

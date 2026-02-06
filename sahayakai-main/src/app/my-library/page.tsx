@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
 import { generateAvatar } from '@/ai/flows/avatar-generator';
 import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-context';
 import { getProfileData } from '@/app/actions/profile';
 import { ContentGallery } from '@/components/library/content-gallery';
 
@@ -31,6 +32,7 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 export default function MyLibraryPage() {
+  const { user, loading } = useAuth();
   const [language, setLanguage] = useState('en');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -38,19 +40,26 @@ export default function MyLibraryPage() {
   const t = translations[language] || translations.en;
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
+    if (user && !loading) {
       getProfileData(user.uid).then(res => {
         setProfile(res.profile);
       });
 
-      generateAvatar({ name: user.displayName || 'Teacher' })
+      generateAvatar({ name: user.displayName || 'Teacher', userId: user.uid })
         .then(res => setAvatar(res.imageDataUri))
         .catch(console.error);
     }
-  }, []);
+  }, [user, loading]);
 
-  const userId = auth.currentUser?.uid || "dev-user";
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const userId = user?.uid || "dev-user";
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">

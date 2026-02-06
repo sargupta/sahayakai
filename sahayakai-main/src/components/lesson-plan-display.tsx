@@ -113,11 +113,13 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
         data: lessonPlan
       };
 
+      const token = await user.getIdToken();
+
       const response = await fetch('/api/content/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.uid
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
