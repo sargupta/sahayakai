@@ -5,7 +5,7 @@ import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sahayakai-b4248.firebaseapp.com",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "auth.sahayakai.com",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sahayakai-b4248",
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sahayakai-b4248.firebasestorage.app",
     messagingSenderId: "640589855975",

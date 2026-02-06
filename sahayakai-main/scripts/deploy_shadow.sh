@@ -26,7 +26,7 @@ echo "---------------------------------------------------"
   --allow-unauthenticated \
   --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest" \
   --set-secrets="FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest" \
-  --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sahayakai-b4248.firebaseapp.com,NODE_ENV=production" \
+  --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com,NODE_ENV=production" \
   --memory 2Gi \
   --cpu 2
 
