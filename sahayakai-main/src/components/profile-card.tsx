@@ -103,12 +103,14 @@ export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, lang
             </div>
           </div>
         </div>
-        <div className="flex-shrink-0">
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            {t.editProfile}
-          </Button>
-        </div>
+        {onEdit && (
+          <div className="flex-shrink-0">
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t.editProfile}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
