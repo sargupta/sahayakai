@@ -7,11 +7,16 @@ import {
   ClipboardCheck,
   FileSignature,
   PencilRuler,
+  Lightbulb,
+  Map as MapIcon,
+  Video,
+  GraduationCap,
   type LucideProps,
 } from 'lucide-react';
 import type { FC } from 'react';
+import { type ContentType } from '@/types';
 
-export type FileType = 'folder' | 'lesson-plan' | 'quiz' | 'rubric' | 'worksheet' | 'image' | 'other';
+export type FileType = ContentType | 'folder' | 'image' | 'other';
 
 type FileTypeIconProps = {
   type: FileType;
@@ -30,8 +35,17 @@ export const FileTypeIcon: FC<FileTypeIconProps> = ({ type, ...props }) => {
       return <ClipboardCheck {...props} />;
     case 'worksheet':
       return <PencilRuler {...props} />;
+    case 'visual-aid':
     case 'image':
       return <ImageIcon {...props} />;
+    case 'instant-answer':
+      return <Lightbulb {...props} />;
+    case 'virtual-field-trip':
+      return <MapIcon {...props} />;
+    case 'micro-lesson':
+      return <Video {...props} />;
+    case 'teacher-training':
+      return <GraduationCap {...props} />;
     default:
       return <FileText {...props} />;
   }

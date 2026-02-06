@@ -19,6 +19,8 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import ReactMarkdown from 'react-markdown';
 import { ImageUploader } from "@/components/image-uploader";
 import { MicrophoneInput } from "@/components/microphone-input";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 
 const formSchema = z.object({
@@ -41,6 +43,7 @@ export default function WorksheetWizardPage() {
 }
 
 function WorksheetWizardContent() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [worksheet, setWorksheet] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -60,21 +63,87 @@ function WorksheetWizardContent() {
   // Auto-fill prompt from URL. Note: Works best if an image is already uploaded or optional.
   // Ideally, the router would handle image parsing too, but for now we auto-fill the text prompt.
   useEffect(() => {
+    const id = searchParams.get("id");
     const promptParam = searchParams.get("prompt");
-    if (promptParam) {
+
+    if (id) {
+      const fetchSavedContent = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          } else if (auth.currentUser?.uid === "dev-user") {
+            headers["x-user-id"] = "dev-user";
+          }
+
+          const res = await fetch(`/api/content/get?id=${id}`, {
+            headers: headers
+          });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.data) {
+              // For worksheets, the data is usually the string or object with worksheetContent
+              setWorksheet(content.data.worksheetContent || content.data);
+              form.reset({
+                prompt: content.topic || content.title,
+                gradeLevel: content.gradeLevel,
+                language: content.language,
+                imageDataUri: content.data.imageDataUri || ""
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved worksheet:", err);
+          toast({
+            title: "Load Failed",
+            description: "Could not load the saved worksheet.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSavedContent();
+    } else if (promptParam) {
       form.setValue("prompt", promptParam);
-      // Auto-submit might fail if image is required but missing.
-      // We'll skip auto-submit for Worksheet Wizard to let user upload image first,
-      // UNLESS we want to support text-only worksheets later.
-      // For now, let's just pre-fill the prompt.
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setWorksheet(null);
     try {
-      const result = await generateWorksheet(values);
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/worksheet", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(values)
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to generate worksheets");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate worksheet");
+      }
+
+      const result = await res.json();
       setWorksheet(result.worksheetContent);
     } catch (error) {
       console.error("Failed to generate worksheet:", error);

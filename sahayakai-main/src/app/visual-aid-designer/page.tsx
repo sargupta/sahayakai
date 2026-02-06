@@ -18,6 +18,8 @@ import Image from "next/image";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import { useEffect } from "react";
 
 
@@ -40,6 +42,7 @@ export default function VisualAidDesignerPage() {
 }
 
 function VisualAidContent() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [imageData, setImageData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -60,30 +63,93 @@ function VisualAidContent() {
   const hasAutoSubmitted = useRef(false);
 
   useEffect(() => {
-    // Router sends 'topic', internal links might use 'prompt'
+    const id = searchParams.get("id");
     const promptParam = searchParams.get("prompt") || searchParams.get("topic");
 
-    if (promptParam && !hasAutoSubmitted.current) {
+    if (id) {
+      const fetchSavedContent = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          } else if (auth.currentUser?.uid === "dev-user") {
+            headers["x-user-id"] = "dev-user";
+          }
+
+          const res = await fetch(`/api/content/get?id=${id}`, {
+            headers: headers
+          });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.data) {
+              setImageData(content.data.imageDataUri || content.data);
+              form.reset({
+                prompt: content.topic || content.title,
+                gradeLevel: content.gradeLevel,
+                language: content.language,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved visual aid:", err);
+          toast({
+            title: "Load Failed",
+            description: "Could not load the saved visual aid.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSavedContent();
+    } else if (promptParam && !hasAutoSubmitted.current) {
       form.setValue("prompt", promptParam);
       hasAutoSubmitted.current = true;
-
-      // Determine intent: if it's a direct handoff, trigger submit
-      // Use a small delay to ensure form state is ready
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
       }, 100);
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setImageData(null);
     try {
-      const result = await generateVisualAid({
-        prompt: values.prompt,
-        language: values.language,
-        gradeLevel: values.gradeLevel,
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/visual-aid", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          prompt: values.prompt,
+          language: values.language,
+          gradeLevel: values.gradeLevel,
+        })
       });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to generate visual aids");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate visual aid");
+      }
+
+      const result = await res.json();
       setImageData(result.imageDataUri);
     } catch (error) {
       console.error("Failed to generate visual aid:", error);

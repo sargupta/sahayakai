@@ -24,6 +24,11 @@ export const SUBJECTS = [
 ] as const;
 export type Subject = typeof SUBJECTS[number];
 
+export const DEPARTMENTS = [
+    'Science', 'Mathematics', 'Social Science', 'Languages', 'Primary Education', 'Arts & Physical Education', 'Computer Science & Vocational', 'Administration'
+] as const;
+export type Department = typeof DEPARTMENTS[number];
+
 export const LANGUAGES = [
     'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali',
 ] as const;
@@ -44,9 +49,22 @@ export interface UserProfile {
 
     // Professional Profile
     schoolName?: string;
+    schoolNormalized?: string; // For fuzzy matching
+    district?: string;
+    pincode?: string;
+    verifiedStatus?: 'none' | 'pending' | 'verified';
+    bio?: string;
+    department?: string;
+    designation?: string;
+    badges: string[];
+
     teachingGradeLevels: GradeLevel[];
     subjects: Subject[];
     preferredLanguage: Language;
+
+    // Social Metadata
+    followersCount: number;
+    followingCount: number;
 
     // Usage Metadata
     createdAt: Timestamp;

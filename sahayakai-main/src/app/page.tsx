@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { processAgentRequest } from "@/ai/flows/agent-router";
 import { Loader2, X } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -24,6 +26,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Home() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
@@ -57,12 +60,37 @@ export default function Home() {
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     // Determine intent using the Smart Router
     setIsThinking(true);
     setAnswer(null);
 
     try {
-      const response = await processAgentRequest({ prompt: values.topic });
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/intent", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ prompt: values.topic })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to use the AI assistant");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to process request");
+      }
+
+      const response = await res.json();
       const { result } = response;
 
       if (result?.action === 'NAVIGATE' && result.url) {
@@ -149,7 +177,7 @@ export default function Home() {
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
-          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/50">
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200">
             <CardContent className="p-1">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
@@ -166,8 +194,13 @@ export default function Home() {
                       className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-3 pl-4 bg-transparent"
                     />
                   </div>
-                  <Button type="submit" size="sm" variant="ghost" className="mr-1 h-8" aria-label="Generate Lesson Plan">
-                    <ArrowRight className="h-4 w-4" />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="mr-1 h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"
+                    aria-label="Generate Lesson Plan"
+                  >
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 </form>
               </Form>

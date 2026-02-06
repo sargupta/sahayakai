@@ -26,6 +26,11 @@ export const quizGeneratorPrompt = ai.definePrompt({
 - **Question Types:** {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 - **Grade Level:** {{{gradeLevel}}}
 - **Language:** {{{language}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -45,6 +50,14 @@ export const quizGeneratorFlow = ai.defineFlow(
     const startTime = Date.now();
 
     try {
+      const { fetchImageAsBase64 } = await import('@/ai/utils/image-utils');
+
+      // Process Image URL -> Base64 if needed
+      let processedImageDataUri = input.imageDataUri;
+      if (input.imageDataUri && !input.imageDataUri.startsWith('data:')) {
+        processedImageDataUri = await fetchImageAsBase64(input.imageDataUri);
+      }
+
       StructuredLogger.info('Starting quiz generation flow', {
         service: 'quiz-generator-flow',
         operation: 'generateQuiz',
@@ -53,12 +66,16 @@ export const quizGeneratorFlow = ai.defineFlow(
           topic: input.topic,
           numQuestions: input.numQuestions,
           gradeLevel: input.gradeLevel,
-          questionTypes: input.questionTypes
+          questionTypes: input.questionTypes,
+          hasImage: !!processedImageDataUri
         }
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await quizGeneratorPrompt(input, resilienceConfig);
+        return await quizGeneratorPrompt({
+          ...input,
+          imageDataUri: processedImageDataUri
+        }, resilienceConfig);
       });
 
       if (!output) {

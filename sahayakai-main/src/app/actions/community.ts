@@ -9,12 +9,13 @@ export async function getProfilesAction(uids: string[]) {
     return await dbAdapter.getUsers(uids);
 }
 
-export async function createPostAction(userId: string, content: string, visibility: string = 'public') {
+export async function createPostAction(userId: string, content: string, visibility: string = 'public', imageUrl?: string) {
     const db = await getDb();
 
     const postData = {
         authorId: userId,
         content,
+        imageUrl,
         visibility,
         likesCount: 0,
         commentsCount: 0,
@@ -60,9 +61,17 @@ export async function toggleLikeAction(postId: string, userId: string) {
     revalidatePath("/community");
 }
 
-export async function getPosts(filters: { language?: string, limit?: number } = {}) {
+export async function getPosts(filters: { language?: string, limit?: number, gradeLevels?: string[], subjects?: string[] } = {}) {
     const db = await getDb();
     let query = db.collection('posts').orderBy('createdAt', 'desc');
+
+    if (filters.gradeLevels && filters.gradeLevels.length > 0) {
+        query = query.where('gradeLevel', 'in', filters.gradeLevels.slice(0, 10));
+    }
+
+    if (filters.subjects && filters.subjects.length > 0) {
+        query = query.where('subject', 'in', filters.subjects.slice(0, 10));
+    }
 
     if (filters.limit) {
         query = query.limit(filters.limit);
@@ -173,8 +182,12 @@ export async function seedLibraryAction(userId: string) {
         batch.set(userRef, {
             ...m,
             email: `${m.uid}@example.com`,
-            school: "Kendriya Vidyalaya",
+            schoolName: "Kendriya Vidyalaya",
+            schoolNormalized: "KENDRIYA VIDYALAYA",
+            district: "Delhi",
             gradeLevels: ["Class 6", "Class 7", "Class 8"],
+            followersCount: Math.floor(Math.random() * 100),
+            followingCount: Math.floor(Math.random() * 50),
             lastLogin: new Date().toISOString()
         }, { merge: true });
     }
@@ -241,4 +254,94 @@ export async function seedLibraryAction(userId: string) {
 
     await batch.commit();
     revalidatePath("/community");
+}
+export async function getRecommendedTeachersAction(userId: string) {
+    const db = await getDb();
+
+    // 1. Get current user profile and following list
+    const [userDoc, followingIds] = await Promise.all([
+        db.collection('users').doc(userId).get(),
+        getFollowingIdsAction(userId)
+    ]);
+
+    if (!userDoc.exists) return [];
+
+    const currentUser = userDoc.data() as any;
+    const userSchool = currentUser.schoolNormalized || currentUser.schoolName || '';
+    const userSubjects = currentUser.subjects || [];
+    const userGrades = currentUser.gradeLevels || [];
+    const userDistrict = currentUser.district || '';
+
+    // 2. Fetch all teachers (excluding self and already followed)
+    const excludeIds = [userId, ...followingIds];
+
+    // Note: Firestore 'not-in' is limited to 10 items. For a robust system, 
+    // we would use a search engine (Algolia) or client-side filtering + batching.
+    // For now, we fetch a larger pool and filter.
+    const snapshot = await db.collection('users')
+        .limit(100)
+        .get();
+
+    const candidates = snapshot.docs
+        .map(doc => ({ uid: doc.id, ...doc.data() } as any))
+        .filter(teacher => !excludeIds.includes(teacher.uid));
+
+    // 3. Robust Multi-Tier Scoring
+    const scored = candidates.map(teacher => {
+        let score = 0;
+        const reasons: string[] = [];
+
+        // Tier 1: Institutional Affinity (Weight: 30 - Reduced from 50 to prevent echo chambers)
+        const teacherSchool = teacher.schoolNormalized || teacher.schoolName || '';
+        if (userSchool && teacherSchool === userSchool) {
+            score += 30;
+            reasons.push("Same School");
+        } else if (userDistrict && teacher.district === userDistrict) {
+            score += 15;
+            reasons.push("Nearby Peer");
+        }
+
+        // Tier 2: Pedagogical Affinity (Weight: 40 - Increased to encourage subject growth)
+        const commonSubjects = teacher.subjects?.filter((s: string) => userSubjects.includes(s)) || [];
+        if (commonSubjects.length > 0) {
+            score += (commonSubjects.length * 20);
+            if (reasons.length === 0) reasons.push(`${commonSubjects[0]} Peer`);
+        }
+
+        const commonGrades = teacher.gradeLevels?.filter((g: string) => userGrades.includes(g)) || [];
+        if (commonGrades.length > 0) {
+            score += (commonGrades.length * 5);
+        }
+
+        // Tier 3: Professional Impact (Weight: 15)
+        const impactBonus = Math.min(15, (teacher.impactScore || 0) / 10);
+        score += impactBonus;
+
+        // Tier 4: Serendipity (Small random factor to prevent stale lists)
+        score += Math.random() * 5;
+
+        return {
+            ...teacher,
+            score,
+            recommendationReason: reasons[0] || "Active Educator"
+        };
+    });
+
+    // 4. Sort and return top 5 (Sanitized results to strip PII)
+    const recommendations = scored
+        .filter(t => t.score > 5) // Minimum quality barrier
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map(t => ({
+            uid: t.uid,
+            displayName: t.displayName,
+            photoURL: t.photoURL,
+            initial: t.initial,
+            schoolName: t.schoolName,
+            subjects: t.subjects,
+            impactScore: t.impactScore,
+            recommendationReason: t.recommendationReason
+        }));
+
+    return dbAdapter.serialize(recommendations);
 }

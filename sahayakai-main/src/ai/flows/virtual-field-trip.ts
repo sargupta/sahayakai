@@ -35,7 +35,25 @@ const VirtualFieldTripOutputSchema = z.object({
 export type VirtualFieldTripOutput = z.infer<typeof VirtualFieldTripOutputSchema>;
 
 export async function planVirtualFieldTrip(input: VirtualFieldTripInput): Promise<VirtualFieldTripOutput> {
-  return virtualFieldTripFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
+  }
+
+  return virtualFieldTripFlow(localizedInput);
 }
 
 const virtualFieldTripPrompt = ai.definePrompt({
@@ -57,6 +75,11 @@ const virtualFieldTripPrompt = ai.definePrompt({
 **Context:**
 - **Topic**: {{{topic}}}
 - **Grade**: {{{gradeLevel}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -136,16 +159,23 @@ const virtualFieldTripFlow = ai.defineFlow(
           });
 
           // Use getDb for consistency with original file but wrap in try/catch 
-          const { getDb } = await import('@/lib/firebase-admin');
-          const db = await getDb();
-          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
             type: 'virtual-field-trip',
+            title: output.title || `Trip: ${input.topic}`,
+            gradeLevel: input.gradeLevel as any || 'Class 5',
+            subject: 'Geography' as any,
             topic: input.topic,
-            gradeLevels: [input.gradeLevel],
-            language: input.language,
+            language: input.language as any || 'English',
             storagePath: filePath,
-            createdAt: now,
             isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: output,
           });
 
           StructuredLogger.info('Content persisted successfully', {

@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 
 type InstantAnswerDisplayProps = {
-    answer: InstantAnswerOutput;
+    answer: InstantAnswerOutput & { videoSuggestionUrl?: string | null };
     title?: string;
 };
 
@@ -88,7 +88,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, ti
                             <Button
                                 variant="destructive"
                                 className="bg-red-600 hover:bg-red-700"
-                                onClick={() => window.open(answer.videoSuggestionUrl, '_blank')}
+                                onClick={() => answer.videoSuggestionUrl && window.open(answer.videoSuggestionUrl, '_blank')}
                             >
                                 Watch on YouTube
                             </Button>

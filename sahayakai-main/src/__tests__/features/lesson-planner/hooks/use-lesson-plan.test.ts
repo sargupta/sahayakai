@@ -122,12 +122,15 @@ describe('useLessonPlan Hook', () => {
 
         act(() => {
             result.current.handleTemplateSelect({
+                id: 'template-1',
                 title: 'Space Template',
+                titleHindi: 'अंतरिक्ष टेम्पलेट',
                 topic: 'The Moon',
                 gradeLevel: '4th Grade',
                 subject: 'Science',
-                icon: 'moon'
-            });
+                icon: 'moon',
+                color: 'blue'
+            } as any);
         });
 
         expect(result.current.form.getValues().topic).toBe('The Moon');

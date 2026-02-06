@@ -64,14 +64,29 @@ export async function generateVisualAid(input: VisualAidInput): Promise<VisualAi
   const safety = validateTopicSafety(input.prompt);
   if (!safety.safe) throw new Error(`Safety Violation: ${safety.reason}`);
 
-  // 2. Rate Limit
+  // 2. Rate Limit & User Profile Context
   const uid = input.userId || 'anonymous_user';
+  let localizedInput = { ...input };
+
   if (uid !== 'anonymous_user') {
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
+
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
   }
 
-  return visualAidFlow(input);
+  return visualAidFlow(localizedInput);
 }
 
 const visualAidFlow = ai.defineFlow(
@@ -126,6 +141,11 @@ const visualAidFlow = ai.defineFlow(
             3. "textLabels": An array of strings representing the EXACT text annotations. CHECK SPELLING CAREFULLY.
 
             Constraint: Output ONLY the raw JSON object. No markdown.
+
+            Constraints:
+            - Language Lock: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+            - No Repetition Loop: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+            - Scope Integrity: Stay strictly within the scope of the educational task assigned.
           `,
           config: {
             temperature: 0.4,
@@ -159,6 +179,15 @@ const visualAidFlow = ai.defineFlow(
         try {
           // Tier 1: Imagen 4.0 (High Quality)
           // Model confirmed available via list-models
+
+          // CRITICAL FIX: Image models struggle with Indic text (Kannada, Hindi, etc.)
+          // If the language is Indic, we SKIP image models and force SVG (Tier 4)
+          const isIndic = ['Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali'].includes(language || '');
+
+          if (isIndic) {
+            throw new Error('Skipping Image Models for Indic Language to ensure text correctness via SVG.');
+          }
+
           return await ai.generate({
             model: 'googleai/imagen-4.0-generate-001',
             prompt: optimizedPrompt

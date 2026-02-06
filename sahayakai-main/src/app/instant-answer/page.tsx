@@ -16,6 +16,7 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
 
@@ -30,6 +31,7 @@ type FormValues = z.infer<typeof formSchema>;
 type Answer = z.infer<typeof formSchema> & { answer: string; videoSuggestionUrl?: string };
 
 export default function InstantAnswerPage() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -46,6 +48,7 @@ export default function InstantAnswerPage() {
   const selectedLanguage = form.watch("language") || 'en';
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setAnswer(null);
     try {
@@ -54,12 +57,15 @@ export default function InstantAnswerPage() {
         language: values.language,
         gradeLevel: values.gradeLevel,
       });
-      setAnswer({ ...values, ...result });
-    } catch (error) {
+      setAnswer({ ...values, ...result } as Answer);
+    } catch (error: any) {
       console.error("Failed to get answer:", error);
+      if (error.message?.includes("unauthorized") || error.message?.includes("sign in")) {
+        openAuthModal();
+      }
       toast({
         title: "Answer Generation Failed",
-        description: "There was an error getting an answer. Please try again.",
+        description: error.message || "There was an error getting an answer. Please try again.",
         variant: "destructive",
       });
     } finally {

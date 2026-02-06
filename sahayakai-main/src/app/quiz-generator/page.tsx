@@ -5,6 +5,7 @@ import { generateQuiz } from "@/ai/flows/quiz-generator";
 import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +26,8 @@ import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
@@ -82,6 +85,14 @@ const translations: Record<string, Record<string, any>> = {
       'Analyze': 'Analyze',
       'Evaluate': 'Evaluate',
       'Create': 'Create',
+    },
+    bloomsHints: {
+      'Remember': 'Recall facts and basic concepts',
+      'Understand': 'Explain ideas or concepts',
+      'Apply': 'Use information in new situations',
+      'Analyze': 'Draw connections among ideas',
+      'Evaluate': 'Justify a stand or decision',
+      'Create': 'Produce new or original work',
     }
   },
   hi: {
@@ -110,6 +121,14 @@ const translations: Record<string, Record<string, any>> = {
       'Analyze': 'विश्लेषण करें',
       'Evaluate': 'मूल्यांकन करें',
       'Create': 'बनाएं',
+    },
+    bloomsHints: {
+      'Remember': 'तथ्यों और बुनियादी अवधारणाओं को याद रखें',
+      'Understand': 'विचारों या अवधारणाओं को समझाएं',
+      'Apply': 'नई स्थितियों में जानकारी का उपयोग करें',
+      'Analyze': 'विचारों के बीच संबंध बनाएं',
+      'Evaluate': 'किसी निर्णय या रुख का औचित्य सिद्ध करें',
+      'Create': 'नया या मौलिक कार्य तैयार करें',
     }
   },
   bn: {
@@ -294,6 +313,7 @@ export default function QuizGeneratorPage() {
 }
 
 function QuizGeneratorContent() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [quiz, setQuiz] = useState<QuizGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -313,24 +333,88 @@ function QuizGeneratorContent() {
   });
 
   useEffect(() => {
+    const id = searchParams.get("id");
     const topicParam = searchParams.get("topic");
-    if (topicParam) {
+
+    if (id) {
+      const fetchSavedContent = async () => {
+        setIsLoading(true);
+        try {
+          // Use auth helper if available, otherwise fallback
+          const userId = auth.currentUser?.uid || "dev-user";
+          const res = await fetch(`/api/content/get?id=${id}`, {
+            headers: { "x-user-id": userId }
+          });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.data) {
+              setQuiz(content.data);
+              // Set form values to match saved content
+              form.reset({
+                topic: content.topic || content.title,
+                gradeLevel: content.gradeLevel,
+                language: content.language,
+                numQuestions: content.data.questions?.length || 5,
+                // Default to standard types if not structured in base metadata
+                questionTypes: ["multiple_choice", "short_answer"],
+                bloomsTaxonomyLevels: ['Remember', 'Understand'],
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved quiz:", err);
+          toast({
+            title: "Load Failed",
+            description: "Could not load the saved quiz.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSavedContent();
+    } else if (topicParam) {
       form.setValue("topic", topicParam);
       // We need to wait a tick for the form value to be registered before submitting
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
       }, 0);
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setQuiz(null);
     try {
-      const result = await generateQuiz({ ...values, language: selectedLanguage });
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/quiz", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ ...values, language: selectedLanguage })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to generate quizzes");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate quiz");
+      }
+
+      const result = await res.json();
       setQuiz(result);
     } catch (error) {
       console.error("Failed to generate quiz:", error);
@@ -513,47 +597,56 @@ function QuizGeneratorContent() {
                       <FormItem>
                         <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
                         <div className="flex flex-wrap gap-2 pt-1">
-                          {bloomsLevelsData.map((item) => (
-                            <FormField
-                              key={item.id}
-                              control={form.control}
-                              name="bloomsTaxonomyLevels"
-                              render={({ field }) => {
-                                const isSelected = field.value?.includes(item.id);
-                                return (
-                                  <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
-                                    <FormControl>
-                                      <Label
-                                        htmlFor={item.id}
-                                        className={cn(
-                                          "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
-                                          isSelected
-                                            ? "bg-blue-100 text-blue-700 border-blue-200"
-                                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                                        )}
-                                      >
-                                        <CheckboxUI
-                                          id={item.id}
-                                          checked={isSelected}
-                                          onCheckedChange={(checked) => {
-                                            const currentValues = field.value || [];
-                                            const newValues = checked
-                                              ? [...currentValues, item.id]
-                                              : currentValues.filter((v) => v !== item.id);
-                                            field.onChange(newValues);
-                                          }}
-                                          className="sr-only" // Hide actual checkbox, style the label
-                                        />
-                                        {/* Custom Check Indicator */}
-                                        <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
-                                        {t.blooms[item.id]}
-                                      </Label>
-                                    </FormControl>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
+                          <TooltipProvider>
+                            {bloomsLevelsData.map((item) => (
+                              <FormField
+                                key={item.id}
+                                control={form.control}
+                                name="bloomsTaxonomyLevels"
+                                render={({ field }) => {
+                                  const isSelected = field.value?.includes(item.id);
+                                  return (
+                                    <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
+                                      <FormControl>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Label
+                                              htmlFor={item.id}
+                                              className={cn(
+                                                "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
+                                                isSelected
+                                                  ? "bg-blue-100 text-blue-700 border-blue-200"
+                                                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                              )}
+                                            >
+                                              <CheckboxUI
+                                                id={item.id}
+                                                checked={isSelected}
+                                                onCheckedChange={(checked) => {
+                                                  const currentValues = field.value || [];
+                                                  const newValues = checked
+                                                    ? [...currentValues, item.id]
+                                                    : currentValues.filter((v) => v !== item.id);
+                                                  field.onChange(newValues);
+                                                }}
+                                                className="sr-only" // Hide actual checkbox, style the label
+                                              />
+                                              {/* Custom Check Indicator */}
+                                              <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
+                                              {t.blooms[item.id]}
+                                            </Label>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{t.bloomsHints?.[item.id] || "Select this level"}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </FormControl>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </TooltipProvider>
                         </div>
                         <FormMessage />
                       </FormItem>

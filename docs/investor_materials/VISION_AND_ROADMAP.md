@@ -464,6 +464,6 @@ By 2030, SahayakAI will be:
 
 ---
 
-**Prepared By:** Saptarshi Gupta, Founder & CEO  
+**Prepared By:** Abhishek Gupta, Founder & CEO  
 **Strategic Advisor Input:** Dr. Ramdas Pai Chair on Education, Chanakya University  
 **Last Updated:** January 27, 2026

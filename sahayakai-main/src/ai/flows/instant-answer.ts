@@ -64,14 +64,29 @@ export async function instantAnswer(input: InstantAnswerInput): Promise<InstantA
   const safety = validateTopicSafety(input.question);
   if (!safety.safe) throw new Error(`Safety Violation: ${safety.reason}`);
 
-  // 2. Rate Limit
+  // 2. Rate Limit & User Profile Context
   const uid = input.userId || 'anonymous_user';
+  let localizedInput = { ...input };
+
   if (uid !== 'anonymous_user') {
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
+
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
   }
 
-  return instantAnswerFlow(input);
+  return instantAnswerFlow(localizedInput);
 }
 
 const instantAnswerPrompt = ai.definePrompt({
@@ -84,10 +99,15 @@ const instantAnswerPrompt = ai.definePrompt({
 **Instructions:**
 1.  **Use Tools:** If the question requires current information or facts, use the \`googleSearch\` tool to get up-to-date information.
 2.  **Tailor the Answer:** Adjust the complexity and vocabulary of your answer based on the provided \`gradeLevel\`. If no grade level is given, answer for a general audience.
-3.  **Language:** Respond in the specified \`language\`.
+3.  **Language:** Respond ONLY in the specified \`language\`.
 4.  **Analogies:** For complex topics, use simple analogies, especially for younger grade levels.
 5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, provide a YouTube Search URL in the \`videoSuggestionUrl\` field. The format MUST be: \`https://www.youtube.com/results?search_query=\` followed by a concise, relevant search query (e.g., "photosynthesis for class 5"). Do NOT try to guess a specific video ID (like watch?v=xyz) as it might be fake. Always use the search results URL.
 6.  **Be Direct:** Provide the answer directly without conversational filler.
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 
 **User's Question:**
 - **Question:** {{{question}}}

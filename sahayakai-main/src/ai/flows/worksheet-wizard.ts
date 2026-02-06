@@ -35,7 +35,25 @@ const WorksheetWizardOutputSchema = z.object({
 export type WorksheetWizardOutput = z.infer<typeof WorksheetWizardOutputSchema>;
 
 export async function generateWorksheet(input: WorksheetWizardInput): Promise<WorksheetWizardOutput> {
-  return worksheetWizardFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
+  }
+
+  return worksheetWizardFlow(localizedInput);
 }
 
 const worksheetWizardPrompt = ai.definePrompt({
@@ -79,7 +97,13 @@ const worksheetWizardPrompt = ai.definePrompt({
 - **Textbook Image:** {{media url=imageDataUri}}
 - **Request:** {{{prompt}}}
 - **Grade**: {{{gradeLevel}}}
+- **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -115,8 +139,19 @@ const worksheetWizardFlow = ai.defineFlow(
         }
       });
 
+      const { fetchImageAsBase64 } = await import('@/ai/utils/image-utils');
+
+      // Process Image URL -> Base64 if needed
+      let processedImageDataUri = input.imageDataUri;
+      if (input.imageDataUri && !input.imageDataUri.startsWith('data:')) {
+        processedImageDataUri = await fetchImageAsBase64(input.imageDataUri);
+      }
+
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await worksheetWizardPrompt(input, resilienceConfig);
+        return await worksheetWizardPrompt({
+          ...input,
+          imageDataUri: processedImageDataUri
+        }, resilienceConfig);
       });
 
       if (!output) {
@@ -157,16 +192,23 @@ const worksheetWizardFlow = ai.defineFlow(
             contentType: 'text/markdown',
           });
 
-          const { getDb } = await import('@/lib/firebase-admin');
-          const db = await getDb();
-          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
             type: 'worksheet',
+            title: `Worksheet: ${input.prompt.substring(0, 30)}`,
+            gradeLevel: input.gradeLevel as any || 'Class 5',
+            subject: 'General',
             topic: input.prompt,
-            gradeLevels: [input.gradeLevel],
-            language: input.language,
+            language: input.language as any || 'English',
             storagePath: filePath,
-            createdAt: now,
             isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: output,
           });
 
           StructuredLogger.info('Content persisted successfully', {

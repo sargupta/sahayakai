@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SahayakAI Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background-color: #0d1117;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        #diagram {
+            padding: 40px;
+            background: #000814;
+            display: inline-block;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom Mermaid styling */
+        .node rect {
+            stroke-width: 3px !important;
+        }
+
+        .node .label {
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: #fff !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="diagram">
+        <div class="mermaid">
+            graph TD
+            %% Node Styles
+            classDef default fill:#1f2937,stroke:#3b82f6,stroke-width:3px,color:#fff;
+            classDef core fill:#1e3a8a,stroke:#3b82f6,stroke-width:5px,color:#fff,font-weight:bold;
+            classDef orange fill:#ea580c,stroke:#fb923c,stroke-width:3px,color:#fff;
+            classDef purple fill:#7c3aed,stroke:#a78bfa,stroke-width:3px,color:#fff;
+
+            User["<b>TEACHER INTERACTION</b><br />Voice / Text / Context"]:::default
+            User --> Router["<b>INTENT ROUTER</b><br />Cognitive Dispatcher"]:::core
+
+            Router --> Admin["<b>Admin Exoskeleton</b><br />Reports & Logs"]:::orange
+            Router --> Wizard["<b>Worksheet Wizard</b><br />Curriculum Synthesis"]:::orange
+            Router --> Assessment["<b>Assessment Engine</b><br />Quizzes & Rubrics"]:::orange
+            Router --> Field["<b>Virtual Field Trip</b><br />Immersive Simulations"]:::orange
+            Router --> Visual["<b>Visual Aid Designer</b><br />Asset Generation"]:::orange
+            Router --> Mentor["<b>Teacher Co-Pilot</b><br />Pedagogical Tips"]:::orange
+
+            Admin & Wizard & Assessment & Field & Visual & Mentor --> Grounding["<b>PEDAGOGICAL KERNEL</b><br />NCERT /
+            Local Policy Grounding"]:::core
+
+            Grounding --> Delivery["<b>OS RUNTIME</b><br />PWA / Offline Resilience"]:::purple
+            Delivery --> Finish["<b>SUPER-TEACHER OUTPUT</b>"]:::default
+
+            linkStyle default stroke:#3b82f6,stroke-width:3px,fill:none;
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 30
+            }
+        });
+    </script>
+</body>
+
+</html>

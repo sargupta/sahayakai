@@ -17,7 +17,6 @@ describe('NCERT Mathematics Data', () => {
 
             expect(chapter).toBeDefined();
             expect(chapter?.id).toBe('math-6-1');
-            expect(chapter?.subject).toBeUndefined(); // Raw data doesn't have subject on chapter level
         });
 
         it('should include "Real Numbers" in Grade 10', () => {

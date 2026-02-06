@@ -18,7 +18,7 @@ Create comprehensive investor materials for SahayakAI pitch deck
 - [x] Define pricing tiers and assumptions
 
 ### Traction & Metrics
-- [x] Synthesize pilot results from existing docs (Karnataka pilot with Chanakya University)
+- [x] Synthesize pilot results from existing docs (Karnataka pilot with independent pedagogical study)
 - [x] Document current user metrics (150+ teachers, ~200 active users)
 - [x] Highlight key achievements and milestones
 

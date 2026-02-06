@@ -96,18 +96,25 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
     throw new Error(`Safety Violation: ${safety.reason}`);
   }
 
-  // 2. Server-Side Rate Limiting
-  // Use input.userId or fallback to "anonymous" (IP-based limits not implemented yet in this scope)
+  // 2. Server-Side Rate Limiting & User Profile Context
   const uid = input.userId || 'anonymous_user';
+  let localizedInput = { ...input };
+
   if (uid !== 'anonymous_user') {
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
-  } else {
-    // Optional: limit anonymous globally? For now, skip to avoid blocking legitimate first-time users without IDs.
-    // In production, we'd use IP.
+
+    // Fetch user's preferred language if not provided
+    if (!input.language) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+      if (profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+    }
   }
 
-  return lessonPlanFlow(input);
+  return lessonPlanFlow(localizedInput);
 }
 
 const lessonPlanPrompt = ai.definePrompt({
@@ -131,6 +138,11 @@ You MUST organize the activities into the 5E Instructional Model:
 - **gradeLevel**: (e.g., "5th Grade")
 - **duration**: (e.g., "45 minutes")
 - **subject**: (e.g., "Science")
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 - **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").
 - **understandingCheck**: A simple focus question for the teacher to ask at the end of each phase.
 - **Assessment**: A brief description of how to assess student learning at the end of the lesson.

@@ -18,6 +18,8 @@ import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 
 const formSchema = z.object({
@@ -39,6 +41,7 @@ export default function VirtualFieldTripPage() {
 }
 
 function VirtualFieldTripContent() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -56,24 +59,91 @@ function VirtualFieldTripContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const id = searchParams.get("id");
     const topicParam = searchParams.get("topic");
-    if (topicParam) {
+
+    if (id) {
+      const fetchSavedContent = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          } else if (auth.currentUser?.uid === "dev-user") {
+            headers["x-user-id"] = "dev-user";
+          }
+
+          const res = await fetch(`/api/content/get?id=${id}`, {
+            headers: headers
+          });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.data) {
+              setTrip(content.data);
+              form.reset({
+                topic: content.topic || content.title,
+                gradeLevel: content.gradeLevel,
+                language: content.language,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved field trip:", err);
+          toast({
+            title: "Load Failed",
+            description: "Could not load the saved field trip.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSavedContent();
+    } else if (topicParam) {
       form.setValue("topic", topicParam);
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
       }, 0);
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setTrip(null);
     try {
-      const result = await planVirtualFieldTrip({
-        topic: values.topic,
-        language: values.language,
-        gradeLevel: values.gradeLevel,
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/virtual-field-trip", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          topic: values.topic,
+          language: values.language,
+          gradeLevel: values.gradeLevel,
+        })
       });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to generate virtual field trips");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate virtual field trip");
+      }
+
+      const result = await res.json();
       setTrip(result);
     } catch (error) {
       console.error("Failed to plan trip:", error);

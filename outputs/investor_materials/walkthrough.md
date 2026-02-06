@@ -89,7 +89,7 @@ Comprehensive 10-section investor appendix covering:
 - Month 18: 500K teachers, Series A ready (₹25+ Cr ARR)
 
 #### Team Profiles
-**Founder & CEO - Saptarshi Gupta:**
+**Founder & CEO - Abhishek Gupta:**
 - 8+ years AI/ML product development
 - Expertise: GCP, Firebase, Generative AI, multi-agent systems
 - Track record: Built AI video production pipeline, serverless architectures

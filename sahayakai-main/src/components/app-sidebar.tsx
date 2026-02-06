@@ -24,12 +24,12 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-             <SidebarMenuButton href="/" asChild tooltip="AI Companion" isActive={pathname === '/'} variant="outline">
-                <Link href="/">
-                  <Sparkles />
-                  <span>AI Companion</span>
-                </Link>
-              </SidebarMenuButton>
+            <SidebarMenuButton asChild tooltip="AI Companion" isActive={pathname === '/'} variant="outline">
+              <Link href="/">
+                <Sparkles />
+                <span>AI Companion</span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -45,7 +45,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/rubric-generator')} tooltip="Rubric Generator">
                 <Link href="/rubric-generator">
                   <ClipboardCheck />
@@ -61,7 +61,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/quiz-generator')} tooltip="Quiz Generator">
                 <Link href="/quiz-generator">
                   <FileSignature />
@@ -77,7 +77,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/instant-answer')} tooltip="Instant Answer">
                 <Link href="/instant-answer">
                   <Wand2 />
@@ -122,63 +122,63 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/my-library')} tooltip="My Library">
-                  <Link href="/my-library">
-                    <FolderKanban />
-                    <span>My Library</span>
-                  </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip="Community Library">
-                  <Link href="/community">
-                    <Library />
-                    <span>Community Library</span>
-                  </Link>
-                </SidebarMenuButton>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/my-library')} tooltip="My Library">
+                <Link href="/my-library">
+                  <FolderKanban />
+                  <span>My Library</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip="Impact Dashboard">
-                  <Link href="/impact-dashboard">
-                    <BarChart />
-                    <span>Impact Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/submit-content')} tooltip="Submit Content">
-                  <Link href="/submit-content">
-                    <Upload />
-                    <span>Submit Content</span>
-                  </Link>
-                </SidebarMenuButton>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip="Community Library">
+                <Link href="/community">
+                  <Library />
+                  <span>Community Library</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip="My Profile">
-                  <Link href="/my-library">
-                    <User />
-                    <span>My Profile</span>
-                  </Link>
-                </SidebarMenuButton>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip="Impact Dashboard">
+                <Link href="/impact-dashboard">
+                  <BarChart />
+                  <span>Impact Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/submit-content')} tooltip="Submit Content">
+                <Link href="/submit-content">
+                  <Upload />
+                  <span>Submit Content</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip="My Profile">
+                <Link href="/my-library">
+                  <User />
+                  <span>My Profile</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-         <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/review-panel')} tooltip="Review Panel">
-                  <Link href="/review-panel">
-                    <ShieldCheck />
-                    <span>Review Panel</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-         </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Admin</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/review-panel')} tooltip="Review Panel">
+                <Link href="/review-panel">
+                  <ShieldCheck />
+                  <span>Review Panel</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarFooter>
     </Sidebar>
   )

@@ -10,7 +10,7 @@
 ## Executive Summary
 
 **Investment Opportunity:**  
-SahayakAI is building an offline-first AI teaching assistant targeting 9.7M Indian teachers (₹9,700 Cr TAM). Current traction: 150+ teachers in Karnataka pilot with 78% retention, partnered with Chanakya University. Seeking ₹2.3 Cr seed funding.
+SahayakAI is building an offline-first AI teaching assistant targeting 9.7M Indian teachers (₹9,700 Cr TAM). Current traction: 150+ teachers in Karnataka pilot with 78% retention, partnered with independent regional validation. Seeking ₹2.3 Cr seed funding.
 
 **Preliminary Assessment:**  
 ⚠️ **MIXED SIGNALS** - Strong technical differentiation and founder capability, BUT significant execution risks in B2G sales and overly aggressive growth projections. Requires major diligence before investment decision.
@@ -213,7 +213,7 @@ SahayakAI is building an offline-first AI teaching assistant targeting 9.7M Indi
 
 #### Founder Capability
 
-**Saptarshi Gupta** - Founder & CEO
+**Abhishek Gupta** - Founder & CEO
 
 **Strengths:**
 - 9 years AI/ML experience ✅
@@ -301,7 +301,7 @@ Condition investment on Govt Relations Manager LOI/hire commitment
 
 **Strengths:**
 - "Land & expand" is correct B2G approach ✅
-- Karnataka pilot (Chanakya University) is strong proof point ✅
+- Karnataka pilot (independent regional validation) is strong proof point ✅
 - DIKSHA integration strategy is smart (4.5M teacher reach) ✅
 
 **Critical Gaps:**
@@ -340,7 +340,7 @@ Require pilot MoU signatures (not just "in discussion") as funding milestone
 **Our Validation:** ✅ **CREDIBLE AND IMPRESSIVE**
 
 **Strengths:**
-- Academic partner (Chanakya University) adds credibility ✅
+- Academic partner (independent regional validation) adds credibility ✅
 - 78% retention is strong for B2G pilot (>60% benchmark) ✅
 - NPS 71 is "Excellent" (>50 is good, >70 is exceptional) ✅
 
@@ -351,7 +351,7 @@ Require pilot MoU signatures (not just "in discussion") as funding milestone
 
 **Due Diligence Required:**
 - Interview 5-10 pilot teachers directly (verify testimonials)
-- Request Chanakya University impact study (peer-reviewed?)
+- Request independent regional validation impact study (peer-reviewed?)
 
 ---
 
@@ -491,7 +491,7 @@ Before proceeding to investment committee, we MUST validate:
 12. ☐ Advisory Board: Commit 1-2 advisors before funding (not "to be recruited")
 
 ### Traction
-13. ☐ Independent validation: Chanakya University study (peer-review status?)
+13. ☐ Independent validation: independent field studies (peer-review status?)
 14. ☐ Teacher interviews: Call 10 pilot teachers directly (verify testimonials)
 15. ☐ Retention data: 6-month cohort analysis (not just 3 months)
 
@@ -526,7 +526,7 @@ Before proceeding to investment committee, we MUST validate:
 - ✅ Founder commits to ₹15 L/month burn rate (extend runway to 15 months)
 - ✅ 1-2 government LOIs signed (de-risk revenue timeline)
 - ✅ Govt Relations Manager hire committed (name + start date)
-- ✅ Chanakya University study independently validated
+- ✅ independent field studies independently validated
 
 #### INVESTMENT TERMS (If Approved):
 

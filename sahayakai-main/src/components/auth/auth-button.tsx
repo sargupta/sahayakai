@@ -60,11 +60,25 @@ export function AuthButton() {
         });
 
         try {
-            await signInWithPopup(auth, provider);
-            toast({
-                title: "Welcome to SahayakAI",
-                description: "You have successfully signed in.",
-            });
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Check if profile exists
+            const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
+            const data = await response.json();
+
+            if (!data.exists) {
+                toast({
+                    title: "Almost there!",
+                    description: "Complete your professional profile to join the community.",
+                });
+                window.location.href = '/onboarding';
+            } else {
+                toast({
+                    title: "Welcome back!",
+                    description: "Redirecting you to the library.",
+                });
+            }
         } catch (error: any) {
             console.error("Auth Error:", error);
             toast({

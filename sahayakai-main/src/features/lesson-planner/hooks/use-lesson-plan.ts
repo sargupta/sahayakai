@@ -16,9 +16,12 @@ import { logger } from "@/lib/logger";
 import { syncTelemetryEvents } from "@/app/actions/telemetry";
 import { formSchema, FormValues, topicPlaceholderTranslations } from "../types";
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import { useSearchParams } from "next/navigation";
 
 export function useLessonPlan() {
+    const { requireAuth, openAuthModal } = useAuth();
     const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState("");
@@ -42,7 +45,6 @@ export function useLessonPlan() {
     const selectedGradeLevels = form.watch("gradeLevels");
     const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
 
-    // Extract numeric grade from string (e.g., "6th Grade" -> 6)
     const getNumericGrade = (grades?: string[]) => {
         if (!grades || grades.length === 0) return undefined;
         const match = grades[0].match(/(\d+)/);
@@ -51,7 +53,6 @@ export function useLessonPlan() {
 
     const currentGrade = getNumericGrade(selectedGradeLevels);
 
-    // Network Status & Telemetry Sync
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setIsOffline(!navigator.onLine);
@@ -61,7 +62,6 @@ export function useLessonPlan() {
             setIsOffline(false);
             toast({ title: "Back Online", description: "You are connected to the internet." });
 
-            // Sync Telemetry
             try {
                 const pending = await getPendingEvents();
                 if (pending.length > 0) {
@@ -92,7 +92,6 @@ export function useLessonPlan() {
         };
     }, [toast]);
 
-    // Auto-save draft (IndexedDB)
     useEffect(() => {
         const subscription = form.watch(async (value) => {
             if (typeof window !== 'undefined') {
@@ -106,8 +105,10 @@ export function useLessonPlan() {
         return () => subscription.unsubscribe();
     }, [form.watch]);
 
-    // Load draft (IndexedDB)
     useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get("id")) return;
+
         const loadDraft = async () => {
             if (typeof window !== 'undefined') {
                 try {
@@ -125,23 +126,66 @@ export function useLessonPlan() {
             }
         };
         loadDraft();
-    }, []);
+    }, [form.reset, toast]);
 
     const searchParams = useSearchParams();
 
-    // Auto-Execution from URL
     useEffect(() => {
+        const id = searchParams.get("id");
         const topicParam = searchParams.get("topic");
-        if (topicParam) {
+
+        if (id) {
+            const fetchSavedContent = async () => {
+                setIsLoading(true);
+                try {
+                    const token = await auth.currentUser?.getIdToken();
+                    const headers: Record<string, string> = {
+                        "Content-Type": "application/json",
+                    };
+
+                    if (token) {
+                        headers["Authorization"] = `Bearer ${token}`;
+                    } else if (auth.currentUser?.uid === "dev-user") {
+                        headers["x-user-id"] = "dev-user";
+                    }
+
+                    const res = await fetch(`/api/content/get?id=${id}`, {
+                        headers: headers
+                    });
+                    if (res.ok) {
+                        const content = await res.json();
+                        if (content.data) {
+                            setLessonPlan(content.data);
+                            form.reset({
+                                topic: content.topic || content.title,
+                                language: content.language,
+                                gradeLevels: content.gradeLevel ? [content.gradeLevel] : ["6th Grade"],
+                                imageDataUri: content.data.imageDataUri || "",
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to load saved lesson plan:", err);
+                    toast({
+                        title: "Load Failed",
+                        description: "Could not load the saved lesson plan.",
+                        variant: "destructive"
+                    });
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchSavedContent();
+        } else if (topicParam) {
             form.setValue("topic", topicParam);
-            // Wait for form state update
             setTimeout(() => {
                 form.handleSubmit(onSubmit)();
             }, 0);
         }
-    }, [searchParams, form]);
+    }, [searchParams, form, toast]);
 
     const onSubmit = async (values: FormValues) => {
+        if (!requireAuth()) return;
         setIsLoading(true);
         setLessonPlan(null);
 
@@ -251,20 +295,44 @@ export function useLessonPlan() {
             await new Promise(r => setTimeout(r, 800)); // UX Pause
             setLoadingMessage("Consulting Indian Context Database...");
 
-            const result = await generateLessonPlan({
-                topic: values.topic,
-                language: values.language,
-                gradeLevels: values.gradeLevels,
-                imageDataUri: values.imageDataUri,
-                useRuralContext: true,
-                resourceLevel: resourceLevel,
-                difficultyLevel: difficultyLevel,
-                ncertChapter: selectedChapter ? {
-                    title: selectedChapter.title,
-                    number: selectedChapter.number,
-                    learningOutcomes: selectedChapter.learningOutcomes,
-                } : undefined,
+            const token = await auth.currentUser?.getIdToken();
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const res = await fetch("/api/ai/lesson-plan", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({
+                    topic: values.topic,
+                    language: values.language,
+                    gradeLevels: values.gradeLevels,
+                    imageDataUri: values.imageDataUri,
+                    useRuralContext: true,
+                    resourceLevel: resourceLevel,
+                    difficultyLevel: difficultyLevel,
+                    ncertChapter: selectedChapter ? {
+                        title: selectedChapter.title,
+                        number: selectedChapter.number,
+                        learningOutcomes: selectedChapter.learningOutcomes,
+                    } : undefined,
+                })
             });
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    openAuthModal();
+                    throw new Error("Please sign in to generate lesson plans");
+                }
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to generate lesson plan");
+            }
+
+            const result = await res.json();
             setLessonPlan(result);
 
             if (typeof window !== 'undefined') {

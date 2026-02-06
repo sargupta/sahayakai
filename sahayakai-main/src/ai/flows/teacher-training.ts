@@ -34,7 +34,22 @@ const TeacherTrainingOutputSchema = z.object({
 export type TeacherTrainingOutput = z.infer<typeof TeacherTrainingOutputSchema>;
 
 export async function getTeacherTrainingAdvice(input: TeacherTrainingInput): Promise<TeacherTrainingOutput> {
-  return teacherTrainingFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's profile for context (language)
+    if (!input.language) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+    }
+  }
+
+  return teacherTrainingFlow(localizedInput);
 }
 
 const teacherTrainingPrompt = ai.definePrompt({
@@ -55,6 +70,12 @@ const teacherTrainingPrompt = ai.definePrompt({
 **Teacher's Request:**
 -   **Question/Concern:** {{{question}}}
 -   **Language:** {{{language}}}
+-   **Language:** {{{language}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -135,15 +156,23 @@ const teacherTrainingFlow = ai.defineFlow(
           // Looking at previous files, they used dbAdapter or getDb.
           // The original code used getDb(). Let's use getDb to match original logic but wrapped involved in try/catch
 
-          const { getDb } = await import('@/lib/firebase-admin');
-          const db = await getDb();
-          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
             type: 'teacher-training',
+            title: `Advice: ${input.question.substring(0, 50)}...`,
+            gradeLevel: 'Class 5',
+            subject: 'General',
             topic: input.question,
-            language: input.language,
+            language: input.language as any || 'English',
             storagePath: filePath,
-            createdAt: now,
             isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: output,
           });
 
           StructuredLogger.info('Content persisted successfully', {

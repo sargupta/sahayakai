@@ -185,7 +185,7 @@ Total LTV = ₹2,920
 ### Pilot Program Results
 
 **Karnataka Pilot (Active):**
-- **Deployment Partner:** Dr. Ramdas Pai Chair on Education, Chanakya University (Bangalore)
+- **Deployment Partner:** Dr. Ramdas Pai Chair on Education, independent pedagogical research
 - **Funding Partner:** Samarasya Foundation
 - **Teachers enrolled:** 150+
 - **Overall customer outreach:** 150+
@@ -225,7 +225,7 @@ Total LTV = ₹2,920
 ### Pipeline & Partnerships
 
 **Active Partnerships:**
-- **Academia:** Dr. Ramdas Pai Chair on Education, Chanakya University (Bangalore) - Pilot & research partner
+- **Academia:** Dr. Ramdas Pai Chair on Education, independent pedagogical research - Pilot & research partner
 - **Funding:** Samarasya Foundation - Pilot funding partner
 - **Technology:** Google Cloud India - Vertex AI integration & GCP ecosystem support
 
@@ -312,7 +312,7 @@ Total LTV = ₹2,920
 
 ### Founder & CEO
 
-**Saptarshi Gupta** - *Founder & Chief Executive Officer*
+**Abhishek Gupta** - *Founder & Chief Executive Officer*
 
 **Profile:**
 - 9+ years of AI/ML experience building AI products and applications
@@ -497,7 +497,7 @@ Total LTV = ₹2,920
 ---
 
 **Contact for Inquiries:**  
-Saptarshi Gupta  
+Abhishek Gupta  
 Founder & CEO, SahayakAI  
 [Email - to be filled]  
 [LinkedIn - to be filled]

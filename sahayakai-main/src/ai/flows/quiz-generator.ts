@@ -15,7 +15,21 @@ import { quizGeneratorFlow } from './quiz-definitions';
 export type { QuizGeneratorOutput } from '@/ai/schemas/quiz-generator-schemas';
 
 export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizGeneratorOutput> {
-  const output = await quizGeneratorFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's preferred language if not provided
+    if (!input.language) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+      if (profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+    }
+  }
+
+  const output = await quizGeneratorFlow(localizedInput);
 
   if (!output) {
     throw new Error('The AI model failed to generate a valid quiz. The returned output was null.');
@@ -36,14 +50,23 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizGener
       contentType: 'application/json',
     });
 
-    await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+    const { dbAdapter } = await import('@/lib/db/adapter');
+    const { Timestamp } = await import('firebase-admin/firestore');
+
+    await dbAdapter.saveContent(input.userId, {
+      id: contentId,
       type: 'quiz',
+      title: input.topic || 'Quiz',
+      gradeLevel: input.gradeLevel as any || 'Class 5',
+      subject: 'General',
       topic: input.topic,
-      gradeLevels: [input.gradeLevel],
-      language: input.language,
+      language: input.language as any || 'English',
       storagePath: filePath,
-      createdAt: now,
       isPublic: false,
+      isDraft: false,
+      createdAt: Timestamp.fromDate(now),
+      updatedAt: Timestamp.fromDate(now),
+      data: output,
     });
   }
 

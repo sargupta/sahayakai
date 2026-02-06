@@ -38,7 +38,25 @@ const RubricGeneratorOutputSchema = z.object({
 export type RubricGeneratorOutput = z.infer<typeof RubricGeneratorOutputSchema>;
 
 export async function generateRubric(input: RubricGeneratorInput): Promise<RubricGeneratorOutput> {
-  return rubricGeneratorFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
+  }
+
+  return rubricGeneratorFlow(localizedInput);
 }
 
 const rubricGeneratorPrompt = ai.definePrompt({
@@ -62,6 +80,11 @@ const rubricGeneratorPrompt = ai.definePrompt({
 - **Assignment**: {{{assignmentDescription}}}
 - **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -139,16 +162,23 @@ const rubricGeneratorFlow = ai.defineFlow(
             contentType: 'application/json',
           });
 
-          const { getDb } = await import('@/lib/firebase-admin');
-          const db = await getDb();
-          await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
             type: 'rubric',
+            title: output.title || `Rubric: ${input.assignmentDescription}`,
+            gradeLevel: input.gradeLevel as any || 'Class 5',
+            subject: 'General',
             topic: input.assignmentDescription,
-            gradeLevels: [input.gradeLevel],
-            language: input.language,
+            language: input.language as any || 'English',
             storagePath: filePath,
-            createdAt: now,
             isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: output,
           });
 
           StructuredLogger.info('Content persisted successfully', {

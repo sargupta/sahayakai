@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen } from 'lucide-react';
+import { submitFeedback } from '@/app/actions/feedback';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import jsPDF from 'jspdf';
@@ -44,7 +45,12 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
   };
 
   const handleFeedback = async (rating: 'thumbs-up' | 'thumbs-down') => {
-    await submitFeedback(lessonPlan.title, rating);
+    await submitFeedback({
+      page: '/lesson-plan',
+      feature: 'lesson-plan-generator',
+      rating,
+      context: { title: lessonPlan.title }
+    });
     setFeedbackSubmitted(true);
     toast({
       title: "Feedback Recorded",
@@ -79,30 +85,47 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
 
   const handleSave = async () => {
     try {
-      const { auth, db } = await import('@/lib/firebase');
-      const { signInAnonymously } = await import('firebase/auth');
-      const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-
+      const { auth } = await import('@/lib/firebase');
       let user = auth.currentUser;
+
+      // Handle Anonymous Auth if needed
       if (!user) {
+        const { signInAnonymously } = await import('firebase/auth');
         const userCred = await signInAnonymously(auth);
         user = userCred.user;
       }
 
-      // meaningful title for the DB entry
+      // Prepare payload strictly matching SaveContentSchema using 1.0.0 API
       const saveTitle = lessonPlan.title && lessonPlan.title !== 'Lesson Plan'
         ? lessonPlan.title
         : `${lessonPlan.subject || 'General'} Lesson - ${lessonPlan.gradeLevel || 'Unspecified'}`;
 
-      await addDoc(collection(db, 'content'), {
-        userId: user.uid,
+      const payload = {
+        id: crypto.randomUUID(), // Generate ID client-side or let server do it (server schema expects UUID in ID)
         type: 'lesson-plan',
         title: saveTitle,
-        data: lessonPlan,
-        createdAt: serverTimestamp(),
-        gradeLevel: lessonPlan.gradeLevel,
-        subject: lessonPlan.subject
+        gradeLevel: lessonPlan.gradeLevel || 'Class 5',
+        subject: lessonPlan.subject || 'General',
+        topic: lessonPlan.title || 'Lesson', // Fallback for topic
+        language: 'English', // Defaulting for now, ideally input should provide this
+        isPublic: false,
+        isDraft: false,
+        data: lessonPlan
+      };
+
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.uid
+        },
+        body: JSON.stringify(payload)
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Server rejected save');
+      }
 
       toast({
         title: "Saved to Library",
@@ -112,7 +135,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
       console.error("Save Error:", error);
       toast({
         title: "Save Failed",
-        description: "Could not save to library. Please try again.",
+        description: error instanceof Error ? error.message : "Could not save to library.",
         variant: "destructive"
       });
     }
@@ -336,7 +359,7 @@ ${lessonPlan.assessment}
             <AccordionContent className="text-foreground/80 space-y-2 pt-2 pl-4">
               {isEditing ? (
                 <Textarea
-                  value={editablePlan.assessment}
+                  value={editablePlan.assessment ?? ''}
                   onChange={(e) => setEditablePlan({ ...editablePlan, assessment: e.target.value })}
                   className="min-h-[100px]"
                   placeholder="Assessment details"

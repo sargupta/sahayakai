@@ -17,6 +17,8 @@ import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 import { MicrophoneInput } from "@/components/microphone-input";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 
 const formSchema = z.object({
@@ -115,14 +117,40 @@ function TeacherTrainingContent() {
     }
   }, [searchParams, form]);
 
+  const { requireAuth, openAuthModal } = useAuth();
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setAdvice(null);
     try {
-      const result = await getTeacherTrainingAdvice({
-        question: values.question,
-        language: values.language,
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/teacher-training", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          question: values.question,
+          language: values.language,
+        })
       });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to get advice");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to get advice");
+      }
+
+      const result = await res.json();
       setAdvice(result);
     } catch (error) {
       console.error("Failed to get advice:", error);

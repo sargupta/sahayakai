@@ -16,7 +16,7 @@ export const QuizGeneratorInputSchema = z.object({
     "An optional photo of a textbook page, as a data URI that must include a MIME type and use Base64 encoding. This will be the primary context for the quiz."
   ),
   numQuestions: z.number().default(5).describe('The number of questions to generate.'),
-  questionTypes: z.array(z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer'])).describe('The types of questions to include.'),
+  questionTypes: z.array(z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer', 'true_false'])).describe('The types of questions to include.'),
   gradeLevel: z.string().optional().describe('The grade level for which the quiz is intended.'),
   language: z.string().optional().describe('The language for the quiz.'),
   bloomsTaxonomyLevels: z.array(z.string()).optional().describe("A list of Bloom's Taxonomy levels to target."),

@@ -523,7 +523,7 @@ SahayakAI's risk management is **proactive, not reactive**. By identifying and m
 
 ---
 
-**Risk Officer:** Saptarshi Gupta (Founder & CEO)  
+**Risk Officer:** Abhishek Gupta (Founder & CEO)  
 **Review Cycle:** Monthly  
 **Last Updated:** January 27, 2026  
 **Next Board Review:** March 2026

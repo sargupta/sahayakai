@@ -52,25 +52,62 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
 
     const handleSave = async () => {
         try {
-            const { saveToLibrary } = await import('@/app/actions/content');
-            const userId = 'user-123'; // TO DO: Get from real Auth
+            const { auth } = await import('@/lib/firebase');
+            let user = auth.currentUser;
+
+            if (!user) {
+                const { signInAnonymously } = await import('firebase/auth');
+                const userCred = await signInAnonymously(auth);
+                user = userCred.user;
+            }
+
             const saveTitle = title || "Worksheet";
 
-            const result = await saveToLibrary(userId, 'worksheet', saveTitle, worksheet);
+            // Construct payload matching WorksheetDataSchema
+            const payload = {
+                id: crypto.randomUUID(),
+                type: 'worksheet',
+                title: saveTitle,
+                gradeLevel: 'Class 5',
+                subject: 'General',
+                topic: saveTitle,
+                language: 'English',
+                isPublic: false,
+                isDraft: false,
+                data: {
+                    layout: 'portrait',
+                    sections: [{
+                        title: 'Generated Content',
+                        instructions: worksheet.worksheetContent,
+                        items: []
+                    }]
+                }
+            };
 
-            if (result.success) {
-                toast({
-                    title: "Saved to Library",
-                    description: "Your worksheet has been saved to your personal library.",
-                });
-            } else {
-                throw new Error(result.error);
+            const response = await fetch('/api/content/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.uid
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Server rejected save');
             }
+
+            toast({
+                title: "Saved to Library",
+                description: "Your worksheet has been saved to your personal library.",
+            });
+
         } catch (error) {
             console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
-                description: "Could not save to library. Please try again.",
+                description: error instanceof Error ? error.message : "Could not save to library.",
                 variant: "destructive"
             });
         }

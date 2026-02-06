@@ -315,7 +315,7 @@ Total LTV = ₹2,920
 
 ### Founder & CEO
 
-**Saptarshi Gupta** - *Founder & Chief Executive Officer*
+**Abhishek Gupta** - *Founder & Chief Executive Officer*
 
 **Profile:**
 - 9+ years of AI/ML experience building AI products and applications
@@ -500,7 +500,7 @@ Total LTV = ₹2,920
 ---
 
 **Contact for Inquiries:**  
-Saptarshi Gupta  
+Abhishek Gupta  
 Founder & CEO, SahayakAI  
 [Email - to be filled]  
 [LinkedIn - to be filled]

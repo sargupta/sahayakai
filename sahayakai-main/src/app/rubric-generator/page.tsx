@@ -26,6 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { MicrophoneInput } from "@/components/microphone-input";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -226,6 +228,7 @@ export default function RubricGeneratorPage() {
 }
 
 function RubricGeneratorContent() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -244,20 +247,88 @@ function RubricGeneratorContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const id = searchParams.get("id");
     const descParam = searchParams.get("assignmentDescription");
-    if (descParam) {
+
+    if (id) {
+      const fetchSavedContent = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          } else if (auth.currentUser?.uid === "dev-user") {
+            headers["x-user-id"] = "dev-user";
+          }
+
+          const res = await fetch(`/api/content/get?id=${id}`, {
+            headers: headers
+          });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.data) {
+              setRubric(content.data);
+              form.reset({
+                assignmentDescription: content.topic || content.title,
+                gradeLevel: content.gradeLevel,
+                language: content.language,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved rubric:", err);
+          toast({
+            title: "Load Failed",
+            description: "Could not load the saved rubric.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSavedContent();
+    } else if (descParam) {
       form.setValue("assignmentDescription", descParam);
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
       }, 0);
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     setIsLoading(true);
     setRubric(null);
     try {
-      const result = await generateRubric({ ...values, language: selectedLanguage });
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/rubric", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ ...values, language: selectedLanguage })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to generate rubrics");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate rubric");
+      }
+
+      const result = await res.json();
       setRubric(result);
     } catch (error) {
       console.error("Failed to generate rubric:", error);

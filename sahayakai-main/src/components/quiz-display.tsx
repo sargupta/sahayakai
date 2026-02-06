@@ -42,11 +42,58 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz }) => {
     });
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Saved to Library",
-      description: "Your quiz has been saved to your personal library.",
-    });
+  const handleSave = async () => {
+    try {
+      const { auth } = await import('@/lib/firebase');
+      let user = auth.currentUser;
+
+      if (!user) {
+        const { signInAnonymously } = await import('firebase/auth');
+        const userCred = await signInAnonymously(auth);
+        user = userCred.user;
+      }
+
+      const saveTitle = quiz.title || 'General Quiz';
+
+      const payload = {
+        id: crypto.randomUUID(),
+        type: 'quiz',
+        title: saveTitle,
+        gradeLevel: 'Class 5', // Defaulting as Quiz schema typically relies on generation context, or we need to extract it
+        subject: 'General',
+        topic: quiz.title || 'General',
+        language: 'English',
+        isPublic: false,
+        isDraft: false,
+        data: quiz
+      };
+
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.uid
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Server rejected save');
+      }
+
+      toast({
+        title: "Saved to Library",
+        description: `Saved quiz "${saveTitle}" to your library.`,
+      });
+    } catch (error) {
+      console.error("Save Error:", error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Could not save quiz.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCopy = () => {
@@ -154,6 +201,46 @@ Answer: ${q.correctAnswer}
       <style jsx global>{`
           .list-alpha {
             list-style-type: lower-alpha;
+          }
+          @media print {
+            /* Hide everything by default */
+            body * {
+              visibility: hidden;
+            }
+            /* Show Quiz and Answer Key */
+            #quiz-sheet, #quiz-sheet *, #answer-key-sheet, #answer-key-sheet * {
+              visibility: visible;
+            }
+            /* Reset positioning for Quiz Sheet to top of page */
+            #quiz-sheet {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 0 20px; /* Minimal padding */
+            }
+            /* Ensure Answer Key starts on a new page */
+            #answer-key-sheet {
+              position: relative !important;
+              left: 0 !important;
+              top: auto !important;
+              width: 100% !important;
+              display: block !important;
+              page-break-before: always;
+            }
+            /* Compact spacing for printing */
+            .space-y-6 > div {
+              margin-bottom: 1.5rem !important; /* Reduce gap between questions */
+              page-break-inside: avoid; /* Prevent splitting questions */
+            }
+            /* Hide Card borders/shadows/backgrounds in print */
+            .shadow-xl, .border-white\\/40, .bg-white\\/30, .backdrop-blur-lg {
+              box-shadow: none !important;
+              border: none !important;
+              background: none !important;
+              backdrop-filter: none !important;
+            }
           }
         `}</style>
     </>
