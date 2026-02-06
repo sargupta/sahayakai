@@ -22,12 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { EditProfileDialog } from "@/components/edit-profile-dialog";
 
 export default function MyProfilePage() {
     const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [certs, setCerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -142,12 +144,29 @@ export default function MyProfilePage() {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3 min-w-40">
-                    <Button variant="default" className="rounded-2xl shadow-lg shadow-primary/20 hover:shadow-xl transition-all gap-2 h-12 text-base font-bold">
+                    <Button
+                        variant="default"
+                        className="rounded-2xl shadow-lg shadow-primary/20 hover:shadow-xl transition-all gap-2 h-12 text-base font-bold"
+                        onClick={() => setIsEditModalOpen(true)}
+                    >
                         <Settings className="h-5 w-5" />
                         {t("Edit Profile")}
                     </Button>
                 </div>
             </div>
+
+            <EditProfileDialog
+                userId={firebaseUser.uid}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                initialData={{
+                    displayName: profile?.displayName || firebaseUser.displayName || "",
+                    bio: profile?.bio || "",
+                    designation: profile?.designation || "",
+                    schoolName: profile?.schoolName || "",
+                    department: profile?.department || "",
+                }}
+            />
 
             {/* Bottom Content Area */}
             <div className="grid gap-10 md:grid-cols-12">

@@ -15,6 +15,7 @@ import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { getProfileData } from '@/app/actions/profile';
 import { ContentGallery } from '@/components/library/content-gallery';
+import { EditProfileDialog } from '@/components/edit-profile-dialog';
 
 
 const translations: Record<string, Record<string, string>> = {
@@ -37,6 +38,7 @@ export default function MyLibraryPage() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [resourceCount, setResourceCount] = useState(0);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const t = translations[language] || translations.en;
 
   useEffect(() => {
@@ -72,6 +74,20 @@ export default function MyLibraryPage() {
           resources: resourceCount, // This will be updated if we add a callback to gallery
         }}
         language={language}
+        onEdit={() => setIsEditModalOpen(true)}
+      />
+
+      <EditProfileDialog
+        userId={userId}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialData={{
+          displayName: profile?.displayName || auth.currentUser?.displayName || "",
+          bio: profile?.bio || "",
+          designation: profile?.designation || "",
+          schoolName: profile?.schoolName || "",
+          department: profile?.department || "",
+        }}
       />
 
       <Card className="bg-white/30 backdrop-blur-lg border-white/40 shadow-xl overflow-hidden">
