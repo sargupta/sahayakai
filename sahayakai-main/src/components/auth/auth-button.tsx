@@ -80,10 +80,15 @@ export function AuthButton() {
                 });
             }
         } catch (error: any) {
-            console.error("Auth Error:", error);
+            console.error("Auth Error Details:", {
+                code: error.code,
+                message: error.message,
+                domain: typeof window !== 'undefined' ? window.location.hostname : 'ssr',
+                authDomain: auth.config.authDomain
+            });
             toast({
                 title: "Sign-in Failed",
-                description: error.message,
+                description: `Firebase Error: ${error.code} (${error.message})`,
                 variant: "destructive",
             });
         }
