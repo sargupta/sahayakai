@@ -325,7 +325,7 @@ function QuizGeneratorContent() {
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: "5th Grade",
+      gradeLevel: undefined, // Changed from "5th Grade" to avoid confusion
       numQuestions: 5,
       questionTypes: ["multiple_choice", "short_answer"],
       bloomsTaxonomyLevels: ['Remember', 'Understand'],
