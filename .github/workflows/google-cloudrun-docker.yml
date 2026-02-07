@@ -1,0 +1,45 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Deploy to Cloud Run
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: 'sahayakai-hotfix-resilience'
+          region: 'asia-southeast1'
+          project_id: 'sahayakai-b4248'
+          source: '.'
+          env_vars: |
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248
+            NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com
+            NODE_ENV=production
+          secrets: |
+            GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest
+            FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest
+          flags: '--allow-unauthenticated --memory=2Gi --cpu=2'
+
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}
