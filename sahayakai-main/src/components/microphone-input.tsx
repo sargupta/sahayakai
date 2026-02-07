@@ -37,6 +37,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const { toast } = useToast();
 
+  const maxVolumeRef = useRef<number>(0);
+  const sustainedSpeechFramesRef = useRef<number>(0);
+  const SPEECH_THRESHOLD = 5; // Volume threshold (out of 128)
+  const SUSTAINED_FRAMES_THRESHOLD = 9; // Approx 150ms at 60fps (9 * 16.6ms ~= 150ms)
   const drawWaveform = () => {
     if (!canvasRef.current || !analyserRef.current) return;
     const canvas = canvasRef.current;
@@ -47,6 +51,21 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
+
+    // Calculate Volume for Silence Detection
+    let maxVal = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      const amplitude = Math.abs(dataArray[i] - 128);
+      if (amplitude > maxVal) maxVal = amplitude;
+    }
+    if (maxVal > maxVolumeRef.current) {
+      maxVolumeRef.current = maxVal;
+    }
+
+    // Track Sustained Speech (Count frames where volume is significant)
+    if (maxVal > SPEECH_THRESHOLD) {
+      sustainedSpeechFramesRef.current += 1;
+    }
 
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 2;
@@ -77,6 +96,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsRecording(true);
       audioChunksRef.current = [];
+      maxVolumeRef.current = 0; // Reset metrics
+      sustainedSpeechFramesRef.current = 0;
       mediaRecorderRef.current = new MediaRecorder(stream);
 
       // Setup audio visualization
@@ -96,6 +117,28 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       };
 
       mediaRecorderRef.current.onstop = async () => {
+        // Robust Noise Filtering:
+        // 1. Max Volume Check (is it too quiet?)
+        // 2. Sustained Speech Check (is it just a brief click/cough?)
+
+        const isTooQuiet = maxVolumeRef.current < SPEECH_THRESHOLD;
+        const isShortNoise = sustainedSpeechFramesRef.current < SUSTAINED_FRAMES_THRESHOLD;
+
+        if (isTooQuiet || isShortNoise) {
+          setIsRecording(false);
+          const message = isTooQuiet
+            ? "Please speak closer to the microphone."
+            : "No meaningful speech detected.";
+
+          toast({
+            title: "No Speech Detected",
+            description: message,
+            variant: "destructive",
+          });
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
         setIsTranscribing(true);
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const reader = new FileReader();
@@ -104,6 +147,15 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           const base64Audio = reader.result as string;
           try {
             const { text } = await voiceToText({ audioDataUri: base64Audio });
+            // Secondary Check: If text is extremely short or just punctuation/noise
+            if (!text || text.length < 2) {
+              toast({
+                title: "No Speech Detected",
+                description: "We couldn't hear you clearly.",
+                variant: "default",
+              });
+              return;
+            }
             onTranscriptChange(text);
           } catch (error) {
             console.error("Transcription failed:", error);

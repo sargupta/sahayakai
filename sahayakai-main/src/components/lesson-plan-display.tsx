@@ -145,22 +145,22 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan }) =>
 
   const handleCopy = () => {
     const lessonPlanText = `
-${lessonPlan.title || 'Lesson Plan'}
+${editablePlan.title || 'Lesson Plan'}
 
 OBJECTIVES:
-${lessonPlan.objectives.map((obj, i) => `${i + 1}. ${obj}`).join('\n')}
+${editablePlan.objectives.map((obj: string, i: number) => `${i + 1}. ${obj}`).join('\n')}
 
-MATERIALS:
-${lessonPlan.materials.map((mat, i) => `• ${mat}`).join('\n')}
+MATERIALS NEEDED:
+${editablePlan.materials.map((mat: string, i: number) => `• ${mat}`).join('\n')}
 
 ACTIVITIES:
-${lessonPlan.activities.map((act, i) => `
+${editablePlan.activities.map((act: any, i: number) => `
 ${i + 1}. ${act.name} (${act.duration})
    ${act.description}
 `).join('\n')}
 
 ASSESSMENT:
-${lessonPlan.assessment}
+${editablePlan.assessment}
     `.trim();
 
     navigator.clipboard.writeText(lessonPlanText);

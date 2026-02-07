@@ -216,6 +216,17 @@
       visibility: visible;
     }
 
+    /* Force Accordion Content to be Valid in Print */
+    /* Force Accordion Content to be Valid in Print - SCOPED to prevent leaks */
+    #lesson-plan-pdf [data-state="closed"],
+    #rubric-pdf [data-state="closed"],
+    #quiz-sheet [data-state="closed"],
+    #worksheet-pdf [data-state="closed"] {
+      display: block !important;
+      height: auto !important;
+      visibility: visible !important;
+    }
+
     /* Remove specific UI elements that shouldn't be in print */
     .no-print,
     .no-print *,

@@ -106,7 +106,7 @@ ${quiz.questions.map((q, idx) => `
 Question ${idx + 1}: ${q.questionText}
 Type: ${questionTypeLabel(q.questionType)}
 ${q.options ? `Options:\n${q.options.map((opt, i) => `  ${String.fromCharCode(97 + i)}) ${opt}`).join('\n')}` : ''}
-Answer: ${q.correctAnswer}
+${showAnswers ? `Answer: ${q.correctAnswer}` : ''}
 `).join('\n')}
     `.trim();
 
