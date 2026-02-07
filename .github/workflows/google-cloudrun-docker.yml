@@ -31,7 +31,7 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }} .
+          docker build -t asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }} ./sahayakai-main
           docker push asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }}
 
       - name: Deploy to Cloud Run
