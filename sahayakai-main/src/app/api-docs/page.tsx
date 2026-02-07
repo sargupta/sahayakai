@@ -1,6 +1,10 @@
 
+
 import { getApiDocs } from '@/lib/swagger';
 import SwaggerClient from '@/components/swagger-client';
+
+// Prevent static generation - swagger-jsdoc needs runtime filesystem access
+export const dynamic = 'force-dynamic';
 
 export default async function ApiDocsPage() {
     const spec = await getApiDocs();
