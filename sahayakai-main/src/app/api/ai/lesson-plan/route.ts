@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { z } from 'zod';
+import { logger } from '@/lib/utils';
 
 /**
  * @swagger
@@ -74,8 +75,14 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error('Lesson Plan API Error:', error);
 
-        // Handle specific AI errors if possible
         const errorMessage = error instanceof Error ? error.message : String(error);
+
+        logger.error("Lesson Plan API Failed", error, {
+            path: "/api/ai/lesson-plan",
+            userId: request.headers.get('x-user-id'),
+            errorMessage
+        });
+
         if (errorMessage.includes('Safety Violation')) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }

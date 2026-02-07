@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { instantAnswer } from '@/ai/flows/instant-answer';
+import { logger } from '@/lib/utils';
 
 /**
  * @swagger
@@ -55,8 +56,16 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error('Instant Answer API Error:', error);
+
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error("Instant Answer API Failed", error, {
+            path: "/api/ai/instant-answer",
+            userId: request.headers.get('x-user-id'),
+            errorMessage
+        });
+
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            { error: 'Internal Server Error', details: errorMessage },
             { status: 500 }
         );
     }
