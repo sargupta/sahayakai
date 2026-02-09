@@ -24,7 +24,11 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Tamil": "முகப்பு",
         "Telugu": "హోమ్",
         "Marathi": "होम",
-        "Bengali": "হোম"
+        "Bengali": "হোম",
+        "Gujarati": "ઘર",
+        "Punjabi": "ਘਰ",
+        "Malayalam": "ഹോം",
+        "Odia": "ଘର"
     },
     "Community": {
         "English": "Community",
@@ -33,7 +37,11 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Tamil": "சமூகம்",
         "Telugu": "సంఘం",
         "Marathi": "समुदाय",
-        "Bengali": "সম্প্রদায়"
+        "Bengali": "সম্প্রদায়",
+        "Gujarati": "સમુદાય",
+        "Punjabi": "ਭਾਈਚਾਰਾ",
+        "Malayalam": "കമ്മ്യൂണിറ്റി",
+        "Odia": "ସମ୍ପ୍ରଦାୟ"
     },
     "My Library": {
         "English": "My Library",
@@ -42,7 +50,11 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Tamil": "என் நூலகம்",
         "Telugu": "నా లైబ్రరీ",
         "Marathi": "माझी लायब्ररी",
-        "Bengali": "আমার লাইব্রেরি"
+        "Bengali": "আমার লাইব্রেরি",
+        "Gujarati": "મારી લાઈબ્રેરી",
+        "Punjabi": "ਮੇਰੀ ਲਾਇਬ੍ਰੇਰੀ",
+        "Malayalam": "എന്റെ ലൈബ്രറി",
+        "Odia": "ମୋର ଲାଇବ୍ରେରୀ"
     },
     "Finish your Profile": {
         "English": "Finish your Profile",
@@ -51,7 +63,11 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Tamil": "உங்கள் சுயவிவரத்தை முடிக்கவும்",
         "Telugu": "మీ ప్రొఫైల్‌ను పూర్తి చేయండి",
         "Marathi": "तुमची प्रोफाईल पूर्ण करा",
-        "Bengali": "আপনার প্রোফাইল সম্পন্ন করুন"
+        "Bengali": "আপনার প্রোফাইল সম্পন্ন করুন",
+        "Gujarati": "તમારી પ્રોફાઇલ પૂર્ણ કરો",
+        "Punjabi": "ਆਪਣੀ ਪ੍ਰੋਫਾਈਲ ਪੂਰੀ ਕਰੋ",
+        "Malayalam": "നിങ്ങളുടെ പ്രൊഫൈൽ പൂർത്തിയാക്കുക",
+        "Odia": "ଆପଣଙ୍କର ପ୍ରୋଫାଇଲ୍ ସମାପ୍ତ କରନ୍ତୁ"
     },
     // Add more as needed
 };

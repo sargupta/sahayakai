@@ -289,7 +289,7 @@ function TeacherTrainingContent() {
         </Card>
       )}
 
-      {advice && <TeacherTrainingDisplay advice={advice} />}
+      {advice && <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} />}
     </div>
   );
 }

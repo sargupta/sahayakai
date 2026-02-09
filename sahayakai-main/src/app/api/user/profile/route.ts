@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { UserProfileSchema } from '@/ai/schemas/content-schemas';
+import { UserProfile } from '@/types';
 
 /**
  * @swagger
@@ -64,7 +65,19 @@ export async function POST(request: Request) {
             );
         }
 
-        const profile = validationResult.data;
+        const profile: UserProfile = {
+            ...validationResult.data,
+            badges: [],
+            followersCount: 0,
+            followingCount: 0,
+            // Cast specialized types that Zod parsed as strings
+            teachingGradeLevels: validationResult.data.teachingGradeLevels as any,
+            subjects: validationResult.data.subjects as any,
+            preferredLanguage: validationResult.data.preferredLanguage as any,
+            verifiedStatus: 'none',
+            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() },
+            lastLogin: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() }
+        };
 
         // Using createUser/updateUser from adapter
         // Currently adapter has createUser which calls set(merge:true), so it works for upsert.

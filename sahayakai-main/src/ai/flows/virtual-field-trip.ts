@@ -13,6 +13,8 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 const VirtualFieldTripInputSchema = z.object({
   topic: z.string().describe('The topic or theme for the virtual field trip.'),
@@ -31,6 +33,8 @@ const VirtualFieldTripOutputSchema = z.object({
     reflectionPrompt: z.string().describe('A critical thinking question for students to answer at this stop.'),
     googleEarthUrl: z.string().describe('A valid Google Earth search URL.'),
   })).describe('An array of stops.'),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type VirtualFieldTripOutput = z.infer<typeof VirtualFieldTripOutputSchema>;
 
@@ -53,6 +57,12 @@ export async function planVirtualFieldTrip(input: VirtualFieldTripInput): Promis
     }
   }
 
+  // BUG FIX #1: Grade Override - Extract from topic if explicitly mentioned
+  const extractedGrade = extractGradeFromTopic(input.topic);
+  if (extractedGrade) {
+    localizedInput.gradeLevel = extractedGrade;
+  }
+
   return virtualFieldTripFlow(localizedInput);
 }
 
@@ -60,7 +70,9 @@ const virtualFieldTripPrompt = ai.definePrompt({
   name: 'virtualFieldTripPrompt',
   input: { schema: VirtualFieldTripInputSchema },
   output: { schema: VirtualFieldTripOutputSchema },
-  prompt: `You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
 
 **Instructions:**
 1.  **Title**: Create an adventurous and educational title.
@@ -70,7 +82,8 @@ const virtualFieldTripPrompt = ai.definePrompt({
     - **Educational Fact**: A specific, high-value fact that isn't common knowledge.
     - **Reflection Prompt**: A question that forces students to observe and think critically about the landscape or site.
 4.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`.
-5.  **Language**: Respond in \`{{{language}}}\`.
+5.  **Metadata**: Identify the most appropriate \`subject\` (e.g., Geography, History, Science) and \`gradeLevel\` if not explicitly provided.
+6.  **Language**: Respond in \`{{{language}}}\`.
 
 **Context:**
 - **Topic**: {{{topic}}}
@@ -166,8 +179,8 @@ const virtualFieldTripFlow = ai.defineFlow(
             id: contentId,
             type: 'virtual-field-trip',
             title: output.title || `Trip: ${input.topic}`,
-            gradeLevel: input.gradeLevel as any || 'Class 5',
-            subject: 'Geography' as any,
+            gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
+            subject: (output.subject || 'Geography') as any,
             topic: input.topic,
             language: input.language as any || 'English',
             storagePath: filePath,

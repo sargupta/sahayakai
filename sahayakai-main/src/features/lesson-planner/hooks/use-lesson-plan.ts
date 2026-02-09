@@ -14,11 +14,13 @@ import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson
 import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent } from "@/lib/indexed-db";
 import { logger } from "@/lib/logger";
 import { syncTelemetryEvents } from "@/app/actions/telemetry";
-import { formSchema, FormValues, topicPlaceholderTranslations } from "../types";
+import { formSchema, FormValues, topicPlaceholderTranslations, loadingMessages } from "../types";
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useSearchParams } from "next/navigation";
+import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
@@ -30,6 +32,8 @@ export function useLessonPlan() {
     const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('standard');
     const [isOffline, setIsOffline] = useState(false);
     const { toast } = useToast();
+    const { startAIGeneration, endAIGeneration } = usePerformanceTracking();
+    const { trackContent, trackFeature, trackFriction } = useAnalytics();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -44,6 +48,7 @@ export function useLessonPlan() {
     const selectedLanguage = form.watch("language") || 'en';
     const selectedGradeLevels = form.watch("gradeLevels");
     const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
+    const messages = loadingMessages[selectedLanguage] || loadingMessages.en;
 
     const getNumericGrade = (grades?: string[]) => {
         if (!grades || grades.length === 0) return undefined;
@@ -113,11 +118,17 @@ export function useLessonPlan() {
             if (typeof window !== 'undefined') {
                 try {
                     const savedDraft = await getDraft("lessonPlanDraft");
-                    if (savedDraft && savedDraft.topic) {
-                        form.reset(savedDraft);
+                    if (savedDraft && (savedDraft.language || savedDraft.gradeLevels)) {
+                        // Only restore preferences, not the topic content
+                        form.reset({
+                            topic: "", // Keep topic empty
+                            language: savedDraft.language || "en",
+                            gradeLevels: savedDraft.gradeLevels || ["6th Grade"],
+                            imageDataUri: savedDraft.imageDataUri || "",
+                        });
                         toast({
-                            title: "Draft Restored",
-                            description: "We restored your previous work from secure storage.",
+                            title: "Preferences Restored",
+                            description: "Your language and grade preferences have been restored.",
                         });
                     }
                 } catch (e) {
@@ -220,6 +231,19 @@ export function useLessonPlan() {
             try {
                 const cachedPlan = await getCache(cacheKey);
                 if (cachedPlan) {
+                    // Track cache hit
+                    endAIGeneration({
+                        feature: 'lesson-plan',
+                        operation: 'generate',
+                        language: values.language || 'en',
+                        gradeLevel: values.gradeLevels?.[0],
+                        inputLength: values.topic.length,
+                        outputLength: JSON.stringify(cachedPlan).length,
+                        apiDuration: 0,
+                        cacheHit: true,
+                        success: true,
+                    });
+
                     setTimeout(() => {
                         setLessonPlan(cachedPlan);
                         setIsLoading(false);
@@ -290,10 +314,14 @@ export function useLessonPlan() {
             }
         }
 
+        // Start performance tracking
+        startAIGeneration();
+        const apiStartTime = Date.now();
+
         try {
-            setLoadingMessage("Analyzing your topic...");
+            setLoadingMessage(messages.analyzing);
             await new Promise(r => setTimeout(r, 800)); // UX Pause
-            setLoadingMessage("Consulting Indian Context Database...");
+            setLoadingMessage(messages.consulting);
 
             const token = await auth.currentUser?.getIdToken();
             const headers: Record<string, string> = {
@@ -333,7 +361,46 @@ export function useLessonPlan() {
             }
 
             const result = await res.json();
+            const apiDuration = Date.now() - apiStartTime;
+
             setLessonPlan(result);
+
+            // Track successful generation (performance monitoring)
+            endAIGeneration({
+                feature: 'lesson-plan',
+                operation: 'generate',
+                language: values.language || 'en',
+                gradeLevel: values.gradeLevels?.[0],
+                inputLength: values.topic.length,
+                outputLength: JSON.stringify(result).length,
+                apiDuration,
+                cacheHit: false,
+                success: true,
+            });
+
+            // Track content creation (analytics)
+            trackContent({
+                content_type: 'lesson-plan',
+                language: values.language || 'en',
+                grade_level: values.gradeLevels?.[0] || 'unknown',
+                subject: selectedChapter?.subject || 'general',
+                success: true,
+                generation_time_sec: apiDuration / 1000,
+                regeneration_count: 0,
+                exported: false,
+                edited: false,
+            });
+
+            // Track feature usage
+            trackFeature('lesson-plan');
+
+            // Detect slow generation
+            if (apiDuration > 12000) {
+                trackFriction('slow_generation', 'high', {
+                    duration_sec: apiDuration / 1000,
+                    feature: 'lesson-plan',
+                });
+            }
 
             if (typeof window !== 'undefined') {
                 await saveCache(cacheKey, result);
@@ -349,6 +416,19 @@ export function useLessonPlan() {
             }
         } catch (error) {
             console.error("Failed to generate lesson plan:", error);
+
+            // Track failed generation
+            endAIGeneration({
+                feature: 'lesson-plan',
+                operation: 'generate',
+                language: values.language || 'en',
+                gradeLevel: values.gradeLevels?.[0],
+                inputLength: values.topic.length,
+                cacheHit: false,
+                success: false,
+                errorType: error instanceof Error ? error.message : 'Unknown error',
+            });
+
             toast({
                 title: "Generation Failed",
                 description: "There was an error generating the lesson plan. Please try again.",

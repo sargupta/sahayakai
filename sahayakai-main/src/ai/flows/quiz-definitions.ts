@@ -1,11 +1,14 @@
 import { ai } from '@/ai/genkit';
 import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
 export const quizGeneratorPrompt = ai.definePrompt({
   name: 'quizGeneratorPrompt',
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
-  prompt: `You are an expert educator who excels at creating assessments that are both challenging and informative. Generate a quiz based on the provided inputs.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert educator who excels at creating assessments that are both challenging and informative. Generate a quiz based on the provided inputs.
 
 **CRITICAL: Voice Input Corrections**
 When analyzing the topic input, users may correct themselves during voice input. Apply correction logic ONLY when clear correction signals are present:
@@ -30,10 +33,16 @@ When analyzing the topic input, users may correct themselves during voice input.
 2.  **Generate Questions:** Create exactly {{{numQuestions}}} questions.
 3.  **Distractor Quality:** For multiple-choice questions, ensure distractors (incorrect options) are plausible and common misconceptions, making the quiz a true learning tool.
 4.  **Explanations:** For EVERY question, provide a detailed "explanation" that clarifies why the answer is correct and why other options are not. This is for the teacher to use during review.
-5.  **Difficulty Levels:** Assign an individual "difficultyLevel" (easy, medium, hard) to each question based on the cognitive depth required.
+5.  **Difficulty Levels:**
+    {{#if targetDifficulty}}
+    **CRITICAL**: You MUST generate ALL questions at the **{{{targetDifficulty}}}** difficulty level. Do not mix levels.
+    {{else}}
+    Assign an individual "difficultyLevel" (easy, medium, hard) to each question based on the cognitive depth required.
+    {{/if}}
 6.  **Teacher Instructions:** Provide a brief "teacherInstructions" section at the end on how to best use this quiz in a classroom setting.
 7.  **Cognitive Level:** Tailor questions to assess these specific Bloom's levels if provided: {{#each bloomsTaxonomyLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-8.  **Context:** Maintain the specified \`gradeLevel\` and \`language\`. If gradeLevel is provided in the topic text, extract and use it (prioritizing the last mentioned grade ONLY if it's a clear correction).
+8.  **Context:** Maintain the specified \`gradeLevel\` and \`language\`.
+9.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
 
 **Inputs:**
 {{#if imageDataUri}}
@@ -44,6 +53,9 @@ When analyzing the topic input, users may correct themselves during voice input.
 - **Question Types:** {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 - **Grade Level:** {{{gradeLevel}}}
 - **Language:** {{{language}}}
+{{#if targetDifficulty}}
+- **Target Difficulty:** {{{targetDifficulty}}}
+{{/if}}
 
 **Constraints:**
 - **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.

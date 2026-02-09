@@ -16,9 +16,10 @@ import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
-import { GRADE_LEVELS, LANGUAGES } from '@/types/index';
+import { GRADE_LEVELS, LANGUAGES, LANGUAGE_CODE_MAP } from '@/types/index';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
+import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -43,11 +44,7 @@ function normalizeInput(input: LessonPlanInput): LessonPlanInput {
   let { language, gradeLevels } = input;
 
   if (language) {
-    const langMap: Record<string, string> = {
-      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
-      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
-    };
-    language = langMap[language.toLowerCase()] || language;
+    language = LANGUAGE_CODE_MAP[language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || language;
   }
 
   if (gradeLevels?.length) {
@@ -86,8 +83,61 @@ const LessonPlanOutputSchema = z.object({
   })).describe('A list of structured activities following the 5E model.'),
   assessment: z.string().nullable().optional().describe('A description of the summative assessment method.'),
   homework: z.string().nullable().optional().describe('A relevant follow-up activity for home.'),
+  language: z.string().optional().describe('The language of the generated lesson plan.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
+
+/**
+ * Audits materials list against activities to ensure consistency.
+ * Returns merged materials list that includes items mentioned in activities.
+ */
+async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
+  try {
+    const activitiesText = output.activities
+      .map(a => `${a.name}: ${a.description}`)
+      .join('\n\n');
+
+    const materialsText = output.materials.join(', ');
+
+    const auditResult = await ai.generate({
+      model: 'googleai/gemini-2.0-flash',
+      prompt: `You are a lesson plan auditor.
+
+Materials Listed: ${materialsText}
+
+Activities:
+${activitiesText}
+
+Task:
+1. Identify items/objects mentioned in activities that are NOT in the materials list.
+2. Return ONLY a JSON array of missing items.
+   Example: ["basket", "measuring tape"]
+   
+If no missing items, return: []
+
+Output ONLY the JSON array, no explanation.`,
+      config: {
+        temperature: 0.2,
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const missingMaterials = auditResult.output
+      ? auditResult.output
+      : JSON.parse(auditResult.text);
+
+    // Merge materials
+    if (Array.isArray(missingMaterials) && missingMaterials.length > 0) {
+      return [...output.materials, ...missingMaterials];
+    }
+
+    return output.materials;
+  } catch (error) {
+    // If audit fails, return original materials
+    console.warn('Materials audit failed:', error);
+    return output.materials;
+  }
+}
 
 export async function generateLessonPlan(input: LessonPlanInput): Promise<LessonPlanOutput> {
   // 1. Server-Side Safety Check
@@ -96,7 +146,14 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
     throw new Error(`Safety Violation: ${safety.reason}`);
   }
 
-  // 2. Server-Side Rate Limiting & User Profile Context
+  // 2. Grade Override: Extract from topic if explicitly mentioned
+  const extractedGrade = extractGradeFromTopic(input.topic);
+  if (extractedGrade) {
+    // User explicitly mentioned a grade in their prompt - OVERRIDE config
+    input.gradeLevels = [extractedGrade];
+  }
+
+  // 3. Server-Side Rate Limiting & User Profile Context
   const uid = input.userId || 'anonymous_user';
   let localizedInput = { ...input };
 
@@ -117,12 +174,16 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
   return lessonPlanFlow(localizedInput);
 }
 
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
   tools: [googleSearch],
-  prompt: `You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
 
 **Your Goal:** Generate a lesson plan that is exactly right for the teacher—not too complex, not too simple, but deeply informative.
 
@@ -258,6 +319,31 @@ const lessonPlanFlow = ai.defineFlow(
             activitiesCount: output?.activities?.length
           }
         });
+
+        // BUG FIX #2: Audit materials consistency
+        try {
+          const auditedMaterials = await auditMaterials(output);
+          if (auditedMaterials.length > output.materials.length) {
+            StructuredLogger.info('Materials audit detected missing items', {
+              service: 'lesson-plan-flow',
+              operation: 'auditMaterials',
+              requestId,
+              metadata: {
+                originalCount: output.materials.length,
+                auditedCount: auditedMaterials.length,
+                addedItems: auditedMaterials.filter(m => !output.materials.includes(m))
+              }
+            });
+            output.materials = auditedMaterials;
+          }
+        } catch (auditError) {
+          StructuredLogger.warn('Materials audit skipped due to error', {
+            service: 'lesson-plan-flow',
+            operation: 'auditMaterials',
+            requestId,
+            metadata: { error: String(auditError) }
+          });
+        }
 
 
         const userId = input.userId;

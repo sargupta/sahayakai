@@ -167,7 +167,7 @@ export default function Home() {
           <MicrophoneInput
             onTranscriptChange={handleTranscript}
             iconSize="xl"
-            label="ಪಠ್ಯದ ಬಗ್ಗೆ ಹೇಳಿ / ಕಲ್ಪನೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ (Speak your topic)"
+            label="Speak your topic"
             className="hover:scale-105 transition-transform"
           />
           <p className="text-slate-500 font-medium text-sm md:text-base animate-pulse">
@@ -177,10 +177,10 @@ export default function Home() {
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
-          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200">
-            <CardContent className="p-1">
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200 transition-all focus-within:ring-primary/50 focus-within:ring-4">
+            <CardContent className="p-2">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <AutoCompleteInput
                       placeholder="Or type here (e.g. 'Photosynthesis')"
@@ -191,13 +191,14 @@ export default function Home() {
                         form.setValue("topic", value);
                         form.handleSubmit(onSubmit)();
                       }}
-                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-3 pl-4 bg-transparent"
+                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-2 pl-4 bg-transparent"
                     />
                   </div>
+
                   <Button
                     type="submit"
                     size="icon"
-                    className="mr-1 h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"
+                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"
                     aria-label="Generate Lesson Plan"
                   >
                     <ArrowRight className="h-5 w-5" />

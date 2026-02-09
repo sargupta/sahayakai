@@ -22,9 +22,10 @@ import { useAuth } from "@/context/auth-context";
 interface ContentGalleryProps {
     userId: string;
     initialType?: ContentType;
+    onCountChange?: (count: number) => void;
 }
 
-export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
+export function ContentGallery({ userId, initialType, onCountChange }: ContentGalleryProps) {
     const router = useRouter();
     const { toast } = useToast();
     const { user, loading: authLoading, openAuthModal } = useAuth();
@@ -66,6 +67,9 @@ export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
 
             const data = await response.json();
             setItems(data.items);
+            if (onCountChange) {
+                onCountChange(data.items?.length || 0);
+            }
         } catch (error: any) {
             console.error(error);
             toast({
@@ -104,11 +108,182 @@ export function ContentGallery({ userId, initialType }: ContentGalleryProps) {
         router.push(`${baseUrl}?id=${resource.id}`);
     };
 
-    const handleDownload = (resource: BaseContent) => {
-        toast({
-            title: "Export Initiated",
-            description: `Preparing your ${resource.type} for download.`
-        });
+    const handleDownload = async (resource: BaseContent) => {
+        try {
+            // Priority 1: Client-Side Export (formatted HTML)
+            // If we have the data locally, generate a beautiful HTML file immediately.
+            // This is preferred for Lesson Plans, Quizzes, Worksheets, etc.
+            if (resource.data && ['lesson-plan', 'quiz', 'worksheet', 'rubric', 'micro-lesson'].includes(resource.type)) {
+                toast({
+                    title: "Exporting...",
+                    description: `Generating document for ${resource.title}...`
+                });
+
+                const blob = createDownloadableContent(resource.data, resource.type);
+                const url = URL.createObjectURL(blob);
+                const cleanTitle = (resource.title || 'Untitled').replace(/[^a-z0-9]/gi, '_');
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `SahayakAI_${cleanTitle}.html`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                toast({
+                    title: "Export Complete",
+                    description: "File downloaded successfully.",
+                });
+                return;
+            }
+
+            // Priority 2: Server-Side Download (Binary files or Missing Data)
+            // Use this for Visual Aids (images) or if local data is incomplete
+            toast({
+                title: "Download Started",
+                description: `Fetching secure link for ${resource.title || "content"}...`
+            });
+
+            const token = await user?.getIdToken();
+            if (!token) throw new Error("Authentication required");
+
+            const response = await fetch(`/api/content/download?id=${resource.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Failed to generate download link");
+            }
+
+            const { downloadUrl, filename } = await response.json();
+
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', filename || '');
+            link.setAttribute('target', '_blank');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast({
+                title: "Download Ready",
+                description: "Your file is downloading.",
+            });
+
+        } catch (error: any) {
+            console.error('Download failed:', error);
+            toast({
+                title: "Download Failed",
+                description: error.message || "Could not retrieve file.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const createDownloadableContent = (content: any, type: string): Blob => {
+        // Create HTML content for download
+        let htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${content.title || content.topic || 'Content'}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .metadata { background: #ecf0f1; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .content { margin-top: 20px; }
+        pre { background: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; overflow-x: auto; }
+        @media print { body { margin: 0; } }
+    </style>
+</head>
+<body>
+    <h1>${content.title || content.topic || 'Content'}</h1>
+    <div class="metadata">
+        <p><strong>Type:</strong> ${type}</p>
+        ${content.grade_level ? `<p><strong>Grade:</strong> ${content.grade_level}</p>` : ''}
+        ${content.language ? `<p><strong>Language:</strong> ${content.language}</p>` : ''}
+        ${content.subject ? `<p><strong>Subject:</strong> ${content.subject}</p>` : ''}
+    </div>
+    <div class="content">
+        ${formatContentByType(content, type)}
+    </div>
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; color: #7f8c8d; font-size: 0.9em;">
+        <p>Generated by SahayakAI | ${new Date().toLocaleDateString()}</p>
+    </footer>
+</body>
+</html>`;
+
+        return new Blob([htmlContent], { type: 'text/html' });
+    };
+
+    const formatContentByType = (content: any, type: string): string => {
+        switch (type) {
+            case 'lesson-plan':
+                return formatLessonPlan(content);
+            case 'quiz':
+                return formatQuiz(content);
+            case 'worksheet':
+                return formatWorksheet(content);
+            case 'rubric':
+                return formatRubric(content);
+            default:
+                return `<pre>${JSON.stringify(content, null, 2)}</pre>`;
+        }
+    };
+
+    const formatLessonPlan = (content: any): string => {
+        let html = '';
+        if (content.sections) {
+            content.sections.forEach((section: any) => {
+                html += `<h2>${section.heading || section.title}</h2>`;
+                html += `<div>${section.content || section.body || ''}</div>`;
+            });
+        }
+        return html || `<div>${JSON.stringify(content, null, 2)}</div>`;
+    };
+
+    const formatQuiz = (content: any): string => {
+        let html = '<div>';
+        if (content.questions && Array.isArray(content.questions)) {
+            content.questions.forEach((q: any, i: number) => {
+                html += `<h3>Question ${i + 1}</h3>`;
+                html += `<p>${q.question}</p>`;
+                if (q.options) {
+                    html += '<ul>';
+                    q.options.forEach((opt: string) => {
+                        html += `<li>${opt}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                if (q.answer) {
+                    html += `<p><strong>Answer:</strong> ${q.answer}</p>`;
+                }
+            });
+        }
+        html += '</div>';
+        return html;
+    };
+
+    const formatWorksheet = (content: any): string => {
+        // Similar to quiz formatting
+        return formatQuiz(content);
+    };
+
+    const formatRubric = (content: any): string => {
+        let html = '<div>';
+        if (content.criteria && Array.isArray(content.criteria)) {
+            html += '<table border="1" cellpadding="10" style="width:100%; border-collapse: collapse;">';
+            html += '<thead><tr><th>Criteria</th><th>Description</th></tr></thead><tbody>';
+            content.criteria.forEach((criterion: any) => {
+                html += `<tr><td>${criterion.name || criterion.title}</td><td>${criterion.description || ''}</td></tr>`;
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div>';
+        return html;
     };
 
     return (

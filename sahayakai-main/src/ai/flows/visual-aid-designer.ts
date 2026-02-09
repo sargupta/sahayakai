@@ -56,8 +56,20 @@ const VisualAidOutputSchema = z.object({
   imageDataUri: z.string().describe("The generated image as a data URI."),
   pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
   discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type VisualAidOutput = z.infer<typeof VisualAidOutputSchema>;
+
+
+
+// Helper to create stable seed
+function stringToSeed(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
+  }
+  return hash >>> 0; // Ensure positive integer
+}
 
 export async function generateVisualAid(input: VisualAidInput): Promise<VisualAidOutput> {
   // 1. Safety Check
@@ -110,6 +122,9 @@ const visualAidFlow = ai.defineFlow(
     const normalizedInput = normalizeInput(input);
     const { prompt, gradeLevel, language, userId } = normalizedInput;
 
+    // Generate a stable seed from the prompt to ensure deterministic results for the same request
+    const stableSeed = stringToSeed(prompt);
+
     try {
       StructuredLogger.info('Starting visual aid generation flow', {
         service: 'visual-aid-designer',
@@ -119,15 +134,20 @@ const visualAidFlow = ai.defineFlow(
         input: { prompt, gradeLevel, language }
       });
 
+
+
       // Step 1: Generate a Detailed Image Prompt & Text Plan (Structured Mode)
       // We use Gemini to create a high-quality prompt and explicitly plan the text annotations.
       const promptRefinement = await runResiliently(async () => {
+        const { SAHAYAK_SOUL_PROMPT } = await import('@/ai/soul');
         const result = await ai.generate({
           model: 'googleai/gemini-2.0-flash',
-          prompt: `
+          prompt: `${SAHAYAK_SOUL_PROMPT}
+
             You are an expert visual designer for educational materials.
             Create a blackboard chalk-style educational illustration.
             Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
+
             
             Style: 
             - High-fidelity white chalk lines on a dark black background.
@@ -137,7 +157,11 @@ const visualAidFlow = ai.defineFlow(
             1. "visualDescription": A detailed description of the image.
                CRITICAL: Use a "High-Fidelity Chalkboard Art" style.
             2. "spatialMap": An array of objects mapping labels to relative positions.
-               Example: { "label": "Torso", "location": "Middle center of the board", "anatomicalReference": "chest/chest cavity" }
+               CRITICAL: Text labels must be SPELLED CORRECTLY.
+               Example: { "label": "Left Atrium", "location": "Top Right of image", "anatomicalReference": "Anatomical Left" }
+               CRITICAL ANATOMY RULE: Anatomical Left = Image Right. Anatomical Right = Image Left.
+               - "Left Atrium" must be "Right side of image"
+               - "Right Atrium" must be "Left side of image"
             3. "textLabels": An array of strings representing the EXACT text annotations. CHECK SPELLING CAREFULLY.
 
             Constraint: Output ONLY the raw JSON object. No markdown.
@@ -148,7 +172,7 @@ const visualAidFlow = ai.defineFlow(
             - Scope Integrity: Stay strictly within the scope of the educational task assigned.
           `,
           config: {
-            temperature: 0.4,
+            temperature: 0, // Deterministic text generation
             responseMimeType: 'application/json',
           },
         });
@@ -160,18 +184,29 @@ const visualAidFlow = ai.defineFlow(
 
       const spatialMap = promptRefinement.spatialMap || [];
       const labelsString = spatialMap.length > 0
-        ? `\n\nSPATIAL ANNOTATIONS (Place these EXACT labels at these locations):
-          ${spatialMap.map((m: any) => `- Label "${m.label}" must be placed at: ${m.location} (${m.anatomicalReference})`).join('\n')}`
+        ? `\n\nLabels to include:\n${spatialMap.map((m: any) => {
+          const ref = m.anatomicalReference && !['n/a', 'none', 'null'].includes(m.anatomicalReference.toLowerCase())
+            ? ` (${m.anatomicalReference})`
+            : '';
+          return `- "${m.label}" near ${m.location}${ref}`;
+        }).join('\n')}`
         : '';
 
-      const styleInstruction = 'STYLE: Photorealistic white chalk on clean black slate, high contrast, elegant lines, educational textbook quality, no smudges.';
+      const styleInstruction = 'Style: Photorealistic white chalk on clean black slate, high contrast, elegant lines, educational textbook quality.';
 
-      const optimizedPrompt = `${promptRefinement.visualDescription}${labelsString}
+      const optimizedPrompt = `
+      Create a high-fidelity educational chalkboard illustration.
       
-      CRITICAL VALIDATION:
-      1. NO PROMPT LEAKAGE: Do NOT include meta-words like "REQUIRED", "LABEL", or "STEP" in the actual image text.
-      2. SPATIAL HONESTY: Ensure "Torso" is in the midsection, "Ankle" at the bottom, etc. Labels must point to the CORRECT anatomical or geographic feature.
-      3. ${styleInstruction}`;
+      Scene Description:
+      ${promptRefinement.visualDescription}
+      
+      ${labelsString}
+      
+      Important Guidelines:
+      - Orientation: For anatomical diagrams, "Left" refers to the subject's left (viewer's right).
+      - Text: Ensure all spelling matches the labels list exactly.
+      - ${styleInstruction}
+      `;
 
       // Step 2: Generate the Image (Image Mode)
       // We use a dedicated image model with fallback logic
@@ -249,7 +284,7 @@ const visualAidFlow = ai.defineFlow(
             Constraint: Output ONLY the raw JSON object. No markdown.
           `,
                   config: {
-                    temperature: 0.3
+                    temperature: 0,
                   }
                 });
 
@@ -284,10 +319,10 @@ const visualAidFlow = ai.defineFlow(
         throw new FlowExecutionError('Image generation failed completely', { step: 'image-generation' });
       }
 
-      // Step 2: Generate the Metadata (Text)
       const MetadataSchema = z.object({
         pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
         discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
+        subject: z.string().describe('The academic subject (e.g., Biology, Geometry).'),
       });
 
       const textResult = await runResiliently(async () => {
@@ -302,7 +337,11 @@ const visualAidFlow = ai.defineFlow(
             
             1. Pedagogical Context: Explain exactly how a teacher should use this diagram to explain the concepts.
             2. Discussion Spark: Provide one thought-provoking question to ask students.
+            3. Subject: Identify the most appropriate school subject (e.g. Science, Math, Geography).
           `,
+          config: {
+            temperature: 0, // Deterministic pedagogical context
+          }
         });
       });
 
@@ -314,7 +353,8 @@ const visualAidFlow = ai.defineFlow(
       const finalOutput: VisualAidOutput = {
         imageDataUri: imageResult.media.url,
         pedagogicalContext: textResult.output.pedagogicalContext,
-        discussionSpark: textResult.output.discussionSpark
+        discussionSpark: textResult.output.discussionSpark,
+        subject: textResult.output.subject
       };
 
       // Validate outgoing schema
@@ -370,7 +410,7 @@ const visualAidFlow = ai.defineFlow(
             type: 'visual-aid',
             title: prompt,
             gradeLevel: gradeLevel as any || 'Class 5',
-            subject: 'Science', // Fallback as input schema doesn't have subject
+            subject: (finalOutput.subject || 'Science') as any, // dynamic subject
             topic: prompt,
             language: language as any || 'English',
             storagePath: filePath,

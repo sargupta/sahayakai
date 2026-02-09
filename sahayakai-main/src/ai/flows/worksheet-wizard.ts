@@ -13,7 +13,11 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
+import { validateTopicSafety } from '@/lib/safety';
 import { format } from 'date-fns';
+import { LANGUAGE_CODE_MAP } from '@/types/index';
+import { extractGradeFromTopic } from '@/lib/grade-utils';
+
 
 const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
@@ -31,6 +35,8 @@ export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
 
 const WorksheetWizardOutputSchema = z.object({
   worksheetContent: z.string().describe('The generated worksheet content in Markdown format.'),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type WorksheetWizardOutput = z.infer<typeof WorksheetWizardOutputSchema>;
 
@@ -53,22 +59,37 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
     }
   }
 
+  // BUG FIX #1: Grade Override - Extract from prompt if explicitly mentioned
+  const extractedGrade = extractGradeFromTopic(input.prompt);
+  if (extractedGrade) {
+    localizedInput.gradeLevel = extractedGrade;
+  }
+
+  // Normalize input
+  if (localizedInput.language) {
+    localizedInput.language = LANGUAGE_CODE_MAP[localizedInput.language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || localizedInput.language;
+  }
+
   return worksheetWizardFlow(localizedInput);
 }
+
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
-  prompt: `You are an expert educator who creates engaging and effective worksheets.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert educator who creates engaging and effective worksheets.
  
   **Instructions:**
   1.  **Analyze the Image:** carefully use the textbook image as the basis for all content.
   2.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\`.
   3.  **High-Fidelity Math:** 
       - Use LaTeX for ALL mathematical formulas, equations, and symbols. 
-      - CRITICAL: Wrap ALL LaTeX in dollar signs: \$ formula \$ for inline or \$\$ formula \$\$ for blocks.
-      - EXAMPLE: Use \$\$ \\int x^2 dx \$\$ instead of simple text.
+      - CRITICAL: Wrap ALL LaTeX in dollar signs: $ formula $ for inline or $$ formula $$ for blocks.
+      - EXAMPLE: Use $$ \\int x^2 dx $$ instead of simple text.
   4.  **Math Problems vs Questions:**
       - If the user asks for "math problems", generate CALCULATIONS and COMPUTATIONS (e.g., Solve for x, Integrate f(x)).
       - Do NOT generate history or theory questions unless explicitly asked.
@@ -92,6 +113,8 @@ const worksheetWizardPrompt = ai.definePrompt({
      
      ## IV. Teacher's Answer Key (FOR TEACHER USE ONLY)
      [Clear answers and explanations for all activities above]
+
+  6.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Math, Science) and \`gradeLevel\` based on the content.
 
 **Context:**
 - **Textbook Image:** {{media url=imageDataUri}}
@@ -199,8 +222,8 @@ const worksheetWizardFlow = ai.defineFlow(
             id: contentId,
             type: 'worksheet',
             title: `Worksheet: ${input.prompt.substring(0, 30)}`,
-            gradeLevel: input.gradeLevel as any || 'Class 5',
-            subject: 'General',
+            gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
+            subject: (output.subject || 'General') as any,
             topic: input.prompt,
             language: input.language as any || 'English',
             storagePath: filePath,

@@ -21,6 +21,7 @@ export const QuizGeneratorInputSchema = z.object({
   language: z.string().optional().describe('The language for the quiz.'),
   bloomsTaxonomyLevels: z.array(z.string()).optional().describe("A list of Bloom's Taxonomy levels to target."),
   userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
+  targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 
@@ -28,5 +29,17 @@ export const QuizGeneratorOutputSchema = z.object({
   title: z.string().describe('A suitable title for the quiz.'),
   questions: z.array(QuestionSchema).describe('The list of generated quiz questions.'),
   teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz and interpret results.'),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type QuizGeneratorOutput = z.infer<typeof QuizGeneratorOutputSchema>;
+
+export const QuizVariantsOutputSchema = z.object({
+  easy: QuizGeneratorOutputSchema.nullable().describe("The easy version of the quiz."),
+  medium: QuizGeneratorOutputSchema.nullable().describe("The medium version of the quiz."),
+  hard: QuizGeneratorOutputSchema.nullable().describe("The hard version of the quiz."),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
+  topic: z.string().nullable().optional().describe('The main topic.'),
+});
+export type QuizVariantsOutput = z.infer<typeof QuizVariantsOutputSchema>;

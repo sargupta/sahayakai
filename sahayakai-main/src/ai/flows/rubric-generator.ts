@@ -13,6 +13,8 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
@@ -34,6 +36,8 @@ const RubricGeneratorOutputSchema = z.object({
       points: z.number().describe("The points awarded for this level."),
     })).describe("A list of performance levels for the criterion, from highest to lowest score."),
   })).describe("An array of criteria for evaluating the assignment."),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type RubricGeneratorOutput = z.infer<typeof RubricGeneratorOutputSchema>;
 
@@ -56,6 +60,12 @@ export async function generateRubric(input: RubricGeneratorInput): Promise<Rubri
     }
   }
 
+  // BUG FIX #1: Grade Override - Extract from assignmentDescription if explicitly mentioned
+  const extractedGrade = extractGradeFromTopic(input.assignmentDescription);
+  if (extractedGrade) {
+    localizedInput.gradeLevel = extractedGrade;
+  }
+
   return rubricGeneratorFlow(localizedInput);
 }
 
@@ -63,7 +73,9 @@ const rubricGeneratorPrompt = ai.definePrompt({
   name: 'rubricGeneratorPrompt',
   input: { schema: RubricGeneratorInputSchema },
   output: { schema: RubricGeneratorOutputSchema },
-  prompt: `You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
 
 **Standardized Structure:**
 1. **Title & Description**: Clear title and one-sentence goal.
@@ -75,6 +87,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
     - **Beginning (1 pt)**: Minimal evidence of the required skill.
 4. **Precision**: Descriptions MUST be objective and measurable (e.g., "Contains 0-1 errors" instead of "Few errors").
 5. **Teacher Guidance**: Add a note on how the teacher should use this specific rubric to provide feedback.
+6. **Metadata**: Identify the most appropriate \`subject\` (e.g., English, Science) and \`gradeLevel\` if not explicitly provided.
 
 **Context:**
 - **Assignment**: {{{assignmentDescription}}}
@@ -169,8 +182,8 @@ const rubricGeneratorFlow = ai.defineFlow(
             id: contentId,
             type: 'rubric',
             title: output.title || `Rubric: ${input.assignmentDescription}`,
-            gradeLevel: input.gradeLevel as any || 'Class 5',
-            subject: 'General',
+            gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
+            subject: (output.subject || 'General') as any,
             topic: input.assignmentDescription,
             language: input.language as any || 'English',
             storagePath: filePath,

@@ -2,7 +2,7 @@
 "use client";
 
 import { generateQuiz } from "@/ai/flows/quiz-generator";
-import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
+import type { QuizVariantsOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -299,6 +299,90 @@ const translations: Record<string, Record<string, any>> = {
       'Create': 'ರಚಿಸಿ',
     },
   },
+  pa: {
+    pageTitle: "ਕਵਿਜ਼ ਜਨਰੇਟਰ",
+    pageDescription: "ਕਿਸੇ ਵੀ ਵਿਸ਼ੇ 'ਤੇ, ਵੱਖ-ਵੱਖ ਪ੍ਰਸ਼ਨ ਕਿਸਮਾਂ ਨਾਲ ਕਵਿਜ਼ ਬਣਾਓ।",
+    contextLabel: "ਪ੍ਰਸੰਗ ਸ਼ਾਮਲ ਕਰੋ (ਵਿਕਲਪਿਕ ਚਿੱਤਰ)",
+    topicLabel: "ਵਿਸ਼ਾ",
+    topicPlaceholder: "ਉਦਾਹਰਣ ਲਈ, ਤਿਤਲੀ ਦਾ ਜੀਵਨ ਚੱਕਰ।",
+    numQuestionsLabel: "ਪ੍ਰਸ਼ਨਾਂ ਦੀ ਗਿਣਤੀ",
+    questionTypesLabel: "ਪ੍ਰਸ਼ਨ ਕਿਸਮਾਂ",
+    bloomsLabel: "ਬਲੂਮਜ਼ ਟੈਕਸੋਨੋਮੀ ਪੱਧਰ",
+    gradeLevelLabel: "ਗ੍ਰੇਡ ਪੱਧਰ",
+    languageLabel: "ਭਾਸ਼ਾ",
+    submitButton: "ਕਵਿਜ਼ ਬਣਾਓ",
+    submitButtonLoading: "ਕਵਿਜ਼ ਬਣਾ ਰਿਹਾ ਹੈ...",
+    loadingText: "ਤੁਹਾਡੇ ਪ੍ਰਸ਼ਨ ਤਿਆਰ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ...",
+    questionTypes: {
+      multiple_choice: 'ਬਹੁ-ਵਿਕਲਪੀ',
+      fill_in_the_blanks: 'ਖਾਲੀ ਥਾਵਾਂ ਭਰੋ',
+      short_answer: 'ਛੋਟਾ ਜਵਾਬ',
+    },
+    blooms: {
+      'Remember': 'ਯਾਦ ਰੱਖੋ',
+      'Understand': 'ਸਮਝੋ',
+      'Apply': 'ਲਾਗੂ ਕਰੋ',
+      'Analyze': 'ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ',
+      'Evaluate': 'ਮੁਲਾਂਕਣ ਕਰੋ',
+      'Create': 'ਬਣਾਓ',
+    },
+  },
+  ml: {
+    pageTitle: "ക്വിസ് ജനറേറ്റർ",
+    pageDescription: "ഏത് വിഷയത്തിലും വൈവിധ്യമാർന്ന ചോദ്യങ്ങളോടെ ക്വിസ് തയ്യാറാക്കുക.",
+    contextLabel: "സന്ദർഭം ചേർക്കുക (ഓപ്ഷണൽ)",
+    topicLabel: "വിഷയം",
+    topicPlaceholder: "ഉദാഹരണത്തിന്, പൂമ്പാറ്റയുടെ ജീവിതചക്രം.",
+    numQuestionsLabel: "ചോദ്യങ്ങളുടെ എണ്ണം",
+    questionTypesLabel: "ചോദ്യ രീതികൾ",
+    bloomsLabel: "ബ്ലൂംസ് ടാക്സോണമി ലെവലുകൾ",
+    gradeLevelLabel: "ഗ്രേഡ് നില",
+    languageLabel: "ഭാഷ",
+    submitButton: "ക്വിസ് സൃഷ്ടിക്കുക",
+    submitButtonLoading: "ക്വിസ് സൃഷ്ടിക്കുന്നു...",
+    loadingText: "ചോദ്യങ്ങൾ തയ്യാറാക്കുന്നു...",
+    questionTypes: {
+      multiple_choice: 'മൾട്ടിപ്പിൾ ചോയ്സ്',
+      fill_in_the_blanks: 'വിട്ടഭാഗം പൂരിപ്പിക്കുക',
+      short_answer: 'ലഘുവായ ഉത്തരം',
+    },
+    blooms: {
+      'Remember': 'ഓർക്കുക',
+      'Understand': 'മനസ്സിലാക്കുക',
+      'Apply': 'പ്രയോഗിക്കുക',
+      'Analyze': 'വിശകലനം ചെയ്യുക',
+      'Evaluate': 'മൂല്യനിർണ്ണയം',
+      'Create': 'സൃഷ്ടിക്കുക',
+    },
+  },
+  or: {
+    pageTitle: "କୁଇଜ୍ ଜେନେରେଟର",
+    pageDescription: "ଯେକୌଣସି ବିଷୟ ଉପରେ, ବିଭିନ୍ନ ପ୍ରକାରର ପ୍ରଶ୍ନ ସହିତ କୁଇଜ୍ ତିଆରି କରନ୍ତୁ।",
+    contextLabel: "ପ୍ରସଙ୍ଗ ଯୋଡନ୍ତୁ (ଇଚ୍ଛାଧୀନ ଚିତ୍ର)",
+    topicLabel: "ବିଷୟ",
+    topicPlaceholder: "ଉଦାହରଣ ସ୍ୱରୂପ, ପ୍ରଜାପତିର ଜୀବନ ଚକ୍ର।",
+    numQuestionsLabel: "ପ୍ରଶ୍ନ ସଂଖ୍ୟା",
+    questionTypesLabel: "ପ୍ରଶ୍ନ ପ୍ରକାର",
+    bloomsLabel: "ବ୍ଲୁମ୍‌ଙ୍କ ବର୍ଗୀକରଣ ସ୍ତର",
+    gradeLevelLabel: "ଶ୍ରେଣୀ ସ୍ତର",
+    languageLabel: "ଭାଷା",
+    submitButton: "କୁଇଜ୍ ତିଆରି କରନ୍ତୁ",
+    submitButtonLoading: "କୁଇଜ୍ ତିଆରି ଚାଲିଛି...",
+    loadingText: "ଆପଣଙ୍କ ପ୍ରଶ୍ନ ପ୍ରସ୍ତୁତ ହେଉଛି...",
+    questionTypes: {
+      multiple_choice: 'ବହୁବିକଳ୍ପ',
+      fill_in_the_blanks: 'ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ',
+      short_answer: 'ସଂକ୍ଷିପ୍ତ ଉତ୍ତର',
+    },
+    blooms: {
+      'Remember': 'ମନେରଖନ୍ତୁ',
+      'Understand': 'ବୁଝନ୍ତୁ',
+      'Apply': 'ପ୍ରୟୋଗ କରନ୍ତୁ',
+      'Analyze': 'ବିଶ୍ଳେଷଣ କରନ୍ତୁ',
+      'Evaluate': 'ମୂଲ୍ୟାୟନ କରନ୍ତୁ',
+      'Create': 'ସୃଷ୍ଟି କରନ୍ତୁ',
+    },
+  },
 };
 
 
@@ -314,7 +398,7 @@ export default function QuizGeneratorPage() {
 
 function QuizGeneratorContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const [quiz, setQuiz] = useState<QuizGeneratorOutput | null>(null);
+  const [quiz, setQuiz] = useState<QuizVariantsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -348,13 +432,28 @@ function QuizGeneratorContent() {
           if (res.ok) {
             const content = await res.json();
             if (content.data) {
-              setQuiz(content.data);
-              // Set form values to match saved content
+              const loadedData = content.data;
+
+              // Backward Compatibility: If loaded data is "old style" (has questions array directly), wrap it
+              if (Array.isArray(loadedData.questions)) {
+                setQuiz({
+                  easy: null,
+                  medium: loadedData, // Treat old quizzes as medium by default
+                  hard: null
+                });
+              } else {
+                // New style (easy, medium, hard)
+                setQuiz(loadedData);
+              }
+
+              // Set form values to match saved content (prioritize medium, then any available)
+              const primaryVariant = loadedData.medium || loadedData.easy || loadedData.hard || loadedData;
+
               form.reset({
                 topic: content.topic || content.title,
                 gradeLevel: content.gradeLevel,
                 language: content.language,
-                numQuestions: content.data.questions?.length || 5,
+                numQuestions: primaryVariant?.questions?.length || 5,
                 // Default to standard types if not structured in base metadata
                 questionTypes: ["multiple_choice", "short_answer"],
                 bloomsTaxonomyLevels: ['Remember', 'Understand'],
@@ -568,7 +667,7 @@ function QuizGeneratorContent() {
                           <FormControl>
                             <LanguageSelector
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                             />
                           </FormControl>
                         </FormItem>

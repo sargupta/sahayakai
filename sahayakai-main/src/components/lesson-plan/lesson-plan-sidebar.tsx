@@ -22,6 +22,19 @@ interface LessonPlanSidebarProps {
   currentGrade?: number;
   setSelectedChapter: (chapter: NCERTChapter | null) => void;
   setTopic: (topic: string) => void;
+  labels?: {
+    configuration?: string;
+    customizeOutput?: string;
+    contextImage?: string;
+    grade?: string;
+    language?: string;
+    showAdvanced?: string;
+    hideAdvanced?: string;
+    resources?: string;
+    difficulty?: string;
+    standard?: string;
+    ncert?: string;
+  };
 }
 
 export function LessonPlanSidebar({
@@ -33,6 +46,7 @@ export function LessonPlanSidebar({
   currentGrade,
   setSelectedChapter,
   setTopic,
+  labels,
 }: LessonPlanSidebarProps) {
   const { control } = useFormContext();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -40,9 +54,9 @@ export function LessonPlanSidebar({
   return (
     <div className="bg-slate-50/50 rounded-xl p-6 border border-slate-100 h-fit">
       <h3 className="font-headline text-lg mb-1">
-        2. Configuration
+        {labels?.configuration || "2. Configuration"}
       </h3>
-      <p className="text-sm text-slate-500 mb-4">Customize the output.</p>
+      <p className="text-sm text-slate-500 mb-4">{labels?.customizeOutput || "Customize the output."}</p>
 
       {/* Context Image (Moved from Main Area) */}
       <div className="mb-4">
@@ -52,7 +66,7 @@ export function LessonPlanSidebar({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-headline text-xs font-semibold text-slate-600">
-                Add Context Image (Optional)
+                {labels?.contextImage || "Add Context Image (Optional)"}
               </FormLabel>
               <FormControl>
                 <ImageUploader
@@ -76,7 +90,7 @@ export function LessonPlanSidebar({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-headline">
-                Grade
+                {labels?.grade || "Grade"}
               </FormLabel>
               <FormControl>
                 <GradeLevelSelector
@@ -96,12 +110,12 @@ export function LessonPlanSidebar({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-headline">
-                Language
+                {labels?.language || "Language"}
               </FormLabel>
               <FormControl>
                 <LanguageSelector
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
                 />
               </FormControl>
               <FormMessage />
@@ -120,7 +134,7 @@ export function LessonPlanSidebar({
       >
         <span className="flex items-center gap-2 text-sm">
           <Settings2 className="h-4 w-4" />
-          {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
+          {showAdvanced ? (labels?.hideAdvanced || "Hide Advanced Options") : (labels?.showAdvanced || "Show Advanced Options")}
         </span>
         {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </Button>
@@ -139,7 +153,7 @@ export function LessonPlanSidebar({
 
           <div className="space-y-1">
             <FormLabel className="font-headline">
-              Difficulty Level <span className="text-slate-400 font-normal text-xs">(Standard)</span>
+              {labels?.difficulty || "Difficulty Level"} <span className="text-slate-400 font-normal text-xs">{labels?.standard || "(Standard)"}</span>
             </FormLabel>
             <DifficultySelector
               value={difficultyLevel}
@@ -151,7 +165,7 @@ export function LessonPlanSidebar({
           {currentGrade && (
             <div className="space-y-1 pt-2 border-t border-slate-100">
               <FormLabel className="text-xs font-semibold text-slate-600">
-                Link NCERT Chapter (Optional)
+                {labels?.ncert || "Link NCERT Chapter (Optional)"}
               </FormLabel>
               <NCERTChapterSelector
                 selectedGrade={currentGrade}

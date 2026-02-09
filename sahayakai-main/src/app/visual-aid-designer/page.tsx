@@ -21,7 +21,178 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useEffect } from "react";
+import { VisualAidDisplay } from "@/components/visual-aid-display";
+import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
 
+
+
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    pageTitle: "Visual Aid Designer",
+    pageDescription: "Create simple black-and-white line drawings for your lessons.",
+    descLabel: "Description",
+    speakLabel: "Speak your description...",
+    placeholder: "e.g., A simple diagram of the water cycle...",
+    gradeLabel: "Grade Level",
+    languageLabel: "Language",
+    submitButton: "Generate Visual Aid",
+    generating: "Generating...",
+    generatingText: "Generating your visual aid... this may take a moment.",
+    resultTitle: "Generated Image",
+    saveButton: "Save",
+    downloadButton: "Download"
+  },
+  hi: {
+    pageTitle: "दृश्य सहायक डिज़ाइनर (Visual Aid Designer)",
+    pageDescription: "अपने पाठों के लिए सरल श्वेत-श्याम रेखा चित्र बनाएं।",
+    descLabel: "विवरण",
+    speakLabel: "अपना विवरण बोलें...",
+    placeholder: "जैसे, जल चक्र का एक सरल आरेख...",
+    gradeLabel: "कक्षा स्तर",
+    languageLabel: "भाषा",
+    submitButton: "दृश्य सहायक (Visual Aid) उत्पन्न करें",
+    generating: "उत्पन्न कर रहा है...",
+    generatingText: "आपकी दृश्य सहायक सामग्री उत्पन्न कर रहा है... इसमें एक पल लग सकता है।",
+    resultTitle: "उत्पन्न छवि",
+    saveButton: "सहेजें",
+    downloadButton: "डाउनलोड करें"
+  },
+  bn: {
+    pageTitle: "ভিজ্যুয়াল এইড ডিজাইনার",
+    pageDescription: "আপনার পাঠের জন্য সাধারণ সাদা-কালো রেখাচিত্র তৈরি করুন।",
+    descLabel: "বিবরণ",
+    speakLabel: "আপনার বিবরণ বলুন...",
+    placeholder: "যেমন, জলচক্রের একটি সাধারণ চিত্র...",
+    gradeLabel: "শ্রেণী",
+    languageLabel: "ভাষা",
+    submitButton: "ভিজ্যুয়াল এইড তৈরি করুন",
+    generating: "তৈরি করা হচ্ছে...",
+    generatingText: "আপনার ভিজ্যুয়াল এইড তৈরি করা হচ্ছে... এতে কিছুক্ষণ সময় লাগতে পারে।",
+    resultTitle: "তৈরি করা ছবি",
+    saveButton: "সংরক্ষণ করুন",
+    downloadButton: "ডাউনলোড করুন"
+  },
+  te: {
+    pageTitle: "విజువల్ ఎయిడ్ డిజైనర్",
+    pageDescription: "మీ పాఠాల కోసం సాధారణ నలుపు-తెలుపు లైన్ డ్రాయింగ్‌లను సృష్టించండి.",
+    descLabel: "వివరణ",
+    speakLabel: "మీ వివరణను చెప్పండి...",
+    placeholder: "ఉదా., నీటి చక్రం యొక్క సాధారణ రేఖాచిత్రం...",
+    gradeLabel: "తరగతి స్థాయి",
+    languageLabel: "భాష",
+    submitButton: "విజువల్ ఎయిడ్‌ను సృష్టించు",
+    generating: "సృష్టిస్తోంది...",
+    generatingText: "మీ విజువల్ ఎయిడ్‌ను సృష్టిస్తోంది... దీనికి కొంత సమయం పట్టవచ్చు.",
+    resultTitle: "సృష్టించబడిన చిత్రం",
+    saveButton: "సేవ్ చేయండి",
+    downloadButton: "డౌన్‌లోడ్ చేయండి"
+  },
+  mr: {
+    pageTitle: "व्हिज्युअल एड डिझायनर",
+    pageDescription: "आपल्या धड्यांसाठी साधे काळे-पांढरे रेषाचित्रे तयार करा.",
+    descLabel: "वर्णन",
+    speakLabel: "आपले वर्णन बोला...",
+    placeholder: "उदा., जलचक्राची एक साधी आकृती...",
+    gradeLabel: "इयत्ता",
+    languageLabel: "भाषा",
+    submitButton: "व्हिज्युअल एड तयार करा",
+    generating: "तयार करत आहे...",
+    generatingText: "तुमचे व्हिज्युअल एड तयार करत आहे... यास थोडा वेळ लागू शकतो.",
+    resultTitle: "तयार केलेली प्रतिमा",
+    saveButton: "जतन करा",
+    downloadButton: "डाउनलोड करा"
+  },
+  ta: {
+    pageTitle: "காட்சி உதவி வடிவமைப்பாளர்",
+    pageDescription: "உங்கள் பாடங்களுக்கான எளிய கருப்பு-வெள்ளை வரி ஓவியங்களை உருவாக்கவும்.",
+    descLabel: "விளக்கம்",
+    speakLabel: "உங்கள் விளக்கத்தைப் பேசுங்கள்...",
+    placeholder: "எ.கா., நீர் சுழற்சியின் எளிய வரைபடம்...",
+    gradeLabel: "வகுப்பு நிலை",
+    languageLabel: "மொழி",
+    submitButton: "காட்சி உதவியை உருவாக்கு",
+    generating: "உருவாக்குகிறது...",
+    generatingText: "உங்கள் காட்சி உதவியை உருவாக்குகிறது... இதற்கு சிறிது நேரம் ஆகலாம்.",
+    resultTitle: "உருவாக்கப்பட்ட படம்",
+    saveButton: "சேமிக்கவும்",
+    downloadButton: "பதிவிறக்கவும்"
+  },
+  gu: {
+    pageTitle: "વિઝ્યુઅલ એઇડ ડિઝાઇનર",
+    pageDescription: "તમારા પાઠ માટે સરળ બ્લેક-એન્ડ-વ્હાઇટ લાઇન ડ્રોઇંગ્સ બનાવો.",
+    descLabel: "વર્ણન",
+    speakLabel: "તમારું વર્ણન બોલો...",
+    placeholder: "દા.ત., જળ ચક્રની એક સરળ આકૃતિ...",
+    gradeLabel: "ધોરણ",
+    languageLabel: "ભાષા",
+    submitButton: "વિઝ્યુઅલ એઇડ બનાવો",
+    generating: "બનાવી રહ્યું છે...",
+    generatingText: "તમારી વિઝ્યુઅલ એઇડ બનાવી રહ્યું છે... આમાં થોડો સમય લાગી શકે છે.",
+    resultTitle: "બનાવેલી છબી",
+    saveButton: "સાચવો",
+    downloadButton: "ડાઉનલોડ કરો"
+  },
+  kn: {
+    pageTitle: "ವಿಶುವಲ್ ಏಡ್ ಡಿಸೈನರ್",
+    pageDescription: "ನಿಮ್ಮ ಪಾಠಗಳಿಗಾಗಿ ಸರಳ ಕಪ್ಪು-ಬಿಳುಪು ರೇಖಾಚಿತ್ರಗಳನ್ನು ರಚಿಸಿ.",
+    descLabel: "ವಿವರಣೆ",
+    speakLabel: "ನಿಮ್ಮ ವಿವರಣೆಯನ್ನು ಮಾತನಾಡಿ...",
+    placeholder: "ಉದಾ., ನೀರಿನ ಚಕ್ರದ ಸರಳ ರೇಖಾಚಿತ್ರ...",
+    gradeLabel: "ದರ್ಜೆ ಮಟ್ಟ",
+    languageLabel: "ಭಾಷೆ",
+    submitButton: "ವಿಶುವಲ್ ಏಡ್ ರಚಿಸಿ",
+    generating: "ರಚಿಸಲಾಗುತ್ತಿದೆ...",
+    generatingText: "ನಿಮ್ಮ ವಿಶುವಲ್ ಏಡ್ ರಚಿಸಲಾಗುತ್ತಿದೆ... ಇದಕ್ಕೆ ಸ್ವಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳಬಹುದು.",
+    resultTitle: "ರಚಿಸಿದ ಚಿತ್ರ",
+    saveButton: "ಉಳಿಸಿ",
+    downloadButton: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  },
+  pa: {
+    pageTitle: "ਵਿਜ਼ੂਅਲ ਏਡ ਡਿਜ਼ਾਈਨਰ",
+    pageDescription: "ਆਪਣੇ ਪਾਠਾਂ ਲਈ ਸਧਾਰਨ ਬਲੈਕ-ਐਂਡ-ਵਾਈਟ ਲਾਈਨ ਡਰਾਇੰਗ ਬਣਾਓ।",
+    descLabel: "ਵੇਰਵਾ",
+    speakLabel: "ਆਪਣਾ ਵੇਰਵਾ ਬੋਲੋ...",
+    placeholder: "ਉਦਾਹਰਣ: ਜਲ ਚੱਕਰ ਦਾ ਇੱਕ ਸਧਾਰਨ ਚਿੱਤਰ...",
+    gradeLabel: "ਜਮਾਤ",
+    languageLabel: "ਭਾਸ਼ਾ",
+    submitButton: "ਵਿਜ਼ੂਅਲ ਏਡ ਬਣਾਓ",
+    generating: "ਬਣਾ ਰਿਹਾ ਹੈ...",
+    generatingText: "ਤੁਹਾਡੀ ਵਿਜ਼ੂਅਲ ਏਡ ਬਣਾ ਰਿਹਾ ਹੈ... ਇਸ ਵਿੱਚ ਕੁਝ ਸਮਾਂ ਲੱਗ ਸਕਦਾ ਹੈ।",
+    resultTitle: "ਬਣਾਈ ਗਈ ਤਸਵੀਰ",
+    saveButton: "ਸੁਰੱਖਿਅਤ ਕਰੋ",
+    downloadButton: "ਡਾਊਨਲੋਡ ਕਰੋ"
+  },
+  ml: {
+    pageTitle: "വിഷ്വൽ എയ്ഡ് ഡിസൈനർ",
+    pageDescription: "നിങ്ങളുടെ പാഠങ്ങൾക്കായി ലളിതമായ ബ്ലാക്ക് ആൻഡ് വൈറ്റ് ലൈൻ ഡ്രോയിംഗുകൾ സൃഷ്ടിക്കുക.",
+    descLabel: "വിവരണം",
+    speakLabel: "നിങ്ങളുടെ വിവരണം പറയുക...",
+    placeholder: "ഉദാ: ജലചക്രത്തിൻ്റെ ഒരു ലളിതമായ രേഖാചിത്രം...",
+    gradeLabel: "ക്ലാസ്",
+    languageLabel: "ഭാഷ",
+    submitButton: "വിഷ്വൽ എയ്ഡ് സൃഷ്ടിക്കുക",
+    generating: "സൃഷ്ടിക്കുന്നു...",
+    generatingText: "നിങ്ങളുടെ വിഷ്വൽ എയ്ഡ് സൃഷ്ടിക്കുന്നു... ഇതിന് ഒരു നിമിഷം എടുത്തേക്കാം.",
+    resultTitle: "സൃഷ്ടിച്ച ചിത്രം",
+    saveButton: "സേവ് ചെയ്യുക",
+    downloadButton: "ഡൗൺലോഡ് ചെയ്യുക"
+  },
+  or: {
+    pageTitle: "ଭିଜୁଆଲ୍ ଏଡ୍ ଡିଜାଇନର୍",
+    pageDescription: "ଆପଣଙ୍କ ପାଠ ପାଇଁ ସରଳ କଳା-ଧଳା ରେଖା ଚିତ୍ର ତିଆରି କରନ୍ତୁ |",
+    descLabel: "ବର୍ଣ୍ଣନା",
+    speakLabel: "ଆପଣଙ୍କ ବର୍ଣ୍ଣନା କୁହନ୍ତୁ...",
+    placeholder: "ଉଦାହରଣ: ଜଳ ଚକ୍ରର ଏକ ସରଳ ଚିତ୍ର...",
+    gradeLabel: "ଶ୍ରେଣୀ",
+    languageLabel: "ଭାଷା",
+    submitButton: "ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି କରନ୍ତୁ",
+    generating: "ତିଆରି ଚାଲିଛି...",
+    generatingText: "ଆପଣଙ୍କ ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି ଚାଲିଛି... ଏଥିପାଇଁ କିଛି ସମୟ ଲାଗିପାରେ |",
+    resultTitle: "ପ୍ରସ୍ତୁତ ଚିତ୍ର",
+    saveButton: "ସଂରକ୍ଷଣ କରନ୍ତୁ",
+    downloadButton: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ"
+  },
+};
 
 const formSchema = z.object({
   prompt: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -43,7 +214,7 @@ export default function VisualAidDesignerPage() {
 
 function VisualAidContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const [imageData, setImageData] = useState<string | null>(null);
+  const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -57,6 +228,7 @@ function VisualAidContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
+  const t = translations[selectedLanguage] || translations.en;
   const searchParams = useSearchParams();
 
   // Ref to prevent double-submission in StrictMode or re-renders
@@ -87,7 +259,7 @@ function VisualAidContent() {
           if (res.ok) {
             const content = await res.json();
             if (content.data) {
-              setImageData(content.data.imageDataUri || content.data);
+              setVisualAid(content.data.imageDataUri ? content.data : { ...content.data, imageDataUri: content.data });
               form.reset({
                 prompt: content.topic || content.title,
                 gradeLevel: content.gradeLevel,
@@ -119,7 +291,7 @@ function VisualAidContent() {
   const onSubmit = async (values: FormValues) => {
     if (!requireAuth()) return;
     setIsLoading(true);
-    setImageData(null);
+    setVisualAid(null);
     try {
       const token = await auth.currentUser?.getIdToken();
       const headers: Record<string, string> = {
@@ -150,7 +322,7 @@ function VisualAidContent() {
       }
 
       const result = await res.json();
-      setImageData(result.imageDataUri);
+      setVisualAid(result);
     } catch (error) {
       console.error("Failed to generate visual aid:", error);
       toast({
@@ -163,26 +335,8 @@ function VisualAidContent() {
     }
   };
 
-  const handleDownload = () => {
-    if (!imageData) return;
-    const link = document.createElement('a');
-    link.href = imageData;
-    link.download = 'visual-aid.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handlePromptClick = (prompt: string) => {
     form.setValue("prompt", prompt);
-    form.trigger("prompt");
-  };
-
-  const handleSave = () => {
-    toast({
-      title: "Saved to Library",
-      description: "Your visual aid has been saved to your personal library.",
-    });
   };
 
   return (
@@ -192,9 +346,9 @@ function VisualAidContent() {
           <div className="flex justify-center items-center mb-4">
             <Images className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Visual Aid Designer</CardTitle>
+          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
-            Create simple black-and-white line drawings for your lessons.
+            {t.pageDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -205,19 +359,19 @@ function VisualAidContent() {
                 name="prompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-headline">Description</FormLabel>
+                    <FormLabel className="font-headline">{t.descLabel}</FormLabel>
                     <div className="flex flex-col gap-4">
                       <MicrophoneInput
                         onTranscriptChange={(transcript) => {
                           field.onChange(transcript);
                         }}
                         iconSize="lg"
-                        label="Speak your description..."
+                        label={t.speakLabel}
                         className="bg-white/50 backdrop-blur-sm"
                       />
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., A simple diagram of the water cycle..."
+                          placeholder={t.placeholder}
                           {...field}
                           className="bg-white/50 backdrop-blur-sm min-h-[100px]"
                         />
@@ -236,7 +390,7 @@ function VisualAidContent() {
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Grade Level</FormLabel>
+                      <FormLabel className="font-headline">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -254,7 +408,7 @@ function VisualAidContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">Language</FormLabel>
+                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -271,10 +425,10 @@ function VisualAidContent() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Generating...
+                    {t.generating}
                   </>
                 ) : (
-                  "Generate Visual Aid"
+                  t.submitButton
                 )}
               </Button>
             </form>
@@ -286,39 +440,18 @@ function VisualAidContent() {
         <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">Generating your visual aid... this may take a moment.</p>
+            <p className="text-muted-foreground">{t.generatingText}</p>
           </CardContent>
         </Card>
       )}
 
-      {imageData && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl flex items-center justify-between">
-              <span>Generated Image</span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center items-center p-4">
-            <Image
-              src={imageData}
-              alt="Generated visual aid"
-              width={512}
-              height={512}
-              className="rounded-lg border border-black/10"
-              data-ai-hint="illustration drawing"
-            />
-          </CardContent>
-        </Card>
+      {visualAid && (
+        <VisualAidDisplay
+          visualAid={visualAid}
+          title={form.getValues('prompt')}
+          gradeLevel={form.getValues('gradeLevel')}
+          language={form.getValues('language')}
+        />
       )}
     </div>
   );

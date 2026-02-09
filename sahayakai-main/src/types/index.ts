@@ -30,9 +30,15 @@ export const DEPARTMENTS = [
 export type Department = typeof DEPARTMENTS[number];
 
 export const LANGUAGES = [
-    'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali',
+    'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali', 'Gujarati', 'Punjabi', 'Malayalam', 'Odia',
 ] as const;
 export type Language = typeof LANGUAGES[number];
+
+export const LANGUAGE_CODE_MAP: Record<string, Language> = {
+    'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada', 'ta': 'Tamil',
+    'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali',
+    'gu': 'Gujarati', 'pa': 'Punjabi', 'ml': 'Malayalam', 'or': 'Odia'
+} as const;
 
 export const CONTENT_TYPES = [
     'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training',

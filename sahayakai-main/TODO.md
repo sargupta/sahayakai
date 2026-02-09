@@ -1,5 +1,11 @@
 # SahayakAI - TODO List
 
+## 🔥 Critical Fixes (Audit Findings)
+- [x] **Fix Firestore Rules**: Secure `lesson-plans`, `instant-answers`, and `users` collections. Current rules are too permissive or irrelevant.
+- [x] **Verify Offline User Flow**: Test PWA offline capabilities and "Local Fallback" for NCERT.
+- [x] **Enable Offline Persistence**: explicitly enable `enableIndexedDbPersistence` in `firebase.ts`.
+- [x] **Telemetry Verification**: Ensure usage data is being captured for impact analysis.
+
 ## 🎯 High Priority - Teacher Experience Improvements
 
 ### ✅ Completed

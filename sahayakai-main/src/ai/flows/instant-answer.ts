@@ -13,6 +13,8 @@ import { z } from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
+import { LANGUAGE_CODE_MAP } from '@/types/index';
+
 
 import { validateTopicSafety } from '@/lib/safety';
 const InstantAnswerInputSchema = z.object({
@@ -28,11 +30,7 @@ function normalizeInput(input: InstantAnswerInput): InstantAnswerInput {
 
   // Normalize Language
   if (language) {
-    const langMap: Record<string, string> = {
-      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
-      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
-    };
-    language = langMap[language.toLowerCase()] || language;
+    language = LANGUAGE_CODE_MAP[language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || language;
   }
 
   // Normalize Grade
@@ -56,6 +54,8 @@ export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
 const InstantAnswerOutputSchema = z.object({
   answer: z.string().describe('The generated answer to the question.'),
   videoSuggestionUrl: z.string().nullable().optional().describe('A URL to a relevant YouTube video.'),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type InstantAnswerOutput = z.infer<typeof InstantAnswerOutputSchema>;
 
@@ -89,12 +89,16 @@ export async function instantAnswer(input: InstantAnswerInput): Promise<InstantA
   return instantAnswerFlow(localizedInput);
 }
 
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
   input: { schema: InstantAnswerInputSchema },
   output: { schema: InstantAnswerOutputSchema },
   tools: [googleSearch],
-  prompt: `You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
 
 **Instructions:**
 1.  **Use Tools:** If the question requires current information or facts, use the \`googleSearch\` tool to get up-to-date information.
@@ -103,6 +107,7 @@ const instantAnswerPrompt = ai.definePrompt({
 4.  **Analogies:** For complex topics, use simple analogies, especially for younger grade levels.
 5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, provide a YouTube Search URL in the \`videoSuggestionUrl\` field. The format MUST be: \`https://www.youtube.com/results?search_query=\` followed by a concise, relevant search query (e.g., "photosynthesis for class 5"). Do NOT try to guess a specific video ID (like watch?v=xyz) as it might be fake. Always use the search results URL.
 6.  **Be Direct:** Provide the answer directly without conversational filler.
+7.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
 
 **Constraints:**
 - **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
@@ -179,6 +184,8 @@ const instantAnswerFlow = ai.defineFlow(
       const sanitizedOutput: InstantAnswerOutput = {
         answer: output.answer || 'Unable to generate an answer at this time.',
         videoSuggestionUrl: output.videoSuggestionUrl || null,
+        gradeLevel: output.gradeLevel,
+        subject: output.subject
       };
 
       // Persistence with error handling
@@ -212,8 +219,8 @@ const instantAnswerFlow = ai.defineFlow(
             id: contentId,
             type: 'instant-answer',
             title: input.question,
-            gradeLevel: input.gradeLevel as any || 'Class 5',
-            subject: 'General',
+            gradeLevel: (sanitizedOutput.gradeLevel || input.gradeLevel || 'Class 5') as any,
+            subject: (sanitizedOutput.subject || 'General') as any,
             topic: input.question,
             language: input.language as any || 'English',
             storagePath: filePath,

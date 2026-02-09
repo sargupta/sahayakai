@@ -1,26 +1,22 @@
-
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart } from "lucide-react";
+import { TeacherAnalyticsDashboard } from "@/components/teacher-analytics-dashboard";
+import { useAuth } from "@/context/auth-context";
 
 export default function ImpactDashboardPage() {
+  const { user } = useAuth();
+  const userId = user?.uid || "dev-user";
+
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center items-center mb-4">
-              <BarChart className="w-12 h-12 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-3xl">Impact Dashboard</CardTitle>
-          <CardDescription>
-            This feature is coming soon. Track student progress and the impact of your teaching.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <p className="text-center text-muted-foreground">Stay tuned!</p>
-        </CardContent>
-      </Card>
+    <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Impact Dashboard</h1>
+        <p className="text-muted-foreground">
+          Track your teaching journey and see the difference you're making in your classroom.
+        </p>
+      </div>
+
+      <TeacherAnalyticsDashboard userId={userId} />
     </div>
   );
 }

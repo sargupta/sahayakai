@@ -15,7 +15,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 type WorksheetDisplayProps = {
-    worksheet: { worksheetContent: string };
+    worksheet: { worksheetContent: string; gradeLevel?: string | null; subject?: string | null };
     title?: string;
 };
 
@@ -30,24 +30,48 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
         });
     };
 
-    const handleDownload = () => {
-        // Better Naming for PDF
-        const originalTitle = document.title;
-        const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
-        const filename = `Sahayak_Worksheet_${cleanTitle}`;
+    const handleDownload = async () => {
+        const element = document.getElementById('worksheet-pdf');
+        if (!element) return;
 
-        document.title = filename; // Sets the default filename in Print Dialog
-        window.print();
+        // Hide buttons for cleaner PDF
+        const actionButtons = element.querySelector('.no-print');
+        if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
 
-        // Restore title after a small delay
-        setTimeout(() => {
-            document.title = originalTitle;
-        }, 1000);
+        try {
+            toast({ title: "Generating PDF...", description: "Preparing high-quality worksheet PDF." });
 
-        toast({
-            title: "Print to PDF",
-            description: "Select 'Save as PDF'. Your worksheet is optimized for high quality.",
-        });
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
+            pdf.save(`Sahayak_Worksheet_${cleanTitle}.pdf`);
+
+            toast({ title: "PDF Downloaded", description: "Your worksheet is ready." });
+        } catch (error) {
+            console.error("PDF Error:", error);
+            toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
+        } finally {
+            // Restore buttons
+            if (actionButtons) (actionButtons as HTMLElement).style.display = '';
+        }
     };
 
     const handleSave = async () => {
@@ -68,10 +92,10 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 id: crypto.randomUUID(),
                 type: 'worksheet',
                 title: saveTitle,
-                gradeLevel: 'Class 5',
-                subject: 'General',
+                gradeLevel: worksheet.gradeLevel || 'Class 5',
+                subject: worksheet.subject || 'General',
                 topic: saveTitle,
-                language: 'English',
+                language: 'English', // TODO: Pass language prop
                 isPublic: false,
                 isDraft: false,
                 data: {
@@ -80,7 +104,9 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                         title: 'Generated Content',
                         instructions: worksheet.worksheetContent,
                         items: []
-                    }]
+                    }],
+                    // Preserving raw content for display re-hydration if needed
+                    ...worksheet
                 }
             };
 

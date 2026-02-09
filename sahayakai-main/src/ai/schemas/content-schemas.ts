@@ -62,6 +62,9 @@ export const BaseContentSchema = z.object({
 
     createdAt: z.string().or(z.date()).optional(),
     updatedAt: z.string().or(z.date()).optional(),
+
+    // Storage
+    storagePath: z.string().optional(),
 });
 
 // --- Feature-Specific Schemas (Standardized to AI Flow Outputs) ---

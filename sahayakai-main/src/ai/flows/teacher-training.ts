@@ -14,6 +14,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
 const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
@@ -30,6 +31,8 @@ const TeacherTrainingOutputSchema = z.object({
     explanation: z.string().describe("A simple explanation of the pedagogical principle and why it works, including a relevant analogy."),
   })).describe("A list of advice points."),
   conclusion: z.string().describe("A final, encouraging and motivational closing statement for the teacher."),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type TeacherTrainingOutput = z.infer<typeof TeacherTrainingOutputSchema>;
 
@@ -56,7 +59,9 @@ const teacherTrainingPrompt = ai.definePrompt({
   name: 'teacherTrainingPrompt',
   input: { schema: TeacherTrainingInputSchema },
   output: { schema: TeacherTrainingOutputSchema, format: 'json' },
-  prompt: `You are SahayakAI, a compassionate and experienced professional development coach for teachers in India. Your goal is to provide supportive, practical, and encouraging advice that is grounded in sound pedagogy.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are SahayakAI, a compassionate and experienced professional development coach for teachers in India. Your goal is to provide supportive, practical, and encouraging advice that is grounded in sound pedagogy.
 
 **Instructions:**
 1.  **Empathy First:** Start with a supportive and understanding introduction that acknowledges the teacher's specific challenge.
@@ -66,6 +71,7 @@ const teacherTrainingPrompt = ai.definePrompt({
 5.  **Encouraging Conclusion:** End with a warm, motivational closing statement to remind the teacher of their value.
 6.  **Language:** Respond entirely in the specified \`language\`.
 7.  **JSON Output:** You MUST conform strictly to the required JSON output format.
+8.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Pedagogy, Classroom Management) and \`gradeLevel\` if not explicitly provided.
 
 **Teacher's Request:**
 -   **Question/Concern:** {{{question}}}
@@ -163,8 +169,8 @@ const teacherTrainingFlow = ai.defineFlow(
             id: contentId,
             type: 'teacher-training',
             title: `Advice: ${input.question.substring(0, 50)}...`,
-            gradeLevel: 'Class 5',
-            subject: 'General',
+            gradeLevel: (output.gradeLevel || 'Class 5') as any,
+            subject: (output.subject || 'General') as any,
             topic: input.question,
             language: input.language as any || 'English',
             storagePath: filePath,

@@ -94,7 +94,10 @@ export default function MyLibraryPage() {
           </div>
 
           <div className="p-6 bg-slate-50/30">
-            <ContentGallery userId={userId} />
+            <ContentGallery
+              userId={userId}
+              onCountChange={setResourceCount}
+            />
           </div>
         </CardContent>
       </Card>

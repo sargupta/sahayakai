@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  @layer utilities {
-    .animate-bounce-subtle {
-      animation: bounce-subtle 3s infinite;
-    }
+@layer utilities {
+  .animate-bounce-subtle {
+    animation: bounce-subtle 3s infinite;
   }
+}
 
+@layer base {
   @keyframes bounce-subtle {
 
     0%,

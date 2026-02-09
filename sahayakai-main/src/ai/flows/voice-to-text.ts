@@ -77,6 +77,38 @@ STEP 2: Apply language-specific cleanup rules. Remove ONLY these filler words/di
 - Filler words: अं (an), अरे (are), अगं (aga), म्हणजे (mhanje), तर (tar), बरं (bara), मग (mag), म्हणून (mhanun)
 - Respect regional nuances
 
+**GUJARATI (ગુજરાતી):**
+- Filler words: એટલે (etle - "meaning/so"), ને (ne - "and/tag"), હવે (have - "now/so"), તો (to - "then/so"), પણ (pan - "but/um"), જુઓ (juo - "look"), રયો (rayo - "remained/um")
+- Common hesitations: અ (a), હા (ha - repetitive yes)
+
+**PUNJABI (ਪੰਜਾਬੀ):**
+- Filler words: ਮਤਲਬ (matlab - "meaning"), ਜੀ (ji - honorific filler), ਤਾਂ (taan - "then/so"), ਹੁਣ (hun - "now"), ਕਿ (ki - "that/so"), ਵੇਖੋ (vekho - "look"), ਅੱਛਾ (accha - "okay")
+- Discourse markers: ਗੱਲ ਸੁਣੋ (gal suno - "listen"), ਬਸ (bas - "just")
+
+**MALAYALAM (മലയാളം):**
+- Filler words: അത് (athu - "that/um"), പിന്നെ (pinne - "then"), എന്ന് വെച്ചാൽ (ennu vechaal - "meaning/if you say"), അപ്പോ (appol - "then/so"), എന്താ (enth - "what/um"), ദേ (de - "hey/look"), കേട്ടോ (ketto - "you know/hear me")
+- Hesitations: ആ (aa), ഉം (um)
+
+**ODIA (ଓଡ଼ିଆ):**
+- Filler words: ମାନେ (mane - "meaning"), ଆଉ (au - "and/um"), ପରା (para - "tag/right?"), ହେଲେ (hele - "but/so"), ଟିକେ (tike - "little/just"), ଦେଖ (dekha - "look"), ଆଜ୍ଞା (agyan - "yes/sir")
+- Common markers: ବୋଲି (boli - "that"), ସତରେ (satare - "really")
+
+**GUJARATI (ગુજરાતી):**
+- Filler words: એટલે (etle - "meaning/so"), ને (ne - "and/tag"), હવે (have - "now/so"), તો (to - "then/so"), પણ (pan - "but/um"), જુઓ (juo - "look"), રયો (rayo - "remained/um")
+- Common hesitations: અ (a), હા (ha - repetitive yes)
+
+**PUNJABI (ਪੰਜਾਬੀ):**
+- Filler words: ਮਤਲਬ (matlab - "meaning"), ਜੀ (ji - honorific filler), ਤਾਂ (taan - "then/so"), ਹੁਣ (hun - "now"), ਕਿ (ki - "that/so"), ਵੇਖੋ (vekho - "look"), ਅੱਛਾ (accha - "okay")
+- Discourse markers: ਗੱਲ ਸੁਣੋ (gal suno - "listen"), ਬਸ (bas - "just")
+
+**MALAYALAM (മലയാളം):**
+- Filler words: അത് (athu - "that/um"), പിന്നെ (pinne - "then"), എന്ന് വെച്ചാൽ (ennu vechaal - "meaning/if you say"), അപ്പോ (appol - "then/so"), എന്താ (enth - "what/um"), ദേ (de - "hey/look"), കേട്ടോ (ketto - "you know/hear me")
+- Hesitations: ആ (aa), ഉം (um)
+
+**ODIA (ଓଡ଼ିଆ):**
+- Filler words: ମାନେ (mane - "meaning"), ଆଉ (au - "and/um"), ପରା (para - "tag/right?"), ହେଲେ (hele - "but/so"), ଟିକେ (tike - "little/just"), ଦେଖ (dekha - "look"), ଆଜ୍ଞା (agyan - "yes/sir")
+- Common markers: ବୋଲି (boli - "that"), ସତରେ (satare - "really")
+
 STEP 3: Apply universal cleanup rules:
 1. Fix stutters and redundant phrases (e.g., "where exactly where" → "where exactly")
 2. Improve grammar while preserving original intent and meaning
