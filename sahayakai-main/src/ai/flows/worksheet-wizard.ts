@@ -29,6 +29,7 @@ const WorksheetWizardInputSchema = z.object({
   language: z.string().optional().describe('The language for the worksheet.'),
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
+  subject: z.string().optional().describe('The academic subject.'),
 });
 
 export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;

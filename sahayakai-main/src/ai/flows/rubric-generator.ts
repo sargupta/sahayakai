@@ -19,6 +19,7 @@ import { extractGradeFromTopic } from '@/lib/grade-utils';
 const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
   gradeLevel: z.string().optional().describe('The grade level for which the rubric is intended.'),
+  subject: z.string().optional().describe('The academic subject.'),
   language: z.string().optional().describe('The language for the rubric.'),
   userId: z.string().optional().describe('The ID of the user for whom the rubric is being generated.'),
 });
@@ -92,6 +93,7 @@ You are an expert educator specializing in assessment and rubric design. Create 
 **Context:**
 - **Assignment**: {{{assignmentDescription}}}
 - **Grade**: {{{gradeLevel}}}
+- **Subject**: {{{subject}}}
 - **Language**: {{{language}}}
 
 **Constraints:**
@@ -183,7 +185,7 @@ const rubricGeneratorFlow = ai.defineFlow(
             type: 'rubric',
             title: output.title || `Rubric: ${input.assignmentDescription}`,
             gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
-            subject: (output.subject || 'General') as any,
+            subject: (input.subject || output.subject || 'General') as any,
             topic: input.assignmentDescription,
             language: input.language as any || 'English',
             storagePath: filePath,

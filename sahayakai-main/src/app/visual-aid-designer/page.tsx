@@ -22,6 +22,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useEffect } from "react";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
+import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
 
 
@@ -40,7 +41,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "Generating your visual aid... this may take a moment.",
     resultTitle: "Generated Image",
     saveButton: "Save",
-    downloadButton: "Download"
+    downloadButton: "Download",
+    subjectLabel: "Subject"
   },
   hi: {
     pageTitle: "दृश्य सहायक डिज़ाइनर (Visual Aid Designer)",
@@ -55,7 +57,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "आपकी दृश्य सहायक सामग्री उत्पन्न कर रहा है... इसमें एक पल लग सकता है।",
     resultTitle: "उत्पन्न छवि",
     saveButton: "सहेजें",
-    downloadButton: "डाउनलोड करें"
+    downloadButton: "डाउनलोड करें",
+    subjectLabel: "विषय"
   },
   bn: {
     pageTitle: "ভিজ্যুয়াল এইড ডিজাইনার",
@@ -198,6 +201,7 @@ const formSchema = z.object({
   prompt: z.string().min(10, { message: "Description must be at least 10 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -224,6 +228,7 @@ function VisualAidContent() {
       prompt: "",
       language: "en",
       gradeLevel: "6th Grade",
+      subject: "General",
     },
   });
 
@@ -309,6 +314,7 @@ function VisualAidContent() {
           prompt: values.prompt,
           language: values.language,
           gradeLevel: values.gradeLevel,
+          subject: values.subject,
         })
       });
 
@@ -341,7 +347,10 @@ function VisualAidContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Images className="w-12 h-12 text-primary" />
@@ -384,13 +393,13 @@ function VisualAidContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -403,16 +412,35 @@ function VisualAidContent() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormControl>
+                        <SubjectSelector
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         />
                       </FormControl>
                       <FormMessage />
@@ -434,25 +462,29 @@ function VisualAidContent() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
-      {isLoading && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardContent className="p-6 flex flex-col items-center justify-center">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t.generatingText}</p>
-          </CardContent>
-        </Card>
-      )}
+      {
+        isLoading && (
+          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">{t.generatingText}</p>
+            </CardContent>
+          </Card>
+        )
+      }
 
-      {visualAid && (
-        <VisualAidDisplay
-          visualAid={visualAid}
-          title={form.getValues('prompt')}
-          gradeLevel={form.getValues('gradeLevel')}
-          language={form.getValues('language')}
-        />
-      )}
+      {
+        visualAid && (
+          <VisualAidDisplay
+            visualAid={visualAid}
+            title={form.getValues('prompt')}
+            gradeLevel={form.getValues('gradeLevel')}
+            language={form.getValues('language')}
+          />
+        )
+      }
     </div>
   );
 }

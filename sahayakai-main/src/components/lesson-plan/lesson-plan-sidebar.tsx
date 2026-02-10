@@ -9,6 +9,7 @@ import { NCERTChapterSelector } from "@/components/ncert-chapter-selector";
 import { type NCERTChapter } from "@/data/ncert";
 import { useFormContext } from "react-hook-form";
 import { ImageUploader } from "@/components/image-uploader";
+import { SubjectSelector } from "@/components/subject-selector";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
@@ -34,7 +35,9 @@ interface LessonPlanSidebarProps {
     difficulty?: string;
     standard?: string;
     ncert?: string;
+    subject?: string;
   };
+  generateButton?: React.ReactNode;
 }
 
 export function LessonPlanSidebar({
@@ -47,16 +50,17 @@ export function LessonPlanSidebar({
   setSelectedChapter,
   setTopic,
   labels,
+  generateButton,
 }: LessonPlanSidebarProps) {
   const { control } = useFormContext();
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="bg-slate-50/50 rounded-xl p-6 border border-slate-100 h-fit">
-      <h3 className="font-headline text-lg mb-1">
-        {labels?.configuration || "2. Configuration"}
+    <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 h-fit border-l-4 border-l-[#FF9933]">
+      <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">
+        {labels?.configuration || "Lesson Plan Settings"}
       </h3>
-      <p className="text-sm text-slate-500 mb-4">{labels?.customizeOutput || "Customize the output."}</p>
+      <div className="pt-2"></div>
 
       {/* Context Image (Moved from Main Area) */}
       <div className="mb-4">
@@ -104,6 +108,28 @@ export function LessonPlanSidebar({
           )}
         />
 
+        <FormField
+          control={control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-headline">
+                {labels?.subject || "Subject"}
+              </FormLabel>
+              <FormControl>
+                <SubjectSelector
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  language={selectedLanguage}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="mt-4">
         <FormField
           control={control}
           name="language"
@@ -178,6 +204,12 @@ export function LessonPlanSidebar({
               />
             </div>
           )}
+        </div>
+      )}
+
+      {generateButton && (
+        <div className="mt-6 pt-2">
+          {generateButton}
         </div>
       )}
     </div>

@@ -21,6 +21,7 @@ const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
   language: z.string().optional().describe('The language for the answer (e.g. English, Hindi).'),
   gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
+  subject: z.string().optional().describe('The academic subject.'),
   userId: z.string().optional().describe('The ID of the user for whom the answer is being generated.'),
 });
 
@@ -117,6 +118,7 @@ You are an expert educator and knowledge base. Your goal is to answer questions 
 **User's Question:**
 - **Question:** {{{question}}}
 - **Grade Level:** {{{gradeLevel}}}
+- **Subject:** {{{subject}}}
 - **Language:** {{{language}}}
 `,
 });
@@ -220,7 +222,7 @@ const instantAnswerFlow = ai.defineFlow(
             type: 'instant-answer',
             title: input.question,
             gradeLevel: (sanitizedOutput.gradeLevel || input.gradeLevel || 'Class 5') as any,
-            subject: (sanitizedOutput.subject || 'General') as any,
+            subject: (input.subject || sanitizedOutput.subject || 'General') as any,
             topic: input.question,
             language: input.language as any || 'English',
             storagePath: filePath,

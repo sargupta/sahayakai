@@ -22,6 +22,7 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
+import { SubjectSelector } from "@/components/subject-selector";
 
 
 
@@ -40,7 +41,8 @@ const translations: Record<string, Record<string, string>> = {
     wizardMagic: "The wizard is working its magic...",
     resultTitle: "Your Generated Worksheet",
     saveButton: "Save",
-    downloadButton: "Download"
+    downloadButton: "Download",
+    subjectLabel: "Subject"
   },
   hi: {
     pageTitle: "वर्कशीट विजार्ड",
@@ -56,7 +58,8 @@ const translations: Record<string, Record<string, string>> = {
     wizardMagic: "विजार्ड अपना जादू चला रहा है...",
     resultTitle: "आपकी उत्पन्न वर्कशीट",
     saveButton: "सहेजें",
-    downloadButton: "डाउनलोड करें"
+    downloadButton: "डाउनलोड करें",
+    subjectLabel: "विषय"
   },
   bn: {
     pageTitle: "ওয়ার্কশীট উইজার্ড",
@@ -209,6 +212,7 @@ const formSchema = z.object({
   prompt: z.string().min(10, { message: "Prompt must be at least 10 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -235,6 +239,7 @@ function WorksheetWizardContent() {
       prompt: "",
       language: "en",
       gradeLevel: "4th Grade",
+      subject: "General",
     },
   });
 
@@ -275,7 +280,8 @@ function WorksheetWizardContent() {
                 prompt: content.topic || content.title,
                 gradeLevel: content.gradeLevel,
                 language: content.language,
-                imageDataUri: content.data.imageDataUri || ""
+                imageDataUri: content.data.imageDataUri || "",
+                subject: content.subject || "General"
               });
             }
           }
@@ -366,7 +372,10 @@ function WorksheetWizardContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <PencilRuler className="w-12 h-12 text-primary" />
@@ -430,13 +439,13 @@ function WorksheetWizardContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="worksheet" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -449,16 +458,35 @@ function WorksheetWizardContent() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormControl>
+                        <SubjectSelector
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         />
                       </FormControl>
                       <FormMessage />
@@ -480,27 +508,31 @@ function WorksheetWizardContent() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
-      {isLoading && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardContent className="p-6 flex flex-col items-center justify-center">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t.wizardMagic}</p>
-          </CardContent>
-        </Card>
-      )}
+      {
+        isLoading && (
+          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">{t.wizardMagic}</p>
+            </CardContent>
+          </Card>
+        )
+      }
 
-      {worksheet && (
-        <WorksheetDisplay
-          worksheet={{
-            worksheetContent: worksheet,
-            gradeLevel: form.getValues("gradeLevel"),
-            subject: "General" // TODO: Add subject to form if needed/available 
-          }}
-          title={form.getValues("prompt") || t.resultTitle}
-        />
-      )}
+      {
+        worksheet && (
+          <WorksheetDisplay
+            worksheet={{
+              worksheetContent: worksheet,
+              gradeLevel: form.getValues("gradeLevel"),
+              subject: form.getValues("subject") || "General"
+            }}
+            title={form.getValues("prompt") || t.resultTitle}
+          />
+        )
+      }
     </div>
   );
 }

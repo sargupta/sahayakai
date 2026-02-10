@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { SubjectSelector } from "@/components/subject-selector";
 import { RubricDisplay } from "@/components/rubric-display";
 import {
   Dialog,
@@ -31,6 +32,7 @@ const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -109,6 +111,7 @@ function RubricGeneratorContent() {
       assignmentDescription: "",
       language: "en",
       gradeLevel: "7th Grade",
+      subject: "General",
     },
   });
 
@@ -207,7 +210,10 @@ function RubricGeneratorContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <ClipboardCheck className="w-12 h-12 text-primary" />
@@ -272,13 +278,13 @@ function RubricGeneratorContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLevel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLevel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -293,14 +299,31 @@ function RubricGeneratorContent() {
                 />
                 <FormField
                   control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">Subject</FormLabel>
+                      <FormControl>
+                        <SubjectSelector
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.language}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.language}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         />
                       </FormControl>
                       <FormMessage />
@@ -322,10 +345,10 @@ function RubricGeneratorContent() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-pulse">
+        <Card className="mt-8 w-full bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
           <CardContent className="p-12 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
             <p className="text-lg font-medium text-slate-600">{t.loadingText}</p>

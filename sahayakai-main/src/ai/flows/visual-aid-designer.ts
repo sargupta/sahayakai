@@ -22,6 +22,7 @@ const VisualAidInputSchema = z.object({
   language: z.string().optional().describe('The language for any text in the visual aid.'),
   gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the visual aid is being generated.'),
+  subject: z.string().optional().describe('The academic subject.'),
 });
 
 function normalizeInput(input: VisualAidInput): VisualAidInput {

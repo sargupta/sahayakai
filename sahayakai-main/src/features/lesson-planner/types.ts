@@ -9,6 +9,7 @@ export const formSchema = z.object({
     gradeLevels: z.array(z.string()).min(1, {
         message: "Please select at least one grade level.",
     }),
+    subject: z.string().optional(),
     imageDataUri: z.string().optional(),
 });
 

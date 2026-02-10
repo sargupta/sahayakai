@@ -43,7 +43,7 @@ export function LessonPlanInputSection({
         render={({ field }) => (
           <FormItem>
             <div className="space-y-1">
-              {/* <FormLabel> removed, redundant or can be kept if needed but usually standard hides it or makes it subtle */}
+              {/* <FormLabel> removed, redundant */}
             </div>
             <FormControl>
               <div className="flex flex-col gap-4">
@@ -51,12 +51,12 @@ export function LessonPlanInputSection({
                   onTranscriptChange={onTranscriptChange}
                   iconSize="lg"
                   label={labels?.microphone || "Speak your lesson topic..."}
-                  className="bg-white/50 backdrop-blur-sm"
+                  className="bg-white"
                 />
                 <Textarea
                   value={field.value}
                   onChange={field.onChange}
-                  className="bg-white/50 backdrop-blur-sm min-h-[140px] text-base border-slate-300 shadow-sm focus:border-primary focus:ring-primary/10 rounded-lg placeholder:text-slate-400 font-normal p-4 resize-none"
+                  className="bg-white min-h-[140px] text-base border-slate-300 shadow-sm focus:border-primary focus:ring-primary/10 rounded-lg placeholder:text-slate-400 font-normal p-4 resize-none"
                   placeholder="e.g., A lesson on 'Healthy Food' for grades 1, 2, and 3."
                 />
               </div>
@@ -65,13 +65,6 @@ export function LessonPlanInputSection({
           </FormItem>
         )}
       />
-
-      {/* GENERATE BUTTON (High Priority) */}
-      {generateButton && (
-        <div className="py-1">
-          {generateButton}
-        </div>
-      )}
 
       {/* Secondary Inputs (Below Fold) */}
       <div className="space-y-4 pt-2 border-t border-slate-100">

@@ -41,6 +41,7 @@ export function useLessonPlan() {
             topic: "",
             language: "en",
             gradeLevels: ["6th Grade"],
+            subject: "General",
             imageDataUri: "",
         },
     });
@@ -343,6 +344,7 @@ export function useLessonPlan() {
                     useRuralContext: true,
                     resourceLevel: resourceLevel,
                     difficultyLevel: difficultyLevel,
+                    subject: values.subject,
                     ncertChapter: selectedChapter ? {
                         title: selectedChapter.title,
                         number: selectedChapter.number,

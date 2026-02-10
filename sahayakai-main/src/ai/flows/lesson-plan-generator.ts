@@ -38,6 +38,7 @@ const LessonPlanInputSchema = z.object({
   }).optional().describe('Specific NCERT chapter details to align the lesson plan with.'),
   resourceLevel: z.enum(['low', 'medium', 'high']).optional().describe('The level of resources available in the classroom. low=chalk&talk, medium=basic aids, high=tech enabled. Defaults to low.'),
   difficultyLevel: z.enum(['remedial', 'standard', 'advanced']).optional().describe('The difficulty level for the lesson content. remedial=simplified, standard=grade-level, advanced=challenging. Defaults to standard.'),
+  subject: z.string().optional().describe('The academic subject area.'),
 });
 
 function normalizeInput(input: LessonPlanInput): LessonPlanInput {

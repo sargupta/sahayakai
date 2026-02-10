@@ -22,11 +22,12 @@ const translations: Record<string, any> = {
             quickTemplates: "Quick Start Templates"
         },
         sidebar: {
-            configuration: "2. Configuration",
+            configuration: "Lesson Plan Settings",
             customizeOutput: "Customize the output.",
             contextImage: "Add Context Image (Optional)",
             grade: "Grade",
             language: "Language",
+            subject: "Subject",
             showAdvanced: "Show Advanced Options",
             hideAdvanced: "Hide Advanced Options",
             resources: "Resources Available",
@@ -51,6 +52,7 @@ const translations: Record<string, any> = {
             contextImage: "संदर्भ छवि जोड़ें (वैकल्पिक)",
             grade: "कक्षा",
             language: "भाषा",
+            subject: "विषय",
             showAdvanced: "उन्नत विकल्प दिखाएं",
             hideAdvanced: "उन्नत विकल्प छिपाएं",
             resources: "उपलब्ध संसाधन",
@@ -195,6 +197,7 @@ const translations: Record<string, any> = {
             contextImage: "ಸಂದರ್ಭ ಚಿತ್ರವನ್ನು ಸೇರಿಸಿ (ಐಚ್ಛಿಕ)",
             grade: "ತರಗತಿ",
             language: "ಭಾಷೆ",
+            subject: "ವಿಷಯ",
             showAdvanced: "ಸುಧಾರಿತ ಆಯ್ಕೆಗಳನ್ನು ತೋರಿಸಿ",
             hideAdvanced: "ಸುಧಾರಿತ ಆಯ್ಕೆಗಳನ್ನು ಮರೆಮಾಡಿ",
             resources: "ಲಭ್ಯವಿರುವ ಸಂಪನ್ಮೂಲಗಳು",
@@ -324,18 +327,6 @@ export function LessonPlanView({
                                         onTranscriptChange={handleTranscript}
                                         onPromptClick={handlePromptClick}
                                         onTemplateSelect={handleTemplateSelect}
-                                        generateButton={
-                                            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-md transition-all flex items-center justify-center gap-2">
-                                                {isLoading ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                                                        {t.generating}
-                                                    </>
-                                                ) : (
-                                                    t.generateButton
-                                                )}
-                                            </Button>
-                                        }
                                     />
                                 </div>
 
@@ -354,6 +345,18 @@ export function LessonPlanView({
                                             form.setValue("topic", topic);
                                             form.trigger("topic");
                                         }}
+                                        generateButton={
+                                            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-[#FF9933] hover:bg-[#FF9933]/90 text-white shadow-lg shadow-[#FF9933]/20 transition-all font-headline">
+                                                {isLoading ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                                                        {t.generating}
+                                                    </>
+                                                ) : (
+                                                    t.generateButton
+                                                )}
+                                            </Button>
+                                        }
                                     />
                                 </div>
                             </div>

@@ -16,6 +16,7 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
+import { SubjectSelector } from "@/components/subject-selector";
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
@@ -204,6 +205,7 @@ const formSchema = z.object({
   question: z.string().min(5, { message: "Question must be at least 5 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -221,6 +223,7 @@ export default function InstantAnswerPage() {
       question: "",
       language: "en",
       gradeLevel: "6th Grade",
+      subject: "General",
     },
   });
 
@@ -237,6 +240,7 @@ export default function InstantAnswerPage() {
         question: values.question,
         language: values.language,
         gradeLevel: values.gradeLevel,
+        subject: values.subject,
       });
       setAnswer({ ...values, ...result } as Answer);
     } catch (error: any) {
@@ -268,7 +272,10 @@ export default function InstantAnswerPage() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Wand2 className="w-12 h-12 text-primary" />
@@ -311,13 +318,13 @@ export default function InstantAnswerPage() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="instant-answer" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -332,10 +339,27 @@ export default function InstantAnswerPage() {
                 />
                 <FormField
                   control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">Subject</FormLabel>
+                      <FormControl>
+                        <SubjectSelector
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -361,10 +385,10 @@ export default function InstantAnswerPage() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+        <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">{t.searchingText}</p>
@@ -373,7 +397,7 @@ export default function InstantAnswerPage() {
       )}
 
       {answer && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+        <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>

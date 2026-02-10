@@ -24,12 +24,12 @@ export const SelectableCard: FC<SelectableCardProps> = ({ icon: Icon, label, isS
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-4 relative flex flex-col items-center justify-center gap-2">
+      <CardContent className="p-2 relative flex flex-col items-center justify-center gap-1">
         {isSelected && (
-          <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-blue-600" />
+          <CheckCircle2 className="absolute top-1 right-1 h-4 w-4 text-blue-600" />
         )}
-        <Icon className="h-8 w-8 text-primary" />
-        <p className="text-sm font-medium text-center">{label}</p>
+        <Icon className="h-6 w-6 text-primary" />
+        <p className="text-[10px] font-medium text-center leading-tight">{label}</p>
       </CardContent>
     </Card>
   );

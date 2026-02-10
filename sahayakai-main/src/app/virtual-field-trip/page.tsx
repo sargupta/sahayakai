@@ -21,6 +21,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
+import { SubjectSelector } from "@/components/subject-selector";
 
 
 
@@ -37,7 +38,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "Generating Itinerary...",
     planningText: "Planning your virtual adventure...",
     saveButton: "Save to Library",
-    visitButton: "Visit on Google Earth"
+    visitButton: "Visit on Google Earth",
+    subjectLabel: "Subject"
   },
   hi: {
     pageTitle: "आभासी क्षेत्र भ्रमण",
@@ -51,7 +53,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "यात्रा कार्यक्रम बना रहा है...",
     planningText: "आपकी आभासी साहसिक यात्रा की योजना बना रहा है...",
     saveButton: "लाइब्रेरी में सहेजें",
-    visitButton: "Google Earth पर जाएँ"
+    visitButton: "Google Earth पर जाएँ",
+    subjectLabel: "विषय"
   },
   bn: {
     pageTitle: "ভার্চুয়াল ফিল্ড ট্রিপ",
@@ -185,6 +188,7 @@ const formSchema = z.object({
   topic: z.string().min(10, { message: "Topic must be at least 10 characters." }),
   language: z.string().optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -211,6 +215,7 @@ function VirtualFieldTripContent() {
       topic: "",
       language: "en",
       gradeLevel: "8th Grade",
+      subject: "General",
     },
   });
 
@@ -291,6 +296,7 @@ function VirtualFieldTripContent() {
           topic: values.topic,
           language: values.language,
           gradeLevel: values.gradeLevel,
+          subject: values.subject,
         })
       });
 
@@ -325,7 +331,10 @@ function VirtualFieldTripContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Globe2 className="w-12 h-12 text-primary" />
@@ -370,13 +379,13 @@ function VirtualFieldTripContent() {
                 <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -389,16 +398,35 @@ function VirtualFieldTripContent() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormControl>
+                        <SubjectSelector
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         />
                       </FormControl>
                       <FormMessage />
@@ -420,25 +448,29 @@ function VirtualFieldTripContent() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
-      {isLoading && (
-        <Card className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-          <CardContent className="p-6 flex flex-col items-center justify-center">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t.planningText}</p>
-          </CardContent>
-        </Card>
-      )}
+      {
+        isLoading && (
+          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">{t.planningText}</p>
+            </CardContent>
+          </Card>
+        )
+      }
 
-      {trip && (
-        <VirtualFieldTripDisplay
-          trip={trip}
-          topic={form.getValues('topic')}
-          gradeLevel={form.getValues('gradeLevel')}
-          language={form.getValues('language')}
-        />
-      )}
+      {
+        trip && (
+          <VirtualFieldTripDisplay
+            trip={trip}
+            topic={form.getValues('topic')}
+            gradeLevel={form.getValues('gradeLevel')}
+            language={form.getValues('language')}
+          />
+        )
+      }
     </div>
   );
 }

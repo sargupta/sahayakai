@@ -9,16 +9,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
+import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil, PencilRuler, Download, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { ImageUploader } from "@/components/image-uploader";
+import { SubjectSelector } from "@/components/subject-selector";
 import { QuizDisplay } from "@/components/quiz-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Input } from "@/components/ui/input";
@@ -26,8 +28,11 @@ import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { WorksheetDisplay } from "@/components/worksheet-display";
+import { VisualAidDisplay } from "@/components/visual-aid-display";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
@@ -53,6 +58,7 @@ const formSchema = z.object({
   }),
   bloomsTaxonomyLevels: z.array(z.string()).optional(),
   gradeLevel: z.string().optional(),
+  subject: z.string().optional(),
   language: z.string().optional(),
 });
 
@@ -69,6 +75,7 @@ const translations: Record<string, Record<string, any>> = {
     questionTypesLabel: "Question Types",
     bloomsLabel: "Bloom's Taxonomy Levels",
     gradeLevelLabel: "Grade Level",
+    subjectLabel: "Subject",
     languageLabel: "Language",
     submitButton: "Generate Quiz",
     submitButtonLoading: "Generating Quiz...",
@@ -87,12 +94,12 @@ const translations: Record<string, Record<string, any>> = {
       'Create': 'Create',
     },
     bloomsHints: {
-      'Remember': 'Recall facts and basic concepts',
-      'Understand': 'Explain ideas or concepts',
-      'Apply': 'Use information in new situations',
-      'Analyze': 'Draw connections among ideas',
-      'Evaluate': 'Justify a stand or decision',
-      'Create': 'Produce new or original work',
+      'Remember': 'Recall facts. Goal: Test basic knowledge. (e.g., Dates, Names)',
+      'Understand': 'Explain concepts. Goal: Check comprehension. (e.g., Explain why...)',
+      'Apply': 'Use info in new ways. Goal: Test problem-solving. (e.g., Use X to solve Y)',
+      'Analyze': 'Draw connections. Goal: Test logical thinking. (e.g., Compare X and Y)',
+      'Evaluate': 'Justify decisions. Goal: Test critical judgment. (e.g., Critique the idea)',
+      'Create': 'Produce original work. Goal: Test synthesis. (e.g., Design a new X)',
     }
   },
   hi: {
@@ -105,13 +112,14 @@ const translations: Record<string, Record<string, any>> = {
     questionTypesLabel: "प्रश्न प्रकार",
     bloomsLabel: "ब्लूम की टैक्सोनॉमी स्तर",
     gradeLevelLabel: "श्रेणी स्तर",
+    subjectLabel: "विषय",
     languageLabel: "भाषा",
     submitButton: "क्विज़ बनाएं",
     submitButtonLoading: "क्विज़ बना रहा है...",
     loadingText: "आपके प्रश्न तैयार किए जा रहे हैं...",
     questionTypes: {
       multiple_choice: 'बहुविकल्पीय',
-      fill_in_the_blanks: 'रिक्त स्थान भरें',
+      fill_in_the_blanks: ' रिक्त स्थान भरें',
       short_answer: 'संक्षिप्त उत्तर',
     },
     blooms: {
@@ -123,12 +131,12 @@ const translations: Record<string, Record<string, any>> = {
       'Create': 'बनाएं',
     },
     bloomsHints: {
-      'Remember': 'तथ्यों और बुनियादी अवधारणाओं को याद रखें',
-      'Understand': 'विचारों या अवधारणाओं को समझाएं',
-      'Apply': 'नई स्थितियों में जानकारी का उपयोग करें',
-      'Analyze': 'विचारों के बीच संबंध बनाएं',
-      'Evaluate': 'किसी निर्णय या रुख का औचित्य सिद्ध करें',
-      'Create': 'नया या मौलिक कार्य तैयार करें',
+      'Remember': 'तथ्यों को याद करें। लक्ष्य: बुनियादी ज्ञान का परीक्षण।',
+      'Understand': 'अवधारणाओं को समझाएं। लक्ष्य: समझ की जांच।',
+      'Apply': 'नई स्थितियों में उपयोग। लक्ष्य: समस्या समाधान का परीक्षण।',
+      'Analyze': 'संबंध बनाएं। लक्ष्य: तार्किक सोच का परीक्षण।',
+      'Evaluate': 'निर्णय का औचित्य। लक्ष्य: आलोचनात्मक निर्णय का परीक्षण।',
+      'Create': 'मौलिक कार्य। लक्ष्य: सृजन कौशल का परीक्षण।',
     }
   },
   bn: {
@@ -154,10 +162,18 @@ const translations: Record<string, Record<string, any>> = {
       'Remember': 'মনে রাখবেন',
       'Understand': 'বুঝুন',
       'Apply': 'প্রয়োগ করুন',
-      'Analyze': 'বিশ্লেষণ করুন',
+      'Analyze': 'বিশलेषण করুন',
       'Evaluate': 'মূল্যায়ন করুন',
       'Create': 'তৈরি করুন',
     },
+    bloomsHints: {
+      'Remember': 'তথ্য মনে রাখা। লক্ষ্য: মৌলিক জ্ঞান যাচাই।',
+      'Understand': 'ধারণা ব্যাখ্যা করা। লক্ষ্য: বোধগম্যতা যাচাই।',
+      'Apply': 'নতুন ক্ষেত্রে প্রয়োগ। লক্ষ্য: সমস্যা সমাধানের দক্ষতা যাচাই।',
+      'Analyze': 'সংযোগ স্থাপন। লক্ষ্য: যৌক্তিক চিন্তাভাবনা যাচাই।',
+      'Evaluate': 'সিদ্ধান্তের যৌক্তিকতা। লক্ষ্য: বিশ্লেষণাত্মক বিচার যাচাই।',
+      'Create': 'নতুন কিছু তৈরি। লক্ষ্য: সৃজনশীলতা যাচাই।',
+    }
   },
   te: {
     pageTitle: "క్విజ్ జనరేటర్",
@@ -186,6 +202,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'మూల్యాంకనం చేయండి',
       'Create': 'సృష్టించండి',
     },
+    bloomsHints: {
+      'Remember': 'వాస్తవాలను గుర్తుంచుకోండి. లక్ష్యం: ప్రాథమిక జ్ఞానాన్ని పరీక్షించడం.',
+      'Understand': 'భావనలను వివరించండి. లక్ష్యం: అవగాహనను తనిఖీ చేయడం.',
+      'Apply': 'కొత్త మార్గాల్లో ఉపయోగించండి. లక్ష్యం: సమస్య పరిష్కారాన్ని పరీక్షించడం.',
+      'Analyze': 'కనెక్షన్లు గీయండి. లక్ష్యం: తార్కిక ఆలోచనలను పరీక్షించడం.',
+      'Evaluate': 'నిర్ణయాలను సమర్థించండి. లక్ష్యం: విమర్శనాత్మక తీర్పును పరీక్షించడం.',
+      'Create': 'అసలు పనిని రూపొందించండి. లక్ష్యం: సంశ్లేషణను పరీక్షించడం.',
+    }
   },
   mr: {
     pageTitle: "क्विझ जनरेटर",
@@ -214,6 +238,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'मूल्यांकन करा',
       'Create': 'तयार करा',
     },
+    bloomsHints: {
+      'Remember': 'तथ्ये आठवा. ध्येय: मूलभूत ज्ञानाची चाचणी.',
+      'Understand': 'संकल्पना स्पष्ट करा. ध्येय: आकलन तपासणे.',
+      'Apply': 'नवीन मार्गांनी वापरा. ध्येय: समस्या सोडवण्याची चाचणी.',
+      'Analyze': 'संबंध जोडा. ध्येय: तार्किक विचारांची चाचणी.',
+      'Evaluate': 'निर्णयाचे समर्थन करा. ध्येय: गंभीर निर्णयाची चाचणी.',
+      'Create': 'मूळ काम तयार करा. ध्येय: संश्लेषणाची चाचणी.',
+    }
   },
   ta: {
     pageTitle: "வினாடி வினா ஜெனரேட்டர்",
@@ -242,6 +274,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'மதிப்பிடுங்கள்',
       'Create': 'உருவாக்கு',
     },
+    bloomsHints: {
+      'Remember': 'உண்மைகளை நினைவுகூருங்கள். இலக்கு: அடிப்படை அறிவைச் சோதித்தல்.',
+      'Understand': 'கருத்துக்களை விளக்குங்கள். இலக்கு: புரிதலைச் சோதித்தல்.',
+      'Apply': 'புதிய வழிகளில் பயன்படுத்துங்கள். இலக்கு: சிக்கலைத் தீர்ப்பதைச் சோதித்தல்.',
+      'Analyze': 'தொடர்புகளை உருவாக்குங்கள். இலக்கு: தர்க்கரீதியான சிந்தனையைச் சோதித்தல்.',
+      'Evaluate': 'முடிவுகளை நியாயப்படுத்துங்கள். இலக்கு: விமர்சனத் திறனைச் சோதித்தல்.',
+      'Create': 'அசல் வேலையை உருவாக்குங்கள். இலக்கு: படைப்பாற்றலைச் சோதித்தல்.',
+    }
   },
   gu: {
     pageTitle: "ક્વિઝ જનરેટર",
@@ -270,6 +310,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'મૂલ્યાંકન કરો',
       'Create': 'બનાવો',
     },
+    bloomsHints: {
+      'Remember': 'તથ્યો યાદ કરો. ધ્યેય: મૂળભૂત જ્ઞાનની ચકાસણી.',
+      'Understand': 'વિભાવનાઓ સમજાવો. ધ્યેય: સમજણની ચકાસણી.',
+      'Apply': 'નવી રીતે ઉપયોગ કરો. ધ્યેય: સમસ્યા ઉકેલવાની ચકાસણી.',
+      'Analyze': 'જોડાણો બનાવો. ધ્યેય: તાર્કિક વિચારસરણીની ચકાસણી.',
+      'Evaluate': 'નિર્ણયોનું સમર્થન કરો. ધ્યેય: આલોચનાત્મક ચુકાદાની ચકાસણી.',
+      'Create': 'મૂળ કાર્ય બનાવો. ધ્યેય: સંશ્લેષણની ચકાસણી.',
+    }
   },
   kn: {
     pageTitle: "ಕ್ವಿಜ್ ಜನರೇಟರ್",
@@ -298,6 +346,15 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ',
       'Create': 'ರಚಿಸಿ',
     },
+    bloomsHints: {
+      'Remember': 'ಸತ್ಯಗಳನ್ನು ನೆನಪಿಸಿಕೊಳ್ಳಿ. ಗುರಿ: ಮೂಲಭೂತ ಜ್ಞಾನದ ಪರೀಕ್ಷೆ.',
+      'Understand': 'ಪರಿಕಲ್ಪನೆಗಳನ್ನು ವಿವರಿಸಿ. ಗುರಿ: ತಿಳುವಳಿಕೆಯ ಪರೀಕ್ಷೆ.',
+      'Apply': 'ಹೊಸ ರೀತಿಯಲ್ಲಿ ಬಳಸಿ. ಗುರಿ: ಸಮಸ್ಯೆ ಪರಿಹಾರದ ಪರೀಕ್ಷೆ.',
+      'Analyze': 'ಸಂಬಂಧಗಳನ್ನು ಗುರುತಿಸಿ. ಗುರಿ: ತಾರ್ಕಿಕ ಚಿಂತನೆಯ ಪರೀಕ್ಷೆ.',
+      'Evaluate': 'ನಿರ್ಧಾರಗಳನ್ನು ಸಮರ್ಥಿಸಿ. ಗುರಿ: ವಿಮರ್ಶಾತ್ಮಕ ತೀರ್ಪಿನ ಪರೀಕ್ಷೆ.',
+      'Create': 'ಹೊಸ ಕೆಲಸವನ್ನು ತಯಾರಿಸಿ. ಗುರಿ: ಸೃಜನಶೀಲತೆಯ ಪರೀಕ್ಷೆ.',
+    },
+    subjectLabel: "ವಿಷಯ",
   },
   pa: {
     pageTitle: "ਕਵਿਜ਼ ਜਨਰੇਟਰ",
@@ -326,6 +383,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'ਮੁਲਾਂਕਣ ਕਰੋ',
       'Create': 'ਬਣਾਓ',
     },
+    bloomsHints: {
+      'Remember': 'ਤੱਥਾਂ ਨੂੰ ਯਾਦ ਕਰੋ। ਟੀਚਾ: ਬੁਨਿਆਦੀ ਗਿਆਨ ਦੀ ਪਰਖ।',
+      'Understand': 'ਸੰਕਲਪਾਂ ਦੀ ਵਿਆਖਿਆ ਕਰੋ। ਟੀਚਾ: ਸਮਝ ਦੀ ਜਾਂਚ।',
+      'Apply': 'ਨਵੇਂ ਤਰੀਕਿਆਂ ਨਾਲ ਵਰਤੋਂ। ਟੀਚਾ: ਸਮੱਸਿਆ ਹੱਲ ਕਰਨ ਦੀ ਪਰਖ।',
+      'Analyze': 'ਸਬੰਧ ਬਣਾਓ। ਟੀਚਾ: ਤਰਕਸ਼ੀਲ ਸੋਚ ਦੀ ਪਰਖ।',
+      'Evaluate': 'ਫੈਸਲਿਆਂ ਨੂੰ ਜਾਇਜ਼ ਠਹਿਰਾਓ। ਟੀਚਾ: ਆਲੋਚਨਾਤਮਕ ਨਿਰਣੇ ਦੀ ਪਰਖ।',
+      'Create': 'ਮੌਲਿਕ ਕੰਮ ਤਿਆਰ ਕਰੋ। ਟੀਚਾ: ਸਿਰਜਣਾਤਮਕਤਾ ਦੀ ਪਰਖ।',
+    }
   },
   ml: {
     pageTitle: "ക്വിസ് ജനറേറ്റർ",
@@ -354,6 +419,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'മൂല്യനിർണ്ണയം',
       'Create': 'സൃഷ്ടിക്കുക',
     },
+    bloomsHints: {
+      'Remember': 'വസ്തുതകൾ ഓർത്തെടുക്കുക. ലക്ഷ്യം: അടിസ്ഥാന അറിവ് പരിശോധിക്കൽ.',
+      'Understand': 'ആശയങ്ങൾ വിശദീകരിക്കുക. ലക്ഷ്യം: ധാരണ പരിശോധിക്കൽ.',
+      'Apply': 'പുതിയ രീതികളിൽ പ്രയോഗിക്കുക. ലക്ഷ്യം: പ്രശ്നപരിഹാര ശേഷി പരിശോധിക്കൽ.',
+      'Analyze': 'ബന്ധങ്ങൾ കണ്ടെത്തുക. ലക്ഷ്യം: യുക്തിസഹമായ ചിന്ത പരിശോധിക്കൽ.',
+      'Evaluate': 'തീരുമാനങ്ങളെ ന്യായീകരിക്കുക. ലക്ഷ്യം: വിമർശനാത്മക വിധി പരിശോധിക്കൽ.',
+      'Create': 'പുതിയത് സൃഷ്ടിക്കുക. ലക്ഷ്യം: സർഗ്ഗാത്മകത പരിശോധിക്കൽ.',
+    }
   },
   or: {
     pageTitle: "କୁଇଜ୍ ଜେନେରେଟର",
@@ -382,6 +455,14 @@ const translations: Record<string, Record<string, any>> = {
       'Evaluate': 'ମୂଲ୍ୟାୟନ କରନ୍ତୁ',
       'Create': 'ସୃଷ୍ଟି କରନ୍ତୁ',
     },
+    bloomsHints: {
+      'Remember': 'ତଥ୍ୟ ମନେ ରଖନ୍ତୁ। ଲକ୍ଷ୍ୟ: ମୌଳିକ ଜ୍ଞାନ ପରୀକ୍ଷା।',
+      'Understand': 'ଧାରଣା ବୁଝାନ୍ତୁ। ଲକ୍ଷ୍ୟ: ବୋଧଶକ୍ତି ପରୀକ୍ଷା।',
+      'Apply': 'ନୂତନ ଭାବେ ପ୍ରୟୋଗ କରନ୍ତୁ। ଲକ୍ଷ୍ୟ: ସମସ୍ୟା ସମାଧାନ ପରୀକ୍ଷା।',
+      'Analyze': 'ସମ୍ପର୍କ ସ୍ଥାପନ କରନ୍ତୁ। ଲକ୍ଷ୍ୟ: ତାର୍କିକ ଚିନ୍ତାଧାରା ପରୀକ୍ଷା।',
+      'Evaluate': 'ନିଷ୍ପତ୍ତିକୁ ଯୁକ୍ତିଯୁକ୍ତ କରନ୍ତୁ। ଲକ୍ଷ୍ୟ: ବିଚାର ଶକ୍ତି ପରୀକ୍ଷା।',
+      'Create': 'ମୌଳିକ କାର୍ଯ୍ୟ କରନ୍ତୁ। ଲକ୍ଷ୍ୟ: ସୃଜନଶୀଳତା ପରୀକ୍ଷା।',
+    }
   },
 };
 
@@ -413,6 +494,7 @@ function QuizGeneratorContent() {
       numQuestions: 5,
       questionTypes: ["multiple_choice", "short_answer"],
       bloomsTaxonomyLevels: ['Remember', 'Understand'],
+      subject: "General",
     },
   });
 
@@ -457,6 +539,7 @@ function QuizGeneratorContent() {
                 // Default to standard types if not structured in base metadata
                 questionTypes: ["multiple_choice", "short_answer"],
                 bloomsTaxonomyLevels: ['Remember', 'Understand'],
+                subject: content.subject || "General",
               });
             }
           }
@@ -540,17 +623,21 @@ function QuizGeneratorContent() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center items-center mb-4">
-            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
-              <FileSignature className="w-8 h-8" />
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
+        <div className="p-6">
+          <CardHeader className="text-center pt-0">
+            <div className="flex justify-center items-center mb-4">
+              <div className="p-3 rounded-full bg-blue-50 text-blue-600">
+                <FileSignature className="w-8 h-8" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
-          <CardDescription>{t.pageDescription}</CardDescription>
-        </CardHeader>
-        <CardContent>
+            <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+            <CardDescription>{t.pageDescription}</CardDescription>
+          </CardHeader>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -607,7 +694,7 @@ function QuizGeneratorContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="grid grid-cols-3 gap-3 pt-2">
                           {questionTypesData.map((item) => (
                             <SelectableCard
                               key={item.id}
@@ -621,7 +708,7 @@ function QuizGeneratorContent() {
                                   : [...currentValues, item.id];
                                 field.onChange(newValues);
                               }}
-                              className="h-24"
+                              className="h-20"
                             />
                           ))}
                         </div>
@@ -636,11 +723,30 @@ function QuizGeneratorContent() {
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
+                {/* RIGHT COLUMN: Configuration (5 cols) */}
                 <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
                   <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Quiz Settings</h3>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Subject, Grade and Language Selection */}
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                          <FormControl>
+                            <SubjectSelector
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              language={selectedLanguage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="gradeLevel"
@@ -650,14 +756,16 @@ function QuizGeneratorContent() {
                           <FormControl>
                             <GradeLevelSelector
                               value={field.value ? [field.value] : []}
-                              onValueChange={(values) => field.onChange(values?.[0])}
+                              onValueChange={(val) => field.onChange(val[0] || undefined)}
                               language={selectedLanguage}
                               isMulti={false}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="language"
@@ -670,6 +778,7 @@ function QuizGeneratorContent() {
                               value={field.value}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -682,7 +791,17 @@ function QuizGeneratorContent() {
                       <FormItem>
                         <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
                         <FormControl>
-                          <Input type="number" min="1" max="20" {...field} className="bg-white border-slate-200" />
+                          <div className="flex items-center gap-4">
+                            <Slider
+                              min={1}
+                              max={20}
+                              step={1}
+                              value={[field.value]}
+                              onValueChange={(vals) => field.onChange(vals[0])}
+                              className="flex-1"
+                            />
+                            <span className="font-bold text-[#FF9933] bg-white px-3 py-1 rounded border border-[#FF9933]/20 min-w-[3rem] text-center">{field.value}</span>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -691,96 +810,113 @@ function QuizGeneratorContent() {
 
                   <FormField
                     control={form.control}
-                    name="bloomsTaxonomyLevels"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          <TooltipProvider>
-                            {bloomsLevelsData.map((item) => (
-                              <FormField
-                                key={item.id}
-                                control={form.control}
-                                name="bloomsTaxonomyLevels"
-                                render={({ field }) => {
-                                  const isSelected = field.value?.includes(item.id);
-                                  return (
-                                    <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
-                                      <FormControl>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Label
-                                              htmlFor={item.id}
-                                              className={cn(
-                                                "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
-                                                isSelected
-                                                  ? "bg-blue-100 text-blue-700 border-blue-200"
-                                                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                                              )}
-                                            >
-                                              <CheckboxUI
-                                                id={item.id}
-                                                checked={isSelected}
-                                                onCheckedChange={(checked) => {
-                                                  const currentValues = field.value || [];
-                                                  const newValues = checked
-                                                    ? [...currentValues, item.id]
-                                                    : currentValues.filter((v) => v !== item.id);
-                                                  field.onChange(newValues);
-                                                }}
-                                                className="sr-only" // Hide actual checkbox, style the label
-                                              />
-                                              {/* Custom Check Indicator */}
-                                              <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
-                                              {t.blooms[item.id]}
-                                            </Label>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>{t.bloomsHints?.[item.id] || "Select this level"}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </FormControl>
-                                    </FormItem>
-                                  )
+                    name="questionTypes"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.questionTypesLabel}</FormLabel>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['multiple_choice', 'short_answer', 'fill_in_the_blanks', 'true_false'].map((type) => (
+                            <div key={type} className="flex items-center space-x-2 bg-white/50 p-2 rounded border border-white/80">
+                              <CheckboxUI
+                                id={type}
+                                checked={field.value?.includes(type as any)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange([...(field.value || []), type]);
+                                  } else {
+                                    field.onChange(field.value?.filter((val: string) => val !== type));
+                                  }
                                 }}
                               />
-                            ))}
-                          </TooltipProvider>
+                              <label htmlFor={type} className="text-xs text-slate-700 cursor-pointer">
+                                {t.questionTypes[type] || type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                              </label>
+                            </div>
+                          ))}
                         </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="bloomsTaxonomyLevels"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
+                        <TooltipProvider>
+                          <div className="flex flex-wrap gap-2">
+                            {['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'].map((level) => (
+                              <Tooltip key={level}>
+                                <TooltipTrigger asChild>
+                                  <Badge
+                                    variant={field.value?.includes(level) ? "default" : "outline"}
+                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? 'bg-[#FF9933] hover:bg-[#FF9933]/90 text-white' : 'bg-white/50 hover:bg-white text-slate-600'}`}
+                                    onClick={() => {
+                                      if (field.value?.includes(level)) {
+                                        field.onChange(field.value.filter((l: string) => l !== level));
+                                      } else {
+                                        field.onChange([...(field.value || []), level]);
+                                      }
+                                    }}
+                                  >
+                                    {t.blooms[level] || level}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-[#1e293b] text-white border-slate-700">
+                                  <p className="text-xs">{t.bloomsHints?.[level] || (translations.en as any).bloomsHints[level]}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                          </div>
+                        </TooltipProvider>
+
+                        {field.value && field.value.length > 0 && (
+                          <div className="mt-3 p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                            <p className="text-[10px] font-bold text-[#FF9933] uppercase tracking-tighter mb-2 flex items-center gap-1">
+                              <Brain className="w-3 h-3" />
+                              Pedagogical Strategy
+                            </p>
+                            <div className="space-y-2">
+                              {field.value.map((level: string) => (
+                                <div key={level} className="text-[11px] leading-relaxed text-slate-700 flex items-start gap-2">
+                                  <div className="mt-1 w-1 h-1 rounded-full bg-[#FF9933] shrink-0" />
+                                  <span>
+                                    <span className="font-bold text-slate-900">{t.blooms[level]}:</span>{" "}
+                                    {t.bloomsHints?.[level] || (translations.en as any).bloomsHints[level]}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-[#FF9933] hover:bg-[#FF9933]/90 text-white shadow-lg shadow-[#FF9933]/20 transition-all font-headline">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                        {t.submitButtonLoading}
+                      </>
+                    ) : (
+                      t.submitButton
+                    )}
+                  </Button>
                 </div>
               </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    {t.submitButtonLoading}
-                  </>
-                ) : (
-                  t.submitButton
-                )}
-              </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {
-        isLoading && (
-          <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">{t.loadingText}</p>
-            </CardContent>
-          </Card>
-        )
-      }
-
-      {quiz && <QuizDisplay quiz={quiz} />}
-    </div >
+      {/* Results Section */}
+      <div className="mt-8">
+        {quiz && <QuizDisplay quiz={quiz as any} />}
+      </div>
+    </div>
   );
 }

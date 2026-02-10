@@ -15,6 +15,7 @@ import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
+import { SubjectSelector } from "@/components/subject-selector";
 import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
@@ -24,6 +25,7 @@ import { useAuth } from "@/context/auth-context";
 const formSchema = z.object({
   question: z.string().min(10, { message: "Question must be at least 10 characters." }),
   language: z.string().optional(),
+  subject: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -96,6 +98,7 @@ function TeacherTrainingContent() {
     defaultValues: {
       question: "",
       language: "en",
+      subject: "General",
     },
   });
 
@@ -138,6 +141,7 @@ function TeacherTrainingContent() {
         body: JSON.stringify({
           question: values.question,
           language: values.language,
+          subject: values.subject,
         })
       });
 
@@ -176,7 +180,10 @@ function TeacherTrainingContent() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Clean Top Bar */}
+        <div className="h-1.5 w-full bg-[#FF9933]" />
+
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <div className="p-3 rounded-full bg-purple-50 text-purple-600">
@@ -234,22 +241,42 @@ function TeacherTrainingContent() {
                 <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
                   <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Settings</h3>
 
-                  <FormField
-                    control={form.control}
-                    name="language"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">Language</FormLabel>
-                        <FormControl>
-                          <LanguageSelector
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">Subject</FormLabel>
+                          <FormControl>
+                            <SubjectSelector
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              language={selectedLanguage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-600">Language</FormLabel>
+                          <FormControl>
+                            <LanguageSelector
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="bg-blue-50/50 p-4 rounded-md border-l-4 border-blue-500">
                     <div className="flex items-start gap-3">
@@ -278,7 +305,7 @@ function TeacherTrainingContent() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
 
       {isLoading && (
         <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">

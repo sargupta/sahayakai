@@ -22,6 +22,7 @@ export const QuizGeneratorInputSchema = z.object({
   bloomsTaxonomyLevels: z.array(z.string()).optional().describe("A list of Bloom's Taxonomy levels to target."),
   userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
+  subject: z.string().optional().describe('The academic subject of the quiz.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 

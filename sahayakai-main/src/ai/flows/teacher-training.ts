@@ -19,6 +19,7 @@ import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
   language: z.string().optional().describe('The language for the response.'),
+  subject: z.string().optional().describe('The academic subject.'),
   userId: z.string().optional().describe('The ID of the user for whom the advice is being generated.'),
 });
 export type TeacherTrainingInput = z.infer<typeof TeacherTrainingInputSchema>;
@@ -75,7 +76,7 @@ You are SahayakAI, a compassionate and experienced professional development coac
 
 **Teacher's Request:**
 -   **Question/Concern:** {{{question}}}
--   **Language:** {{{language}}}
+-   **Subject:** {{{subject}}}
 -   **Language:** {{{language}}}
 
 **Constraints:**
@@ -170,7 +171,7 @@ const teacherTrainingFlow = ai.defineFlow(
             type: 'teacher-training',
             title: `Advice: ${input.question.substring(0, 50)}...`,
             gradeLevel: (output.gradeLevel || 'Class 5') as any,
-            subject: (output.subject || 'General') as any,
+            subject: (input.subject || output.subject || 'General') as any,
             topic: input.question,
             language: input.language as any || 'English',
             storagePath: filePath,

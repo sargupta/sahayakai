@@ -124,7 +124,8 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
 
     if (isLoading) {
         return (
-            <Card>
+            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="h-1.5 w-full bg-[#FF9933]" />
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />
                     <Skeleton className="h-4 w-64 mt-2" />
@@ -136,7 +137,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         ))}
                     </div>
                 </CardContent>
-            </Card>
+            </div>
         );
     }
 
@@ -192,7 +193,8 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     return (
         <div className="space-y-6">
             {/* Overall Health Score */}
-            <Card>
+            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="h-1.5 w-full bg-[#FF9933]" />
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
@@ -221,34 +223,34 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl text-center">
-                            <div className="p-3 bg-muted rounded-lg">
-                                <p className="text-2xl font-bold text-blue-600">{healthScore.consecutive_days_used}</p>
-                                <p className="text-sm text-muted-foreground">Day Streak</p>
+                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                                <p className="text-2xl font-bold text-blue-600 font-headline">{healthScore.consecutive_days_used}</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Day Streak</p>
                             </div>
-                            <div className="p-3 bg-muted rounded-lg">
-                                <p className="text-2xl font-bold text-green-600">{healthScore.estimated_students_impacted}</p>
-                                <p className="text-sm text-muted-foreground">Students Impacted</p>
+                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                                <p className="text-2xl font-bold text-green-600 font-headline">{healthScore.estimated_students_impacted}</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Students Impacted</p>
                             </div>
-                            <div className="p-3 bg-muted rounded-lg">
-                                <p className="text-2xl font-bold text-purple-600">
+                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                                <p className="text-2xl font-bold text-purple-600 font-headline">
                                     {healthScore.days_since_last_use === 0 ? 'Today' : `${healthScore.days_since_last_use}d ago`}
                                 </p>
-                                <p className="text-sm text-muted-foreground">Last Active</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Last Active</p>
                             </div>
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </div>
 
             {/* Component Scores */}
-            <Card>
-                <CardHeader>
+            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden p-6">
+                <CardHeader className="px-0 pt-0">
                     <CardTitle>Score Breakdown</CardTitle>
                     <CardDescription>
                         Your score is calculated from four key areas
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 pb-0">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center py-4">
                         <div className="relative">
                             <CircularProgress
@@ -299,7 +301,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         <p><strong>Growth (0-20):</strong> Week-over-week improvement and streaks</p>
                     </div>
                 </CardContent>
-            </Card>
+            </div>
         </div>
     );
 }
