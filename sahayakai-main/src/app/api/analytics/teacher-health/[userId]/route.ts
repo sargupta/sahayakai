@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getDb } from '@/lib/firebase-admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,10 +40,11 @@ export async function GET(
         const { userId } = await params;
 
         // Fetch from Firestore teacher_analytics collection
-        const analyticsRef = doc(db, 'teacher_analytics', userId);
-        const analyticsDoc = await getDoc(analyticsRef);
+        const db = await getDb();
+        const analyticsRef = db.collection('teacher_analytics').doc(userId);
+        const analyticsDoc = await analyticsRef.get();
 
-        if (!analyticsDoc.exists()) {
+        if (!analyticsDoc.exists) {
             // Return default values for new users
             return NextResponse.json({
                 score: 0,

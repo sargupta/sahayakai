@@ -20,6 +20,7 @@ import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { VoiceAssistant } from "@/components/voice-assistant";
 
 
 const formSchema = z.object({
@@ -317,6 +318,11 @@ function TeacherTrainingContent() {
       )}
 
       {advice && <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} />}
+
+      {/* Floating Assistant (Safe Mode) */}
+      <VoiceAssistant
+        context={advice ? JSON.stringify(advice) : "No advice yet."}
+      />
     </div>
   );
 }
