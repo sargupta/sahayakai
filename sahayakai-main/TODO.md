@@ -82,3 +82,10 @@
 
 ---
 *Last Updated: 2025-12-08*
+
+## 🏗️ Future Architecture (API-First Strategy)
+- [ ] **Generate OpenAPI Spec**: Export `openapi.json` from `ai-video-script-generator` (FastAPI).
+- [ ] **Generate TypeScript Client**: Create `npm run generate-client` in `sahayakai-main` to sync with Python API.
+- [ ] **Refactor Next.js Backend**: Decouple API routes to support both Web and Mobile (Offline-First).
+- [ ] **Implement Mobile Sync**: Build API endpoints specifically for `isar` database synchronization.
+
