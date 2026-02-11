@@ -1,0 +1,74 @@
+
+> nextn@0.1.0 test
+> jest --no-cache
+
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+PASS src/__tests__/lib/indian-context.test.ts
+PASS src/lib/db/__tests__/adapter.test.ts
+PASS src/__tests__/lib/logger.test.ts
+PASS src/__tests__/lib/safety.test.ts
+PASS src/__tests__/components/lesson-plan/lesson-plan-input-section.test.tsx
+PASS src/__tests__/app/page.test.tsx
+PASS src/__tests__/components/feedback-dialog.test.tsx
+PASS src/__tests__/data/ncert.test.ts
+PASS src/__tests__/hooks/use-toast.test.ts
+PASS src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts
+  ● Console
+
+    console.warn
+      [Performance] startAIGeneration was not called
+
+      27 |     const endAIGeneration = useCallback((data: Partial<AIGenData>) => {
+      28 |         if (!startTimeRef.current) {
+    > 29 |             console.warn('[Performance] startAIGeneration was not called');
+         |                     ^
+      30 |             return;
+      31 |         }
+      32 |
+
+      at warn (src/hooks/use-performance-tracking.ts:29:21)
+      at Object.endAIGeneration [as onSubmit] (src/features/lesson-planner/hooks/use-lesson-plan.ts:236:21)
+      at src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts:147:13
+
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                     
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+All files                       |   86.18 |    61.21 |   68.75 |   86.18 |                                                                                                                       
+ app                            |   87.36 |    33.33 |      60 |   87.36 |                                                                                                                       
+  page.tsx                      |   87.36 |    33.33 |      60 |   87.36 | 42-43,51-53,77-78,87-93,101-111,113-120,193-195                                                                       
+ components                     |    90.9 |       80 |   71.42 |    90.9 |                                                                                                                       
+  feedback-dialog.tsx           |    90.9 |       80 |   71.42 |    90.9 | 44-45,56-61,79-82                                                                                                     
+ components/lesson-plan         |     100 |       25 |     100 |     100 |                                                                                                                       
+  lesson-plan-input-section.tsx |     100 |       25 |     100 |     100 | 53-98                                                                                                                 
+ data/ncert                     |   98.75 |      100 |   33.33 |   98.75 |                                                                                                                       
+  english.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  hindi.ts                      |     100 |      100 |     100 |     100 |                                                                                                                       
+  index.ts                      |      90 |      100 |   33.33 |      90 | 71-72,75-80                                                                                                           
+  it.ts                         |     100 |      100 |     100 |     100 |                                                                                                                       
+  kannada.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  mathematics.ts                |     100 |      100 |     100 |     100 |                                                                                                                       
+  sanskrit.ts                   |     100 |      100 |     100 |     100 |                                                                                                                       
+  science.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  social-studies.ts             |     100 |      100 |     100 |     100 |                                                                                                                       
+ features/lesson-planner/hooks  |   68.31 |    51.42 |      80 |   68.31 |                                                                                                                       
+  use-lesson-plan.ts            |   68.31 |    51.42 |      80 |   68.31 | 68-84,107-108,123-134,136-137,150-190,192-196,261-262,275-287,289-290,295-316,333-334,349-351,357-363,401-405,420-438 
+ hooks                          |   82.47 |    68.42 |      70 |   82.47 |                                                                                                                       
+  use-toast.ts                  |   82.47 |    68.42 |      70 |   82.47 | 63-64,67-71,86-91,101-104,114,119-128,149-152,162-163                                                                 
+ lib                            |   83.11 |     73.8 |   66.66 |   83.11 |                                                                                                                       
+  indian-context.ts             |     100 |      100 |     100 |     100 |                                                                                                                       
+  logger.ts                     |   57.44 |    65.38 |      50 |   57.44 | 32-57,60-67,81-82,84-85,93,98-99,103-106,111-112,120-121,128-138                                                      
+  safety.ts                     |   93.22 |    83.33 |     100 |   93.22 | 34-37                                                                                                                 
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+
+Test Suites: 10 passed, 10 total
+Tests:       49 passed, 49 total
+Snapshots:   0 total
+Time:        5.911 s
+Ran all test suites.

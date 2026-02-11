@@ -1,0 +1,495 @@
+
+> nextn@0.1.0 test
+> jest --no-cache
+
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+PASS src/__tests__/lib/indian-context.test.ts
+PASS src/lib/db/__tests__/adapter.test.ts
+PASS src/__tests__/lib/logger.test.ts
+PASS src/__tests__/lib/safety.test.ts
+PASS src/__tests__/components/lesson-plan/lesson-plan-input-section.test.tsx
+PASS src/__tests__/data/ncert.test.ts
+PASS src/__tests__/components/feedback-dialog.test.tsx
+PASS src/__tests__/hooks/use-toast.test.ts
+PASS src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts
+  ● Console
+
+    console.warn
+      [2026-02-11T20:26:09.104Z]  @firebase/firestore: Firestore (11.10.0): enableIndexedDbPersistence() will be deprecated in the future, you can use `FirestoreSettings.cache` instead.
+
+      24 | // Enable Offline Persistence (Client-side only)
+      25 | if (typeof window !== 'undefined') {
+    > 26 |     enableIndexedDbPersistence(db).catch((err) => {
+         |                               ^
+      27 |         if (err.code == 'failed-precondition') {
+      28 |             // Multiple tabs open, persistence can only be enabled in one tab at a a time.
+      29 |             console.warn('Firestore persistence failed: Multiple tabs open');
+
+      at Logger.defaultLogHandler [as _logHandler] (node_modules/@firebase/logger/src/logger.ts:115:57)
+      at Logger.warn (node_modules/@firebase/logger/src/logger.ts:206:10)
+      at logWarn (node_modules/@firebase/firestore/src/util/log.ts:69:15)
+      at enableIndexedDbPersistence (node_modules/@firebase/firestore/src/api/database.ts:375:3)
+      at Object.<anonymous> (src/lib/firebase.ts:26:31)
+      at Object.<anonymous> (src/features/lesson-planner/hooks/use-lesson-plan.ts:22:19)
+      at Object.<anonymous> (src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts:64:24)
+
+    console.warn
+      [Performance] startAIGeneration was not called
+
+      27 |     const endAIGeneration = useCallback((data: Partial<AIGenData>) => {
+      28 |         if (!startTimeRef.current) {
+    > 29 |             console.warn('[Performance] startAIGeneration was not called');
+         |                     ^
+      30 |             return;
+      31 |         }
+      32 |
+
+      at warn (src/hooks/use-performance-tracking.ts:29:21)
+      at Object.endAIGeneration [as onSubmit] (src/features/lesson-planner/hooks/use-lesson-plan.ts:236:21)
+      at src/__tests__/features/lesson-planner/hooks/use-lesson-plan.test.ts:147:13
+
+FAIL src/__tests__/app/page.test.tsx
+  ● Console
+
+    console.warn
+      [2026-02-11T20:26:09.168Z]  @firebase/firestore: Firestore (11.10.0): enableIndexedDbPersistence() will be deprecated in the future, you can use `FirestoreSettings.cache` instead.
+
+      24 | // Enable Offline Persistence (Client-side only)
+      25 | if (typeof window !== 'undefined') {
+    > 26 |     enableIndexedDbPersistence(db).catch((err) => {
+         |                               ^
+      27 |         if (err.code == 'failed-precondition') {
+      28 |             // Multiple tabs open, persistence can only be enabled in one tab at a a time.
+      29 |             console.warn('Firestore persistence failed: Multiple tabs open');
+
+      at Logger.defaultLogHandler [as _logHandler] (node_modules/@firebase/logger/src/logger.ts:115:57)
+      at Logger.warn (node_modules/@firebase/logger/src/logger.ts:206:10)
+      at logWarn (node_modules/@firebase/firestore/src/util/log.ts:69:15)
+      at enableIndexedDbPersistence (node_modules/@firebase/firestore/src/api/database.ts:375:3)
+      at Object.<anonymous> (src/lib/firebase.ts:26:31)
+      at Object.<anonymous> (src/app/page.tsx:27:19)
+      at Object.<anonymous> (src/__tests__/app/page.test.tsx:105:54)
+
+    console.log
+      DEBUG: Page.tsx Component Check: {
+        Form: 'function',
+        AutoCompleteInput: 'object',
+        MicrophoneInput: 'function',
+        Link: 'object',
+        Loader2: 'function',
+        Sparkles: 'function'
+      }
+
+      at Object.log (src/app/page.tsx:30:9)
+
+    console.error
+      [Error: AggregateError] { type: 'XMLHttpRequest' }
+
+      at VirtualConsole.<anonymous> (node_modules/@jest/environment-jsdom-abstract/build/index.js:87:23)
+      at Object.dispatchError (node_modules/jsdom/lib/jsdom/living/xhr/xhr-utils.js:65:53)
+      at Request.<anonymous> (node_modules/jsdom/lib/jsdom/living/xhr/XMLHttpRequest-impl.js:655:18)
+      at ClientRequest.<anonymous> (node_modules/jsdom/lib/jsdom/living/helpers/http-request.js:127:14)
+
+    console.error
+      Router Error: TypeError: Network request failed
+          at /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/whatwg-fetch/dist/fetch.umd.js:567:18
+          at Timeout.task [as _onTimeout] (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+          at listOnTimeout (node:internal/timers:608:17)
+          at processTimers (node:internal/timers:543:7)
+
+      121 |       }
+      122 |     } catch (error) {
+    > 123 |       console.error("Router Error:", error);
+          |               ^
+      124 |       toast({
+      125 |         title: "Connection Error",
+      126 |         description: "Could not reach Sahayak. Please try again.",
+
+      at error (src/app/page.tsx:123:15)
+      at unset (node_modules/react-hook-form/src/logic/createFormControl.ts:1293:7)
+
+    console.error
+      [Error: AggregateError] { type: 'XMLHttpRequest' }
+
+      at VirtualConsole.<anonymous> (node_modules/@jest/environment-jsdom-abstract/build/index.js:87:23)
+      at Object.dispatchError (node_modules/jsdom/lib/jsdom/living/xhr/xhr-utils.js:65:53)
+      at Request.<anonymous> (node_modules/jsdom/lib/jsdom/living/xhr/XMLHttpRequest-impl.js:655:18)
+      at ClientRequest.<anonymous> (node_modules/jsdom/lib/jsdom/living/helpers/http-request.js:127:14)
+
+    console.error
+      Router Error: TypeError: Network request failed
+          at /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/whatwg-fetch/dist/fetch.umd.js:567:18
+          at Timeout.task [as _onTimeout] (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+          at listOnTimeout (node:internal/timers:608:17)
+          at processTimers (node:internal/timers:543:7)
+
+      121 |       }
+      122 |     } catch (error) {
+    > 123 |       console.error("Router Error:", error);
+          |               ^
+      124 |       toast({
+      125 |         title: "Connection Error",
+      126 |         description: "Could not reach Sahayak. Please try again.",
+
+      at error (src/app/page.tsx:123:15)
+      at unset (node_modules/react-hook-form/src/logic/createFormControl.ts:1293:7)
+
+  ● Home Page › navigates on form submission
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "/lesson-plan?topic=Photosynthesis"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col items-center justify-center min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-3 w-3 md:h-4 md:w-4"[39m
+                  [33mdata-testid[39m=[32m"sparkles"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mAI-Powered Teaching Assistant for Bharat[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight"[39m
+              [36m>[39m
+                [0mGood Morning[0m
+                [0m, [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-primary"[39m
+                [36m>[39m
+                  [0mTeacher.[0m
+                [36m</span>[39m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4"[39m
+              [36m>[39m
+                [0mI am Sahayak, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 flex flex-col items-center gap-8"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col items-center gap-4"[39m
+              [36m>[39m
+                [36m<button>[39m
+                  [0mMic Mock[0m
+                [36m</button>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-slate-500 font-medium text-sm md:text-base animate-pulse"[39m
+                [36m>[39m
+                  [0mTap the microphone and tell Sahayak what you want to teach today[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-full"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"rounded-lg border text-card-foreground border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200 transition-all focus-within:ring-primary/50 focus-within:ring-4"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"md:p-6 p-2"[39m
+                  [36m>[39m
+                    [36m<form[39m
+                      [33mclass[39m=[32m"flex items-center gap-2"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"relative flex-1"[39m
+                      [36m>[39m
+                        [36m<input[39m
+                          [33mdata-testid[39m=[32m"topic-input"[39m
+                          [33mname[39m=[32m"topic"[39m
+                          [33mplaceholder[39m=[32m"Or type here (e.g. 'Photosynthesis')"[39m
+                          [33mvalue[39m=[32m"Photosynthesis"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                      [36m<button[39m
+                        [33maria-label[39m=[32m"Generate Lesson Plan"[39m
+                        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"[39m
+                        [33mtype[39m=[32m"submit"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-5 w-5"[39m
+                          [33mdata-testid[39m=[32m"arrow-right"[39m
+                        [36m/>[39m
+                      [36m</button>[39m
+                    [36m</form>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col items-center gap-2"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-center text-xs md:text-sm text-slate-500 font-medium px-4 line-clamp-1"[39m
+                [36m>[39m
+                  [0mtry: "Quiz about photosynthesis" or "Lesson plan for solar system"[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-[10px] text-slate-400"[39m
+                [36m>[39m
+                  [0mSahayak can make mistakes. Please review generated content.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"group"[39m
+                [33mhref[39m=[32m"/lesson-plan"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"rounded-lg border text-card-foreground shadow-sm h-full border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"p-3 md:p-4 rounded-full group-hover:scale-110 transition-transform duration-300 text-orange-600 bg-orange-50"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"h-6 w-6 md:h-8 md:w-8"[39m
+                        [33mdata-testid[39m=[32m"book-open"[39m
+                      [36m/>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"space-y-1 md:space-y-2"[39m
+                    [36m>[39m
+                      [36m<h3[39m
+                        [33mclass[39m=[32m"font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight"[39m
+                      [36m>[39m
+                        [0mLesson Plan[0m
+                      [36m</h3>[39m
+                      [36m<p[39m
+        ...
+
+      112 |
+      113 |         await waitFor(() => {
+    > 114 |             expect(mockPush).toHaveBeenCalledWith('/lesson-plan?topic=Photosynthesis');
+          |                              ^
+      115 |         });
+      116 |     });
+      117 |
+
+      at toHaveBeenCalledWith (src/__tests__/app/page.test.tsx:114:30)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ● Home Page › handles microphone input
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "/lesson-plan?topic=Mic%20Input"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col items-center justify-center min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-3 w-3 md:h-4 md:w-4"[39m
+                  [33mdata-testid[39m=[32m"sparkles"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mAI-Powered Teaching Assistant for Bharat[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight"[39m
+              [36m>[39m
+                [0mGood Morning[0m
+                [0m, [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-primary"[39m
+                [36m>[39m
+                  [0mTeacher.[0m
+                [36m</span>[39m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4"[39m
+              [36m>[39m
+                [0mI am Sahayak, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 flex flex-col items-center gap-8"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col items-center gap-4"[39m
+              [36m>[39m
+                [36m<button>[39m
+                  [0mMic Mock[0m
+                [36m</button>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-slate-500 font-medium text-sm md:text-base animate-pulse"[39m
+                [36m>[39m
+                  [0mTap the microphone and tell Sahayak what you want to teach today[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-full"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"rounded-lg border text-card-foreground border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200 transition-all focus-within:ring-primary/50 focus-within:ring-4"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"md:p-6 p-2"[39m
+                  [36m>[39m
+                    [36m<form[39m
+                      [33mclass[39m=[32m"flex items-center gap-2"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"relative flex-1"[39m
+                      [36m>[39m
+                        [36m<input[39m
+                          [33mdata-testid[39m=[32m"topic-input"[39m
+                          [33mname[39m=[32m"topic"[39m
+                          [33mplaceholder[39m=[32m"Or type here (e.g. 'Photosynthesis')"[39m
+                          [33mvalue[39m=[32m"Mic Input"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                      [36m<button[39m
+                        [33maria-label[39m=[32m"Generate Lesson Plan"[39m
+                        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"[39m
+                        [33mtype[39m=[32m"submit"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-5 w-5"[39m
+                          [33mdata-testid[39m=[32m"arrow-right"[39m
+                        [36m/>[39m
+                      [36m</button>[39m
+                    [36m</form>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col items-center gap-2"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-center text-xs md:text-sm text-slate-500 font-medium px-4 line-clamp-1"[39m
+                [36m>[39m
+                  [0mtry: "Quiz about photosynthesis" or "Lesson plan for solar system"[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-[10px] text-slate-400"[39m
+                [36m>[39m
+                  [0mSahayak can make mistakes. Please review generated content.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"group"[39m
+                [33mhref[39m=[32m"/lesson-plan"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"rounded-lg border text-card-foreground shadow-sm h-full border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"p-3 md:p-4 rounded-full group-hover:scale-110 transition-transform duration-300 text-orange-600 bg-orange-50"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"h-6 w-6 md:h-8 md:w-8"[39m
+                        [33mdata-testid[39m=[32m"book-open"[39m
+                      [36m/>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"space-y-1 md:space-y-2"[39m
+                    [36m>[39m
+                      [36m<h3[39m
+                        [33mclass[39m=[32m"font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight"[39m
+                      [36m>[39m
+                        [0mLesson Plan[0m
+                      [36m</h3>[39m
+                      [36m<p[39m
+             ...
+
+      122 |
+      123 |         await waitFor(() => {
+    > 124 |             expect(mockPush).toHaveBeenCalledWith('/lesson-plan?topic=Mic%20Input');
+          |                              ^
+      125 |         });
+      126 |     });
+      127 | });
+
+      at toHaveBeenCalledWith (src/__tests__/app/page.test.tsx:124:30)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                     
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+All files                       |   86.24 |    59.06 |   68.75 |   86.24 |                                                                                                                       
+ app                            |   87.79 |    22.22 |      60 |   87.79 |                                                                                                                       
+  page.tsx                      |   87.79 |    22.22 |      60 |   87.79 | 52-53,61-63,87-88,95-107,109-121,203-205                                                                              
+ components                     |    90.9 |       80 |   71.42 |    90.9 |                                                                                                                       
+  feedback-dialog.tsx           |    90.9 |       80 |   71.42 |    90.9 | 44-45,56-61,79-82                                                                                                     
+ components/lesson-plan         |     100 |       25 |     100 |     100 |                                                                                                                       
+  lesson-plan-input-section.tsx |     100 |       25 |     100 |     100 | 53-98                                                                                                                 
+ data/ncert                     |   98.75 |      100 |   33.33 |   98.75 |                                                                                                                       
+  english.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  hindi.ts                      |     100 |      100 |     100 |     100 |                                                                                                                       
+  index.ts                      |      90 |      100 |   33.33 |      90 | 71-72,75-80                                                                                                           
+  it.ts                         |     100 |      100 |     100 |     100 |                                                                                                                       
+  kannada.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  mathematics.ts                |     100 |      100 |     100 |     100 |                                                                                                                       
+  sanskrit.ts                   |     100 |      100 |     100 |     100 |                                                                                                                       
+  science.ts                    |     100 |      100 |     100 |     100 |                                                                                                                       
+  social-studies.ts             |     100 |      100 |     100 |     100 |                                                                                                                       
+ features/lesson-planner/hooks  |   68.31 |    51.42 |      80 |   68.31 |                                                                                                                       
+  use-lesson-plan.ts            |   68.31 |    51.42 |      80 |   68.31 | 68-84,107-108,123-134,136-137,150-190,192-196,261-262,275-287,289-290,295-316,333-334,349-351,357-363,401-405,420-438 
+ hooks                          |   82.47 |    68.42 |      70 |   82.47 |                                                                                                                       
+  use-toast.ts                  |   82.47 |    68.42 |      70 |   82.47 | 63-64,67-71,86-91,101-104,114,119-128,149-152,162-163                                                                 
+ lib                            |   83.11 |     73.8 |   66.66 |   83.11 |                                                                                                                       
+  indian-context.ts             |     100 |      100 |     100 |     100 |                                                                                                                       
+  logger.ts                     |   57.44 |    65.38 |      50 |   57.44 | 32-57,60-67,81-82,84-85,93,98-99,103-106,111-112,120-121,128-138                                                      
+  safety.ts                     |   93.22 |    83.33 |     100 |   93.22 | 34-37                                                                                                                 
+--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------
+Test Suites: 1 failed, 9 passed, 10 total
+Tests:       2 failed, 47 passed, 49 total
+Snapshots:   0 total
+Time:        5.543 s
+Ran all test suites.

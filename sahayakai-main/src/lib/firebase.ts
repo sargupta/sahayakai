@@ -14,25 +14,20 @@ const firebaseConfig = {
 };
 
 import { getAuth } from "firebase/auth";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // Initialize Firebase (Singleton pattern)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+
+// Initialize Firestore with persistent cache (Modern API)
+const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+    })
+});
+
 const auth = getAuth(app);
 const storage = getStorage(app);
-
-// Enable Offline Persistence (Client-side only)
-if (typeof window !== 'undefined') {
-    enableIndexedDbPersistence(db).catch((err) => {
-        if (err.code == 'failed-precondition') {
-            // Multiple tabs open, persistence can only be enabled in one tab at a a time.
-            console.warn('Firestore persistence failed: Multiple tabs open');
-        } else if (err.code == 'unimplemented') {
-            // The current browser does not support all of the features required to enable persistence
-            console.warn('Firestore persistence not supported by this browser');
-        }
-    });
-}
 
 // Export instances
 export { app, db, auth, storage };

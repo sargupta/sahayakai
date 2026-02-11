@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,8 +13,7 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { processAgentRequest } from "@/ai/flows/agent-router";
-import { Loader2, X } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
@@ -24,6 +22,10 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+
+
+
 
 export default function Home() {
   const { requireAuth, openAuthModal } = useAuth();
@@ -220,7 +222,7 @@ export default function Home() {
           {/* Thinking Indicator */}
           {isThinking && (
             <div className="flex items-center gap-2 text-primary font-medium mt-2 animate-pulse">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              {/* <Loader2 className="h-4 w-4 animate-spin" /> */}
               <span>Thinking...</span>
             </div>
           )}
