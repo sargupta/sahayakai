@@ -1,56 +1,0 @@
-Using UID: test-swagger-user-500
-
-
---- TEST 1: Creating User Profile ---
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   309    0    46  100   263     52    301 --:--:-- --:--:-- --:--:--   354
-HTTP/1.1 200 OK
-permissions-policy: camera=(), microphone=(self), geolocation=(), payment=()
-referrer-policy: strict-origin-when-cross-origin
-x-content-type-options: nosniff
-x-frame-options: DENY
-vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
-content-type: application/json
-Date: Thu, 05 Feb 2026 20:46:00 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-Transfer-Encoding: chunked
-
-{"success":true,"uid":"test-swagger-user-500"}
-
---- TEST 2: Saving VALID Content ---
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   952    0     0  100   952      0   4759 --:--:-- --:--:-- --:--:--  4760100  1012    0    60  100   952    297   4726 --:--:-- --:--:-- --:--:--  5009
-HTTP/1.1 200 OK
-permissions-policy: camera=(), microphone=(self), geolocation=(), payment=()
-referrer-policy: strict-origin-when-cross-origin
-x-content-type-options: nosniff
-x-frame-options: DENY
-vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
-content-type: application/json
-Date: Thu, 05 Feb 2026 20:46:00 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-Transfer-Encoding: chunked
-
-{"success":true,"id":"123e4567-e89b-12d3-a456-426614174000"}
-
---- TEST 3: Saving INVALID Content (Should Fail) ---
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  1253    0  1048  100   205  13106   2563 --:--:-- --:--:-- --:--:-- 15860
-HTTP/1.1 400 Bad Request
-permissions-policy: camera=(), microphone=(self), geolocation=(), payment=()
-referrer-policy: strict-origin-when-cross-origin
-x-content-type-options: nosniff
-x-frame-options: DENY
-vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
-content-type: application/json
-Date: Thu, 05 Feb 2026 20:46:00 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-Transfer-Encoding: chunked
-
-{"error":"Schema Validation Failed","details":{"_errors":[],"gradeLevel":{"_errors":["Required"]},"data":{"_errors":[],"metadata":{"_errors":["Required"]},"content":{"_errors":["Required"]},"teacherSupport":{"_errors":["Required"]},"assessment":{"_errors":["Required"]},"homework":{"_errors":["Required"]},"format":{"_errors":["Required"]},"questions":{"_errors":["Required"]},"answerKey":{"_errors":["Required"]},"sections":{"_errors":["Required"]},"layout":{"_errors":["Required"]},"prompt":{"_errors":["Required"]},"style":{"_errors":["Required"]},"imageUrl":{"_errors":["Required"]},"altText":{"_errors":["Required"]},"suggestedCaption":{"_errors":["Required"]},"discussionQuestions":{"_errors":["Required"]},"slides":{"_errors":["Required"]},"assignmentTitle":{"_errors":["Required"]},"scale":{"_errors":["Required"]},"criteria":{"_errors":["Required"]},"locationName":{"_errors":["Required"]},"stops":{"_errors":["Required"]},"learningOutcomes":{"_errors":["Required"]},"question":{"_errors":["Required"]},"answer":{"_errors":["Required"]}}}}
