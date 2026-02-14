@@ -55,7 +55,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
 
         } catch (error) {
             console.error("Assistant Error:", error);
-            setMessages(prev => [...prev, { role: "ai", content: "Sorry, I'm having trouble. Please try again." }]);
+            setMessages(prev => [...prev, { role: "ai", content: "Sorry, I&apos;m having trouble. Please try again." }]);
         } finally {
             setIsLoading(false);
         }

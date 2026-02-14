@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { LibraryCard } from "./library-card";
 import { BaseContent, ContentType } from "@/types";
@@ -35,7 +35,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
     const [typeFilter, setTypeFilter] = useState<string>(initialType || "all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-    const fetchContent = async () => {
+    const fetchContent = useCallback(async () => {
         if (authLoading) return;
         if (!user) {
             setLoading(false);
@@ -80,13 +80,13 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         } finally {
             setLoading(false);
         }
-    };
+    }, [authLoading, user, typeFilter, openAuthModal, toast, onCountChange]);
 
     useEffect(() => {
         if (!authLoading) {
             fetchContent();
         }
-    }, [typeFilter, userId, authLoading, user]);
+    }, [fetchContent, authLoading]);
 
     const filteredItems = items.filter(item =>
         (item.title || "").toLowerCase().includes(query.toLowerCase()) ||

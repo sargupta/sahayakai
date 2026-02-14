@@ -138,7 +138,7 @@ export function useLessonPlan() {
             }
         };
         loadDraft();
-    }, [form.reset, toast]);
+    }, [form.reset, toast, form]);
 
     const searchParams = useSearchParams();
 
