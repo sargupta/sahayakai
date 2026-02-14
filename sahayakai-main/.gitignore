@@ -55,3 +55,17 @@ next-env.d.ts
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Generated Documentation & Slides
+*.pdf
+*.docx
+*.doc
+*.pptx
+*.ppt
+*.xlsx
+*.csv
+
+# Generated Service Worker
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
