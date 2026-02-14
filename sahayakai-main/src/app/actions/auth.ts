@@ -15,7 +15,6 @@ export async function syncUserAction(user: { uid: string; email: string | null; 
             email: user.email || "",
             displayName: user.displayName || "",
             photoURL: user.photoURL || "",
-            updatedAt: new Date().toISOString(), // Will be handled as server timestamp by adapter where possible or string
         };
 
         // This uses dbAdapter.updateUser which performs a set({ ... }, { merge: true })
