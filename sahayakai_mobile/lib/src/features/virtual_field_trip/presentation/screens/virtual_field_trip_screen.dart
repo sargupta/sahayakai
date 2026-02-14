@@ -102,7 +102,7 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
-                              return Center(
+                              return const Center(
                                 child: GlassLoadingIndicator(
                                   message: 'Loading...',
                                 ),

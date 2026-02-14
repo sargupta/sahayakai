@@ -227,7 +227,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
           const SizedBox(height: GlassSpacing.xl),
 
           // Preview Card
-          GlassPreviewCard(
+          const GlassPreviewCard(
             label: 'The Notebook Theme',
           ),
         ],

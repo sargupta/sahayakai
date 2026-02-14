@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SahayakAI API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .swagger-ui .topbar {
+            background-color: #ff6b35;
+        }
+
+        .swagger-ui .topbar-wrapper {
+            content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40"><text x="10" y="25" fill="white" font-size="20" font-weight="bold">SahayakAI APIs</text></svg>');
+        }
+    </style>
+</head>
+
+<body>
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function () {
+            // Get the spec file from URL parameter, default to analytics
+            const urlParams = new URLSearchParams(window.location.search);
+            const spec = urlParams.get('spec') || 'analytics';
+
+            window.ui = SwaggerUIBundle({
+                url: `/api-specs/${spec}.yaml`,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                // Enable "Try it out" by default
+                tryItOutEnabled: true,
+                // Show request duration
+                displayRequestDuration: true,
+                // Default to localhost for testing
+                server: window.location.origin
+            });
+        };
+    </script>
+</body>
+
+</html>

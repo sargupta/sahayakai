@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Worksheet Generator API
+  version: 1.0.0
+  description: Generate worksheets from textbook images with questions, puzzles, and answer keys
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://sahayakai.in
+    description: Production
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/worksheet:
+    post:
+      summary: Generate worksheet from textbook image
+      description: Analyzes textbook page image and creates educational worksheet with answer key
+      operationId: generateWorksheet
+      tags:
+        - AI Generation
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+                - imageDataUri
+              properties:
+                prompt:
+                  type: string
+                  description: Instructions for worksheet creation
+                  example: "Create a math multiplication worksheet based on this page"
+                imageDataUri:
+                  type: string
+                  format: uri
+                  description: Base64 encoded textbook page image
+                  example: "data:image/png;base64,..."
+                gradeLevel:
+                  type: string
+                  example: "Class 4"
+                language:
+                  type: string
+                  enum: [English, Hindi, Bengali, Kannada, Tamil, Telugu, Marathi, Gujarati, Punjabi, Malayalam, Odia]
+                  default: English
+                subject:
+                  type: string
+                  example: "Mathematics"
+            examples:
+              mathWorksheet:
+                summary: Math multiplication worksheet
+                value:
+                  prompt: "Create 10 multiplication problems based on the table shown"
+                  imageDataUri: "data:image/png;base64,..."
+                  gradeLevel: "Class 3"
+                  language: "English"
+                  subject: "Mathematics"
+              scienceWorksheet:
+                summary: Science diagram labeling
+                value:
+                  prompt: "Create a worksheet to label the parts of this diagram"
+                  imageDataUri: "data:image/png;base64,..."
+                  gradeLevel: "Class 6"
+                  language: "Hindi"
+                  subject: "Science"
+      
+      responses:
+        '200':
+          description: Worksheet generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - worksheetContent
+                properties:
+                  worksheetContent:
+                    type: string
+                    description: Generated worksheet in Markdown format
+                  gradeLevel:
+                    type: string
+                    nullable: true
+                  subject:
+                    type: string
+                    nullable: true
+        
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/Error'
+        
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized: Missing User Identity"
+        
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: string

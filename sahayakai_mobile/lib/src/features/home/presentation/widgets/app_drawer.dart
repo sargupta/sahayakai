@@ -29,8 +29,8 @@ class AppDrawer extends ConsumerWidget {
       child: Column(
         children: [
           // 1. User Profile Header - Styled like "AI Companion" or just generic helpful header
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
+          const UserAccountsDrawerHeader(
+            decoration: BoxDecoration(
               color: AppColors.primary,
             ),
             currentAccountPicture: CircleAvatar(
@@ -39,9 +39,9 @@ class AppDrawer extends ConsumerWidget {
                   style: TextStyle(
                       color: AppColors.primary, fontWeight: FontWeight.bold)),
             ),
-            accountName: const Text("Sargupta",
+            accountName: Text("Sargupta",
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            accountEmail: const Text("Government High School, Madurai"),
+            accountEmail: Text("Government High School, Madurai"),
           ),
 
           // 2. Navigation Items

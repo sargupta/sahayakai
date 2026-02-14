@@ -7,6 +7,7 @@
 /// ```dart
 /// import 'package:sahayakai_mobile/src/core/theme/glassmorphic/glass_components.dart';
 /// ```
+library;
 
 // Core Theme Tokens
 export 'glass_theme.dart';

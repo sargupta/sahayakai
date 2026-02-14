@@ -92,15 +92,15 @@ class GlassColors {
   );
 
   // Radial shaded background for more depth
-  static RadialGradient get shadedBackgroundGradient => RadialGradient(
+  static RadialGradient get shadedBackgroundGradient => const RadialGradient(
     center: Alignment.topLeft,
     radius: 1.5,
-    colors: const [
+    colors: [
       Color(0xFFD8C8AC), // Center - lighter
       Color(0xFFC4B494), // Mid
       Color(0xFFB0A080), // Outer - darker shade
     ],
-    stops: const [0.0, 0.5, 1.0],
+    stops: [0.0, 0.5, 1.0],
   );
 
   static const LinearGradient primaryGradient = LinearGradient(

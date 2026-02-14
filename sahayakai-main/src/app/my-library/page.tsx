@@ -216,117 +216,117 @@ export default function MyLibraryPage() {
   const [language, setLanguage] = useState('en');
   const [avatar, setAvatar] = useState<string | null>(null);
   const t = translations[language] || translations.en;
-  
+
   useEffect(() => {
     generateAvatar({ name: 'Anjali Sharma' })
-        .then(res => setAvatar(res.imageDataUri))
-        .catch(console.error);
+      .then(res => setAvatar(res.imageDataUri))
+      .catch(console.error);
   }, []);
 
   const getTranslatedFileType = (type: FileType): string => {
     switch (type) {
-        case 'folder': return t.folder;
-        case 'lesson-plan': return t.lessonPlan;
-        case 'quiz': return t.quiz;
-        case 'rubric': return t.rubric;
-        case 'worksheet': return t.worksheet;
-        case 'image': return t.image;
-        default: return t.other;
+      case 'folder': return t.folder;
+      case 'lesson-plan': return t.lessonPlan;
+      case 'quiz': return t.quiz;
+      case 'rubric': return t.rubric;
+      case 'worksheet': return t.worksheet;
+      case 'image': return t.image;
+      default: return t.other;
     }
   }
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
-        <ProfileCard 
-            name="Anjali Sharma"
-            avatarUrl={avatar}
-            stats={{
-                followers: 1250,
-                following: 180,
-                resources: mockData.length,
-            }}
-            language={language}
-        />
-        <Card className="bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
-            <CardContent className="p-4 md:p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
-                        <Button variant="outline">
-                            <FolderPlus className="mr-2 h-4 w-4" />
-                            {t.newFolder}
-                        </Button>
-                        <Button>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            {t.createNew}
-                        </Button>
-                    </div>
-                </div>
+      <ProfileCard
+        name="Anjali Sharma"
+        avatarUrl={avatar}
+        stats={{
+          followers: 1250,
+          following: 180,
+          resources: mockData.length,
+        }}
+        language={language}
+      />
+      <Card className="bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
+              <Button variant="outline">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                {t.newFolder}
+              </Button>
+              <Button>
+                <Sparkles className="mr-2 h-4 w-4" />
+                {t.createNew}
+              </Button>
+            </div>
+          </div>
 
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input placeholder={t.searchPlaceholder} className="pl-10 bg-white/50" />
-                </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input placeholder={t.searchPlaceholder} className="pl-10 bg-white/50" />
+          </div>
 
-                <div className="rounded-lg border">
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead className="w-[50%]">
-                            <Button variant="ghost" size="sm">
-                            {t.name}
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </TableHead>
-                        <TableHead className="w-[25%] hidden md:table-cell">
-                             <Button variant="ghost" size="sm">
-                            {t.type}
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                             </Button>
-                        </TableHead>
-                        <TableHead className="w-[25%] text-right">
-                             <Button variant="ghost" size="sm">
-                            {t.modified}
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                             </Button>
-                        </TableHead>
-                        <TableHead className="w-10"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {mockData.map((item) => (
-                        <TableRow key={item.id} className="hover:bg-accent/50 cursor-pointer">
-                            <TableCell>
-                            <div className="flex items-center gap-3">
-                                <FileTypeIcon type={item.type} className="h-6 w-6 text-primary" />
-                                <span className="font-medium truncate">{item.name}</span>
-                            </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">{getTranslatedFileType(item.type)}</TableCell>
-                            <TableCell className="text-right text-muted-foreground">{item.modified}</TableCell>
-                            <TableCell>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                <DropdownMenuItem>{t.open}</DropdownMenuItem>
-                                <DropdownMenuItem>{t.rename}</DropdownMenuItem>
-                                <DropdownMenuItem>{t.move}</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">{t.delete}</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50%]">
+                    <Button variant="ghost" size="sm">
+                      {t.name}
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[25%] hidden md:table-cell">
+                    <Button variant="ghost" size="sm">
+                      {t.type}
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[25%] text-right">
+                    <Button variant="ghost" size="sm">
+                      {t.modified}
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockData.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-accent/50 cursor-pointer">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <FileTypeIcon type={item.type} className="h-6 w-6 text-primary" />
+                        <span className="font-medium truncate">{item.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{getTranslatedFileType(item.type)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{item.modified}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>{t.open}</DropdownMenuItem>
+                          <DropdownMenuItem>{t.rename}</DropdownMenuItem>
+                          <DropdownMenuItem>{t.move}</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">{t.delete}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

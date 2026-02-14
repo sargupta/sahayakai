@@ -79,7 +79,7 @@ class MyLibraryScreen extends ConsumerWidget {
                   historyAsync.when(
                     data: (plans) {
                       if (plans.isEmpty) {
-                        return GlassEmptyState(
+                        return const GlassEmptyState(
                           icon: Icons.menu_book_rounded,
                           title: 'No Lesson Plans Yet',
                           message: 'Create your first lesson plan to see it here.',
@@ -115,7 +115,7 @@ class MyLibraryScreen extends ConsumerWidget {
                         },
                       );
                     },
-                    loading: () => Center(
+                    loading: () => const Center(
                       child: GlassLoadingIndicator(message: 'Loading...'),
                     ),
                     error: (err, stack) => GlassEmptyState(
@@ -126,7 +126,7 @@ class MyLibraryScreen extends ConsumerWidget {
                   ),
 
                   // 2. Quizzes Tab
-                  GlassEmptyState(
+                  const GlassEmptyState(
                     icon: Icons.extension_rounded,
                     title: 'No Quizzes Yet',
                     message: 'Create your first quiz to see it here.',

@@ -185,7 +185,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                       ],
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     Icons.more_horiz_rounded,
                     color: GlassColors.textTertiary,
                   ),
@@ -193,7 +193,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
               ),
             ),
 
-            Divider(height: 1, color: GlassColors.divider),
+            const Divider(height: 1, color: GlassColors.divider),
 
             // Content
             Padding(
@@ -237,7 +237,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
               ),
             ),
 
-            Divider(height: 1, color: GlassColors.divider),
+            const Divider(height: 1, color: GlassColors.divider),
 
             // Actions
             Padding(

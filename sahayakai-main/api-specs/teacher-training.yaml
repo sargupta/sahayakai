@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Teacher Training API
+  version: 1.0.0
+  description: Professional development and pedagogical advice for teachers
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/teacher-training:
+    post:
+      summary: Get teacher training advice
+      tags: [AI Generation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: {type: string, example: "How do I manage a classroom of 40 students?"}
+                language: {type: string, default: English}
+            examples:
+              classroomManagement:
+                value:
+                  question: "How do I manage a classroom of 40 students with limited resources?"
+                  language: "English"
+      responses:
+        '200':
+          description: Training advice generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  advice: {type: string}
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

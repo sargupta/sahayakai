@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Voice Assistant API
+  version: 1.0.0
+  description: Conversational AI assistant for teachers powered by Gemini
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+paths:
+  /api/assistant:
+    post:
+      summary: Chat with AI assistant
+      tags: [Assistant]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: {type: string, example: "How do I teach fractions?"}
+                history: {type: array, items: {type: object}}
+                context: {type: string}
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response: {type: string}
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

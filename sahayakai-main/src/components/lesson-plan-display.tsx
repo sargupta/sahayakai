@@ -21,6 +21,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, X, Save as SaveIcon } from 'lucide-react'; // Removing ThumbsUp/Down imports if they conflict or keep if reusable icons
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
+// Simple markdown to HTML converter for basic formatting
+const renderMarkdown = (text: string | null | undefined) => {
+  if (!text) return '';
+  return text
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>') // bold+italic
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // bold
+    .replace(/\*(.+?)\*/g, '<em>$1</em>') // italic
+    .replace(/\n/g, '<br/>'); // line breaks
+};
+
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
 };
@@ -317,8 +327,10 @@ ${lessonPlan.assessment}
                     </>
                   ) : (
                     <>
-                      <h4 className="font-semibold text-foreground">{activity.name} ({activity.duration})</h4>
-                      <p>{activity.description}</p>
+                      <h4 className="font-semibold text-foreground">
+                        <span dangerouslySetInnerHTML={{ __html: renderMarkdown(activity.name) }} /> ({activity.duration})
+                      </h4>
+                      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(activity.description) }} />
                     </>
                   )}
                 </div>
@@ -342,7 +354,7 @@ ${lessonPlan.assessment}
                   placeholder="Assessment details"
                 />
               ) : (
-                <p>{editablePlan.assessment}</p>
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(editablePlan.assessment) }} />
               )}
             </AccordionContent>
           </AccordionItem>

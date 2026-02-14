@@ -1,0 +1,42 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Analytics API
+  version: 1.0.0
+  description: Teacher engagement analytics and health scores
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+paths:
+  /api/analytics/teacher-health/{userId}:
+    get:
+      summary: Get teacher health score
+      tags: [Analytics]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Health metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  score: {type: integer, minimum: 0, maximum: 100}
+                  risk_level: {type: string, enum: [healthy, at-risk, critical]}
+                  activity_score: {type: integer}
+                  engagement_score: {type: integer}
+                  success_score: {type: integer}
+                  growth_score: {type: integer}
+                  days_since_last_use: {type: integer}
+                  consecutive_days_used: {type: integer}
+                  estimated_students_impacted: {type: integer}
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

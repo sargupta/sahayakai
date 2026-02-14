@@ -89,7 +89,7 @@ export function LessonPlanInputSection({
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <svg
-              className="w-4 h-4 text-[#FF9933]"
+              className="w-4 h-4 text-primary"
               fill="currentColor"
               viewBox="0 0 20 20"
             >

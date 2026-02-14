@@ -1,0 +1,62 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI System APIs  
+  version: 1.0.0
+  description: Health checks, metrics, and system monitoring
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+paths:
+  /api/health:
+    get:
+      summary: System health check
+      tags: [System]
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp: {type: string, format: date-time}
+                  status: {type: string, enum: [healthy, degraded]}
+                  version: {type: string}
+                  environment: {type: string}
+                  checks: {type: object}
+        '503':
+          description: System unhealthy
+  
+  /api/metrics:
+    post:
+      summary: Submit client metrics
+      tags: [System]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metrics]
+              properties:
+                metrics:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type: {type: string}
+                      timestamp: {type: integer}
+      responses:
+        '200':
+          description: Metrics received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  received: {type: integer}
+
+components: {}

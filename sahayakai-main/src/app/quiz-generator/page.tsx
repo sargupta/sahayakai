@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useAnalytics } from "@/hooks/use-analytics";
+
 import { generateQuiz } from "@/ai/flows/quiz-generator";
 import type { QuizGeneratorOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
@@ -8,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil } from "lucide-react";
-import { useState, useEffect } from "react";
+import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil, Sparkles } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -283,11 +285,12 @@ const translations: Record<string, Record<string, any>> = {
 };
 
 
-export default function QuizGeneratorPage() {
+function QuizGeneratorContent() {
   const [quiz, setQuiz] = useState<QuizGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { trackContent, trackInteraction } = useAnalytics();
 
 
   const form = useForm<FormValues>({
@@ -322,12 +325,38 @@ export default function QuizGeneratorPage() {
     try {
       const result = await generateQuiz({ ...values, language: selectedLanguage });
       setQuiz(result);
+
+      // Track successful generation
+      trackContent({
+        content_type: 'quiz',
+        language: selectedLanguage,
+        grade_level: values.gradeLevel,
+        generation_time_sec: 0,
+        success: true,
+        regeneration_count: 0,
+        topic_length: values.topic.length,
+        page_path: '/quiz-generator',
+        device_type: 'desktop' // Simplified defaulting, ideally should use a helper
+      });
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
         title: "Generation Failed",
         description: "There was an error generating the quiz. Please try again.",
         variant: "destructive",
+      });
+
+      // Track failed generation
+      trackContent({
+        content_type: 'quiz',
+        language: selectedLanguage,
+        grade_level: values.gradeLevel,
+        generation_time_sec: 0,
+        success: false,
+        regeneration_count: 0,
+        topic_length: values.topic.length,
+        page_path: '/quiz-generator',
+        device_type: 'desktop'
       });
     } finally {
       setIsLoading(false);
@@ -337,11 +366,21 @@ export default function QuizGeneratorPage() {
   const handlePromptClick = (prompt: string) => {
     form.setValue("topic", prompt);
     form.trigger("topic");
+    trackInteraction({
+      interaction_type: 'click',
+      component_name: 'example_prompts',
+      target_element: prompt,
+      value: 0
+    });
   };
 
   const handleTranscript = (transcript: string) => {
     form.setValue("topic", transcript);
     form.trigger("topic");
+    // Auto-submit after voice input
+    setTimeout(() => {
+      form.handleSubmit(onSubmit)();
+    }, 100);
   };
 
 
@@ -350,222 +389,228 @@ export default function QuizGeneratorPage() {
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
-              <FileSignature className="w-8 h-8" />
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg">
+              <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
-          <CardDescription>{t.pageDescription}</CardDescription>
+          <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            {t.pageTitle}
+          </CardTitle>
+          <CardDescription className="text-lg text-slate-600">
+            {t.pageDescription}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <CardContent>        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                {/* LEFT COLUMN: Main Content (7 cols) */}
-                <div className="lg:col-span-7 space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="topic"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="flex flex-col gap-4">
-                            <MicrophoneInput
-                              onTranscriptChange={(transcript) => {
-                                field.onChange(transcript);
-                              }}
-                              iconSize="lg"
-                              label={t.topicLabel + " (Speak)"}
-                              className="bg-white/50 backdrop-blur-sm"
-                            />
-                            <Textarea
-                              placeholder={t.topicPlaceholder}
-                              {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[140px] resize-none text-base p-4"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="imageDataUri"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-headline">{t.contextLabel}</FormLabel>
-                        <FormControl>
-                          <ImageUploader
-                            onImageUpload={(dataUri) => field.onChange(dataUri)}
-                            language={selectedLanguage}
+              {/* LEFT COLUMN: Main Content (7 cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                <FormField
+                  control={form.control}
+                  name="topic"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex flex-col gap-4">
+                          <MicrophoneInput
+                            onTranscriptChange={(transcript) => {
+                              field.onChange(transcript);
+                              handleTranscript(transcript);
+                            }}
+                            iconSize="lg"
+                            label={t.topicLabel + " (Speak)"}
+                            className="bg-white/50 backdrop-blur-sm"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="questionTypes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 pt-2">
-                          {questionTypesData.map((item) => (
-                            <SelectableCard
-                              key={item.id}
-                              icon={item.icon}
-                              label={t.questionTypes[item.id]}
-                              isSelected={field.value?.includes(item.id)}
-                              onSelect={() => {
-                                const currentValues = field.value || [];
-                                const newValues = currentValues.includes(item.id)
-                                  ? currentValues.filter((v) => v !== item.id)
-                                  : [...currentValues, item.id];
-                                field.onChange(newValues);
-                              }}
-                              className="h-24"
-                            />
-                          ))}
+                          <Textarea
+                            placeholder={t.topicPlaceholder}
+                            {...field}
+                            className="bg-white/50 backdrop-blur-sm min-h-[140px] resize-none text-base p-4"
+                          />
                         </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <div className="space-y-2">
-                    <FormLabel className="font-headline">Quick Ideas</FormLabel>
-                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
-                  </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="imageDataUri"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline">{t.contextLabel}</FormLabel>
+                      <FormControl>
+                        <ImageUploader
+                          onImageUpload={(dataUri) => field.onChange(dataUri)}
+                          language={selectedLanguage}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
-                  <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Quiz Settings</h3>
+                <FormField
+                  control={form.control}
+                  name="questionTypes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        {questionTypesData.map((item) => (
+                          <SelectableCard
+                            key={item.id}
+                            icon={item.icon}
+                            label={t.questionTypes[item.id]}
+                            isSelected={field.value?.includes(item.id)}
+                            onSelect={() => {
+                              const currentValues = field.value || [];
+                              const newValues = currentValues.includes(item.id)
+                                ? currentValues.filter((v) => v !== item.id)
+                                : [...currentValues, item.id];
+                              field.onChange(newValues);
+                            }}
+                            className="h-24"
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="gradeLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.gradeLevelLabel}</FormLabel>
-                          <FormControl>
-                            <GradeLevelSelector
-                              value={field.value ? [field.value] : []}
-                              onValueChange={(values) => field.onChange(values?.[0])}
-                              language={selectedLanguage}
-                              isMulti={false}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
-                          <FormControl>
-                            <LanguageSelector
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="numQuestions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="1" max="20" {...field} className="bg-white border-slate-200" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="bloomsTaxonomyLevels"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {bloomsLevelsData.map((item) => (
-                            <FormField
-                              key={item.id}
-                              control={form.control}
-                              name="bloomsTaxonomyLevels"
-                              render={({ field }) => {
-                                const isSelected = field.value?.includes(item.id);
-                                return (
-                                  <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
-                                    <FormControl>
-                                      <Label
-                                        htmlFor={item.id}
-                                        className={cn(
-                                          "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
-                                          isSelected
-                                            ? "bg-blue-100 text-blue-700 border-blue-200"
-                                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                                        )}
-                                      >
-                                        <CheckboxUI
-                                          id={item.id}
-                                          checked={isSelected}
-                                          onCheckedChange={(checked) => {
-                                            const currentValues = field.value || [];
-                                            const newValues = checked
-                                              ? [...currentValues, item.id]
-                                              : currentValues.filter((v) => v !== item.id);
-                                            field.onChange(newValues);
-                                          }}
-                                          className="sr-only" // Hide actual checkbox, style the label
-                                        />
-                                        {/* Custom Check Indicator */}
-                                        <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
-                                        {t.blooms[item.id]}
-                                      </Label>
-                                    </FormControl>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="space-y-2">
+                  <FormLabel className="font-headline">Quick Ideas</FormLabel>
+                  <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
                 </div>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    {t.submitButtonLoading}
-                  </>
-                ) : (
-                  t.submitButton
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+              {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
+              <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
+                <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Quiz Settings</h3>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="gradeLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.gradeLevelLabel}</FormLabel>
+                        <FormControl>
+                          <GradeLevelSelector
+                            value={field.value ? [field.value] : []}
+                            onValueChange={(values) => field.onChange(values?.[0])}
+                            language={selectedLanguage}
+                            isMulti={false}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="language"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                        <FormControl>
+                          <LanguageSelector
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="numQuestions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" max="20" {...field} className="bg-white border-slate-200" />
+                      </FormControl >
+                      <FormMessage />
+                    </FormItem >
+                  )
+                  }
+                />
+
+                < FormField
+                  control={form.control}
+                  name="bloomsTaxonomyLevels"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {bloomsLevelsData.map((item) => (
+                          <FormField
+                            key={item.id}
+                            control={form.control}
+                            name="bloomsTaxonomyLevels"
+                            render={({ field }) => {
+                              const isSelected = field.value?.includes(item.id);
+                              return (
+                                <FormItem key={item.id} className="flex flex-row items-center space-x-0 space-y-0">
+                                  <FormControl>
+                                    <Label
+                                      htmlFor={item.id}
+                                      className={cn(
+                                        "flex items-center gap-1.5 cursor-pointer rounded-md py-1.5 px-3 text-xs font-medium border transition-all",
+                                        isSelected
+                                          ? "bg-blue-100 text-blue-700 border-blue-200"
+                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                      )}
+                                    >
+                                      <CheckboxUI
+                                        id={item.id}
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                          const currentValues = field.value || [];
+                                          const newValues = checked
+                                            ? [...currentValues, item.id]
+                                            : currentValues.filter((v) => v !== item.id);
+                                          field.onChange(newValues);
+                                        }}
+                                        className="sr-only" // Hide actual checkbox, style the label
+                                      />
+                                      {/* Custom Check Indicator */}
+                                      <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-300")} />
+                                      {t.blooms[item.id]}
+                                    </Label>
+                                  </FormControl>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              </div >
+            </div >
+
+            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                  {t.submitButtonLoading}
+                </>
+              ) : (
+                t.submitButton
+              )}
+            </Button>
+          </form >
+        </Form >
+        </CardContent >
+      </Card >
 
       {
         isLoading && (
@@ -580,5 +625,13 @@ export default function QuizGeneratorPage() {
 
       {quiz && <QuizDisplay quiz={quiz} />}
     </div >
+  );
+}
+
+export default function QuizGeneratorPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <QuizGeneratorContent />
+    </Suspense>
   );
 }

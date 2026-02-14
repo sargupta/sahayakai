@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SahayakAI API Docs - Select API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .card-description {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .badge {
+            background: #ff6b35;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .arrow {
+            color: #ff6b35;
+            font-size: 1.5rem;
+        }
+
+        .quick-links {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-links h2 {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .quick-links ul {
+            list-style: none;
+        }
+
+        .quick-links li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .quick-links li:last-child {
+            border-bottom: none;
+        }
+
+        .quick-links a {
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .quick-links a:hover {
+            text-decoration: underline;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 1.5rem;
+            margin: 40px 0 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 SahayakAI API Documentation</h1>
+        <p class="subtitle">Interactive Swagger UI for all backend endpoints</p>
+
+        <div class="stats">
+            <div class="stat">✅ 14 OpenAPI Specs</div>
+            <div class="stat">📡 22 API Endpoints</div>
+            <div class="stat">🚀 Ready to Test</div>
+        </div>
+
+        <h3 class="section-title">📊 Monitoring & Analytics</h3>
+        <div class="grid">
+            <a href="swagger.html?spec=analytics" class="card">
+                <div class="card-title">Teacher Analytics</div>
+                <div class="card-description">Teacher health scores, activity tracking, engagement metrics</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=system" class="card">
+                <div class="card-title">System Health</div>
+                <div class="card-description">Server status, health checks, metrics collection</div>
+                <div class="card-footer">
+                    <span class="badge">2 endpoints</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        </div>
+
+        <h3 class="section-title">🔐 Auth & User Management</h3>
+        <div class="grid">
+            <a href="swagger.html?spec=auth-user" class="card">
+                <div class="card-title">Auth & User Profile</div>
+                <div class="card-description">Profile checks, user management, onboarding status</div>
+                <div class="card-footer">
+                    <span class="badge">2 endpoints</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        </div>
+
+        <h3 class="section-title">🤖 AI Content Generators</h3>
+        <div class="grid">
+            <a href="swagger.html?spec=lesson-plan" class="card">
+                <div class="card-title">Lesson Plan Generator</div>
+                <div class="card-description">AI-powered lesson plan creation with 5E model</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=quiz-generator" class="card">
+                <div class="card-title">Quiz Generator</div>
+                <div class="card-description">Adaptive quiz generation with multiple question types</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=worksheet" class="card">
+                <div class="card-title">Worksheet Wizard</div>
+                <div class="card-description">Custom worksheet generation with varied difficulty</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=visual-aid" class="card">
+                <div class="card-title">Visual Aid Designer</div>
+                <div class="card-description">AI-generated educational visuals and diagrams</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=rubric" class="card">
+                <div class="card-title">Rubric Generator</div>
+                <div class="card-description">Assessment rubrics with criteria and scoring</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=instant-answer" class="card">
+                <div class="card-title">Instant Answer</div>
+                <div class="card-description">Quick AI responses for teacher questions</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        </div>
+
+        <h3 class="section-title">🎓 Teacher Support</h3>
+        <div class="grid">
+            <a href="swagger.html?spec=teacher-training" class="card">
+                <div class="card-title">Teacher Training</div>
+                <div class="card-description">Professional development and pedagogical advice</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=virtual-field-trip" class="card">
+                <div class="card-title">Virtual Field Trip</div>
+                <div class="card-description">Plan immersive virtual tours using Google Earth</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=assistant" class="card">
+                <div class="card-title">Voice Assistant</div>
+                <div class="card-description">Conversational AI assistant for teachers</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        </div>
+
+        <h3 class="section-title">📚 Content Management</h3>
+        <div class="grid">
+            <a href="swagger.html?spec=content-management" class="card">
+                <div class="card-title">Content Management</div>
+                <div class="card-description">Save, list, retrieve, and download user content</div>
+                <div class="card-footer">
+                    <span class="badge">4 endpoints</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+
+            <a href="swagger.html?spec=intent" class="card">
+                <div class="card-title">Intent Router</div>
+                <div class="card-description">AI-powered intent detection and routing</div>
+                <div class="card-footer">
+                    <span class="badge">1 endpoint</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="quick-links">
+            <h2>📖 Quick Links</h2>
+            <ul>
+                <li><a href="/docs/TEACHER_LOOKUP.md" target="_blank">→ Teacher Lookup Guide (Track by Email)</a></li>
+                <li><a href="/docs/MONITORING.md" target="_blank">→ Monitoring Guide (KPIs & Metrics)</a></li>
+                <li><a href="https://console.firebase.google.com/project/sahayakai-b4248/firestore" target="_blank">→
+                        Firebase Console (View Data)</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

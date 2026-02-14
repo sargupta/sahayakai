@@ -236,7 +236,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.schedule_rounded,
                         size: 14,
                         color: GlassColors.textTertiary,
@@ -247,7 +247,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                         style: GlassTypography.bodySmall(),
                       ),
                       const SizedBox(width: GlassSpacing.lg),
-                      Icon(
+                      const Icon(
                         Icons.person_outline_rounded,
                         size: 14,
                         color: GlassColors.textTertiary,
@@ -285,7 +285,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
               color: GlassColors.textTertiary,
@@ -303,9 +303,9 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: GlassColors.warmBackgroundGradient,
-          borderRadius: const BorderRadius.vertical(
+          borderRadius: BorderRadius.vertical(
             top: Radius.circular(GlassRadius.xl),
           ),
         ),

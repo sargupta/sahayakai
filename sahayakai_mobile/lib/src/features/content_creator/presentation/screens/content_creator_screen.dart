@@ -209,7 +209,7 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
           const SizedBox(height: GlassSpacing.xl),
 
           // Preview Card
-          GlassPreviewCard(
+          const GlassPreviewCard(
             label: 'The Editor\'s Theme',
           ),
         ],

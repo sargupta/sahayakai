@@ -225,7 +225,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
 
             // Preview Card (only show when no answer)
             if (_answer == null) ...[
-              GlassPreviewCard(
+              const GlassPreviewCard(
                 label: 'Quick Answer Theme',
               ),
             ],

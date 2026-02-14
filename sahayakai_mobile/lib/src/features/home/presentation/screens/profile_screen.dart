@@ -189,7 +189,7 @@ class ProfileScreen extends StatelessWidget {
             trailing,
             const SizedBox(width: GlassSpacing.sm),
           ],
-          Icon(
+          const Icon(
             Icons.arrow_forward_ios_rounded,
             size: 14,
             color: GlassColors.textTertiary,

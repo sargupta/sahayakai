@@ -1,9 +1,7 @@
 
-import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:sahayakai_mobile/src/features/lesson_plan/domain/lesson_plan_models.dart';
 
 // Alias models to avoid naming conflicts with PDF widgets if any, 
@@ -61,8 +59,8 @@ class PdfGeneratorService {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text("${plan.subject} • ${plan.gradeLevel}", style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
-            pw.Text("Duration: ${plan.duration}", style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
+            pw.Text("${plan.subject} • ${plan.gradeLevel}", style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
+            pw.Text("Duration: ${plan.duration}", style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
           ],
         ),
         pw.Divider(),
@@ -95,11 +93,11 @@ class PdfGeneratorService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(activity.name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text(activity.duration, style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+              pw.Text(activity.duration, style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
             ],
           ),
           pw.SizedBox(height: 4),
-          pw.Text(activity.description, style: pw.TextStyle(fontSize: 12)),
+          pw.Text(activity.description, style: const pw.TextStyle(fontSize: 12)),
         ],
       ),
     );

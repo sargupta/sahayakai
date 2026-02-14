@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Virtual Field Trip API
+  version: 1.0.0
+  description: Plan immersive virtual field trips using Google Earth
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/virtual-field-trip:
+    post:
+      summary: Plan virtual field trip
+      tags: [AI Generation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic]
+              properties:
+                topic: {type: string, example: "The Great Barrier Reef"}
+                gradeLevel: {type: string}
+                language: {type: string}
+            examples:
+              reef:
+                value:
+                  topic: "Exploring the Great Barrier Reef"
+                  gradeLevel: "Class 7"
+                  language: "English"
+      responses:
+        '200':
+          description: Field trip plan generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title: {type: string}
+                  stops: {type: array, items: {type: object}}
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

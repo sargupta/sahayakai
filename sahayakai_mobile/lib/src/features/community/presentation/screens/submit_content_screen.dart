@@ -87,7 +87,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Category"),
                       DropdownButtonFormField<String>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v!),
                         decoration: _inputDecoration(""),
@@ -102,7 +102,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Language"),
                       DropdownButtonFormField<String>(
-                        value: _selectedLanguage,
+                        initialValue: _selectedLanguage,
                         items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
                         onChanged: (v) => setState(() => _selectedLanguage = v!),
                         decoration: _inputDecoration(""),

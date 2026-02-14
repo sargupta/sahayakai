@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Content Management API
+  version: 1.0.0
+  description: |
+    Comprehensive API for managing user-generated educational content.
+    Handles saving, retrieving, listing, and downloading lesson plans, quizzes, worksheets, and more.
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+tags:
+  - name: Content
+
+paths:
+  /api/content/save:
+    post:
+      summary: Save content to user library
+      tags: [Content]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, type, title]
+              properties:
+                id: {type: string, example: "uuid-123"}
+                type: {type: string, enum: [lesson-plan, quiz, worksheet, rubric, visual-aid, instant-answer, virtual-field-trip]}
+                title: {type: string}
+                gradeLevel: {type: string}
+                subject: {type: string}
+                topic: {type: string}
+                language: {type: string}
+                data: {type: object}
+                isPublic: {type: boolean, default: false}
+                isDraft: {type: boolean, default: false}
+      responses:
+        '200':
+          description: Content saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  id: {type: string}
+      security: [{bearerAuth: []}]
+  
+  /api/content/get:
+    get:
+      summary: Get content by ID
+      tags: [Content]
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Content item
+        '404':
+          description: Not found
+      security: [{bearerAuth: []}]
+  
+  /api/content/list:
+    get:
+      summary: List user's content
+      tags: [Content]
+      parameters:
+        - name: type
+          in: query
+          schema: {type: string}
+        - name: limit
+          in: query
+          schema: {type: integer, default: 20}
+      responses:
+        '200':
+          description: List of content
+      security: [{bearerAuth: []}]
+  
+  /api/content/download:
+    get:
+      summary: Download content file
+      tags: [Content]
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: File content
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

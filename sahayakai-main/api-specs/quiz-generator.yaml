@@ -1,0 +1,283 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Quiz Generator API
+  version: 1.0.0
+  description: |
+    Generate educational quizzes with multiple difficulty levels and question types.
+    Supports voice-to-text input for hands-free quiz creation.
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://sahayakai.in
+    description: Production server
+
+tags:
+  - name: AI Tools
+    description: AI-powered educational content generation
+
+paths:
+  /api/ai/quiz:
+    post:
+      summary: Generate quiz from topic
+      description: |
+        Creates a quiz with easy, medium, and hard variants based on the provided topic.
+        Supports various question types and alignment with Bloom's Taxonomy.
+      operationId: generateQuiz
+      tags:
+        - AI Tools
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizRequest'
+            examples:
+              basicQuiz:
+                summary: Basic science quiz
+                value:
+                  topic: "Generate quiz for grade five, chapter two of science"
+                  numQuestions: 5
+                  questionTypes: ["multiple_choice", "short_answer"]
+                  gradeLevel: "5th Grade"
+                  subject: "Science"
+                  language: "en"
+              voiceInput:
+                summary: Voice-generated quiz
+                value:
+                  topic: "Photosynthesis process for middle school students"
+                  numQuestions: 10
+                  questionTypes: ["multiple_choice", "fill_in_the_blanks", "short_answer"]
+                  bloomsTaxonomyLevels: ["Remember", "Understand", "Apply"]
+                  gradeLevel: "8th Grade"
+                  subject: "Biology"
+                  language: "en"
+      
+      responses:
+        '200':
+          description: Quiz generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+              examples:
+                success:
+                  summary: Successful quiz generation
+                  value:
+                    easy:
+                      questions:
+                        - question: "What is photosynthesis?"
+                          type: "multiple_choice"
+                          options: ["A process", "An animal", "A planet", "A tool"]
+                          correctAnswer: "A process"
+                    medium:
+                      questions:
+                        - question: "Explain the role of chlorophyll in photosynthesis"
+                          type: "short_answer"
+                          correctAnswer: "Chlorophyll absorbs light energy"
+                    hard:
+                      questions:
+                        - question: "The light-independent reactions occur in the ___"
+                          type: "fill_in_the_blanks"
+                          correctAnswer: "stroma"
+        
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidTopic:
+                  summary: Topic too short
+                  value:
+                    error: "Topic must be at least 3 characters"
+                invalidQuestionCount:
+                  summary: Invalid question count
+                  value:
+                    error: "Number of questions must be between 1 and 20"
+        
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        
+        '500':
+          $ref: '#/components/responses/ServerError'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase Authentication token
+  
+  schemas:
+    QuizRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Quiz topic or voice-transcribed instructions
+          example: "Generate quiz for grade five, chapter two of science"
+        
+        numQuestions:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: Number of questions to generate
+        
+        questionTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - multiple_choice
+              - fill_in_the_blanks
+              - short_answer
+              - true_false
+          description: Types of questions to include
+          example: ["multiple_choice", "short_answer"]
+        
+        bloomsTaxonomyLevels:
+          type: array
+          items:
+            type: string
+            enum:
+              - Remember
+              - Understand
+              - Apply
+              - Analyze
+              - Evaluate
+              - Create
+          description: Bloom's Taxonomy levels for question complexity
+          example: ["Remember", "Understand"]
+        
+        gradeLevel:
+          type: string
+          description: Target grade level
+          example: "5th Grade"
+        
+        subject:
+          type: string
+          default: "General"
+          description: Subject area
+          example: "Science"
+        
+        language:
+          type: string
+          default: "en"
+          enum: [en, hi, bn, te, mr, ta, gu, kn, pa, ml, or]
+          description: Language code for quiz questions
+        
+        imageDataUri:
+          type: string
+          format: uri
+          description: Optional image context (data URI)
+    
+    QuizResponse:
+      type: object
+      properties:
+        easy:
+          allOf:
+            - $ref: '#/components/schemas/QuizVariant'
+            - nullable: true
+        medium:
+          allOf:
+            - $ref: '#/components/schemas/QuizVariant'
+            - nullable: true
+        hard:
+          allOf:
+            - $ref: '#/components/schemas/QuizVariant'
+            - nullable: true
+    
+    QuizVariant:
+      type: object
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    
+    Question:
+      type: object
+      required:
+        - question
+        - type
+      properties:
+        question:
+          type: string
+          description: The question text
+        
+        type:
+          type: string
+          enum:
+            - multiple_choice
+            - fill_in_the_blanks
+            - short_answer
+            - true_false
+        
+        options:
+          type: array
+          items:
+            type: string
+          description: Answer options (for multiple_choice and true_false)
+        
+        correctAnswer:
+          type: string
+          description: The correct answer or answer key
+        
+        explanation:
+          type: string
+          description: Explanation for the correct answer
+        
+        bloomLevel:
+          type: string
+          enum:
+            - Remember
+            - Understand
+            - Apply
+            - Analyze
+            - Evaluate
+            - Create
+          description: Bloom's Taxonomy level
+    
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+  
+  responses:
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Please sign in to generate quizzes"
+    
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Failed to generate quiz. Please try again."

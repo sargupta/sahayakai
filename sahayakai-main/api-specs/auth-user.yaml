@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Auth & User Management API
+  version: 1.0.0
+  description: User authentication, profile management, and onboarding
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+paths:
+  /api/auth/profile-check:
+    get:
+      summary: Check if user profile exists
+      tags: [Auth]
+      parameters:
+        - name: uid
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Profile check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists: {type: boolean}
+  
+  /api/user/profile:
+    post:
+      summary: Create or update user profile
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uid, email, displayName]
+              properties:
+                uid: {type: string}
+                email: {type: string, format: email}
+                displayName: {type: string}
+                schoolName: {type: string}
+                teachingGradeLevels: {type: array, items: {type: string}}
+                subjects: {type: array, items: {type: string}}
+                preferredLanguage: {type: string}
+      responses:
+        '200':
+          description: Profile saved
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}

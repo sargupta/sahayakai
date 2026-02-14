@@ -137,7 +137,7 @@ class GlassDropdown<T> extends StatelessWidget {
                     )
                   : null,
               style: GlassTypography.bodyLarge(),
-              icon: Icon(
+              icon: const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: GlassColors.textSecondary,
               ),
@@ -191,7 +191,7 @@ class GlassSwitch extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: GlassColors.switchActive,
+          activeThumbColor: GlassColors.switchActive,
           activeTrackColor: GlassColors.switchTrackActive,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: GlassColors.switchTrackInactive,

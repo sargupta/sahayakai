@@ -283,7 +283,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
           const SizedBox(height: GlassSpacing.xl),
 
           // Preview Card
-          GlassPreviewCard(
+          const GlassPreviewCard(
             label: 'The Grid Theme',
           ),
         ],

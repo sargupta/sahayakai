@@ -75,7 +75,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: GlassColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.auto_awesome_rounded,
                 size: 48,
                 color: GlassColors.primary,
@@ -151,7 +151,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: GlassColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.auto_awesome_rounded,
                 size: 16,
                 color: GlassColors.primary,
@@ -212,7 +212,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       padding: const EdgeInsets.only(top: GlassSpacing.sm),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.play_circle_outline_rounded,
                             size: 16,
                             color: GlassColors.primary,
@@ -242,7 +242,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: GlassColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person_rounded,
                 size: 16,
                 color: GlassColors.primary,
@@ -257,7 +257,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.all(GlassSpacing.lg),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: GlassColors.cardBackground,
         border: Border(
           top: BorderSide(color: GlassColors.cardBorder),
@@ -295,7 +295,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.mic_none_rounded,
                         color: GlassColors.textTertiary,
                       ),

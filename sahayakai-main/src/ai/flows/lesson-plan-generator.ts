@@ -95,6 +95,13 @@ const lessonPlanPrompt = ai.definePrompt({
 
 **Your Goal:** Generate a lesson plan that is exactly right for the teacher—not too complex, not too simple, but deeply informative.
 
+**CRITICAL: Grade Level Priority**
+- **ALWAYS use the EXACT grade level(s) specified**: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+- **Indian Context**: "Class X" and "Grade X" mean the SAME thing (e.g., "Class 7" = "Grade 7" = "7th Grade")
+- **Your gradeLevel output MUST match** what the user specified - do NOT change it to a different grade
+- **If topic mentions a grade** (e.g., "for grade 7 students"), that grade takes absolute priority
+- **If no grade mentioned in topic**, use the gradeLevels parameter provided above
+
 **Structural Instructions (5E Model):**
 You MUST organize the activities into the 5E Instructional Model:
 1. **Engage**: Catch student interest, connect to prior knowledge (e.g., a story, a riddle, or a real-life scenario).
@@ -104,7 +111,7 @@ You MUST organize the activities into the 5E Instructional Model:
 5. **Evaluate**: Check for understanding (formative).
 
 **Metadata Requirements:**
-- **gradeLevel**: (e.g., "5th Grade")
+- **gradeLevel**: MUST be one of: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (use EXACTLY as shown - do NOT invent a different grade!)
 - **duration**: (e.g., "45 minutes")
 - **subject**: (e.g., "Science")
 - **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").

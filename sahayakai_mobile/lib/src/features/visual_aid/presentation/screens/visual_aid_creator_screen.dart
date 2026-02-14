@@ -267,7 +267,7 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
           const SizedBox(height: GlassSpacing.xl),
 
           // Preview Card
-          GlassPreviewCard(
+          const GlassPreviewCard(
             label: 'The Art Studio Theme',
           ),
         ],
@@ -342,7 +342,7 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.image_rounded,
                         size: 48,
                         color: GlassColors.textTertiary,

@@ -1,0 +1,142 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Instant Answer API
+  version: 1.0.0
+  description: Get quick educational answers augmented by Google Search with optional video suggestions
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://sahayakai.in
+    description: Production
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/instant-answer:
+    post:
+      summary: Get instant answer to question
+      description: Provides direct answer to educational questions with optional video resources
+      operationId: instantAnswer
+      tags:
+        - AI Generation
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  description: Educational question to answer
+                  example: "What is photosynthesis?"
+                gradeLevel:
+                  type: string
+                  example: "Class 5"
+                language:
+                  type: string
+                  enum: [English, Hindi, Bengali, Kannada, Tamil, Telugu, Marathi, Gujarati, Punjabi, Malayalam, Odia]
+                  default: English
+                subject:
+                  type: string
+                  example: "Science"
+            examples:
+              scienceQuestion:
+                summary: Science concept
+                value:
+                  question: "What is photosynthesis?"
+                  gradeLevel: "Class 6"
+                  language: "English"
+                  subject: "Biology"
+              mathQuestion:
+                summary: Math concept
+                value:
+                  question: "What is the Pythagoras theorem?"
+                  gradeLevel: "Class 9"
+                  language: "Hindi"
+                  subject: "Mathematics"
+              socialStudies:
+                summary: History question
+                value:
+                  question: "Who was Mahatma Gandhi?"
+                  gradeLevel: "Class 5"
+                  language: "English"
+                  subject: "Social Studies"
+      
+      responses:
+        '200':
+          description: Answer generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - answer
+                properties:
+                  answer:
+                    type: string
+                    description: Direct answer to the question
+                    example: "Photosynthesis is the process by which green plants make their own food using sunlight, water, and carbon dioxide."
+                  videoSuggestionUrl:
+                    type: string
+                    nullable: true
+                    format: uri
+                    description: YouTube video URL for visual learning
+                    example: "https://www.youtube.com/watch?v=..."
+                  gradeLevel:
+                    type: string
+                    nullable: true
+                  subject:
+                    type: string
+                    nullable: true
+              examples:
+                success:
+                  summary: Successful answer with video
+                  value:
+                    answer: "Photosynthesis is the process by which green plants make their own food. Plants use sunlight, water from soil, and carbon dioxide from air to produce glucose (food) and oxygen. The green pigment chlorophyll in leaves captures sunlight energy."
+                    videoSuggestionUrl: "https://www.youtube.com/watch?v=example"
+                    gradeLevel: "Class 6"
+                    subject: "Science"
+        
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: string

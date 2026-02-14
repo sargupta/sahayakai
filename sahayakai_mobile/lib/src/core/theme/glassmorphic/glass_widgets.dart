@@ -107,7 +107,7 @@ class GlassPreviewCard extends StatelessWidget {
               color: GlassColors.primary.withOpacity(0.2),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.edit_outlined,
               size: 14,
               color: GlassColors.primary,

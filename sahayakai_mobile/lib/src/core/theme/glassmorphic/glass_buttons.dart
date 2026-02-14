@@ -27,7 +27,7 @@ class GlassPrimaryButton extends StatelessWidget {
       height: height ?? 56,
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [

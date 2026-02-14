@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(70),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: GlassColors.warmBackgroundGradient,
         ),
         child: SafeArea(
@@ -278,9 +278,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.mic_none_rounded,
-                  color: const Color(0xFF2563EB),
+                  color: Color(0xFF2563EB),
                   size: 24,
                 ),
               ],
@@ -353,11 +353,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: GlassColors.inputBackground,
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 12,
               color: GlassColors.textTertiary,
@@ -388,12 +388,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     height: 160,
                     width: double.infinity,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: GlassColors.inputBackground,
-                      borderRadius: const BorderRadius.vertical(
+                      borderRadius: BorderRadius.vertical(
                         top: Radius.circular(GlassRadius.lg),
                       ),
-                      image: const DecorationImage(
+                      image: DecorationImage(
                         image: NetworkImage(
                           'https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
                         ),

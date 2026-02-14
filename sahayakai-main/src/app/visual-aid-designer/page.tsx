@@ -29,7 +29,9 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function VisualAidDesignerPage() {
+import { Suspense } from "react";
+
+function VisualAidDesignerContent() {
   const [imageData, setImageData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -105,7 +107,9 @@ export default function VisualAidDesignerPage() {
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <Images className="w-12 h-12 text-primary" />
+            <div className="flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600">
+              <Images className="w-8 h-8" />
+            </div>
           </div>
           <CardTitle className="font-headline text-3xl">Visual Aid Designer</CardTitle>
           <CardDescription>
@@ -236,5 +240,13 @@ export default function VisualAidDesignerPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function VisualAidDesignerPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <VisualAidDesignerContent />
+    </Suspense>
   );
 }

@@ -242,7 +242,7 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
           const SizedBox(height: GlassSpacing.xl),
 
           // Preview Card
-          GlassPreviewCard(
+          const GlassPreviewCard(
             label: 'The Director\'s Theme',
           ),
         ],

@@ -11,7 +11,6 @@ import '../../../../core/theme/studio_theme_resolver.dart'; // For StudioType en
 
 // Feature Imports
 import '../../domain/lesson_plan_models.dart';
-import '../../data/lesson_plan_repository.dart';
 import '../widgets/voice_input_widget.dart';
 import 'lesson_result_screen.dart';
 import '../providers/lesson_plan_provider.dart';

@@ -36,7 +36,7 @@ export function LessonPlanView({
 
             <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                 {/* Clean Top Bar */}
-                <div className="h-1.5 w-full bg-[#FF9933]" />
+                <div className="h-1.5 w-full bg-primary" />
 
                 <LessonPlanHeader />
                 <CardContent>
@@ -80,6 +80,7 @@ export function LessonPlanView({
                                             form.setValue("topic", topic);
                                             form.trigger("topic");
                                         }}
+
                                     />
                                 </div>
                             </div>

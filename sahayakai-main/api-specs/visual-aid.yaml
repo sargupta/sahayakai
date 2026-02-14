@@ -1,0 +1,138 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Visual Aid Designer API
+  version: 1.0.0
+  description: Generate blackboard-style chalk drawings and diagrams for classroom teaching
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://sahayakai.in
+    description: Production
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/visual-aid:
+    post:
+      summary: Generate visual aid drawing
+      description: Creates blackboard-style educational diagrams with teaching context
+      operationId: generateVisualAid
+      tags:
+        - AI Generation
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  description: Description of visual aid to create
+                  example: "Structure of a plant cell"
+                gradeLevel:
+                  type: string
+                  example: "Class 6"
+                language:
+                  type: string
+                  enum: [English, Hindi, Bengali, Kannada, Tamil, Telugu, Marathi, Gujarati, Punjabi, Malayalam, Odia]
+                  default: English
+                subject:
+                  type: string
+                  example: "Biology"
+            examples:
+              plantCell:
+                summary: Plant cell diagram
+                value:
+                  prompt: "Structure of a plant cell with all organelles labeled"
+                  gradeLevel: "Class 8"
+                  language: "English"
+                  subject: "Biology"
+              waterCycle:
+                summary: Water cycle diagram
+                value:
+                  prompt: "The water cycle showing evaporation, condensation, and precipitation"
+                  gradeLevel: "Class 5"
+                  language: "Hindi"
+                  subject: "Science"
+      
+      responses:
+        '200':
+          description: Visual aid generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - imageDataUri
+                properties:
+                  imageDataUri:
+                    type: string
+                    format: uri
+                    description: Generated image as data URI
+                  pedagogicalContext:
+                    type: string
+                    description: How teacher should use this visual aid
+                    example: "Point to each organelle and explain its function while students copy the diagram"
+                  discussionSpark:
+                    type: string
+                    description: Focus question for students
+                    example: "Which part of the cell do you think is most important and why?"
+                  subject:
+                    type: string
+                    nullable: true
+        
+        '400':
+          description: Bad request or safety violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                safetyViolation:
+                  summary: Content safety check failed
+                  value:
+                    error: "Safety Violation: Inappropriate content detected"
+        
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: string

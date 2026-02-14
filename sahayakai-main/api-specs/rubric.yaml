@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Rubric Generator API
+  version: 1.0.0
+  description: Generate detailed grading rubrics for assignments with multiple performance levels
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://sahayakai.in
+    description: Production
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/rubric:
+    post:
+      summary: Generate grading rubric
+      description: Creates structured rubric with criteria and performance levels
+      operationId: generateRubric
+      tags:
+        - AI Generation
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - assignmentDescription
+              properties:
+                assignmentDescription:
+                  type: string
+                  description: Description of the assignment to grade
+                  example: "A grade 5 project on renewable energy sources"
+                gradeLevel:
+                  type: string
+                  example: "Class 5"
+                language:
+                  type: string
+                  enum: [English, Hindi, Bengali, Kannada, Tamil, Telugu, Marathi, Gujarati, Punjabi, Malayalam, Odia]
+                  default: English
+                subject:
+                  type: string
+                  example: "Science"
+            examples:
+              scienceProject:
+                summary: Science project rubric
+                value:
+                  assignmentDescription: "Students will create a model showing how solar panels work and present it to the class"
+                  gradeLevel: "Class 6"
+                  language: "English"
+                  subject: "Science"
+              essayRubric:
+                summary: Essay writing rubric
+                value:
+                  assignmentDescription: "Write a 300-word essay on the importance of water conservation"
+                  gradeLevel: "Class 8"
+                  language: "Hindi"
+                  subject: "Environmental Studies"
+      
+      responses:
+        '200':
+          description: Rubric generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - title
+                  - description
+                  - criteria
+                properties:
+                  title:
+                    type: string
+                    description: Rubric title
+                    example: "Science Project Rubric"
+                  description:
+                    type: string
+                    description: Brief description of assignment
+                    example: "Criteria for evaluating solar panel project"
+                  criteria:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - name
+                        - levels
+                      properties:
+                        name:
+                          type: string
+                          description: Criterion name
+                          example: "Content Knowledge"
+                        levels:
+                          type: array
+                          description: Performance levels (Excellent, Good, Needs Improvement, Poor)
+                          items:
+                            type: object
+                            required:
+                              - level
+                              - description
+                            properties:
+                              level:
+                                type: string
+                                example: "Excellent"
+                              description:
+                                type: string
+                                example: "Demonstrates deep understanding of solar energy concepts"
+                              points:
+                                type: integer
+                                example: 4
+                  gradeLevel:
+                    type: string
+                    nullable: true
+                  subject:
+                    type: string
+                    nullable: true
+              examples:
+                success:
+                  summary: Complete rubric
+                  value:
+                    title: "Solar Energy Project Rubric"
+                    description: "Grading criteria for Class 6 solar panel model project"
+                    criteria:
+                      - name: "Content Knowledge"
+                        levels:
+                          - level: "Excellent"
+                            description: "Demonstrates thorough understanding of how solar panels convert sunlight to electricity"
+                            points: 4
+                          - level: "Good"
+                            description: "Shows good understanding with minor gaps"
+                            points: 3
+                          - level: "Needs Improvement"
+                            description: "Basic understanding but missing key concepts"
+                            points: 2
+                          - level: "Poor"
+                            description: "Limited understanding of solar energy"
+                            points: 1
+                      - name: "Presentation Skills"
+                        levels:
+                          - level: "Excellent"
+                            description: "Clear, confident presentation with good eye contact"
+                            points: 4
+                          - level: "Good"
+                            description: "Generally clear with some hesitation"
+                            points: 3
+                    gradeLevel: "Class 6"
+                    subject: "Science"
+        
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: string

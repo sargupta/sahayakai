@@ -338,7 +338,7 @@ Total LTV = ₹2,920
 - Field experience in rural Karnataka deployment
 
 **Vision for SahayakAI:**
-> "We're not building another EdTech app - we're building the operating system for Bharat's education transformation. Every rural teacher deserves the same AI superpowers that Silicon Valley engineers have. SahayakAI democratizes world-class pedagogy by transforming rural teachers into 'Super Teachers.'"
+> "We're not building another EdTech app - we're building the operating system for Bharat's education transformation. Every rural teacher deserves the same AI superpowers that Silicon Valley engineers have. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'.** SahayakAI democratizes world-class pedagogy."
 
 ### Key Team Members (Planned Hires - Seed Round)
 

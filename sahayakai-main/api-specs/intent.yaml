@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Intent Router API
+  version: 1.0.0
+  description: AI-powered intent detection and routing
+
+servers:
+  - url: http://localhost:3000
+  - url: https://sahayakai.in
+
+tags:
+  - name: AI Generation
+
+paths:
+  /api/ai/intent:
+    post:
+      summary: Detect user intent and route
+      tags: [AI Generation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt: {type: string, example: "Create a quiz about gravity"}
+                language: {type: string}
+            examples:
+              quiz:
+                value: {prompt: "Create a quiz about photosynthesis", language: "English"}
+              lesson:
+                value: {prompt: "Teach me about the water cycle", language: "Hindi"}
+      responses:
+        '200':
+          description: Intent detected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: {type: string, enum: [lessonPlan, quiz, visualAid, worksheet, virtualFieldTrip, teacherTraining, rubric, instantAnswer]}
+                  result: {type: object}
+              examples:
+                navigate:
+                  value: {type: "quiz", result: {action: "NAVIGATE", url: "/quiz-generator?topic=gravity"}}
+                answer:
+                  value: {type: "instantAnswer", result: {action: "ANSWER", content: "Gravity is..."}}
+      security: [{bearerAuth: []}]
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

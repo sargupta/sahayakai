@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ClipboardCheck, Info } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -215,7 +215,7 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 
-export default function RubricGeneratorPage() {
+function RubricGeneratorContent() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -405,5 +405,13 @@ export default function RubricGeneratorPage() {
 
       {rubric && <RubricDisplay rubric={rubric} />}
     </div>
+  );
+}
+
+export default function RubricGeneratorPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <RubricGeneratorContent />
+    </Suspense>
   );
 }

@@ -33,7 +33,7 @@ Rural teachers are not just educators; they are overburdened administrators mana
 
 **"Force Multiplier for the Rural Teacher"**
 
-By providing a Voice-First, Offline-Capable AI Assistant, we bridge the Urban-Rural divide, ensuring that a child in a remote village receives the same personalized, high-quality, and contextually rich education as a child in a metropolitan city—**democratizing not just schooling, but learning itself**.
+By providing a Voice-First, Offline-Capable AI Assistant, we bridge the Urban-Rural divide, ensuring that a child in a remote village receives the same personalized, high-quality, and contextually rich education as a child in a metropolitan city. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'**—democratizing not just schooling, but learning itself.
 
 ---
 

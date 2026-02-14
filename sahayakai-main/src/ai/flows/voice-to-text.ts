@@ -8,8 +8,8 @@
  * - VoiceToTextOutput - The return type for the voiceToText function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const VoiceToTextInputSchema = z.object({
   audioDataUri: z
@@ -31,8 +31,8 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
 
 const voiceToTextPrompt = ai.definePrompt({
   name: 'voiceToTextPrompt',
-  input: {schema: VoiceToTextInputSchema},
-  output: {schema: VoiceToTextOutputSchema},
+  input: { schema: VoiceToTextInputSchema },
+  output: { schema: VoiceToTextOutputSchema },
   prompt: `Transcribe the following audio data to text:\n\n{{media url=audioDataUri}}`,
 });
 
@@ -43,7 +43,7 @@ const voiceToTextFlow = ai.defineFlow(
     outputSchema: VoiceToTextOutputSchema,
   },
   async input => {
-    const {output} = await voiceToTextPrompt(input);
+    const { output } = await voiceToTextPrompt(input);
     return output!;
   }
 );

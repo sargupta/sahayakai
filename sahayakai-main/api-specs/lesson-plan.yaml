@@ -1,0 +1,436 @@
+openapi: 3.0.0
+info:
+  title: SahayakAI Lesson Plan Generator API
+  version: 1.0.0
+  description: |
+    Generate comprehensive 5E model lesson plans tailored for Indian rural classrooms.
+    Supports multi-grade teaching, Indian context, NCERT alignment, and voice/image inputs.
+  contact:
+    name: SahayakAI Team
+    email: support@sahayakai.in
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://sahayakai.in
+    description: Production server
+
+tags:
+  - name: AI Generation
+    description: AI-powered educational content generation
+
+paths:
+  /api/ai/lesson-plan:
+    post:
+      summary: Generate a comprehensive lesson plan
+      description: |
+        Uses AI to generate a detailed 5E instructional model lesson plan.
+        Automatically saves to the user's library if authenticated.
+      operationId: generateLessonPlan
+      tags:
+        - AI Generation
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonPlanRequest'
+            examples:
+              basicPlan:
+                summary: Basic lesson plan
+                value:
+                  topic: "Photosynthesis"
+                  gradeLevels: ["Class 5"]
+                  language: "English"
+              voiceInput:
+                summary: Voice-generated lesson plan
+                value:
+                  topic: "Teach addition and subtraction to class 2 students using local market examples"
+                  gradeLevels: ["Class 2"]
+                  language: "Hindi"
+                  useRuralContext: true
+                  resourceLevel: "low"
+              ncertAligned:
+                summary: NCERT chapter-aligned plan
+                value:
+                  topic: "Water Cycle"
+                  gradeLevels: ["Class 6"]
+                  language: "English"
+                  subject: "Science"
+                  ncertChapter:
+                    title: "Air Around Us"
+                    number: 15
+                    subject: "Science"
+                    learningOutcomes:
+                      - "Understand the states of water"
+                      - "Explain evaporation and condensation"
+              multiGrade:
+                summary: Multi-grade classroom plan
+                value:
+                  topic: "Indian Freedom Struggle"
+                  gradeLevels: ["Class 7", "Class 8"]
+                  language: "Bengali"
+                  difficultyLevel: "standard"
+                  resourceLevel: "medium"
+      
+      responses:
+        '200':
+          description: Lesson plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonPlanResponse'
+              examples:
+                success:
+                  summary: Generated 5E lesson plan
+                  value:
+                    title: "Understanding Photosynthesis"
+                    gradeLevel: "5th Grade"
+                    duration: "45 minutes"
+                    subject: "Science"
+                    objectives:
+                      - "SWBAT explain the process of photosynthesis"
+                      - "SWBAT identify the role of chlorophyll"
+                    keyVocabulary:
+                      - term: "Chlorophyll"
+                        meaning: "The green pigment in plants that captures sunlight"
+                      - term: "Glucose"
+                        meaning: "Sugar produced by plants during photosynthesis"
+                    materials:
+                      - "Green leaves"
+                      - "Beaker"
+                      - "Alcohol"
+                      - "Iodine solution"
+                    activities:
+                      - phase: "Engage"
+                        name: "Plant Breathing Story"
+                        description: "Start with a riddle: 'I drink water, eat sunlight, and breathe out what you breathe in. Who am I?'"
+                        duration: "5 minutes"
+                        teacherTips: "Encourage students to observe plants around the school"
+                        understandingCheck: "Can you name one thing plants need to make food?"
+                      - phase: "Explore"
+                        name: "Leaf Starch Test"
+                        description: "Students observe a destarched leaf exposed to sunlight and test for starch using iodine"
+                        duration: "15 minutes"
+                        teacherTips: "Prepare leaves a day before by keeping them in dark"
+                        understandingCheck: "What color did the leaf turn after adding iodine?"
+                      - phase: "Explain"
+                        name: "Photosynthesis Process"
+                        description: "Explain the chemical equation and role of sunlight, water, and carbon dioxide"
+                        duration: "10 minutes"
+                        teacherTips: "Use a diagram on the blackboard showing the flow"
+                        understandingCheck: "What are the raw materials needed for photosynthesis?"
+                      - phase: "Elaborate"
+                        name: "Farming Connection"
+                        description: "Discuss how farmers ensure plants get enough sunlight and water"
+                        duration: "10 minutes"
+                        teacherTips: "Ask students about crops they see in their village"
+                        understandingCheck: "Why do farmers remove weeds from croplands?"
+                      - phase: "Evaluate"
+                        name: "Quick Quiz"
+                        description: "5 quick-fire questions on photosynthesis"
+                        duration: "5 minutes"
+                        teacherTips: "Use thumbs up/down for rapid assessment"
+                        understandingCheck: "Can you draw the photosynthesis process?"
+                    assessment: "Draw and label the photosynthesis process diagram"
+                    homework: "Observe and list 5 plants at home. Note which get more sunlight."
+                    language: "English"
+        
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                safetyViolation:
+                  summary: Safety check failed
+                  value:
+                    error: "Safety Violation: Topic contains inappropriate content"
+                missingTopic:
+                  summary: Missing required field
+                  value:
+                    error: "Topic is required"
+        
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        
+        '500':
+          $ref: '#/components/responses/ServerError'
+      
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase Authentication token (passed as x-user-id header)
+  
+  schemas:
+    LessonPlanRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: The topic for the lesson plan (supports voice transcriptions)
+          example: "Photosynthesis for Class 5"
+        
+        gradeLevels:
+          type: array
+          items:
+            type: string
+          description: Target grade levels (auto-extracted from topic if mentioned)
+          example: ["Class 5"]
+        
+        language:
+          type: string
+          enum:
+            - English
+            - Hindi
+            - Bengali
+            - Kannada
+            - Tamil
+            - Telugu
+            - Marathi
+            - Gujarati
+            - Punjabi
+            - Malayalam
+            - Odia
+          default: English
+          description: Output language for lesson plan
+        
+        subject:
+          type: string
+          description: Academic subject area
+          example: "Science"
+        
+        resourceLevel:
+          type: string
+          enum: [low, medium, high]
+          default: low
+          description: |
+            Classroom resource availability:
+            - low: Chalk, blackboard, local items (leaves, stones)
+            - medium: Chart papers, pens, basic objects
+            - high: Projector, internet access
+        
+        difficultyLevel:
+          type: string
+          enum: [remedial, standard, advanced]
+          default: standard
+          description: |
+            Content difficulty:
+            - remedial: Simplified for struggling learners
+            - standard: Grade-appropriate
+            - advanced: Challenging for advanced learners
+        
+        useRuralContext:
+          type: boolean
+          default: true
+          description: Use Indian rural examples (farming, seasons, local festivals)
+        
+        ncertChapter:
+          type: object
+          description: Specific NCERT chapter alignment
+          properties:
+            title:
+              type: string
+              example: "Air Around Us"
+            number:
+              type: integer
+              example: 15
+            subject:
+              type: string
+              example: "Science"
+            learningOutcomes:
+              type: array
+              items:
+                type: string
+              example:
+                - "Understand properties of air"
+                - "Explain atmospheric pressure"
+        
+        imageDataUri:
+          type: string
+          format: uri
+          description: |
+            Optional textbook page image as data URI.
+            Format: data:<mimetype>;base64,<encoded_data>
+    
+    LessonPlanResponse:
+      type: object
+      required:
+        - title
+        - objectives
+        - materials
+        - activities
+      properties:
+        title:
+          type: string
+          description: Concise and engaging lesson title
+          example: "Understanding Photosynthesis"
+        
+        gradeLevel:
+          type: string
+          nullable: true
+          description: Target grade level
+          example: "5th Grade"
+        
+        duration:
+          type: string
+          nullable: true
+          description: Estimated lesson duration
+          example: "45 minutes"
+        
+        subject:
+          type: string
+          nullable: true
+          description: Subject area
+          example: "Science"
+        
+        objectives:
+          type: array
+          items:
+            type: string
+          description: Measurable learning objectives (SWBAT format)
+          example:
+            - "SWBAT explain the process of photosynthesis"
+            - "SWBAT identify the role of chlorophyll"
+        
+        keyVocabulary:
+          type: array
+          nullable: true
+          items:
+            type: object
+            required:
+              - term
+              - meaning
+            properties:
+              term:
+                type: string
+                example: "Chlorophyll"
+              meaning:
+                type: string
+                description: Student-friendly definition
+                example: "Green pigment that captures sunlight"
+        
+        materials:
+          type: array
+          items:
+            type: string
+          description: Required materials list (includes items from activities)
+          example:
+            - "Green leaves"
+            - "Beaker"
+            - "Alcohol"
+        
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+          description: Structured 5E model activities
+        
+        assessment:
+          type: string
+          nullable: true
+          description: Summative assessment method
+          example: "Draw and label the photosynthesis process"
+        
+        homework:
+          type: string
+          nullable: true
+          description: Follow-up home activity
+          example: "Observe 5 plants at home and note sunlight exposure"
+        
+        language:
+          type: string
+          description: Language of lesson plan content
+          example: "English"
+    
+    Activity:
+      type: object
+      required:
+        - phase
+        - name
+        - description
+        - duration
+      properties:
+        phase:
+          type: string
+          enum: [Engage, Explore, Explain, Elaborate, Evaluate]
+          description: 5E instructional model phase
+        
+        name:
+          type: string
+          description: Activity name
+          example: "Plant Breathing Story"
+        
+        description:
+          type: string
+          description: Detailed activity instructions
+          example: "Start with a riddle about plants to spark curiosity"
+        
+        duration:
+          type: string
+          description: Estimated time
+          example: "5 minutes"
+        
+        teacherTips:
+          type: string
+          nullable: true
+          description: Behind-the-lesson advice for effective execution
+          example: "Encourage students to observe plants around the school"
+        
+        understandingCheck:
+          type: string
+          nullable: true
+          description: Quick question to check student comprehension
+          example: "Can you name one thing plants need to make food?"
+    
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Detailed error information
+  
+  responses:
+    Unauthorized:
+      description: Unauthorized - missing user authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized: Missing User Identity"
+    
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            aiGenerationFailed:
+              summary: AI generation failure
+              value:
+                error: "Internal Server Error"
+                details: "AI model returned null output"
+            schemaMismatch:
+              summary: Schema validation failure
+              value:
+                error: "Internal Server Error"
+                details: "Schema validation failed: Missing required field 'objectives'"
