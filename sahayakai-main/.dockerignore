@@ -7,3 +7,4 @@ README.md
 .git
 .github
 *.local
+!.env.local
