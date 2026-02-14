@@ -4,7 +4,7 @@
 import { voiceToText } from "@/ai/flows/voice-to-text";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, logger } from "@/lib/utils";
 import { Mic, StopCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 
@@ -37,6 +37,22 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const { toast } = useToast();
 
+  const maxVolumeRef = useRef<number>(0);
+  const sustainedSpeechFramesRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null); // Added for stream management
+  const failsafeTimerRef = useRef<NodeJS.Timeout | null>(null); // Added for failsafe timer
+
+  // VAD State Refs
+  const isSpeakingRef = useRef<boolean>(false);
+  const silenceStartTimeRef = useRef<number | null>(null);
+  const speechStartTimeRef = useRef<number | null>(null);
+
+  const SPEECH_THRESHOLD = 5; // Balanced threshold for reliable silence detection
+  const SUSTAINED_FRAMES_THRESHOLD = 5;
+  const SILENCE_DURATION_MS = 5000;
+  const MIN_SPEECH_DURATION_MS = 500;
+  const MAX_RECORDING_TIME_MS = 30000; // Failsafe: 30 second max
+
   const drawWaveform = () => {
     if (!canvasRef.current || !analyserRef.current) return;
     const canvas = canvasRef.current;
@@ -47,6 +63,49 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
+
+    // Calculate Volume for Silence Detection
+    let maxVal = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      const amplitude = Math.abs(dataArray[i] - 128);
+      if (amplitude > maxVal) maxVal = amplitude;
+    }
+    if (maxVal > maxVolumeRef.current) {
+      maxVolumeRef.current = maxVal;
+    }
+
+    // VAD Logic: Check Volume against Threshold
+    if (maxVal > SPEECH_THRESHOLD) {
+      // SPEECH DETECTED
+      sustainedSpeechFramesRef.current += 1;
+
+      if (!isSpeakingRef.current) {
+        isSpeakingRef.current = true;
+        speechStartTimeRef.current = Date.now();
+        console.log("🎤 VAD: Speech started! Volume:", maxVal);
+        logger.info("VAD: Speech started", { volume: maxVal });
+      }
+
+      silenceStartTimeRef.current = null; // Reset silence timer
+    } else {
+      // SILENCE DETECTED
+      if (isSpeakingRef.current) {
+        // User WAS speaking, now silent
+        if (!silenceStartTimeRef.current) {
+          silenceStartTimeRef.current = Date.now();
+          console.log("🔇 VAD: Silence started");
+        }
+
+        // Check if silence has exceeded duration
+        const silenceDuration = Date.now() - silenceStartTimeRef.current;
+        if (silenceDuration > SILENCE_DURATION_MS) {
+          console.log("⏹️ VAD: Auto-stopping due to silence", silenceDuration);
+          logger.info("VAD: Auto-stopping due to silence", { duration: silenceDuration });
+          handleStopRecording();
+          return; // Exit loop, stopRecording will clear animation frame
+        }
+      }
+    }
 
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 2;
@@ -72,12 +131,47 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     animationFrameRef.current = requestAnimationFrame(drawWaveform);
   };
 
+  // Extract stop logic to reusable function for VAD
+  const handleStopRecording = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = undefined;
+    }
+    if (failsafeTimerRef.current) {
+      clearTimeout(failsafeTimerRef.current);
+      failsafeTimerRef.current = null;
+    }
+
+    // Idempotent Stop
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      logger.info("VAD: Stopping MediaRecorder");
+      mediaRecorderRef.current.stop();
+    }
+  };
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsRecording(true);
       audioChunksRef.current = [];
-      mediaRecorderRef.current = new MediaRecorder(stream);
+
+      // Reset VAD Metrics
+      maxVolumeRef.current = 0;
+      sustainedSpeechFramesRef.current = 0;
+      isSpeakingRef.current = false;
+      silenceStartTimeRef.current = null;
+      speechStartTimeRef.current = null;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream; // Store stream for cleanup
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      // FAILSAFE: Force stop after MAX time
+      failsafeTimerRef.current = setTimeout(() => {
+        console.warn("⚠️ FAILSAFE: Max recording time reached");
+        handleStopRecording();
+      }, MAX_RECORDING_TIME_MS);
 
       // Setup audio visualization
       if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
@@ -96,6 +190,24 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       };
 
       mediaRecorderRef.current.onstop = async () => {
+        // Robust Noise Filtering Logic
+        // We only error if the user NEVER spoke during the entire session.
+        // If they spoke and then went silent (triggering auto-stop), that is SUCCESS, not error.
+
+        // REMOVED: Client-side "No Speech" block.
+        // We now pass EVERYTHING to the backend as requested by the user.
+        // The AI model will decide if the audio is valid.
+
+        /* 
+        const hasSpoken = isSpeakingRef.current;
+        const isTooQuiet = maxVolumeRef.current < SPEECH_THRESHOLD;
+ 
+        if (!hasSpoken && isTooQuiet) {
+           // ... logic removed ...
+           return;
+        }
+        */
+
         setIsTranscribing(true);
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const reader = new FileReader();
@@ -104,19 +216,36 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           const base64Audio = reader.result as string;
           try {
             const { text } = await voiceToText({ audioDataUri: base64Audio });
+            // Secondary Check: If text is extremely short or just punctuation/noise
+            if (!text || text.length < 2) {
+              toast({
+                title: "No Speech Detected",
+                description: "We couldn't hear you clearly.",
+                variant: "default",
+              });
+              return;
+            }
             onTranscriptChange(text);
           } catch (error) {
-            console.error("Transcription failed:", error);
+            console.error("Transcription error:", error);
+            logger.error("Voice-to-text transcription failed", error, {
+              apiEndpoint: "/api/voice-to-text",
+              audioSize: audioBlob.size
+            });
+
             toast({
-              title: "Transcription Error",
-              description: "Could not transcribe audio. Please try again.",
+              title: "Error",
+              description: "Failed to transcribe audio. Please try again.",
               variant: "destructive",
             });
           } finally {
+            // Delay slightly to allow UI to settle? No, just reset.
             setIsTranscribing(false);
+            setIsRecording(false); // Ensure we are reset
           }
         };
-        stream.getTracks().forEach((track) => track.stop()); // Stop microphone access
+        // Note: tracks are stopped in startRecording or cleanup, but good to be sure
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorderRef.current.start();
@@ -170,10 +299,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   const getIconSize = () => {
     switch (iconSize) {
-      case "sm": return "h-4 w-4";
-      case "lg": return "h-10 w-10";
-      case "xl": return "h-16 w-16";
-      default: return "h-6 w-6";
+      case "sm": return "h-5 w-5"; // 20px (Slightly larger than 16px)
+      case "lg": return "h-14 w-14"; // 56px (Better fill for 80px button)
+      case "xl": return "h-32 w-32"; // 128px (Homepage Hero)
+      default: return "h-6 w-6"; // 24px (Standard)
     }
   };
 
@@ -181,30 +310,30 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     if (isFloating) return "h-20 w-20 md:h-24 md:w-24";
     if (iconSize === 'xl') return "h-32 w-32";
     if (iconSize === 'lg') return "h-20 w-20";
-    return ""; // use size prop
+    return ""; // use default size
   };
 
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-3",
-        isFloating && "fixed bottom-8 right-8 z-[100] animate-bounce-subtle",
-        className
-      )}
-    >
+    <div className="flex flex-col items-center gap-4">
       <Button
-        type="button"
-        onClick={handleMicClick}
-        disabled={isTranscribing}
         variant={isRecording ? "destructive" : variant}
         size={isFloating || iconSize === 'lg' || iconSize === 'xl' ? "icon" : size}
         className={cn(
-          "transition-all duration-300 ease-in-out shadow-xl",
+          "relative transition-all duration-300 flex items-center justify-center", // Ensure centering
+          isRecording && "bg-destructive hover:bg-destructive/90 animate-pulse ring-4 ring-destructive/30 text-white",
+          isTranscribing && "cursor-wait opacity-80",
+          // Floating positioning
+          isFloating && "fixed bottom-8 right-8 rounded-full shadow-2xl z-50 border-4 border-white dark:border-slate-900",
           getButtonSize(),
-          isRecording && "animate-pulse scale-110",
+          className,
+          "transition-all duration-300 ease-in-out shadow-xl",
           !isRecording && variant === 'default' && "rounded-full hover:scale-110",
-          isFloating && "bg-primary text-primary-foreground hover:bg-primary/90 border-4 border-white dark:border-slate-900"
+          // CRITICAL: This MUST be last to override any bg-* from className prop
+          !isRecording && "!bg-primary !text-primary-foreground hover:!bg-primary/90"
         )}
+        onClick={isRecording ? handleStopRecording : startRecording}
+        disabled={isTranscribing}
+        data-microphone="true"
         aria-label={isRecording ? "Stop recording" : "Start recording"}
       >
         {isTranscribing ? (
@@ -216,25 +345,29 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         )}
       </Button>
 
-      {(label || isRecording) && (
-        <div className={cn(
-          "px-4 py-2 rounded-full backdrop-blur-md shadow-sm border transition-all duration-300",
-          isRecording ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse" : "bg-white/80 text-slate-700 border-slate-200"
-        )}>
-          <span className="text-sm font-bold whitespace-nowrap">
-            {isTranscribing ? "Transcribing..." : isRecording ? "Speaking..." : label}
-          </span>
-        </div>
-      )}
+      {
+        (label || isRecording) && (
+          <div className={cn(
+            "px-4 py-2 rounded-full backdrop-blur-md shadow-sm border transition-all duration-300",
+            isRecording ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse" : "bg-white/80 text-slate-700 border-slate-200"
+          )}>
+            <span className="text-sm font-bold whitespace-nowrap">
+              {isTranscribing ? "Transcribing..." : isRecording ? "Speaking..." : label}
+            </span>
+          </div>
+        )
+      }
 
-      {isRecording && (
-        <div className={cn(
-          "overflow-hidden rounded-xl bg-slate-100/50 backdrop-blur-sm border border-slate-200",
-          isFloating ? "fixed bottom-40 right-8 w-64 h-24" : "h-16 w-full"
-        )}>
-          <canvas ref={canvasRef} width="300" height="80" className="h-full w-full" />
-        </div>
-      )}
-    </div>
+      {
+        isRecording && (
+          <div className={cn(
+            "overflow-hidden rounded-xl bg-slate-100/50 backdrop-blur-sm border border-slate-200",
+            isFloating ? "fixed bottom-40 right-8 w-64 h-24" : "h-16 w-full"
+          )}>
+            <canvas ref={canvasRef} width="300" height="80" className="h-full w-full" />
+          </div>
+        )
+      }
+    </div >
   );
 };

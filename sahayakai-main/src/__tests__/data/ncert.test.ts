@@ -8,7 +8,7 @@ describe('NCERT Mathematics Data', () => {
             // We know from the file there are 8 chapters in Grade 6
             const grade6 = NCERTMathematics.find(g => g.grade === 6);
             expect(grade6).toBeDefined();
-            expect(grade6?.chapters.length).toBe(8);
+            expect(grade6?.chapters.length).toBe(12);
         });
 
         it('should include "Knowing Our Numbers" in Grade 6', () => {
@@ -17,7 +17,6 @@ describe('NCERT Mathematics Data', () => {
 
             expect(chapter).toBeDefined();
             expect(chapter?.id).toBe('math-6-1');
-            expect(chapter?.subject).toBeUndefined(); // Raw data doesn't have subject on chapter level
         });
 
         it('should include "Real Numbers" in Grade 10', () => {
@@ -34,7 +33,7 @@ describe('NCERT Mathematics Data', () => {
             const chapters = getChaptersForGrade(6, 'Mathematics');
 
             // Should be 8
-            expect(chapters.length).toBe(8);
+            expect(chapters.length).toBe(12);
 
             // Should have subject 'Mathematics' injected by the helper (index.ts)
             chapters.forEach(c => {

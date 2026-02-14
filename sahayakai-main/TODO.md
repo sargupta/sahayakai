@@ -1,5 +1,11 @@
 # SahayakAI - TODO List
 
+## 🔥 Critical Fixes (Audit Findings)
+- [x] **Fix Firestore Rules**: Secure `lesson-plans`, `instant-answers`, and `users` collections. Current rules are too permissive or irrelevant.
+- [x] **Verify Offline User Flow**: Test PWA offline capabilities and "Local Fallback" for NCERT.
+- [x] **Enable Offline Persistence**: explicitly enable `enableIndexedDbPersistence` in `firebase.ts`.
+- [x] **Telemetry Verification**: Ensure usage data is being captured for impact analysis.
+
 ## 🎯 High Priority - Teacher Experience Improvements
 
 ### ✅ Completed
@@ -76,3 +82,10 @@
 
 ---
 *Last Updated: 2025-12-08*
+
+## 🏗️ Future Architecture (API-First Strategy)
+- [ ] **Generate OpenAPI Spec**: Export `openapi.json` from `ai-video-script-generator` (FastAPI).
+- [ ] **Generate TypeScript Client**: Create `npm run generate-client` in `sahayakai-main` to sync with Python API.
+- [ ] **Refactor Next.js Backend**: Decouple API routes to support both Web and Mobile (Offline-First).
+- [ ] **Implement Mobile Sync**: Build API endpoints specifically for `isar` database synchronization.
+

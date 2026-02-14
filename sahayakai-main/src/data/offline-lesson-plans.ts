@@ -24,16 +24,19 @@ export const offlineLessonPlans: Record<string, LessonPlanOutput> = {
         ],
         activities: [
             {
+                phase: "Engage",
                 name: "Introduction (The Hungry Plant)",
                 description: "Ask students: 'We eat food to get energy. Do plants eat food? How do they get energy?' Discuss their answers. Introduce the concept that plants 'cook' their own food using sunlight.",
                 duration: "10 minutes"
             },
             {
+                phase: "Explain",
                 name: "The Kitchen of the Plant",
                 description: "Draw a simple diagram of a plant on the blackboard. Label the leaf as the 'Kitchen'. Explain how roots bring water (ingredients) and leaves take sunlight (fire) to cook food.",
                 duration: "20 minutes"
             },
             {
+                phase: "Explore",
                 name: "Leaf Observation",
                 description: "Take students outside or bring leaves to class. Ask them to observe the green color (Chlorophyll) and explain that this green color helps catch sunlight.",
                 duration: "15 minutes"
@@ -60,16 +63,19 @@ export const offlineLessonPlans: Record<string, LessonPlanOutput> = {
         ],
         activities: [
             {
+                phase: "Explore",
                 name: "Paper Folding Activity",
                 description: "Give each student a sheet of paper. Ask them to fold it once to make 2 equal parts. Explain that each part is 1/2. Fold again to make 4 parts (1/4).",
                 duration: "15 minutes"
             },
             {
+                phase: "Explain",
                 name: "Blackboard Visualization",
                 description: "Draw a circle (Roti) on the board. Divide it into 4 parts. Shade 1 part. Write '1/4' and explain: 1 is the shaded part (Numerator), 4 is the total parts (Denominator).",
                 duration: "15 minutes"
             },
             {
+                phase: "Evaluate",
                 name: "Real-life Quiz",
                 description: "Ask: 'If you share one guava equally with your friend, how much do you get?' (Answer: 1/2).",
                 duration: "10 minutes"
@@ -95,11 +101,13 @@ export const offlineLessonPlans: Record<string, LessonPlanOutput> = {
         ],
         activities: [
             {
+                phase: "Engage",
                 name: "The Solar Family",
                 description: "Draw the Sun on the left side of the board. Explain it is the head of the family. Draw planets in order. Use a mnemonic: 'My Very Efficient Mother Just Served Us Nuts' (Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune).",
                 duration: "20 minutes"
             },
             {
+                phase: "Explore",
                 name: "Role Play: Orbiting Planets",
                 description: "Take students to the ground. One student is the Sun. Others are planets. Ask them to walk in circles (orbits) around the Sun at different speeds.",
                 duration: "20 minutes"

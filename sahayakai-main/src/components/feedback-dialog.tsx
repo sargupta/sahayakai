@@ -12,7 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsDown, ThumbsUp, MessageSquare } from "lucide-react";
 import { useState } from "react";
-// import { submitFeedback } from "@/app/actions/feedback"; // Switched to Client SDK
+import { submitFeedback } from "@/app/actions/feedback";
 import { useToast } from "@/hooks/use-toast";
 
 interface FeedbackDialogProps {
@@ -32,19 +32,17 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
     const handleSubmit = async (selectedRating: 'thumbs-up' | 'thumbs-down', userComment?: string) => {
         setIsSubmitting(true);
         try {
-            // Dynamically import to ensure client-side execution
-            const { db } = await import('@/lib/firebase');
-            const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-
-            await addDoc(collection(db, 'feedbacks'), {
+            const result = await submitFeedback({
                 page,
                 feature,
                 rating: selectedRating,
-                comment: userComment || "",
-                context: context || {},
-                timestamp: serverTimestamp(),
-                userAgent: navigator.userAgent
+                comment: userComment,
+                context,
             });
+
+            if (!result.success) {
+                throw new Error(result.error || "Submission failed");
+            }
 
             toast({
                 title: "Feedback Received",
@@ -56,22 +54,6 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
 
         } catch (error: any) {
             console.error("Feedback Error:", error);
-
-            if (error.code === 'permission-denied') {
-                toast({
-                    title: "Permission Denied 🔒",
-                    description: "Your Firestore Rules are blocking writes. Please allow 'create' on the 'feedbacks' collection in Firebase Console.",
-                    variant: "destructive"
-                });
-                return;
-            }
-
-            // Fallback for dev/permission issues
-            if (process.env.NODE_ENV === 'development') {
-                console.warn("Firestore Write Failed. Logged to console.");
-                toast({ description: "Logged to Console (DB Permission Error)" });
-                return;
-            }
             toast({
                 title: "Error",
                 description: "Could not save feedback. Please check your connection.",

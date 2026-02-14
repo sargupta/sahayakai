@@ -1,0 +1,24 @@
+[
+    {
+        "description": "Fix: Ensure user profile is created in Firestore upon login",
+        "files": [
+            "src/app/actions/auth.ts",
+            "src/context/auth-context.tsx"
+        ],
+        "type": "fix"
+    },
+    {
+        "description": "Feat: Enable global analytics tracking in layout",
+        "files": [
+            "src/app/layout.tsx"
+        ],
+        "type": "feat"
+    },
+    {
+        "description": "Docs: Update walkthrough with deployment info",
+        "files": [
+            "walkthrough.md"
+        ],
+        "type": "docs"
+    }
+]

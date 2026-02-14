@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from './ui/button';
 import { Download, Save, Copy, ClipboardCheck } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useToast } from '@/hooks/use-toast';
 
 type RubricDisplayProps = {
   rubric: RubricGeneratorOutput;
@@ -28,35 +28,102 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
     return null;
   }
 
-  const handleDownload = () => {
-    const input = document.getElementById('rubric-pdf');
-    if (input) {
-      html2canvas(input, { scale: 2 }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        let width = pdfWidth;
-        let height = width / ratio;
-        if (height > pdfHeight) {
-          height = pdfHeight;
-          width = height * ratio;
-        }
+  const handleDownload = async () => {
+    const element = document.getElementById('rubric-pdf');
+    if (!element) return;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        pdf.save('rubric.pdf');
-      });
+    // Hide action buttons for capture
+    const actionButtons = element.querySelector('.no-print');
+    if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
+
+    try {
+      toast({ title: "Generating PDF...", description: "Preparing rubric document." });
+
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Handle multi-page if needed, but for now single page scale down or split
+      // Simple strategy: fit width, allow height to spill (or add page)
+      if (imgHeight > 297) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+
+      const cleanTitle = (rubric.title || 'Rubric').replace(/[^a-z0-9]/gi, '_');
+      pdf.save(`Sahayak_Rubric_${cleanTitle}.pdf`);
+
+      toast({ title: "PDF Downloaded", description: "Your file is ready." });
+    } catch (error) {
+      console.error("PDF Error:", error);
+      toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
+    } finally {
+      if (actionButtons) (actionButtons as HTMLElement).style.display = '';
     }
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Saved to Library",
-      description: "Your rubric has been saved to your personal library.",
-    });
+  const handleSave = async () => {
+    try {
+      const { auth } = await import('@/lib/firebase');
+      let user = auth.currentUser;
+      if (!user) {
+        toast({ title: "Login Required", description: "Please login to save.", variant: "destructive" });
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      const payload = {
+        id: crypto.randomUUID(),
+        type: 'rubric',
+        title: rubric.title,
+        gradeLevel: rubric.gradeLevel || 'Class 5',
+        subject: rubric.subject || 'General',
+        topic: rubric.title, // Use title as topic fallback
+        language: 'English', // Todo: Pass language prop
+        isPublic: false,
+        isDraft: false,
+        data: rubric
+      };
+
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('Server rejected save');
+
+      toast({
+        title: "Saved to Library",
+        description: "Saved to your personal library.",
+      });
+    } catch (error) {
+      console.error("Save Error:", error);
+      toast({
+        title: "Save Failed",
+        variant: "destructive",
+        description: "Could not save to library."
+      });
+    }
   };
 
   const handleCopy = () => {

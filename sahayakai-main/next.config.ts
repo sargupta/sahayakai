@@ -8,12 +8,13 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   /* config options here */
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   images: {
     remotePatterns: [

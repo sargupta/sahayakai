@@ -17,6 +17,7 @@ type ProfileCardProps = {
     resources: number;
   };
   language: string;
+  onEdit?: () => void;
 };
 
 const translations: Record<string, Record<string, string>> = {
@@ -70,7 +71,7 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, language }) => {
+export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, language, onEdit }) => {
   const t = translations[language] || translations.en;
 
   return (
@@ -79,7 +80,7 @@ export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, lang
       <CardContent className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-6 pt-0">
         <Avatar className="-mt-12 h-24 w-24 border-4 border-background">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="teacher profile"/>
+            <AvatarImage src={avatarUrl} alt={name} data-ai-hint="teacher profile" />
           ) : (
             <Skeleton className="h-full w-full rounded-full" />
           )}
@@ -102,12 +103,14 @@ export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, lang
             </div>
           </div>
         </div>
-        <div className="flex-shrink-0">
-            <Button variant="outline">
-                <Pencil className="mr-2 h-4 w-4" />
-                {t.editProfile}
+        {onEdit && (
+          <div className="flex-shrink-0">
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t.editProfile}
             </Button>
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

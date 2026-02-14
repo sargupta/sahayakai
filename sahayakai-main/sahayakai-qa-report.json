@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Lesson Plan Generator",
+    "success": true,
+    "duration": 12425
+  },
+  {
+    "name": "Quiz Generator",
+    "success": true,
+    "duration": 6016
+  },
+  {
+    "name": "Worksheet Wizard",
+    "success": true,
+    "duration": 7104
+  },
+  {
+    "name": "Visual Aid Designer",
+    "success": true,
+    "duration": 20611
+  },
+  {
+    "name": "Rubric Generator",
+    "success": true,
+    "duration": 11065
+  },
+  {
+    "name": "Virtual Field Trip",
+    "success": true,
+    "duration": 8639
+  },
+  {
+    "name": "Instant Answer",
+    "success": true,
+    "duration": 3406
+  },
+  {
+    "name": "Teacher Training",
+    "success": true,
+    "duration": 7276
+  }
+]

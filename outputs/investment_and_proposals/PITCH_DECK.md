@@ -13,7 +13,7 @@
 # **SahayakAI**
 ### Democratizing World-Class Pedagogy for Rural India
 
-**"Building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'"**
+**"Transforming Every Rural Teacher into a Super Teacher"**
 
 ---
 

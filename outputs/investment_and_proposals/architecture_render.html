@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SahayakAI Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background-color: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        #diagram {
+            padding: 30px;
+            background: #0d1117;
+            border-radius: 12px;
+            display: inline-block;
+            width: 100%;
+            height: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Custom Mermaid node styling to make it bigger */
+        .node rect,
+        .node circle,
+        .node polygon,
+        .node path {
+            stroke-width: 2px !important;
+        }
+
+        .node .label {
+            font-size: 16px !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="diagram">
+        <div class="mermaid">
+            graph TD
+            %% Node Styles
+            classDef default fill:#1f2937,stroke:#3b82f6,stroke-width:2px,color:#fff;
+            classDef core fill:#1e3a8a,stroke:#3b82f6,stroke-width:4px,color:#fff,font-weight:bold;
+            classDef pillar fill:#111827,stroke:#60a5fa,stroke-width:2px,color:#dbeafe;
+            classDef leaf fill:#0f172a,stroke:#94a3b8,stroke-dasharray: 5 5,color:#cbd5e1;
+
+            User["<b>Teacher Voice/Text Input</b>"]:::default --> Orchestrator["<b>AGENT GARDEN
+                KERNEL</b><br />(Orchestrator)"]:::core
+
+            Orchestrator --> Admin["<b>Admin Exoskeleton</b><br />(Automation)"]:::pillar
+            Orchestrator --> LG["<b>Resource Synthesizer</b><br />(Content Generation)"]:::pillar
+            Orchestrator --> Mentor["<b>Pedagogical Mentorship</b><br />(Real-time Coaching)"]:::pillar
+
+            Admin --> Logs["Reports & MDM Logs"]:::leaf
+            LG --> Materials["Worksheets & Plans"]:::leaf
+            Mentor --> Coach["Just-in-Time Tips"]:::leaf
+
+            Admin & LG & Mentor --> Guardrails["<b>Internal Adversarial Review</b>"]:::core
+            Guardrails --> Output["<b>SUPER-TEACHER OUTPUT</b>"]:::default
+
+            linkStyle default stroke:#3b82f6,stroke-width:3px,fill:none;
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: false, /* Force it to take actual size */
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+
+> nextn@0.1.0 build
+> next build
+
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+   ▲ Next.js 15.5.11
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · serverActions
+     · clientTraceMetadata
+
+   Creating an optimized production build ...
+[@sentry/nextjs] It appears you've configured a `sentry.server.config.ts` file. Please ensure to put this file's content into the `register()` function of a Next.js instrumentation file instead. To ensure correct functionality of the SDK, `Sentry.init` must be called inside of an instrumentation file. Learn more about setting up an instrumentation file in Next.js: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation. You can safely delete the `sentry.server.config.ts` file afterward.
+[@sentry/nextjs] Could not find a Next.js instrumentation file. This indicates an incomplete configuration of the Sentry SDK. An instrumentation file is required for the Sentry SDK to be initialized on the server: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#create-initialization-config-files (you can suppress this warning by setting SENTRY_SUPPRESS_INSTRUMENTATION_FILE_WARNING=1 as environment variable)
+> [PWA] Compile server
+[@sentry/nextjs] It seems like you don't have a global error handler set up. It is recommended that you add a 'global-error.js' file with Sentry instrumentation so that React rendering errors are reported to Sentry. Read more: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#react-render-errors-in-app-router (you can suppress this warning by setting SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 as environment variable)
+[@sentry/nextjs] It appears you've configured a `sentry.edge.config.ts` file. Please ensure to put this file's content into the `register()` function of a Next.js instrumentation file instead. To ensure correct functionality of the SDK, `Sentry.init` must be called inside of an instrumentation file. Learn more about setting up an instrumentation file in Next.js: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation. You can safely delete the `sentry.edge.config.ts` file afterward.
+> [PWA] Compile server
+> [PWA] Compile client (static)
+> [PWA] Auto register service worker with: /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next-pwa/register.js
+> [PWA] Service worker: /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/public/sw.js
+> [PWA]   url: /sw.js
+> [PWA]   scope: /
+[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file, or moving its content to `instrumentation-client.ts`. When using Turbopack `sentry.client.config.ts` will no longer work. Read more about the `instrumentation-client.ts` file: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
+ ⚠ Compiled with warnings in 5.5s
+
+./src/lib/logger.ts
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./src/lib/logger.ts
+./src/app/error.tsx
+
+./src/lib/logger.ts
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./src/lib/logger.ts
+./src/app/error.tsx
+
+./src/lib/logger.ts
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./src/lib/logger.ts
+./src/ai/flows/lesson-plan-generator.ts
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/24) ...
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/lesson-plan". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at g (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/.next/server/chunks/8536.js:24:49830)
+    at m (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/.next/server/chunks/8536.js:24:2686)
+    at /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/.next/server/app/lesson-plan/page.js:67:49583
+    at bC (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/.next/server/app/lesson-plan/page.js:67:52192)
+    at n3 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:82831)
+    at n6 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84601)
+    at n5 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:104801)
+    at n7 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:102219)
+    at n8 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:83183)
+    at n6 (/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:2:84647)
+Error occurred prerendering page "/lesson-plan". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /lesson-plan/page: /lesson-plan, exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null

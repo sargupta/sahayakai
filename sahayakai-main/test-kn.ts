@@ -28,9 +28,9 @@ async function testKannadaSupport() {
             gradeLevel: "8th Grade"
         });
 
-        console.log("✅ Quiz Title:", quiz.title);
-        console.log("✅ First Question:", quiz.questions[0]?.questionText);
-        console.log("✅ Explanation Sample:", quiz.questions[0]?.explanation);
+        console.log("✅ Quiz Title:", quiz.medium?.title);
+        console.log("✅ First Question:", quiz.medium?.questions[0]?.questionText);
+        console.log("✅ Explanation Sample:", quiz.medium?.questions[0]?.explanation);
 
         console.log("\n🚀 KANNADA VERIFICATION COMPLETE");
     } catch (error) {

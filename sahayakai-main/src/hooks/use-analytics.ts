@@ -4,9 +4,8 @@
  * Unified analytics hook for tracking teacher engagement and social impact
  */
 
-import { useEffect, useCallback, useRef, useState } from 'react';
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/context/auth-context';
 import { usePathname } from 'next/navigation';
 import {
     initAnalytics,
@@ -18,20 +17,12 @@ import {
     type ContentCreatedEvent,
     type ChallengeDetectedEvent,
 } from '@/lib/analytics-events';
-import { trackInteraction, type UserInteractionMetric } from '@/lib/performance-monitor';
 
 export function useAnalytics() {
-    const [user, setUser] = useState<User | null>(null);
+    const { user } = useAuth();
     const pathname = usePathname();
     const previousPath = useRef<string>('');
     const initialized = useRef(false);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-        });
-        return () => unsubscribe();
-    }, []);
 
     // Initialize analytics on mount with user context
     useEffect(() => {
@@ -85,7 +76,6 @@ export function useAnalytics() {
         trackContent,
         trackFeature,
         trackFriction,
-        trackInteraction,
     };
 }
 

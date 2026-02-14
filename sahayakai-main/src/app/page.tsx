@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,8 +13,9 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { processAgentRequest } from "@/ai/flows/agent-router";
-import { Loader2, X } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -23,27 +23,36 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+
+
+
+
 export default function Home() {
+  const { requireAuth, openAuthModal } = useAuth();
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const router = useRouter();
 
   const { toast } = useToast();
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const voiceTranscript = searchParams?.get("voice_transcript");
-
   useEffect(() => {
+    // Client-side only logic
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
 
-    if (voiceTranscript) {
-      form.setValue("topic", voiceTranscript);
-      form.handleSubmit(onSubmit)();
+    // Handle voice transcript from URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const voiceTranscript = params.get("voice_transcript");
+
+      if (voiceTranscript) {
+        form.setValue("topic", voiceTranscript);
+        form.handleSubmit(onSubmit)();
+      }
     }
-  }, [voiceTranscript]);
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,12 +62,37 @@ export default function Home() {
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (!requireAuth()) return;
     // Determine intent using the Smart Router
     setIsThinking(true);
     setAnswer(null);
 
     try {
-      const response = await processAgentRequest({ prompt: values.topic });
+      const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/ai/intent", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ prompt: values.topic })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          openAuthModal();
+          throw new Error("Please sign in to use the AI assistant");
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to process request");
+      }
+
+      const response = await res.json();
       const { result } = response;
 
       if (result?.action === 'NAVIGATE' && result.url) {
@@ -135,7 +169,7 @@ export default function Home() {
           <MicrophoneInput
             onTranscriptChange={handleTranscript}
             iconSize="xl"
-            label="ಪಠ್ಯದ ಬಗ್ಗೆ ಹೇಳಿ / ಕಲ್ಪನೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ (Speak your topic)"
+            label="Speak your topic"
             className="hover:scale-105 transition-transform"
           />
           <p className="text-slate-500 font-medium text-sm md:text-base animate-pulse">
@@ -145,10 +179,10 @@ export default function Home() {
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
-          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/50">
-            <CardContent className="p-1">
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200 transition-all focus-within:ring-primary/50 focus-within:ring-4">
+            <CardContent className="p-2">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex items-center">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <AutoCompleteInput
                       placeholder="Or type here (e.g. 'Photosynthesis')"
@@ -159,11 +193,17 @@ export default function Home() {
                         form.setValue("topic", value);
                         form.handleSubmit(onSubmit)();
                       }}
-                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-3 pl-4 bg-transparent"
+                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-2 pl-4 bg-transparent"
                     />
                   </div>
-                  <Button type="submit" size="sm" variant="ghost" className="mr-1 h-8" aria-label="Generate Lesson Plan">
-                    <ArrowRight className="h-4 w-4" />
+
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"
+                    aria-label="Generate Lesson Plan"
+                  >
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 </form>
               </Form>
@@ -182,7 +222,7 @@ export default function Home() {
           {/* Thinking Indicator */}
           {isThinking && (
             <div className="flex items-center gap-2 text-primary font-medium mt-2 animate-pulse">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              {/* <Loader2 className="h-4 w-4 animate-spin" /> */}
               <span>Thinking...</span>
             </div>
           )}

@@ -25,7 +25,7 @@ SahayakAI isn't just a tool for teachers; it's a feedback loop for the entire ed
 - For Parents, automated SMS/WhatsApp summaries of what was taught, keeping illiterate or semi-literate parents in the loop.
 - For The State, real-time, anonymized analytics on what is actually being taught vs. the curriculum, allowing for data-driven policy interventions rather than guesswork.
 
-The vision is to build the digital backbone of rural Indian education. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'**, ensuring that a child in a remote village has access to the same quality of lesson planning and personalized attention as a child in a metropolitan private school.
+The vision is to build the digital backbone of rural Indian education, ensuring that a child in a remote village has access to the same quality of lesson planning and personalized attention as a child in a metropolitan private school.
 
 —————
 
@@ -45,16 +45,6 @@ Rural teachers are not just educators; they are overburdened administrators ofte
 2. Resource Poverty: Lack of stable connectivity and teaching aids means even motivated teachers cannot access modern pedagogical tools.
 3. Administrative Overload: Non-academic duties leave them with less than 15 minutes of prep time per class.
 SahayakAI solves this by acting as a "Force Multiplier" for the rural teacher. By providing a Voice-First, Offline-Capable AI Assistant, we bridge the Urban-Rural divide, ensuring that a child in a remote village receives the same personalized, high-quality, and contextually rich education as a child in a metropolitan city—democratizing not just schooling, but learning itself.
-
-## SARGVISION’s SahayakAI
-
-SARGVISION’s SahayakAI directly tackles India’s “Quality Paradox” in education: while enrollment and access to schools have improved, learning outcomes, especially in rural areas, remain stubbornly low. The core reason is not a lack of effort from teachers, but a deep and widening urban–rural capacity gap. Rural teachers are expected to teach diverse classrooms, manage heavy administrative loads, navigate multiple local languages, and still deliver an often urban-centric curriculum that feels distant from village realities.
-
-SahayakAI is designed as a Voice-First, Offline-Capable AI teaching companion built specifically for this context. A rural teacher can simply speak to SahayakAI in their preferred language to generate localized lesson plans, quizzes, activities, and explanations that reflect the cultural and linguistic environment of their students. By automating time-consuming planning, documentation, and content creation tasks, SahayakAI frees teachers to focus on what humans do best: building relationships, mentoring, and adapting in real time to the needs of individual learners.
-
-Crucially, SahayakAI works reliably in low-connectivity, low-resource environments, ensuring that even schools on the fringes of the network can benefit from advanced AI support. In doing so, it acts as a force multiplier for each rural teacher, amplifying their impact rather than replacing their judgment.
-
-The result is a simple but powerful promise: a child in a remote village should receive the same standard of high-quality, personalized education as a child in a top urban school. SahayakAI exists to make that level of democratized learning not just an aspiration, but an operational reality.
 
 
 
@@ -78,8 +68,6 @@ Which existing/ novel AI technology are you leveraging to build your solution?*
 * Vertex AI Agent Builder & Agent Development Kit
 * A2A (Agent-to-Agent) Protocol
 * Offline-First Native Architecture
-
-Our GCP based Voice-First Architecture orchestrates Google Gemini 2.0 Flash and specialized agents built on Vertex AI using the Agent Development Kit, utilizing Google's A2A Protocol to enable secure, low-latency, and multimodal pedagogical reasoning
 
 +++++
 What is your unique selling point?
@@ -303,7 +291,7 @@ What is the value proposition/ social impact statement for your AI solution?
 SahayakAI democratizes world-class pedagogy by transforming rural teachers into "Super Teachers."
 * Problem: Rural teachers are overburdened and lack quality resources, causing students to fall behind city peers.
 * Solution: SahayakAI provides an offline AI assistant that creates culturally relevant, localized lesson plans instantly via voice.
-* Impact: We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'**, democratizing quality education by bridging the urban-rural divide.
+* Impact: We democratize quality education by bridging the urban-rural divide, ensuring every village child receives the same high-quality teaching as metropolitan students.
 
 +++++
 

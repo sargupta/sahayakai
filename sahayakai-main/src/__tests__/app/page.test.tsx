@@ -8,43 +8,100 @@ jest.mock('next/navigation', () => ({
     useRouter: jest.fn(),
 }));
 
-// Mock Lucide Icons (Common source of ESM pain)
-jest.mock('lucide-react', () => ({
-    Sparkles: () => <div data-testid="icon-sparkles" />,
-    ArrowRight: () => <div data-testid="icon-arrow" />,
-    BookOpen: () => <div data-testid="icon-book" />,
-    BrainCircuit: () => <div data-testid="icon-brain" />,
-    PenTool: () => <div data-testid="icon-pen" />,
-    GraduationCap: () => <div data-testid="icon-grad" />,
+
+// Mock `lucide-react` globally for this test file
+jest.mock("lucide-react", () => ({
+    // ...jest.requireActual("lucide-react"), // Don't require actual, it causes issues
+    Loader2: (props: any) => <div {...props} data-testid="loader2" />,
+    Mic: (props: any) => <div {...props} data-testid="mic" />,
+    Search: (props: any) => <div {...props} data-testid="search" />,
+    Sparkles: (props: any) => <div {...props} data-testid="sparkles" />,
+    BookOpen: (props: any) => <div {...props} data-testid="book-open" />,
+    BrainCircuit: (props: any) => <div {...props} data-testid="brain-circuit" />,
+    PenTool: (props: any) => <div {...props} data-testid="pen-tool" />,
+    GraduationCap: (props: any) => <div {...props} data-testid="graduation-cap" />,
+    ArrowRight: (props: any) => <div {...props} data-testid="arrow-right" />,
+    X: (props: any) => <div {...props} data-testid="x" />,
+}));
+
+// Mock Firebase to prevent initialization errors
+jest.mock("@/lib/firebase", () => ({
+    auth: { currentUser: null },
+    db: {},
+    app: {},
+    storage: {}
+}));
+
+// agent-router is NOT used in page.tsx (it uses direct fetch to /api/ai/intent), so we don't need to mock the module.
+
+// Mock Component - AutoCompleteInput with forwardRef for React Hook Form compatibility
+jest.mock("@/components/auto-complete-input", () => ({
+    AutoCompleteInput: React.forwardRef((props: any, ref: any) => (
+        <div data-testid="auto-complete-input-mock">
+            <input
+                ref={ref}
+                data-testid="topic-input"
+                name={props.name}
+                value={props.value}
+                onChange={props.onChange}
+                onBlur={props.onBlur}
+                placeholder={props.placeholder}
+            />
+        </div>
+    ))
 }));
 
 // Mock Components
 jest.mock('@/components/microphone-input', () => ({
     MicrophoneInput: ({ onTranscriptChange }: any) => (
-        <button onClick={() => onTranscriptChange('Mic Input')}>Mic Mock</button>
-    )
+        <button onClick={() => onTranscriptChange("Mic Input")}>Mic Mock</button>
+    ),
 }));
 
-jest.mock('@/components/auto-complete-input', () => ({
-    AutoCompleteInput: React.forwardRef((props: any, ref: any) => (
-        <input
-            ref={ref}
-            data-testid="topic-input"
-            onChange={props.onChange}
-            onBlur={props.onBlur} // Important for hook form
-            name={props.name}     // Important for hook form
-            value={props.value || ''}
-            placeholder={props.placeholder}
-        />
-    ))
+jest.mock('@/context/auth-context', () => ({
+    useAuth: jest.fn().mockReturnValue({
+        user: { uid: 'test-user', email: 'test@example.com', displayName: 'Teacher' },
+        loading: false,
+        requireAuth: jest.fn().mockReturnValue(true),
+        openAuthModal: jest.fn(),
+    })
 }));
+
+// Mock Icons
+// Utilizes src/__mocks__/lucide-react.ts via moduleNameMapper in jest.config.ts
 
 describe('Home Page', () => {
     const mockPush = jest.fn();
 
+    beforeAll(() => {
+        // Mock global.fetch to simulate /api/ai/intent response
+        global.fetch = jest.fn((url, options) => {
+            if (url === "/api/ai/intent" && options?.method === 'POST') {
+                const body = JSON.parse(options.body as string);
+                const topic = body.prompt;
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve({
+                        result: {
+                            action: 'NAVIGATE',
+                            url: `/lesson-plan?topic=${encodeURIComponent(topic)}`
+                        }
+                    }),
+                });
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({}),
+            });
+        }) as jest.Mock;
+    });
+
     beforeEach(() => {
-        (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
         jest.clearAllMocks();
+        (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+        // Restore fetch mock implementation if it was modified in a specific test
+        (global.fetch as jest.Mock).mockClear();
     });
 
     it('renders the hero section with greeting', () => {

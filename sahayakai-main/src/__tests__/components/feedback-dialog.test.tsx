@@ -3,6 +3,25 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FeedbackDialog } from '@/components/feedback-dialog';
 import { useToast } from '@/hooks/use-toast';
 
+// Critical: Mock firebase-admin to avoid jose ESM crash
+jest.mock('@/lib/firebase-admin', () => ({
+    getDb: jest.fn(),
+    getAuthInstance: jest.fn(),
+    getStorageInstance: jest.fn(),
+}));
+
+// Critical: Mock client-side firestore to avoid connection errors
+jest.mock('firebase/firestore', () => ({
+    getFirestore: jest.fn(),
+    collection: jest.fn(),
+    addDoc: jest.fn().mockResolvedValue({ id: 'test-doc-id' }),
+}));
+
+// Mock Server Action
+jest.mock('@/app/actions/feedback', () => ({
+    submitFeedback: jest.fn().mockResolvedValue({ success: true }),
+}));
+
 // Mock Hooks
 jest.mock('@/hooks/use-toast');
 

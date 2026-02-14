@@ -13,7 +13,16 @@ export const dbAdapter = {
         const db = await getDb();
         const doc = await db.collection(USERS_COLLECTION).doc(uid).get();
         if (!doc.exists) return null;
-        return doc.data() as UserProfile;
+        return { uid, ...doc.data() } as UserProfile;
+    },
+
+    async getUsers(uids: string[]): Promise<UserProfile[]> {
+        if (!uids.length) return [];
+        const db = await getDb();
+        const snapshot = await db.collection(USERS_COLLECTION)
+            .where('uid', 'in', uids.slice(0, 10))
+            .get();
+        return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
     },
 
     async createUser(profile: UserProfile): Promise<void> {
@@ -23,10 +32,14 @@ export const dbAdapter = {
 
     async updateUser(uid: string, data: Partial<UserProfile>): Promise<void> {
         const db = await getDb();
-        await db.collection(USERS_COLLECTION).doc(uid).update({
+        const docRef = db.collection(USERS_COLLECTION).doc(uid);
+
+        // Use set with merge: true to handle cases where the document might not exist (upsert)
+        await docRef.set({
             ...data,
-            lastLogin: FieldValue.serverTimestamp(), // Always track activity
-        });
+            uid, // Ensure UID is always present
+            lastLogin: FieldValue.serverTimestamp(),
+        }, { merge: true });
     },
 
     // --- Content Library Operations ---
@@ -69,7 +82,7 @@ export const dbAdapter = {
                 .set({
                     ...removeUndefined(content),
                     updatedAt: FieldValue.serverTimestamp(),
-                });
+                }, { merge: true });
             logger.info(`Content saved successfully`, 'DATABASE', { userId, contentId: content.id, type: content.type });
         } catch (error) {
             logger.error(`Failed to save content`, error, 'DATABASE', { userId, contentId: content.id });
@@ -92,13 +105,27 @@ export const dbAdapter = {
 
     async listContent(
         userId: string,
-        filters?: { type?: ContentType; limit?: number }
+        filters?: {
+            type?: ContentType;
+            limit?: number;
+            gradeLevels?: string[];
+            subjects?: string[];
+        }
     ): Promise<BaseContent[]> {
         const db = await getDb();
         let query = db.collection(USERS_COLLECTION).doc(userId).collection(CONTENT_COLLECTION).orderBy('createdAt', 'desc');
 
         if (filters?.type) {
             query = query.where('type', '==', filters.type);
+        }
+
+        if (filters?.gradeLevels && filters.gradeLevels.length > 0) {
+            // Note: Limited to 10 items in array-contains-any
+            query = query.where('gradeLevel', 'in', filters.gradeLevels.slice(0, 10));
+        }
+
+        if (filters?.subjects && filters.subjects.length > 0) {
+            query = query.where('subject', 'in', filters.subjects.slice(0, 10));
         }
 
         if (filters?.limit) {
@@ -117,5 +144,18 @@ export const dbAdapter = {
             .collection(CONTENT_COLLECTION)
             .doc(contentId)
             .delete();
+    },
+
+    serialize<T>(data: T): T {
+        return JSON.parse(JSON.stringify(data, (key, value) => {
+            // Handle Firestore Timestamps
+            if (value && typeof value === 'object' && '_seconds' in value && '_nanoseconds' in value) {
+                return new Date(value._seconds * 1000).toISOString();
+            }
+            if (value instanceof Date) {
+                return value.toISOString();
+            }
+            return value;
+        }));
     }
 };

@@ -2,6 +2,14 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
   maxInstances: 1
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: auth.sahayakai.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: sahayakai-b4248
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: sahayakai-b4248.firebasestorage.app
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw

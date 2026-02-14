@@ -1,138 +1,335 @@
-import { logEvent } from "@/lib/indexed-db";
-import { trackInteraction } from "@/lib/performance-monitor";
+/**
+ * Analytics Events System
+ * 
+ * Unified event tracking for social impact metrics and teacher engagement
+ */
 
-export interface AnalyticsEvent {
-    event_type: string;
-    user_id?: string;
-    session_id: string;
+// ============================================================================
+// EVENT TYPES
+// ============================================================================
+
+export type AnalyticsEventType =
+    // Session events
+    | 'session_start'
+    | 'session_end'
+    | 'page_visit'
+
+    // Content events
+    | 'content_created'
+    | 'content_edited'
+    | 'content_exported'
+    | 'content_shared'
+    | 'content_regenerated'
+
+    // Feature events
+    | 'feature_first_use'
+    | 'feature_use'
+
+    // Engagement events
+    | 'onboarding_milestone'
+    | 'achievement_unlocked'
+
+    // Challenge events
+    | 'challenge_detected'
+
+    // Social impact events
+    | 'teacher_profile_updated';
+
+// ============================================================================
+// EVENT INTERFACES
+// ============================================================================
+
+interface BaseEvent {
+    event_type: AnalyticsEventType;
     timestamp: number;
-    page_path: string;
-    device_type: 'mobile' | 'tablet' | 'desktop';
-    metadata?: Record<string, any>;
+    user_id: string;
+    session_id?: string;
 }
 
-export interface ContentCreatedEvent extends AnalyticsEvent {
+export interface SessionStartEvent extends BaseEvent {
+    event_type: 'session_start';
+    location_type?: 'rural' | 'urban';
+    device_type: 'mobile' | 'desktop' | 'tablet';
+    network_quality?: 'high' | 'medium' | 'low';
+    preferred_language: string;
+}
+
+export interface SessionEndEvent extends BaseEvent {
+    event_type: 'session_end';
+    duration_minutes: number;
+    pages_visited: string[];
+    features_used: string[];
+    content_created_count: number;
+}
+
+export interface PageVisitEvent extends BaseEvent {
+    event_type: 'page_visit';
+    page: string;
+    referrer?: string;
+}
+
+export interface ContentCreatedEvent extends BaseEvent {
     event_type: 'content_created';
-    content_type: 'lesson-plan' | 'quiz' | 'visual-aid' | 'rubric' | 'story' | 'worksheet';
-    topic_length: number;
+    content_type: 'lesson-plan' | 'quiz' | 'instant-answer' | 'worksheet' | 'visual-aid' | 'rubric' | 'field-trip';
     language: string;
-    generation_time_sec?: number;
-    success: boolean;
-    model_used?: string;
     grade_level?: string;
     subject?: string;
-    regeneration_count?: number;
+    success: boolean;
+    generation_time_sec: number;
+    regeneration_count: number;
+    exported: boolean;
+    edited: boolean;
+    edit_percentage?: number;
 }
 
-export interface FeatureUsageEvent extends AnalyticsEvent {
-    event_type: 'feature_used';
-    feature_name: string;
-    is_first_use?: boolean;
+export interface FeatureUseEvent extends BaseEvent {
+    event_type: 'feature_use' | 'feature_first_use';
+    feature: string;
+    days_since_signup?: number;
 }
 
-export interface ChallengeDetectedEvent extends AnalyticsEvent {
+export interface ChallengeDetectedEvent extends BaseEvent {
     event_type: 'challenge_detected';
-    challenge_type: 'rate_limit' | 'api_error' | 'validation_error' | 'empty_result';
+    challenge_type:
+    | 'slow_generation'
+    | 'poor_content_quality'
+    | 'language_barrier'
+    | 'onboarding_stalled'
+    | 'engagement_declining'
+    | 'connectivity_issues'
+    | 'not_using_output'
+    | 'abandonment_risk';
     severity: 'low' | 'medium' | 'high';
-    details?: string;
+    details?: Record<string, any>;
 }
 
-let currentUserId: string | undefined = undefined;
-let sessionId: string = '';
-
-// Initialize session
-if (typeof window !== 'undefined') {
-    sessionId = sessionStorage.getItem('analytics_session_id') || `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('analytics_session_id', sessionId);
+export interface TeacherProfileUpdatedEvent extends BaseEvent {
+    event_type: 'teacher_profile_updated';
+    location_type: 'rural' | 'urban';
+    state?: string;
+    district?: string;
+    subjects_taught: string[];
+    grade_levels_taught: string[];
+    estimated_students: number;
 }
 
-export function initAnalytics(userId?: string) {
-    if (userId) {
-        currentUserId = userId;
-        logEvent({
-            type: 'session_start',
-            user_id: userId,
-            timestamp: Date.now()
+export type AnalyticsEvent =
+    | SessionStartEvent
+    | SessionEndEvent
+    | PageVisitEvent
+    | ContentCreatedEvent
+    | FeatureUseEvent
+    | ChallengeDetectedEvent
+    | TeacherProfileUpdatedEvent;
+
+// ============================================================================
+// EVENT TRACKER
+// ============================================================================
+
+class AnalyticsEventTracker {
+    private queue: AnalyticsEvent[] = [];
+    private batchTimer: NodeJS.Timeout | null = null;
+    private sessionId: string | null = null;
+    private userId: string | null = null;
+
+    private config = {
+        batchSize: 10,
+        batchTimeout: 5000,
+        endpoint: '/api/teacher-activity',
+        enabled: true, // Can be toggled based on user consent
+    };
+
+    /**
+     * Initialize tracker with user context
+     */
+    init(userId: string) {
+        this.userId = userId;
+        this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * Track an event
+     */
+    track<T extends AnalyticsEvent>(event: Omit<T, 'timestamp' | 'user_id' | 'session_id'>) {
+        if (!this.config.enabled || !this.userId) return;
+
+        const fullEvent = {
+            ...event,
+            timestamp: Date.now(),
+            user_id: this.userId,
+            session_id: this.sessionId || undefined,
+        } as unknown as AnalyticsEvent;
+
+        this.queue.push(fullEvent);
+
+        // Immediately send critical events
+        if (this.isCriticalEvent(event.event_type)) {
+            this.sendBatch();
+        } else {
+            this.scheduleBatch();
+        }
+    }
+
+    /**
+     * Convenience methods for common events
+     */
+    trackSessionStart(data: Omit<SessionStartEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) {
+        this.track<SessionStartEvent>({ event_type: 'session_start', ...data });
+    }
+
+    trackSessionEnd(data: Omit<SessionEndEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) {
+        this.track<SessionEndEvent>({ event_type: 'session_end', ...data });
+        this.sendBatch(); // Force send on session end
+    }
+
+    trackPageVisit(page: string, referrer?: string) {
+        this.track<PageVisitEvent>({
+            event_type: 'page_visit',
+            page,
+            referrer
         });
+    }
+
+    trackContentCreated(data: Omit<ContentCreatedEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) {
+        this.track<ContentCreatedEvent>({ event_type: 'content_created', ...data });
+    }
+
+    trackFeatureUse(feature: string, isFirstUse: boolean = false, daysSinceSignup?: number) {
+        this.track<FeatureUseEvent>({
+            event_type: isFirstUse ? 'feature_first_use' : 'feature_use',
+            feature,
+            days_since_signup: daysSinceSignup,
+        });
+    }
+
+    trackChallenge(challenge_type: ChallengeDetectedEvent['challenge_type'], severity: 'low' | 'medium' | 'high', details?: Record<string, any>) {
+        this.track<ChallengeDetectedEvent>({
+            event_type: 'challenge_detected',
+            challenge_type,
+            severity,
+            details,
+        });
+    }
+
+    trackTeacherProfile(data: Omit<TeacherProfileUpdatedEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) {
+        this.track<TeacherProfileUpdatedEvent>({ event_type: 'teacher_profile_updated', ...data });
+    }
+
+    /**
+     * Schedule batch send
+     */
+    private scheduleBatch() {
+        if (this.batchTimer) clearTimeout(this.batchTimer);
+
+        if (this.queue.length >= this.config.batchSize) {
+            this.sendBatch();
+        } else {
+            this.batchTimer = setTimeout(() => this.sendBatch(), this.config.batchTimeout);
+        }
+    }
+
+    /**
+     * Send batched events
+     */
+    private async sendBatch() {
+        if (this.queue.length === 0) return;
+
+        const batch = [...this.queue];
+        this.queue = [];
+
+        if (this.batchTimer) {
+            clearTimeout(this.batchTimer);
+            this.batchTimer = null;
+        }
+
+        try {
+            await fetch(this.config.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ events: batch }),
+                keepalive: true,
+            });
+        } catch (error) {
+            console.error('[Analytics] Failed to send events:', error);
+            // Re-queue with limit
+            if (this.queue.length < 50) {
+                this.queue.unshift(...batch);
+            }
+        }
+    }
+
+    /**
+     * Check if event requires immediate sending
+     */
+    private isCriticalEvent(eventType: AnalyticsEventType): boolean {
+        return [
+            'session_end',
+            'challenge_detected',
+            'teacher_profile_updated',
+        ].includes(eventType);
+    }
+
+    /**
+     * Flush all pending events
+     */
+    flush() {
+        return this.sendBatch();
+    }
+
+    /**
+     * Enable/disable tracking (for privacy consent)
+     */
+    setEnabled(enabled: boolean) {
+        this.config.enabled = enabled;
+        if (!enabled) {
+            this.queue = [];
+        }
     }
 }
 
-function getBaseEvent(): Omit<AnalyticsEvent, 'event_type'> {
-    return {
-        timestamp: Date.now(),
-        session_id: sessionId,
-        user_id: currentUserId,
-        page_path: typeof window !== 'undefined' ? window.location.pathname : '',
-        device_type: getDeviceType(),
-    };
+// ============================================================================
+// SINGLETON INSTANCE
+// ============================================================================
+
+let tracker: AnalyticsEventTracker | null = null;
+
+export function getAnalyticsTracker(): AnalyticsEventTracker {
+    if (!tracker) {
+        tracker = new AnalyticsEventTracker();
+    }
+    return tracker;
 }
 
-function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
-    if (typeof window === 'undefined') return 'desktop';
-    const width = window.innerWidth;
-    if (width < 768) return 'mobile';
-    if (width < 1024) return 'tablet';
-    return 'desktop';
-}
+// ============================================================================
+// CONVENIENCE EXPORTS
+// ============================================================================
 
-export function trackPageVisit(path: string, referrer?: string) {
-    const event = {
-        ...getBaseEvent(),
-        event_type: 'page_view',
-        page_path: path,
-        metadata: { referrer }
-    };
-    logEvent({ type: 'page_view', value: event });
-}
+export const initAnalytics = (userId: string) =>
+    getAnalyticsTracker().init(userId);
 
-export function trackContentCreated(data: Omit<ContentCreatedEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id' | 'device_type' | 'page_path'>) {
-    const event: ContentCreatedEvent = {
-        ...getBaseEvent(),
-        event_type: 'content_created',
-        ...data
-    };
-    logEvent({ type: 'content_created', value: event });
+export const trackSessionStart = (data: Omit<SessionStartEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) =>
+    getAnalyticsTracker().trackSessionStart(data);
 
-    // Also track as interaction for performance monitoring
-    trackInteraction({
-        interaction_type: 'submit',
-        component_name: data.content_type,
-        target_element: 'generate_button',
-        value: data.generation_time_sec || 0,
-        rating: data.success ? 'good' : 'poor'
-    } as any);
-}
+export const trackSessionEnd = (data: Omit<SessionEndEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) =>
+    getAnalyticsTracker().trackSessionEnd(data);
 
-export function trackFeatureUse(featureName: string, isFirstUse: boolean = false, daysSinceSignup?: number) {
-    const event: FeatureUsageEvent = {
-        ...getBaseEvent(),
-        event_type: 'feature_used',
-        feature_name: featureName,
-        is_first_use: isFirstUse,
-        metadata: { days_since_signup: daysSinceSignup }
-    };
-    logEvent({ type: 'feature_used', value: event });
-}
+export const trackPageVisit = (page: string, referrer?: string) =>
+    getAnalyticsTracker().trackPageVisit(page, referrer);
 
-export function trackChallenge(
-    type: ChallengeDetectedEvent['challenge_type'],
-    severity: ChallengeDetectedEvent['severity'],
-    details?: Record<string, any>
-) {
-    const event: ChallengeDetectedEvent = {
-        ...getBaseEvent(),
-        event_type: 'challenge_detected',
-        challenge_type: type,
-        severity: severity,
-        details: JSON.stringify(details),
-        metadata: details
-    };
-    logEvent({ type: 'challenge_used', value: event }); // Typo in logEvent type? preserving for now or checking lib
-}
+export const trackContentCreated = (data: Omit<ContentCreatedEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) =>
+    getAnalyticsTracker().trackContentCreated(data);
 
+export const trackFeatureUse = (feature: string, isFirstUse?: boolean, daysSinceSignup?: number) =>
+    getAnalyticsTracker().trackFeatureUse(feature, isFirstUse, daysSinceSignup);
 
-export async function flushAnalytics() {
-    // This function typically sends data to the server
-    // For now, we rely on the IndexedDB sync mechanism handled in useLessonPlan / telemetry actions
-    console.log('Flushing analytics queue...');
-}
+export const trackChallenge = (challenge_type: ChallengeDetectedEvent['challenge_type'], severity: 'low' | 'medium' | 'high', details?: Record<string, any>) =>
+    getAnalyticsTracker().trackChallenge(challenge_type, severity, details);
+
+export const trackTeacherProfile = (data: Omit<TeacherProfileUpdatedEvent, 'event_type' | 'timestamp' | 'user_id' | 'session_id'>) =>
+    getAnalyticsTracker().trackTeacherProfile(data);
+
+export const flushAnalytics = () =>
+    getAnalyticsTracker().flush();
+
+export const setAnalyticsEnabled = (enabled: boolean) =>
+    getAnalyticsTracker().setEnabled(enabled);

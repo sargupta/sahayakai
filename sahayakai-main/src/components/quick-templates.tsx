@@ -22,7 +22,7 @@ export function QuickTemplates({ onTemplateSelect, className }: QuickTemplatesPr
                         className={cn(
                             "flex flex-col items-center justify-center p-3 rounded-lg border transition-all hover:scale-105 hover:shadow-sm text-center h-full",
                             "bg-white border-slate-200",
-                            "hover:border-primary hover:bg-primary/5"
+                            "hover:border-primary hover:bg-primary/5 hover:text-primary"
                         )}
                     >
                         <div className={cn("h-7 w-7 rounded-full flex items-center justify-center text-lg mb-1", template.color)}>

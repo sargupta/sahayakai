@@ -72,21 +72,16 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'File missing from storage bucket' }, { status: 404 });
         }
 
-        // Sanitize filename for header - strict alphanumeric to prevent header splitting
-        const safeTitle = (content.title || 'content').replace(/[^a-z0-9]/gi, '_');
-        const extension = content.storagePath.split('.').pop() || 'file';
-        const downloadFilename = `SahayakAI_${safeTitle}.${extension}`;
-
         // Generate URL valid for 15 minutes
         const [url] = await file.getSignedUrl({
             action: 'read',
             expires: Date.now() + 15 * 60 * 1000,
-            responseDisposition: `attachment; filename="${downloadFilename}"`
+            promptSaveAs: content.storagePath.split('/').pop() // Hint browser to download
         });
 
         return NextResponse.json({
             downloadUrl: url,
-            filename: downloadFilename
+            filename: content.storagePath.split('/').pop()
         });
 
     } catch (error) {

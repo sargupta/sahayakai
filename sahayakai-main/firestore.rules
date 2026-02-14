@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // --- Core Educational Data (Strict Ownership) ---
+
+    // Users Collection: strictly private to the user
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+
+      // User's Content (Lesson Plans, Quizzes, etc.)
+      // Read: Owner OR Public
+      // Write: Owner ONLY
+      match /content/{contentId} {
+        allow read: if (isSignedIn() && isOwner(userId)) || (resource.data.isPublic == true);
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+
+      // User's Analytics (aggregated daily stats)
+      // Read: Owner ONLY
+      // Write: System (via Server SDK) or Owner (if client-side tracking enabled?) 
+      // ideally analytics shouldn't be writable by client to prevent tampering, 
+      // but for now we'll allow owner write for simplicity if Client SDK is used.
+      match /analytics/{docId} {
+        allow read, write: if isSignedIn() && isOwner(userId);
+      }
+    }
+
+    // --- Legacy / Social Features (Retained for Backward Compatibility) ---
+    // If these are not used, they should be removed in a future cleanup.
+
+    // Profiles
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    // Posts
+    match /posts/{postId} {
+      allow read: if resource.data.visibility == 'public' || isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+      
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    // Connections
+    match /connections/{connectionId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+    }
+  }
+}

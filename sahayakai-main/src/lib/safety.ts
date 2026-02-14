@@ -1,5 +1,5 @@
 export const SAFETY_CONFIG = {
-    MAX_REQUESTS_PER_WINDOW: 5,
+    MAX_REQUESTS_PER_WINDOW: 15,
     WINDOW_MS: 10 * 60 * 1000, // 10 Minutes
     COOLDOWN_STORAGE_KEY: 'sahayak_rate_limit'
 };

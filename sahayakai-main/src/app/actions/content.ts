@@ -32,6 +32,59 @@ export async function getUserContent(userId: string): Promise<BaseContent[]> {
     }
 }
 
+/**
+ * Context-Aware Smart Search for the Library
+ * Searches user content and boosts matches based on teacher profile (Grade, Subject, Language)
+ */
+export async function searchContentAction(userId: string, query: string): Promise<BaseContent[]> {
+    try {
+        // 1. Fetch user profile for context
+        const profile = await dbAdapter.getUser(userId);
+
+        // 2. Initial filter by user ID (Security boundary)
+        const allContent = await dbAdapter.listContent(userId);
+
+        // 3. Perform Smart Search & Ranking
+        const searchTerms = query.toLowerCase().split(/\s+/);
+
+        const rankedResults = allContent
+            .map(item => {
+                let score = 0;
+                const titleLower = item.title.toLowerCase();
+                const topicLower = (item.topic || "").toLowerCase();
+
+                // Term matching (Title boost)
+                searchTerms.forEach(term => {
+                    if (titleLower.includes(term)) score += 10;
+                    if (topicLower.includes(term)) score += 5;
+                });
+
+                // Context Affinity Boosts
+                if (profile) {
+                    // Grade Level Affinity
+                    if (profile.teachingGradeLevels?.includes(item.gradeLevel as any)) score += 15;
+
+                    // Subject Affinity
+                    if (profile.subjects?.includes(item.subject as any)) score += 15;
+
+                    // Language Affinity
+                    if (profile.preferredLanguage === item.language) score += 10;
+                }
+
+                return { ...item, _searchScore: score };
+            })
+            .filter(item => item._searchScore > 0 || query === "") // Show all if query empty, else only matches
+            .sort((a, b) => b._searchScore - a._searchScore);
+
+        // Remove ephemeral score before returning
+        return rankedResults.map(({ _searchScore, ...item }: any) => item);
+
+    } catch (error) {
+        logger.error("Smart Search failed", error, 'DATABASE', { userId, query });
+        return [];
+    }
+}
+
 export async function saveToLibrary(userId: string, type: ContentType, title: string, data: any): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
         const storage = await getStorageInstance();

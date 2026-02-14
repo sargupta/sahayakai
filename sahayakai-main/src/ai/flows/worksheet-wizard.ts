@@ -13,7 +13,11 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
+import { validateTopicSafety } from '@/lib/safety';
 import { format } from 'date-fns';
+import { LANGUAGE_CODE_MAP } from '@/types/index';
+import { extractGradeFromTopic } from '@/lib/grade-utils';
+
 
 const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
@@ -25,29 +29,72 @@ const WorksheetWizardInputSchema = z.object({
   language: z.string().optional().describe('The language for the worksheet.'),
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
+  subject: z.string().optional().describe('The academic subject.'),
 });
 
 export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
 
 const WorksheetWizardOutputSchema = z.object({
   worksheetContent: z.string().describe('The generated worksheet content in Markdown format.'),
+  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
+  subject: z.string().nullable().optional().describe('The academic subject.'),
 });
 export type WorksheetWizardOutput = z.infer<typeof WorksheetWizardOutputSchema>;
 
 export async function generateWorksheet(input: WorksheetWizardInput): Promise<WorksheetWizardOutput> {
-  return worksheetWizardFlow(input);
+  const uid = input.userId;
+  let localizedInput = { ...input };
+
+  if (uid) {
+    // Fetch user's profile for context (language, grade)
+    if (!input.language || !input.gradeLevel) {
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const profile = await dbAdapter.getUser(uid);
+
+      if (!input.language && profile?.preferredLanguage) {
+        localizedInput.language = profile.preferredLanguage;
+      }
+      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
+      }
+    }
+  }
+
+  // BUG FIX #1: Grade Override - Extract from prompt if explicitly mentioned
+  const extractedGrade = extractGradeFromTopic(input.prompt);
+  if (extractedGrade) {
+    localizedInput.gradeLevel = extractedGrade;
+  }
+
+  // Normalize input
+  if (localizedInput.language) {
+    localizedInput.language = LANGUAGE_CODE_MAP[localizedInput.language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || localizedInput.language;
+  }
+
+  return worksheetWizardFlow(localizedInput);
 }
+
+import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
-  prompt: `You are an expert educator who creates engaging and effective worksheets.
+  prompt: `${SAHAYAK_SOUL_PROMPT}
+
+You are an expert educator who creates engaging and effective worksheets.
  
- **Instructions:**
- 1.  **Analyze the Image:** carefully use the textbook image as the basis for all content.
- 2.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\`.
- 3.  **Strict Markdown Template:** You MUST structure the worksheet exactly like this:
+  **Instructions:**
+  1.  **Analyze the Image:** carefully use the textbook image as the basis for all content.
+  2.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\`.
+  3.  **High-Fidelity Math:** 
+      - Use LaTeX for ALL mathematical formulas, equations, and symbols. 
+      - CRITICAL: Wrap ALL LaTeX in dollar signs: $ formula $ for inline or $$ formula $$ for blocks.
+      - EXAMPLE: Use $$ \\int x^2 dx $$ instead of simple text.
+  4.  **Math Problems vs Questions:**
+      - If the user asks for "math problems", generate CALCULATIONS and COMPUTATIONS (e.g., Solve for x, Integrate f(x)).
+      - Do NOT generate history or theory questions unless explicitly asked.
+  5.  **Strict Markdown Template:** You MUST structure the worksheet exactly like this:
      # [Worksheet Title]
      **Grade**: [Level] | **Subject**: [Subject]
      
@@ -68,11 +115,19 @@ const worksheetWizardPrompt = ai.definePrompt({
      ## IV. Teacher's Answer Key (FOR TEACHER USE ONLY)
      [Clear answers and explanations for all activities above]
 
+  6.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Math, Science) and \`gradeLevel\` based on the content.
+
 **Context:**
 - **Textbook Image:** {{media url=imageDataUri}}
 - **Request:** {{{prompt}}}
 - **Grade**: {{{gradeLevel}}}
+- **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
+
+**Constraints:**
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
+- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 `,
 });
 
@@ -83,37 +138,163 @@ const worksheetWizardFlow = ai.defineFlow(
     outputSchema: WorksheetWizardOutputSchema,
   },
   async input => {
-    const { output } = await worksheetWizardPrompt(input);
+    const { runResiliently } = await import('@/ai/genkit');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+    const { FlowExecutionError, SchemaValidationError, PersistenceError } = await import('@/lib/errors');
 
-    if (!output) {
-      throw new Error('The AI model failed to generate a valid worksheet. The returned output was null.');
-    }
+    // Persistence imports
+    const { getStorageInstance } = await import('@/lib/firebase-admin');
+    const { format } = await import('date-fns');
+    const { v4: uuidv4 } = await import('uuid');
 
-    if (input.userId) {
-      const storage = await getStorageInstance();
-      const db = await getDb();
-      const now = new Date();
-      const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-      const contentId = uuidv4();
-      const fileName = `${timestamp}-${contentId}.md`;
-      const filePath = `users/${input.userId}/worksheets/${fileName}`;
-      const file = storage.bucket().file(filePath);
+    const requestId = uuidv4();
+    const startTime = Date.now();
 
-      await file.save(output.worksheetContent, {
-        contentType: 'text/markdown',
+    try {
+      StructuredLogger.info('Starting worksheet generation flow', {
+        service: 'worksheet-wizard-flow',
+        operation: 'generateWorksheet',
+        userId: input.userId,
+        requestId,
+        input: {
+          prompt: input.prompt,
+          language: input.language,
+          gradeLevel: input.gradeLevel
+        }
       });
 
-      await db.collection('users').doc(input.userId).collection('content').doc(contentId).set({
-        type: 'worksheet',
-        topic: input.prompt,
-        gradeLevels: [input.gradeLevel],
-        language: input.language,
-        storagePath: filePath,
-        createdAt: now,
-        isPublic: false,
-      });
-    }
+      const { fetchImageAsBase64 } = await import('@/ai/utils/image-utils');
 
-    return output;
+      // Process Image URL -> Base64 if needed
+      let processedImageDataUri = input.imageDataUri;
+      if (input.imageDataUri && !input.imageDataUri.startsWith('data:')) {
+        processedImageDataUri = await fetchImageAsBase64(input.imageDataUri);
+      }
+
+      const { output } = await runResiliently(async (resilienceConfig) => {
+        return await worksheetWizardPrompt({
+          ...input,
+          imageDataUri: processedImageDataUri
+        }, resilienceConfig);
+      });
+
+      if (!output) {
+        throw new FlowExecutionError(
+          'AI model returned null output',
+          {
+            modelUsed: 'gemini-2.0-flash',
+            input: input.prompt
+          }
+        );
+      }
+
+      // Validate schema explicitly
+      try {
+        WorksheetWizardOutputSchema.parse(output);
+      } catch (validationError: any) {
+        throw new SchemaValidationError(
+          `Schema validation failed: ${validationError.message}`,
+          {
+            parseErrors: validationError.errors,
+            rawOutput: output,
+            expectedSchema: 'WorksheetWizardOutputSchema'
+          }
+        );
+      }
+
+      if (input.userId) {
+        try {
+          const storage = await getStorageInstance();
+          const now = new Date();
+          const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+          const contentId = uuidv4();
+          const fileName = `${timestamp}-${contentId}.md`;
+          const filePath = `users/${input.userId}/worksheets/${fileName}`;
+          const file = storage.bucket().file(filePath);
+
+          await file.save(output.worksheetContent, {
+            contentType: 'text/markdown',
+          });
+
+          const { dbAdapter } = await import('@/lib/db/adapter');
+          const { Timestamp } = await import('firebase-admin/firestore');
+
+          await dbAdapter.saveContent(input.userId, {
+            id: contentId,
+            type: 'worksheet',
+            title: `Worksheet: ${input.prompt.substring(0, 30)}`,
+            gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
+            subject: (output.subject || 'General') as any,
+            topic: input.prompt,
+            language: input.language as any || 'English',
+            storagePath: filePath,
+            isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: output,
+          });
+
+          StructuredLogger.info('Content persisted successfully', {
+            service: 'worksheet-wizard-flow',
+            operation: 'persistContent',
+            userId: input.userId,
+            requestId,
+            metadata: { contentId }
+          });
+
+        } catch (persistenceError: any) {
+          StructuredLogger.error(
+            'Failed to persist worksheet',
+            {
+              service: 'worksheet-wizard-flow',
+              operation: 'persistContent',
+              userId: input.userId,
+              requestId
+            },
+            new PersistenceError('Persistence failed', 'saveContent')
+          );
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      StructuredLogger.info('Worksheet generation flow completed successfully', {
+        service: 'worksheet-wizard-flow',
+        operation: 'generateWorksheet',
+        requestId,
+        duration,
+        metadata: {
+          contentLength: output.worksheetContent.length
+        }
+      });
+
+      return output;
+
+    } catch (flowError: any) {
+      const duration = Date.now() - startTime;
+
+      const errorId = StructuredLogger.error(
+        'Worksheet generation flow execution failed',
+        {
+          service: 'worksheet-wizard-flow',
+          operation: 'generateWorksheet',
+          requestId,
+          input: {
+            prompt: input.prompt
+          },
+          duration,
+          metadata: {
+            errorType: flowError.constructor?.name,
+            errorCode: flowError.errorCode
+          }
+        },
+        flowError
+      );
+
+      if (typeof flowError === 'object' && flowError !== null) {
+        flowError.errorId = errorId;
+      }
+      throw flowError;
+    }
   }
 );

@@ -48,25 +48,21 @@ export function LibraryCard({
 
     return (
         <Card className="flex flex-col h-full group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-slate-200 bg-white overflow-hidden">
-            <CardHeader className="p-4 pb-2">
-                <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shrink-0">
+            <CardHeader className="p-5 pb-3">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-orange-50 text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300">
                         <FileTypeIcon type={resource.type} className="h-6 w-6" />
                     </div>
-                    <div className="space-y-1 flex-1 min-w-0">
-                        {/* Title with fixed minimum height for alignment (approx 3 lines) */}
-                        <div className="min-h-[4.5rem] flex items-start">
-                            <CardTitle className="text-lg font-bold leading-tight line-clamp-3 text-slate-800 font-headline group-hover:text-primary transition-colors">
-                                {resource.title}
-                            </CardTitle>
-                        </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                        <CardTitle className="text-lg font-bold leading-tight line-clamp-2 text-slate-800 font-headline group-hover:text-primary transition-colors">
+                            {resource.title}
+                        </CardTitle>
 
-                        {/* Badges container with fixed height/structure */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2 h-[22px] overflow-hidden">
-                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none text-[10px] px-2 py-0.5 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none text-[10px] px-2 py-0.5">
                                 {resource.gradeLevel}
                             </Badge>
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] px-2 py-0.5 whitespace-nowrap">
+                            <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] px-2 py-0.5">
                                 {resource.subject}
                             </Badge>
                         </div>
@@ -85,7 +81,7 @@ export function LibraryCard({
                 </div>
             </CardHeader>
 
-            <CardContent className="flex-grow px-4 py-2">
+            <CardContent className="flex-grow px-5 py-2">
                 <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
                     <Calendar className="h-3 w-3" />
                     <span>Updated {formattedDate}</span>
@@ -93,7 +89,7 @@ export function LibraryCard({
             </CardContent>
 
             <CardFooter className="p-3 bg-slate-50/80 backdrop-blur-sm border-t border-slate-100 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2">
                     <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 text-[10px] px-2 py-0.5 font-bold">
                         {languageMap[resource.language] || resource.language}
                     </Badge>
@@ -101,18 +97,18 @@ export function LibraryCard({
 
                 <div className="flex items-center gap-2">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="h-8 gap-2 text-slate-600 hover:text-primary hover:border-primary transition-all font-bold px-3 bg-white"
+                        className="h-8 gap-2 text-slate-600 hover:text-primary transition-all font-bold px-3"
                         onClick={() => onOpen?.(resource)}
                     >
                         <BookOpen className="h-4 w-4" />
-                        <span className="hidden xs:inline">Open</span>
+                        <span>Open</span>
                     </Button>
                     <Button
                         variant="default"
                         size="sm"
-                        className="h-8 gap-2 shadow-sm font-bold px-3 shrink-0"
+                        className="h-8 gap-2 shadow-sm font-bold px-3"
                         onClick={() => onDownload?.(resource)}
                     >
                         <Download className="h-4 w-4" />

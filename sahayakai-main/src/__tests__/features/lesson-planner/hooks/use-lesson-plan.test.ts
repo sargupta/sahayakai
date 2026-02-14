@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useLessonPlan } from '@/features/lesson-planner/hooks/use-lesson-plan';
+/* import { useAuth } from '@/context/auth-context'; // Not needed if mocked */
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { useToast } from '@/hooks/use-toast';
 import { checkRateLimit, validateTopicSafety } from '@/lib/safety';
@@ -34,6 +35,30 @@ jest.mock('@/lib/logger', () => ({
         debug: jest.fn(),
     }
 }));
+// Mock Auth Context
+jest.mock('@/context/auth-context', () => ({
+    useAuth: jest.fn().mockReturnValue({
+        user: { uid: 'test-user', email: 'test@example.com' },
+        loading: false,
+        requireAuth: jest.fn().mockReturnValue(true),
+        openAuthModal: jest.fn(),
+    })
+}));
+
+jest.mock('@/hooks/use-analytics', () => ({
+    useAnalytics: jest.fn().mockReturnValue({
+        trackContent: jest.fn(),
+        trackFeature: jest.fn(),
+        trackFriction: jest.fn(),
+    })
+}));
+
+// Mock Next Navigation
+jest.mock('next/navigation', () => ({
+    useSearchParams: jest.fn().mockReturnValue({ get: jest.fn().mockReturnValue(null) }),
+    useRouter: jest.fn().mockReturnValue({ push: jest.fn() }),
+    usePathname: jest.fn().mockReturnValue('/mock-path')
+}));
 
 describe('useLessonPlan Hook', () => {
     const mockToast = jest.fn();
@@ -46,6 +71,13 @@ describe('useLessonPlan Hook', () => {
         (generateLessonPlan as jest.Mock).mockResolvedValue({ title: 'Mock Plan' });
         (getCache as jest.Mock).mockResolvedValue(null);
         (getCachedLessonPlan as jest.Mock).mockResolvedValue(null);
+
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ title: 'Mock Plan' }),
+            })
+        ) as jest.Mock;
     });
 
     it('should initialize with default values', () => {
@@ -66,9 +98,15 @@ describe('useLessonPlan Hook', () => {
             });
         });
 
-        expect(generateLessonPlan).toHaveBeenCalledWith(expect.objectContaining({
-            topic: 'Solar System'
-        }));
+
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/ai/lesson-plan'),
+            expect.objectContaining({
+                method: 'POST',
+                body: expect.stringContaining('Solar System')
+            })
+        );
         expect(result.current.lessonPlan).toEqual({ title: 'Mock Plan' });
         expect(result.current.isLoading).toBe(false);
     }, 10000); // Extended timeout for "UX Pause" in hook
@@ -122,12 +160,15 @@ describe('useLessonPlan Hook', () => {
 
         act(() => {
             result.current.handleTemplateSelect({
+                id: 'template-1',
                 title: 'Space Template',
+                titleHindi: 'अंतरिक्ष टेम्पलेट',
                 topic: 'The Moon',
                 gradeLevel: '4th Grade',
                 subject: 'Science',
-                icon: 'moon'
-            });
+                icon: 'moon',
+                color: 'blue'
+            } as any);
         });
 
         expect(result.current.form.getValues().topic).toBe('The Moon');

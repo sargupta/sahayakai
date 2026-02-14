@@ -7,7 +7,7 @@
 ---
 
 ## 1. Project Overview
-**SahayakAI** is a specialized, AI-powered teaching assistant built for the Indian education ecosystem. It addresses the unique challenges of rural teachers—connectivity issues, language barriers, and lack of resources—by providing a voice-first, culturally aware, and offline-capable PWA. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'.**
+**SahayakAI** is a specialized, AI-powered teaching assistant built for the Indian education ecosystem. It addresses the unique challenges of rural teachers—connectivity issues, language barriers, and lack of resources—by providing a voice-first, culturally aware, and offline-capable PWA.
 
 ### Core Philosophy
 *   **Bharat First:** All content (names, examples, currency, geography) is localized to rural India.
