@@ -174,11 +174,11 @@ function TeacherTrainingContent() {
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-[#FF9933]" />
+        <div className="h-1.5 w-full bg-primary" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <div className="p-3 rounded-full bg-purple-50 text-purple-600">
+            <div className="p-3 rounded-full bg-primary/10 text-primary">
               <GraduationCap className="w-8 h-8" />
             </div>
           </div>
@@ -230,8 +230,8 @@ function TeacherTrainingContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-[#FF9933] border-t border-r border-b border-[#FF9933]/20 shadow-sm h-fit">
-                  <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">Settings</h3>
+                <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
+                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Settings</h3>
 
                   <div className="grid grid-cols-2 gap-3">
                     <FormField

@@ -346,7 +346,7 @@ export function LessonPlanView({
                                             form.trigger("topic");
                                         }}
                                         generateButton={
-                                            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-[#FF9933] hover:bg-[#FF9933]/90 text-white shadow-lg shadow-[#FF9933]/20 transition-all font-headline">
+                                            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
                                                 {isLoading ? (
                                                     <>
                                                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />

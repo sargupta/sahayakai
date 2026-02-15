@@ -274,7 +274,7 @@ export default function InstantAnswerPage() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-[#FF9933]" />
+        <div className="h-1.5 w-full bg-primary" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
@@ -372,7 +372,7 @@ export default function InstantAnswerPage() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />

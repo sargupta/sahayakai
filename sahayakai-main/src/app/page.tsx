@@ -129,7 +129,7 @@ export default function Home() {
     <Link href={href} className="group">
       <Card className="h-full border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
         <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
-          <div className={cn("p-3 md:p-4 rounded-full bg-slate-50 group-hover:scale-110 transition-transform duration-300", color)}>
+          <div className={cn("p-3 md:p-4 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300")}>
             <Icon className="h-6 w-6 md:h-8 md:w-8" />
           </div>
           <div className="space-y-1 md:space-y-2">
@@ -145,7 +145,9 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12 relative">
+      {/* Clean Top Bar for Consistency */}
+      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-xl" />
 
       {/* Hero Section */}
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -255,28 +257,28 @@ export default function Home() {
           title="Lesson Plan"
           icon={BookOpen}
           href="/lesson-plan"
-          color="text-orange-600 bg-orange-50"
+          color=""
           description="NCERT-aligned plans."
         />
         <QuickActionCard
           title="Quiz Generator"
           icon={BrainCircuit}
           href="/quiz-generator"
-          color="text-blue-600 bg-blue-50"
+          color=""
           description="Instant quizzes & worksheets."
         />
         <QuickActionCard
           title="Content Creator"
           icon={PenTool}
           href="/content-creator"
-          color="text-green-600 bg-green-50"
+          color=""
           description="Stories & visual aids."
         />
         <QuickActionCard
           title="Teacher Training"
           icon={GraduationCap}
           href="/teacher-training"
-          color="text-purple-600 bg-purple-50"
+          color=""
           description="Professional development."
         />
       </div>

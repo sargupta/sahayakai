@@ -76,7 +76,7 @@ export default function MyLibraryPage() {
 
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-[#FF9933]" />
+        <div className="h-1.5 w-full bg-primary" />
         <CardContent className="p-0">
           <div className="p-6 border-b border-white/40">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

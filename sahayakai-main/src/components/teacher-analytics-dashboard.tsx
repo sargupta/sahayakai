@@ -125,7 +125,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     if (isLoading) {
         return (
             <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="h-1.5 w-full bg-[#FF9933]" />
+                <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />
                     <Skeleton className="h-4 w-64 mt-2" />
@@ -179,7 +179,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
         <div className="space-y-6">
             {/* Overall Health Score */}
             <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="h-1.5 w-full bg-[#FF9933]" />
+                <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>

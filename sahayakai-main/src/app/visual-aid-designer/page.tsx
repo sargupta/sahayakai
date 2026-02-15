@@ -341,11 +341,11 @@ function VisualAidContent() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-[#FF9933]" />
+        <div className="h-1.5 w-full bg-primary" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <div className="flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600">
+            <div className="flex items-center justify-center p-3 rounded-full bg-primary/10 text-primary">
               <Images className="w-8 h-8" />
             </div>
           </div>

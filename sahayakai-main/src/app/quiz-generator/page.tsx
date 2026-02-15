@@ -649,7 +649,7 @@ function QuizGeneratorContent() {
         <div className="p-6">
           <CardHeader className="text-center pt-0">
             <div className="flex justify-center items-center mb-4">
-              <div className="p-3 rounded-full bg-orange-50 text-[#FF9933]">
+              <div className="p-3 rounded-full bg-primary/10 text-primary">
                 <FileSignature className="w-8 h-8" />
               </div>
             </div>
@@ -819,7 +819,7 @@ function QuizGeneratorContent() {
                               onValueChange={(vals) => field.onChange(vals[0])}
                               className="flex-1"
                             />
-                            <span className="font-bold text-[#FF9933] bg-white px-3 py-1 rounded border border-[#FF9933]/20 min-w-[3rem] text-center">{field.value}</span>
+                            <span className="font-bold text-primary bg-white px-3 py-1 rounded border border-primary/20 min-w-[3rem] text-center">{field.value}</span>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -871,7 +871,7 @@ function QuizGeneratorContent() {
                                 <TooltipTrigger asChild>
                                   <Badge
                                     variant={field.value?.includes(level) ? "default" : "outline"}
-                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? 'bg-[#FF9933] hover:bg-[#FF9933]/90 text-white' : 'bg-white/50 hover:bg-white text-slate-600'}`}
+                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-white/50 hover:bg-white text-slate-600"}`}
                                     onClick={() => {
                                       if (field.value?.includes(level)) {
                                         field.onChange(field.value.filter((l: string) => l !== level));
@@ -893,14 +893,14 @@ function QuizGeneratorContent() {
 
                         {field.value && field.value.length > 0 && (
                           <div className="mt-3 p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                            <p className="text-[10px] font-bold text-[#FF9933] uppercase tracking-tighter mb-2 flex items-center gap-1">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
                               <Brain className="w-3 h-3" />
                               Pedagogical Strategy
                             </p>
                             <div className="space-y-2">
                               {field.value.map((level: string) => (
                                 <div key={level} className="text-[11px] leading-relaxed text-slate-700 flex items-start gap-2">
-                                  <div className="mt-1 w-1 h-1 rounded-full bg-[#FF9933] shrink-0" />
+                                  <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                                   <span>
                                     <span className="font-bold text-slate-900">{t.blooms[level]}:</span>{" "}
                                     {t.bloomsHints?.[level] || (translations.en as any).bloomsHints[level]}
@@ -915,7 +915,7 @@ function QuizGeneratorContent() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-[#FF9933] hover:bg-[#FF9933]/90 text-white shadow-lg shadow-[#FF9933]/20 transition-all font-headline">
+                  <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />

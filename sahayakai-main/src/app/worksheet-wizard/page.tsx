@@ -363,7 +363,7 @@ function WorksheetWizardContent() {
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-[#FF9933]" />
+        <div className="h-1.5 w-full bg-primary" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
