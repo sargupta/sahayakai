@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase-admin/firestore';
+import { aggregateUserMetrics } from './aggregator';
 
 export async function getUserContent(userId: string): Promise<BaseContent[]> {
     try {
@@ -144,6 +145,12 @@ export async function saveToLibrary(userId: string, type: ContentType, title: st
             createdAt: Timestamp.fromDate(now),
             updatedAt: Timestamp.fromDate(now),
         } as any);
+
+        revalidatePath("/my-library");
+        revalidatePath("/impact-dashboard");
+
+        // Background aggregation
+        aggregateUserMetrics(userId).catch(e => logger.error("Aggregator error during save", e));
 
         logger.info(`Content successfully saved to library`, 'STORAGE', { userId, contentId, type, path: filePath });
         return { success: true, id: contentId };

@@ -4,6 +4,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
+import { aggregateUserMetrics } from "./aggregator";
 
 export async function getProfilesAction(uids: string[]) {
     return await dbAdapter.getUsers(uids);
@@ -12,28 +13,38 @@ export async function getProfilesAction(uids: string[]) {
 export async function createPostAction(userId: string, content: string, visibility: string = 'public', imageUrl?: string) {
     const db = await getDb();
 
-    const postData = {
+    const postData: any = {
         authorId: userId,
         content,
-        imageUrl,
         visibility,
         likesCount: 0,
         commentsCount: 0,
-        createdAt: new Date().toISOString(), // In real app use FieldValue.serverTimestamp()
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
 
+    if (imageUrl) postData.imageUrl = imageUrl;
+
     const docRef = await db.collection('posts').add(postData);
 
-    // Trigger background processing (Feeds, Notifications)
-    await publishEvent('teacher-connect-events', {
-        type: 'NEW_POST',
-        postId: docRef.id,
-        authorId: userId,
-        timestamp: postData.createdAt
-    });
+    // Trigger background processing (Feeds, Notifications) - Safe call
+    try {
+        await publishEvent('teacher-connect-events', {
+            type: 'NEW_POST',
+            postId: docRef.id,
+            authorId: userId,
+            timestamp: postData.createdAt
+        });
+    } catch (e) {
+        console.error("Non-critical: Failed to publish post event:", e);
+    }
 
     revalidatePath("/community");
+    revalidatePath("/impact-dashboard");
+
+    // Background aggregation
+    aggregateUserMetrics(userId).catch(e => console.error("Aggregator error:", e));
+
     return docRef.id;
 }
 
