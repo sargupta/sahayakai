@@ -238,7 +238,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
       case 'fill_in_the_blanks': return 'Fill in the Blanks';
       case 'short_answer': return 'Short Answer';
       case 'true_false': return 'True/False';
-      default: return type.replace(/_/g, ' ');
+      default: return (type || 'Question').replace(/_/g, ' ');
     }
   };
 

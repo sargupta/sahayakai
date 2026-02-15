@@ -84,6 +84,8 @@ export async function getPosts(filters: { language?: string, limit?: number, gra
     })));
 }
 
+import { createNotification } from "./notifications";
+
 export async function followTeacherAction(followerId: string, followingId: string) {
     const db = await getDb();
     const connectionId = `${followerId}_${followingId}`;
@@ -98,6 +100,25 @@ export async function followTeacherAction(followerId: string, followingId: strin
             followingId,
             createdAt: new Date().toISOString()
         });
+
+        // Create Notification for the person being followed
+        try {
+            const followerDoc = await db.collection('users').doc(followerId).get();
+            const followerData = followerDoc.data();
+
+            await createNotification({
+                recipientId: followingId,
+                type: 'FOLLOW',
+                title: 'New Follower',
+                message: `${followerData?.displayName || 'A teacher'} started following you`,
+                senderId: followerId,
+                senderName: followerData?.displayName,
+                senderPhotoURL: followerData?.photoURL,
+                link: `/community` // Could link to follower's profile if available
+            });
+        } catch (e) {
+            console.error("Failed to send follow notification:", e);
+        }
     }
     revalidatePath("/community");
 }
@@ -132,19 +153,46 @@ export async function getFollowingPosts(followerId: string) {
     return dbAdapter.serialize(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 }
 
-export async function getLibraryResources(filters: { type?: string, language?: string, authorId?: string } = {}) {
+export async function getLibraryResources(filters: { type?: string, language?: string, authorId?: string, authorIds?: string[], excludeTypes?: string[] } = {}) {
     const db = await getDb();
     let query: any = db.collection('library_resources');
 
     if (filters.type) query = query.where('type', '==', filters.type);
+    if (filters.excludeTypes && filters.excludeTypes.length > 0) query = query.where('type', 'not-in', filters.excludeTypes);
     if (filters.language && filters.language !== 'all') query = query.where('language', '==', filters.language);
-    if (filters.authorId) query = query.where('authorId', '==', filters.authorId);
 
-    const snapshot = await query.orderBy('stats.likes', 'desc').limit(20).get();
-    return dbAdapter.serialize(snapshot.docs.map((doc: any) => ({
+    if (filters.authorId) {
+        query = query.where('authorId', '==', filters.authorId);
+    } else if (filters.authorIds && filters.authorIds.length > 0) {
+        // Firestore 'in' query supports up to 10-30 items depending on configuration
+        // Using slice to stay within standard limits
+        query = query.where('authorId', 'in', filters.authorIds.slice(0, 10));
+    }
+
+    // Determine if we have filters that would require a composite index when paired with orderBy
+    const hasFilters = !!(filters.type || (filters.language && filters.language !== 'all') || filters.authorId || (filters.authorIds && filters.authorIds.length > 0) || (filters.excludeTypes && filters.excludeTypes.length > 0));
+
+    let snapshot;
+    if (hasFilters) {
+        // If filters are present, fetch without server-side ordering to avoid composite index requirement
+        // We'll limit to a larger number and sort in memory.
+        snapshot = await query.limit(100).get();
+    } else {
+        // Global trending query - standard single-field index works fine here
+        snapshot = await query.orderBy('stats.likes', 'desc').limit(50).get();
+    }
+
+    let resources = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data()
-    })));
+    }));
+
+    if (hasFilters) {
+        // Sort in memory
+        resources.sort((a: any, b: any) => (b.stats?.likes || 0) - (a.stats?.likes || 0));
+    }
+
+    return dbAdapter.serialize(resources);
 }
 
 export async function trackDownloadAction(resourceId: string) {
@@ -166,95 +214,6 @@ export async function trackDownloadAction(resourceId: string) {
     });
 }
 
-export async function seedLibraryAction(userId: string) {
-    const db = await getDb();
-    const batch = db.batch();
-
-    // 1. Create Mock User Profiles
-    const mockUsers = [
-        { uid: 'mock_ravi', displayName: 'Ravi Kumar', initial: 'RK', subject: 'Math', photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ravi' },
-        { uid: 'mock_priya', displayName: 'Priya Singh', initial: 'PS', subject: 'Science', photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
-        { uid: 'mock_amit', displayName: 'Amit Sharma', initial: 'AS', subject: 'Hindi', photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Amit' },
-    ];
-
-    for (const m of mockUsers) {
-        const userRef = db.collection('users').doc(m.uid);
-        batch.set(userRef, {
-            ...m,
-            email: `${m.uid}@example.com`,
-            schoolName: "Kendriya Vidyalaya",
-            schoolNormalized: "KENDRIYA VIDYALAYA",
-            district: "Delhi",
-            gradeLevels: ["Class 6", "Class 7", "Class 8"],
-            followersCount: Math.floor(Math.random() * 100),
-            followingCount: Math.floor(Math.random() * 50),
-            lastLogin: new Date().toISOString()
-        }, { merge: true });
-    }
-
-    // 2. Create Library Resources from Mock Users
-    const resources = [
-        {
-            title: 'Interactive Lesson on the Solar System',
-            type: 'lesson-plan',
-            authorId: 'mock_priya',
-            authorName: 'Priya Singh',
-            authorInitials: 'PS',
-            language: 'en',
-            stats: { likes: 128, downloads: 45 },
-            createdAt: new Date().toISOString()
-        },
-        {
-            title: 'भिन्न पर उन्नत प्रश्नोत्तरी (कक्षा 7)',
-            type: 'quiz',
-            authorId: 'mock_ravi',
-            authorName: 'Ravi Kumar',
-            authorInitials: 'RK',
-            language: 'hi',
-            stats: { likes: 95, downloads: 30 },
-            createdAt: new Date().toISOString()
-        },
-        {
-            title: 'Modern Indian History Overview',
-            type: 'lesson-plan',
-            authorId: 'mock_amit',
-            authorName: 'Amit Sharma',
-            authorInitials: 'AS',
-            language: 'en',
-            stats: { likes: 210, downloads: 88 },
-            createdAt: new Date().toISOString()
-        }
-    ];
-
-    resources.forEach(r => {
-        const ref = db.collection('library_resources').doc();
-        batch.set(ref, r);
-    });
-
-    // 3. Create Staffroom Posts from Mock Users
-    const posts = [
-        {
-            authorId: 'mock_priya',
-            content: "Just tried the new AI Visual Aid designer for my Class 7 Science lab. The students loved the B&W diagrams!",
-            likesCount: 12,
-            createdAt: new Date().toISOString()
-        },
-        {
-            authorId: 'mock_ravi',
-            content: "Does anyone have a good strategy for teaching Vedic Math shortcuts to Class 6?",
-            likesCount: 5,
-            createdAt: new Date().toISOString()
-        }
-    ];
-
-    posts.forEach(p => {
-        const ref = db.collection('posts').doc();
-        batch.set(ref, p);
-    });
-
-    await batch.commit();
-    revalidatePath("/community");
-}
 export async function getRecommendedTeachersAction(userId: string) {
     const db = await getDb();
 
@@ -329,14 +288,14 @@ export async function getRecommendedTeachersAction(userId: string) {
 
     // 4. Sort and return top 5 (Sanitized results to strip PII)
     const recommendations = scored
-        .filter(t => t.score > 5) // Minimum quality barrier
+        .filter(t => t.score > 1 && t.displayName) // Must have a name and minimum affinity
         .sort((a, b) => b.score - a.score)
         .slice(0, 5)
         .map(t => ({
             uid: t.uid,
             displayName: t.displayName,
             photoURL: t.photoURL,
-            initial: t.initial,
+            initial: t.displayName?.[0] || t.initial || "T",
             schoolName: t.schoolName,
             subjects: t.subjects,
             impactScore: t.impactScore,
@@ -344,4 +303,36 @@ export async function getRecommendedTeachersAction(userId: string) {
         }));
 
     return dbAdapter.serialize(recommendations);
+}
+
+export async function getAllTeachersAction(currentUserId?: string) {
+    const db = await getDb();
+
+    // Fetch all teachers
+    // Note: In a massive scale app, we'd use pagination. 
+    // For the initial "show all" requirement, we fetch up to 200.
+    const snapshot = await db.collection('users')
+        .orderBy('displayName', 'asc')
+        .limit(200)
+        .get();
+
+    const teachers = snapshot.docs
+        .map(doc => ({ uid: doc.id, ...doc.data() } as any))
+        .filter(teacher => teacher.uid !== currentUserId); // Exclude self if provided
+
+    // Sanitize output for public directory - Only use real data
+    const sanitized = teachers.map(t => ({
+        uid: t.uid,
+        displayName: t.displayName, // Must be real
+        photoURL: t.photoURL,
+        initial: t.displayName?.[0] || t.initial,
+        schoolName: t.schoolName,
+        subjects: t.subjects || [],
+        gradeLevels: t.gradeLevels || [],
+        bio: t.bio,
+        impactScore: t.impactScore || 0,
+        followersCount: t.followersCount || 0
+    })).filter(t => t.displayName); // Ensure only teachers with names are shown
+
+    return dbAdapter.serialize(sanitized);
 }

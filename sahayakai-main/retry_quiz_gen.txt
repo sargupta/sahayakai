@@ -1,0 +1,136 @@
+  console.log
+    Mock lucide-react loaded
+
+      at Object.log (src/__mocks__/lucide-react.ts:3:9)
+
+FAIL src/__tests__/app/quiz-generator.test.tsx
+  Quiz Generator - Voice Input Auto-Submit
+    ✕ should auto-submit form after voice transcript is received (97 ms)
+    ✕ should include voice transcript in quiz generation request (4 ms)
+  Quiz Generator - UI Color Palette
+    ✓ should use saffron theme colors for slider (34 ms)
+
+  ● Quiz Generator - Voice Input Auto-Submit › should auto-submit form after voice transcript is received
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/uuid/dist-node/index.js:1
+    export { default as MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: Unexpected token 'export'
+
+      19 |
+      20 | const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+    > 21 |
+         | ^
+      22 | const translations: Record<string, Record<string, string>> = {
+      23 |   en: {
+      24 |     title: "Upload Textbook Page",
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1318:40)
+      at Object.<anonymous> (src/components/image-uploader.tsx:21:15)
+      at Object.<anonymous> (src/app/quiz-generator/page.tsx:29:24)
+      at Object.require (src/__tests__/app/quiz-generator.test.tsx:66:35)
+
+  ● Quiz Generator - Voice Input Auto-Submit › should include voice transcript in quiz generation request
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/node_modules/uuid/dist-node/index.js:1
+    export { default as MAX } from './max.js';
+    ^^^^^^
+
+    SyntaxError: Unexpected token 'export'
+
+      19 |
+      20 | const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+    > 21 |
+         | ^
+      22 | const translations: Record<string, Record<string, string>> = {
+      23 |   en: {
+      24 |     title: "Upload Textbook Page",
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1318:40)
+      at Object.<anonymous> (src/components/image-uploader.tsx:21:15)
+      at Object.<anonymous> (src/app/quiz-generator/page.tsx:29:24)
+      at Object.require (src/__tests__/app/quiz-generator.test.tsx:102:35)
+
+--------------------------------|---------|----------|---------|---------|--------------------------------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                          
+--------------------------------|---------|----------|---------|---------|--------------------------------------------
+All files                       |    3.14 |        0 |       0 |    3.14 |                                            
+ app                            |       0 |        0 |       0 |       0 |                                            
+  page.tsx                      |       0 |        0 |       0 |       0 | 1-285                                      
+ components                     |       0 |        0 |       0 |       0 |                                            
+  feedback-dialog.tsx           |       0 |        0 |       0 |       0 | 1-132                                      
+ components/lesson-plan         |       0 |        0 |       0 |       0 |                                            
+  lesson-plan-input-section.tsx |       0 |        0 |       0 |       0 | 1-108                                      
+ data/ncert                     |       0 |        0 |       0 |       0 |                                            
+  english.ts                    |       0 |        0 |       0 |       0 | 1-27                                       
+  hindi.ts                      |       0 |        0 |       0 |       0 | 1-27                                       
+  index.ts                      |       0 |        0 |       0 |       0 | 1-80                                       
+  it.ts                         |       0 |        0 |       0 |       0 | 1-46                                       
+  kannada.ts                    |       0 |        0 |       0 |       0 | 1-109                                      
+  mathematics.ts                |       0 |        0 |       0 |       0 | 1-132                                      
+  sanskrit.ts                   |       0 |        0 |       0 |       0 | 1-75                                       
+  science.ts                    |       0 |        0 |       0 |       0 | 1-122                                      
+  social-studies.ts             |       0 |        0 |       0 |       0 | 1-27                                       
+ features/lesson-planner/hooks  |       0 |        0 |       0 |       0 |                                            
+  use-lesson-plan.ts            |       0 |        0 |       0 |       0 | 1-486                                      
+ hooks                          |   36.08 |      100 |       0 |   36.08 |                                            
+  use-toast.ts                  |   36.08 |      100 |       0 |   36.08 | 30-33,62-75,78-130,136-141,145-172,174-192 
+ lib                            |       0 |        0 |       0 |       0 |                                            
+  indian-context.ts             |       0 |        0 |       0 |       0 | 1-179                                      
+  logger.ts                     |       0 |        0 |       0 |       0 | 1-141                                      
+  safety.ts                     |       0 |        0 |       0 |       0 | 1-59                                       
+--------------------------------|---------|----------|---------|---------|--------------------------------------------
+Jest: "global" coverage threshold for statements (50%) not met: 3.14%
+Jest: "global" coverage threshold for branches (50%) not met: 0%
+Jest: "global" coverage threshold for lines (50%) not met: 3.14%
+Jest: "global" coverage threshold for functions (50%) not met: 0%
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 1 passed, 3 total
+Snapshots:   0 total
+Time:        1.005 s
+Ran all test suites matching src/__tests__/app/quiz-generator.test.tsx.

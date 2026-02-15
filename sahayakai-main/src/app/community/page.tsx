@@ -11,48 +11,51 @@ import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { getLibraryResources } from '@/app/actions/community';
+import { getLibraryResources, getFollowingIdsAction } from '@/app/actions/community';
 import { Loader2 } from 'lucide-react';
 import { TeacherSuggestions } from '@/components/teacher-suggestions';
 import { CreatePostDialog } from '@/components/community/create-post-dialog';
+import { TeacherDirectory } from '@/components/community/teacher-directory';
+import { useAuth } from '@/context/auth-context';
 
 type Resource = {
   id: string;
   title: string;
   type: FileType;
   author: string;
+  authorId: string;
   likes: number;
   language: string;
   imageUrl?: string;
 };
 
 const mockTrendingResources: Resource[] = [
-  { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', likes: 128, language: 'en' },
-  { id: '2', title: 'भिन्न पर उन्नत प्रश्नोत्तरी (कक्षा 7)', type: 'quiz', author: 'Priya Singh', likes: 95, language: 'hi' },
-  { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', likes: 210, language: 'en' },
-  { id: '4', title: 'মোগল সাম্রাজ্য শব্দ অনুসন্ধান', type: 'worksheet', author: 'Aisha Khan', likes: 72, language: 'bn' },
-  { id: 't1', title: 'శోషణ వ్యవస్థపై విజువల్ ఎయిడ్', type: 'image', author: 'S. Rao', likes: 190, language: 'te' },
-  { id: 't2', title: 'சுவாச அமைப்பு பற்றிய பாடம்', type: 'lesson-plan', author: 'M. Devi', likes: 250, language: 'ta' },
-  { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', likes: 350, language: 'en' },
-  { id: 't3', title: 'भारतीय स्वातंत्र्य चळवळीवर वर्कशीट', type: 'worksheet', author: 'A. Joshi', likes: 115, language: 'mr' },
-  { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', likes: 180, language: 'en' },
-  { id: 't4', title: 'ಬೆಳಕಿನ ರಸಪ್ರಶ್ನೆ', type: 'quiz', author: 'G. Gowda', likes: 85, language: 'kn' },
-  { id: '7', title: 'बुनियादी बीजगणित वर्कशीट', type: 'worksheet', author: 'Deepa Iyer', likes: 150, language: 'hi' },
-  { id: 't5', title: 'ગુજરાતના ઇતિહાસ પર નિબંધ માટે રૂબ્રિક', type: 'rubric', author: 'N. Shah', likes: 130, language: 'gu' },
-  { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', likes: 450, language: 'en' },
-  { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', likes: 110, language: 'en' },
+  { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorId: 'rk1', likes: 128, language: 'en' },
+  { id: '2', title: 'भिन्न पर उन्नत प्रश्नोत्तरी (कक्षा 7)', type: 'quiz', author: 'Priya Singh', authorId: 'ps1', likes: 95, language: 'hi' },
+  { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorId: 'sg1', likes: 210, language: 'en' },
+  { id: '4', title: 'মোগল সাম্রাজ্য শব্দ অনুসন্ধান', type: 'worksheet', author: 'Aisha Khan', authorId: 'ak1', likes: 72, language: 'bn' },
+  { id: 't1', title: 'శోషణ వ్యవస్థపై విజువల్ ఎయిడ్', type: 'image', author: 'S. Rao', authorId: 'sr1', likes: 190, language: 'te' },
+  { id: 't2', title: 'சுவாச அமைப்பு பற்றிய பாடம்', type: 'lesson-plan', author: 'M. Devi', authorId: 'md1', likes: 250, language: 'ta' },
+  { id: '5', title: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorId: 'rk1', likes: 350, language: 'en' },
+  { id: 't3', title: 'भारतीय स्वातंत्र्य चळवळीवर वर्कशीट', type: 'worksheet', author: 'A. Joshi', authorId: 'aj1', likes: 115, language: 'mr' },
+  { id: '6', title: 'Introduction to Indian Geography', type: 'lesson-plan', author: 'Priya Singh', authorId: 'ps1', likes: 180, language: 'en' },
+  { id: 't4', title: 'ಬೆಳಕಿನ ರಸಪ್ರಶ್ನೆ', type: 'quiz', author: 'G. Gowda', authorId: 'gg1', likes: 85, language: 'kn' },
+  { id: '7', title: 'बुनियादी बीजगणित वर्कशीट', type: 'worksheet', author: 'Deepa Iyer', authorId: 'di1', likes: 150, language: 'hi' },
+  { id: 't5', title: 'ગુજરાતના ઇતિહાસ પર નિબંધ માટે રૂબ્રિક', type: 'rubric', author: 'N. Shah', authorId: 'ns1', likes: 130, language: 'gu' },
+  { id: '8', title: 'The Story of Indus Valley Civilization', type: 'lesson-plan', author: 'Sameer Gupta', authorId: 'sg1', likes: 450, language: 'en' },
+  { id: '9', title: 'Quiz on Indian National Symbols', type: 'quiz', author: 'Aisha Khan', authorId: 'ak1', likes: 110, language: 'en' },
 ];
 
 const mockFollowingResources: Resource[] = [
-  { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', likes: 42, language: 'en' },
-  { id: 'f2', title: 'गति पर वर्कशीट', type: 'worksheet', author: 'Priya Singh', likes: 88, language: 'hi' },
-  { id: 'f3', title: 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', likes: 105, language: 'en' },
+  { id: 'f1', title: 'Activity: Build a Simple Circuit', type: 'lesson-plan', author: 'Ravi Kumar', authorId: 'rk1', likes: 42, language: 'en' },
+  { id: 'f2', title: 'गति पर वर्कशीट', type: 'worksheet', author: 'Priya Singh', authorId: 'ps1', likes: 88, language: 'hi' },
+  { id: 'f3', title: 'Short Story Writing Prompts', type: 'worksheet', author: 'Ravi Kumar', authorId: 'rk1', likes: 105, language: 'en' },
 ];
 
 const mockMyContentResources: Resource[] = [
-  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', likes: 15, language: 'en' },
-  { id: 'm2', title: 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', likes: 3, language: 'hi' },
-  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', likes: 22, language: 'en' },
+  { id: 'm1', title: 'My Photosynthesis Lesson Plan', type: 'lesson-plan', author: 'Anjali Sharma', authorId: 'me', likes: 15, language: 'en' },
+  { id: 'm2', title: 'मेरी भिन्न प्रश्नोत्तरी', type: 'quiz', author: 'Anjali Sharma', authorId: 'me', likes: 3, language: 'hi' },
+  { id: 'm3', title: 'My Essay Writing Rubric', type: 'rubric', author: 'Anjali Sharma', authorId: 'me', likes: 22, language: 'en' },
 ];
 
 const languageMap: Record<string, string> = {
@@ -81,50 +84,61 @@ const authorAvatarMap: Record<string, string> = {
 };
 
 const ResourceList = ({ resources }: { resources: Resource[] }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
     {resources.map((resource) => (
-      <Card key={resource.id} className="flex flex-col hover:shadow-lg transition-shadow">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} data-ai-hint="teacher profile" />
-                  <AvatarFallback>{resource.author.substring(0, 2)}</AvatarFallback>
+      <Card key={resource.id} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1rem] bg-white">
+        <CardHeader className="p-3 pb-1">
+          <div className="flex items-start gap-2">
+            <div className="p-1.5 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
+              <FileTypeIcon type={resource.type} className="h-4 w-4 text-orange-600" />
+            </div>
+            <div className="space-y-0.5 flex-1 min-w-0">
+              <CardTitle className="text-sm font-black leading-tight text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+                {resource.title}
+              </CardTitle>
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-3.5 w-3.5 ring-1 ring-white shadow-sm">
+                  <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} />
+                  <AvatarFallback className="text-[5px] bg-slate-200">{resource.author.substring(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span>{resource.author}</span>
+                <span className="text-[9px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-default truncate">
+                  {resource.author}
+                </span>
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-grow">
-          {/* Render content snippet */}
-          {/* <p className="text-sm text-slate-600 mb-2 line-clamp-3">{(resource as any).content}</p> */}
 
-          {/* Render specific image if available */}
-          {resource.imageUrl && (
-            <div className="mt-3 relative h-48 w-full overflow-hidden rounded-md border border-slate-100">
+        <CardContent className="px-3 py-1.5 flex-grow">
+          {resource.imageUrl ? (
+            <div className="relative h-24 w-full overflow-hidden rounded-lg border border-slate-100 group-hover:border-orange-100 transition-all">
               <img
                 src={resource.imageUrl}
                 alt="Post attachment"
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
               />
+            </div>
+          ) : (
+            <div className="h-10 flex items-center">
+              <p className="text-[10px] text-slate-400 font-medium italic border-l-2 border-slate-100 pl-2 py-0.5 line-clamp-2">
+                "Resource shared to enhance learning outcomes."
+              </p>
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between items-center bg-accent/20 p-3">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Badge variant="outline">{languageMap[resource.language] || 'English'}</Badge>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1">
-              <ThumbsUp className="h-4 w-4" />
-              <span className="text-sm">{resource.likes}</span>
-            </Button>
+
+        <CardFooter className="px-3 py-2 border-t border-slate-50 bg-slate-50/30 flex justify-between items-center mt-auto">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 text-[8px] font-bold px-1.5 py-0 rounded">
+              {languageMap[resource.language] || 'English'}
+            </Badge>
+            <div className="flex items-center gap-1 text-slate-400 group/like font-bold text-[9px]">
+              <ThumbsUp className="h-2.5 w-2.5 group-hover/like:text-orange-500 transition-colors" />
+              <span>{resource.likes}</span>
+            </div>
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Download
+          <Button variant="ghost" size="sm" className="h-6 text-[9px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded px-1.5 transition-all">
+            Save
           </Button>
         </CardFooter>
       </Card>
@@ -134,16 +148,12 @@ const ResourceList = ({ resources }: { resources: Resource[] }) => (
 
 
 export default function CommunityPage() {
+  const { user } = useAuth();
   const [languageFilter, setLanguageFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'my-content'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'teachers' | 'my-content'>('trending');
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
-
-  const allResources = {
-    trending: mockTrendingResources,
-    following: mockFollowingResources,
-    'my-content': mockMyContentResources,
-  };
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -152,23 +162,54 @@ export default function CommunityPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const data = await getLibraryResources({
-          language: languageFilter === 'all' ? undefined : languageFilter,
-          type: undefined // Add type filter if needed
-        });
+        // Parallel fetch for trending following and personal content
+        // Exclude 'document' type from public trending feed (assumed private notes)
+        const [trendingData, followIds] = await Promise.all([
+          getLibraryResources({
+            language: languageFilter === 'all' ? undefined : languageFilter,
+            excludeTypes: ['document']
+          }),
+          user ? getFollowingIdsAction(user.uid) : Promise.resolve([])
+        ]);
 
-        // Transform data to match Resource type if necessary
-        const transformed = (data as any[]).map(r => ({
+        let followingResources: any[] = [];
+        if (user && followIds.length > 0) {
+          followingResources = await getLibraryResources({
+            authorIds: followIds,
+            language: languageFilter === 'all' ? undefined : languageFilter
+          });
+        }
+
+        let myResources: any[] = [];
+        if (user) {
+          myResources = await getLibraryResources({
+            authorId: user.uid,
+            language: languageFilter === 'all' ? undefined : languageFilter
+          });
+        }
+
+        // Aggregate and deduplicate
+        const allFetchedData = [...(trendingData as any[]), ...followingResources, ...myResources];
+
+        // Transform data and ensure we have authorId
+        const transformed = allFetchedData.map((r: any) => ({
           id: r.id,
           title: r.title,
           type: r.type,
           author: r.authorName || 'Teacher',
+          authorId: r.authorId || r.userId || '',
           likes: r.stats?.likes || 0,
           language: r.language,
           imageUrl: r.imageUrl
         }));
 
-        setResources(transformed);
+        // Deduplicate by ID
+        const uniqueResources = Array.from(new Map(transformed.map(item => [item.id, item])).values());
+
+        setResources(uniqueResources);
+        setFollowingIds(followIds);
+
+
       } catch (error) {
         console.error("Error loading community resources:", error);
       } finally {
@@ -176,26 +217,35 @@ export default function CommunityPage() {
       }
     }
     loadData();
-  }, [languageFilter]);
+  }, [languageFilter, user]);
 
   useEffect(() => {
     const filtered = resources.filter(resource => {
       const matchesSearch = searchTerm === '' || resource.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (activeTab === 'following') {
+        return matchesSearch && followingIds.includes(resource.authorId);
+      }
+
+      if (activeTab === 'my-content') {
+        return matchesSearch && user && resource.authorId === user.uid;
+      }
+
       return matchesSearch;
     });
     setFilteredResources(filtered);
-  }, [resources, searchTerm]);
+  }, [resources, searchTerm, activeTab, followingIds, user]);
 
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Library className="w-12 h-12 text-primary" />
           </div>
           <CardTitle className="font-headline text-3xl">Community Library</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-500 font-medium">
             Discover and share educational resources with fellow teachers.
           </CardDescription>
           <div className="mt-4">
@@ -210,40 +260,44 @@ export default function CommunityPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main Content Area */}
             <div className="flex-grow space-y-6">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-6 p-1 bg-slate-50/50 rounded-[2rem] border border-slate-100">
                 <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input
                     placeholder="Search for lesson plans, quizzes, and more..."
-                    className="pl-10 bg-white/50"
+                    className="pl-14 h-14 bg-white border-none rounded-[1.8rem] shadow-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-orange-200"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="w-full sm:w-48">
+                <div className="w-full sm:w-56 h-14">
                   <LanguageSelector onValueChange={setLanguageFilter} defaultValue={languageFilter} />
                 </div>
               </div>
 
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                  <p className="text-slate-500 font-medium">Loading community resources...</p>
+                  <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+                  <p className="text-slate-500 font-bold tracking-tight">Curating your library...</p>
                 </div>
               ) : (
-                <Tabs defaultValue="trending" onValueChange={(v) => setActiveTab(v as any)}>
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="trending">Trending</TabsTrigger>
-                    <TabsTrigger value="following">Following</TabsTrigger>
-                    <TabsTrigger value="my-content">My Content</TabsTrigger>
+                <Tabs defaultValue="trending" onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+                  <TabsList className="flex w-full bg-slate-100/50 p-1 rounded-[1.25rem] h-auto border border-slate-200/50">
+                    <TabsTrigger value="trending" className="flex-1 py-3 rounded-[1.2rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg transition-all duration-300">Trending</TabsTrigger>
+                    <TabsTrigger value="following" className="flex-1 py-3 rounded-[1.2rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg transition-all duration-300">Following</TabsTrigger>
+                    <TabsTrigger value="teachers" className="flex-1 py-3 rounded-[1.2rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg transition-all duration-300">Teachers</TabsTrigger>
+                    <TabsTrigger value="my-content" className="flex-1 py-3 rounded-[1.2rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg transition-all duration-300">My Content</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="trending">
+                  <TabsContent value="trending" className="outline-none">
                     <ResourceList resources={filteredResources} />
                   </TabsContent>
-                  <TabsContent value="following">
+                  <TabsContent value="following" className="outline-none">
                     <ResourceList resources={filteredResources} />
                   </TabsContent>
-                  <TabsContent value="my-content">
+                  <TabsContent value="teachers" className="outline-none">
+                    <TeacherDirectory />
+                  </TabsContent>
+                  <TabsContent value="my-content" className="outline-none">
                     <ResourceList resources={filteredResources} />
                   </TabsContent>
                 </Tabs>

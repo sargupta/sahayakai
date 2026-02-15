@@ -45,7 +45,17 @@ describe('Quiz Generator - Voice Input Auto-Submit', () => {
                 json: () =>
                     Promise.resolve({
                         easy: { questions: [] },
-                        medium: { questions: [{ question: 'Test?', type: 'multiple_choice' }] },
+                        medium: {
+                            title: 'Test Quiz',
+                            questions: [{
+                                questionText: 'Test?',
+                                questionType: 'multiple_choice',
+                                options: ['A', 'B'],
+                                correctAnswer: 'A',
+                                explanation: 'Because.',
+                                difficultyLevel: 'medium'
+                            }]
+                        },
                         hard: { questions: [] },
                     }),
             })

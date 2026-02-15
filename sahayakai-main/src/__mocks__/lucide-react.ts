@@ -1,21 +1,28 @@
 import React from 'react';
 
-console.log('Mock lucide-react loaded');
+console.log('Mock lucide-react (ForwardRef Proxy) loaded');
 
-const IconMock = (name: string) => (props: any) =>
-    React.createElement('div', { ...props, 'data-testid': `icon-${name.toLowerCase().replace(' ', '-')}` });
+const iconProxy = new Proxy({}, {
+    get: (target: any, name: string | symbol) => {
+        if (name === '__esModule') return true;
 
-export const Loader2 = IconMock('loader2');
-export const Mic = IconMock('mic');
-export const Search = IconMock('search');
-export const Sparkles = IconMock('sparkles');
-export const BookOpen = IconMock('book-open');
-export const BrainCircuit = IconMock('brain-circuit');
-export const PenTool = IconMock('pen-tool');
-export const GraduationCap = IconMock('graduation-cap');
-export const ArrowRight = IconMock('arrow-right');
-export const X = IconMock('x');
-export const StopCircle = IconMock('stop-circle');
+        const componentName = name.toString();
 
-// Default export for deep imports (e.g. lucide-react/dist/esm/icons/loader-2)
-export default (props: any) => React.createElement('div', { ...props, 'data-testid': 'icon-mock-default' });
+        if (componentName === 'default') {
+            const DefaultComponent = React.forwardRef((props: any, ref: any) =>
+                React.createElement('div', { ...props, ref, 'data-testicon': 'DefaultIcon' })
+            );
+            return DefaultComponent;
+        }
+
+        const IconComponent = React.forwardRef((props: any, ref: any) =>
+            React.createElement('div', { ...props, ref, 'data-testicon': componentName })
+        );
+
+        // @ts-ignore
+        IconComponent.displayName = componentName;
+        return IconComponent;
+    }
+});
+
+module.exports = iconProxy;

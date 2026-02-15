@@ -221,3 +221,21 @@ export interface UserImpactSchema {
         moneySavedINR: number;
     };
 }
+
+// --- Notifications ---
+
+export type NotificationType = 'FOLLOW' | 'NEW_POST' | 'BADGE_EARNED' | 'SYSTEM';
+
+export interface Notification {
+    id: string;
+    recipientId: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    senderId?: string;
+    senderName?: string;
+    senderPhotoURL?: string;
+    link?: string;
+    isRead: boolean;
+    createdAt: string;
+}

@@ -146,33 +146,18 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
             <Card>
                 <CardHeader>
                     <CardTitle>Analytics Dashboard</CardTitle>
-                    <CardDescription>No analytics data available yet. Start using the app to see your impact!</CardDescription>
+                    <CardDescription>Start using the app to generate your impact metrics.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <button
-                        onClick={async () => {
-                            setIsLoading(true);
-                            try {
-                                const res = await fetch('/api/analytics/seed', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ userId })
-                                });
-
-                                if (!res.ok) throw new Error("Seed failed: " + res.statusText);
-
-                                // Force reload to see new data
-                                window.location.reload();
-                            } catch (e) {
-                                console.error("Demo Seed Failed", e);
-                                setIsLoading(false);
-                                alert("Failed to seed data. Please check console.");
-                            }
-                        }}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-                    >
-                        Populate Demo Data
-                    </button>
+                <CardContent className="flex flex-col gap-4">
+                    <p className="text-sm text-balance text-muted-foreground">
+                        Your dashboard will populate automatically as you create content and engage with the community.
+                    </p>
+                    <div className="flex gap-2">
+                        <div className="p-4 bg-slate-50 rounded-lg border text-center w-full">
+                            <h3 className="font-semibold text-lg">0</h3>
+                            <p className="text-xs text-muted-foreground uppercase">Impact Score</p>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
         );

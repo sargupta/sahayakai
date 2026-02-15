@@ -1,0 +1,21 @@
+{
+  "name": "nextn",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node_modules/.bin/next dev",
+    "build": "node_modules/.bin/next build",
+    "start": "node_modules/.bin/next start",
+    "lint": "node_modules/.bin/next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    
+    "api:generate-spec": "ts-node scripts/generate-api-specs.ts",
+    "api:validate": "ts-node scripts/validate-api-specs.ts",
+    "api:test": "jest src/__tests__/api/",
+    "api:test:watch": "jest --watch src/__tests__/api/",
+    "api:docs": "ts-node scripts/generate-api-docs.ts",
+    "api:all": "npm run api:validate && npm run api:test"
+  }
+}

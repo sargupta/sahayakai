@@ -16,7 +16,10 @@ const config: Config = {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^lucide-react$': '<rootDir>/src/__mocks__/lucide-react.ts',
         '^lucide-react/(.*)$': '<rootDir>/src/__mocks__/lucide-react.ts',
+        '^uuid$': '<rootDir>/src/__mocks__/uuid.ts',
     },
+
+
     collectCoverage: true,
     collectCoverageFrom: [
         'src/lib/safety.ts',
@@ -30,8 +33,9 @@ const config: Config = {
         'src/app/page.tsx',
     ],
     transformIgnorePatterns: [
-        '/node_modules/(?!(jose|firebase-admin|jwks-rsa|@genkit-ai|@google-cloud|lucide-react)/)',
+        '/node_modules/(?!(jose|firebase-admin|jwks-rsa|@genkit-ai|@google-cloud|lucide-react|uuid)/)',
     ],
+
     coverageThreshold: {
         global: {
             branches: 50,

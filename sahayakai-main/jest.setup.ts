@@ -32,33 +32,42 @@ const observe = jest.fn();
 const unobserve = jest.fn();
 const disconnect = jest.fn();
 
-window.IntersectionObserver = jest.fn(() => ({
-    observe,
-    unobserve,
-    disconnect,
-})) as any;
+if (typeof window !== 'undefined') {
+    window.IntersectionObserver = jest.fn(() => ({
+        observe,
+        unobserve,
+        disconnect,
+    })) as any;
+}
+
 
 // Mock ResizeObserver
-window.ResizeObserver = jest.fn(() => ({
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
-})) as any;
+if (typeof window !== 'undefined') {
+    window.ResizeObserver = jest.fn(() => ({
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+    })) as any;
+}
+
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: jest.fn().mockImplementation(query => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: jest.fn(), // deprecated
-        removeListener: jest.fn(), // deprecated
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-        dispatchEvent: jest.fn(),
-    })),
-});
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: jest.fn().mockImplementation(query => ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener: jest.fn(), // deprecated
+            removeListener: jest.fn(), // deprecated
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+            dispatchEvent: jest.fn(),
+        })),
+    });
+}
+
 
 // Mock performance API
 const performanceMock = {
@@ -72,10 +81,13 @@ const performanceMock = {
     toJSON: jest.fn(),
 };
 
-Object.defineProperty(window, 'performance', {
-    writable: true,
-    value: performanceMock,
-});
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'performance', {
+        writable: true,
+        value: performanceMock,
+    });
+}
+
 
 Object.defineProperty(global, 'performance', {
     writable: true,
@@ -91,3 +103,32 @@ global.PerformanceObserver = jest.fn().mockImplementation((callback) => ({
 (global.PerformanceObserver as any).supportedEntryTypes = [];
 
 
+
+// Mock Canvas context
+if (typeof window !== 'undefined') {
+    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
+        fillRect: jest.fn(),
+        clearRect: jest.fn(),
+        getImageData: jest.fn(),
+        putImageData: jest.fn(),
+        createImageData: jest.fn(),
+        setTransform: jest.fn(),
+        drawImage: jest.fn(),
+        save: jest.fn(),
+        restore: jest.fn(),
+        beginPath: jest.fn(),
+        moveTo: jest.fn(),
+        lineTo: jest.fn(),
+        closePath: jest.fn(),
+        stroke: jest.fn(),
+        translate: jest.fn(),
+        scale: jest.fn(),
+        rotate: jest.fn(),
+        arc: jest.fn(),
+        fill: jest.fn(),
+        measureText: jest.fn().mockReturnValue({ width: 0 }),
+        transform: jest.fn(),
+        rect: jest.fn(),
+        clip: jest.fn(),
+    });
+}

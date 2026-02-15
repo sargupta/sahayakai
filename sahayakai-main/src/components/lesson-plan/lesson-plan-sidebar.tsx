@@ -56,10 +56,11 @@ export function LessonPlanSidebar({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 h-fit border-l-4 border-l-[#FF9933]">
-      <h3 className="font-headline text-base font-bold text-[#FF9933] uppercase tracking-wide">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 h-fit border-l-4 border-l-primary">
+      <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">
         {labels?.configuration || "Lesson Plan Settings"}
       </h3>
+
       <div className="pt-2"></div>
 
       {/* Context Image (Moved from Main Area) */}

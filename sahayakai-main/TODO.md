@@ -79,6 +79,7 @@
 3. **Improve Remaining Tools** - Apply same enhancements to other 5 tools
 4. **Fix Navigation Bug** - Investigate page redirect issue
 5. **Add Print Styles** - Better PDF generation
+6. **Multi-Agent Sync** - Formalize background peer-reviews as default (Feb 2026)
 
 ---
 *Last Updated: 2025-12-08*

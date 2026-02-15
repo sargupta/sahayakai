@@ -58,11 +58,14 @@ export default function RootLayout({
                   </div>
                 </header>
                 <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center p-4 md:p-8">
-                  {children}
+                  <AnalyticsProvider>
+                    {children}
+                  </AnalyticsProvider>
                 </main>
               </SidebarInset>
               <AuthDialog />
             </SidebarProvider>
+
           </AuthProvider>
           <Toaster />
           {/* <GlobalVoiceInterface /> */}
