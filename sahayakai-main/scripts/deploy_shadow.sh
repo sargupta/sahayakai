@@ -19,11 +19,13 @@ echo "---------------------------------------------------"
 
 # 1. Deploy directly from source (uses Google Cloud Buildpacks)
 # We map the secrets from Secret Manager to Environment Variables
+set -e
 /Users/sargupta/google-cloud-sdk/bin/gcloud run deploy "$SERVICE_NAME" \
   --source . \
   --project "$PROJECT_ID" \
   --region "$REGION" \
   --allow-unauthenticated \
+  --clear-base-image \
   --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest" \
   --set-secrets="FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest" \
   --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com,NODE_ENV=production" \
