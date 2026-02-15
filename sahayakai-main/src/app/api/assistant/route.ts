@@ -4,14 +4,15 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 
 // Use the verified model
-const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash",
-    apiKey: process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY,
-});
-
 export async function POST(req: NextRequest) {
     try {
         const { message, history, context } = await req.json();
+
+        // Instantiate model inside handler to avoid build-time requirement for GOOGLE_API_KEY
+        const model = new ChatGoogleGenerativeAI({
+            model: "gemini-2.5-flash",
+            apiKey: process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY,
+        });
 
         const messages = [];
 
