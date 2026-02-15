@@ -83,68 +83,95 @@ const authorAvatarMap: Record<string, string> = {
   'Anjali Sharma': '/avatars/anjali_sharma.png', // Assuming you might want one for the "My Content" author too
 };
 
-const ResourceList = ({ resources }: { resources: Resource[] }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
-    {resources.map((resource) => (
-      <Card key={resource.id} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1rem] bg-white">
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-start gap-2">
-            <div className="p-1.5 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
-              <FileTypeIcon type={resource.type} className="h-4 w-4 text-orange-600" />
-            </div>
-            <div className="space-y-0.5 flex-1 min-w-0">
-              <CardTitle className="text-sm font-black leading-tight text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
-                {resource.title}
-              </CardTitle>
-              <div className="flex items-center gap-1.5">
-                <Avatar className="h-3.5 w-3.5 ring-1 ring-white shadow-sm">
-                  <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} />
-                  <AvatarFallback className="text-[5px] bg-slate-200">{resource.author.substring(0, 2)}</AvatarFallback>
-                </Avatar>
-                <span className="text-[9px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-default truncate">
-                  {resource.author}
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="px-3 py-1.5 flex-grow">
-          {resource.imageUrl ? (
-            <div className="relative h-24 w-full overflow-hidden rounded-lg border border-slate-100 group-hover:border-orange-100 transition-all">
-              <img
-                src={resource.imageUrl}
-                alt="Post attachment"
-                className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
-              />
-            </div>
-          ) : (
-            <div className="h-10 flex items-center">
-              <p className="text-[10px] text-slate-400 font-medium italic border-l-2 border-slate-100 pl-2 py-0.5 line-clamp-2">
-                "Resource shared to enhance learning outcomes."
-              </p>
-            </div>
-          )}
-        </CardContent>
-
-        <CardFooter className="px-3 py-2 border-t border-slate-50 bg-slate-50/30 flex justify-between items-center mt-auto">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 text-[8px] font-bold px-1.5 py-0 rounded">
-              {languageMap[resource.language] || 'English'}
-            </Badge>
-            <div className="flex items-center gap-1 text-slate-400 group/like font-bold text-[9px]">
-              <ThumbsUp className="h-2.5 w-2.5 group-hover/like:text-orange-500 transition-colors" />
-              <span>{resource.likes}</span>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" className="h-6 text-[9px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded px-1.5 transition-all">
-            Save
-          </Button>
-        </CardFooter>
-      </Card>
-    ))}
+const EmptyState = ({ tab }: { tab: string }) => (
+  <div className="flex flex-col items-center justify-center py-24 px-6 text-center space-y-4 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200 mt-4">
+    <div className="bg-orange-100 p-6 rounded-full">
+      <Library className="h-10 w-10 text-orange-600" />
+    </div>
+    <div className="max-w-md space-y-2">
+      <h3 className="text-xl font-bold text-slate-900">
+        {tab === 'following' ? "Grow Your Network" : "The Community is Growing"}
+      </h3>
+      <p className="text-sm text-slate-500 font-medium">
+        {tab === 'following'
+          ? "Follow fellow teachers to see their latest lesson plans and resources here."
+          : "Be the first to share a Lesson Plan or Quiz. Your contribution helps teachers across Bharat."}
+      </p>
+    </div>
+    <div className="pt-2">
+      <CreatePostDialog onPostCreated={() => window.location.reload()} />
+    </div>
   </div>
 );
+
+const ResourceList = ({ resources, tab }: { resources: Resource[], tab: string }) => {
+  if (resources.length === 0) {
+    return <EmptyState tab={tab} />;
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
+      {resources.map((resource) => (
+        <Card key={resource.id} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1rem] bg-white">
+          <CardHeader className="p-3 pb-1">
+            <div className="flex items-start gap-2">
+              <div className="p-1.5 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
+                <FileTypeIcon type={resource.type} className="h-4 w-4 text-orange-600" />
+              </div>
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <CardTitle className="text-sm font-black leading-tight text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+                  {resource.title}
+                </CardTitle>
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="h-3.5 w-3.5 ring-1 ring-white shadow-sm">
+                    <AvatarImage src={authorAvatarMap[resource.author]} alt={resource.author} />
+                    <AvatarFallback className="text-[5px] bg-slate-200">{resource.author.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-[9px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-default truncate">
+                    {resource.author}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="px-3 py-1.5 flex-grow">
+            {resource.imageUrl ? (
+              <div className="relative h-24 w-full overflow-hidden rounded-lg border border-slate-100 group-hover:border-orange-100 transition-all">
+                <img
+                  src={resource.imageUrl}
+                  alt="Post attachment"
+                  className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
+            ) : (
+              <div className="h-10 flex items-center">
+                <p className="text-[10px] text-slate-400 font-medium italic border-l-2 border-slate-100 pl-2 py-0.5 line-clamp-2">
+                  "Resource shared to enhance learning outcomes."
+                </p>
+              </div>
+            )}
+          </CardContent>
+
+          <CardFooter className="px-3 py-2 border-t border-slate-50 bg-slate-50/30 flex justify-between items-center mt-auto">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 text-[8px] font-bold px-1.5 py-0 rounded">
+                {languageMap[resource.language] || 'English'}
+              </Badge>
+              <div className="flex items-center gap-1 text-slate-400 group/like font-bold text-[9px]">
+                <ThumbsUp className="h-2.5 w-2.5 group-hover/like:text-orange-500 transition-colors" />
+                <span>{resource.likes}</span>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="h-6 text-[9px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded px-1.5 transition-all">
+              Save
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
 
 export default function CommunityPage() {
@@ -289,16 +316,16 @@ export default function CommunityPage() {
                     <TabsTrigger value="my-content" className="flex-1 py-3 rounded-[1.2rem] font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg transition-all duration-300">My Content</TabsTrigger>
                   </TabsList>
                   <TabsContent value="trending" className="outline-none">
-                    <ResourceList resources={filteredResources} />
+                    <ResourceList resources={filteredResources} tab="trending" />
                   </TabsContent>
                   <TabsContent value="following" className="outline-none">
-                    <ResourceList resources={filteredResources} />
+                    <ResourceList resources={filteredResources} tab="following" />
                   </TabsContent>
                   <TabsContent value="teachers" className="outline-none">
                     <TeacherDirectory />
                   </TabsContent>
                   <TabsContent value="my-content" className="outline-none">
-                    <ResourceList resources={filteredResources} />
+                    <ResourceList resources={filteredResources} tab="my-content" />
                   </TabsContent>
                 </Tabs>
               )}
