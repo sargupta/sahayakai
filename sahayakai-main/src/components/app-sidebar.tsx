@@ -156,7 +156,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip="My Profile">
-                <Link href="/my-library">
+                <Link href="/my-profile">
                   <User />
                   <span>My Profile</span>
                 </Link>
