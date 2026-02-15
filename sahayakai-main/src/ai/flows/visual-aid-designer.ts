@@ -226,7 +226,12 @@ const visualAidFlow = ai.defineFlow(
             data: { ...finalOutput, imageDataUri: undefined, storageRef: filePath },
           });
         } catch (e) {
-          StructuredLogger.error('Persistence failed', { userId, requestId }, e as Error);
+          StructuredLogger.error('Persistence failed', {
+            service: 'visual-aid-designer',
+            operation: 'persistContent',
+            userId,
+            requestId
+          }, e as Error);
         }
       }
 
@@ -234,7 +239,12 @@ const visualAidFlow = ai.defineFlow(
       return finalOutput;
 
     } catch (flowError: any) {
-      StructuredLogger.error('Visual aid flow failed', { requestId, duration: Date.now() - startTime }, flowError);
+      StructuredLogger.error('Visual aid flow failed', {
+        service: 'visual-aid-designer',
+        operation: 'generateVisualAid',
+        requestId,
+        duration: Date.now() - startTime
+      }, flowError);
       throw flowError;
     }
   }

@@ -91,7 +91,7 @@ INSTRUCTIONS:
             logger.info("Voice Assistant triggering tool calls", { requestId, tool: response.tool_calls[0].name });
             for (const toolCall of response.tool_calls) {
                 if (toolCall.name === "googleSearch") {
-                    const toolResult = await googleSearch.invoke(toolCall.args);
+                    const toolResult = await googleSearch(toolCall.args as any);
                     messages.push(response);
                     messages.push(new HumanMessage({
                         content: JSON.stringify(toolResult),

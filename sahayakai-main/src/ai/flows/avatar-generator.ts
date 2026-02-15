@@ -92,7 +92,12 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
 
     return { imageDataUri: media.url };
   } catch (error) {
-    StructuredLogger.error('Avatar generation flow failed', { userId, name }, error as Error);
+    StructuredLogger.error('Avatar generation flow failed', {
+      service: 'avatar-generator',
+      operation: 'generateAvatar',
+      userId,
+      metadata: { name }
+    }, error as Error);
     throw error;
   }
 }
