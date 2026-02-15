@@ -150,7 +150,7 @@ ${criterion.levels.map(level => `   • ${level.name} (${level.points} pts): ${l
 
 
   const performanceLevels = rubric.criteria[0]?.levels.map(level => ({
-    name: level.name,
+    name: level.name.replace(/\s*\(\d+\s*pts\)/, ''),
     points: level.points
   })) || [];
 
