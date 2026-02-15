@@ -100,27 +100,30 @@ async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
 
     const materialsText = output.materials.join(', ');
 
-    const auditResult = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      prompt: `You are a lesson plan auditor.
-
-Materials Listed: ${materialsText}
-
-Activities:
-${activitiesText}
-
-Task:
-1. Identify items/objects mentioned in activities that are NOT in the materials list.
-2. Return ONLY a JSON array of missing items.
-   Example: ["basket", "measuring tape"]
-   
-If no missing items, return: []
-
-Output ONLY the JSON array, no explanation.`,
-      config: {
-        temperature: 0.2,
-        responseMimeType: 'application/json'
-      }
+    const auditResult = await runResiliently(async (resilienceConfig) => {
+      return await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: `You are a lesson plan auditor.
+  
+  Materials Listed: ${materialsText}
+  
+  Activities:
+  ${activitiesText}
+  
+  Task:
+  1. Identify items/objects mentioned in activities that are NOT in the materials list.
+  2. Return ONLY a JSON array of missing items.
+     Example: ["basket", "measuring tape"]
+     
+  If no missing items, return: []
+  
+  Output ONLY the JSON array, no explanation.`,
+        config: {
+          temperature: 0.2,
+          responseMimeType: 'application/json',
+          ...resilienceConfig.config
+        }
+      });
     });
 
     const missingMaterials = auditResult.output

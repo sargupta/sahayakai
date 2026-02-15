@@ -8,6 +8,7 @@
  * - AvatarGeneratorOutput - The return type for the generateAvatar function.
  */
 
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,27 +30,43 @@ export type AvatarGeneratorOutput = z.infer<typeof AvatarGeneratorOutputSchema>;
  * This ensures the avatar is "simple and decent" and remains stable for the user.
  */
 export async function generateAvatar(input: AvatarGeneratorInput): Promise<AvatarGeneratorOutput> {
+  const { runResiliently } = await import('@/ai/genkit');
+  const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+  const { v4: uuidv4 } = await import('uuid');
+  const { format } = await import('date-fns');
+  const { getStorageInstance, getDb } = await import('@/lib/firebase-admin');
+
   const { name, userId } = input;
 
   try {
-    // 1. Create a stable seed. Use userId if available, otherwise name.
-    // This ensures the avatar "should not change" for a specific user identity.
-    const stableSeed = userId || name.trim().toLowerCase().replace(/\s+/g, '-');
+    const { media } = await runResiliently(async (overrideConfig) => {
+      return await ai.generate({
+        model: 'googleai/gemini-2.5-flash-image',
+        ...overrideConfig,
+        prompt: `
+          You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
 
-    // 2. Use DiceBear 'initials' style for a "simple and decent" professional look.
-    // We encode the name (e.g. "Sandeep") so the initials (e.g. "S") are generated correctly.
-    // Background colors are chosen from a professional, slightly muted palette.
-    const backgroundColors = ["6366f1", "f43f5e", "10b981", "f59e0b", "8b5cf6", "06b6d4"];
-    const bgColor = backgroundColors[Math.abs(stableSeed.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % backgroundColors.length];
+          **Style Guide:**
+          - **Subject:** A head and shoulders portrait of a teacher. The person should appear to be of Indian ethnicity, reflecting the diversity of regions across India.
+          - **Style:** Photorealistic, high-quality, professional headshot.
+          - **Composition:** The person should be looking towards the viewer or slightly off-camera with a friendly, warm, and approachable expression. They should look like a real person.
+          - **Background:** A simple, neutral, out-of-focus studio background (light gray, beige, or soft blue).
+          - **Uniqueness & Diversity:** Generate a unique individual based on the name provided. People with different names should look like different people. Ensure a mix of genders. For a name like "Priya Singh", generate a female-presenting person. For a name like "Ravi Kumar", generate a male-presenting person. For neutral names, you can choose.
 
-    const avatarUrl = `https://api.dicebear.com/9.x/initials/png?seed=${stableSeed}&label=${encodeURIComponent(name)}&backgroundColor=${bgColor}`;
+          **Task:**
+          Generate a unique, photorealistic avatar for a teacher named "${name}".
+        `,
+        config: {
+          ...overrideConfig.config,
+          responseModalities: ['TEXT', 'IMAGE'],
+          temperature: 0.8,
+        },
+      });
+    });
 
-    const response = await fetch(avatarUrl);
-    if (!response.ok) throw new Error('Failed to fetch from DiceBear');
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const imageDataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+    if (!media) {
+      throw new Error('Image generation failed to produce an avatar.');
+    }
 
     if (userId) {
       const now = new Date();
@@ -61,29 +78,21 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
       const storage = await getStorageInstance();
       const file = storage.bucket().file(filePath);
 
-      const downloadToken = uuidv4();
+      const buffer = Buffer.from(media.url.split(',')[1], 'base64');
       await file.save(buffer, {
         resumable: false,
-        metadata: {
-          contentType: 'image/png',
-          metadata: {
-            firebaseStorageDownloadTokens: downloadToken,
-          }
-        },
+        metadata: { contentType: 'image/png' },
       });
 
-      // Save to user profile for persistence
       const db = await getDb();
       await db.collection('users').doc(userId).set({
         avatarUrl: filePath,
-        avatarDataUri: imageDataUri,
-        lastAvatarUpdate: now.toISOString()
       }, { merge: true });
     }
 
-    return { imageDataUri };
+    return { imageDataUri: media.url };
   } catch (error) {
-    console.error('Error generating stable avatar:', error);
-    throw new Error('Failed to generate professional avatar.');
+    StructuredLogger.error('Avatar generation flow failed', { userId, name }, error as Error);
+    throw error;
   }
 }

@@ -54,18 +54,28 @@ export async function POST(request: Request) {
 
         return NextResponse.json(output);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Instant Answer API Error:', error);
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error.message || 'Internal Server Error';
+        const errorCode = error.errorCode || 'UNKNOWN_ERROR';
+        const context = error.context || null;
+
         logger.error("Instant Answer API Failed", error, {
             path: "/api/ai/instant-answer",
             userId: request.headers.get('x-user-id'),
-            errorMessage
+            errorMessage,
+            errorCode,
+            context
         });
 
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            {
+                error: errorMessage,
+                errorCode: errorCode,
+                details: errorMessage,
+                context: context
+            },
             { status: 500 }
         );
     }

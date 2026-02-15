@@ -87,8 +87,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
+        const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
+        const userFriendlyError = isAuthError
+            ? `Server Configuration Error: ${errorMessage}. Please ensure 'gcloud auth application-default login' has been run on the server.`
+            : errorMessage;
+
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            {
+                error: userFriendlyError,
+                details: errorMessage,
+                code: (error as any).code || 'INTERNAL_ERROR'
+            },
             { status: 500 }
         );
     }

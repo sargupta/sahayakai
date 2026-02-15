@@ -55,17 +55,24 @@ export async function POST(request: Request) {
 
         return NextResponse.json(output);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Visual Aid API Error:', error);
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error.message || 'Internal Server Error';
+        const errorCode = error.errorCode || 'UNKNOWN_ERROR';
+        const context = error.context || null;
 
         if (errorMessage.includes('Safety Violation')) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            {
+                error: errorMessage,
+                errorCode: errorCode,
+                details: errorMessage,
+                context: context
+            },
             { status: 500 }
         );
     }

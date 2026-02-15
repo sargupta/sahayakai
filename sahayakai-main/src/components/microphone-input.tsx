@@ -5,7 +5,7 @@ import { voiceToText } from "@/ai/flows/voice-to-text";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn, logger } from "@/lib/utils";
-import { Mic, StopCircle } from "lucide-react";
+import { Mic, StopCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 
 type MicrophoneInputProps = {
@@ -41,6 +41,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   const sustainedSpeechFramesRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null); // Added for stream management
   const failsafeTimerRef = useRef<NodeJS.Timeout | null>(null); // Added for failsafe timer
+  const recordedMimeTypeRef = useRef<string>(""); // Added to track actual mime type used
 
   // VAD State Refs
   const isSpeakingRef = useRef<boolean>(false);
@@ -164,7 +165,20 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream; // Store stream for cleanup
 
-      const mediaRecorder = new MediaRecorder(stream);
+      // Gemini supports audio/ogg, audio/wav, audio/mp3, audio/flac.
+      // WebM is often not explicitly supported in all Gemini interfaces.
+      let mimeType = "";
+      if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      }
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      recordedMimeTypeRef.current = mimeType || mediaRecorder.mimeType;
       mediaRecorderRef.current = mediaRecorder;
 
       // FAILSAFE: Force stop after MAX time
@@ -208,8 +222,16 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         }
         */
 
+        // Guard: Prevent sending empty or tiny recordings
+        if (!audioChunksRef.current || audioChunksRef.current.length === 0) {
+          console.warn("⏹️ MicrophoneInput: No audio chunks captured. Skipping transcription.");
+          setIsTranscribing(false);
+          setIsRecording(false);
+          return;
+        }
+
         setIsTranscribing(true);
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeTypeRef.current || "audio/webm" });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
@@ -314,60 +336,95 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <Button
-        variant={isRecording ? "destructive" : variant}
-        size={isFloating || iconSize === 'lg' || iconSize === 'xl' ? "icon" : size}
-        className={cn(
-          "relative transition-all duration-300 flex items-center justify-center", // Ensure centering
-          isRecording && "bg-destructive hover:bg-destructive/90 animate-pulse ring-4 ring-destructive/30 text-white",
-          isTranscribing && "cursor-wait opacity-80",
-          // Floating positioning
-          isFloating && "fixed bottom-8 right-8 rounded-full shadow-2xl z-50 border-4 border-white dark:border-slate-900",
-          getButtonSize(),
-          className,
-          "transition-all duration-300 ease-in-out shadow-xl",
-          !isRecording && variant === 'default' && "rounded-full hover:scale-110",
-          // CRITICAL: This MUST be last to override any bg-* from className prop
-          !isRecording && "!bg-primary !text-primary-foreground hover:!bg-primary/90"
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative flex items-center justify-center">
+        {/* Concentric Rings - Idle State (Inviting) */}
+        {!isRecording && !isTranscribing && (
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-[-8px] rounded-full bg-primary/20 animate-ping [animation-duration:3s]" />
+            <div className="absolute inset-[-16px] rounded-full bg-primary/10 animate-ping [animation-duration:4s]" />
+          </div>
         )}
-        onClick={isRecording ? handleStopRecording : startRecording}
-        disabled={isTranscribing}
-        data-microphone="true"
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
-      >
-        {isTranscribing ? (
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent" />
-        ) : isRecording ? (
-          <StopCircle className={getIconSize()} />
-        ) : (
-          <Mic className={getIconSize()} />
-        )}
-      </Button>
 
-      {
-        (label || isRecording) && (
-          <div className={cn(
-            "px-4 py-2 rounded-full backdrop-blur-md shadow-sm border transition-all duration-300",
-            isRecording ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse" : "bg-white/80 text-slate-700 border-slate-200"
-          )}>
-            <span className="text-sm font-bold whitespace-nowrap">
-              {isTranscribing ? "Transcribing..." : isRecording ? "Speaking..." : label}
+        {/* Pulsating Orb - Recording State (Active) */}
+        {isRecording && (
+          <div className="absolute inset-[-12px] rounded-full bg-destructive/20 animate-pulse" />
+        )}
+
+        <Button
+          variant={isRecording ? "destructive" : variant}
+          size={isFloating || iconSize === 'lg' || iconSize === 'xl' ? "icon" : size}
+          className={cn(
+            "relative transition-all duration-500 flex items-center justify-center overflow-hidden z-20 shadow-2xl",
+            isRecording
+              ? "bg-gradient-to-br from-destructive to-red-600 border-2 border-white/20 scale-110"
+              : "bg-gradient-to-br from-primary to-orange-600 hover:scale-110",
+            isTranscribing && "cursor-wait opacity-80",
+            isFloating && "fixed bottom-8 right-8 z-50 border-4 border-white dark:border-slate-900",
+            getButtonSize(),
+            className,
+            "rounded-full transition-all duration-300 ease-in-out border-4 border-white",
+            !isRecording && "!bg-primary !text-primary-foreground hover:!bg-primary/95"
+          )}
+          onClick={isRecording ? handleStopRecording : startRecording}
+          disabled={isTranscribing}
+          data-microphone="true"
+          aria-label={isRecording ? "Stop recording" : "Start recording"}
+        >
+          {/* Internal Glow for recording */}
+          {isRecording && (
+            <div className="absolute inset-0 bg-white/10 animate-pulse" />
+          )}
+
+          {isTranscribing ? (
+            <div className="relative h-10 w-10">
+              <div className="absolute inset-0 rounded-full border-4 border-white/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
+              <Sparkles className="absolute inset-0 m-auto h-4 w-4 text-white animate-pulse" />
+            </div>
+          ) : isRecording ? (
+            <StopCircle className={cn(getIconSize(), "relative z-30 text-white")} />
+          ) : (
+            <Mic className={cn(getIconSize(), "relative z-30 text-white")} />
+          )}
+        </Button>
+      </div>
+
+      {/* Volume Visualizer Label - More elegant bubble */}
+      {(label || isRecording || isTranscribing) && (
+        <div className={cn(
+          "px-5 py-2.5 rounded-2xl backdrop-blur-xl shadow-lg border transition-all duration-500 scale-in-center",
+          isRecording
+            ? "bg-destructive/10 text-destructive border-destructive/20"
+            : isTranscribing
+              ? "bg-primary/10 text-primary border-primary/20"
+              : "bg-white/90 text-slate-700 border-slate-200"
+        )}>
+          <div className="flex items-center gap-3">
+            {isRecording && (
+              <div className="flex gap-1 items-end h-4">
+                <div className="w-1 bg-destructive rounded-full animate-[pulse_1s_infinite] h-[50%]" />
+                <div className="w-1 bg-destructive rounded-full animate-[pulse_1s_infinite_0.2s] h-[100%]" />
+                <div className="w-1 bg-destructive rounded-full animate-[pulse_1s_infinite_0.4s] h-[60%]" />
+                <div className="w-1 bg-destructive rounded-full animate-[pulse_1s_infinite_0.6s] h-[30%]" />
+              </div>
+            )}
+            <span className="text-sm font-bold tracking-tight whitespace-nowrap">
+              {isTranscribing ? "Sahayak is thinking..." : isRecording ? "I'm listening..." : label}
             </span>
           </div>
-        )
-      }
+        </div>
+      )}
 
-      {
-        isRecording && (
-          <div className={cn(
-            "overflow-hidden rounded-xl bg-slate-100/50 backdrop-blur-sm border border-slate-200",
-            isFloating ? "fixed bottom-40 right-8 w-64 h-24" : "h-16 w-full"
-          )}>
-            <canvas ref={canvasRef} width="300" height="80" className="h-full w-full" />
-          </div>
-        )
-      }
-    </div >
+      {/* Waveform Visualization - Elegant glassmorphic container */}
+      {isRecording && (
+        <div className={cn(
+          "overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/40 transition-all duration-500 shadow-xl",
+          isFloating ? "fixed bottom-44 right-8 w-72 h-32" : "h-20 w-full"
+        )}>
+          <canvas ref={canvasRef} width="300" height="100" className="h-full w-full opacity-80" />
+        </div>
+      )}
+    </div>
   );
 };

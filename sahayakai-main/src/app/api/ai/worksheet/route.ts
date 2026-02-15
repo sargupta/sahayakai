@@ -60,12 +60,20 @@ export async function POST(request: Request) {
 
         return NextResponse.json(output);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Worksheet API Error:', error);
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error.message || 'Internal Server Error';
+        const errorCode = error.errorCode || 'UNKNOWN_ERROR';
+        const context = error.context || null;
+
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            {
+                error: errorMessage,
+                errorCode: errorCode,
+                details: errorMessage,
+                context: context
+            },
             { status: 500 }
         );
     }

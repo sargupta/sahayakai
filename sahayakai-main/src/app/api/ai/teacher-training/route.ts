@@ -52,8 +52,20 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error('Teacher Training API Error:', error);
+
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
+
+        const userFriendlyError = isAuthError
+            ? `Server Configuration Error: ${errorMessage}. Please ensure 'gcloud auth application-default login' has been run on the server.`
+            : errorMessage;
+
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            {
+                error: userFriendlyError,
+                details: errorMessage,
+                code: (error as any).code || 'INTERNAL_ERROR'
+            },
             { status: 500 }
         );
     }

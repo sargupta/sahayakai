@@ -32,21 +32,12 @@ export const AgentRouterOutputSchema = z.object({
 export type AgentRouterOutput = z.infer<typeof AgentRouterOutputSchema>;
 
 
-// The main router flow
-export const agentRouterFlow = ai.defineFlow(
-  {
-    name: 'agentRouter',
-    inputSchema: AgentRouterInputSchema,
-    outputSchema: AgentRouterOutputSchema,
-  },
-  async (input) => {
-    // 1. Determine the user's intent
-    const intentPrompt = ai.definePrompt(
-      {
-        name: 'intentClassifier',
-        input: { schema: z.object({ prompt: z.string() }) },
-        output: { schema: z.object({ intent: AgentTypeSchema }) },
-        prompt: `Analyze the user prompt and determine which tool is most appropriate.
+// 1. Determine the user's intent
+const intentPrompt = ai.definePrompt({
+  name: 'intentClassifier',
+  input: { schema: z.object({ prompt: z.string() }) },
+  output: { schema: z.object({ intent: AgentTypeSchema }) },
+  prompt: `Analyze the user prompt and determine which tool is most appropriate.
 
         - 'lessonPlan': Creating lessons, lesson plans, unit plans.
         - 'quiz': Creating quizzes, tests, assessments, exam questions.
@@ -60,10 +51,22 @@ export const agentRouterFlow = ai.defineFlow(
 
         Prompt: {{{prompt}}}
         `,
-      }
-    );
+});
 
-    const { output: intentOutput } = await intentPrompt({ prompt: input.prompt });
+// The main router flow
+export const agentRouterFlow = ai.defineFlow(
+  {
+    name: 'agentRouter',
+    inputSchema: AgentRouterInputSchema,
+    outputSchema: AgentRouterOutputSchema,
+  },
+  async (input) => {
+    const { runResiliently } = await import('@/ai/genkit');
+    // 1. Determine the user's intent
+    const { output: intentOutput } = await runResiliently(async (resilienceConfig) => {
+      return await intentPrompt({ prompt: input.prompt }, resilienceConfig);
+    });
+
     const intent = intentOutput?.intent || 'unknown';
 
     // The actual execution or navigation logic will be handled by the server action

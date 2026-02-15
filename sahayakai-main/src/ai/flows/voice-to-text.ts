@@ -87,7 +87,11 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
   const { runResiliently } = await import('@/ai/genkit');
 
   return runResiliently(async (config) => {
+    console.log(`[VoiceToText] Starting transcription. Audio URI length: ${input.audioDataUri.length}, Prefix: ${input.audioDataUri.substring(0, 50)}`);
+
     const { output: transcription } = await voiceToTextPrompt(input, config);
+
+    console.log(`[VoiceToText] Raw transcription result:`, transcription);
 
     if (!transcription?.text) {
       throw new Error("Empty transcription returned from model");

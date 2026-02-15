@@ -3,30 +3,7 @@ import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-// Lazy load client to prevent crash if no credentials
-let secretManager: any = null;
-
-async function getSecret(secretName: string): Promise<string> {
-  try {
-    if (!secretManager) {
-      const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
-      secretManager = new SecretManagerServiceClient();
-    }
-
-    const [version] = await secretManager.accessSecretVersion({
-      name: `projects/sahayakai-b4248/secrets/${secretName}/versions/latest`,
-    });
-    const payload = version.payload?.data?.toString();
-    if (!payload) {
-      throw new Error(`Secret ${secretName} has no payload.`);
-    }
-    return payload;
-  } catch (error: any) {
-    // If we can't load credentials, or secret doesn't exist, we log and throw a clean error
-    console.warn(`[getSecret] Could not fetch ${secretName}: ${error.message}`);
-    throw error;
-  }
-}
+import { getSecret } from '@/lib/secrets';
 
 let firebasePromise: Promise<void> | null = null;
 
@@ -37,20 +14,26 @@ export async function initializeFirebase() {
     if (!admin.apps.length) {
       try {
         console.log("[FirebaseAdmin] Initializing...");
+        const isPlaceholder = (val?: string) => !val || val.startsWith('secrets/');
         let serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-        if (!serviceAccountString) {
+        if (isPlaceholder(serviceAccountString)) {
           console.log("[FirebaseAdmin] Fetching service account from Secret Manager...");
           serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY');
         }
 
-        if (!serviceAccountString) {
+        if (isPlaceholder(serviceAccountString)) {
           throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY not found in Environment or Secret Manager.");
         }
 
-        const serviceAccount = JSON.parse(serviceAccountString);
+        let serviceAccount: any;
+        try {
+          serviceAccount = JSON.parse(serviceAccountString!);
+        } catch (e) {
+          throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is not a valid JSON string. If you are using Secret Manager, ensure your local .env.local doesn't have a placeholder for it, or that gcloud auth is configured.");
+        }
 
-        if (!process.env.GOOGLE_GENAI_API_KEY) {
+        if (isPlaceholder(process.env.GOOGLE_GENAI_API_KEY)) {
           try {
             console.log("[FirebaseAdmin] Fetching AI keys...");
             process.env.GOOGLE_GENAI_API_KEY = await getSecret('GOOGLE_GENAI_API_KEY');

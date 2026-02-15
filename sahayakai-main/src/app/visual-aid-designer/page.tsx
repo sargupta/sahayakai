@@ -1,4 +1,3 @@
-
 "use client";
 
 import { generateVisualAid } from "@/ai/flows/visual-aid-designer";
@@ -8,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Download, Images, Save } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSearchParams } from "next/navigation";
@@ -20,12 +19,9 @@ import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
-import { useEffect } from "react";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
-
-
 
 const translations: Record<string, Record<string, string>> = {
   en: {
@@ -77,18 +73,18 @@ const translations: Record<string, Record<string, string>> = {
   },
   te: {
     pageTitle: "విజువల్ ఎయిడ్ డిజైనర్",
-    pageDescription: "మీ పాఠాల కోసం సాధారణ నలుపు-తెలుపు లైన్ డ్రాయింగ్‌లను సృష్టించండి.",
+    pageDescription: "మీ పాఠాల కోసం సాధారణ నలుపు-తెలుపు లైన్ డ్రాయింగ్లను సృష్టించండి.",
     descLabel: "వివరణ",
     speakLabel: "మీ వివరణను చెప్పండి...",
     placeholder: "ఉదా., నీటి చక్రం యొక్క సాధారణ రేఖాచిత్రం...",
     gradeLabel: "తరగతి స్థాయి",
     languageLabel: "భాష",
-    submitButton: "విజువల్ ఎయిడ్‌ను సృష్టించు",
+    submitButton: "విజువల్ ఎయిడ్ను సృష్టించు",
     generating: "సృష్టిస్తోంది...",
-    generatingText: "మీ విజువల్ ఎయిడ్‌ను సృష్టిస్తోంది... దీనికి కొంత సమయం పట్టవచ్చు.",
+    generatingText: "మీ విజువల్ ఎయిడ్ను సృష్టిస్తోంది... దీనికి కొంత సమయం పట్టవచ్చు.",
     resultTitle: "సృష్టించబడిన చిత్రం",
     saveButton: "సేవ్ చేయండి",
-    downloadButton: "డౌన్‌లోడ్ చేయండి"
+    downloadButton: "డౌన్లోడ్ చేయండి"
   },
   mr: {
     pageTitle: "व्हिज्युअल एड डिझायनर",
@@ -148,11 +144,11 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "ನಿಮ್ಮ ವಿಶುವಲ್ ಏಡ್ ರಚಿಸಲಾಗುತ್ತಿದೆ... ಇದಕ್ಕೆ ಸ್ವಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳಬಹುದು.",
     resultTitle: "ರಚಿಸಿದ ಚಿತ್ರ",
     saveButton: "ಉಳಿಸಿ",
-    downloadButton: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+    downloadButton: "ಡೌನ್ಲೋಡ್ ಮಾಡಿ"
   },
   pa: {
     pageTitle: "ਵਿਜ਼ੂਅਲ ਏਡ ਡਿਜ਼ਾਈਨਰ",
-    pageDescription: "ਆਪਣੇ ਪਾਠਾਂ ਲਈ ਸਧਾਰਨ ਬਲੈਕ-ਐਂਡ-ਵਾਈਟ ਲਾਈਨ ਡਰਾਇੰਗ ਬਣਾਓ।",
+    pageDescription: "ਆਪਣੇ ਪਾਠਾਂ ਲਈ ਸਧਾਰਨ ਬਲੈਕ-ਏਂਡ-ਵਾਈਟ ਲਾਈਨ ਡਰਾਇੰਗ ਬਣਾਓ।",
     descLabel: "ਵੇਰਵਾ",
     speakLabel: "ਆਪਣਾ ਵੇਰਵਾ ਬੋਲੋ...",
     placeholder: "ਉਦਾਹਰਣ: ਜਲ ਚੱਕਰ ਦਾ ਇੱਕ ਸਧਾਰਨ ਚਿੱਤਰ...",
@@ -186,11 +182,11 @@ const translations: Record<string, Record<string, string>> = {
     descLabel: "ବର୍ଣ୍ଣନା",
     speakLabel: "ଆପଣଙ୍କ ବର୍ଣ୍ଣନା କୁହନ୍ତୁ...",
     placeholder: "ଉଦାହରଣ: ଜଳ ଚକ୍ରର ଏକ ସରଳ ଚିତ୍ର...",
-    gradeLabel: "ଶ୍ରେଣୀ",
+    gradeLabel: "ଶ୍ରੇଣୀ",
     languageLabel: "ଭାଷା",
     submitButton: "ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି କରନ୍ତୁ",
     generating: "ତିଆରି ଚାଲିଛି...",
-    generatingText: "ଆପଣଙ୍କ ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି ଚାଲିଛି... ଏଥିପାଇଁ କିଛି ସମୟ ଲାଗିପାରେ |",
+    generatingText: "ଆପଣଙ୍କ ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି ଚାଲିଛି... ଏଥିପାଇଁ କିଛି ସମୟ ଲାଗିପାରે |",
     resultTitle: "ପ୍ରସ୍ତୁତ ଚିତ୍ର",
     saveButton: "ସଂରକ୍ଷଣ କରନ୍ତୁ",
     downloadButton: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ"
@@ -205,8 +201,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-import { Suspense } from "react";
 
 function VisualAidContent() {
   const { requireAuth, openAuthModal } = useAuth();
@@ -316,16 +310,18 @@ function VisualAidContent() {
           throw new Error("Please sign in to generate visual aids");
         }
         const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to generate visual aid");
+        // Propagate the detailed error if available
+        const detailMessage = errorData.details || errorData.error || "Failed to generate visual aid";
+        throw new Error(detailMessage);
       }
 
       const result = await res.json();
       setVisualAid(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate visual aid:", error);
       toast({
         title: "Generation Failed",
-        description: "There was an error generating the visual aid. Please try again.",
+        description: error.message || "There was an error generating the visual aid. Please try again.",
         variant: "destructive",
       });
     } finally {
