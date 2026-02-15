@@ -1,13 +1,5 @@
 'use server';
 
-/**
- * @fileOverview Converts voice input (audio data URI) to text with multilingual cleanup.
- *
- * - voiceToText - A function that converts voice input to text.
- * - VoiceToTextInput - The input type for the voiceToText function.
- * - VoiceToTextOutput - The return type for the voiceToText function.
- */
-
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
@@ -24,10 +16,6 @@ const VoiceToTextOutputSchema = z.object({
   text: z.string().describe('The transcribed text from the audio input.'),
 });
 export type VoiceToTextOutput = z.infer<typeof VoiceToTextOutputSchema>;
-
-export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextOutput> {
-  return voiceToTextFlow(input);
-}
 
 const voiceToTextPrompt = ai.definePrompt({
   name: 'voiceToTextPrompt',
@@ -55,85 +43,62 @@ STEP 2: Apply language-specific cleanup rules. Remove ONLY these filler words/di
 
 **HINDI (हिंदी):**
 - Filler words: अच्छा (acchā), मतलब (matlab), वैसे (vaise), तो (to), देखो (dekho), यानी (yānī), वो (vo), असल में (asal mein), हूँ (hoon), अ (a), आ (aa)
-- Avoid removing when meaningful in context
 
 **KANNADA (ಕನ್ನಡ):**
 - Filler words: ಅಂದರೆ (andare),ಹೆಳೋದೆಂದರೆ (heḷodendare), ಅಲ್ಲವಾ (allava), ಏನು (enu), ಹೌದು (haudu - when repetitive), ಅಂತೆ (ante), ನೋಡು (nodu), ಸರಿ (sari - when filler)
-- Preserve cultural context
 
 **TAMIL (தமிழ்):**
 - Filler words: அது (athu), இது (idhu), அப்படின்னா (appadinna), சரி (sari), அது மாதிரி (athu maadhiri), அப்படியே (appadiye), என்ன (enna - when filler)
-- Keep meaningful usage
 
 **TELUGU (తెలుగు):**
-- Filler words: అంటే (ante), అవి (avi), ఇవి (ivi), అలాగె (alāge), చూస్తే (chūstē), అదేంటి (adēnti), ఇదేంటి (idēnti), మరి (mari), అబ్బ (abba), ఆ (ā), అం (am), ఉం (um)
-- Preserve natural Telugu flow
+- Filler words: అంటే (ante), అవి (avi), ఇవి (ivi), అలాగె (alāge), చూస్తే (chūstē), అదేంటి (adēnti), ఇదేంటి (idēnti), మరి (mari), అಬ್ಬ (abba), ఆ (ā), ಅಂ (am), ಉಂ (um)
 
 **BENGALI (বাংলা):**
 - Filler words: ওই (oi), মানে (mane), তো (to), এই (ei), দেখো (dekho), আরে (are), আসলে (ashole), বুঝলে (bujhle), শুনো (shuno)
-- Keep cultural expressions
 
 **MARATHI (मराठी):**
 - Filler words: अं (an), अरे (are), अगं (aga), म्हणजे (mhanje), तर (tar), बरं (bara), मग (mag), म्हणून (mhanun)
-- Respect regional nuances
 
 **GUJARATI (ગુજરાતી):**
-- Filler words: એટલે (etle - "meaning/so"), ને (ne - "and/tag"), હવે (have - "now/so"), તો (to - "then/so"), પણ (pan - "but/um"), જુઓ (juo - "look"), રયો (rayo - "remained/um")
-- Common hesitations: અ (a), હા (ha - repetitive yes)
+- Filler words: એટલે (etle), ને (ne), હવે (have), તો (to), પણ (pan), જુઓ (juo), રયો (rayo)
 
 **PUNJABI (ਪੰਜਾਬੀ):**
-- Filler words: ਮਤਲਬ (matlab - "meaning"), ਜੀ (ji - honorific filler), ਤਾਂ (taan - "then/so"), ਹੁਣ (hun - "now"), ਕਿ (ki - "that/so"), ਵੇਖੋ (vekho - "look"), ਅੱਛਾ (accha - "okay")
-- Discourse markers: ਗੱਲ ਸੁਣੋ (gal suno - "listen"), ਬਸ (bas - "just")
+- Filler words: ਮਤਲਬ (matlab), ਜੀ (ji), ਤਾਂ (taan), ਹੁਣ (hun), ਕਿ (ki), ਵੇਖੋ (vekho), ਅੱਛਾ (accha)
 
 **MALAYALAM (മലയാളം):**
-- Filler words: അത് (athu - "that/um"), പിന്നെ (pinne - "then"), എന്ന് വെച്ചാൽ (ennu vechaal - "meaning/if you say"), അപ്പോ (appol - "then/so"), എന്താ (enth - "what/um"), ദേ (de - "hey/look"), കേട്ടോ (ketto - "you know/hear me")
-- Hesitations: ആ (aa), ഉം (um)
+- Filler words: అది (athu), പിന്നെ (pinne), എന്ന് വെച്ചാൽ (ennu vechaal), അപ്പോ (appol), എന്താ (enth), ദേ (de), കേട്ടോ (ketto)
 
 **ODIA (ଓଡ଼ିଆ):**
-- Filler words: ମାନେ (mane - "meaning"), ଆଉ (au - "and/um"), ପରା (para - "tag/right?"), ହେଲେ (hele - "but/so"), ଟିକେ (tike - "little/just"), ଦେଖ (dekha - "look"), ଆଜ୍ଞା (agyan - "yes/sir")
-- Common markers: ବୋଲି (boli - "that"), ସତରେ (satare - "really")
-
-**GUJARATI (ગુજરાતી):**
-- Filler words: એટલે (etle - "meaning/so"), ને (ne - "and/tag"), હવે (have - "now/so"), તો (to - "then/so"), પણ (pan - "but/um"), જુઓ (juo - "look"), રયો (rayo - "remained/um")
-- Common hesitations: અ (a), હા (ha - repetitive yes)
-
-**PUNJABI (ਪੰਜਾਬੀ):**
-- Filler words: ਮਤਲਬ (matlab - "meaning"), ਜੀ (ji - honorific filler), ਤਾਂ (taan - "then/so"), ਹੁਣ (hun - "now"), ਕਿ (ki - "that/so"), ਵੇਖੋ (vekho - "look"), ਅੱਛਾ (accha - "okay")
-- Discourse markers: ਗੱਲ ਸੁਣੋ (gal suno - "listen"), ਬਸ (bas - "just")
-
-**MALAYALAM (മലയാളം):**
-- Filler words: അത് (athu - "that/um"), പിന്നെ (pinne - "then"), എന്ന് വെച്ചാൽ (ennu vechaal - "meaning/if you say"), അപ്പോ (appol - "then/so"), എന്താ (enth - "what/um"), ദേ (de - "hey/look"), കേട്ടോ (ketto - "you know/hear me")
-- Hesitations: ആ (aa), ഉം (um)
-
-**ODIA (ଓଡ଼ିଆ):**
-- Filler words: ମାନେ (mane - "meaning"), ଆଉ (au - "and/um"), ପରା (para - "tag/right?"), ହେଲେ (hele - "but/so"), ଟିକେ (tike - "little/just"), ଦେଖ (dekha - "look"), ଆଜ୍ଞା (agyan - "yes/sir")
-- Common markers: ବୋଲି (boli - "that"), ସତରେ (satare - "really")
+- Filler words: ମାନେ (mane), ଆଉ (au), ପରା (para), ହେଲେ (hele), ଟିକେ (tike), ଦେଖ (dekha), ଆଜ୍ଞା (agyan)
 
 STEP 3: Apply universal cleanup rules:
-1. Fix stutters and redundant phrases (e.g., "where exactly where" → "where exactly")
-2. Improve grammar while preserving original intent and meaning
+1. Fix stutters and redundant phrases
+2. Improve grammar while preserving original intent
 3. Keep tone natural and conversational
-4. DO NOT add information that wasn't in the original text
-5. Preserve code-switching (Hinglish, Tanglish, etc.) - don't over-Anglicize
+4. DO NOT add information
+5. Preserve code-switching
 
 Raw text: {{rawText}}
 
 Provide only the cleaned text in the SAME LANGUAGE as the input, nothing else.`,
 });
 
-const voiceToTextFlow = ai.defineFlow(
-  {
-    name: 'voiceToTextFlow',
-    inputSchema: VoiceToTextInputSchema,
-    outputSchema: VoiceToTextOutputSchema,
-  },
-  async input => {
-    // Step 1: Transcribe audio
-    const { output: transcription } = await voiceToTextPrompt(input);
+export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextOutput> {
+  const { runResiliently } = await import('@/ai/genkit');
 
-    // Step 2: Clean up the transcription with language-aware processing
-    const { output: cleaned } = await cleanupTextPrompt({ rawText: transcription!.text });
+  return runResiliently(async (config) => {
+    const { output: transcription } = await voiceToTextPrompt(input, config);
 
-    return cleaned!;
-  }
-);
+    if (!transcription?.text) {
+      throw new Error("Empty transcription returned from model");
+    }
+
+    const { output: cleaned } = await cleanupTextPrompt({ rawText: transcription.text }, config);
+
+    if (!cleaned) {
+      return { text: transcription.text };
+    }
+
+    return cleaned;
+  });
+}

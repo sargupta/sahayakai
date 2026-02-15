@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase-admin/firestore';
 import { aggregateUserMetrics } from './aggregator';
+import { revalidatePath } from 'next/cache';
 
 export async function getUserContent(userId: string): Promise<BaseContent[]> {
     try {

@@ -1,5 +1,5 @@
 
-import { getDb } from "../src/lib/firebase-admin";
+import { getDb } from "@/lib/firebase-admin";
 
 export async function aggregateUserMetrics(uid: string) {
     const db = await getDb();
