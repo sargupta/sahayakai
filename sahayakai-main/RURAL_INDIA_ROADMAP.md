@@ -12,13 +12,18 @@ Transform SahayakAI into a practical, robust tool for rural government school te
 ### 1.1 Local Context & Examples ✅ STARTING HERE
 **Goal:** Make content feel Indian, not Western
 
+**Status:** In Progress
+
 **Tasks:**
-- [ ] Update all AI prompts to use Indian context by default
+- [x] Update all AI prompts to use Indian context by default
 - [ ] Add "Rural Context" toggle in settings
 - [ ] Create Indian example database (farming, monsoon, local festivals, etc.)
 - [ ] Update lesson plan prompts with local examples
 - [ ] Update quiz prompts with Indian context
 - [ ] Test with sample generations
+
+**Notes:**
+- A UI bug in the rubric generator causing duplicate points has been fixed. This improves the user experience for a key feature.
 
 **Files to Modify:**
 - `src/ai/flows/lesson-plan-generator.ts`

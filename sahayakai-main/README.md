@@ -30,11 +30,11 @@ SahayakAI is a web-based application designed to assist teachers in India with l
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/sargupta/sahayakai-feature.git
+    git clone https://github.com/sargupta/sahayakai.git
     ```
 2.  Navigate to the project directory:
     ```bash
-    cd sahayakai-feature
+    cd sahayakai-main
     ```
 3.  Install the dependencies:
     ```bash
@@ -54,3 +54,10 @@ SahayakAI is a web-based application designed to assist teachers in India with l
     ```bash
     npm run dev
     ```
+
+    The application will be available at `http://localhost:3000`.
+
+## Deployment
+
+Deployment to production is handled automatically by a GitHub Actions workflow. Pushing changes to the `main` branch will trigger the deployment process.
+
