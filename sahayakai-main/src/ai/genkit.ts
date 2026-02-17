@@ -28,9 +28,24 @@ async function ensureKeyPool() {
       .split(',')
       .map(k => k.trim())
       .filter(Boolean);
-    console.log(`[AI Resilience] Loaded ${keyPool.length} keys from Secret Manager. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+    console.log(`[AI Resilience] ✅ Loaded ${keyPool.length} keys from Secret Manager. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+
+    // NEW: Alert if pool is suspiciously small
+    if (keyPool.length < 2) {
+      console.warn(`[AI Resilience] ⚠️ WARNING: Only ${keyPool.length} key(s) in pool. Consider adding more for resilience.`);
+    }
   } catch (error) {
-    console.warn('[AI Resilience] Failed to load keys from Secret Manager, falling back to process.env');
+    // NEW: Log the FULL error for Secret Manager access failures
+    console.error('[AI Resilience] ❌ CRITICAL: Failed to load keys from Secret Manager', {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        code: (error as any).code
+      } : error
+    });
+    console.warn('[AI Resilience] Falling back to process.env');
+
     const isPlaceholder = (val: string) => val.startsWith('secrets/');
     keyPool = (process.env.GOOGLE_GENAI_API_KEY || '')
       .split(',')

@@ -32,20 +32,45 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   // Define the difficulties to generate
   const difficulties = ['easy', 'medium', 'hard'] as const;
 
-  // Run 3 generations in parallel
-  const results = await Promise.all(
+  // Run 3 generations in parallel with detailed error tracking
+  const results = await Promise.allSettled(
     difficulties.map(async (difficulty) => {
       try {
         const difficultyInput = { ...localizedInput, targetDifficulty: difficulty };
         return await quizGeneratorFlow(difficultyInput);
       } catch (error) {
-        console.error(`Failed to generate ${difficulty} quiz:`, error);
+        // Enhanced diagnostic logging
+        const errorDetails = {
+          difficulty,
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          // NEW: Expose quota/auth signals
+          isQuotaError: error instanceof Error && (
+            error.message?.includes('429') ||
+            error.message?.includes('quota') ||
+            error.message?.includes('RESOURCE_EXHAUSTED')
+          ),
+          isAuthError: error instanceof Error && (
+            error.message?.includes('401') ||
+            error.message?.includes('403') ||
+            error.message?.includes('PERMISSION_DENIED') ||
+            error.message?.includes('UNAUTHENTICATED')
+          ),
+          isConfigError: error instanceof Error && (
+            error.message?.includes('API key') ||
+            error.message?.includes('Secret Manager')
+          ),
+          timestamp: new Date().toISOString()
+        };
+
+        console.error(`❌ [Quiz Generator] ${difficulty} variant failed:`, errorDetails);
         return null;
       }
     })
   );
 
-  const [easy, medium, hard] = results;
+  // Convert PromiseSettledResult to values
+  const [easy, medium, hard] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
   // Extract metadata from one of the successful outputs (prefer medium)
   const metaSource = medium || easy || hard;
