@@ -934,7 +934,7 @@ function QuizGeneratorContent() {
 
       {/* Results Section */}
       <div className="mt-8">
-        {quiz && <QuizDisplay quiz={quiz as any} />}
+        {quiz && <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} />}
       </div>
     </div>
   );

@@ -157,5 +157,16 @@ export const dbAdapter = {
             }
             return value;
         }));
+    },
+
+    // --- Feedback Operations ---
+    async saveFeedback(userId: string, feedbackData: any): Promise<void> {
+        const db = await getDb();
+        await db.collection('feedback').add({
+            userId,
+            ...feedbackData,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+        logger.info(`Feedback saved`, 'DATABASE', { userId, type: feedbackData.type });
     }
 };

@@ -50,8 +50,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   const SPEECH_THRESHOLD = 5; // Balanced threshold for reliable silence detection
   const SUSTAINED_FRAMES_THRESHOLD = 5;
-  const SILENCE_DURATION_MS = 5000;
   const MIN_SPEECH_DURATION_MS = 500;
+  const SILENCE_DURATION_MS = 2500; // Optimized for faster response (was 5000)
   const MAX_RECORDING_TIME_MS = 30000; // Failsafe: 30 second max
 
   const drawWaveform = () => {

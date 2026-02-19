@@ -142,7 +142,7 @@ graph TB
             USERS_COL[users/]
             PLANS_COL[lesson_plans/]
             LIBRARY_COL[my_library/]
-            CACHE_COL[cached_lesson_plans/]
+            CACHE_COL[cached_content/]
         end
         IDB_CACHE[IndexedDB<br/>Offline Cache]
     end
@@ -383,7 +383,7 @@ graph LR
     end
 
     subgraph "CI/CD"
-        BUILD[Cloud Build<br/>Automated Pipeline]
+        BUILD[GitHub Actions<br/>Automated Workflow]
     end
 
     subgraph "Deployment Targets"

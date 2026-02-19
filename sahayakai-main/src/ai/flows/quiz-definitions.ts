@@ -119,10 +119,46 @@ export const quizGeneratorFlow = ai.defineFlow(
         );
       }
 
-      // Validate schema explicitly
+      // Validate schema explicitly with enhanced diagnostics
       try {
-        QuizGeneratorOutputSchema.parse(output);
+        const { validateQuizOutput, sanitizeQuizOutput } = await import('./quiz-definitions-enhanced-validation');
+
+        // First, sanitize the output to fix common AI mistakes
+        const sanitized = sanitizeQuizOutput(output);
+
+        // Then validate with detailed error messages
+        const validation = validateQuizOutput(sanitized);
+
+        if (!validation.valid) {
+          const detailedErrors = validation.errors.join('\n  - ');
+
+          StructuredLogger.error('Quiz schema validation failed - detailed errors', {
+            service: 'quiz-generator-flow',
+            operation: 'generateQuiz',
+            requestId,
+            metadata: {
+              validationErrors: validation.errors,
+              rawOutput: JSON.stringify(sanitized, null, 2)
+            }
+          });
+
+          throw new SchemaValidationError(
+            `Quiz output failed schema validation:\n  - ${detailedErrors}`,
+            {
+              validationErrors: validation.errors,
+              rawOutput: sanitized,
+              expectedSchema: 'QuizGeneratorOutputSchema',
+              hint: 'The AI model may need prompt adjustments or the schema may be too strict'
+            }
+          );
+        }
+
+        QuizGeneratorOutputSchema.parse(sanitized);
       } catch (validationError: any) {
+        if (validationError instanceof SchemaValidationError) {
+          throw validationError;
+        }
+
         throw new SchemaValidationError(
           `Schema validation failed: ${validationError.message}`,
           {
