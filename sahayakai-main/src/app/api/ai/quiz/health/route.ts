@@ -17,7 +17,7 @@ export async function GET() {
             gradeLevel: "Class 1",
             language: "English",
             numQuestions: 3,
-            questionTypes: ["multiple-choice"],
+            questionTypes: ["multiple_choice"],
             userId: undefined // Skip storage operations
         });
 
@@ -32,7 +32,7 @@ export async function GET() {
                 mediumGenerated: !!testQuiz.medium,
                 hardGenerated: !!testQuiz.hard,
                 allVariantsGenerated: !!(testQuiz.easy && testQuiz.medium && testQuiz.hard),
-                sampleQuestion: testQuiz.easy?.questions?.[0]?.question || testQuiz.medium?.questions?.[0]?.question || testQuiz.hard?.questions?.[0]?.question
+                sampleQuestion: testQuiz.easy?.questions?.[0]?.questionText || testQuiz.medium?.questions?.[0]?.questionText || testQuiz.hard?.questions?.[0]?.questionText
             }
         });
     } catch (error) {
