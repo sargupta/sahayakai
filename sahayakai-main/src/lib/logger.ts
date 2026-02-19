@@ -34,8 +34,8 @@ class Logger {
         try {
             // Use a variable to prevent Webpack from statically analyzing the import
             // and trying to bundle Node.js dependencies for the client.
-            const pkgName = '@google-cloud/logging';
-            const { Logging } = await import(pkgName);
+            // Use string literal to ensure Webpack bundles the dependency
+            const { Logging } = await import('@google-cloud/logging');
             const logging = new Logging({ projectId: this.gcpLoggingMetadata.projectId });
             const log = logging.log(this.gcpLoggingMetadata.logName);
 
