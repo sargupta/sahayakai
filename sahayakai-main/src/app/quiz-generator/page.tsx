@@ -624,20 +624,7 @@ function QuizGeneratorContent() {
     }, 100);
   };
 
-  // Integration test support: auto-submit if topic changes to a "complete" prompt
-  // and we're in a test environment. This satisfies the existing test suite's 
-  // expectation of auto-submission on topic completion.
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'test') {
-      const topic = form.watch("topic");
-      if (topic && topic.length > 20 && !isLoading && !quiz) {
-        const timer = setTimeout(() => {
-          form.handleSubmit(onSubmit)();
-        }, 100);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [form.watch("topic"), isLoading, quiz, form]);
+
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
@@ -893,10 +880,10 @@ function QuizGeneratorContent() {
 
                         {field.value && field.value.length > 0 && (
                           <div className="mt-3 p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
+                            <div className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
                               <Brain className="w-3 h-3" />
                               Pedagogical Strategy
-                            </p>
+                            </div>
                             <div className="space-y-2">
                               {field.value.map((level: string) => (
                                 <div key={level} className="text-[11px] leading-relaxed text-slate-700 flex items-start gap-2">

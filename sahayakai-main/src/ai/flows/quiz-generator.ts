@@ -11,6 +11,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { quizGeneratorFlow } from './quiz-definitions';
+import { logger } from '@/lib/logger';
 
 export type { QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-generator-schemas';
 
@@ -63,7 +64,8 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
           timestamp: new Date().toISOString()
         };
 
-        console.error(`❌ [Quiz Generator] ${difficulty} variant failed:`, errorDetails);
+        const errorMsg = `Quiz Generation Failed (${difficulty} variant) for topic: "${input.topic || 'Unknown'}"`;
+        logger.error(errorMsg, new Error('Generation Error'), 'QUIZ', errorDetails);
         return null;
       }
     })

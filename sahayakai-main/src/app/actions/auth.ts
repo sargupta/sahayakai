@@ -3,6 +3,7 @@
 import { dbAdapter } from "@/lib/db/adapter";
 import { User } from "firebase/auth";
 import { UserProfile } from "@/types";
+import { logger } from "@/lib/logger";
 
 export async function syncUserAction(user: { uid: string; email: string | null; displayName: string | null; photoURL: string | null }) {
     if (!user || !user.uid) {
@@ -23,7 +24,7 @@ export async function syncUserAction(user: { uid: string; email: string | null; 
 
         return { success: true };
     } catch (error) {
-        console.error("Failed to sync user profile:", error);
+        logger.error("Failed to sync user profile", error, 'AUTH', { uid: user.uid });
         return { success: false, error: "Failed to sync user profile" };
     }
 }

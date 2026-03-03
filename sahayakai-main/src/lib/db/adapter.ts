@@ -83,9 +83,11 @@ export const dbAdapter = {
                     ...removeUndefined(content),
                     updatedAt: FieldValue.serverTimestamp(),
                 }, { merge: true });
-            logger.info(`Content saved successfully`, 'DATABASE', { userId, contentId: content.id, type: content.type });
+            const typeName = content.type || 'unknown';
+            logger.info(`Successfully saved ${typeName} content ID: ${content.id}`, 'DATABASE', { userId, contentId: content.id, type: content.type });
         } catch (error) {
-            logger.error(`Failed to save content`, error, 'DATABASE', { userId, contentId: content.id });
+            const typeName = content?.type || 'unknown';
+            logger.error(`Failed to save ${typeName} content ID: ${content?.id}`, error, 'DATABASE', { userId, contentId: content?.id });
             throw error;
         }
     },

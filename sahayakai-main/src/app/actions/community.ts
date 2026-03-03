@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
 import { aggregateUserMetrics } from "./aggregator";
+import { logger } from "@/lib/logger";
 
 export async function getProfilesAction(uids: string[]) {
     return await dbAdapter.getUsers(uids);
@@ -36,14 +37,14 @@ export async function createPostAction(userId: string, content: string, visibili
             timestamp: postData.createdAt
         });
     } catch (e) {
-        console.error("Non-critical: Failed to publish post event:", e);
+        logger.error("Non-critical: Failed to publish post event", e, 'COMMUNITY', { postId: docRef.id, authorId: userId });
     }
 
     revalidatePath("/community");
     revalidatePath("/impact-dashboard");
 
     // Background aggregation
-    aggregateUserMetrics(userId).catch(e => console.error("Aggregator error:", e));
+    aggregateUserMetrics(userId).catch(e => logger.error("Aggregator error for user metrics", e, 'COMMUNITY', { userId }));
 
     return docRef.id;
 }
@@ -128,7 +129,7 @@ export async function followTeacherAction(followerId: string, followingId: strin
                 link: `/community` // Could link to follower's profile if available
             });
         } catch (e) {
-            console.error("Failed to send follow notification:", e);
+            logger.error("Failed to send follow notification", e, 'COMMUNITY', { followerId, followingId });
         }
     }
     revalidatePath("/community");

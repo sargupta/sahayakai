@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
+import { logger } from '@/lib/logger';
 
 /**
  * Health check endpoint for quiz generation diagnostics.
@@ -69,7 +70,7 @@ export async function GET() {
             timestamp: new Date().toISOString()
         };
 
-        console.error('[Quiz Health Check] FAILED:', errorDetails);
+        logger.error('[Quiz Health Check] FAILED', error, 'HEALTH_CHECK', errorDetails);
 
         return NextResponse.json(errorDetails, { status: 500 });
     }

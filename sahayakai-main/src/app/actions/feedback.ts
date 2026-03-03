@@ -2,6 +2,7 @@
 
 import { getDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
+import { logger } from "@/lib/logger";
 
 export type FeedbackData = {
     page: string;
@@ -32,14 +33,14 @@ export async function submitFeedback(data: FeedbackData) {
     } catch (error: any) {
         // Graceful Fallback for Development (if DB is not configured)
         if (process.env.NODE_ENV === 'development') {
-            console.warn("⚠️ [DEV MODE] FirebaseDB not available. Feedback logged to console instead:");
-            console.log("FEEDBACK PAYLOAD:", JSON.stringify(data, null, 2));
-            console.error("Backend Error (Ignored in Dev):", error.message);
+            logger.warn("⚠️ [DEV MODE] FirebaseDB not available. Feedback logged via logger instead", 'FEEDBACK_DEV');
+            logger.info("FEEDBACK PAYLOAD", 'FEEDBACK_DEV', { data });
+            logger.error("Backend Error (Ignored in Dev)", error, 'FEEDBACK_DEV');
 
             return { success: true, id: 'dev-mock-id', warning: "Saved to Dev Console (DB Offline)" };
         }
 
-        console.error("Error submitting feedback:", error);
+        logger.error("Error submitting feedback", error, 'FEEDBACK');
         return { success: false, error: error.message };
     }
 }

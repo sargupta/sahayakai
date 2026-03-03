@@ -14,6 +14,7 @@ import { z } from 'genkit';
 import { googleSearch } from '../tools/google-search';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
+import { logger } from '@/lib/logger';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
 import { GRADE_LEVELS, LANGUAGES, LANGUAGE_CODE_MAP } from '@/types/index';
@@ -138,7 +139,7 @@ async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
     return output.materials;
   } catch (error) {
     // If audit fails, return original materials
-    console.warn('Materials audit failed:', error);
+    logger.warn('Materials audit failed', 'AI', { error: String(error) });
     return output.materials;
   }
 }

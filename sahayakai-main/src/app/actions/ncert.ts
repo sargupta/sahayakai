@@ -2,6 +2,7 @@
 
 import { getDb } from '@/lib/firebase-admin';
 import { NCERTChapter } from '@/data/ncert';
+import { logger } from '@/lib/logger';
 
 /**
  * Fetches NCERT chapters from Firestore.
@@ -28,7 +29,7 @@ export async function getNCERTChapters(grade: number, subject?: string): Promise
             .sort((a, b) => a.number - b.number);
 
     } catch (error) {
-        console.error("Error fetching NCERT chapters from DB:", error);
+        logger.error("Error fetching NCERT chapters from DB", error, 'NCERT', { grade, subject });
         return [];
     }
 }

@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { generateWorksheet } from '@/ai/flows/worksheet-wizard';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -44,6 +45,7 @@ import { generateWorksheet } from '@/ai/flows/worksheet-wizard';
  *         description: AI Generation failed
  */
 export async function POST(request: Request) {
+    let promptText = 'Unknown Prompt';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        promptText = body.prompt || 'Unknown Prompt';
 
         // Call the AI Flow
         const output = await generateWorksheet({
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        console.error('Worksheet API Error:', error);
+        logger.error(`Worksheet API Failed for prompt: "${promptText}"`, error, 'WORKSHEET', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';

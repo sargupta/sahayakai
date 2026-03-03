@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
             // Log to Cloud Logging with proper structure
             switch (severity) {
                 case 'WARNING':
-                    logger.warn('Performance metric', 'METRICS', {
+                    logger.warn(`Performance Warning on ${metric.page || 'unknown'}: ${metric.type} metric elevated`, 'METRICS', {
                         metric: metric.type,
                         data: metric,
                         labels: {
@@ -48,10 +48,14 @@ export async function POST(req: NextRequest) {
                     });
                     break;
 
-                case 'ERROR':
+                case 'ERROR': {
+                    const durationStr = metric.duration ? ` took ${metric.duration}ms` : (metric.totalDuration ? ` took ${metric.totalDuration}ms` : '');
+                    const detailsStr = metric.rating ? ` (Rating: ${metric.rating})` : '';
+                    const message = `Poor Performance on /${metric.page || 'unknown'}: ${metric.type}${durationStr}${detailsStr}`;
+
                     logger.error(
-                        'Performance metric - Poor',
-                        new Error(`Poor performance: ${metric.type}`),
+                        message,
+                        new Error(message),
                         'METRICS',
                         {
                             metric: metric.type,
@@ -64,9 +68,10 @@ export async function POST(req: NextRequest) {
                         }
                     );
                     break;
+                }
 
                 default:
-                    logger.info('Performance metric', 'METRICS', {
+                    logger.info(`Performance OK on ${metric.page || 'unknown'}: ${metric.type}`, 'METRICS', {
                         metric: metric.type,
                         data: metric,
                         labels: {
@@ -83,7 +88,7 @@ export async function POST(req: NextRequest) {
             received: body.metrics.length
         });
     } catch (error) {
-        console.error('Failed to process metrics:', error);
+        logger.error('Failed to process metrics', error, 'METRICS');
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { instantAnswer } from '@/ai/flows/instant-answer';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -36,6 +37,7 @@ import { instantAnswer } from '@/ai/flows/instant-answer';
  *         description: Analysis failed
  */
 export async function POST(request: Request) {
+    let promptText = 'Unknown Prompt';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
 
         const body = await request.json();
         const { prompt, language } = body;
+        promptText = prompt || 'Unknown Prompt';
 
         // 1. Determine Intent
         const { type: intent } = await agentRouterFlow({
@@ -96,7 +99,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        console.error('Intent Router API Error:', error);
+        logger.error(`Intent Router API Failed for prompt: "${promptText}"`, error, 'INTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
             { error: 'Internal Server Error' },
             { status: 500 }

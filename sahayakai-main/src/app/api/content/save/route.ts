@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { SaveContentSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -119,7 +120,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, id: validContent.id });
 
     } catch (error) {
-        console.error('Save Content API Error:', error);
+        const failedType = (request as any).body?.type || 'unknown';
+        logger.error(`Save Content API Failed for type: ${failedType}`, error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
             { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
             { status: 500 }

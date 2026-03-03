@@ -10,9 +10,7 @@ export const GradeLevelSchema = z.string();
 export const SubjectSchema = z.string();
 // Previously: z.enum(['Mathematics', ...]) - Relaxed for flexible AI subjects
 
-export const LanguageSchema = z.enum([
-    'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali'
-]);
+export const LanguageSchema = z.string();
 
 // --- Core User Schema ---
 
@@ -26,7 +24,7 @@ export const UserProfileSchema = z.object({
     schoolName: z.string().optional(),
     teachingGradeLevels: z.array(GradeLevelSchema).default([]),
     subjects: z.array(SubjectSchema).default([]),
-    preferredLanguage: LanguageSchema.default('English'),
+    preferredLanguage: LanguageSchema.default('en'),
 
     // Metadata
     planType: z.enum(['free', 'pro', 'institution']).default('free'),

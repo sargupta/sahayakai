@@ -27,6 +27,7 @@
     *   **Resource Awareness:** Default assumption is "Chalk & Blackboard" environment.
     *   **Tone:** Supportive, pedagogical, and highly accessible (voice-first).
     *   **Reliability:** Deterministic business logic must wrap LLM outputs.
+    *   **Planning Phase Constraint:** MUST prepare a plan (`implementation_plan.md`) and divide work into tasks (`task.md`) before executing any implementation changes. Without doing this, do not move forward.
 
 ## Data Schema (Lesson Plan Payload)
 ```json

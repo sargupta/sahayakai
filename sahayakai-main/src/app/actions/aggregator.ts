@@ -1,9 +1,10 @@
 
 import { getDb } from "@/lib/firebase-admin";
+import { logger } from "@/lib/logger";
 
 export async function aggregateUserMetrics(uid: string) {
     const db = await getDb();
-    console.log(`[Aggregator] Refreshing metrics for user: ${uid}`);
+    logger.info(`Refreshing metrics for user`, 'AGGREGATOR', { userId: uid });
 
     // 1. Fetch User Data
     const userDoc = await db.collection('users').doc(uid).get();
@@ -36,18 +37,22 @@ export async function aggregateUserMetrics(uid: string) {
     // Truthful Scoring Logic
     // Logic: 10 pts/resource, 5 pts/quiz, 20 pts/share, 5 pts/post
     const calculatedScore = Math.min((resourceCount * 10) + (quizCount * 5) + (sharedCount * 20) + (postCount * 5), 100);
-    const activityScore = Math.min(resourceCount * 5, 40);
-    const engagementScore = Math.min((sharedCount * 15) + (postCount * 5), 60);
 
-    // Update Analytics
+    // FIX (Bug #3): Write field names that match the TeacherAnalytics interface
+    // consumed by GET /api/analytics/teacher-health/[userId]
     await db.collection('teacher_analytics').doc(uid).set({
         userId: uid,
+        // Engagement fields (matched to TeacherAnalytics interface)
+        content_created_total: resourceCount,
+        shared_to_community_count: sharedCount,
+        content_created_last_7_days: resourceCount, // Approximation; real-time route maintains exact 7-day window
+        // Session/activity will be kept from real-time updates via /api/teacher-activity
+        exported_content_count: postCount, // posts used as a proxy for export engagement
+        last_active: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        // Legacy fields kept for compatibility
         score: calculatedScore,
         level: calculatedScore > 50 ? 'expert' : 'novice',
-        resources_created: resourceCount,
-        shared_resources: sharedCount,
-        last_active: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
     }, { merge: true });
 
     // Update User Profile cache

@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -66,7 +67,7 @@ export async function GET(
 
         return NextResponse.json(healthScore);
     } catch (error) {
-        console.error('Failed to fetch teacher health score:', error);
+        logger.error('Failed to fetch teacher health score', error, 'ANALYTICS', { userId: (await params).userId });
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

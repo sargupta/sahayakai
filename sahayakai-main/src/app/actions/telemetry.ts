@@ -1,6 +1,7 @@
 'use server';
 
 import { getDb } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 export async function syncTelemetryEvents(events: any[]) {
     try {
@@ -21,7 +22,7 @@ export async function syncTelemetryEvents(events: any[]) {
         await batch.commit();
         return { success: true, count: chunk.length };
     } catch (error) {
-        console.error("Telemetry sync error", error);
+        logger.error("Telemetry sync error", error, 'TELEMETRY');
         return { success: false };
     }
 }

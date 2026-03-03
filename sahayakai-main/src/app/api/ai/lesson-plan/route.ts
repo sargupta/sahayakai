@@ -55,6 +55,7 @@ import { logger } from '@/lib/utils';
  *         description: AI Generation failed
  */
 export async function POST(request: Request) {
+    let topicText = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        topicText = body.topic || 'Unknown Topic';
 
         // Call the AI Flow
         // We inject the userId so the flow handles persistence automatically.
@@ -73,11 +75,9 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Lesson Plan API Error:', error);
-
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        logger.error("Lesson Plan API Failed", error, {
+        logger.error(`Lesson Plan API Failed for topic: "${topicText}"`, error, {
             path: "/api/ai/lesson-plan",
             userId: request.headers.get('x-user-id'),
             errorMessage

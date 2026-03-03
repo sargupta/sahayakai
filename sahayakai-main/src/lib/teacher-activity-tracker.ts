@@ -193,15 +193,24 @@ class TeacherActivityTracker {
      * Log structured event to Cloud Logging
      */
     private logEvent(eventType: string, data: Record<string, any>) {
-        // Send to metrics endpoint
+        // Send to teacher-activity endpoint in the expected EventBatch format
+        const event = {
+            event_type: eventType,
+            timestamp: Date.now(),
+            user_id: data.user_id,
+            session_id: data.session_id,
+            success: data.success,
+            feature: data.feature,
+            content_type: data.content_type,
+            severity: data.severity,
+            ...data,
+        };
+
         fetch('/api/teacher-activity', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event_type: eventType,
-                timestamp: Date.now(),
-                data,
-            }),
+            // FIX: Wrap in { events: [...] } batch format as the API expects EventBatch
+            body: JSON.stringify({ events: [event] }),
             keepalive: true,
         }).catch(err => {
             console.error('[Teacher Activity] Failed to log event:', err);

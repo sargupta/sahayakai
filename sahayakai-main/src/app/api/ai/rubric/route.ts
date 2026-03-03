@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { generateRubric } from '@/ai/flows/rubric-generator';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -39,6 +40,7 @@ import { generateRubric } from '@/ai/flows/rubric-generator';
  *         description: AI Generation failed
  */
 export async function POST(request: Request) {
+    let assignmentText = 'Unknown Assignment';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        assignmentText = body.assignmentDescription || 'Unknown Assignment';
 
         const output = await generateRubric({
             ...body,
@@ -55,7 +58,7 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Rubric API Error:', error);
+        logger.error(`Rubric API Failed for assignment: "${assignmentText}"`, error, 'RUBRIC', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(

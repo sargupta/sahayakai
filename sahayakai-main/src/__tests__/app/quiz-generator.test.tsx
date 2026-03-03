@@ -26,6 +26,15 @@ jest.mock('next/navigation', () => ({
     }),
 }));
 
+jest.mock('@/components/microphone-input', () => ({
+    MicrophoneInput: ({ onTranscriptChange }: any) => (
+        <input
+            data-testid="mock-mic"
+            onChange={(e) => onTranscriptChange(e.target.value)}
+        />
+    )
+}));
+
 // Mock the AI flow
 jest.mock('@/ai/flows/quiz-generator', () => ({
     generateQuiz: jest.fn(),
@@ -83,11 +92,8 @@ describe('Quiz Generator - Voice Input Auto-Submit', () => {
         });
 
         // Simulate microphone transcription callback
-        // Note: In real implementation, this would be triggered by MicrophoneInput component
-        const topicTextarea = screen.getByPlaceholderText(/life cycle of a butterfly/i);
-
-        // Simulate the transcript being set
-        fireEvent.change(topicTextarea, { target: { value: mockTranscript } });
+        const mockMic = screen.getByTestId('mock-mic');
+        fireEvent.change(mockMic, { target: { value: mockTranscript } });
 
         // Verify that the API call was made automatically
         await waitFor(
@@ -116,8 +122,8 @@ describe('Quiz Generator - Voice Input Auto-Submit', () => {
             expect(screen.getByText(/Quiz Generator/i)).toBeInTheDocument();
         });
 
-        const topicTextarea = screen.getByPlaceholderText(/life cycle of a butterfly/i);
-        fireEvent.change(topicTextarea, { target: { value: mockTranscript } });
+        const mockMic = screen.getByTestId('mock-mic');
+        fireEvent.change(mockMic, { target: { value: mockTranscript } });
 
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalled();

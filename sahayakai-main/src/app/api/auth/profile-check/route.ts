@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
             exists: !!(profile && profile.schoolName)
         });
     } catch (error) {
-        console.error("Profile check error:", error);
+        logger.error("Profile check error", error, 'AUTH', { uid });
         return NextResponse.json({ exists: false });
     }
 }

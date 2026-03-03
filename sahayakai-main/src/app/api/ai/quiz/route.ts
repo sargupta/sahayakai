@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
 import { QuizGeneratorInputSchema } from '@/ai/schemas/quiz-generator-schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
+    let topicText = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -10,6 +12,7 @@ export async function POST(request: Request) {
         }
 
         const json = await request.json();
+        topicText = json.topic || 'Unknown Topic';
 
         // SECURITY: Validate input against schema
         const body = QuizGeneratorInputSchema.parse(json);
@@ -23,7 +26,7 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Quiz API Error:', error);
+        logger.error(`Quiz API Failed for topic: "${topicText}"`, error, 'QUIZ', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(

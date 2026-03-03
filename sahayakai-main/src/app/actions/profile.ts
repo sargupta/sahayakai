@@ -4,6 +4,7 @@ import { dbAdapter } from "@/lib/db/adapter";
 import { certificationService } from "@/lib/services/certification-service";
 import { getAuthInstance } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 export async function getProfileData(userId: string) {
     try {
@@ -14,7 +15,7 @@ export async function getProfileData(userId: string) {
 
         return dbAdapter.serialize({ profile, certifications });
     } catch (error) {
-        console.error("Failed to fetch profile data:", error);
+        logger.error("Failed to fetch profile data", error, 'PROFILE', { userId });
         return { profile: null, certifications: [] };
     }
 }

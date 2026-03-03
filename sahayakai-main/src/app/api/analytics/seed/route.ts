@@ -2,6 +2,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
     try {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, message: "Analytics seeded" });
     } catch (error: any) {
-        console.error("Seed API Error:", error);
+        logger.error("Seed API Error", error, 'ANALYTICS');
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

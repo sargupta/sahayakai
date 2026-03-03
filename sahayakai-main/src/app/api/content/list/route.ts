@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { ContentTypeSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // Schema for Query Params
 const ListContentQuerySchema = z.object({
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
-        console.error('List Content API Error:', error);
+        logger.error('List Content API Failed', error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
             { error: 'Internal Server Error' },
             { status: 500 }

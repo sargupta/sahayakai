@@ -39,6 +39,7 @@ import { logger } from '@/lib/utils';
  *         description: AI Generation failed
  */
 export async function POST(request: Request) {
+    let questionText = 'Unknown Question';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        questionText = body.question || 'Unknown Question';
 
         const output = await instantAnswer({
             ...body,
@@ -55,13 +57,11 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        console.error('Instant Answer API Error:', error);
-
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
 
-        logger.error("Instant Answer API Failed", error, {
+        logger.error(`Instant Answer API Failed for question: "${questionText}"`, error, {
             path: "/api/ai/instant-answer",
             userId: request.headers.get('x-user-id'),
             errorMessage,

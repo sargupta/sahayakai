@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AnalyticsEvent } from '@/lib/analytics-events';
 import { getDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,10 +36,8 @@ export async function POST(req: NextRequest) {
         for (const event of body.events) {
             const severity = getEventSeverity(event);
 
-            // 1. Structured Logging (stdout)
-            const logEntry = {
-                severity,
-                message: `Teacher activity: ${event.event_type}`,
+            // 1. Structured Logging (via standard logger)
+            const logContext = {
                 event_type: event.event_type,
                 data: event,
                 labels: {
@@ -48,7 +47,14 @@ export async function POST(req: NextRequest) {
                 },
                 timestamp: new Date(event.timestamp).toISOString(),
             };
-            console.log(JSON.stringify(logEntry));
+
+            if (severity === 'ERROR') {
+                logger.error(`Teacher activity: ${event.event_type}`, new Error('Analytics Error'), 'ANALYTICS', logContext);
+            } else if (severity === 'WARNING') {
+                logger.warn(`Teacher activity: ${event.event_type}`, 'ANALYTICS', logContext);
+            } else {
+                logger.info(`Teacher activity: ${event.event_type}`, 'ANALYTICS', logContext);
+            }
 
             // 2. Firestore Aggregation (Daily Stats)
             // Schema: users/{userId}/analytics/{YYYY-MM-DD}
@@ -119,11 +125,7 @@ export async function POST(req: NextRequest) {
             received: body.events.length
         });
     } catch (error) {
-        console.error(JSON.stringify({
-            severity: 'ERROR',
-            message: 'Failed to process teacher activity events',
-            error: error instanceof Error ? error.message : String(error),
-        }));
+        logger.error('Failed to process teacher activity events', error, 'ANALYTICS');
 
         return NextResponse.json(
             { error: 'Internal server error' },

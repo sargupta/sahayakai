@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -39,6 +40,7 @@ import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
  *         description: AI Generation failed
  */
 export async function POST(request: Request) {
+    let promptText = 'Unknown Prompt';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        promptText = body.prompt || 'Unknown Prompt';
 
         // Call the AI Flow
         const output = await generateVisualAid({
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        console.error('Visual Aid API Error:', error);
+        logger.error(`Visual Aid API Failed for prompt: "${promptText}"`, error, 'VISUAL_AID', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';

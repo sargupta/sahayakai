@@ -5,6 +5,7 @@ import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
 import { syncUserAction } from '@/app/actions/auth';
+import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
 
 type AuthContextType = {
     user: User | null;
@@ -26,6 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             // Handle logout (was logged in, now logged out)
             if (user && !currentUser) {
+                // FIX (Bug #1): End teacher activity tracking session
+                endTeacherSession();
                 trackSessionEnd({
                     duration_minutes: 0, // Will be calculated by tracker
                     pages_visited: [],
@@ -51,7 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     photoURL: currentUser.photoURL
                 }).catch(err => console.error("Profile sync failed:", err));
 
-                // Track session start
+                // FIX (Bug #1): Start teacher activity tracker with real userId
+                // This initializes the singleton so trackTeacherContent() starts firing events
+                startTeacherSession(currentUser.uid, {
+                    preferred_language: 'en',
+                });
+
+                // Track session start (for legacy analytics events system)
                 trackSessionStart({
                     device_type: getDeviceType(),
                     preferred_language: 'en', // Will be updated from user profile

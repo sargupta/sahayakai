@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { UserProfileSchema } from '@/ai/schemas/content-schemas';
 import { UserProfile } from '@/types';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, uid: profile.uid });
 
     } catch (error) {
-        console.error('Profile Save API Error:', error);
+        logger.error('Profile Save API Failed', error, 'PROFILE');
         return NextResponse.json(
             { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
             { status: 500 }
