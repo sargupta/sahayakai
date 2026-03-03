@@ -1,6 +1,6 @@
 
-import { generateLessonPlan } from './src/ai/flows/lesson-plan-generator';
-import { generateQuiz } from './src/ai/flows/quiz-generator';
+import { generateLessonPlan } from '../src/ai/flows/lesson-plan-generator';
+import { generateQuiz } from '../src/ai/flows/quiz-generator';
 
 async function testKannadaSupport() {
     console.log("--- Testing Kannada Support ---");

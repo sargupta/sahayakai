@@ -76,9 +76,11 @@ async function aggregateRealMetrics() {
                 success_score: 10, // Default for real users
                 growth_score: 5,   // Default for real users
 
-                // Raw Metrics
-                resources_created: realResourceCount,
-                shared_resources: realSharedCount,
+                // Engagement fields (matched to TeacherAnalytics interface)
+                content_created_total: realResourceCount,
+                shared_to_community_count: realSharedCount,
+                content_created_last_7_days: realResourceCount, // Approximation
+                exported_content_count: 0,
                 quiz_attempts: 0,
 
                 last_active: new Date().toISOString(),
