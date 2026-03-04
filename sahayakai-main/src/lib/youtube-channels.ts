@@ -78,14 +78,14 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
      */
     courses: [
         {
-            id: CHANNELS.UNACADEMY,
-            name: 'Unacademy',
-            description: 'Comprehensive teacher training and subject courses'
+            id: CHANNELS.NCERT,
+            name: 'NCERT Official',
+            description: 'Nishtha modules and professional development courses'
         },
         {
-            id: CHANNELS.KHAN_ACADEMY,
-            name: 'Khan Academy India',
-            description: 'Teacher community, training, and classroom strategies'
+            id: CHANNELS.MINISTRY_OF_ED,
+            name: 'Ministry of Education India',
+            description: 'Official announcements and teacher training frameworks'
         },
     ],
 

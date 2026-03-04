@@ -162,52 +162,52 @@ export const CURATED_INDIAN_EDU_VIDEOS: Record<string, YouTubeVideo[]> = {
     ],
     "courses": [
         {
-            "id": "ZfhnFr-1MPo",
-            "title": "Unacademy Centre - The Power Behind You",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/ZfhnFr-1MPo/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2024-03-20T11:33:57+00:00"
+            "id": "hjk9s4W8pF8",
+            "title": "Classroom transaction on Arts Integrated Learning (AIL) Module - 9 - NISHTHA APP",
+            "description": "Professional development and teacher training content from NCERT Official.",
+            "thumbnail": "https://i.ytimg.com/vi/hjk9s4W8pF8/mqdefault.jpg",
+            "channelTitle": "NCERT Official",
+            "publishedAt": "2026-03-04T08:27:03.957Z"
         },
         {
-            "id": "CBDM_OhgQFI",
-            "title": "Aarambh - The Journey Begins | Unacademy Centre Foundation Day | June 15, 2023",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/CBDM_OhgQFI/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2023-06-24T08:23:57+00:00"
+            "id": "qmM-zObDpxs",
+            "title": "Live interaction on NISHTHA :  Pedagogy of Mathematics",
+            "description": "Professional development and teacher training content from NCERT Official.",
+            "thumbnail": "https://i.ytimg.com/vi/qmM-zObDpxs/mqdefault.jpg",
+            "channelTitle": "NCERT Official",
+            "publishedAt": "2026-03-04T08:27:04.834Z"
         },
         {
-            "id": "gFPhYguV0ZU",
-            "title": "Epic Hide & Seek Ft. @ashishchanchlanivines @SamayRainaOfficial  | Official Challenge",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/gFPhYguV0ZU/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2022-11-26T15:38:46+00:00"
+            "id": "ZuJQ5Qblaro",
+            "title": "Classroom management",
+            "description": "Professional development and teacher training content from Teach For India.",
+            "thumbnail": "https://i.ytimg.com/vi/ZuJQ5Qblaro/mqdefault.jpg",
+            "channelTitle": "Teach For India",
+            "publishedAt": "2026-03-04T08:27:05.533Z"
         },
         {
-            "id": "Ym1WWgG3HSI",
-            "title": "Brain: Parts & functions [Marathi] | Life processes in Living Organisms | Class 9 | Science | KA",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/Ym1WWgG3HSI/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T06:35:38+00:00"
+            "id": "p9esa4nR2dE",
+            "title": "Which is your favorite Classroom management strategy?",
+            "description": "Professional development and teacher training content from Teach For India.",
+            "thumbnail": "https://i.ytimg.com/vi/p9esa4nR2dE/mqdefault.jpg",
+            "channelTitle": "Teach For India",
+            "publishedAt": "2026-03-04T08:27:06.217Z"
         },
         {
-            "id": "WbD2694U3-g",
-            "title": "Nervous system (central & peripheral) [Marathi] | Life processes in Living Organisms | Class 9 | KA",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/WbD2694U3-g/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T06:20:28+00:00"
+            "id": "m9Q92oW_rKM",
+            "title": "👍NEP - 2020 pedagogy and teaching strategies",
+            "description": "Professional development and teacher training content from Ministry of Education.",
+            "thumbnail": "https://i.ytimg.com/vi/m9Q92oW_rKM/mqdefault.jpg",
+            "channelTitle": "Ministry of Education",
+            "publishedAt": "2026-03-04T08:27:06.845Z"
         },
         {
-            "id": "wIb4fiYbIFo",
-            "title": "Antibiotics [Marathi] | Useful and Harmful Microbes | Class 9 | Science | Khan Academy",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/wIb4fiYbIFo/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T04:29:12+00:00"
+            "id": "BY3yE7kvSuQ",
+            "title": "How many hours of CPD has been alloted to teachers according to NEP-2020?",
+            "description": "Professional development and teacher training content from Ministry of Education.",
+            "thumbnail": "https://i.ytimg.com/vi/BY3yE7kvSuQ/mqdefault.jpg",
+            "channelTitle": "Ministry of Education",
+            "publishedAt": "2026-03-04T08:27:08.060Z"
         }
     ],
     "topRecommended": [
