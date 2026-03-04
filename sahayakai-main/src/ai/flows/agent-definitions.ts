@@ -11,6 +11,7 @@ const AgentTypeSchema = z.enum([
   'teacherTraining',
   'rubric',
   'instantAnswer',
+  'videoStoryteller',
   'unknown'
 ]);
 
@@ -47,6 +48,7 @@ const intentPrompt = ai.definePrompt({
         - 'teacherTraining': Professional development, classroom management advice, teaching strategies.
         - 'rubric': Creating grading rubrics, assessment criteria.
         - 'instantAnswer': Direct questions (What is...), definitions, quick facts.
+        - 'videoStoryteller': Finding educational videos, storytelling, pedagogy videos, recommeded educational content.
         - 'unknown': If the intent is unclear or doesn't match above.
 
         Prompt: {{{prompt}}}

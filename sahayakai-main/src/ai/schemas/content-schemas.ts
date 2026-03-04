@@ -182,17 +182,7 @@ export const MicroLessonDataSchema = z.object({
 // --- Combined Schemas for API Validation ---
 
 export const SaveContentSchema = BaseContentSchema.extend({
-    data: z.union([
-        LessonPlanDataSchema,
-        QuizDataSchema,
-        WorksheetDataSchema,
-        VisualAidDataSchema,
-        MicroLessonDataSchema,
-        RubricDataSchema,
-        VirtualFieldTripDataSchema,
-        InstantAnswerDataSchema,
-        TeacherTrainingDataSchema
-    ])
+    data: z.any().describe("The payload data. Kept as z.any() to flexibly accommodate varied and evolving AI definitions like QuizVariantsOutput, TeacherTrainingOutput, etc.")
 });
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;
