@@ -108,7 +108,7 @@ function rankVideosLocal(
     for (const cat of CATEGORY_ORDER) {
         const catVideos = scoredList
             .filter(item => item.bestCat === cat && !seenIds.has(item.video.id))
-            .slice(0, 36)
+            .slice(0, 60)  // ← was 36, now 60 per category
             .map(item => item.video);
 
         finalCategories[cat] = catVideos;
@@ -242,6 +242,23 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
 }
 
 /**
+ * Daily rotation shuffle — time-seeded so results change every 6 hours.
+ * Same pool of videos, different order = freshness without extra API calls.
+ * Formula: seed changes 4× per day (every 21,600 seconds).
+ */
+function dailyShuffle<T>(arr: T[]): T[] {
+    if (arr.length <= 1) return arr;
+    // Seed changes every 6 hours
+    const seed = Math.floor(Date.now() / (1000 * 60 * 60 * 6));
+    return [...arr].sort((a, b) => {
+        const idxA = arr.indexOf(a);
+        const hashA = Math.sin(seed * 9301 + idxA * 49297) * 233280;
+        const hashB = Math.sin(seed * 9301 + arr.indexOf(b) * 49297) * 233280;
+        return (hashA - Math.floor(hashA)) - (hashB - Math.floor(hashB));
+    });
+}
+
+/**
  * Fetches RSS videos mapped to categories for a specific teacher.
  * Uses subject-aware channel prioritization.
  */
@@ -264,8 +281,14 @@ async function fetchRSSVideosForTeacher(
             if (cat === 'storytelling' || cat === 'topRecommended') {
                 channels = [...subjectChannels, ...channels];
             }
-            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 8), 50);
-            return [cat, videos] as [string, any[]];
+            // Deduplicate channels by ID before fetching
+            const uniqueChannels = channels.filter(
+                (ch, i, arr) => arr.findIndex(c => c.id === ch.id) === i
+            );
+            // Fetch ALL channels (up to 25) with maximum RSS videos per channel (15)
+            const videos = await fetchMultipleChannelsRSS(uniqueChannels.slice(0, 25), 15);
+            // Apply daily rotation so the order feels fresh on every page load
+            return [cat, dailyShuffle(videos)] as [string, any[]];
         })
     );
 
@@ -288,7 +311,8 @@ function mergeLayers(
         const bVideos = b[key] || [];
         const seenIds = new Set(aVideos.map((v: any) => v.id));
         const extras = bVideos.filter((v: any) => !seenIds.has(v.id));
-        merged[key] = [...aVideos, ...extras].slice(0, 6);
+        // ← Removed the .slice(0, 6) cap — let ALL videos through to the ranker
+        merged[key] = [...aVideos, ...extras];
     }
 
     return merged;
