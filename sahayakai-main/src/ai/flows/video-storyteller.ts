@@ -53,8 +53,8 @@ function rankVideosLocal(
     // Scoring Keywords
     const KEYWORDS: Record<string, string[]> = {
         storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept', 'animation'],
-        pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential', 'scaffolding', 'differentiated', 'assessment'],
-        courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam'],
+        pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential', 'scaffolding', 'differentiated', 'assessment', 'inclusive education', 'cpd', 'classroom management'],
+        courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam', 'professional development'],
         govtUpdates: ['update', 'announcement', 'notification', 'ministry', 'ncert', 'policy', 'rte'],
         topRecommended: [subject, gradeLevel, 'best', 'masterclass', 'ncert official']
     };
@@ -73,18 +73,23 @@ function rankVideosLocal(
 
                 // Keyword match
                 kws.forEach(kw => {
-                    if (title.includes(kw.toLowerCase())) score += 2;
+                    if (title.includes(kw.toLowerCase())) {
+                        // High weight for pedagogy matches to overcome general noise
+                        score += (cat === 'pedagogy') ? 4 : 2;
+                    }
                 });
 
-                // Authority boost
-                if (AUTHORITY_CHANNELS.has(video.id)) score += 5;
+                // Authority boost (FIXED: checking channelId)
+                if (video.channelId && AUTHORITY_CHANNELS.has(video.channelId)) {
+                    score += (cat === 'pedagogy' || cat === 'govtUpdates') ? 8 : 5;
+                }
 
                 // Topic relevance boost! (Crucial for manual searches like Chola empire)
-                if (topic && title.includes(topic.toLowerCase())) score += 10;
+                if (topic && title.includes(topic.toLowerCase())) score += 12;
 
                 // Explicit metadata boost (if available)
                 if (video.channelTitle.includes('NCERT') || video.channelTitle.includes('Ministry')) score += 5;
-                if (video.channelTitle.toLowerCase().includes('learn') || video.channelTitle.toLowerCase().includes('premji')) score += 3;
+                if (video.channelTitle.toLowerCase().includes('learn') || video.channelTitle.toLowerCase().includes('premji') || video.channelTitle.toLowerCase().includes('india')) score += 5;
 
                 categoryScores[cat] = score;
             }
