@@ -566,11 +566,18 @@ function QuizGeneratorContent() {
       };
       fetchSavedContent();
     } else if (topicParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
       form.setValue("topic", topicParam);
-      // We need to wait a tick for the form value to be registered before submitting
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [searchParams, form, toast]);
 

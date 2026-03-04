@@ -189,10 +189,20 @@ export function useLessonPlan() {
             };
             fetchSavedContent();
         } else if (topicParam) {
+            // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+            const subjectParam = searchParams.get("subject");
+            const gradeLevelParam = searchParams.get("gradeLevel");
+            const languageParam = searchParams.get("language");
+
             form.setValue("topic", topicParam);
+            if (subjectParam) form.setValue("subject", subjectParam);
+            if (gradeLevelParam) form.setValue("gradeLevels", [gradeLevelParam]);
+            if (languageParam) form.setValue("language", languageParam);
+            // ────────────────────────────────────────────────────────────────────
+
             setTimeout(() => {
                 form.handleSubmit(onSubmit)();
-            }, 0);
+            }, 300); // Small delay to let React settle form state
         }
     }, [searchParams, form, toast]);
 
