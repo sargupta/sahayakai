@@ -54,6 +54,8 @@ Provide a score (0.0 to 10.0) for each category. If a video is purely for studen
 {{#each videos}}
 - ID: {{id}} | Title: {{title}} | Channel: {{channelTitle}}
 {{/each}}
+
+Rank the top 12 most relevant videos for each category.
 `,
 });
 
@@ -70,9 +72,9 @@ async function rankAndDeduplicateVideos(
 
     if (candidates.length === 0) return {};
 
-    // 1. LLM Ranking Pass
+    // 1. LLM Ranking Pass (Process up to 60 candidates for ranking)
     const { output } = await runResiliently(async (config) => {
-        return await videoRankerPrompt({ subject, gradeLevel, videos: candidates.slice(0, 40) }, config);
+        return await videoRankerPrompt({ subject, gradeLevel, videos: candidates.slice(0, 60) }, config);
     });
 
     if (!output || !output.rankedVideos) {
@@ -111,11 +113,11 @@ async function rankAndDeduplicateVideos(
         .filter((item): item is NonNullable<typeof item> => item !== null)
         .sort((a, b) => b.bestScore - a.bestScore);
 
-    // 3. Assign to categories strictly
+    // 3. Assign to categories strictly (Increase per-category limit to 12)
     for (const item of scoredList) {
         if (seenIds.has(item.video.id)) continue;
 
-        if (finalCategories[item.bestCat] && finalCategories[item.bestCat].length < 6) {
+        if (finalCategories[item.bestCat] && finalCategories[item.bestCat].length < 12) {
             finalCategories[item.bestCat].push(item.video);
             seenIds.add(item.video.id);
         }
@@ -264,7 +266,7 @@ async function fetchRSSVideosForTeacher(
             if (cat === 'storytelling' || cat === 'topRecommended') {
                 channels = [...subjectChannels, ...channels];
             }
-            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 3), 10);
+            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 5), 20);
             return [cat, videos] as [string, any[]];
         })
     );
