@@ -95,7 +95,7 @@ export function LessonPlanSidebar({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-headline">
-                {labels?.grade || "Grade"}
+                {labels?.grade || "Class"}
               </FormLabel>
               <FormControl>
                 <GradeLevelSelector

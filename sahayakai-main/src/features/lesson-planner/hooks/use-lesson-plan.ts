@@ -40,7 +40,7 @@ export function useLessonPlan() {
         defaultValues: {
             topic: "",
             language: "en",
-            gradeLevels: ["6th Grade"],
+            gradeLevels: [],
             subject: "General",
             imageDataUri: "",
         },
@@ -124,7 +124,7 @@ export function useLessonPlan() {
                         form.reset({
                             topic: "", // Keep topic empty
                             language: savedDraft.language || "en",
-                            gradeLevels: savedDraft.gradeLevels || ["6th Grade"],
+                            gradeLevels: savedDraft.gradeLevels || [],
                             imageDataUri: savedDraft.imageDataUri || "",
                         });
                         toast({
@@ -171,7 +171,7 @@ export function useLessonPlan() {
                             form.reset({
                                 topic: content.topic || content.title,
                                 language: content.language,
-                                gradeLevels: content.gradeLevel ? [content.gradeLevel] : ["6th Grade"],
+                                gradeLevels: content.gradeLevel ? [content.gradeLevel] : [],
                                 imageDataUri: content.data.imageDataUri || "",
                             });
                         }

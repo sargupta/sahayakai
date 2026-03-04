@@ -25,7 +25,7 @@ const translations: Record<string, any> = {
             configuration: "Lesson Plan Settings",
             customizeOutput: "Customize the output.",
             contextImage: "Add Context Image (Optional)",
-            grade: "Grade",
+            grade: "Class",
             language: "Language",
             subject: "Subject",
             showAdvanced: "Show Advanced Options",
