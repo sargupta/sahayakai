@@ -53,11 +53,11 @@ function rankVideosLocal(
 
     // Scoring Keywords
     const KEYWORDS: Record<string, string[]> = {
-        storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept', 'animation', 'visualize'],
+        storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept', 'animation'],
         pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential', 'scaffolding', 'differentiated', 'assessment', 'inclusive education', 'cpd', 'classroom management'],
-        courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam', 'professional development', 'lecture', 'module', 'session', 'ctet', 'uptet', 'bed', 'med'],
-        govtUpdates: ['update', 'announcement', 'notification', 'ministry', 'ncert', 'policy', 'rte', 'exam', 'board', 'circular', 'gazette', 'pm evidya'],
-        topRecommended: [subject, gradeLevel, 'best', 'masterclass', 'curated']
+        courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam', 'professional development'],
+        govtUpdates: ['update', 'announcement', 'notification', 'ministry', 'ncert', 'policy', 'rte'],
+        topRecommended: [subject, gradeLevel, 'best', 'masterclass', 'ncert official']
     };
 
     // Score and Categorize
@@ -75,8 +75,8 @@ function rankVideosLocal(
                 // Keyword match
                 kws.forEach(kw => {
                     if (title.includes(kw.toLowerCase())) {
-                        // High weight for pedagogy and govt to overcome general noise
-                        score += (cat === 'pedagogy' || cat === 'govtUpdates' || cat === 'courses') ? 4 : 2;
+                        // High weight for pedagogy matches to overcome general noise
+                        score += (cat === 'pedagogy') ? 4 : 2;
                     }
                 });
 
@@ -96,7 +96,7 @@ function rankVideosLocal(
                 // If this video was fetched explicitly FOR this category via RSS/Search, give it a massive boost
                 // so it doesn't get starved by lack of keywords in the title.
                 if (sourceCategoryMap[video.id]?.includes(cat)) {
-                    score += 100; // Increased from 50 to 100 for absolute lane-locking
+                    score += 50;
                 }
 
                 categoryScores[cat] = score;
@@ -106,31 +106,17 @@ function rankVideosLocal(
             const entries = Object.entries(categoryScores);
             const [bestCat, bestScore] = entries.sort((a, b) => b[1] - a[1])[0];
 
-            return { video, scores: categoryScores, bestCat, bestScore };
+            return { video, bestCat, bestScore };
         })
         .sort((a, b) => b.bestScore - a.bestScore);
 
     // Assign to categories (Priority order)
-    // LANE PRIORITY: Each category gets first pick of its strongest candidates.
-    // This stops 'Pedagogy' from stealing videos from 'Courses' via tie-breaks.
     const CATEGORY_ORDER = ['topRecommended', 'courses', 'pedagogy', 'storytelling', 'govtUpdates'];
 
     for (const cat of CATEGORY_ORDER) {
         const catVideos = scoredList
-            .filter(item => {
-                if (seenIds.has(item.video.id)) return false;
-
-                // CRITERIA:
-                // 1. This is the absolute best category for the video (natural selection)
-                if (item.bestCat === cat && item.bestScore > 5) return true;
-
-                // 2. OR this video was explicitly fetched FOR this category (+100 boost)
-                // and we are currently filling this specific lane (priority selection).
-                if (item.scores[cat] >= 90) return true;
-
-                return false;
-            })
-            .slice(0, 60)
+            .filter(item => item.bestCat === cat && !seenIds.has(item.video.id))
+            .slice(0, 60)  // ← was 36, now 60 per category
             .map(item => item.video);
 
         finalCategories[cat] = catVideos;
@@ -200,11 +186,6 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const aiResult = aiOutput.status === 'fulfilled' ? aiOutput.value : null;
     const rssResult = rssVideos.status === 'fulfilled' ? rssVideos.value : {};
 
-    // DEBUG: Log RSS results
-    Object.entries(rssResult).forEach(([cat, vids]) => {
-        console.log(`[Storyteller] 📥 RSS Category "${cat}": Fetched ${vids.length} videos`);
-    });
-
     // YouTube Search Layer (if AI queries exist)
     let searchVideos: Record<string, any[]> = {};
     if (aiResult?.categories) {
@@ -262,15 +243,9 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     });
 
     const candidates = Array.from(candidatePoolMap.values());
-    console.log(`[Storyteller] 🏊 Total Unique Candidates in pool: ${candidates.length}`);
 
     // 4. [Tier 3] Deterministic Local Ranking (Eliminates 2nd LLM call)
     const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic, sourceCategoryMap);
-
-    // DEBUG: Log final counts
-    Object.entries(rankedVideos).forEach(([cat, vids]) => {
-        console.log(`[Storyteller] 📊 Final Ranked "${cat}": ${vids.length} videos`);
-    });
 
     const personalizedMessage = aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
