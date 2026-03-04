@@ -23,7 +23,8 @@ import {
 function rankVideosLocal(
     subject: string,
     gradeLevel: string,
-    candidates: VideoCandidate[]
+    candidates: VideoCandidate[],
+    topic?: string
 ): Record<string, VideoCandidate[]> {
     if (candidates.length === 0) return {};
 
@@ -44,12 +45,15 @@ function rankVideosLocal(
         'UCA7OQkX9AEIVQ6j9i0OSQhA', // CEC-UGC
         'UCaIXqbYp2OJ4fdTM4JqZuDg', // IGNOU
         'UC37XfXzS9Lp8XG-rW5_p0HA', // NIOS
+        'UCV5w3dqPZL23JSjdAfsJpzw', // Let's LEARN
+        'UCFidunW38-O2R0V1E9t2cKA', // Teach For India
+        'UC0e9e-XlU6h8yW3o_d0m2Lg', // Azim Premji University
     ]);
 
     // Scoring Keywords
     const KEYWORDS: Record<string, string[]> = {
-        storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept'],
-        pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential'],
+        storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept', 'animation'],
+        pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential', 'scaffolding', 'differentiated', 'assessment'],
         courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam'],
         govtUpdates: ['update', 'announcement', 'notification', 'ministry', 'ncert', 'policy', 'rte'],
         topRecommended: [subject, gradeLevel, 'best', 'masterclass', 'ncert official']
@@ -75,8 +79,12 @@ function rankVideosLocal(
                 // Authority boost
                 if (AUTHORITY_CHANNELS.has(video.id)) score += 5;
 
+                // Topic relevance boost! (Crucial for manual searches like Chola empire)
+                if (topic && title.includes(topic.toLowerCase())) score += 10;
+
                 // Explicit metadata boost (if available)
-                if (video.channelTitle.includes('NCERT') || video.channelTitle.includes('Ministry')) score += 3;
+                if (video.channelTitle.includes('NCERT') || video.channelTitle.includes('Ministry')) score += 5;
+                if (video.channelTitle.toLowerCase().includes('learn') || video.channelTitle.toLowerCase().includes('premji')) score += 3;
 
                 categoryScores[cat] = score;
             }
@@ -95,7 +103,7 @@ function rankVideosLocal(
     for (const cat of CATEGORY_ORDER) {
         const catVideos = scoredList
             .filter(item => item.bestCat === cat && !seenIds.has(item.video.id))
-            .slice(0, 12)
+            .slice(0, 24)
             .map(item => item.video);
 
         finalCategories[cat] = catVideos;
@@ -187,7 +195,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const candidates = Array.from(candidatePoolMap.values());
 
     // 4. [Tier 3] Deterministic Local Ranking (Eliminates 2nd LLM call)
-    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates);
+    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic);
 
     const personalizedMessage = aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
@@ -236,7 +244,7 @@ async function fetchRSSVideosForTeacher(
             if (cat === 'storytelling' || cat === 'topRecommended') {
                 channels = [...subjectChannels, ...channels];
             }
-            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 5), 20);
+            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 8), 50);
             return [cat, videos] as [string, any[]];
         })
     );

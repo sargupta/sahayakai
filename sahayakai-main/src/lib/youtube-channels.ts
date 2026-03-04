@@ -23,8 +23,11 @@ const CHANNELS = {
     UNACADEMY: 'UCx1VY57UmjU76Tgq8YwkklA',
     IGNOU: 'UCaIXqbYp2OJ4fdTM4JqZuDg',
     CEC_UGC: 'UCA7OQkX9AEIVQ6j9i0OSQhA',
-    NIOS: 'UC37XfXzS9Lp8XG-rW5_p0HA', // National Institute of Open Schooling
-    PM_EVIDYA_HUB: 'UCT0s92hGjqLX6p7qY9BBrSA', // Consolidated under NCERT Official
+    NIOS: 'UC37XfXzS9Lp8XG-rW5_p0HA',
+    PM_EVIDYA_HUB: 'UCT0s92hGjqLX6p7qY9BBrSA',
+    LETS_LEARN: 'UCV5w3dqPZL23JSjdAfsJpzw',
+    TEACH_FOR_INDIA: 'UCFidunW38-O2R0V1E9t2cKA',
+    AZIM_PREMJI: 'UC0e9e-XlU6h8yW3o_d0m2Lg',
 };
 
 /** Map of category → list of channel definitions */
@@ -47,6 +50,16 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
             id: CHANNELS.CEC_UGC,
             name: 'CEC-UGC',
             description: 'Consortium for Educational Communication - NISHTHA & NEP Training'
+        },
+        {
+            id: CHANNELS.LETS_LEARN,
+            name: "Let's LEARN",
+            description: 'Expert child development and pedagogy training'
+        },
+        {
+            id: CHANNELS.AZIM_PREMJI,
+            name: 'Azim Premji Foundation',
+            description: 'Advanced pedagogical research and teacher workshops'
         },
     ],
 
@@ -100,6 +113,11 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
             id: CHANNELS.MINISTRY_OF_ED,
             name: 'Ministry of Education India',
             description: 'Official announcements and teacher training frameworks'
+        },
+        {
+            id: CHANNELS.TEACH_FOR_INDIA,
+            name: 'Teach For India',
+            description: 'Leadership and classroom excellence stories'
         },
     ],
 

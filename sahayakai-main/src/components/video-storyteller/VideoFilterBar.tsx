@@ -60,7 +60,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
     };
 
     return (
-        <div className="bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-[2.5rem] p-3 shadow-2xl shadow-slate-200/40 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/80 rounded-[2.5rem] p-3 shadow-2xl shadow-slate-200/50 animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="flex flex-col lg:flex-row items-center gap-3">
                 {/* Search Input */}
                 <div className="relative w-full lg:w-1/3 group">
@@ -88,7 +88,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:flex-1">
                     {/* Subject Select */}
                     <Select value={subject} onValueChange={setSubject}>
-                        <SelectTrigger className="h-14 bg-slate-50/50 border-none rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group">
+                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <BookOpen className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Subject" />
@@ -104,7 +104,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Class (Grade) Select */}
                     <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                        <SelectTrigger className="h-14 bg-slate-50/50 border-none rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group">
+                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <GraduationCap className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Class" />
@@ -120,7 +120,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Language Select */}
                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="h-14 bg-slate-50/50 border-none rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group">
+                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <Languages className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Language" />
