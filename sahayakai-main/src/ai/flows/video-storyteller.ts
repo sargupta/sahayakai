@@ -24,7 +24,8 @@ function rankVideosLocal(
     subject: string,
     gradeLevel: string,
     candidates: VideoCandidate[],
-    topic?: string
+    topic?: string,
+    sourceCategoryMap: Record<string, string[]> = {}
 ): Record<string, VideoCandidate[]> {
     if (candidates.length === 0) return {};
 
@@ -90,6 +91,13 @@ function rankVideosLocal(
                 // Explicit metadata boost (if available)
                 if (video.channelTitle.includes('NCERT') || video.channelTitle.includes('Ministry')) score += 5;
                 if (video.channelTitle.toLowerCase().includes('learn') || video.channelTitle.toLowerCase().includes('premji') || video.channelTitle.toLowerCase().includes('india')) score += 5;
+
+                // CRITICAL FIX: Source Category Boost
+                // If this video was fetched explicitly FOR this category via RSS/Search, give it a massive boost
+                // so it doesn't get starved by lack of keywords in the title.
+                if (sourceCategoryMap[video.id]?.includes(cat)) {
+                    score += 50;
+                }
 
                 categoryScores[cat] = score;
             }
@@ -189,6 +197,23 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         }
     }
 
+    // Preserve source categories before flattening so the ranker knows where they came from
+    const sourceCategoryMap: Record<string, string[]> = {};
+
+    for (const [cat, vids] of Object.entries(rssResult)) {
+        vids.forEach((v: any) => {
+            if (!sourceCategoryMap[v.id]) sourceCategoryMap[v.id] = [];
+            sourceCategoryMap[v.id].push(cat);
+        });
+    }
+
+    for (const [cat, vids] of Object.entries(searchVideos)) {
+        vids.forEach((v: any) => {
+            if (!sourceCategoryMap[v.id]) sourceCategoryMap[v.id] = [];
+            sourceCategoryMap[v.id].push(cat);
+        });
+    }
+
     // Aggregate into a flat unique pool
     let flatRSS = Object.values(rssResult).flat();
     let flatSearch = Object.values(searchVideos).flat();
@@ -201,7 +226,12 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
             const emergencyResults = await getCategorizedVideos({
                 topRecommended: [input.topic]
             });
-            flatSearch = Object.values(emergencyResults).flat();
+            const emergencyVids = Object.values(emergencyResults).flat();
+            emergencyVids.forEach((v: any) => {
+                if (!sourceCategoryMap[v.id]) sourceCategoryMap[v.id] = [];
+                sourceCategoryMap[v.id].push('topRecommended');
+            });
+            flatSearch = emergencyVids;
         } catch (e) {
             console.error('[Storyteller] Emergency search failed:', e);
         }
@@ -215,7 +245,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const candidates = Array.from(candidatePoolMap.values());
 
     // 4. [Tier 3] Deterministic Local Ranking (Eliminates 2nd LLM call)
-    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic);
+    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic, sourceCategoryMap);
 
     const personalizedMessage = aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
