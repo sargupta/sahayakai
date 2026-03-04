@@ -179,7 +179,9 @@ export function mergeCuratedVideos(
         // Mark curated fallbacks as seen so they can't be reused in another category
         fill.forEach(v => globalSeenIds.add(v.id));
 
-        merged[cat] = [...live, ...fill].slice(0, 6);
+        // The single bottleneck that was destroying the 50+ videos!
+        // Removed .slice(0, 6) so the full ranked array passes to the UI
+        merged[cat] = [...live, ...fill];
     }
 
     return merged;
