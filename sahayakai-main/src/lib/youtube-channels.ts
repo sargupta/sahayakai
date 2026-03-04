@@ -22,7 +22,9 @@ const CHANNELS = {
     KHAN_ACADEMY: 'UCR3ZOcUoPHiFGd-Q9FwV-yA',
     UNACADEMY: 'UCx1VY57UmjU76Tgq8YwkklA',
     IGNOU: 'UCaIXqbYp2OJ4fdTM4JqZuDg',
-    CEC_UGC: 'UCA7OQkX9AEIVQ6j9i0OSQhA'
+    CEC_UGC: 'UCA7OQkX9AEIVQ6j9i0OSQhA',
+    NIOS: 'UC37XfXzS9Lp8XG-rW5_p0HA', // National Institute of Open Schooling
+    PM_EVIDYA_HUB: 'UCT0s92hGjqLX6p7qY9BBrSA', // Consolidated under NCERT Official
 };
 
 /** Map of category → list of channel definitions */
@@ -44,7 +46,7 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
         {
             id: CHANNELS.CEC_UGC,
             name: 'CEC-UGC',
-            description: 'Consortium for Educational Communication - Undergraduate Education'
+            description: 'Consortium for Educational Communication - NISHTHA & NEP Training'
         },
     ],
 
