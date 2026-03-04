@@ -33,6 +33,7 @@ export type VideoStorytellerOutput = z.infer<typeof VideoStorytellerOutputSchema
  */
 export async function getVideoRecommendations(input: VideoStorytellerInput): Promise<Record<string, any>> {
     const { getCategorizedVideos } = await import('@/lib/youtube');
+    const { mergeCuratedVideos } = await import('@/lib/curated-videos');
     const { dbAdapter } = await import('@/lib/db/adapter');
 
     let subject = input.subject;
@@ -64,7 +65,9 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         language
     });
 
-    const categorizedVideos = await getCategorizedVideos(aiOutput.categories);
+    // Fetch live YouTube videos (parallel), then merge with curated fallback
+    const liveVideos = await getCategorizedVideos(aiOutput.categories);
+    const categorizedVideos = mergeCuratedVideos(liveVideos);
 
     return {
         ...aiOutput,

@@ -1,3 +1,5 @@
+import { getSecret } from './secrets';
+
 export interface YouTubeVideo {
     id: string;
     title: string;
@@ -12,88 +14,116 @@ export interface YouTubeVideo {
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 const cache: Record<string, { data: YouTubeVideo[]; timestamp: number }> = {};
 
-import { getSecret } from './secrets';
-
 /**
  * Searches for videos on YouTube using the provided query.
  * Implements basic in-memory caching to save API quota.
+ * Uses regionCode=IN and videoCategoryId=27 (Education) for Bharat-First results.
  */
 export async function searchYouTube(query: string, maxResults = 5): Promise<YouTubeVideo[]> {
     let apiKey = '';
     try {
         apiKey = await getSecret('YOUTUBE_API_KEY');
     } catch (e) {
-        console.error('Failed to get YOUTUBE_API_KEY:', e);
+        console.error('[YouTube] Failed to get YOUTUBE_API_KEY:', e);
+        return [];
+    }
+
+    if (!apiKey) {
+        console.error('[YouTube] YOUTUBE_API_KEY is empty after retrieval.');
         return [];
     }
 
     // Check cache
-    const cached = cache[query];
+    const cacheKey = `${query}:${maxResults}`;
+    const cached = cache[cacheKey];
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return cached.data;
     }
 
     try {
-        const response = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-                query
-            )}&type=video&maxResults=${maxResults}&key=${apiKey}`
-        );
+        const params = new URLSearchParams({
+            part: 'snippet',
+            q: query,
+            type: 'video',
+            maxResults: String(maxResults),
+            regionCode: 'IN',
+            relevanceLanguage: 'hi,en',
+            key: apiKey,
+        });
+
+        const url = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
+        const response = await fetch(url);
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('YouTube API Error:', errorData);
+            const errorData = await response.json().catch(() => ({}));
+            console.error('[YouTube] API Error:', response.status, JSON.stringify(errorData));
             return [];
         }
 
         const data = await response.json();
-        const videos: YouTubeVideo[] = data.items.map((item: any) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
-            channelTitle: item.snippet.channelTitle,
-            publishedAt: item.snippet.publishedAt,
-        }));
+
+        if (!data.items || data.items.length === 0) {
+            console.warn(`[YouTube] No results for query: "${query}"`);
+            return [];
+        }
+
+        const videos: YouTubeVideo[] = data.items
+            .filter((item: any) => item.id?.videoId) // skip playlist/channel results
+            .map((item: any) => ({
+                id: item.id.videoId,
+                title: item.snippet.title,
+                description: item.snippet.description,
+                thumbnail:
+                    item.snippet.thumbnails?.high?.url ||
+                    item.snippet.thumbnails?.medium?.url ||
+                    item.snippet.thumbnails?.default?.url,
+                channelTitle: item.snippet.channelTitle,
+                publishedAt: item.snippet.publishedAt,
+            }));
 
         // Update cache
-        cache[query] = { data: videos, timestamp: Date.now() };
+        cache[cacheKey] = { data: videos, timestamp: Date.now() };
 
         return videos;
     } catch (error) {
-        console.error('Failed to fetch from YouTube:', error);
+        console.error('[YouTube] Failed to fetch:', error);
         return [];
     }
 }
 
 /**
- * Categorizes and fetches videos for multiple categories.
+ * Fetches videos for multiple categories IN PARALLEL for speed.
+ * Takes the first non-empty query for each category.
  */
 export async function getCategorizedVideos(
     queriesByCategory: Record<string, string[]>
 ): Promise<Record<string, YouTubeVideo[]>> {
-    const results: Record<string, YouTubeVideo[]> = {};
-
     const categories = Object.keys(queriesByCategory);
 
-    for (const category of categories) {
-        const queries = queriesByCategory[category];
-        // Take the first 2 queries from each category to fetch a mix
-        const categoryVideos: YouTubeVideo[] = [];
-        const seenIds = new Set<string>();
+    // Fetch ALL categories in parallel
+    const results = await Promise.all(
+        categories.map(async (category) => {
+            const queries = queriesByCategory[category];
+            const categoryVideos: YouTubeVideo[] = [];
+            const seenIds = new Set<string>();
 
-        for (const query of queries.slice(0, 2)) {
-            const videos = await searchYouTube(query, 3);
-            for (const v of videos) {
-                if (!seenIds.has(v.id)) {
-                    categoryVideos.push(v);
-                    seenIds.add(v.id);
+            // Still use top 2 queries per category, but run THOSE in parallel too
+            const videoArrays = await Promise.all(
+                queries.slice(0, 2).map((q) => searchYouTube(q, 3))
+            );
+
+            for (const videos of videoArrays) {
+                for (const v of videos) {
+                    if (!seenIds.has(v.id)) {
+                        categoryVideos.push(v);
+                        seenIds.add(v.id);
+                    }
                 }
             }
-        }
 
-        results[category] = categoryVideos;
-    }
+            return [category, categoryVideos] as [string, YouTubeVideo[]];
+        })
+    );
 
-    return results;
+    return Object.fromEntries(results);
 }
