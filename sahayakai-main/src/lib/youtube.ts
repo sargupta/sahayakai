@@ -12,15 +12,18 @@ export interface YouTubeVideo {
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 const cache: Record<string, { data: YouTubeVideo[]; timestamp: number }> = {};
 
+import { getSecret } from './secrets';
+
 /**
  * Searches for videos on YouTube using the provided query.
  * Implements basic in-memory caching to save API quota.
  */
 export async function searchYouTube(query: string, maxResults = 5): Promise<YouTubeVideo[]> {
-    const apiKey = process.env.YOUTUBE_API_KEY;
-
-    if (!apiKey) {
-        console.error('YOUTUBE_API_KEY is not set in environment variables');
+    let apiKey = '';
+    try {
+        apiKey = await getSecret('YOUTUBE_API_KEY');
+    } catch (e) {
+        console.error('Failed to get YOUTUBE_API_KEY:', e);
         return [];
     }
 
