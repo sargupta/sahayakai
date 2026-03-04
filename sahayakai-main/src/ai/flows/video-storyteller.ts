@@ -32,7 +32,6 @@ export type VideoStorytellerOutput = z.infer<typeof VideoStorytellerOutputSchema
  * Fetches user profile if userId is provided to enhance personalization.
  */
 export async function getVideoRecommendations(input: VideoStorytellerInput): Promise<Record<string, any>> {
-    const { videoStorytellerFlow } = await import('./video-storyteller');
     const { getCategorizedVideos } = await import('@/lib/youtube');
     const { dbAdapter } = await import('@/lib/db/adapter');
 

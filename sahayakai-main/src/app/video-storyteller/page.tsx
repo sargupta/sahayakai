@@ -32,11 +32,12 @@ export default function VideoStorytellerPage() {
 
     setLoading(true);
     try {
+      const token = await user?.getIdToken();
       const response = await fetch("/api/ai/video-storyteller", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user?.uid || "",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           language: "English", // We could source this from profile later
