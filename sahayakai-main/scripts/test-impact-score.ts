@@ -1,4 +1,4 @@
-import { calculateHealthScore } from '../src/app/api/analytics/teacher-health/[userId]/route';
+import { calculateHealthScore } from '../src/lib/analytics/impact-score';
 
 const profiles = {
     // 1. Core target: A healthy, growing teacher utilizing multiple features
