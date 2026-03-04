@@ -318,7 +318,7 @@ You are SahayakAI, a dedicated mentor for Indian teachers. Generate highly perso
 `,
 });
 
-export const videoStorytellerFlow = ai.defineFlow(
+const videoStorytellerFlow = ai.defineFlow(
     {
         name: 'videoStorytellerFlow',
         inputSchema: VideoStorytellerInputSchema,
