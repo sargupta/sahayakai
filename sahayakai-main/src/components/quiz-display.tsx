@@ -191,8 +191,6 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz, onRegenerate }) => {
 
       const saveTitle = currentQuiz.title || 'General Quiz';
 
-      // We save the ENTIRE multi-variant object, not just the active one, 
-      // so the user retains all difficulty levels.
       const payload = {
         id: crypto.randomUUID(),
         type: 'quiz',
@@ -201,9 +199,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz, onRegenerate }) => {
         subject: quiz.subject || 'General',
         topic: currentQuiz.title || quiz.topic || 'General',
         language: 'English',
-        isPublic: false,
-        isDraft: false,
-        data: editState.editedVariants // Save the EDITED version
+        data: editState.editedVariants
       };
 
       const token = await user.getIdToken();
@@ -220,7 +216,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz, onRegenerate }) => {
 
       toast({
         title: "Saved to Library",
-        description: `Saved "${saveTitle}" (All Variants) to your library.`,
+        description: `Saved "${saveTitle}" to your library.`,
       });
     } catch (error) {
       console.error("Save Error:", error);
@@ -394,24 +390,47 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
     <div className="w-full max-w-4xl mx-auto mt-8 animate-fade-in-up">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         {/* Difficulty Tabs */}
-        <div className="flex justify-between items-center mb-6">
-          <TabsList className="grid w-[360px] grid-cols-3 bg-slate-200/80 backdrop-blur-md border border-slate-300 shadow-sm p-1">
-            <TabsTrigger value="easy" disabled={!quiz.easy} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm font-semibold transition-all">Easy</TabsTrigger>
-            <TabsTrigger value="medium" disabled={!quiz.medium} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm font-semibold transition-all">Medium</TabsTrigger>
-            <TabsTrigger value="hard" disabled={!quiz.hard} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm font-semibold transition-all">Hard</TabsTrigger>
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+          <TabsList className="grid w-full md:w-[360px] grid-cols-3 bg-slate-100 border border-slate-200 shadow-sm p-1 rounded-xl">
+            <TabsTrigger value="easy" disabled={!quiz.easy} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Easy</TabsTrigger>
+            <TabsTrigger value="medium" disabled={!quiz.medium} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Medium</TabsTrigger>
+            <TabsTrigger value="hard" disabled={!quiz.hard} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Hard</TabsTrigger>
           </TabsList>
 
-          <div className="flex gap-2 relative">
-            {/* THE FLOATING REGENERATE BUTTON */}
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={onRegenerate}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 gap-2 px-4 rounded-full transition-all hover:scale-105 active:scale-95"
+              className="bg-white border-primary/20 text-primary hover:bg-primary/5 gap-2 rounded-full h-10 px-4 whitespace-nowrap"
             >
               <RotateCw className="h-4 w-4" />
-              Regenerate document
+              Regenerate All
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full h-10 px-6 whitespace-nowrap shadow-md shadow-primary/20">
+                  <Download className="h-4 w-4" />
+                  Export Quiz
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleDownloadPDF}>
+                  <FileDown className="mr-2 h-4 w-4" /> Download PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCopyText}>
+                  <Copy className="mr-2 h-4 w-4" /> Copy Text
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.print()}>
+                  <Printer className="mr-2 h-4 w-4" /> Print Quiz
+                </DropdownMenuItem>
+                <Separator className="my-1" />
+                <DropdownMenuItem onClick={handleSaveToLibrary}>
+                  <Save className="mr-2 h-4 w-4" /> Save to Library
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -521,49 +540,50 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                   onMouseLeave={() => setHoveredQuestion(null)}
                   className="relative group p-6 rounded-2xl hover:bg-white/60 transition-all duration-300 border border-transparent hover:border-slate-100 hover:shadow-sm"
                 >
-                  {/* FLOATING RICH TOOLBAR FOR QUESTIONS */}
+                  {/* QUESTION TOOLBAR (Minimalist) */}
                   <div className={cn(
-                    "absolute -top-4 left-1/2 -translate-x-1/2 z-10 flex border bg-white/95 backdrop-blur-md shadow-xl rounded-lg p-0.5 border-slate-200 opacity-0 scale-95 transition-all duration-200",
+                    "absolute -top-3 right-6 z-10 flex border bg-white shadow-lg rounded-full p-1 border-slate-200 opacity-0 scale-95 transition-all duration-200",
                     (hoveredQuestion === idx || isRefining === idx) && "opacity-100 scale-100"
                   )}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRegenerateQuestion(idx)}
-                      className={cn("h-8 w-8 rounded-md text-amber-600 hover:bg-amber-50", isRefining === idx && "animate-spin")}
-                      title="Regenerate Question"
-                    >
-                      <RotateCw className="h-3.5 w-3.5" />
-                    </Button>
-                    <div className="w-px h-5 bg-slate-200 mx-0.5 my-auto" />
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost" size="icon"
+                            onClick={() => handleRegenerateQuestion(idx)}
+                            className={cn("h-7 w-7 rounded-full text-amber-500", isRefining === idx && "animate-spin")}
+                          >
+                            <RotateCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px]">Improve</TooltipContent>
+                      </Tooltip>
 
-                    {/* Add Question Dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-md text-emerald-600 hover:bg-emerald-50"
-                          title="Add Question Below"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center" className="w-48">
-                        <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'multiple_choice')}>
-                          <BarChart2 className="mr-2 h-4 w-4" /> Multiple Choice
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'short_answer')}>
-                          <MessageSquare className="mr-2 h-4 w-4" /> Short Answer
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'fill_in_the_blanks')}>
-                          <Pencil className="mr-2 h-4 w-4" /> Fill in Blanks
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'true_false')}>
-                          <CheckSquare className="mr-2 h-4 w-4" /> True/False
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      <div className="w-px h-4 bg-slate-100 mx-1 self-center" />
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-emerald-500">
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" className="text-xs">
+                          <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'multiple_choice')}>Multiple Choice</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'true_false')}>True/False</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'fill_in_the_blanks')}>Fill in Blanks</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAddQuestion(idx, 'short_answer')}>Short Answer</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <div className="w-px h-4 bg-slate-100 mx-1 self-center" />
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleFeedback(idx, 'up')} className="h-7 w-7 rounded-full text-slate-400 hover:text-green-500"><ThumbsUp className="h-3 w-3" /></Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px]">Good</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
 
                   <div className="flex justify-between items-start mb-4">

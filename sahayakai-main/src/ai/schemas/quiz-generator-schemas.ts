@@ -39,8 +39,10 @@ export const QuizVariantsOutputSchema = z.object({
   easy: QuizGeneratorOutputSchema.nullable().describe("The easy version of the quiz."),
   medium: QuizGeneratorOutputSchema.nullable().describe("The medium version of the quiz."),
   hard: QuizGeneratorOutputSchema.nullable().describe("The hard version of the quiz."),
+  id: z.string().nullable().optional().describe('The database ID of the quiz.'),
   gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
   topic: z.string().nullable().optional().describe('The main topic.'),
+  isSaved: z.boolean().default(false).describe('Whether the quiz is already saved in the library.'),
 });
 export type QuizVariantsOutput = z.infer<typeof QuizVariantsOutputSchema>;

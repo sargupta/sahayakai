@@ -36,6 +36,7 @@ import { VisualAidDisplay } from "@/components/visual-aid-display";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
+  { id: 'true_false', icon: CheckSquare },
   { id: 'fill_in_the_blanks', icon: Pencil },
   { id: 'short_answer', icon: MessageSquare },
 ] as const;
@@ -53,7 +54,7 @@ const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   imageDataUri: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(20).default(5),
-  questionTypes: z.array(z.enum(["multiple_choice", "fill_in_the_blanks", "short_answer"])).min(1, {
+  questionTypes: z.array(z.enum(["multiple_choice", "fill_in_the_blanks", "short_answer", "true_false"])).min(1, {
     message: "You have to select at least one question type.",
   }),
   bloomsTaxonomyLevels: z.array(z.string()).optional(),
@@ -520,12 +521,21 @@ function QuizGeneratorContent() {
               if (Array.isArray(loadedData.questions)) {
                 setQuiz({
                   easy: null,
-                  medium: loadedData, // Treat old quizzes as medium by default
-                  hard: null
+                  medium: loadedData,
+                  hard: null,
+                  id: id,
+                  isSaved: true,
+                  gradeLevel: content.gradeLevel,
+                  subject: content.subject,
+                  topic: content.topic || content.title
                 });
               } else {
                 // New style (easy, medium, hard)
-                setQuiz(loadedData);
+                setQuiz({
+                  ...loadedData,
+                  id: id,
+                  isSaved: true
+                });
               }
 
               // Set form values to match saved content (prioritize medium, then any available)
