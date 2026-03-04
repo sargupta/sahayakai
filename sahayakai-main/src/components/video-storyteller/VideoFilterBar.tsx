@@ -88,7 +88,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:flex-1">
                     {/* Subject Select */}
                     <Select value={subject} onValueChange={setSubject}>
-                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <BookOpen className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Subject" />
@@ -104,7 +104,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Class (Grade) Select */}
                     <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <GraduationCap className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Class" />

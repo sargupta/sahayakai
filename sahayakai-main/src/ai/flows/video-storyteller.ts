@@ -103,7 +103,7 @@ function rankVideosLocal(
     for (const cat of CATEGORY_ORDER) {
         const catVideos = scoredList
             .filter(item => item.bestCat === cat && !seenIds.has(item.video.id))
-            .slice(0, 24)
+            .slice(0, 36)
             .map(item => item.video);
 
         finalCategories[cat] = catVideos;
@@ -185,8 +185,23 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     }
 
     // Aggregate into a flat unique pool
-    const flatRSS = Object.values(rssResult).flat();
-    const flatSearch = Object.values(searchVideos).flat();
+    let flatRSS = Object.values(rssResult).flat();
+    let flatSearch = Object.values(searchVideos).flat();
+
+    // EMERGENCY SEARCH: If a specific topic was requested but we have no candidates, 
+    // trigger a direct fallback search to ensure users see results for specific queries (e.g. Chola empire)
+    if (flatSearch.length === 0 && input.topic) {
+        try {
+            const { getCategorizedVideos } = await import('@/lib/youtube');
+            const emergencyResults = await getCategorizedVideos({
+                topRecommended: [input.topic]
+            });
+            flatSearch = Object.values(emergencyResults).flat();
+        } catch (e) {
+            console.error('[Storyteller] Emergency search failed:', e);
+        }
+    }
+
     const candidatePoolMap = new Map<string, VideoCandidate>();
     [...flatSearch, ...flatRSS].forEach(v => {
         if (!candidatePoolMap.has(v.id)) candidatePoolMap.set(v.id, v);
