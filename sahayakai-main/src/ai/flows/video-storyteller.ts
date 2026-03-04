@@ -211,8 +211,24 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const personalizedMessage = aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates to help you become an even more effective teacher.`;
 
-    // 5. Build final result with curated fallback for empty categories
-    const finalVideos = mergeCuratedVideos(rankedVideos);
+    // 5. [CRITICAL] Final Global Cross-Category Deduplication
+    // Run this BEFORE merging curated fallbacks to guarantee no video appears in 2 carousels.
+    // Process categories in this priority order: topRecommended wins, then others.
+    const CATEGORY_PRIORITY = ['topRecommended', 'courses', 'pedagogy', 'storytelling', 'govtUpdates'];
+    const globalFinalSeen = new Set<string>();
+    const deduplicatedFinal: Record<string, any[]> = {};
+
+    for (const cat of CATEGORY_PRIORITY) {
+        const videos = rankedVideos[cat] || [];
+        deduplicatedFinal[cat] = videos.filter(v => {
+            if (globalFinalSeen.has(v.id)) return false;
+            globalFinalSeen.add(v.id);
+            return true;
+        });
+    }
+
+    // 6. Build final result with curated fallback for empty categories
+    const finalVideos = mergeCuratedVideos(deduplicatedFinal);
 
     // 6. Store result in Firestore cache
     void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
