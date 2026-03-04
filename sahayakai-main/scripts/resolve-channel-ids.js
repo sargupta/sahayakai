@@ -3,12 +3,13 @@ const fs = require('fs');
 
 const HANDLES = {
     'NCERT Official': '@ncertofficial',
-    'DIKSHA': '@diksha_india',
+    'DIKSHA': '@dikshabharat',
+    'IGNOU': '@ignou',
+    'CEC-UGC': '@cecgurukul',
+    'eGyanKosh': '@egyankoshignou',
+    'PM_eVidya': '@pm_evidya',
     'Khan Academy India': '@khanacademyindia',
-    'Vedantu': '@vedantu',
-    'Magnet Brains': '@magnetbrains',
     'Unacademy': '@unacademy',
-    'Teach For India': '@teachforindia',
     'Ministry of Education India': '@eduminofindia'
 };
 

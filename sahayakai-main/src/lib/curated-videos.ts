@@ -6,155 +6,121 @@
  *
  * Used as L4 fallback when both live RSS feeds and YouTube API fail.
  * mqdefault thumbnails (320x180) are guaranteed for all valid YouTube video IDs.
+ *
+ * DESIGN RULE: Each video ID must appear in EXACTLY ONE category.
+ * No video should ever appear in multiple categories — this is the single source
+ * of truth for the global deduplication guarantee.
  */
 import { YouTubeVideo } from './youtube';
 
 export const CURATED_INDIAN_EDU_VIDEOS: Record<string, YouTubeVideo[]> = {
-    "pedagogy": [
+    "topRecommended": [
         {
             "id": "OyNil0Zkgj8",
-            "title": "Sahyog : Breathing and the Brain: Techniques for Calming One's Mind",
-            "description": "Educational content from NCERT Official.",
+            "title": "Sahyog: Breathing and the Brain: Techniques for Calming One's Mind",
+            "description": "Holistic wellness for teachers from NCERT.",
             "thumbnail": "https://i.ytimg.com/vi/OyNil0Zkgj8/mqdefault.jpg",
             "channelTitle": "NCERT Official",
             "publishedAt": "2026-03-04T00:03:12+00:00"
         },
         {
+            "id": "m9Q92oW_rKM",
+            "title": "NEP 2020: Pedagogy and Teaching Strategies",
+            "description": "NEP 2020 pedagogy and teaching strategies for Indian classrooms.",
+            "thumbnail": "https://i.ytimg.com/vi/m9Q92oW_rKM/mqdefault.jpg",
+            "channelTitle": "Ministry of Education India",
+            "publishedAt": "2026-03-04T08:27:06.845Z"
+        },
+        {
+            "id": "hjk9s4W8pF8",
+            "title": "Classroom Transaction on Arts Integrated Learning (AIL) — NISHTHA",
+            "description": "NISHTHA Arts-Integrated Learning module from NCERT.",
+            "thumbnail": "https://i.ytimg.com/vi/hjk9s4W8pF8/mqdefault.jpg",
+            "channelTitle": "NCERT Official",
+            "publishedAt": "2026-03-04T08:27:03.957Z"
+        },
+        {
+            "id": "qmM-zObDpxs",
+            "title": "Live Interaction on NISHTHA: Pedagogy of Mathematics",
+            "description": "Live interaction with mathematics educators on NISHTHA platform.",
+            "thumbnail": "https://i.ytimg.com/vi/qmM-zObDpxs/mqdefault.jpg",
+            "channelTitle": "NCERT Official",
+            "publishedAt": "2026-03-04T08:27:04.834Z"
+        }
+    ],
+    "pedagogy": [
+        {
             "id": "GVVdRTiRv0k",
-            "title": "Day 2:  Exploring Online Course Platforms & Features",
-            "description": "Educational content from NCERT Official.",
+            "title": "Day 2: Exploring Online Course Platforms & Features",
+            "description": "Teacher professional development content from NCERT.",
             "thumbnail": "https://i.ytimg.com/vi/GVVdRTiRv0k/mqdefault.jpg",
             "channelTitle": "NCERT Official",
             "publishedAt": "2026-03-03T23:38:34+00:00"
         },
         {
-            "id": "3sdfPmwcG8s",
-            "title": "NCERT  अध्याय 6 जयपुर से पत्र (भाग - I)   Subject: हिन्दी    Class: IV  Live",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/3sdfPmwcG8s/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-03T22:28:07+00:00"
-        },
-        {
             "id": "oWGIhy24Eos",
-            "title": "Post Budget Webinar 2026–27 | Education, Skills & University Townships | Towards Viksit Bharat @2047",
-            "description": "Educational content from Ministry of Education India.",
+            "title": "Post Budget Webinar 2026–27 | Education, Skills & University Townships",
+            "description": "Education policy webinar from Ministry of Education India.",
             "thumbnail": "https://i.ytimg.com/vi/oWGIhy24Eos/mqdefault.jpg",
             "channelTitle": "Ministry of Education India",
             "publishedAt": "2026-03-03T08:22:36+00:00"
         },
         {
             "id": "RIOK03Ta0ZA",
-            "title": "LIVE | Shri Dharmendra Pradhan Addresses Study in India Edu-Diplomatic Conclave",
-            "description": "Educational content from Ministry of Education India.",
+            "title": "Shri Dharmendra Pradhan Addresses Study in India Edu-Diplomatic Conclave",
+            "description": "Education policy from Ministry of Education India.",
             "thumbnail": "https://i.ytimg.com/vi/RIOK03Ta0ZA/mqdefault.jpg",
             "channelTitle": "Ministry of Education India",
             "publishedAt": "2026-03-02T18:28:37+00:00"
         },
         {
             "id": "_RCw3k2aAKk",
-            "title": "Bodhan.ai, AI Centre of Excellence for Education at IIT Madras Established by MoE",
-            "description": "Educational content from Ministry of Education India.",
+            "title": "Bodhan.ai, AI Centre of Excellence for Education at IIT Madras",
+            "description": "AI innovation in Indian education from MoE.",
             "thumbnail": "https://i.ytimg.com/vi/_RCw3k2aAKk/mqdefault.jpg",
             "channelTitle": "Ministry of Education India",
             "publishedAt": "2026-02-18T10:26:19+00:00"
+        },
+        {
+            "id": "BY3yE7kvSuQ",
+            "title": "How many hours of CPD has been allotted to teachers according to NEP-2020?",
+            "description": "NEP 2020 teacher development hours explained.",
+            "thumbnail": "https://i.ytimg.com/vi/BY3yE7kvSuQ/mqdefault.jpg",
+            "channelTitle": "Ministry of Education India",
+            "publishedAt": "2026-03-04T08:27:08.060Z"
         }
     ],
     "storytelling": [
         {
             "id": "Ym1WWgG3HSI",
-            "title": "Brain: Parts & functions [Marathi] | Life processes in Living Organisms | Class 9 | Science | KA",
-            "description": "Educational content from Khan Academy India.",
+            "title": "Brain: Parts & Functions [Marathi] | Life Processes in Living Organisms | Class 9 Science",
+            "description": "Marathi explainer for Class 9 Science — Khan Academy India.",
             "thumbnail": "https://i.ytimg.com/vi/Ym1WWgG3HSI/mqdefault.jpg",
             "channelTitle": "Khan Academy India",
             "publishedAt": "2026-03-01T06:35:38+00:00"
         },
         {
             "id": "WbD2694U3-g",
-            "title": "Nervous system (central & peripheral) [Marathi] | Life processes in Living Organisms | Class 9 | KA",
-            "description": "Educational content from Khan Academy India.",
+            "title": "Nervous System (Central & Peripheral) [Marathi] | Life Processes | Class 9",
+            "description": "Marathi explainer for nervous system — Khan Academy India.",
             "thumbnail": "https://i.ytimg.com/vi/WbD2694U3-g/mqdefault.jpg",
             "channelTitle": "Khan Academy India",
             "publishedAt": "2026-03-01T06:20:28+00:00"
         },
         {
             "id": "wIb4fiYbIFo",
-            "title": "Antibiotics [Marathi] | Useful and Harmful Microbes | Class 9 | Science | Khan Academy",
-            "description": "Educational content from Khan Academy India.",
+            "title": "Antibiotics [Marathi] | Useful and Harmful Microbes | Class 9 Science",
+            "description": "Marathi explainer for microbes and antibiotics — Khan Academy India.",
             "thumbnail": "https://i.ytimg.com/vi/wIb4fiYbIFo/mqdefault.jpg",
             "channelTitle": "Khan Academy India",
             "publishedAt": "2026-03-01T04:29:12+00:00"
-        },
-        {
-            "id": "OyNil0Zkgj8",
-            "title": "Sahyog : Breathing and the Brain: Techniques for Calming One's Mind",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/OyNil0Zkgj8/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-04T00:03:12+00:00"
-        },
-        {
-            "id": "GVVdRTiRv0k",
-            "title": "Day 2:  Exploring Online Course Platforms & Features",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/GVVdRTiRv0k/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-03T23:38:34+00:00"
-        },
-        {
-            "id": "3sdfPmwcG8s",
-            "title": "NCERT  अध्याय 6 जयपुर से पत्र (भाग - I)   Subject: हिन्दी    Class: IV  Live",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/3sdfPmwcG8s/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-03T22:28:07+00:00"
         }
     ],
     "govtUpdates": [
         {
-            "id": "oWGIhy24Eos",
-            "title": "Post Budget Webinar 2026–27 | Education, Skills & University Townships | Towards Viksit Bharat @2047",
-            "description": "Educational content from Ministry of Education India.",
-            "thumbnail": "https://i.ytimg.com/vi/oWGIhy24Eos/mqdefault.jpg",
-            "channelTitle": "Ministry of Education India",
-            "publishedAt": "2026-03-03T08:22:36+00:00"
-        },
-        {
-            "id": "RIOK03Ta0ZA",
-            "title": "LIVE | Shri Dharmendra Pradhan Addresses Study in India Edu-Diplomatic Conclave",
-            "description": "Educational content from Ministry of Education India.",
-            "thumbnail": "https://i.ytimg.com/vi/RIOK03Ta0ZA/mqdefault.jpg",
-            "channelTitle": "Ministry of Education India",
-            "publishedAt": "2026-03-02T18:28:37+00:00"
-        },
-        {
-            "id": "_RCw3k2aAKk",
-            "title": "Bodhan.ai, AI Centre of Excellence for Education at IIT Madras Established by MoE",
-            "description": "Educational content from Ministry of Education India.",
-            "thumbnail": "https://i.ytimg.com/vi/_RCw3k2aAKk/mqdefault.jpg",
-            "channelTitle": "Ministry of Education India",
-            "publishedAt": "2026-02-18T10:26:19+00:00"
-        },
-        {
-            "id": "OyNil0Zkgj8",
-            "title": "Sahyog : Breathing and the Brain: Techniques for Calming One's Mind",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/OyNil0Zkgj8/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-04T00:03:12+00:00"
-        },
-        {
-            "id": "GVVdRTiRv0k",
-            "title": "Day 2:  Exploring Online Course Platforms & Features",
-            "description": "Educational content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/GVVdRTiRv0k/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-03T23:38:34+00:00"
-        },
-        {
             "id": "3sdfPmwcG8s",
-            "title": "NCERT  अध्याय 6 जयपुर से पत्र (भाग - I)   Subject: हिन्दी    Class: IV  Live",
-            "description": "Educational content from NCERT Official.",
+            "title": "NCERT अध्याय 6 जयपुर से पत्र — Subject: हिन्दी, Class IV",
+            "description": "NCERT Hindi curriculum for Class IV.",
             "thumbnail": "https://i.ytimg.com/vi/3sdfPmwcG8s/mqdefault.jpg",
             "channelTitle": "NCERT Official",
             "publishedAt": "2026-03-03T22:28:07+00:00"
@@ -162,102 +128,20 @@ export const CURATED_INDIAN_EDU_VIDEOS: Record<string, YouTubeVideo[]> = {
     ],
     "courses": [
         {
-            "id": "hjk9s4W8pF8",
-            "title": "Classroom transaction on Arts Integrated Learning (AIL) Module - 9 - NISHTHA APP",
-            "description": "Professional development and teacher training content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/hjk9s4W8pF8/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-04T08:27:03.957Z"
-        },
-        {
-            "id": "qmM-zObDpxs",
-            "title": "Live interaction on NISHTHA :  Pedagogy of Mathematics",
-            "description": "Professional development and teacher training content from NCERT Official.",
-            "thumbnail": "https://i.ytimg.com/vi/qmM-zObDpxs/mqdefault.jpg",
-            "channelTitle": "NCERT Official",
-            "publishedAt": "2026-03-04T08:27:04.834Z"
-        },
-        {
             "id": "ZuJQ5Qblaro",
-            "title": "Classroom management",
-            "description": "Professional development and teacher training content from Teach For India.",
+            "title": "Classroom Management",
+            "description": "Effective classroom management strategies for Indian teachers.",
             "thumbnail": "https://i.ytimg.com/vi/ZuJQ5Qblaro/mqdefault.jpg",
             "channelTitle": "Teach For India",
             "publishedAt": "2026-03-04T08:27:05.533Z"
         },
         {
             "id": "p9esa4nR2dE",
-            "title": "Which is your favorite Classroom management strategy?",
-            "description": "Professional development and teacher training content from Teach For India.",
+            "title": "Which is Your Favorite Classroom Management Strategy?",
+            "description": "Classroom management strategies discussion.",
             "thumbnail": "https://i.ytimg.com/vi/p9esa4nR2dE/mqdefault.jpg",
             "channelTitle": "Teach For India",
             "publishedAt": "2026-03-04T08:27:06.217Z"
-        },
-        {
-            "id": "m9Q92oW_rKM",
-            "title": "👍NEP - 2020 pedagogy and teaching strategies",
-            "description": "Professional development and teacher training content from Ministry of Education.",
-            "thumbnail": "https://i.ytimg.com/vi/m9Q92oW_rKM/mqdefault.jpg",
-            "channelTitle": "Ministry of Education",
-            "publishedAt": "2026-03-04T08:27:06.845Z"
-        },
-        {
-            "id": "BY3yE7kvSuQ",
-            "title": "How many hours of CPD has been alloted to teachers according to NEP-2020?",
-            "description": "Professional development and teacher training content from Ministry of Education.",
-            "thumbnail": "https://i.ytimg.com/vi/BY3yE7kvSuQ/mqdefault.jpg",
-            "channelTitle": "Ministry of Education",
-            "publishedAt": "2026-03-04T08:27:08.060Z"
-        }
-    ],
-    "topRecommended": [
-        {
-            "id": "Ym1WWgG3HSI",
-            "title": "Brain: Parts & functions [Marathi] | Life processes in Living Organisms | Class 9 | Science | KA",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/Ym1WWgG3HSI/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T06:35:38+00:00"
-        },
-        {
-            "id": "WbD2694U3-g",
-            "title": "Nervous system (central & peripheral) [Marathi] | Life processes in Living Organisms | Class 9 | KA",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/WbD2694U3-g/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T06:20:28+00:00"
-        },
-        {
-            "id": "wIb4fiYbIFo",
-            "title": "Antibiotics [Marathi] | Useful and Harmful Microbes | Class 9 | Science | Khan Academy",
-            "description": "Educational content from Khan Academy India.",
-            "thumbnail": "https://i.ytimg.com/vi/wIb4fiYbIFo/mqdefault.jpg",
-            "channelTitle": "Khan Academy India",
-            "publishedAt": "2026-03-01T04:29:12+00:00"
-        },
-        {
-            "id": "ZfhnFr-1MPo",
-            "title": "Unacademy Centre - The Power Behind You",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/ZfhnFr-1MPo/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2024-03-20T11:33:57+00:00"
-        },
-        {
-            "id": "CBDM_OhgQFI",
-            "title": "Aarambh - The Journey Begins | Unacademy Centre Foundation Day | June 15, 2023",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/CBDM_OhgQFI/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2023-06-24T08:23:57+00:00"
-        },
-        {
-            "id": "gFPhYguV0ZU",
-            "title": "Epic Hide & Seek Ft. @ashishchanchlanivines @SamayRainaOfficial  | Official Challenge",
-            "description": "Educational content from Unacademy.",
-            "thumbnail": "https://i.ytimg.com/vi/gFPhYguV0ZU/mqdefault.jpg",
-            "channelTitle": "Unacademy",
-            "publishedAt": "2022-11-26T15:38:46+00:00"
         }
     ]
 };
@@ -265,20 +149,37 @@ export const CURATED_INDIAN_EDU_VIDEOS: Record<string, YouTubeVideo[]> = {
 /**
  * Merges live API/RSS results with curated fallback.
  * Live results always appear first; curated fill gaps.
- * Guarantees minimum 3 videos per category.
+ *
+ * CRITICAL: Uses a GLOBAL seenIds set across ALL categories to guarantee
+ * that no video ID ever appears in more than one carousel, regardless of
+ * what the curated fallback library contains.
  */
 export function mergeCuratedVideos(
     liveVideos: Record<string, YouTubeVideo[]>
 ): Record<string, YouTubeVideo[]> {
     const merged: Record<string, YouTubeVideo[]> = {};
-    const categories = Object.keys(CURATED_INDIAN_EDU_VIDEOS);
 
-    for (const cat of categories) {
+    // Global cross-category dedup — the most important invariant.
+    // Any ID already placed in one category will be blocked from all others.
+    const globalSeenIds = new Set<string>();
+
+    // First pass: register all live video IDs across every category.
+    // Live content has priority and is never displaced.
+    for (const cat of Object.keys(CURATED_INDIAN_EDU_VIDEOS)) {
+        const live = liveVideos[cat] || [];
+        live.forEach(v => globalSeenIds.add(v.id));
+    }
+
+    // Second pass: build merged output, filling gaps with globally-unique curated videos.
+    for (const cat of Object.keys(CURATED_INDIAN_EDU_VIDEOS)) {
         const live = liveVideos[cat] || [];
         const curated = CURATED_INDIAN_EDU_VIDEOS[cat] || [];
-        const seenIds = new Set(live.map((v) => v.id));
-        const extras = curated.filter((v) => !seenIds.has(v.id));
-        merged[cat] = [...live, ...extras].slice(0, 6);
+
+        const fill = curated.filter(v => !globalSeenIds.has(v.id));
+        // Mark curated fallbacks as seen so they can't be reused in another category
+        fill.forEach(v => globalSeenIds.add(v.id));
+
+        merged[cat] = [...live, ...fill].slice(0, 6);
     }
 
     return merged;

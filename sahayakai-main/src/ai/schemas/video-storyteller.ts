@@ -24,6 +24,7 @@ export const VideoCandidateSchema = z.object({
     title: z.string(),
     description: z.string(),
     channelTitle: z.string(),
+    channelId: z.string().optional(),
     thumbnail: z.string(),
     publishedAt: z.string(),
 });

@@ -6,6 +6,7 @@ export interface YouTubeVideo {
     description: string;
     thumbnail: string;
     channelTitle: string;
+    channelId?: string;
     publishedAt: string;
     duration?: string;
     viewCount?: string;

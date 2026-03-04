@@ -20,7 +20,14 @@ const CHANNELS = {
     NCERT: 'UCT0s92hGjqLX6p7qY9BBrSA',
     MINISTRY_OF_ED: 'UCp2smQxAyu_09vXiPJ3vTTg',
     KHAN_ACADEMY: 'UCR3ZOcUoPHiFGd-Q9FwV-yA',
-    UNACADEMY: 'UCx1VY57UmjU76Tgq8YwkklA'
+    UNACADEMY: 'UCx1VY57UmjU76Tgq8YwkklA',
+    IGNOU: 'UCaIXqbYp2OJ4fdTM4JqZuDg',
+    CEC_UGC: 'UCA7OQkX9AEIVQ6j9i0OSQhA',
+    NIOS: 'UC37XfXzS9Lp8XG-rW5_p0HA',
+    PM_EVIDYA_HUB: 'UCT0s92hGjqLX6p7qY9BBrSA',
+    LETS_LEARN: 'UCV5w3dqPZL23JSjdAfsJpzw',
+    TEACH_FOR_INDIA: 'UCFidunW38-O2R0V1E9t2cKA',
+    AZIM_PREMJI: 'UC0e9e-XlU6h8yW3o_d0m2Lg',
 };
 
 /** Map of category → list of channel definitions */
@@ -31,13 +38,28 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
     pedagogy: [
         {
             id: CHANNELS.NCERT,
-            name: 'NCERT Official',
-            description: 'National Council of Educational Research and Training'
+            name: 'NCERT Official (DIKSHA)',
+            description: 'National Council of Educational Research and Training - DIKSHA Portal'
         },
         {
             id: CHANNELS.MINISTRY_OF_ED,
             name: 'Ministry of Education India',
             description: 'Official channel - Ministry of Education, Govt of India'
+        },
+        {
+            id: CHANNELS.CEC_UGC,
+            name: 'CEC-UGC',
+            description: 'Consortium for Educational Communication - NISHTHA & NEP Training'
+        },
+        {
+            id: CHANNELS.LETS_LEARN,
+            name: "Let's LEARN",
+            description: 'Expert child development and pedagogy training'
+        },
+        {
+            id: CHANNELS.AZIM_PREMJI,
+            name: 'Azim Premji Foundation',
+            description: 'Advanced pedagogical research and teacher workshops'
         },
     ],
 
@@ -46,14 +68,14 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
      */
     storytelling: [
         {
+            id: CHANNELS.NCERT,
+            name: 'NCERT Official',
+            description: 'NCERT-based educational concepts and stories'
+        },
+        {
             id: CHANNELS.KHAN_ACADEMY,
             name: 'Khan Academy India',
             description: 'World-class education in Hindi and English for Indian students'
-        },
-        {
-            id: CHANNELS.NCERT,
-            name: 'NCERT Official',
-            description: 'NCERT-based educational concepts'
         },
     ],
 
@@ -79,13 +101,23 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
     courses: [
         {
             id: CHANNELS.NCERT,
-            name: 'NCERT Official',
+            name: 'NCERT Official (Nishtha)',
             description: 'Nishtha modules and professional development courses'
+        },
+        {
+            id: CHANNELS.IGNOU,
+            name: 'IGNOU Official',
+            description: 'Indira Gandhi National Open University - Teacher Education & Training'
         },
         {
             id: CHANNELS.MINISTRY_OF_ED,
             name: 'Ministry of Education India',
             description: 'Official announcements and teacher training frameworks'
+        },
+        {
+            id: CHANNELS.TEACH_FOR_INDIA,
+            name: 'Teach For India',
+            description: 'Leadership and classroom excellence stories'
         },
     ],
 
@@ -94,19 +126,24 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
      */
     topRecommended: [
         {
-            id: CHANNELS.KHAN_ACADEMY,
-            name: 'Khan Academy India',
-            description: 'Best multi-subject educational content in Hindi and English'
-        },
-        {
             id: CHANNELS.NCERT,
             name: 'NCERT Official',
             description: 'The gold standard of Indian curriculum content'
         },
         {
-            id: CHANNELS.UNACADEMY,
-            name: 'Unacademy',
-            description: 'Top courses and training material for Indian educators'
+            id: CHANNELS.MINISTRY_OF_ED,
+            name: 'PM e-Vidya',
+            description: 'Official digital learning channel for Classes 1-12'
+        },
+        {
+            id: CHANNELS.CEC_UGC,
+            name: 'CEC-UGC Gurukul',
+            description: 'Premium undergraduate and teacher training content'
+        },
+        {
+            id: CHANNELS.IGNOU,
+            name: 'IGNOU',
+            description: 'National resources for open and distance learning'
         },
     ],
 };

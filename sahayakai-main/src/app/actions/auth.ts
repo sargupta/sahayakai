@@ -28,3 +28,13 @@ export async function syncUserAction(user: { uid: string; email: string | null; 
         return { success: false, error: "Failed to sync user profile" };
     }
 }
+export async function getUserProfileAction(uid: string) {
+    if (!uid) return { success: false, error: "Missing UID" };
+    try {
+        const profile = await dbAdapter.getUser(uid);
+        return { success: true, profile: dbAdapter.serialize(profile) };
+    } catch (error) {
+        logger.error("Failed to fetch user profile", error, 'AUTH', { uid });
+        return { success: false, error: "Failed to fetch user profile" };
+    }
+}

@@ -15,68 +15,19 @@ import {
     type VideoRanking
 } from '@/ai/schemas/video-storyteller';
 
-const videoRankerPrompt = ai.definePrompt({
-    name: 'videoRankerPrompt',
-    input: {
-        schema: z.object({
-            subject: z.string(),
-            gradeLevel: z.string(),
-            videos: z.array(VideoCandidateSchema)
-        })
-    },
-    output: { schema: VideoRankingSchema, format: 'json' },
-    prompt: `
-You are an expert Educational Content Curator. Your task is to rank a list of YouTube videos based on their relevance to a **Teacher's** specific needs.
-
-**Teacher Profile:**
-- Subject: {{subject}}
-- Grade Level: {{gradeLevel}}
-
-**Categories to Score (0-10):**
-1. **Storytelling**: Narrative explanation of topics, animated stories, high student engagement.
-2. **Pedagogy**: Methods, classroom management, NEP 2020 workshops, teacher mindset.
-3. **Courses**: Professional training, SWAYAM, long-form certification previews.
-4. **Govt Updates**: Ministry news, policy changes, NCERT announcements.
-5. **Top Recommended**: High-quality gems that fit multiple educator needs.
-
-**CRITICAL RULE: "The Teacher/Student Filter"**
-- A video about "Chapter 5 Exercise Solutions" is for **STUDENTS**. Set \`isForTeachers: false\`.
-- A video about "How to teach Chapter 5 effectively" is for **TEACHERS**. Set \`isForTeachers: true\`.
-- Professional Development is ALWAYS for teachers.
-
-Provide a score (0.0 to 10.0) for each category. If a video is purely for students, demote its pedagogy/courses scores.
-
-**Videos to Evaluate:**
-{{#each videos}}
-- ID: {{id}} | Title: {{title}} | Channel: {{channelTitle}}
-{{/each}}
-`,
-});
 
 /**
- * Ranks and deduplicates a pool of candidate videos into categories.
- * USES AI to ensure relevance and eliminates cross-category duplication.
+ * Ranks and deduplicates a pool of candidate videos into categories using deterministic local scoring.
+ * Optimized for speed (< 100ms) to replace the 2-5s LLM ranking pass.
  */
-async function rankAndDeduplicateVideos(
+function rankVideosLocal(
     subject: string,
     gradeLevel: string,
-    candidates: VideoCandidate[]
-): Promise<Record<string, VideoCandidate[]>> {
-    const { runResiliently } = await import('@/ai/genkit');
-
+    candidates: VideoCandidate[],
+    topic?: string
+): Record<string, VideoCandidate[]> {
     if (candidates.length === 0) return {};
 
-    // 1. LLM Ranking Pass
-    const { output } = await runResiliently(async (config) => {
-        return await videoRankerPrompt({ subject, gradeLevel, videos: candidates.slice(0, 40) }, config);
-    });
-
-    if (!output || !output.rankedVideos) {
-        console.warn('[Ranker] AI failed to rank videos, returning raw pool');
-        return { topRecommended: candidates.slice(0, 6) };
-    }
-
-    // 2. Filter, Score, and Deduplicate
     const finalCategories: Record<string, VideoCandidate[]> = {
         storytelling: [],
         pedagogy: [],
@@ -87,34 +38,81 @@ async function rankAndDeduplicateVideos(
 
     const seenIds = new Set<string>();
 
-    // Create a map for quick lookup
-    const candidateMap = new Map(candidates.map(v => [v.id, v]));
+    // Authority Channels (Boost Score)
+    const AUTHORITY_CHANNELS = new Set([
+        'UCT0s92hGjqLX6p7qY9BBrSA', // NCERT
+        'UCp2smQxAyu_09vXiPJ3vTTg', // Ministry of Ed
+        'UCA7OQkX9AEIVQ6j9i0OSQhA', // CEC-UGC
+        'UCaIXqbYp2OJ4fdTM4JqZuDg', // IGNOU
+        'UC37XfXzS9Lp8XG-rW5_p0HA', // NIOS
+        'UCV5w3dqPZL23JSjdAfsJpzw', // Let's LEARN
+        'UCFidunW38-O2R0V1E9t2cKA', // Teach For India
+        'UC0e9e-XlU6h8yW3o_d0m2Lg', // Azim Premji University
+    ]);
 
-    // Sort candidates by their highest category score
-    const scoredList = output.rankedVideos
-        .filter(v => v.isForTeachers) // Mandatory teacher filter
-        .map(rank => {
-            const video = candidateMap.get(rank.id);
-            if (!video) return null;
+    // Scoring Keywords
+    const KEYWORDS: Record<string, string[]> = {
+        storytelling: ['story', 'animated', 'narrative', 'kahani', 'explanation', 'concept', 'animation'],
+        pedagogy: ['pedagogy', 'teaching method', 'classroom', 'nep 2020', 'ncf', 'active learning', 'experiential', 'scaffolding', 'differentiated', 'assessment', 'inclusive education', 'cpd', 'classroom management'],
+        courses: ['training', 'course', 'workshop', 'nistha', 'diksha', 'certification', 'swayam', 'professional development'],
+        govtUpdates: ['update', 'announcement', 'notification', 'ministry', 'ncert', 'policy', 'rte'],
+        topRecommended: [subject, gradeLevel, 'best', 'masterclass', 'ncert official']
+    };
 
-            // Find best category for this video
-            const scores = rank.categoryScores;
-            const entries = Object.entries(scores) as [string, number][];
+    // Score and Categorize
+    const scoredList = candidates
+        .map(video => {
+            const title = video.title.toLowerCase();
+            const channel = video.channelTitle.toLowerCase();
+
+            // Basic relevance scoring
+            const categoryScores: Record<string, number> = {};
+
+            for (const [cat, kws] of Object.entries(KEYWORDS)) {
+                let score = 0;
+
+                // Keyword match
+                kws.forEach(kw => {
+                    if (title.includes(kw.toLowerCase())) {
+                        // High weight for pedagogy matches to overcome general noise
+                        score += (cat === 'pedagogy') ? 4 : 2;
+                    }
+                });
+
+                // Authority boost (FIXED: checking channelId)
+                if (video.channelId && AUTHORITY_CHANNELS.has(video.channelId)) {
+                    score += (cat === 'pedagogy' || cat === 'govtUpdates') ? 8 : 5;
+                }
+
+                // Topic relevance boost! (Crucial for manual searches like Chola empire)
+                if (topic && title.includes(topic.toLowerCase())) score += 12;
+
+                // Explicit metadata boost (if available)
+                if (video.channelTitle.includes('NCERT') || video.channelTitle.includes('Ministry')) score += 5;
+                if (video.channelTitle.toLowerCase().includes('learn') || video.channelTitle.toLowerCase().includes('premji') || video.channelTitle.toLowerCase().includes('india')) score += 5;
+
+                categoryScores[cat] = score;
+            }
+
+            // Determine best category
+            const entries = Object.entries(categoryScores);
             const [bestCat, bestScore] = entries.sort((a, b) => b[1] - a[1])[0];
 
             return { video, bestCat, bestScore };
         })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
         .sort((a, b) => b.bestScore - a.bestScore);
 
-    // 3. Assign to categories strictly
-    for (const item of scoredList) {
-        if (seenIds.has(item.video.id)) continue;
+    // Assign to categories (Priority order)
+    const CATEGORY_ORDER = ['topRecommended', 'courses', 'pedagogy', 'storytelling', 'govtUpdates'];
 
-        if (finalCategories[item.bestCat] && finalCategories[item.bestCat].length < 6) {
-            finalCategories[item.bestCat].push(item.video);
-            seenIds.add(item.video.id);
-        }
+    for (const cat of CATEGORY_ORDER) {
+        const catVideos = scoredList
+            .filter(item => item.bestCat === cat && !seenIds.has(item.video.id))
+            .slice(0, 36)
+            .map(item => item.video);
+
+        finalCategories[cat] = catVideos;
+        catVideos.forEach(v => seenIds.add(v.id));
     }
 
     return finalCategories;
@@ -122,19 +120,19 @@ async function rankAndDeduplicateVideos(
 
 /**
  * Multi-tier video recommendation orchestrator.
- *
- * NEW 4-Tier RECOMENDATION PIPELINE:
- * 1. [L1] Firestore Semantic Cache (Fastest)
- * 2. [L2] Candidate Retrieval (RSS + Search + Curated)
- * 3. [L3] AI Ranking & Deduplication (The "ML" Layer)
- * 4. [L4] Personalized Context Generation
+ * 
+ * "LATENCY BLITZ" OPTIMIZED VERSION:
+ * 1. Parallel retrieval (AI + RSS in one Promise.all)
+ * 2. Deterministic Local Ranking (Eliminates 2-5s LLM latency)
+ * 3. Structured Logging of total duration
  */
 export async function getVideoRecommendations(input: VideoStorytellerInput): Promise<Record<string, any>> {
     const { getCachedVideos, setCachedVideos } = await import('@/lib/youtube-video-cache');
-    const { fetchMultipleChannelsRSS } = await import('@/lib/youtube-rss');
-    const { INDIAN_EDU_CHANNELS, SUBJECT_CHANNEL_MAP } = await import('@/lib/youtube-channels');
     const { mergeCuratedVideos } = await import('@/lib/curated-videos');
     const { dbAdapter } = await import('@/lib/db/adapter');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+
+    const startTime = Date.now();
 
     let subject = input.subject;
     let gradeLevel = input.gradeLevel;
@@ -160,15 +158,18 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     // 2. [Tier 1] Firestore semantic cache check
     let cachedResult = await getCachedVideos(subject, gradeLevel);
     if (cachedResult) {
+        StructuredLogger.info('Video Storyteller served from cache', {
+            metadata: { subject, gradeLevel },
+            duration: Date.now() - startTime
+        });
         return {
-            categories: {},
-            personalizedMessage: cachedResult.personalizedMessage,
-            categorizedVideos: cachedResult.categorizedVideos,
+            ...cachedResult,
             fromCache: true,
+            latencyScore: Date.now() - startTime
         };
     }
 
-    // 3. [Tier 2] Candidate Retrieval Phase
+    // 3. [Tier 2] Parallel Retrieval Phase (LATENCY BLITZ)
     const [aiOutput, rssVideos] = await Promise.allSettled([
         videoStorytellerFlow({ ...input, subject, gradeLevel, language }),
         fetchRSSVideosForTeacher(subject, language || 'English'),
@@ -188,11 +189,24 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         }
     }
 
-    // Aggregrate all candidates into a flat unique pool
-    const flatRSS = Object.values(rssResult).flat();
-    const flatSearch = Object.values(searchVideos).flat();
+    // Aggregate into a flat unique pool
+    let flatRSS = Object.values(rssResult).flat();
+    let flatSearch = Object.values(searchVideos).flat();
 
-    // Priority deduplication for pooling
+    // EMERGENCY SEARCH: If a specific topic was requested but we have no candidates, 
+    // trigger a direct fallback search to ensure users see results for specific queries (e.g. Chola empire)
+    if (flatSearch.length === 0 && input.topic) {
+        try {
+            const { getCategorizedVideos } = await import('@/lib/youtube');
+            const emergencyResults = await getCategorizedVideos({
+                topRecommended: [input.topic]
+            });
+            flatSearch = Object.values(emergencyResults).flat();
+        } catch (e) {
+            console.error('[Storyteller] Emergency search failed:', e);
+        }
+    }
+
     const candidatePoolMap = new Map<string, VideoCandidate>();
     [...flatSearch, ...flatRSS].forEach(v => {
         if (!candidatePoolMap.has(v.id)) candidatePoolMap.set(v.id, v);
@@ -200,17 +214,22 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
 
     const candidates = Array.from(candidatePoolMap.values());
 
-    // 4. [Tier 3] AI Ranking & Deduplication Pass
-    // This phase ensures "Chapter Exercises" are hidden from "Teacher Training"
-    const rankedVideos = await rankAndDeduplicateVideos(subject, gradeLevel, candidates);
+    // 4. [Tier 3] Deterministic Local Ranking (Eliminates 2nd LLM call)
+    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic);
 
     const personalizedMessage = aiResult?.personalizedMessage ||
-        `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates to help you become an even more effective teacher.`;
+        `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
 
     // 5. Build final result with curated fallback for empty categories
     const finalVideos = mergeCuratedVideos(rankedVideos);
 
-    // 6. Store result in Firestore cache
+    // 6. Store in cache & Log duration
+    const duration = Date.now() - startTime;
+    StructuredLogger.info('Video Storyteller curation complete', {
+        metadata: { subject, gradeLevel, candidates: candidates.length },
+        duration
+    });
+
     void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
 
     return {
@@ -218,6 +237,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         personalizedMessage,
         categorizedVideos: finalVideos,
         fromCache: false,
+        latencyScore: duration
     };
 }
 
@@ -244,7 +264,7 @@ async function fetchRSSVideosForTeacher(
             if (cat === 'storytelling' || cat === 'topRecommended') {
                 channels = [...subjectChannels, ...channels];
             }
-            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 3), 10);
+            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 8), 50);
             return [cat, videos] as [string, any[]];
         })
     );

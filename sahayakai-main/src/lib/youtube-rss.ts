@@ -34,6 +34,7 @@ function parseRssFeed(xml: string, channelName: string): YouTubeVideo[] {
         const entry = entryMatch[1];
 
         const id = (/<yt:videoId>(.*?)<\/yt:videoId>/.exec(entry))?.[1]?.trim();
+        const channelId = (/<yt:channelId>(.*?)<\/yt:channelId>/.exec(entry))?.[1]?.trim();
         const title = (/<title>(.*?)<\/title>/.exec(entry))?.[1]?.trim();
         const published = (/<published>(.*?)<\/published>/.exec(entry))?.[1]?.trim();
         const description = (/<media:description>([\s\S]*?)<\/media:description>/.exec(entry))?.[1]?.trim() || '';
@@ -47,6 +48,7 @@ function parseRssFeed(xml: string, channelName: string): YouTubeVideo[] {
             description: decodeXmlEntities(description).slice(0, 200),
             thumbnail: thumbnail || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
             channelTitle: channelName,
+            channelId: channelId,
             publishedAt: published || new Date().toISOString(),
         });
     }
