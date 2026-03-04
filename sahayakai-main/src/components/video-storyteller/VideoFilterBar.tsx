@@ -120,7 +120,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Language Select */}
                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="h-14 bg-white border border-slate-200/80 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-sm hover:border-primary/30 transition-all">
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
                             <div className="flex items-center gap-3 truncate">
                                 <Languages className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
                                 <SelectValue placeholder="Select Language" />
