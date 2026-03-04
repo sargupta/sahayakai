@@ -90,9 +90,6 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
      * Target: 20+ channels → 300+ candidates
      */
     pedagogy: [
-        { id: CH.NCERT, name: 'NCERT Official (DIKSHA)', description: 'DIKSHA & NISHTHA teacher training' },
-        { id: CH.MINISTRY_OF_ED, name: 'Ministry of Education India', description: 'NEP 2020, NCF, official policy content' },
-        { id: CH.CEC_UGC, name: 'CEC-UGC', description: 'NISHTHA & NEP Teacher Training' },
         { id: CH.LETS_LEARN, name: "Let's LEARN", description: 'Pedagogical approaches & child development' },
         { id: CH.AZIM_PREMJI, name: 'Azim Premji Foundation', description: 'Advanced pedagogy research & workshops' },
         { id: CH.TEACH_FOR_INDIA, name: 'Teach For India', description: 'Classroom leadership & equity' },
@@ -100,13 +97,8 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
         { id: CH.IDISCOVERI, name: 'iDiscoveri Education', description: 'Experiential learning & teacher training' },
         { id: CH.PRATHAM, name: 'Pratham Education Foundation', description: 'TaRL methodology & foundational literacy' },
         { id: CH.EKLAVYA, name: 'Eklavya Foundation', description: 'Tribal education & child-centred pedagogy' },
-        { id: CH.SWAYAM_NPTEL, name: 'SWAYAM NPTEL', description: 'Teacher education courses & CPD' },
-        { id: CH.IGNOU, name: 'IGNOU Official', description: 'B.Ed, M.Ed & teacher education' },
         { id: CH.QUEST_ALLIANCE, name: 'Quest Alliance', description: 'Blended learning & 21st century skills' },
         { id: CH.CEE_INDIA, name: 'CEE India', description: 'Constructivist & environment pedagogy' },
-        { id: CH.VIGYAN_PRASAR, name: 'Vigyan Prasar', description: 'Science communication & inquiry-based learning' },
-        { id: CH.NIOS, name: 'NIOS', description: 'Open schooling & inclusive education' },
-        { id: CH.KHAN_ACADEMY_IN, name: 'Khan Academy India', description: 'Mastery-based learning methodology' },
         { id: CH.AIICT_EDUCATION, name: 'AIICT Education', description: 'ICT integration in teaching' },
         { id: CH.TEACHER_SOLID, name: 'Teacher Solid', description: 'Practical classroom techniques' },
         { id: CH.SANKALP_INDIA, name: 'Sankalp India Foundation', description: 'Community education & teacher empowerment' },
@@ -117,7 +109,6 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
      * Target: 20+ channels → 300+ candidates
      */
     storytelling: [
-        { id: CH.NCERT, name: 'NCERT Official', description: 'NCERT textbook concepts visualized' },
         { id: CH.KHAN_ACADEMY_IN, name: 'Khan Academy India', description: 'World-class concept storytelling' },
         { id: CH.VEDANTU, name: 'Vedantu', description: 'Live & animated learning stories' },
         { id: CH.PHYSICS_WALLAH, name: 'Physics Wallah', description: 'Engaging concept explanations PW style' },
@@ -163,21 +154,13 @@ export const INDIAN_EDU_CHANNELS: Record<string, ChannelDefinition[]> = {
     courses: [
         { id: CH.NCERT, name: 'NCERT (NISHTHA)', description: 'NISHTHA modules & professional CPD' },
         { id: CH.IGNOU, name: 'IGNOU Official', description: 'B.Ed, M.Ed, teacher education courses' },
-        { id: CH.MINISTRY_OF_ED, name: 'Ministry of Education India', description: 'Official teacher frameworks & training' },
-        { id: CH.TEACH_FOR_INDIA, name: 'Teach For India', description: 'Leadership & classroom excellence' },
-        { id: CH.CEC_UGC, name: 'CEC-UGC', description: 'Teacher education from UGC consortium' },
         { id: CH.SWAYAM_NPTEL, name: 'SWAYAM NPTEL', description: 'Certified teacher upskilling courses' },
-        { id: CH.AZIM_PREMJI, name: 'Azim Premji Foundation', description: 'Pedagogical research training' },
-        { id: CH.LETS_LEARN, name: "Let's LEARN", description: 'Child development & learning science' },
-        { id: CH.PRATHAM, name: 'Pratham Education', description: 'TaRL-based teacher training' },
-        { id: CH.ROOM_TO_READ, name: 'Room to Read', description: 'Literacy skill development training' },
-        { id: CH.IDISCOVERI, name: 'iDiscoveri Education', description: 'Experiential learning teacher courses' },
-        { id: CH.QUEST_ALLIANCE, name: 'Quest Alliance', description: '21st century skills & digital tools' },
-        { id: CH.EKLAVYA, name: 'Eklavya Foundation', description: 'Community & tribal teacher training' },
-        { id: CH.SANKALP_INDIA, name: 'Sankalp India', description: 'Community education instructor training' },
-        { id: CH.NIOS, name: 'NIOS', description: 'Inclusive & special educator training' },
+        { id: CH.NIOS, name: 'NIOS Teacher Ed', description: 'Inclusive & special educator training' },
+        { id: CH.CEC_UGC, name: 'CEC-UGC', description: 'Teacher education from UGC consortium' },
         { id: CH.AIICT_EDUCATION, name: 'AIICT Education', description: 'ICT tools for modern classrooms' },
         { id: CH.VIGYAN_PRASAR, name: 'Vigyan Prasar', description: 'Science teacher enrichment programs' },
+        { id: CH.SANKALP_INDIA, name: 'Sankalp India', description: 'Community education instructor training' },
+        { id: CH.TEACH_FOR_INDIA, name: 'Teach For India Training', description: 'Leadership & classroom excellence' },
     ],
 
     /**
