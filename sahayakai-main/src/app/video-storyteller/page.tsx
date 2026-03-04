@@ -10,6 +10,8 @@ import { YouTubeVideo } from "@/lib/youtube";
 import { CURATED_INDIAN_EDU_VIDEOS, mergeCuratedVideos } from "@/lib/curated-videos";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
+import { getUserProfileAction } from "@/app/actions/auth";
 
 interface VideoRecommendations {
   categories: {
@@ -31,7 +33,17 @@ export default function VideoStorytellerPage() {
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<{ key: string, title: string } | null>(null);
 
-  const fetchRecommendations = async () => {
+  // Real-time intelligent filter state
+  const [filters, setFilters] = useState<{
+    subject?: string;
+    gradeLevel?: string;
+    language?: string;
+    searchQuery?: string;
+  }>({
+    language: "English",
+  });
+
+  const fetchRecommendations = async (activeFilters = filters) => {
     if (!requireAuth()) return;
 
     setLoading(true);
@@ -44,7 +56,10 @@ export default function VideoStorytellerPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          language: "English",
+          subject: activeFilters.subject,
+          gradeLevel: activeFilters.gradeLevel,
+          language: activeFilters.language,
+          topic: activeFilters.searchQuery,
         }),
       });
 
@@ -79,11 +94,32 @@ export default function VideoStorytellerPage() {
     }
   };
 
+  // Load preferences from Teacher Profile on mount
   useEffect(() => {
-    if (user) {
-      fetchRecommendations();
-    }
+    const loadProfile = async () => {
+      if (user) {
+        const result = await getUserProfileAction(user.uid);
+        if (result.success && result.profile) {
+          const profile = result.profile;
+          const initialFilters = {
+            subject: profile.subjects?.[0],
+            gradeLevel: profile.teachingGradeLevels?.[0],
+            language: profile.preferredLanguage || "English",
+          };
+          setFilters(initialFilters);
+          fetchRecommendations(initialFilters);
+        } else {
+          fetchRecommendations(filters);
+        }
+      }
+    };
+    loadProfile();
   }, [user]);
+
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters);
+    fetchRecommendations(newFilters);
+  };
 
   const handleVideoSelect = (video: YouTubeVideo) => {
     window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank");
@@ -136,19 +172,29 @@ export default function VideoStorytellerPage() {
             Personalized educational stories and pedagogy to empower your classroom, aligned with <span className="text-primary font-bold">Bharat's educational mission</span>.
           </p>
         </div>
-        <Button
-          onClick={fetchRecommendations}
-          disabled={loading}
-          size="lg"
-          className="gap-3 bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/40 rounded-full px-8 h-14 font-bold text-lg transition-all hover:scale-105 active:scale-95"
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Sparkles className="w-5 h-5" />
-          )}
-          Refresh Feed
-        </Button>
+        {/* Intelligent Filter Bar */}
+        <div className="mb-12">
+          <VideoFilterBar
+            onFilterChange={handleFilterChange}
+            initialFilters={filters}
+          />
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <Button
+            onClick={() => fetchRecommendations()}
+            disabled={loading}
+            size="lg"
+            className="gap-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 shadow-sm rounded-full px-6 h-12 font-bold transition-all hover:scale-105 active:scale-95"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-primary" />
+            )}
+            Refresh Insights
+          </Button>
+        </div>
       </div>
 
       {loading && !recommendations && (
