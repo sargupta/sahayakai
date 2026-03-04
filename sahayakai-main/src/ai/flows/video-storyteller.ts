@@ -4,40 +4,130 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
-const VideoStorytellerInputSchema = z.object({
-    subject: z.string().describe('The academic subject taught by the teacher.'),
-    gradeLevel: z.string().describe('The target grade level or class (e.g., Class 5, Grade 10).'),
-    topic: z.string().optional().describe('An optional specific chapter or topic within the subject.'),
-    language: z.string().optional().describe('The preferred language for the content (e.g., Hindi, Tamil, English).'),
-    userId: z.string().optional().describe('The ID of the user for personalization context.'),
+import {
+    VideoStorytellerInputSchema,
+    VideoStorytellerOutputSchema,
+    VideoCandidateSchema,
+    VideoRankingSchema,
+    type VideoStorytellerInput,
+    type VideoStorytellerOutput,
+    type VideoCandidate,
+    type VideoRanking
+} from '@/ai/schemas/video-storyteller';
+
+const videoRankerPrompt = ai.definePrompt({
+    name: 'videoRankerPrompt',
+    input: {
+        schema: z.object({
+            subject: z.string(),
+            gradeLevel: z.string(),
+            videos: z.array(VideoCandidateSchema)
+        })
+    },
+    output: { schema: VideoRankingSchema, format: 'json' },
+    prompt: `
+You are an expert Educational Content Curator. Your task is to rank a list of YouTube videos based on their relevance to a **Teacher's** specific needs.
+
+**Teacher Profile:**
+- Subject: {{subject}}
+- Grade Level: {{gradeLevel}}
+
+**Categories to Score (0-10):**
+1. **Storytelling**: Narrative explanation of topics, animated stories, high student engagement.
+2. **Pedagogy**: Methods, classroom management, NEP 2020 workshops, teacher mindset.
+3. **Courses**: Professional training, SWAYAM, long-form certification previews.
+4. **Govt Updates**: Ministry news, policy changes, NCERT announcements.
+5. **Top Recommended**: High-quality gems that fit multiple educator needs.
+
+**CRITICAL RULE: "The Teacher/Student Filter"**
+- A video about "Chapter 5 Exercise Solutions" is for **STUDENTS**. Set \`isForTeachers: false\`.
+- A video about "How to teach Chapter 5 effectively" is for **TEACHERS**. Set \`isForTeachers: true\`.
+- Professional Development is ALWAYS for teachers.
+
+Provide a score (0.0 to 10.0) for each category. If a video is purely for students, demote its pedagogy/courses scores.
+
+**Videos to Evaluate:**
+{{#each videos}}
+- ID: {{id}} | Title: {{title}} | Channel: {{channelTitle}}
+{{/each}}
+`,
 });
 
-export type VideoStorytellerInput = z.infer<typeof VideoStorytellerInputSchema>;
+/**
+ * Ranks and deduplicates a pool of candidate videos into categories.
+ * USES AI to ensure relevance and eliminates cross-category duplication.
+ */
+async function rankAndDeduplicateVideos(
+    subject: string,
+    gradeLevel: string,
+    candidates: VideoCandidate[]
+): Promise<Record<string, VideoCandidate[]>> {
+    const { runResiliently } = await import('@/ai/genkit');
 
-const VideoStorytellerOutputSchema = z.object({
-    categories: z.object({
-        pedagogy: z.array(z.string()).describe('Search queries for government-instructed pedagogy and teaching techniques.'),
-        storytelling: z.array(z.string()).describe('Search queries for storytelling videos of chapters/subjects.'),
-        govtUpdates: z.array(z.string()).describe('Search queries for personalized government related updates or educational news for teachers.'),
-        courses: z.array(z.string()).describe('Search queries for relevant professional development courses for the teacher.'),
-        topRecommended: z.array(z.string()).describe('Search queries for top recommended educational content for the subject and class.'),
-    }),
-    personalizedMessage: z.string().describe('A brief, supportive message explaining why these videos were chosen for this specific teacher.'),
-});
+    if (candidates.length === 0) return {};
 
-export type VideoStorytellerOutput = z.infer<typeof VideoStorytellerOutputSchema>;
+    // 1. LLM Ranking Pass
+    const { output } = await runResiliently(async (config) => {
+        return await videoRankerPrompt({ subject, gradeLevel, videos: candidates.slice(0, 40) }, config);
+    });
+
+    if (!output || !output.rankedVideos) {
+        console.warn('[Ranker] AI failed to rank videos, returning raw pool');
+        return { topRecommended: candidates.slice(0, 6) };
+    }
+
+    // 2. Filter, Score, and Deduplicate
+    const finalCategories: Record<string, VideoCandidate[]> = {
+        storytelling: [],
+        pedagogy: [],
+        courses: [],
+        govtUpdates: [],
+        topRecommended: []
+    };
+
+    const seenIds = new Set<string>();
+
+    // Create a map for quick lookup
+    const candidateMap = new Map(candidates.map(v => [v.id, v]));
+
+    // Sort candidates by their highest category score
+    const scoredList = output.rankedVideos
+        .filter(v => v.isForTeachers) // Mandatory teacher filter
+        .map(rank => {
+            const video = candidateMap.get(rank.id);
+            if (!video) return null;
+
+            // Find best category for this video
+            const scores = rank.categoryScores;
+            const entries = Object.entries(scores) as [string, number][];
+            const [bestCat, bestScore] = entries.sort((a, b) => b[1] - a[1])[0];
+
+            return { video, bestCat, bestScore };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .sort((a, b) => b.bestScore - a.bestScore);
+
+    // 3. Assign to categories strictly
+    for (const item of scoredList) {
+        if (seenIds.has(item.video.id)) continue;
+
+        if (finalCategories[item.bestCat] && finalCategories[item.bestCat].length < 6) {
+            finalCategories[item.bestCat].push(item.video);
+            seenIds.add(item.video.id);
+        }
+    }
+
+    return finalCategories;
+}
 
 /**
  * Multi-tier video recommendation orchestrator.
  *
- * Strategy (in order of priority):
- *   L1 → Firestore semantic cache (by subject+grade hash, 6hr TTL)
- *   L2 → YouTube RSS feeds (zero quota, no API key, always works)
- *   L3 → YouTube Data API search (if key available and quota permits)
- *   L4 → Curated Indian edu video library (absolute last resort)
- *
- * AI runs independently to generate the personalized message and refine
- * channel selection — it does NOT block video display.
+ * NEW 4-Tier RECOMENDATION PIPELINE:
+ * 1. [L1] Firestore Semantic Cache (Fastest)
+ * 2. [L2] Candidate Retrieval (RSS + Search + Curated)
+ * 3. [L3] AI Ranking & Deduplication (The "ML" Layer)
+ * 4. [L4] Personalized Context Generation
  */
 export async function getVideoRecommendations(input: VideoStorytellerInput): Promise<Record<string, any>> {
     const { getCachedVideos, setCachedVideos } = await import('@/lib/youtube-video-cache');
@@ -67,11 +157,9 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     subject = subject || 'General';
     gradeLevel = gradeLevel || 'Class 5';
 
-    // 2. [L1] Firestore semantic cache check
+    // 2. [Tier 1] Firestore semantic cache check
     let cachedResult = await getCachedVideos(subject, gradeLevel);
     if (cachedResult) {
-        // Run AI message generation in background while returning cache immediately
-        void runAIInBackground(input, subject, gradeLevel, language, cachedResult.personalizedMessage);
         return {
             categories: {},
             personalizedMessage: cachedResult.personalizedMessage,
@@ -80,7 +168,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         };
     }
 
-    // 3. Run AI + RSS concurrently — neither blocks the other
+    // 3. [Tier 2] Candidate Retrieval Phase
     const [aiOutput, rssVideos] = await Promise.allSettled([
         videoStorytellerFlow({ ...input, subject, gradeLevel, language }),
         fetchRSSVideosForTeacher(subject, language || 'English'),
@@ -89,7 +177,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const aiResult = aiOutput.status === 'fulfilled' ? aiOutput.value : null;
     const rssResult = rssVideos.status === 'fulfilled' ? rssVideos.value : {};
 
-    // 4. [L2] Try YouTube Data API search if AI generated queries
+    // YouTube Search Layer (if AI queries exist)
     let searchVideos: Record<string, any[]> = {};
     if (aiResult?.categories) {
         try {
@@ -100,15 +188,29 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         }
     }
 
-    // 5. Merge: Search API results → RSS → Curated fallback
-    // Priority: live search > RSS > curated
-    const mergedFromSearch = mergeLayers(searchVideos, rssResult);
-    const finalVideos = mergeCuratedVideos(mergedFromSearch);
+    // Aggregrate all candidates into a flat unique pool
+    const flatRSS = Object.values(rssResult).flat();
+    const flatSearch = Object.values(searchVideos).flat();
+
+    // Priority deduplication for pooling
+    const candidatePoolMap = new Map<string, VideoCandidate>();
+    [...flatSearch, ...flatRSS].forEach(v => {
+        if (!candidatePoolMap.has(v.id)) candidatePoolMap.set(v.id, v);
+    });
+
+    const candidates = Array.from(candidatePoolMap.values());
+
+    // 4. [Tier 3] AI Ranking & Deduplication Pass
+    // This phase ensures "Chapter Exercises" are hidden from "Teacher Training"
+    const rankedVideos = await rankAndDeduplicateVideos(subject, gradeLevel, candidates);
 
     const personalizedMessage = aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates to help you become an even more effective teacher.`;
 
-    // 6. Store result in Firestore cache (fire-and-forget)
+    // 5. Build final result with curated fallback for empty categories
+    const finalVideos = mergeCuratedVideos(rankedVideos);
+
+    // 6. Store result in Firestore cache
     void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
 
     return {
@@ -142,7 +244,7 @@ async function fetchRSSVideosForTeacher(
             if (cat === 'storytelling' || cat === 'topRecommended') {
                 channels = [...subjectChannels, ...channels];
             }
-            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 3), 4);
+            const videos = await fetchMultipleChannelsRSS(channels.slice(0, 3), 10);
             return [cat, videos] as [string, any[]];
         })
     );
