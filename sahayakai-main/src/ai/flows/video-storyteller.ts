@@ -44,6 +44,10 @@ You are an expert Educational Content Curator. Your task is to rank a list of Yo
 - A video about "How to teach Chapter 5 effectively" is for **TEACHERS**. Set \`isForTeachers: true\`.
 - Professional Development is ALWAYS for teachers.
 
+**CRITICAL RULE: "Source Diversity & Credibility"**
+- **HIGH REWARD**: Content from **DIKSHA**, **NCERT**, **IGNOU**, **CEC-UGC**, or **Ministry of Education**. Boost scores by +2 for these.
+- **DIVERSITY**: If multiple videos explain the same topic, prioritize the one from a government official channel over private ed-tech (e.g., NCERT > Unacademy).
+
 Provide a score (0.0 to 10.0) for each category. If a video is purely for students, demote its pedagogy/courses scores.
 
 **Videos to Evaluate:**

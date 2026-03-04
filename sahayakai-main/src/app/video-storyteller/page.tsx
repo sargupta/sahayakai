@@ -148,6 +148,12 @@ export default function VideoStorytellerPage() {
 
           {/* Video Sections */}
           <VideoCarousel
+            title="🌟 Top Recommended for You"
+            videos={recommendations.categorizedVideos.topRecommended}
+            onVideoSelect={handleVideoSelect}
+          />
+
+          <VideoCarousel
             title="📖 Storytelling for your Subjects"
             videos={recommendations.categorizedVideos.storytelling}
             onVideoSelect={handleVideoSelect}
@@ -168,12 +174,6 @@ export default function VideoStorytellerPage() {
           <VideoCarousel
             title="🏫 Teacher Training Courses"
             videos={recommendations.categorizedVideos.courses}
-            onVideoSelect={handleVideoSelect}
-          />
-
-          <VideoCarousel
-            title="🌟 Top Recommended for You"
-            videos={recommendations.categorizedVideos.topRecommended}
             onVideoSelect={handleVideoSelect}
           />
         </div>
