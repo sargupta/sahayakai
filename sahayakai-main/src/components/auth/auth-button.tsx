@@ -63,21 +63,31 @@ export function AuthButton() {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
-            // Check if profile exists
-            const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
-            const data = await response.json();
-
-            if (!data.exists) {
-                toast({
-                    title: "Almost there!",
-                    description: "Complete your professional profile to join the community.",
-                });
-                window.location.href = '/onboarding';
-            } else {
+            // Check if profile exists — be resilient to API errors
+            // IMPORTANT: Only redirect to onboarding on a DEFINITIVE false.
+            // A failed API call should NOT send a returning teacher to onboarding.
+            try {
+                const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists === false) {
+                        toast({
+                            title: "Almost there!",
+                            description: "Complete your professional profile to join the community.",
+                        });
+                        window.location.href = '/onboarding';
+                        return;
+                    }
+                }
+                // If response is not ok OR exists is true/undefined, treat as returning user
                 toast({
                     title: "Welcome back!",
-                    description: "Redirecting you to the library.",
+                    description: "You're all set!",
                 });
+            } catch (profileCheckError) {
+                // API error — don't block login with onboarding redirect
+                console.warn("Profile check failed, assuming existing user:", profileCheckError);
+                toast({ title: "Welcome back!", description: "Logging you in..." });
             }
         } catch (error: any) {
             console.error("Auth Error Details:", {

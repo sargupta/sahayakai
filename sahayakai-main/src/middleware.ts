@@ -50,6 +50,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/metrics') ||
         pathname.startsWith('/api/analytics') ||
         pathname.startsWith('/api/assistant') ||
+        pathname.startsWith('/api/auth/') ||  // Auth routes are called before user has a token
         pathname === '/favicon.ico'
     ) {
         return NextResponse.next();
