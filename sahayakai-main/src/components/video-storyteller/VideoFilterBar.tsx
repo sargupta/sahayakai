@@ -88,11 +88,9 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:flex-1">
                     {/* Subject Select */}
                     <Select value={subject} onValueChange={setSubject}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
-                            <div className="flex items-center gap-3 truncate">
-                                <BookOpen className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
-                                <SelectValue placeholder="Select Subject" />
-                            </div>
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
+                            <BookOpen className="w-4 h-4 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="All Subjects" />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
                             <SelectItem value="all" className="font-bold">All Subjects</SelectItem>
@@ -104,11 +102,9 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Class (Grade) Select */}
                     <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
-                            <div className="flex items-center gap-3 truncate">
-                                <GraduationCap className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
-                                <SelectValue placeholder="Select Class" />
-                            </div>
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
+                            <GraduationCap className="w-4 h-4 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="All Classes" />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
                             <SelectItem value="all" className="font-bold">All Classes</SelectItem>
@@ -120,11 +116,9 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
 
                     {/* Language Select */}
                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight px-6 group shadow-md hover:border-primary/40 transition-all">
-                            <div className="flex items-center gap-3 truncate">
-                                <Languages className="w-4 h-4 text-slate-400 shrink-0 group-focus:text-primary" />
-                                <SelectValue placeholder="Select Language" />
-                            </div>
+                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
+                            <Languages className="w-4 h-4 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="All Languages" />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
                             {LANGUAGES.map((l) => (
