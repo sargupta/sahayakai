@@ -8,7 +8,6 @@
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleSearch } from '../tools/google-search';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
 import { logger } from '@/lib/logger';
@@ -182,7 +181,6 @@ const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
-  tools: [googleSearch],
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
