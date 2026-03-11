@@ -40,6 +40,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
             await acceptConnectionRequestAction(requestId);
             await markNotificationAsReadAction(notification.id);
             setActionState((prev) => ({ ...prev, [notification.id]: 'accepted' }));
+            router.refresh();
         } catch {
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
         }
@@ -53,6 +54,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
             await declineConnectionRequestAction(requestId);
             await markNotificationAsReadAction(notification.id);
             setActionState((prev) => ({ ...prev, [notification.id]: 'declined' }));
+            router.refresh();
         } catch {
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
         }

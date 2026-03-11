@@ -338,14 +338,16 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 <span className="hidden group-hover/conn:inline">Disconnect</span>
                             </Button>
                         )}
-                        <Button
-                            variant="outline"
-                            onClick={() => router.push(`/messages?with=${targetUid}`)}
-                            className="rounded-full border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
-                        >
-                            <MessageCircle className="h-5 w-5" />
-                            Message
-                        </Button>
+                        {connStatus === 'connected' && (
+                            <Button
+                                variant="outline"
+                                onClick={() => router.push(`/messages?with=${targetUid}`)}
+                                className="rounded-full border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
+                            >
+                                <MessageCircle className="h-5 w-5" />
+                                Message
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>

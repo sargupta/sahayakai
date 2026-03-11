@@ -30,15 +30,14 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
     if (fromUid === toUid) throw new Error('Cannot connect with yourself');
 
     const db = await getDb();
-    const reqId = buildConnectionId(fromUid, toUid); // sorted — same key regardless of direction
-    const connId = buildConnectionId(fromUid, toUid);
+    const pairId = buildConnectionId(fromUid, toUid); // sorted — same key regardless of direction
 
-    // Check if already connected
-    const connSnap = await db.collection('connections').doc(connId).get();
+    // Parallel pre-flight: check connection + existing request in one round-trip
+    const [connSnap, existingReq] = await Promise.all([
+        db.collection('connections').doc(pairId).get(),
+        db.collection('connection_requests').doc(pairId).get(),
+    ]);
     if (connSnap.exists) return { status: 'already_connected' };
-
-    // Check if a request already exists in either direction
-    const existingReq = await db.collection('connection_requests').doc(reqId).get();
     if (existingReq.exists) return { status: 'already_pending' };
 
     const now = new Date();
@@ -51,7 +50,7 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
         expiresAt: expiresAt.toISOString(),
     };
 
-    await db.collection('connection_requests').doc(reqId).set(reqData);
+    await db.collection('connection_requests').doc(pairId).set(reqData);
 
     // Notify recipient
     try {
@@ -84,7 +83,6 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
 export async function acceptConnectionRequestAction(requestId: string): Promise<void> {
     const callerId = await getAuthUserId();
     const db = await getDb();
-    const { FieldValue } = await import('firebase-admin/firestore');
 
     const reqSnap = await db.collection('connection_requests').doc(requestId).get();
     if (!reqSnap.exists) throw new Error('Request not found');

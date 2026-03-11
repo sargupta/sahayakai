@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -100,22 +100,9 @@ export function TeacherDirectory() {
 
     const handleWithdraw = async (teacherUid: string) => {
         if (!userId) return;
-        const state = connState[teacherUid];
-        if (!state?.requestId && state?.status === 'pending_sent') {
-            // Need to find requestId — it's the sorted pair
-            const reqId = [userId, teacherUid].sort().join('_');
-            setTeacherLoading(teacherUid, true);
-            try {
-                await declineConnectionRequestAction(reqId);
-                setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
-            } catch {
-                setTeacherLoading(teacherUid, false);
-            }
-            return;
-        }
+        const reqId = [userId, teacherUid].sort().join('_');
         setTeacherLoading(teacherUid, true);
         try {
-            const reqId = [userId, teacherUid].sort().join('_');
             await declineConnectionRequestAction(reqId);
             setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
         } catch {
@@ -336,7 +323,7 @@ export function TeacherDirectory() {
                             >
                                 Profile
                             </Button>
-                            {userId && userId !== teacher.uid && (
+                            {userId && userId !== teacher.uid && connState[teacher.uid]?.status === 'connected' && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
