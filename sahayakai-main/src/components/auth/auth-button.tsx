@@ -138,7 +138,11 @@ export function AuthButton() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-primary/10">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
+                        <AvatarImage
+                            src={user.photoURL || ""}
+                            alt={user.displayName || "User"}
+                            referrerPolicy="no-referrer"
+                        />
                         <AvatarFallback>{user.displayName?.[0] || "T"}</AvatarFallback>
                     </Avatar>
                 </Button>
