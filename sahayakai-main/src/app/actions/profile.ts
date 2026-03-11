@@ -5,6 +5,8 @@ import { certificationService } from "@/lib/services/certification-service";
 import { getAuthInstance } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
+import { validateAdmin } from "@/lib/auth-utils";
+import { headers } from "next/headers";
 
 export async function getProfileData(userId: string) {
     try {
@@ -45,4 +47,16 @@ export async function updateProfileAction(userId: string, data: any) {
     await dbAdapter.updateUser(userId, data);
 
     revalidatePath("/my-profile");
+}
+
+export async function getDailyCostsAction(days: number = 7) {
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+
+    if (!userId) throw new Error("Unauthorized");
+    await validateAdmin(userId);
+
+    const { costService } = await import("@/lib/services/cost-service");
+    const data = await costService.getDailyCosts(days);
+    return data;
 }

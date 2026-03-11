@@ -2,6 +2,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { BaseContent, ContentType, UserProfile } from '@/types';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
+import { UsageTracker } from '../usage-tracker';
 
 const USERS_COLLECTION = 'users';
 const CONTENT_COLLECTION = 'content';
@@ -40,6 +41,9 @@ export const dbAdapter = {
             uid, // Ensure UID is always present
             lastLogin: FieldValue.serverTimestamp(),
         }, { merge: true });
+
+        // Track write
+        UsageTracker.logUsage({ userId: uid, type: 'firestore_writes', value: 1 });
     },
 
     // --- Content Library Operations ---
@@ -85,6 +89,9 @@ export const dbAdapter = {
                 }, { merge: true });
             const typeName = content.type || 'unknown';
             logger.info(`Successfully saved ${typeName} content ID: ${content.id}`, 'DATABASE', { userId, contentId: content.id, type: content.type });
+
+            // Track write
+            UsageTracker.logUsage({ userId, type: 'firestore_writes', value: 1 });
         } catch (error) {
             const typeName = content?.type || 'unknown';
             logger.error(`Failed to save ${typeName} content ID: ${content?.id}`, error, 'DATABASE', { userId, contentId: content?.id });
