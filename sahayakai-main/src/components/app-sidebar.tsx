@@ -12,12 +12,36 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, Zap, Terminal } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { collection, query, where, onSnapshot } from "firebase/firestore"
+import { db, auth } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  // Live unread badge — subscribe to conversation unread counts
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) { setTotalUnread(0); return; }
+
+      const q = query(
+        collection(db, "conversations"),
+        where("participantIds", "array-contains", user.uid),
+      );
+      const unsubConv = onSnapshot(q, (snap) => {
+        let count = 0;
+        snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0; });
+        setTotalUnread(count);
+      });
+      return () => unsubConv();
+    });
+    return () => unsubAuth();
+  }, []);
 
   return (
     <Sidebar>
@@ -135,6 +159,21 @@ export function AppSidebar() {
                 <Link href="/community">
                   <Library />
                   <span>Community Library</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/messages')} tooltip="Messages">
+                <Link href="/messages" className="flex items-center justify-between w-full">
+                  <span className="flex items-center gap-2">
+                    <MessageCircle />
+                    <span>Messages</span>
+                  </span>
+                  {totalUnread > 0 && (
+                    <span className="ml-auto h-4 min-w-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center">
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </span>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

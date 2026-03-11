@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserCheck, Loader2, MapPin, GraduationCap, BookOpen, Users } from "lucide-react";
+import { UserPlus, UserCheck, Loader2, MapPin, GraduationCap, BookOpen, Users, MessageCircle } from "lucide-react";
 import { getAllTeachersAction, followTeacherAction, getFollowingIdsAction } from "@/app/actions/community";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
@@ -119,7 +119,11 @@ export function TeacherDirectory() {
                                 onClick={() => handleViewProfile(teacher.uid)}
                             >
                                 <Avatar className="h-14 w-14 ring-2 ring-slate-50 shadow-sm group-hover:ring-orange-100 transition-all duration-500">
-                                    <AvatarImage src={teacher.photoURL} className="object-cover" />
+                                    <AvatarImage
+                                        src={teacher.photoURL}
+                                        className="object-cover"
+                                        referrerPolicy="no-referrer"
+                                    />
                                     <AvatarFallback className={cn(
                                         "text-white text-lg font-bold bg-gradient-to-br",
                                         getAvatarGradient(teacher.displayName || teacher.uid)
@@ -180,14 +184,27 @@ export function TeacherDirectory() {
                                 <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mt-0.5">Impact</span>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all"
-                            onClick={() => handleViewProfile(teacher.uid)}
-                        >
-                            Profile
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all"
+                                onClick={() => handleViewProfile(teacher.uid)}
+                            >
+                                Profile
+                            </Button>
+                            {userId && userId !== teacher.uid && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                    title={`Message ${teacher.displayName}`}
+                                    onClick={() => router.push(`/messages?with=${teacher.uid}`)}
+                                >
+                                    <MessageCircle className="h-3.5 w-3.5" />
+                                </Button>
+                            )}
+                        </div>
                     </CardFooter>
                 </Card>
             ))}

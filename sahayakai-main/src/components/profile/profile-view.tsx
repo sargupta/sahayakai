@@ -15,8 +15,10 @@ import {
     Plus,
     GraduationCap,
     Mail,
-    Briefcase
+    Briefcase,
+    MessageCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { getProfileData } from "@/app/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,7 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewProps) {
+    const router = useRouter();
     const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [certs, setCerts] = useState<any[]>([]);
@@ -140,12 +143,16 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
                 <div className="relative">
                     <Avatar className="h-32 w-32 ring-8 ring-white/80 shadow-2xl transition-transform duration-500 group-hover:scale-105">
-                        <AvatarImage src={profile?.photoURL || (isOwnProfile ? firebaseUser?.photoURL : "") || ""} className="object-cover" />
+                        <AvatarImage
+                            src={(isOwnProfile ? firebaseUser?.photoURL : profile?.photoURL) || ""}
+                            referrerPolicy="no-referrer"
+                            className="object-cover"
+                        />
                         <AvatarFallback className={cn(
                             "text-4xl font-black bg-gradient-to-br text-white",
-                            getAvatarGradient(profile?.displayName || (isOwnProfile ? firebaseUser?.displayName : "Educator") || "Educator")
+                            getAvatarGradient((isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || "Educator")
                         )}>
-                            {profile?.displayName?.[0] || (isOwnProfile ? firebaseUser?.displayName?.[0] : "T") || "T"}
+                            {(isOwnProfile ? firebaseUser?.displayName?.[0] : profile?.displayName?.[0]) || "T"}
                         </AvatarFallback>
                     </Avatar>
                     {profile?.verifiedStatus === 'verified' && (
@@ -158,11 +165,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 <div className="text-center md:text-left space-y-4 flex-1">
                     <div className="space-y-2">
                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 font-headline tracking-tighter leading-tight">
-                            {profile?.displayName || (isOwnProfile && firebaseUser ? firebaseUser.displayName : "Educator")}
+                            {(isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || "Educator"}
                         </h1>
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-slate-500 font-medium">
                             <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-default">
-                                <Mail className="h-4 w-4" /> {profile?.email || (isOwnProfile && firebaseUser ? firebaseUser.email : "Contact Hidden")}
+                                <Mail className="h-4 w-4" /> {(isOwnProfile ? firebaseUser?.email : profile?.email) || "Contact Hidden"}
                             </span>
                             {profile?.designation && (
                                 <span className="flex items-center gap-1.5 text-slate-400">
@@ -216,6 +223,14 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         >
                             <Plus className="h-5 w-5" />
                             Connect
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => router.push(`/messages?with=${targetUid}`)}
+                            className="rounded-full border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                            Message
                         </Button>
                     </div>
                 )}
