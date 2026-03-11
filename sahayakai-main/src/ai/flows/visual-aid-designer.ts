@@ -11,7 +11,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-
+import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
 
 const VisualAidInputSchema = z.object({
@@ -159,6 +159,11 @@ const visualAidFlow = ai.defineFlow(
         throw new Error('IMAGE_GENERATION_EMPTY');
       }
 
+      // Track Image Generation
+      if (userId) {
+        UsageTracker.trackImageGen(userId);
+      }
+
       // Step 2: Generate the Metadata (Text)
       const MetadataSchema = z.object({
         pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
@@ -184,6 +189,10 @@ const visualAidFlow = ai.defineFlow(
           `,
         });
       });
+
+      if (userId && (textResult as any).usage) {
+        UsageTracker.trackGemini(userId, (textResult as any).usage.totalTokens || 0, 'gemini-2.5-flash');
+      }
 
       if (!textResult.output) {
         throw new FlowExecutionError('Metadata generation failed.', { step: 'metadata-generation' });

@@ -21,16 +21,29 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
         redirect('/');
     }
 
-    // 2. Verify Admin Status in Firestore
-    const authorized = await isAdmin(userId);
+    // 2. Verify Admin Status
+    // In development, we skip the DB check if we're using the mock dev-user-123.
+    // This prevents hangs due to local GCP auth/Secret Manager issues.
+    const isDev = process.env.NODE_ENV === 'development';
+    const isDevUser = userId === 'dev-user-123';
 
-    // In development, we allow access to set up the dashboard (bypass),
-    // but in production, we strictly redirect unauthorized users to the homepage.
-    if (!authorized && process.env.NODE_ENV === 'production') {
+    let authorized = false;
+    if (isDev && isDevUser) {
+        authorized = false; // We still treat them as unauthorized for the UI flags
+    } else {
+        try {
+            authorized = await isAdmin(userId);
+        } catch (e) {
+            console.error("[AdminLayout] Auth check failed:", e);
+        }
+    }
+
+    // 3. Application Security Guard
+    if (!authorized && !isDev) {
         redirect('/');
     }
 
-    // 3. Render the Dashboard
+    // 4. Render the Dashboard
     return (
         <div className="min-h-screen bg-slate-50/50">
             {/* Admin-only Header */}
@@ -38,7 +51,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-white text-xs font-bold tracking-widest uppercase">Admin Secure Session</span>
-                    {process.env.NODE_ENV === 'development' && !authorized && (
+                    {isDev && !authorized && (
                         <span className="ml-2 text-amber-400 text-[10px] font-bold border border-amber-400/30 px-1 rounded">DEV BYPASS</span>
                     )}
                 </div>

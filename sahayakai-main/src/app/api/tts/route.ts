@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { initializeFirebase } from '@/lib/firebase-admin';
 import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 // Cache the GCP access token for its full lifetime (1 hour).
 // Re-fetching on every request added 100–300 ms of latency per TTS call.
@@ -105,10 +106,12 @@ export async function POST(req: NextRequest) {
         const cached = getCachedAudio(cacheKey);
         if (cached) {
             console.log(`[TTS] Cache Hit for: ${voiceName}`);
+            UsageTracker.trackTTS(uid, cleanText.length, true);
             return NextResponse.json({ audioContent: cached });
         }
 
         console.log(`[TTS] Inference required for: ${voiceName}`);
+        UsageTracker.trackTTS(uid, cleanText.length, false);
         const token = await getGoogleAccessToken();
 
         const response = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {

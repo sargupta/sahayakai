@@ -17,6 +17,7 @@ import { GRADE_LEVELS, LANGUAGES, LANGUAGE_CODE_MAP } from '@/types/index';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -283,11 +284,19 @@ const lessonPlanFlow = ai.defineFlow(
         // 1. AI Generation Phase
         const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: normalizedInput.topic }); // Legacy logger
 
-        const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
+        const { output, usage } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
           return await runResiliently(async (resilienceConfig) => {
-            return await lessonPlanPrompt(normalizedInput, resilienceConfig);
+            const result = await lessonPlanPrompt(normalizedInput, resilienceConfig);
+            return {
+              output: result.output,
+              usage: (result as any).usage
+            };
           });
         });
+
+        if (normalizedInput.userId && usage) {
+          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+        }
         genTimer.stop();
 
         if (!output) {
