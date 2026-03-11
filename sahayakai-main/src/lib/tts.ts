@@ -51,9 +51,24 @@ export const tts = {
         if (!text) return;
         this.cancel(); // Cancel any existing audio before speaking
         try {
+            // Attach Firebase ID token so middleware can verify identity.
+            // Without this, prod middleware returns 401 and the call falls
+            // through to the inconsistent browser speechSynthesis fallback.
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            try {
+                const { auth } = await import('@/lib/firebase');
+                const { getIdToken } = await import('firebase/auth');
+                if (auth.currentUser) {
+                    const idToken = await getIdToken(auth.currentUser);
+                    headers['Authorization'] = `Bearer ${idToken}`;
+                }
+            } catch {
+                // Non-critical — will still attempt the request, middleware will 401
+            }
+
             const response = await fetch('/api/tts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ text, targetLang }),
             });
 

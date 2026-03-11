@@ -7,13 +7,22 @@ const PROJECT_ID = 'sahayakai-b4248';
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`;
 const GOOGLE_CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 
+// Cache Google public certs — they rotate every ~6 h, so 5 h is safe.
+// Without this every API request did a live network call to Google = +50–200 ms.
+let _certsCache: { certs: Record<string, string>; expiresAt: number } | null = null;
+
+async function getGoogleCerts(): Promise<Record<string, string>> {
+    if (_certsCache && Date.now() < _certsCache.expiresAt) return _certsCache.certs;
+    const res = await fetch(GOOGLE_CERTS_URL);
+    const certs = await res.json();
+    _certsCache = { certs, expiresAt: Date.now() + 5 * 60 * 60 * 1000 };
+    return certs;
+}
+
 async function verifyIdToken(token: string) {
     try {
-        // 1. Fetch Google's public keys
-        console.log('[MIDDLEWARE] fetching google certs...');
-        const res = await fetch(GOOGLE_CERTS_URL);
-        console.log('[MIDDLEWARE] certs fetched mask status:', res.status);
-        const certs = await res.json();
+        // 1. Get Google's public keys (cached for 5 h)
+        const certs = await getGoogleCerts();
 
         // 2. Decode header to find 'kid' (key id)
         const header = JSON.parse(Buffer.from(token.split('.')[0], 'base64').toString());

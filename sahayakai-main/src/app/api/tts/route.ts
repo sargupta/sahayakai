@@ -4,12 +4,22 @@ import { initializeFirebase } from '@/lib/firebase-admin';
 import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 
-async function getGoogleAccessToken() {
+// Cache the GCP access token for its full lifetime (1 hour).
+// Re-fetching on every request added 100–300 ms of latency per TTS call.
+let _tokenCache: { value: string; expiresAt: number } | null = null;
+
+async function getGoogleAccessToken(): Promise<string> {
+    // Reuse until 60 s before expiry to handle clock skew
+    if (_tokenCache && Date.now() < _tokenCache.expiresAt - 60_000) {
+        return _tokenCache.value;
+    }
     await initializeFirebase();
     const credential = admin.app().options.credential;
     if (!credential) throw new Error("Firebase Admin credential missing");
     const token = await (credential as any).getAccessToken();
-    return token.access_token as string;
+    // Google access tokens are valid for 3600 s; cache for 55 min
+    _tokenCache = { value: token.access_token as string, expiresAt: Date.now() + 55 * 60 * 1000 };
+    return _tokenCache.value;
 }
 
 /**
