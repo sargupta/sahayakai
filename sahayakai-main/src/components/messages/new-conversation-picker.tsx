@@ -7,9 +7,7 @@ import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
 import { sendConnectionRequestAction, getMyConnectionDataAction } from "@/app/actions/connections";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Loader2, Search, MessageCircle, GraduationCap, UserPlus, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { MyConnectionData } from "@/types";
 
 interface Teacher {
