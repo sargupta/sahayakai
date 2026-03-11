@@ -17,6 +17,10 @@ import {
     Mail,
     Briefcase,
     MessageCircle,
+    UserPlus,
+    UserCheck,
+    UserMinus,
+    Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getProfileData } from "@/app/actions/profile";
@@ -26,6 +30,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import {
+    sendConnectionRequestAction,
+    acceptConnectionRequestAction,
+    declineConnectionRequestAction,
+    disconnectAction,
+    getMyConnectionDataAction,
+} from "@/app/actions/connections";
+import type { ConnectionStatus } from "@/types";
 
 interface ProfileViewProps {
     uid?: string;
@@ -39,6 +51,9 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
     const [certs, setCerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [connStatus, setConnStatus] = useState<ConnectionStatus>('none');
+    const [connRequestId, setConnRequestId] = useState<string | undefined>();
+    const [connLoading, setConnLoading] = useState(false);
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -54,6 +69,28 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     const { profile: userProfile, certifications } = await getProfileData(uidToLoad);
                     setProfile(userProfile);
                     setCerts(certifications || []);
+
+                    // Load connection state when viewing another teacher's profile
+                    if (currentUser && targetUid && currentUser.uid !== targetUid) {
+                        try {
+                            const connData = await getMyConnectionDataAction();
+                            if (connData.connectedUids.includes(targetUid)) {
+                                setConnStatus('connected');
+                            } else if (connData.sentRequestUids.includes(targetUid)) {
+                                setConnStatus('pending_sent');
+                            } else {
+                                const received = connData.receivedRequests.find((r) => r.uid === targetUid);
+                                if (received) {
+                                    setConnStatus('pending_received');
+                                    setConnRequestId(received.requestId);
+                                } else {
+                                    setConnStatus('none');
+                                }
+                            }
+                        } catch {
+                            // Connection state is non-critical
+                        }
+                    }
                 } catch (error) {
                     console.error("Failed to load profile data:", error);
                 } finally {
@@ -217,13 +254,90 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
                 {!isOwnProfile && firebaseUser && (
                     <div className="flex flex-col gap-3 min-w-40">
-                        <Button
-                            variant="default"
-                            className="rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-100 flex items-center justify-center gap-2 h-12"
-                        >
-                            <Plus className="h-5 w-5" />
-                            Connect
-                        </Button>
+                        {connLoading ? (
+                            <Button disabled className="rounded-full h-12">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            </Button>
+                        ) : connStatus === 'none' ? (
+                            <Button
+                                className="rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-100 flex items-center justify-center gap-2 h-12"
+                                onClick={async () => {
+                                    if (!targetUid) return;
+                                    setConnLoading(true);
+                                    try {
+                                        await sendConnectionRequestAction(targetUid);
+                                        setConnStatus('pending_sent');
+                                    } finally { setConnLoading(false); }
+                                }}
+                            >
+                                <UserPlus className="h-5 w-5" /> Connect
+                            </Button>
+                        ) : connStatus === 'pending_sent' ? (
+                            <Button
+                                variant="outline"
+                                className="rounded-full border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 h-12 flex items-center justify-center gap-2"
+                                onClick={async () => {
+                                    if (!targetUid) return;
+                                    setConnLoading(true);
+                                    try {
+                                        const reqId = [firebaseUser.uid, targetUid].sort().join('_');
+                                        await declineConnectionRequestAction(reqId);
+                                        setConnStatus('none');
+                                    } finally { setConnLoading(false); }
+                                }}
+                                title="Withdraw request"
+                            >
+                                <Clock className="h-5 w-5" /> Pending
+                            </Button>
+                        ) : connStatus === 'pending_received' ? (
+                            <div className="flex flex-col gap-2">
+                                <Button
+                                    className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white h-12"
+                                    onClick={async () => {
+                                        if (!connRequestId) return;
+                                        setConnLoading(true);
+                                        try {
+                                            await acceptConnectionRequestAction(connRequestId);
+                                            setConnStatus('connected');
+                                        } finally { setConnLoading(false); }
+                                    }}
+                                >
+                                    <UserCheck className="h-5 w-5 mr-2" /> Accept
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="rounded-full border-slate-200 text-slate-500 hover:text-red-500 h-12"
+                                    onClick={async () => {
+                                        if (!connRequestId) return;
+                                        setConnLoading(true);
+                                        try {
+                                            await declineConnectionRequestAction(connRequestId);
+                                            setConnStatus('none');
+                                        } finally { setConnLoading(false); }
+                                    }}
+                                >
+                                    Decline
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                variant="secondary"
+                                className="rounded-full bg-slate-50 border border-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 h-12 flex items-center justify-center gap-2 group/conn"
+                                onClick={async () => {
+                                    if (!targetUid) return;
+                                    setConnLoading(true);
+                                    try {
+                                        await disconnectAction(targetUid);
+                                        setConnStatus('none');
+                                    } finally { setConnLoading(false); }
+                                }}
+                            >
+                                <UserCheck className="h-5 w-5 group-hover/conn:hidden" />
+                                <UserMinus className="h-5 w-5 hidden group-hover/conn:inline-block" />
+                                <span className="group-hover/conn:hidden">Connected</span>
+                                <span className="hidden group-hover/conn:inline">Disconnect</span>
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             onClick={() => router.push(`/messages?with=${targetUid}`)}

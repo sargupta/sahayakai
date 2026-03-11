@@ -72,5 +72,43 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 500;
       allow update, delete: if false;
     }
+
+    // --- Connection Requests (pending invitations) ---
+    // Created by sender; readable/deletable by either party; never mutated (update: false)
+    match /connection_requests/{reqId} {
+      // Sender must be signed in, must be themselves, and cannot self-connect
+      allow create: if isSignedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.fromUid != request.resource.data.toUid;
+
+      // Both sender and recipient can read (to check pending state)
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUid
+            || request.auth.uid == resource.data.toUid);
+
+      // Either party can delete (sender withdraws / recipient declines)
+      allow delete: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUid
+            || request.auth.uid == resource.data.toUid);
+
+      // Requests are immutable — accept/decline = delete + write to /connections
+      allow update: if false;
+    }
+
+    // --- Connections (accepted, symmetric) ---
+    // Written only by Admin SDK (server action); clients can read + self-disconnect
+    match /connections/{connId} {
+      // Any signed-in user can query connections (needed for directory lookups)
+      allow read: if isSignedIn();
+
+      // Only Admin SDK server action can create (accept request)
+      allow create: if false;
+
+      // Either participant can disconnect (delete the document)
+      allow delete: if isSignedIn()
+        && request.auth.uid in resource.data.uids;
+
+      allow update: if false;
+    }
   }
 }
