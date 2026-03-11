@@ -2,72 +2,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // --- Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+
+    // --- Feedback (open submission, no auth required) ---
+    match /feedbacks/{document} {
+      allow create: if true;
     }
 
-    // --- Core Educational Data (Strict Ownership) ---
-
-    // Users Collection: strictly private to the user
+    // --- Users ---
+    // Each user can only read/write their own document
     match /users/{userId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
-
-      // User's Content (Lesson Plans, Quizzes, etc.)
-      // Read: Owner OR Public
-      // Write: Owner ONLY
-      match /content/{contentId} {
-        allow read: if (isSignedIn() && isOwner(userId)) || (resource.data.isPublic == true);
-        allow write: if isSignedIn() && isOwner(userId);
-      }
-
-      // User's Analytics (aggregated daily stats)
-      // Read: Owner ONLY
-      // Write: System (via Server SDK) or Owner (if client-side tracking enabled?) 
-      // ideally analytics shouldn't be writable by client to prevent tampering, 
-      // but for now we'll allow owner write for simplicity if Client SDK is used.
-      match /analytics/{docId} {
-        allow read, write: if isSignedIn() && isOwner(userId);
-      }
+      allow read, update: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
     }
 
-    // --- Legacy / Social Features (Retained for Backward Compatibility) ---
-    // If these are not used, they should be removed in a future cleanup.
+    // --- Content ---
+    // User-generated content (lesson plans, quizzes, etc.) stored in top-level collection
+    match /content/{documentId} {
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
 
-    // Profiles
-    match /profiles/{userId} {
+    // --- Community Library ---
+    // Public read; writes only via trusted backend (Server SDK / Admin SDK)
+    match /community/{communityContentId} {
       allow read: if true;
-      allow write: if isSignedIn() && isOwner(userId);
-    }
-
-    // Posts
-    match /posts/{postId} {
-      allow read: if resource.data.visibility == 'public' || isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-      
-      match /likes/{userId} {
-        allow read: if true;
-        allow write: if isSignedIn() && isOwner(userId);
-      }
-      
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-      }
-    }
-
-    // Connections
-    match /connections/{connectionId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+      allow write: if false;
     }
 
     // --- Direct Messages & Group Conversations ---
@@ -100,7 +64,7 @@ service cloud.firestore {
       }
     }
 
-    // Community chat (broadcast — all signed-in users)
+    // --- Community Chat (broadcast — all signed-in users) ---
     match /community_chat/{messageId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
