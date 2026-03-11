@@ -47,11 +47,17 @@ async function verifyIdToken(token: string) {
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    console.log(`[MIDDLEWARE] incoming request: ${pathname}`);
 
-    // Skip verification for static files and specific public APIs
+    // Skip static assets entirely
     if (
         pathname.startsWith('/_next') ||
+        pathname === '/favicon.ico'
+    ) {
+        return NextResponse.next();
+    }
+
+    // Public API routes — skip auth
+    const isPublicApi =
         pathname.startsWith('/api/health') ||
         pathname.startsWith('/api/ai/quiz/health') ||
         pathname.startsWith('/api-docs') ||
@@ -59,59 +65,54 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/metrics') ||
         pathname.startsWith('/api/analytics') ||
         pathname.startsWith('/api/assistant') ||
-        pathname.startsWith('/api/auth/') ||  // Auth routes are called before user has a token
-        pathname === '/favicon.ico'
-    ) {
+        pathname.startsWith('/api/auth/');
+
+    if (isPublicApi) {
         return NextResponse.next();
     }
 
-    // Only apply logic to API and Admin routes
-    if (pathname.startsWith('/api/') || pathname.startsWith('/admin/')) {
-        const authHeader = request.headers.get('Authorization');
+    const requestHeaders = new Headers(request.headers);
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            // [DEVELOPMENT BYPASS] If we're on localhost, inject a mock user ID
-            if (process.env.NODE_ENV === 'development') {
-                console.log('[MIDDLEWARE] Dev mode detected, injecting mock user ID');
-                const requestHeaders = new Headers(request.headers);
-                requestHeaders.set('x-user-id', 'dev-user-123'); // Mock UID for local dev
-                return NextResponse.next({
-                    request: {
-                        headers: requestHeaders,
-                    },
-                });
+    // --- Resolve the Firebase ID token ---
+    // Priority: Authorization header (API calls) → auth-token cookie (server actions / page requests)
+    const authHeader = request.headers.get('Authorization');
+    const cookieToken = request.cookies.get('auth-token')?.value;
+    const rawToken = authHeader?.startsWith('Bearer ')
+        ? authHeader.split(' ')[1]
+        : cookieToken ?? null;
+
+    const isApiOrAdmin = pathname.startsWith('/api/') || pathname.startsWith('/admin/');
+
+    if (rawToken) {
+        if (process.env.NODE_ENV === 'development' && rawToken === 'dev-token') {
+            // Dev bypass — inject mock UID when using the dev token placeholder
+            requestHeaders.set('x-user-id', 'dev-user-123');
+        } else {
+            const decoded = await verifyIdToken(rawToken);
+            if (decoded?.sub) {
+                requestHeaders.set('x-user-id', decoded.sub);
+            } else if (isApiOrAdmin) {
+                // Invalid token on protected routes → reject
+                return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
             }
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-
-        const token = authHeader.split(' ')[1];
-        const decoded = await verifyIdToken(token);
-
-        if (!decoded || !decoded.sub) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    } else {
+        if (isApiOrAdmin) {
+            // No token at all on protected API/admin routes
+            if (process.env.NODE_ENV === 'development') {
+                requestHeaders.set('x-user-id', 'dev-user-123');
+            } else {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
         }
-
-        // Inject the verified user ID into headers for the API route
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', decoded.sub);
-
-        return NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        });
+        // Page routes without a token: pass through, x-user-id simply not set
     }
 
-    // Standard non-API security headers logic
+    // Security headers for all non-static responses
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-    const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-nonce', nonce);
 
-    const response = NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
 
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -125,10 +126,9 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Config to match only API paths for security headers and auth
+// Run on all routes except static files (handled by the early return above)
 export const config = {
     matcher: [
-        '/api/:path*',
-        '/admin/:path*',
+        '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };

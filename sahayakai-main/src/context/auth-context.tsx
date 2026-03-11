@@ -2,10 +2,24 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
 import { syncUserAction } from '@/app/actions/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
+
+// Keep the auth-token cookie in sync with Firebase's token lifecycle.
+// onIdTokenChanged fires on login AND on automatic token refresh (~every 55 min),
+// so the cookie stays fresh. Middleware reads this cookie to inject x-user-id
+// into server actions, which don't carry an Authorization header.
+function syncAuthCookie(token: string | null) {
+    if (typeof document === 'undefined') return;
+    if (token) {
+        const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Strict${secure}`;
+    } else {
+        document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+}
 
 type AuthContextType = {
     user: User | null;
@@ -22,6 +36,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    // Sync Firebase ID token → auth-token cookie on every token refresh
+    useEffect(() => {
+        const unsubToken = onIdTokenChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                const token = await currentUser.getIdToken();
+                syncAuthCookie(token);
+            } else {
+                syncAuthCookie(null);
+            }
+        });
+        return () => unsubToken();
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
