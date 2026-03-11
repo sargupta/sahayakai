@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
 import { ConversationList } from "@/components/messages/conversation-list";
 import { ConversationThread } from "@/components/messages/conversation-thread";
+import { NewConversationPicker } from "@/components/messages/new-conversation-picker";
 import { Conversation } from "@/types/messages";
 import { MessageCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ function MessagesPageContent() {
     const openId  = searchParams.get("open");   // auto-open existing conversation by ID
 
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+    const [showPicker, setShowPicker] = useState(false);
     const [mobileView, setMobileView] = useState<"list" | "thread">("list");
     const [autoOpenLoading, setAutoOpenLoading] = useState(!!(withUid || openId));
 
@@ -77,14 +79,23 @@ function MessagesPageContent() {
 
     const handleSelectConversation = (conv: Conversation) => {
         setActiveConversation(conv);
+        setShowPicker(false);
         setMobileView("thread");
     };
 
     const handleNewDM = () => {
-        router.push("/community?tab=teachers");
+        setActiveConversation(null);
+        setShowPicker(true);
+        setMobileView("thread"); // on mobile, show right panel
+    };
+
+    const handlePickerReady = (conversationId: string) => {
+        setShowPicker(false);
+        openConversationById(conversationId);
     };
 
     const handleBack = () => {
+        setShowPicker(false);
         setMobileView("list");
     };
 
@@ -119,13 +130,15 @@ function MessagesPageContent() {
                 />
             </div>
 
-            {/* ── Conversation Thread ───────────────────────────────── */}
+            {/* ── Right panel: picker → thread → empty state ───────── */}
             <div className={cn(
                 "flex-1 min-w-0 lg:block",
                 mobileView === "list" ? "hidden lg:flex" : "flex",
                 "flex-col"
             )}>
-                {activeConversation ? (
+                {showPicker ? (
+                    <NewConversationPicker onConversationReady={handlePickerReady} />
+                ) : activeConversation ? (
                     <ConversationThread
                         conversation={activeConversation}
                         onBack={handleBack}
