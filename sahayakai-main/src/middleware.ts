@@ -65,8 +65,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Only apply logic to API routes
-    if (pathname.startsWith('/api/')) {
+    // Only apply logic to API and Admin routes
+    if (pathname.startsWith('/api/') || pathname.startsWith('/admin/')) {
         const authHeader = request.headers.get('Authorization');
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -129,5 +129,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         '/api/:path*',
+        '/admin/:path*',
     ],
 };

@@ -122,6 +122,21 @@ function getSeverity(metric: any): 'INFO' | 'WARNING' | 'ERROR' {
             if (metric.duration > 1000) return 'WARNING'; // >1s API call
             return 'INFO';
 
+        case 'cost_metric':
+            // Thresholds based on USER_REQUEST
+            if (metric.metric === 'gemini_spend_daily' && metric.value > 50) return 'ERROR';
+            if (metric.metric === 'tts_char_count_daily' && metric.value > 5000000) return 'ERROR';
+            if (metric.metric === 'image_gen_calls_daily' && metric.value > 500) return 'ERROR';
+            if (metric.metric === 'grounding_calls_daily' && metric.value > 1000) return 'ERROR';
+
+            // Warnings at 80% of threshold
+            if (metric.metric === 'gemini_spend_daily' && metric.value > 40) return 'WARNING';
+            if (metric.metric === 'tts_char_count_daily' && metric.value > 4000000) return 'WARNING';
+            if (metric.metric === 'image_gen_calls_daily' && metric.value > 400) return 'WARNING';
+            if (metric.metric === 'grounding_calls_daily' && metric.value > 800) return 'WARNING';
+
+            return 'INFO';
+
         default:
             return 'INFO';
     }
