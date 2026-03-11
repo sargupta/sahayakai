@@ -387,6 +387,11 @@ function VirtualFieldTripContent() {
                           className="bg-white/50 backdrop-blur-sm min-h-[100px]"
                         />
                       </FormControl>
+                      <MicrophoneInput
+                        onTranscriptChange={(text) => form.setValue("topic", text)}
+                        label={t.speakLabel}
+                        iconSize="sm"
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>

@@ -118,6 +118,7 @@ Therefore, your \`response\` field MUST confirm that generation has STARTED, not
 - Extract gradeLevel as "Class N" (e.g., "Class 5", "Class 10"). If "5th grade" is said, map to "Class 5".
 - Extract subject as one of the allowed values. "Ganit" → "Mathematics", "Vigyan" → "Science", "Itihas/SST" → "Social Science".
 - Extract topic as a concise English phrase (e.g., "Water Cycle", "Chapter 2 Living Things", "Fractions").
+- **Cross-turn context resolution (CRITICAL):** If the teacher uses vague references like "those locations", "that topic", "the places we discussed", "make one for that", "same topic", "wahi topic pe", etc., you MUST look at the Chat History to resolve what they mean. Extract the actual content/subject from the previous user message and use it as the topic. NEVER return null for topic when chat history contains relevant context — always extract and use it.
 - If subject/grade is NOT mentioned AND teacherProfile has preferredGrade/preferredSubject, use those defaults and mention it in the response.
 - If subject/grade is NOT mentioned AND no profile exists, set to null and politely ask in your response.
 - Language defaults to teacherProfile.preferredLanguage if set, otherwise "en" unless teacher is speaking Hindi (hi), etc.
