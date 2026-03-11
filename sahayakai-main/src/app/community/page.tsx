@@ -19,11 +19,12 @@ import {
 } from '@/app/actions/community';
 import {
   Loader2, Search, Library, Flame, UserCheck,
-  School, BookOpen, Bookmark, ArrowRight, Heart,
+  School, BookOpen, Bookmark, ArrowRight, Heart, MessageCircle,
 } from 'lucide-react';
 import { TeacherSuggestions } from '@/components/teacher-suggestions';
 import { CreatePostDialog } from '@/components/community/create-post-dialog';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
+import { CommunityChat } from '@/components/community/community-chat';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -406,7 +407,7 @@ export default function CommunityPage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchInput, setSearchInput]   = useState('');
   const [searchTerm, setSearchTerm]     = useState('');
-  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'teachers' | 'my-content'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'teachers' | 'my-content' | 'chat'>('trending');
 
   const [resources, setResources]             = useState<Resource[]>([]);
   const [filteredResources, setFiltered]      = useState<Resource[]>([]);
@@ -677,6 +678,14 @@ export default function CommunityPage() {
                 <BookOpen className="h-3.5 w-3.5 shrink-0" />
                 <span>My Work</span>
               </TabsTrigger>
+
+              <TabsTrigger
+                value="chat"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
+              >
+                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Chat</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="trending" className="outline-none">
@@ -719,6 +728,10 @@ export default function CommunityPage() {
                 onLike={handleLike}
                 onSave={handleSave}
               />
+            </TabsContent>
+
+            <TabsContent value="chat" className="outline-none">
+              <CommunityChat />
             </TabsContent>
           </Tabs>
         </div>
