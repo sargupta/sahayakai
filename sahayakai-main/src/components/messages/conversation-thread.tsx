@@ -222,7 +222,6 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         try {
             await sendMessageAction({
                 conversationId: conversation.id,
-                senderId: user.uid,
                 text: trimmed,
                 type,
                 resource,

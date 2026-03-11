@@ -9,6 +9,8 @@ import { ConversationThread } from "@/components/messages/conversation-thread";
 import { Conversation } from "@/types/messages";
 import { MessageCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // ── Empty state (no conversation selected) ────────────────────────────────────
 
@@ -40,35 +42,38 @@ function MessagesPageContent() {
 
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [mobileView, setMobileView] = useState<"list" | "thread">("list");
-    const [autoOpenLoading, setAutoOpenLoading] = useState(!!withUid);
+    const [autoOpenLoading, setAutoOpenLoading] = useState(!!(withUid || openId));
+
+    // Helper: fetch a conversation doc from Firestore and open it
+    const openConversationById = async (conversationId: string) => {
+        const snap = await getDoc(doc(db, "conversations", conversationId));
+        if (snap.exists()) {
+            setActiveConversation({ id: snap.id, ...snap.data() } as Conversation);
+            setMobileView("thread");
+        }
+    };
 
     // Auto-create/open DM when `?with=uid` is in the URL
     useEffect(() => {
         if (!withUid || !user) return;
         setAutoOpenLoading(true);
         getOrCreateDirectConversationAction(user.uid, withUid)
-            .then(({ conversationId }) => {
-                // The real-time listener in ConversationList will pick up the conversation.
-                // We set a stub so the thread panel opens immediately.
-                setActiveConversation({
-                    id: conversationId,
-                    type: "direct",
-                    participantIds: [user.uid, withUid],
-                    participants: {},
-                    lastMessage: "",
-                    lastMessageAt: null,
-                    lastMessageSenderId: "",
-                    unreadCount: {},
-                    createdAt: null,
-                    updatedAt: null,
-                });
-                setMobileView("thread");
-                // Clean up URL param
-                router.replace("/messages");
-            })
-            .catch(console.error)
+            .then(({ conversationId }) => openConversationById(conversationId))
+            .then(() => router.replace("/messages"))
+            .catch(() => {})
             .finally(() => setAutoOpenLoading(false));
-    }, [withUid, user, router]);
+    }, [withUid, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Open an existing conversation by ID when `?open=convId` is in the URL
+    // Used by notification deep-links
+    useEffect(() => {
+        if (!openId || !user) return;
+        setAutoOpenLoading(true);
+        openConversationById(openId)
+            .then(() => router.replace("/messages"))
+            .catch(() => {})
+            .finally(() => setAutoOpenLoading(false));
+    }, [openId, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSelectConversation = (conv: Conversation) => {
         setActiveConversation(conv);

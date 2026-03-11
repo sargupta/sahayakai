@@ -84,10 +84,17 @@ export async function createGroupConversationAction(
     const { FieldValue } = await import('firebase-admin/firestore');
 
     const allUids = Array.from(new Set([creatorUid, ...participantUids]));
-    const profiles = await dbAdapter.getUsers(allUids.slice(0, 10)); // adapter max 10
+
+    // Fetch all profiles in batches of 10 (Firestore 'in' query limit)
+    const profileBatches = [];
+    for (let i = 0; i < allUids.length; i += 10) {
+        profileBatches.push(dbAdapter.getUsers(allUids.slice(i, i + 10)));
+    }
+    const profileResults = await Promise.all(profileBatches);
+    const allProfiles = profileResults.flat();
 
     const participants: Record<string, { displayName: string; photoURL: string | null; preferredLanguage?: string }> = {};
-    for (const p of profiles) {
+    for (const p of allProfiles) {
         participants[p.uid] = {
             displayName: p.displayName ?? 'Teacher',
             photoURL: p.photoURL ?? null,
@@ -117,19 +124,17 @@ export async function createGroupConversationAction(
 
 export async function sendMessageAction({
     conversationId,
-    senderId,
     text,
     type = 'text',
     resource,
 }: {
     conversationId: string;
-    senderId: string;
     text: string;
     type?: 'text' | 'resource';
     resource?: SharedResource;
 }): Promise<{ messageId: string }> {
-    const callerId = await getAuthUserId();
-    if (callerId !== senderId) throw new Error('Unauthorized');
+    // Identity always comes from the server — client never supplies senderId
+    const senderId = await getAuthUserId();
 
     const trimmed = text.trim();
     if (!trimmed && type === 'text') throw new Error('Message cannot be empty');
@@ -229,16 +234,17 @@ export async function markConversationReadAction(
     // Reset unread badge
     await convRef.update({ [`unreadCount.${userId}`]: 0 });
 
-    // Mark unread messages as read (batch, up to 100)
-    const unreadSnap = await convRef
+    // Mark recent messages as read. Firestore cannot negate array-contains,
+    // so we fetch the last 50 and use arrayUnion (idempotent — no-op if already read).
+    const recentSnap = await convRef
         .collection('messages')
-        .where('readBy', 'not-in', [[userId]])
-        .limit(100)
+        .orderBy('createdAt', 'desc')
+        .limit(50)
         .get();
 
-    if (!unreadSnap.empty) {
+    if (!recentSnap.empty) {
         const batch = db.batch();
-        unreadSnap.docs.forEach((doc) => {
+        recentSnap.docs.forEach((doc) => {
             batch.update(doc.ref, { readBy: FieldValue.arrayUnion(userId) });
         });
         await batch.commit();
