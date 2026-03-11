@@ -610,28 +610,36 @@ export async function publishContentToLibraryAction(
     return { resourceId };
 }
 
-export async function sendChatMessageAction({
-    text,
-    authorId,
-    authorName,
-    authorPhotoURL,
-}: {
-    text: string;
-    authorId: string;
-    authorName: string;
-    authorPhotoURL?: string;
-}) {
-    if (!text?.trim() || !authorId) throw new Error("Invalid message");
-    if (text.length > 500) throw new Error("Message too long");
+export async function sendChatMessageAction(text: string) {
+    // 1. Authenticate via middleware-injected header — never trust client-supplied identity
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const authorId = h.get("x-user-id");
+    if (!authorId) throw new Error("Unauthorized");
 
+    // 2. Validate input
+    const trimmed = text?.trim();
+    if (!trimmed) throw new Error("Message cannot be empty");
+    if (trimmed.length > 500) throw new Error("Message too long");
+
+    // 3. Rate limit
+    const { checkServerRateLimit } = await import("@/lib/server-safety");
+    await checkServerRateLimit(authorId);
+
+    // 4. Fetch author profile from server — never trust client-supplied name/photo
     const db = await getDb();
     const { FieldValue } = await import("firebase-admin/firestore");
 
+    const userDoc = await db.collection("users").doc(authorId).get();
+    const userData = userDoc.data();
+    const authorName = userData?.displayName || "Teacher";
+    const authorPhotoURL = userData?.photoURL ?? null;
+
     await db.collection("community_chat").add({
-        text: text.trim(),
+        text: trimmed,
         authorId,
         authorName,
-        authorPhotoURL: authorPhotoURL ?? null,
+        authorPhotoURL,
         createdAt: FieldValue.serverTimestamp(),
     });
 }
