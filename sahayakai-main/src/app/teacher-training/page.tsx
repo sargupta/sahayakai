@@ -3,7 +3,7 @@
 
 import { Suspense } from "react";
 
-import { getTeacherTrainingAdvice, TeacherTrainingOutput } from "@/ai/flows/teacher-training";
+import type { TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Generates simple, decent, and stable avatars for teachers.
  *

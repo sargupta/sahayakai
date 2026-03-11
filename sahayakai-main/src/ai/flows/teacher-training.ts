@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Provides professional development advice and encouragement for teachers.
  *

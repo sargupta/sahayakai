@@ -1,7 +1,6 @@
 
 "use client";
 
-import { generateQuiz } from "@/ai/flows/quiz-generator";
 import type { QuizVariantsOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview A visual aid designer agent that creates simple black-and-white line drawings.
  *

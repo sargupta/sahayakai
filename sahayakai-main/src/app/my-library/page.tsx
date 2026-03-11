@@ -10,7 +10,6 @@ import {
 import { LanguageSelector } from '@/components/language-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
-import { generateAvatar } from '@/ai/flows/avatar-generator';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { getProfileData } from '@/app/actions/profile';
@@ -45,9 +44,17 @@ export default function MyLibraryPage() {
         setProfile(res.profile);
       });
 
-      generateAvatar({ name: user.displayName || 'Teacher', userId: user.uid })
-        .then(res => setAvatar(res.imageDataUri))
-        .catch(console.error);
+      auth.currentUser?.getIdToken().then(token => {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return fetch('/api/ai/avatar', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name: user.displayName || 'Teacher' }),
+        });
+      }).then(res => res?.json()).then((res: { imageDataUri?: string }) => {
+        if (res?.imageDataUri) setAvatar(res.imageDataUri);
+      }).catch(console.error);
     }
   }, [user, loading]);
 

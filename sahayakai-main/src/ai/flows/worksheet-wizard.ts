@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Creates worksheets from an image of a textbook page and a user prompt.
  *

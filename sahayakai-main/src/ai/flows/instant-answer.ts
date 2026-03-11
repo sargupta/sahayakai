@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Provides instant answers to user questions using a knowledge base augmented by Google Search.
  *

@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Generates lesson plans based on user-provided topics using voice or text input.
  *

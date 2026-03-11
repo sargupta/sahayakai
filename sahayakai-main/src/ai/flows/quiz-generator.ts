@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Creates quizzes based on a topic, context from an image, and user-specified parameters.
  *

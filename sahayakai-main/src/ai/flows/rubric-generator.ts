@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Creates detailed grading rubrics for assignments.
  *

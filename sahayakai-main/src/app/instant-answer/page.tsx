@@ -1,7 +1,7 @@
 
 "use client";
 
-import { instantAnswer } from "@/ai/flows/instant-answer";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -284,12 +284,21 @@ function InstantAnswerContent() {
     setIsLoading(true);
     setAnswer(null);
     try {
-      const result = await instantAnswer({
-        question: values.question,
-        language: values.language || selectedLanguage,
-        gradeLevel: values.gradeLevel,
-        subject: values.subject,
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const token = await auth.currentUser?.getIdToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/ai/instant-answer', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          question: values.question,
+          language: values.language || selectedLanguage,
+          gradeLevel: values.gradeLevel,
+          subject: values.subject,
+        }),
       });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to get answer');
+      const result = await res.json();
       setAnswer({ ...values, ...result } as Answer);
       clearFormSnapshot("instant-answer");
     } catch (error: any) {

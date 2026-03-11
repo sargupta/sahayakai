@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview The main agent router for the application.
  * This file acts as a server component to determine intent and route requests.

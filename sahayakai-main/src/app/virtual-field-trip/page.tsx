@@ -1,6 +1,6 @@
 
 "use client";
-import { planVirtualFieldTrip, VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
+import type { VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

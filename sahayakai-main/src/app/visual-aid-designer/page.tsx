@@ -1,6 +1,5 @@
 "use client";
 
-import { generateVisualAid } from "@/ai/flows/visual-aid-designer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

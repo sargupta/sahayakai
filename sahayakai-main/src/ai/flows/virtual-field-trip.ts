@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Plans virtual field trips using Google Earth.
  *

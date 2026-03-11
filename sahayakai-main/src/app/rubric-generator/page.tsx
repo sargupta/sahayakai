@@ -1,6 +1,6 @@
 "use client";
 
-import { generateRubric, RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
+import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

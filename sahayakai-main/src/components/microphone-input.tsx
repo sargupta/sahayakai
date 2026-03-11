@@ -1,6 +1,6 @@
 "use client";
 
-import { voiceToTextFormData } from "@/ai/flows/voice-to-text";
+import { auth } from "@/lib/firebase";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn, logger } from "@/lib/utils";
@@ -243,7 +243,12 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   const transcribeWithRetry = async (formData: FormData, attempt = 1): Promise<{ text: string, language?: string }> => {
     try {
-      const result = await voiceToTextFormData(formData);
+      const headers: Record<string, string> = {};
+      const token = await auth.currentUser?.getIdToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/ai/voice-to-text', { method: 'POST', headers, body: formData });
+      if (!res.ok) throw new Error((await res.json()).error || 'Transcription failed');
+      const result = await res.json();
       return { text: result.text, language: result.language };
     } catch (err) {
       if (attempt < MAX_RETRIES) {
