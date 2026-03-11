@@ -609,3 +609,29 @@ export async function publishContentToLibraryAction(
     revalidatePath('/community');
     return { resourceId };
 }
+
+export async function sendChatMessageAction({
+    text,
+    authorId,
+    authorName,
+    authorPhotoURL,
+}: {
+    text: string;
+    authorId: string;
+    authorName: string;
+    authorPhotoURL?: string;
+}) {
+    if (!text?.trim() || !authorId) throw new Error("Invalid message");
+    if (text.length > 500) throw new Error("Message too long");
+
+    const db = await getDb();
+    const { FieldValue } = await import("firebase-admin/firestore");
+
+    await db.collection("community_chat").add({
+        text: text.trim(),
+        authorId,
+        authorName,
+        authorPhotoURL: authorPhotoURL ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+    });
+}
