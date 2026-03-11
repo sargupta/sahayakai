@@ -96,6 +96,62 @@
 - **Logic Layer:** All business rules (NCERT mapping, Bharat-context injection, pedagogical grounding) happen in the AI System Prompt guided by `architecture/` SOPs.
 - **Validation Layer:** Deterministic checks for "Westernisms", metadata completeness, and mandatory pedagogical citations.
 
+## Git Standards & Branching Rules
+
+### Branch Strategy
+- **`main`** — production branch. Auto-deploys to Cloud Run (`sahayakai-hotfix-resilience`) on push. **NEVER commit directly to main.**
+- **`feature/<name>`** — new features (e.g., `feature/jarvis-omniorb`, `feature/chat-phase1`)
+- **`fix/<name>`** — bug fixes and hotfixes (e.g., `fix/vft-audio-input`, `fix/tts-auth`)
+- **`chore/<name>`** — tooling, deps, config (e.g., `chore/update-deps`)
+
+### Workflow (mandatory)
+```
+# 1. Always branch off main
+git checkout main && git pull origin main
+git checkout -b fix/<descriptive-name>
+
+# 2. Make changes, commit with conventional commits
+git add <specific files>   # never git add -A or git add .
+git commit -m "fix(scope): description"
+
+# 3. Merge to main via --no-ff so branch is visible in history
+git checkout main
+git merge fix/<name> --no-ff -m "merge(fix): <description>"
+git push origin main
+
+# 4. Clean up
+git branch -d fix/<name>
+```
+
+### Commit Message Convention (Conventional Commits)
+```
+<type>(<scope>): <short description>
+
+Types: feat | fix | chore | docs | refactor | test | perf | merge
+Scope: cost | tts | vft | quiz | auth | ci | deps | soul | ...
+
+Examples:
+  fix(tts): add Authorization header for prod middleware
+  feat(chat): add Firestore real-time message listener
+  fix(cost): remove unnecessary grounding from lesson-plan
+  chore(deps): upgrade firebase-admin to 13.x
+  merge(fix): vft audio input + cross-page context resolution
+```
+
+### Rules Claude Must Follow
+1. **Never work directly on `main`.** Always create a `fix/` or `feature/` branch first.
+2. **Never `git add -A` or `git add .`** — stage specific files only (avoid committing .env, secrets, large binaries).
+3. **Never `git push --force`** to main.
+4. **Never `--no-verify`** (skip hooks) unless explicitly asked.
+5. **Merge with `--no-ff`** so branch history is preserved in main's graph.
+6. **Always confirm before `git push`** unless the user says "you have all permissions, deploy".
+7. **Co-author every commit** with `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`.
+
+### Deployment
+- Deployment = `git push origin main`
+- Firebase App Hosting auto-deploys on every push to main
+- Service: `sahayakai-hotfix-resilience` (Cloud Run, asia-south1)
+
 ## Maintenance Log
 *   **2026-01-29:** Project initialized. Discovery Questions answered via strategic analysis. Handshake verified Gemini API link. Created `architecture/lesson_plan_generation_sop.md`.
 *   **2026-01-29:** Commenced **Phase 4: S - Stylize**. Added Copy button and improved layout for the Instant Answer component on the homepage.
