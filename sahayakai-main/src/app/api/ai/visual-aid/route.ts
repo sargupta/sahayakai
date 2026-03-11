@@ -1,4 +1,7 @@
 
+// Allow up to 120s for image generation (Gemini preview model can be slow)
+export const maxDuration = 120;
+
 import { NextResponse } from 'next/server';
 import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
 import { logger } from '@/lib/logger';
@@ -67,6 +70,20 @@ export async function POST(request: Request) {
 
         if (errorMessage.includes('Safety Violation')) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
+        }
+
+        if (errorMessage === 'IMAGE_GENERATION_TIMEOUT') {
+            return NextResponse.json(
+                { error: 'Image generation timed out. Try a simpler diagram description or retry.' },
+                { status: 504 }
+            );
+        }
+
+        if (errorMessage === 'IMAGE_GENERATION_EMPTY') {
+            return NextResponse.json(
+                { error: 'The AI could not generate an image for this prompt. Try rephrasing with fewer labels.' },
+                { status: 422 }
+            );
         }
 
         return NextResponse.json(

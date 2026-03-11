@@ -15,7 +15,14 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 type WorksheetDisplayProps = {
-    worksheet: { worksheetContent: string; gradeLevel?: string | null; subject?: string | null };
+    worksheet: {
+        worksheetContent: string;
+        title?: string;
+        gradeLevel?: string | null;
+        subject?: string | null;
+        activities?: any[];
+        learningObjectives?: string[];
+    };
     title?: string;
 };
 
@@ -61,7 +68,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 heightLeft -= pageHeight;
             }
 
-            const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
+            const cleanTitle = (title || worksheet.title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
             pdf.save(`Sahayak_Worksheet_${cleanTitle}.pdf`);
 
             toast({ title: "PDF Downloaded", description: "Your worksheet is ready." });
@@ -85,7 +92,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 user = userCred.user;
             }
 
-            const saveTitle = title || "Worksheet";
+            const saveTitle = title || worksheet.title || "Worksheet";
 
             // Construct payload matching WorksheetDataSchema
             const payload = {
@@ -99,14 +106,8 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 isPublic: false,
                 isDraft: false,
                 data: {
+                    ...worksheet,
                     layout: 'portrait',
-                    sections: [{
-                        title: 'Generated Content',
-                        instructions: worksheet.worksheetContent,
-                        items: []
-                    }],
-                    // Preserving raw content for display re-hydration if needed
-                    ...worksheet
                 }
             };
 

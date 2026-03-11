@@ -69,24 +69,26 @@
 }
 ```
 
-## Data Schema (Micro-Lesson Payload)
+}
+```
+
+## Data Schema (Quiz Payload)
 ```json
 {
-  "topic": "string (Required)",
-  "gradeLevel": "string (Required)",
-  "sequenceNumber": "number (Required) - 1 for first lesson, 2 for second...",
-  "slides": [
+  "title": "string (Required)",
+  "questions": [
     {
-      "slideNumber": "number (1-5)",
-      "type": "Title | Concept | Example | Activity | Summary",
-      "content": {
-        "title": "string",
-        "bulletPoints": ["string"],
-        "visualPrompt": "string (Description for image generation or placeholder)",
-        "teacherNotes": "string (Script for the teacher)"
-      }
+      "questionText": "string (Required)",
+      "questionType": "multiple_choice | fill_in_the_blanks | short_answer | true_false",
+      "options": ["string"],
+      "correctAnswer": "string (Required)",
+      "explanation": "string (Required) - Pedagogical explanation tied to Bharat context",
+      "difficultyLevel": "easy | medium | hard"
     }
-  ]
+  ],
+  "teacherInstructions": "string (Optional) - Classroom management tips",
+  "gradeLevel": "string (Optional)",
+  "subject": "string (Optional)"
 }
 ```
 
@@ -104,5 +106,7 @@
     *   **Architecture:** Enforced 5-slide rule via Validator.
     *   **Quality:** Passed Senior Engineer Audit (Complexity Check) and Vitest functional tests.
     *   **Feature:** Client-side PDF generation producing 5-slide, high-contrast decks.
+*   **2026-03-09:** **BAKTA Persona & OmniOrb Consolidation** - Injected Mr. Abhishek Gupta's blunt, truth-speaking persona into the AI voice. Consolidated OmniOrb microphones and resolved domain mapping conflicts for `sargupta.in`.
+*   **2026-03-04:** **Infrastructure & UX Hardening** - Fixed TTS Authorization ("Unauthorized" error) and implemented audio priming. Refactored "Grade" to "Class" terminology for Bharat-First localization.
 *   **Next Step:** Apply Schema First methodology to remaining services (Quiz, Worksheet, Field Trip) and refine the UI to match the data contracts.
 

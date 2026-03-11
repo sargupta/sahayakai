@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dialog";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { useAuth } from "@/context/auth-context";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -50,7 +52,7 @@ const translations: Record<string, Record<string, string>> = {
     dialogEfficiencyText: "They can make the grading process faster and more straightforward for teachers.",
     formLabel: "Assignment Description",
     formPlaceholder: "e.g., A project to build a model of the solar system for 6th graders.",
-    gradeLevel: "Grade Level",
+    gradeLevel: "Class",
     language: "Language",
     buttonGenerate: "Generate Rubric",
     buttonGenerating: "Generating Rubric...",
@@ -92,16 +94,41 @@ function RubricGeneratorContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const hasLoaded = useRef(false);
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       assignmentDescription: "",
       language: "en",
-      gradeLevel: "7th Grade",
+      gradeLevel: "Class 7",
       subject: "General",
     },
   });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedDesc    = form.watch("assignmentDescription");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("rubric-generator", {
+    assignmentDescription: watchedDesc,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
+  });
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const descParam = searchParams.get("assignmentDescription");
+    const id = searchParams.get("id");
+    if (descParam || id || !savedSnapshot) return;
+    if (savedSnapshot.assignmentDescription) form.setValue("assignmentDescription", savedSnapshot.assignmentDescription);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
@@ -145,11 +172,20 @@ function RubricGeneratorContent() {
       };
       fetchSavedContent();
     } else if (descParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("assignmentDescription", descParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       hasLoaded.current = true;
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [user, searchParams, form, toast]);
 
@@ -165,7 +201,7 @@ function RubricGeneratorContent() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ ...values, language: selectedLanguage })
+        body: JSON.stringify({ ...values, language: values.language || selectedLanguage })
       });
 
       if (!res.ok) {
@@ -179,6 +215,7 @@ function RubricGeneratorContent() {
 
       const result = await res.json();
       setRubric(result);
+      clearFormSnapshot("rubric-generator");
     } catch (error) {
       console.error("Failed to generate rubric:", error);
       toast({
@@ -246,12 +283,6 @@ function RubricGeneratorContent() {
                     <FormLabel className="font-headline">{t.formLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => field.onChange(transcript)}
-                          iconSize="lg"
-                          label="Describe the assignment..."
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.formPlaceholder}
                           {...field}

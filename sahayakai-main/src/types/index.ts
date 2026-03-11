@@ -98,6 +98,8 @@ export interface BaseContent<T = any> {
     // Status
     isPublic: boolean;
     isDraft: boolean;
+    deletedAt?: Timestamp | null;  // null = active, set = soft-deleted
+    expiresAt?: Timestamp | null;  // TTL field: Firestore auto-purges 30 days after soft-delete
 
     // Storage
     storagePath?: string; // Path to full JSON/Markdown in Cloud Storage
@@ -224,7 +226,15 @@ export interface UserImpactSchema {
 
 // --- Notifications ---
 
-export type NotificationType = 'FOLLOW' | 'NEW_POST' | 'BADGE_EARNED' | 'SYSTEM';
+export type NotificationType =
+    | 'FOLLOW'
+    | 'NEW_POST'
+    | 'BADGE_EARNED'
+    | 'SYSTEM'
+    | 'LIKE'            // someone liked your library resource
+    | 'RESOURCE_SAVED'  // someone saved your resource to their personal library
+    | 'RESOURCE_USED'   // someone clicked "Use This" on your resource (routed to a tool)
+    | 'COMMENT';        // future: someone commented on your resource
 
 export interface Notification {
     id: string;

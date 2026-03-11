@@ -130,6 +130,7 @@ class PerformanceMonitor {
     private queue: PerformanceMetric[] = [];
     private batchTimer: NodeJS.Timeout | null = null;
     private sessionId: string;
+    private navigationObserver: PerformanceObserver | null = null;
 
     constructor() {
         this.sessionId = this.generateSessionId();
@@ -205,7 +206,7 @@ class PerformanceMonitor {
         let lastPath = window.location.pathname;
         let navigationStart = Date.now();
 
-        const observer = new PerformanceObserver((list) => {
+        this.navigationObserver = new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
                 if (entry.entryType === 'navigation') {
                     const current = window.location.pathname;
@@ -224,7 +225,7 @@ class PerformanceMonitor {
             }
         });
 
-        observer.observe({ type: 'navigation', buffered: true });
+        this.navigationObserver.observe({ type: 'navigation', buffered: true });
     }
 
     /**
@@ -371,6 +372,18 @@ class PerformanceMonitor {
      */
     flush() {
         return this.sendBatch();
+    }
+
+    /**
+     * Disconnect observers and cancel pending timers (call on logout / unmount)
+     */
+    cleanup() {
+        this.navigationObserver?.disconnect();
+        this.navigationObserver = null;
+        if (this.batchTimer) {
+            clearTimeout(this.batchTimer);
+            this.batchTimer = null;
+        }
     }
 }
 

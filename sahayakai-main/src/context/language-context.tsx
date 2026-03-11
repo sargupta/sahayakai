@@ -96,6 +96,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         const user = auth.currentUser;
         if (user) {
             await updateProfileAction(user.uid, { preferredLanguage: lang });
+
+            // Keep VIDYA's jarvis.preferredLanguage in sync (fire-and-forget)
+            user.getIdToken().then((idToken) =>
+                fetch('/api/vidya/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+                    body: JSON.stringify({ profile: { preferredLanguage: lang } }),
+                })
+            ).catch(console.warn);
         }
     };
 

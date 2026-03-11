@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Logo } from '@/components/logo';
 import { MicrophoneInput } from '@/components/microphone-input';
 import { GlobalVoiceInterface } from '@/components/global-voice-interface';
+import { OmniOrb } from '@/components/omni-orb';
 import { LanguageProvider } from '@/context/language-context';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthButton } from '@/components/auth/auth-button';
@@ -66,6 +67,8 @@ export default function RootLayout({
               <AuthDialog />
             </SidebarProvider>
 
+            {/* OmniOrb needs AuthProvider for useAuth — must live inside it */}
+            <OmniOrb />
           </AuthProvider>
           <Toaster />
           {/* <GlobalVoiceInterface /> */}

@@ -1,6 +1,4 @@
-
 'use server';
-
 /**
  * @fileOverview Generates lesson plans based on user-provided topics using voice or text input.
  *
@@ -179,14 +177,14 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
   return lessonPlanFlow(localizedInput);
 }
 
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
   tools: [googleSearch],
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
 

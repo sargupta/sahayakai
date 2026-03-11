@@ -6,7 +6,7 @@ const QuestionSchema = z.object({
   questionType: z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer', 'true_false']).describe('The type of the question.'),
   options: z.array(z.string()).optional().describe('For multiple-choice questions, the list of possible answers.'),
   correctAnswer: z.string().describe('The correct answer.'),
-  explanation: z.string().describe('A clear explanation of why the answer is correct and why other options are incorrect.'),
+  explanation: z.string().describe('A clear, empathetic explanation of why the answer is correct, ideally using a Bharat-First analogy (e.g., farming, local market).'),
   difficultyLevel: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of this specific question.'),
 });
 
@@ -29,7 +29,7 @@ export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 export const QuizGeneratorOutputSchema = z.object({
   title: z.string().describe('A suitable title for the quiz.'),
   questions: z.array(QuestionSchema).describe('The list of generated quiz questions.'),
-  teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz and interpret results.'),
+  teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz in a "Chalk & Blackboard" environment (e.g., "Write these on the board", "Discuss the mango tree example").'),
   gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
 });

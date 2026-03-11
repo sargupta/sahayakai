@@ -8,8 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Wand2, Youtube, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { MicrophoneInput } from "@/components/microphone-input";
@@ -20,6 +21,8 @@ import { SubjectSelector } from "@/components/subject-selector";
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 const translations: Record<string, Record<string, string>> = {
@@ -29,7 +32,7 @@ const translations: Record<string, Record<string, string>> = {
     questionLabel: "Your Question",
     speakLabel: "Speak your question...",
     placeholder: "e.g., 'Explain photosynthesis to a 10-year-old...'",
-    gradeLabel: "Grade Level",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Get Instant Answer",
     loadingText: "Getting Answer...",
@@ -211,25 +214,70 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type Answer = z.infer<typeof formSchema> & { answer: string; videoSuggestionUrl?: string };
 
-export default function InstantAnswerPage() {
+function InstantAnswerContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
       language: "en",
-      gradeLevel: "6th Grade",
+      gradeLevel: "Class 6",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedQuestion = form.watch("question");
+  const watchedGrade    = form.watch("gradeLevel");
+  const watchedSubject  = form.watch("subject");
+  const watchedLang     = form.watch("language");
+  const savedSnapshot   = useVidyaFormSync("instant-answer", {
+    question: watchedQuestion,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   /* Translations Helper */
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
+  const searchParams = useSearchParams();
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const questionParam = searchParams.get("question") || searchParams.get("topic") || searchParams.get("prompt");
+    if (questionParam || !savedSnapshot) return;
+    if (savedSnapshot.question)   form.setValue("question",   savedSnapshot.question);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
+
+  useEffect(() => {
+    const questionParam = searchParams.get("question") || searchParams.get("topic") || searchParams.get("prompt");
+
+    if (questionParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
+      form.setValue("question", questionParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ───────────────────────────────────────────────────────────────────
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 300);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     if (!requireAuth()) return;
@@ -238,11 +286,12 @@ export default function InstantAnswerPage() {
     try {
       const result = await instantAnswer({
         question: values.question,
-        language: values.language,
+        language: values.language || selectedLanguage,
         gradeLevel: values.gradeLevel,
         subject: values.subject,
       });
       setAnswer({ ...values, ...result } as Answer);
+      clearFormSnapshot("instant-answer");
     } catch (error: any) {
       console.error("Failed to get answer:", error);
       if (error.message?.includes("unauthorized") || error.message?.includes("sign in")) {
@@ -296,14 +345,6 @@ export default function InstantAnswerPage() {
                     <FormLabel className="font-headline">{t.questionLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => {
-                            field.onChange(transcript);
-                          }}
-                          iconSize="lg"
-                          label={t.speakLabel}
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}
@@ -431,5 +472,13 @@ export default function InstantAnswerPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function InstantAnswerPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <InstantAnswerContent />
+    </Suspense>
   );
 }

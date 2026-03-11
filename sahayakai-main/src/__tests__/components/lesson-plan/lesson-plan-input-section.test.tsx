@@ -15,15 +15,6 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
-// Mocks
-jest.mock('@/components/microphone-input', () => ({
-    MicrophoneInput: ({ onTranscriptChange }: any) => (
-        <button data-testid="mic-input" onClick={() => onTranscriptChange('Spoken Text')}>
-            Mic
-        </button>
-    ),
-}));
-
 jest.mock('@/components/image-uploader', () => ({
     ImageUploader: ({ onImageUpload }: any) => (
         <button data-testid="img-upload" onClick={() => onImageUpload('data:image/png;base64,123')}>
@@ -63,7 +54,6 @@ describe('LessonPlanInputSection', () => {
 
         // expect(screen.getByText(/Topic/i)).toBeInTheDocument(); // Removed as per current UI
         expect(screen.getByPlaceholderText(/A lesson on 'Healthy Food'/i)).toBeInTheDocument();
-        expect(screen.getByTestId('mic-input')).toBeInTheDocument();
         // expect(screen.getByText('Generate')).toBeInTheDocument(); // Removed as per current UI
     });
 
@@ -80,14 +70,5 @@ describe('LessonPlanInputSection', () => {
         expect(input).toHaveValue('Force and Motion');
     });
 
-    it('handles microphone input', () => {
-        render(
-            <Wrapper>
-                <LessonPlanInputSection {...defaultProps} />
-            </Wrapper>
-        );
-
-        fireEvent.click(screen.getByTestId('mic-input'));
-        expect(defaultProps.onTranscriptChange).toHaveBeenCalledWith('Spoken Text');
-    });
+    
 });

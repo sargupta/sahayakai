@@ -21,6 +21,8 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
 import { SubjectSelector } from "@/components/subject-selector";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 
@@ -31,7 +33,7 @@ const translations: Record<string, Record<string, string>> = {
     topicLabel: "Trip Topic",
     speakLabel: "Speak your trip idea...",
     placeholder: "e.g., 'A tour of the major centers of the Harappan Civilization...'",
-    gradeLabel: "Grade Level",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Generate",
     generating: "Generating Itinerary...",
@@ -197,20 +199,45 @@ function VirtualFieldTripContent() {
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: "8th Grade",
+      gradeLevel: "Class 8",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedTopic   = form.watch("topic");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("virtual-field-trip", {
+    topic: watchedTopic,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
   const searchParams = useSearchParams();
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    const id = searchParams.get("id");
+    if (topicParam || id || !savedSnapshot) return;
+    if (savedSnapshot.topic)      form.setValue("topic",      savedSnapshot.topic);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -258,10 +285,19 @@ function VirtualFieldTripContent() {
       };
       fetchSavedContent();
     } else if (topicParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("topic", topicParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [searchParams, form, toast]);
 
@@ -283,7 +319,7 @@ function VirtualFieldTripContent() {
         headers: headers,
         body: JSON.stringify({
           topic: values.topic,
-          language: values.language,
+          language: values.language || selectedLanguage,
           gradeLevel: values.gradeLevel,
           subject: values.subject,
         })
@@ -300,6 +336,7 @@ function VirtualFieldTripContent() {
 
       const result = await res.json();
       setTrip(result);
+      clearFormSnapshot("virtual-field-trip");
     } catch (error) {
       console.error("Failed to plan trip:", error);
       toast({
@@ -343,14 +380,6 @@ function VirtualFieldTripContent() {
                   <FormItem>
                     <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
                     <div className="flex flex-col gap-4">
-                      <MicrophoneInput
-                        onTranscriptChange={(transcript) => {
-                          field.onChange(transcript);
-                        }}
-                        iconSize="lg"
-                        label={t.speakLabel}
-                        className="bg-white/50 backdrop-blur-sm"
-                      />
                       <FormControl>
                         <Textarea
                           placeholder={t.placeholder}

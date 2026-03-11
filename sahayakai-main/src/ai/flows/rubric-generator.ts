@@ -13,7 +13,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 const RubricGeneratorInputSchema = z.object({
@@ -74,7 +74,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
   name: 'rubricGeneratorPrompt',
   input: { schema: RubricGeneratorInputSchema },
   output: { schema: RubricGeneratorOutputSchema },
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
 

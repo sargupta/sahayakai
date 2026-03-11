@@ -70,3 +70,15 @@ export async function clearEvent(key: number) {
     const db = await initDB();
     return db.delete('telemetry', key);
 }
+
+const MAX_TELEMETRY_ITEMS = 500;
+
+export async function pruneOldTelemetry() {
+    const db = await initDB();
+    const allKeys = await db.getAllKeys('telemetry');
+    if (allKeys.length <= MAX_TELEMETRY_ITEMS) return;
+    const toDelete = allKeys.slice(0, allKeys.length - MAX_TELEMETRY_ITEMS);
+    const tx = db.transaction('telemetry', 'readwrite');
+    await Promise.all(toDelete.map((k) => tx.store.delete(k)));
+    await tx.done;
+}

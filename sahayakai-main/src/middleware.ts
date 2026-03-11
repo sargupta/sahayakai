@@ -61,6 +61,17 @@ export async function middleware(request: NextRequest) {
         const authHeader = request.headers.get('Authorization');
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            // [DEVELOPMENT BYPASS] If we're on localhost, inject a mock user ID
+            if (process.env.NODE_ENV === 'development') {
+                console.log('[MIDDLEWARE] Dev mode detected, injecting mock user ID');
+                const requestHeaders = new Headers(request.headers);
+                requestHeaders.set('x-user-id', 'dev-user-123'); // Mock UID for local dev
+                return NextResponse.next({
+                    request: {
+                        headers: requestHeaders,
+                    },
+                });
+            }
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

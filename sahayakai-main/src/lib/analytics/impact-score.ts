@@ -28,23 +28,40 @@ export interface TeacherAnalytics {
     preferred_language: string;
 }
 
-export function calculateHealthScore(data: TeacherAnalytics) {
+export function calculateHealthScore(data: any): any {
+    // =========================================================================
+    // NORMALIZE INPUTS (Handle snake_case/camelCase and undefined/null)
+    // =========================================================================
+    const sessions_last_7_days = Number(data.sessions_last_7_days ?? 0);
+    const sessions_days_8_to_14 = Number(data.sessions_days_8_to_14 ?? 0);
+    const content_created_last_7_days = Number(data.content_created_last_7_days ?? 0);
+    const content_created_days_8_to_14 = Number(data.content_created_days_8_to_14 ?? 0);
+    const content_created_total = Number(data.content_created_total ?? 0);
+    const exported_content_count = Number(data.exported_content_count ?? 0);
+    const shared_to_community_count = Number(data.shared_to_community_count ?? 0);
+    const community_library_visits = Number(data.community_library_visits ?? 0);
+    const days_since_last_use = Number(data.days_since_last_use ?? 0);
+    const consecutive_days_used = Number(data.consecutive_days_used ?? 0);
+    const total_attempts = Number(data.total_attempts ?? 0);
+    const successful_generations = Number(data.successful_generations ?? 0);
+    const avg_regenerations_per_content = Number(data.avg_regenerations_per_content ?? 1);
+    const features_used_count = (data.features_used_last_30_days?.length ?? 1);
+
     // =========================================================================
     // DIMENSION 1: Kinematic Activity with Temporal Decay — A(t)
     // =========================================================================
     const decayLambda = Math.LN2 / 3;
-    const recentActivity = data.sessions_last_7_days * Math.exp(-decayLambda * 3.5);
-    const olderActivity = data.sessions_days_8_to_14 * Math.exp(-decayLambda * 11);
-    const recencyBoost = Math.exp(-decayLambda * data.days_since_last_use);
+    const recentActivity = sessions_last_7_days * Math.exp(-decayLambda * 3.5);
+    const olderActivity = sessions_days_8_to_14 * Math.exp(-decayLambda * 11);
+    const recencyBoost = Math.exp(-decayLambda * days_since_last_use);
 
     let rawActivity = (recentActivity + olderActivity + (recencyBoost * 2)) * 10;
-    rawActivity = Math.min(100, rawActivity);
+    rawActivity = Math.min(100, Math.max(0, rawActivity));
 
     // =========================================================================
     // DIMENSION 2: Volume-Weighted Shannon Entropy of Feature Engagement — E(t)
     // =========================================================================
-    const totalContent = data.content_created_total || 1;
-    const featuresUsedCount = data.features_used_last_30_days?.length || 1;
+    const featuresUsedCount = Math.max(1, features_used_count);
     const kFeatures = 13;
 
     const pFeature = 1.0 / featuresUsedCount;
@@ -52,11 +69,11 @@ export function calculateHealthScore(data: TeacherAnalytics) {
         ? -(featuresUsedCount * (pFeature * (Math.log(pFeature) / Math.log(kFeatures))))
         : 0;
 
-    const volumeBaseline = Math.min(1, totalContent / 50);
+    const volumeBaseline = Math.min(1, content_created_total / 50);
     const entropyE = (0.7 * entropyDepth) + (0.3 * volumeBaseline);
 
     let rawEngagement = entropyE * 100;
-    rawEngagement = Math.min(100, rawEngagement);
+    rawEngagement = Math.min(100, Math.max(0, rawEngagement));
 
     // =========================================================================
     // DIMENSION 3: Bayesian Success Competency — S(t)
@@ -64,23 +81,23 @@ export function calculateHealthScore(data: TeacherAnalytics) {
     const priorAlpha = 8;
     const priorBeta = 2;
 
-    const successes = data.successful_generations || 0;
-    const failures = Math.max(0, (data.total_attempts || 0) - successes);
+    const successes = successful_generations;
+    const failures = Math.max(0, total_attempts - successes);
 
-    const expectedSuccessRate = (successes + priorAlpha) / (successes + failures + priorAlpha + priorBeta);
-    const avgRegens = data.avg_regenerations_per_content || 1.0;
+    const expectedSuccessRate = (successes + priorAlpha) / (successes + failures + priorAlpha + priorBeta || 1);
+    const avgRegens = avg_regenerations_per_content;
     const thrashingPenalty = Math.exp(-0.4 * Math.max(0, avgRegens - 1));
 
     let rawSuccess = (expectedSuccessRate * 100) * thrashingPenalty;
-    rawSuccess = Math.min(100, rawSuccess);
+    rawSuccess = Math.min(100, Math.max(0, rawSuccess));
 
     // =========================================================================
     // DIMENSION 4: EMA Growth Momentum — G(t)
     // =========================================================================
-    const deltaContent = data.content_created_last_7_days - data.content_created_days_8_to_14;
+    const deltaContent = content_created_last_7_days - content_created_days_8_to_14;
     const growthVelocity = Math.tanh(0.2 * deltaContent);
     const momentumScore = 50 + (growthVelocity * 50);
-    const streakBonus = Math.min(20, data.consecutive_days_used * 2);
+    const streakBonus = Math.min(20, consecutive_days_used * 2);
 
     let rawGrowth = momentumScore + streakBonus;
     rawGrowth = Math.min(100, Math.max(0, rawGrowth));
@@ -88,18 +105,14 @@ export function calculateHealthScore(data: TeacherAnalytics) {
     // =========================================================================
     // DIMENSION 5: Community Impact Score — C(t)
     // =========================================================================
-    const sharedCount = data.shared_to_community_count || 0;
-    const exportedCount = data.exported_content_count || 0;
-    const communityVisits = data.community_library_visits || 0;
-
-    const shareDepth = totalContent > 1
-        ? Math.log10(1 + sharedCount) / Math.log10(1 + totalContent)
+    const shareDepth = content_created_total > 1
+        ? Math.log10(1 + shared_to_community_count) / Math.log10(1 + content_created_total)
         : 0;
-    const exportReach = Math.min(1, exportedCount / Math.max(1, totalContent));
-    const communityReciprocity = Math.min(1, communityVisits / 20);
+    const exportReach = Math.min(1, exported_content_count / Math.max(1, content_created_total));
+    const communityReciprocity = Math.min(1, community_library_visits / 20);
 
     let rawCommunity = ((0.5 * shareDepth) + (0.3 * exportReach) + (0.2 * communityReciprocity)) * 100;
-    rawCommunity = Math.min(100, rawCommunity);
+    rawCommunity = Math.min(100, Math.max(0, rawCommunity));
 
     // =========================================================================
     // CORE HEALTH EQUATION — H(t)
@@ -136,8 +149,8 @@ export function calculateHealthScore(data: TeacherAnalytics) {
         success_score: Math.round((rawSuccess / 100) * 20),
         growth_score: Math.round((rawGrowth / 100) * 20),
         community_score: Math.round((rawCommunity / 100) * 20),
-        days_since_last_use: data.days_since_last_use,
-        consecutive_days_used: data.consecutive_days_used,
+        days_since_last_use,
+        consecutive_days_used,
         estimated_students_impacted: data.estimated_students || 40,
     };
 }

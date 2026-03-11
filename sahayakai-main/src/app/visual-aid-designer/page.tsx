@@ -22,6 +22,8 @@ import { useAuth } from "@/context/auth-context";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 const translations: Record<string, Record<string, string>> = {
   en: {
@@ -30,7 +32,7 @@ const translations: Record<string, Record<string, string>> = {
     descLabel: "Description",
     speakLabel: "Speak your description...",
     placeholder: "e.g., A simple diagram of the water cycle...",
-    gradeLabel: "Grade Level",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Generate Visual Aid",
     generating: "Generating...",
@@ -207,15 +209,28 @@ function VisualAidContent() {
   const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
       language: "en",
-      gradeLevel: "6th Grade",
+      gradeLevel: "Class 6",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedPrompt  = form.watch("prompt");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("visual-aid-designer", {
+    prompt: watchedPrompt,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   const selectedLanguage = form.watch("language") || 'en';
@@ -224,6 +239,18 @@ function VisualAidContent() {
 
   // Ref to prevent double-submission in StrictMode or re-renders
   const hasAutoSubmitted = useRef(false);
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt") || searchParams.get("topic");
+    const id = searchParams.get("id");
+    if (promptParam || id || !savedSnapshot) return;
+    if (savedSnapshot.prompt)     form.setValue("prompt",     savedSnapshot.prompt);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -271,11 +298,20 @@ function VisualAidContent() {
       };
       fetchSavedContent();
     } else if (promptParam && !hasAutoSubmitted.current) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("prompt", promptParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       hasAutoSubmitted.current = true;
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 100);
+      }, 300);
     }
   }, [searchParams, form, toast]);
 
@@ -298,7 +334,7 @@ function VisualAidContent() {
         headers: headers,
         body: JSON.stringify({
           prompt: values.prompt,
-          language: values.language,
+          language: values.language || selectedLanguage,
           gradeLevel: values.gradeLevel,
           subject: values.subject,
         })
@@ -317,6 +353,7 @@ function VisualAidContent() {
 
       const result = await res.json();
       setVisualAid(result);
+      clearFormSnapshot("visual-aid-designer");
     } catch (error: any) {
       console.error("Failed to generate visual aid:", error);
       toast({
@@ -360,14 +397,6 @@ function VisualAidContent() {
                   <FormItem>
                     <FormLabel className="font-headline">{t.descLabel}</FormLabel>
                     <div className="flex flex-col gap-4">
-                      <MicrophoneInput
-                        onTranscriptChange={(transcript) => {
-                          field.onChange(transcript);
-                        }}
-                        iconSize="lg"
-                        label={t.speakLabel}
-                        className="bg-white/50 backdrop-blur-sm"
-                      />
                       <FormControl>
                         <Textarea
                           placeholder={t.placeholder}

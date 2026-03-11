@@ -47,12 +47,6 @@ export function LessonPlanInputSection({
             </div>
             <FormControl>
               <div className="flex flex-col gap-4">
-                <MicrophoneInput
-                  onTranscriptChange={onTranscriptChange}
-                  iconSize="lg"
-                  label={labels?.microphone || "Speak your lesson topic..."}
-                  className="bg-white"
-                />
                 <Textarea
                   value={field.value}
                   onChange={field.onChange}
