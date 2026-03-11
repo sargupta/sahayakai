@@ -188,18 +188,10 @@ export function ConversationList({
                         </div>
                         <div>
                             <p className="text-sm font-bold text-slate-700">No messages yet</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                                Go to the Community page and message a fellow teacher.
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                Use the <PenSquare className="inline h-3 w-3 mb-0.5" /> button above to find a teacher and start a conversation.
                             </p>
                         </div>
-                        <Button
-                            size="sm"
-                            onClick={onNewDM}
-                            className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl gap-1.5 text-xs font-bold mt-2"
-                        >
-                            <PenSquare className="h-3.5 w-3.5" />
-                            Start a conversation
-                        </Button>
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-50">
