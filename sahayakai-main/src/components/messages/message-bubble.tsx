@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
     BookOpen, ClipboardCheck, FileSignature, Images,
-    Globe2, GraduationCap, Wand2, ArrowRight, CheckCheck, Check,
+    Globe2, GraduationCap, Wand2, ArrowRight, CheckCheck, Check, Mic,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -109,6 +109,40 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
     );
 }
 
+// ── Audio Bubble ──────────────────────────────────────────────────────────────
+
+function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration?: number; isOwn: boolean }) {
+    const formatDuration = (s?: number) => {
+        if (!s) return "";
+        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    };
+
+    return (
+        <div className={cn(
+            "flex items-center gap-2 min-w-[160px]",
+        )}>
+            <div className={cn(
+                "p-1.5 rounded-full shrink-0",
+                isOwn ? "bg-white/20" : "bg-orange-100"
+            )}>
+                <Mic className={cn("h-3.5 w-3.5", isOwn ? "text-white" : "text-orange-500")} />
+            </div>
+            <audio
+                src={audioUrl}
+                controls
+                preload="metadata"
+                className="h-8 flex-1 min-w-0"
+                style={{ colorScheme: "normal" }}
+            />
+            {duration && (
+                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-slate-400")}>
+                    {formatDuration(duration)}
+                </span>
+            )}
+        </div>
+    );
+}
+
 // ── Read receipt icon ─────────────────────────────────────────────────────────
 
 function ReadReceipt({ readBy, participantIds }: { readBy: string[]; participantIds: string[] }) {
@@ -165,6 +199,11 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds }: Me
                     {/* Resource card */}
                     {message.type === "resource" && message.resource && (
                         <ResourceCard resource={message.resource} isOwn={isOwn} />
+                    )}
+
+                    {/* Audio message */}
+                    {message.type === "audio" && message.audioUrl && (
+                        <AudioBubble audioUrl={message.audioUrl} duration={message.audioDuration} isOwn={isOwn} />
                     )}
                 </div>
 

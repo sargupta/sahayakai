@@ -65,7 +65,7 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
             senderName: sender?.displayName,
             senderPhotoURL: sender?.photoURL,
             link: `/profile/${fromUid}`,
-            metadata: { requestId: reqId },
+            metadata: { requestId: pairId },
         });
     } catch {
         // Notification failure must not block the request

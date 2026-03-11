@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 
 export type ConversationType = 'direct' | 'group';
 
-export type MessageType = 'text' | 'resource';
+export type MessageType = 'text' | 'resource' | 'audio';
 
 // ── Participant snapshot (denormalized so inbox renders without joins) ─────────
 
@@ -36,6 +36,8 @@ export interface Message {
     senderName: string;                 // denormalized
     senderPhotoURL: string | null;      // denormalized
     resource?: SharedResource;          // only when type === 'resource'
+    audioUrl?: string;                  // only when type === 'audio'
+    audioDuration?: number;             // duration in seconds
     readBy: string[];                   // UIDs who have opened this message
     createdAt: Timestamp | null;
 }

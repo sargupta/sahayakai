@@ -16,6 +16,7 @@ import {
     Send, Loader2, ArrowLeft, Paperclip, X, BookOpen,
     ClipboardCheck, FileSignature, Images, Globe2, GraduationCap, Wand2,
 } from "lucide-react";
+import { VoiceRecorder } from "./voice-recorder";
 import { cn } from "@/lib/utils";
 import {
     Popover, PopoverContent, PopoverTrigger,
@@ -210,12 +211,15 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
 
     const handleSend = useCallback(async (
         text: string,
-        type: "text" | "resource" = "text",
+        type: "text" | "resource" | "audio" = "text",
         resource?: SharedResource,
+        audioUrl?: string,
+        audioDuration?: number,
     ) => {
         if (!user || sending) return;
         const trimmed = text.trim();
         if (!trimmed && type === "text") return;
+        if (type === "audio" && !audioUrl) return;
 
         setInput("");
         setSending(true);
@@ -225,6 +229,8 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                 text: trimmed,
                 type,
                 resource,
+                audioUrl,
+                audioDuration,
             });
         } finally {
             setSending(false);
@@ -341,6 +347,12 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             className="flex-1 min-h-[40px] max-h-32 text-sm bg-slate-50 border-slate-200 rounded-xl resize-none focus-visible:ring-orange-400/30 placeholder:text-slate-400 py-2.5"
                             rows={1}
                             maxLength={1000}
+                            disabled={sending}
+                        />
+
+                        {/* Voice message */}
+                        <VoiceRecorder
+                            onSend={(audioUrl, duration) => handleSend("", "audio", undefined, audioUrl, duration)}
                             disabled={sending}
                         />
 

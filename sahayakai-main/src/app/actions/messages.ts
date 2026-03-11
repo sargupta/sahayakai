@@ -127,17 +127,22 @@ export async function sendMessageAction({
     text,
     type = 'text',
     resource,
+    audioUrl,
+    audioDuration,
 }: {
     conversationId: string;
     text: string;
-    type?: 'text' | 'resource';
+    type?: 'text' | 'resource' | 'audio';
     resource?: SharedResource;
+    audioUrl?: string;
+    audioDuration?: number;
 }): Promise<{ messageId: string }> {
     // Identity always comes from the server — client never supplies senderId
     const senderId = await getAuthUserId();
 
     const trimmed = text.trim();
     if (!trimmed && type === 'text') throw new Error('Message cannot be empty');
+    if (type === 'audio' && !audioUrl) throw new Error('Audio URL is required for voice messages');
     if (trimmed.length > 1000) throw new Error('Message too long (max 1000 chars)');
 
     const db = await getDb();
@@ -170,6 +175,11 @@ export async function sendMessageAction({
             messagePayload.resource = resource;
         }
 
+        if (type === 'audio' && audioUrl) {
+            messagePayload.audioUrl = audioUrl;
+            if (audioDuration) messagePayload.audioDuration = audioDuration;
+        }
+
         tx.set(msgRef, messagePayload);
 
         // Increment unreadCount for all OTHER participants
@@ -182,6 +192,8 @@ export async function sendMessageAction({
 
         const preview = type === 'resource'
             ? `📎 ${resource?.title ?? 'Shared a resource'}`
+            : type === 'audio'
+            ? 'Voice message'
             : trimmed.slice(0, 80);
 
         tx.update(convRef, {
@@ -206,6 +218,8 @@ export async function sendMessageAction({
             title: `New message from ${conversationName}`,
             message: type === 'resource'
                 ? `📎 ${resource?.title ?? 'Shared a resource'}`
+                : type === 'audio'
+                ? 'Voice message'
                 : trimmed.slice(0, 80),
             senderId,
             senderName: senderSnap?.displayName ?? 'Teacher',
