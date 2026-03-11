@@ -8,13 +8,15 @@ import { sendChatMessageAction } from "@/app/actions/community";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Loader2 } from "lucide-react";
+import { Send, MessageCircle, Loader2, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { VoiceRecorder } from "@/components/messages/voice-recorder";
 
 type ChatMessage = {
     id: string;
     text: string;
+    audioUrl?: string;
     authorId: string;
     authorName: string;
     authorPhotoURL?: string | null;
@@ -64,31 +66,33 @@ export function CommunityChat() {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSend = async () => {
+    const handleSend = async (audioUrl?: string) => {
         const text = input.trim();
-        if (!text || !user || sending) return;
+        if (!audioUrl && !text) return;
+        if (!user || sending) return;
 
         // Optimistic update
         const optimisticId = `optimistic_${Date.now()}`;
         const optimisticMsg: ChatMessage = {
             id: optimisticId,
-            text,
+            text: audioUrl ? "Voice message" : text,
+            audioUrl,
             authorId: user.uid,
             authorName: user.displayName || "Teacher",
             authorPhotoURL: user.photoURL,
             createdAt: null,
         };
         setMessages((prev) => [...prev, optimisticMsg]);
-        setInput("");
+        if (!audioUrl) setInput("");
         setError(null);
         setSending(true);
 
         try {
-            await sendChatMessageAction(text);
+            await sendChatMessageAction(audioUrl ? "" : text, audioUrl);
         } catch (err: any) {
             // Rollback optimistic message and show error
             setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-            setInput(text);
+            if (!audioUrl) setInput(text);
             setError(
                 err?.message?.includes("Unauthorized")
                     ? "You must be signed in to send messages."
@@ -107,6 +111,10 @@ export function CommunityChat() {
             e.preventDefault();
             handleSend();
         }
+    };
+
+    const handleVoiceSend = (audioUrl: string) => {
+        handleSend(audioUrl);
     };
 
     return (
@@ -182,7 +190,16 @@ export function CommunityChat() {
                                             : "bg-slate-100 text-slate-800 rounded-bl-sm",
                                         isOptimistic && "opacity-60",
                                     )}>
-                                        {msg.text}
+                                        {msg.audioUrl ? (
+                                            <div className="flex items-center gap-2 min-w-[160px]">
+                                                <div className={cn("p-1.5 rounded-full shrink-0", isOwn ? "bg-white/20" : "bg-orange-100")}>
+                                                    <Mic className={cn("h-3.5 w-3.5", isOwn ? "text-white" : "text-orange-500")} />
+                                                </div>
+                                                <audio src={msg.audioUrl} controls preload="metadata" className="h-8 flex-1 min-w-0" />
+                                            </div>
+                                        ) : (
+                                            msg.text
+                                        )}
                                     </div>
                                     {showMeta && (
                                         <p className="text-[10px] text-slate-400 px-1">{formatTime(msg.createdAt)}</p>
@@ -216,9 +233,10 @@ export function CommunityChat() {
                             maxLength={500}
                             disabled={sending}
                         />
+                        <VoiceRecorder onSend={handleVoiceSend} disabled={sending} />
                         <Button
                             size="sm"
-                            onClick={handleSend}
+                            onClick={() => handleSend()}
                             disabled={!input.trim() || sending}
                             className="h-10 w-10 p-0 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-sm shrink-0"
                         >

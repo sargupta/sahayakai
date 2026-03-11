@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,18 +16,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getLibraryResources, getFollowingIdsAction,
   likeResourceAction, saveResourceToLibraryAction,
+  getRecommendedTeachersAction,
 } from '@/app/actions/community';
 import {
-  Loader2, Search, Library, Flame, UserCheck,
-  School, BookOpen, Bookmark, ArrowRight, Heart, MessageCircle,
+  Loader2, Search, Library, Flame,
+  School, Bookmark, ArrowRight, Heart, MessageCircle,
+  Mic, MicOff, LayoutGrid, Users, Plus,
 } from 'lucide-react';
-import { TeacherSuggestions } from '@/components/teacher-suggestions';
 import { CreatePostDialog } from '@/components/community/create-post-dialog';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
 import { CommunityChat } from '@/components/community/community-chat';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,9 +48,6 @@ type Resource = {
 };
 
 // ── Resource-type config ─────────────────────────────────────────────────────
-// Each type gets a coloured top border + matching icon bg so teachers can
-// recognise the resource kind before reading the title — important for
-// low-literacy tech users scanning on a small phone screen.
 
 const TYPE_CONFIG: Record<string, {
   border: string; bg: string; text: string; label: string; route: string;
@@ -72,17 +72,107 @@ const LANG_SHORT: Record<string, string> = {
   ta: 'TA', gu: 'GU', kn: 'KN', pa: 'PA', ml: 'ML', or: 'OR',
 };
 
-// ── Type filter chips ────────────────────────────────────────────────────────
+// ── Type filter chips (with icons) ───────────────────────────────────────────
 
-const TYPE_CHIPS = [
-  { value: 'all',               label: 'All' },
-  { value: 'lesson-plan',       label: 'Lessons' },
-  { value: 'quiz',              label: 'Quizzes' },
-  { value: 'worksheet',         label: 'Worksheets' },
-  { value: 'rubric',            label: 'Rubrics' },
-  { value: 'visual-aid',        label: 'Visual Aids' },
-  { value: 'virtual-field-trip',label: 'Field Trips' },
+const TYPE_CHIPS: { value: string; label: string; fileType?: FileType }[] = [
+  { value: 'all',                label: 'All' },
+  { value: 'lesson-plan',        label: 'Lessons',    fileType: 'lesson-plan' },
+  { value: 'quiz',               label: 'Quizzes',    fileType: 'quiz' },
+  { value: 'worksheet',          label: 'Worksheets', fileType: 'worksheet' },
+  { value: 'rubric',             label: 'Rubrics',    fileType: 'rubric' },
+  { value: 'visual-aid',         label: 'Visual Aids',fileType: 'visual-aid' },
+  { value: 'virtual-field-trip', label: 'Field Trips',fileType: 'virtual-field-trip' },
 ];
+
+// ── Teacher suggestions horizontal strip ─────────────────────────────────────
+
+function TeacherStrip() {
+  const router = useRouter();
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) { setLoading(false); return; }
+      getRecommendedTeachersAction(user.uid)
+        .then((recs) => setSuggestions(recs))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    });
+    return () => unsub();
+  }, []);
+
+  if (loading || suggestions.length === 0) return null;
+
+  return (
+    <div className="space-y-2 mt-3">
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+        <Users className="h-3.5 w-3.5" />
+        Suggested Educators
+      </p>
+      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+        {suggestions.map((t) => (
+          <button
+            key={t.uid}
+            onClick={() => router.push(`/profile/${t.uid}`)}
+            className="flex flex-col items-center gap-1.5 shrink-0 p-3 rounded-2xl bg-white border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all min-w-[88px]"
+          >
+            <Avatar className="h-11 w-11 ring-2 ring-white shadow-sm">
+              <AvatarImage src={t.photoURL} referrerPolicy="no-referrer" />
+              <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-400 to-amber-500 text-white">
+                {t.initial || t.displayName?.[0] || 'T'}
+              </AvatarFallback>
+            </Avatar>
+            <p className="text-[11px] font-bold text-slate-800 text-center leading-tight w-full truncate">
+              {t.displayName}
+            </p>
+            {t.recommendationReason && (
+              <span className="text-[9px] text-slate-400 font-medium truncate w-full text-center">
+                {t.recommendationReason}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Voice search hook ─────────────────────────────────────────────────────────
+
+function useVoiceSearch(onResult: (text: string) => void, lang: string) {
+  const [isListening, setIsListening] = useState(false);
+  const recRef = useRef<any>(null);
+
+  const toggle = useCallback(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+
+    if (isListening) {
+      recRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const rec = new SR();
+    rec.lang = lang !== 'all' ? lang : navigator.language;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onresult = (e: any) => {
+      const transcript = e.results[0]?.[0]?.transcript ?? '';
+      if (transcript) onResult(transcript);
+    };
+    rec.onend = () => setIsListening(false);
+    rec.onerror = () => setIsListening(false);
+
+    recRef.current = rec;
+    rec.start();
+    setIsListening(true);
+  }, [isListening, lang, onResult]);
+
+  return { isListening, toggle };
+}
 
 // ── Skeleton card ────────────────────────────────────────────────────────────
 
@@ -139,7 +229,6 @@ const ResourceCard = ({
     router.push(`/${c.route}?${params.toString()}`);
   };
 
-  // Initials for avatar fallback — handles single-word names gracefully
   const initials = resource.author
     .split(' ')
     .slice(0, 2)
@@ -156,21 +245,17 @@ const ResourceCard = ({
         c.border,
       )}
     >
-      {/* Header */}
       <CardHeader className="p-4 pb-2">
         <div className="flex items-start gap-3">
-          {/* Type icon with matching bg */}
           <div className={cn('p-2 rounded-xl shrink-0 transition-all duration-200', c.bg, 'group-hover:scale-105')}>
             <FileTypeIcon type={resource.type} className={cn('h-5 w-5', c.text)} />
           </div>
 
           <div className="flex-1 min-w-0 space-y-1">
-            {/* Title — clamp to 2 lines, links colour on hover */}
             <CardTitle className="text-sm font-bold leading-snug text-slate-900 group-hover:text-primary transition-colors line-clamp-2 font-headline">
               {resource.title}
             </CardTitle>
 
-            {/* Author row */}
             <div className="flex items-center gap-1.5">
               <Avatar className={cn('h-5 w-5 ring-1 ring-white shadow-sm shrink-0')}>
                 <AvatarImage src={undefined} />
@@ -186,7 +271,6 @@ const ResourceCard = ({
         </div>
       </CardHeader>
 
-      {/* Body: image preview OR metadata tags */}
       <CardContent className="px-4 py-2 flex-grow">
         {resource.imageUrl ? (
           <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-100 transition-all group-hover:border-slate-200">
@@ -199,7 +283,6 @@ const ResourceCard = ({
             />
           </div>
         ) : (
-          /* Grade / subject / type chips replace the meaningless placeholder quote */
           <div className="flex flex-wrap gap-1.5 pt-1">
             {resource.gradeLevel && (
               <Badge className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold border-0 rounded-full">
@@ -218,9 +301,7 @@ const ResourceCard = ({
         )}
       </CardContent>
 
-      {/* Footer */}
       <CardFooter className="px-4 py-2.5 border-t border-slate-50 bg-slate-50/40 flex justify-between items-center gap-2 mt-auto">
-        {/* Language badge + like toggle */}
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
@@ -229,7 +310,6 @@ const ResourceCard = ({
             {LANG_SHORT[resource.language] ?? resource.language?.toUpperCase() ?? 'EN'}
           </Badge>
 
-          {/* Like button — filled heart when liked, optimistic toggle */}
           <button
             onClick={() => onLike(resource)}
             className={cn(
@@ -245,7 +325,6 @@ const ResourceCard = ({
           </button>
         </div>
 
-        {/* Save + Use actions */}
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="ghost"
@@ -263,7 +342,6 @@ const ResourceCard = ({
             {isSaved ? 'Saved' : 'Save'}
           </Button>
 
-          {/* "Use This" — routes to the matching tool with topic pre-filled */}
           <Button
             size="sm"
             className="h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-none"
@@ -280,40 +358,20 @@ const ResourceCard = ({
 
 // ── Empty state ──────────────────────────────────────────────────────────────
 
-const EMPTY_COPY: Record<string, { title: string; desc: string }> = {
-  trending: {
-    title: 'The Community is Growing',
-    desc: 'Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.',
-  },
-  following: {
-    title: 'Grow Your Network',
-    desc: 'Follow fellow teachers to see their latest resources here. Connect with educators from your region.',
-  },
-  'my-content': {
-    title: 'Share Your First Resource',
-    desc: "You haven't shared anything yet. Share your best work and inspire teachers across India.",
-  },
-  teachers: {
-    title: 'No Teachers Found',
-    desc: 'Try adjusting your filters to find teachers from your region or subject area.',
-  },
-};
-
-const EmptyState = ({ tab, onCreatePost }: { tab: string; onCreatePost?: () => void }) => {
-  const copy = EMPTY_COPY[tab] ?? EMPTY_COPY.trending;
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 mt-4">
-      <div className="bg-orange-100 p-5 rounded-full">
-        <Library className="h-8 w-8 text-orange-500" />
-      </div>
-      <div className="max-w-sm space-y-1.5">
-        <h3 className="text-base font-bold text-slate-900 font-headline">{copy.title}</h3>
-        <p className="text-sm text-slate-500 leading-relaxed">{copy.desc}</p>
-      </div>
-      <CreatePostDialog onPostCreated={onCreatePost ?? (() => {})} />
+const EmptyState = ({ onCreatePost }: { onCreatePost?: () => void }) => (
+  <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 mt-4">
+    <div className="bg-orange-100 p-5 rounded-full">
+      <Library className="h-8 w-8 text-orange-500" />
     </div>
-  );
-};
+    <div className="max-w-sm space-y-1.5">
+      <h3 className="text-base font-bold text-slate-900 font-headline">The Community is Growing</h3>
+      <p className="text-sm text-slate-500 leading-relaxed">
+        Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.
+      </p>
+    </div>
+    <CreatePostDialog onPostCreated={onCreatePost ?? (() => {})} />
+  </div>
+);
 
 // ── Resource list with skeleton + load-more ───────────────────────────────────
 
@@ -323,7 +381,6 @@ const PAGE_SIZE = 20;
 const ResourceList = ({
   resources,
   loading,
-  tab,
   likedIds,
   savedIds,
   onLike,
@@ -332,7 +389,6 @@ const ResourceList = ({
 }: {
   resources: Resource[];
   loading: boolean;
-  tab: string;
   likedIds: Set<string>;
   savedIds: Set<string>;
   onLike: (r: Resource) => void;
@@ -341,8 +397,7 @@ const ResourceList = ({
 }) => {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
-  // Reset visible count when tab or filter changes
-  useEffect(() => { setVisibleCount(INITIAL_VISIBLE); }, [tab, resources.length]);
+  useEffect(() => { setVisibleCount(INITIAL_VISIBLE); }, [resources.length]);
 
   if (loading) {
     return (
@@ -353,7 +408,7 @@ const ResourceList = ({
   }
 
   if (resources.length === 0) {
-    return <EmptyState tab={tab} onCreatePost={onCreatePost} />;
+    return <EmptyState onCreatePost={onCreatePost} />;
   }
 
   const visible = resources.slice(0, visibleCount);
@@ -362,7 +417,6 @@ const ResourceList = ({
 
   return (
     <div className="space-y-4 mt-4">
-      {/* Result count — helps teachers know scope of what they're browsing */}
       <p className="text-xs text-slate-400 font-semibold">
         {resources.length} resource{resources.length !== 1 ? 's' : ''} found
       </p>
@@ -407,18 +461,22 @@ export default function CommunityPage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchInput, setSearchInput]   = useState('');
   const [searchTerm, setSearchTerm]     = useState('');
-  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'teachers' | 'my-content' | 'chat'>('trending');
+  const [activeTab, setActiveTab] = useState<'discover' | 'connect' | 'chat'>('discover');
 
   const [resources, setResources]             = useState<Resource[]>([]);
   const [filteredResources, setFiltered]      = useState<Resource[]>([]);
-  const [followingIds, setFollowingIds]       = useState<string[]>([]);
   const [loading, setLoading]                 = useState(true);
 
-  // Optimistic sets — local only, no extra DB reads on page load
   const [likedIds, setLikedIds]   = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds]   = useState<Set<string>>(new Set());
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ── Voice search ──────────────────────────────────────────────────────────
+  const handleVoiceResult = useCallback((text: string) => {
+    setSearchInput(text);
+  }, []);
+  const { isListening, toggle: toggleVoice } = useVoiceSearch(handleVoiceResult, languageFilter);
 
   // ── Debounced search ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -432,33 +490,12 @@ export default function CommunityPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const [trendingData, followIds] = await Promise.all([
-          getLibraryResources({
-            language: languageFilter === 'all' ? undefined : languageFilter,
-            excludeTypes: ['document'],
-          }),
-          user ? getFollowingIdsAction(user.uid) : Promise.resolve([]),
-        ]);
+        const trendingData = await getLibraryResources({
+          language: languageFilter === 'all' ? undefined : languageFilter,
+          excludeTypes: ['document'],
+        });
 
-        let followingResources: any[] = [];
-        if (user && followIds.length > 0) {
-          followingResources = await getLibraryResources({
-            authorIds: followIds,
-            language: languageFilter === 'all' ? undefined : languageFilter,
-          });
-        }
-
-        let myResources: any[] = [];
-        if (user) {
-          myResources = await getLibraryResources({
-            authorId: user.uid,
-            language: languageFilter === 'all' ? undefined : languageFilter,
-          });
-        }
-
-        const all = [...(trendingData as any[]), ...followingResources, ...myResources];
-
-        const transformed: Resource[] = all.map((r: any) => ({
+        const transformed: Resource[] = (trendingData as any[]).map((r: any) => ({
           id:         r.id,
           title:      r.title,
           type:       r.type,
@@ -471,10 +508,8 @@ export default function CommunityPage() {
           subject:    r.subject,
         }));
 
-        // Deduplicate across fetches
         const unique = Array.from(new Map(transformed.map((r) => [r.id, r])).values());
         setResources(unique);
-        setFollowingIds(followIds);
       } catch (error) {
         console.error('Error loading community resources:', error);
         toast({
@@ -492,19 +527,13 @@ export default function CommunityPage() {
   // ── Client-side filtering ─────────────────────────────────────────────────
   useEffect(() => {
     const lowerSearch = searchTerm.toLowerCase();
-
     const filtered = resources.filter((r) => {
       const matchesSearch = !searchTerm || r.title.toLowerCase().includes(lowerSearch);
       const matchesType   = typeFilter === 'all' || r.type === typeFilter;
-
-      if (activeTab === 'following')   return matchesSearch && matchesType && followingIds.includes(r.authorId);
-      if (activeTab === 'my-content')  return matchesSearch && matchesType && !!user && r.authorId === user.uid;
-
-      return matchesSearch && matchesType; // trending
+      return matchesSearch && matchesType;
     });
-
     setFiltered(filtered);
-  }, [resources, searchTerm, typeFilter, activeTab, followingIds, user]);
+  }, [resources, searchTerm, typeFilter]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -513,14 +542,12 @@ export default function CommunityPage() {
       toast({ title: 'Sign in to like resources', variant: 'destructive' });
       return;
     }
-    // Optimistic toggle
     setLikedIds((prev) => {
       const next = new Set(prev);
       if (next.has(resource.id)) next.delete(resource.id);
       else next.add(resource.id);
       return next;
     });
-    // Also update the like count in the local resource list
     setResources((prev) =>
       prev.map((r) =>
         r.id === resource.id
@@ -531,7 +558,6 @@ export default function CommunityPage() {
     try {
       await likeResourceAction(resource.id, user.uid);
     } catch {
-      // Revert on failure
       setLikedIds((prev) => {
         const next = new Set(prev);
         if (next.has(resource.id)) next.delete(resource.id);
@@ -547,7 +573,6 @@ export default function CommunityPage() {
       toast({ title: 'Sign in to save resources', variant: 'destructive' });
       return;
     }
-    // Optimistic mark
     setSavedIds((prev) => new Set(prev).add(resource.id));
     try {
       const { alreadySaved } = await saveResourceToLibraryAction(
@@ -576,9 +601,9 @@ export default function CommunityPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-5">
+    <div className="w-full max-w-7xl mx-auto space-y-4 pb-24 sm:pb-6">
 
-      {/* ── Header strip — warm saffron gradient, compact ────────────────── */}
+      {/* ── Header strip ─────────────────────────────────────────────────── */}
       <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50/70 to-white border border-orange-100/70 shadow-sm">
         <div className="px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -594,17 +619,46 @@ export default function CommunityPage() {
               </p>
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 hidden sm:block">
             <CreatePostDialog onPostCreated={() => {}} />
           </div>
         </div>
       </div>
 
-      {/* ── Main layout ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
+      {/* ── Main tabs ──────────────────────────────────────────────────────── */}
+      <Tabs
+        defaultValue="discover"
+        onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+        className="w-full"
+      >
+        <TabsList className="flex w-full bg-slate-100/60 p-1 rounded-2xl h-auto border border-slate-200/60 gap-0.5">
+          <TabsTrigger
+            value="discover"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
+          >
+            <Flame className="h-3.5 w-3.5 shrink-0" />
+            <span>Discover</span>
+          </TabsTrigger>
 
-        {/* Left: content area */}
-        <div className="flex-grow min-w-0 space-y-3">
+          <TabsTrigger
+            value="connect"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
+          >
+            <School className="h-3.5 w-3.5 shrink-0" />
+            <span>Connect</span>
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="chat"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
+          >
+            <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>Chat</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── Discover tab ─────────────────────────────────────────────────── */}
+        <TabsContent value="discover" className="outline-none space-y-3 mt-3">
 
           {/* Search + language row */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -612,134 +666,93 @@ export default function CommunityPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="Search lessons, quizzes, worksheets…"
-                className="pl-11 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
+                className="pl-11 pr-12 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
+              {/* Voice search button */}
+              <button
+                onClick={toggleVoice}
+                className={cn(
+                  "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
+                  isListening
+                    ? "bg-red-100 text-red-500 animate-pulse"
+                    : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                )}
+                title={isListening ? "Stop listening" : "Search by voice"}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
             </div>
             <div className="w-full sm:w-48 h-12">
               <LanguageSelector onValueChange={setLanguageFilter} defaultValue={languageFilter} />
             </div>
           </div>
 
-          {/* Type filter chips — horizontal scroll on mobile */}
+          {/* Type filter chips — with icons */}
           <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-            {TYPE_CHIPS.map((chip) => (
-              <button
-                key={chip.value}
-                onClick={() => setTypeFilter(chip.value)}
-                className={cn(
-                  'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap',
-                  typeFilter === chip.value
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:text-primary',
-                )}
-              >
-                {chip.label}
-              </button>
-            ))}
+            {TYPE_CHIPS.map((chip) => {
+              const isActive = typeFilter === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  onClick={() => setTypeFilter(chip.value)}
+                  className={cn(
+                    'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap',
+                    isActive
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:text-primary',
+                  )}
+                >
+                  {chip.fileType ? (
+                    <FileTypeIcon
+                      type={chip.fileType}
+                      className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")}
+                    />
+                  ) : (
+                    <LayoutGrid className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")} />
+                  )}
+                  {chip.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Tabs */}
-          <Tabs
-            defaultValue="trending"
-            onValueChange={(v) => setActiveTab(v as typeof activeTab)}
-            className="w-full"
-          >
-            <TabsList className="flex w-full bg-slate-100/60 p-1 rounded-2xl h-auto border border-slate-200/60 gap-0.5">
-              <TabsTrigger
-                value="trending"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-              >
-                <Flame className="h-3.5 w-3.5 shrink-0" />
-                <span>Trending</span>
-              </TabsTrigger>
+          {/* Suggested educators horizontal strip */}
+          {activeTab === 'discover' && <TeacherStrip />}
 
-              <TabsTrigger
-                value="following"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-              >
-                <UserCheck className="h-3.5 w-3.5 shrink-0" />
-                <span>Following</span>
-              </TabsTrigger>
+          {/* Resource grid */}
+          <ResourceList
+            resources={filteredResources}
+            loading={loading}
+            likedIds={likedIds}
+            savedIds={savedIds}
+            onLike={handleLike}
+            onSave={handleSave}
+          />
+        </TabsContent>
 
-              <TabsTrigger
-                value="teachers"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-              >
-                <School className="h-3.5 w-3.5 shrink-0" />
-                <span>Teachers</span>
-              </TabsTrigger>
+        {/* ── Connect tab ──────────────────────────────────────────────────── */}
+        <TabsContent value="connect" className="outline-none mt-3">
+          <TeacherDirectory />
+        </TabsContent>
 
-              <TabsTrigger
-                value="my-content"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-              >
-                <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                <span>My Work</span>
-              </TabsTrigger>
+        {/* ── Chat tab ─────────────────────────────────────────────────────── */}
+        <TabsContent value="chat" className="outline-none mt-3">
+          <CommunityChat />
+        </TabsContent>
+      </Tabs>
 
-              <TabsTrigger
-                value="chat"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-              >
-                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                <span>Chat</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="trending" className="outline-none">
-              <ResourceList
-                resources={filteredResources}
-                loading={loading}
-                tab="trending"
-                likedIds={likedIds}
-                savedIds={savedIds}
-                onLike={handleLike}
-                onSave={handleSave}
-              />
-            </TabsContent>
-
-            <TabsContent value="following" className="outline-none">
-              <ResourceList
-                resources={filteredResources}
-                loading={loading}
-                tab="following"
-                likedIds={likedIds}
-                savedIds={savedIds}
-                onLike={handleLike}
-                onSave={handleSave}
-              />
-            </TabsContent>
-
-            <TabsContent value="teachers" className="outline-none">
-              <div className="mt-4">
-                <TeacherDirectory />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="my-content" className="outline-none">
-              <ResourceList
-                resources={filteredResources}
-                loading={loading}
-                tab="my-content"
-                likedIds={likedIds}
-                savedIds={savedIds}
-                onLike={handleLike}
-                onSave={handleSave}
-              />
-            </TabsContent>
-
-            <TabsContent value="chat" className="outline-none">
-              <CommunityChat />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Right: sticky suggestions sidebar */}
-        <div className="w-full lg:w-72 shrink-0 lg:sticky lg:top-4">
-          <TeacherSuggestions />
-        </div>
+      {/* ── Mobile FAB — Share button ─────────────────────────────────────── */}
+      <div className="fixed bottom-6 right-6 sm:hidden z-50">
+        <CreatePostDialog
+          onPostCreated={() => {}}
+          trigger={
+            <button className="h-14 w-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl flex items-center justify-center transition-all active:scale-95">
+              <Plus className="h-6 w-6" />
+            </button>
+          }
+        />
       </div>
     </div>
   );

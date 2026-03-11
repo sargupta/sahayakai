@@ -69,7 +69,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.text.size() <= 500;
+        && (request.resource.data.text.size() <= 500 || request.resource.data.audioUrl is string);
       allow update, delete: if false;
     }
 

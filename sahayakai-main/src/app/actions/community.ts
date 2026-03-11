@@ -610,7 +610,7 @@ export async function publishContentToLibraryAction(
     return { resourceId };
 }
 
-export async function sendChatMessageAction(text: string) {
+export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // 1. Authenticate via middleware-injected header — never trust client-supplied identity
     const { headers } = await import("next/headers");
     const h = await headers();
@@ -619,8 +619,8 @@ export async function sendChatMessageAction(text: string) {
 
     // 2. Validate input
     const trimmed = text?.trim();
-    if (!trimmed) throw new Error("Message cannot be empty");
-    if (trimmed.length > 500) throw new Error("Message too long");
+    if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
+    if (trimmed && trimmed.length > 500) throw new Error("Message too long");
 
     // 3. Rate limit
     const { checkServerRateLimit } = await import("@/lib/server-safety");
@@ -635,11 +635,14 @@ export async function sendChatMessageAction(text: string) {
     const authorName = userData?.displayName || "Teacher";
     const authorPhotoURL = userData?.photoURL ?? null;
 
-    await db.collection("community_chat").add({
-        text: trimmed,
+    const payload: Record<string, any> = {
+        text: trimmed || '',
         authorId,
         authorName,
         authorPhotoURL,
         createdAt: FieldValue.serverTimestamp(),
-    });
+    };
+    if (audioUrl) payload.audioUrl = audioUrl;
+
+    await db.collection("community_chat").add(payload);
 }
