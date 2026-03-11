@@ -268,6 +268,15 @@ export function OmniOrb() {
                 // Persist session turn with the triggered action
                 syncSessionTurn(updatedMessages, { flow: action.flow, params: action.params });
 
+                // If VIDYA couldn't extract a topic (vague follow-up like "those locations"),
+                // fall back to the last user message from chatHistory as context.
+                if (!action.params.topic && !action.params.question && !action.params.prompt) {
+                    const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
+                    if (lastUserMsg) {
+                        action.params.topic = lastUserMsg.parts.map((p: { text: string }) => p.text).join("").trim();
+                    }
+                }
+
                 const queryParams = new URLSearchParams();
                 if (action.params.topic) queryParams.set("topic", action.params.topic);
                 if (action.params.question) queryParams.set("question", action.params.question);
