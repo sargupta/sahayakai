@@ -1,21 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserCheck, Loader2, MapPin, GraduationCap, BookOpen, Users, MessageCircle } from "lucide-react";
-import { getAllTeachersAction, followTeacherAction, getFollowingIdsAction } from "@/app/actions/community";
+import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus } from "lucide-react";
+import { getAllTeachersAction } from "@/app/actions/community";
+import {
+    sendConnectionRequestAction,
+    acceptConnectionRequestAction,
+    declineConnectionRequestAction,
+    disconnectAction,
+    getMyConnectionDataAction,
+} from "@/app/actions/connections";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import type { ConnectionStatus, MyConnectionData } from "@/types";
+
+// Per-teacher connection state
+interface TeacherConnState {
+    status: ConnectionStatus;
+    requestId?: string; // set when pending_received — needed to accept/decline
+    loading: boolean;
+}
 
 export function TeacherDirectory() {
     const router = useRouter();
     const [teachers, setTeachers] = useState<any[]>([]);
-    const [followingIds, setFollowingIds] = useState<string[]>([]);
+    const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
 
@@ -25,6 +40,7 @@ export function TeacherDirectory() {
                 setUserId(user.uid);
                 loadData(user.uid);
             } else {
+                setUserId(null);
                 loadData();
             }
         });
@@ -34,12 +50,31 @@ export function TeacherDirectory() {
     const loadData = async (uid?: string) => {
         setLoading(true);
         try {
-            const [allTeachers, following] = await Promise.all([
+            const [allTeachers, connData] = await Promise.all([
                 getAllTeachersAction(uid),
-                uid ? getFollowingIdsAction(uid) : Promise.resolve([])
+                uid ? getMyConnectionDataAction() : Promise.resolve<MyConnectionData>({ connectedUids: [], sentRequestUids: [], receivedRequests: [] }),
             ]);
             setTeachers(allTeachers);
-            setFollowingIds(following);
+
+            // Build per-teacher state map
+            const stateMap: Record<string, TeacherConnState> = {};
+            for (const t of allTeachers) {
+                if (t.uid === uid) continue; // own card — skip
+                const { connectedUids, sentRequestUids, receivedRequests } = connData;
+                if (connectedUids.includes(t.uid)) {
+                    stateMap[t.uid] = { status: 'connected', loading: false };
+                } else if (sentRequestUids.includes(t.uid)) {
+                    stateMap[t.uid] = { status: 'pending_sent', loading: false };
+                } else {
+                    const received = receivedRequests.find((r) => r.uid === t.uid);
+                    if (received) {
+                        stateMap[t.uid] = { status: 'pending_received', requestId: received.requestId, loading: false };
+                    } else {
+                        stateMap[t.uid] = { status: 'none', loading: false };
+                    }
+                }
+            }
+            setConnState(stateMap);
         } catch (error) {
             console.error("Failed to load teacher directory:", error);
         } finally {
@@ -47,28 +82,79 @@ export function TeacherDirectory() {
         }
     };
 
-    const handleFollow = async (targetId: string) => {
-        if (!userId) {
-            alert("Please sign in to follow teachers.");
+    const setTeacherLoading = (uid: string, on: boolean) =>
+        setConnState((prev) => ({ ...prev, [uid]: { ...prev[uid], loading: on } }));
+
+    const handleConnect = async (teacherUid: string) => {
+        if (!userId) return;
+        setTeacherLoading(teacherUid, true);
+        // Optimistic
+        setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'pending_sent', loading: true } }));
+        try {
+            await sendConnectionRequestAction(teacherUid);
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'pending_sent', loading: false } }));
+        } catch {
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
+        }
+    };
+
+    const handleWithdraw = async (teacherUid: string) => {
+        if (!userId) return;
+        const state = connState[teacherUid];
+        if (!state?.requestId && state?.status === 'pending_sent') {
+            // Need to find requestId — it's the sorted pair
+            const reqId = [userId, teacherUid].sort().join('_');
+            setTeacherLoading(teacherUid, true);
+            try {
+                await declineConnectionRequestAction(reqId);
+                setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
+            } catch {
+                setTeacherLoading(teacherUid, false);
+            }
             return;
         }
-
-        const isFollowing = followingIds.includes(targetId);
-
-        // Optimistic update
-        if (isFollowing) {
-            setFollowingIds(prev => prev.filter(id => id !== targetId));
-        } else {
-            setFollowingIds(prev => [...prev, targetId]);
-        }
-
+        setTeacherLoading(teacherUid, true);
         try {
-            await followTeacherAction(userId, targetId);
-        } catch (error) {
-            console.error("Follow action failed:", error);
-            // Revert on error
-            const following = await getFollowingIdsAction(userId);
-            setFollowingIds(following);
+            const reqId = [userId, teacherUid].sort().join('_');
+            await declineConnectionRequestAction(reqId);
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
+        } catch {
+            setTeacherLoading(teacherUid, false);
+        }
+    };
+
+    const handleAccept = async (teacherUid: string) => {
+        const state = connState[teacherUid];
+        if (!state?.requestId) return;
+        setTeacherLoading(teacherUid, true);
+        try {
+            await acceptConnectionRequestAction(state.requestId);
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'connected', loading: false } }));
+        } catch {
+            setTeacherLoading(teacherUid, false);
+        }
+    };
+
+    const handleDecline = async (teacherUid: string) => {
+        const state = connState[teacherUid];
+        if (!state?.requestId) return;
+        setTeacherLoading(teacherUid, true);
+        try {
+            await declineConnectionRequestAction(state.requestId);
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
+        } catch {
+            setTeacherLoading(teacherUid, false);
+        }
+    };
+
+    const handleDisconnect = async (teacherUid: string) => {
+        if (!userId) return;
+        setTeacherLoading(teacherUid, true);
+        try {
+            await disconnectAction(teacherUid);
+            setConnState((prev) => ({ ...prev, [teacherUid]: { status: 'none', loading: false } }));
+        } catch {
+            setTeacherLoading(teacherUid, false);
         }
     };
 
@@ -86,7 +172,6 @@ export function TeacherDirectory() {
         </div>
     );
 
-    // Dynamic professional gradients for avatars to avoid "Alphabet Soup" look
     const getAvatarGradient = (name: string) => {
         const colors = [
             'from-indigo-500 to-purple-500',
@@ -96,16 +181,91 @@ export function TeacherDirectory() {
             'from-amber-400 to-orange-600',
             'from-sky-400 to-blue-600',
         ];
-        // Simple hash for consistency
         let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
         return colors[Math.abs(hash) % colors.length];
     };
 
-    const handleViewProfile = (uid: string) => {
-        router.push(`/profile/${uid}`);
+    const renderConnectButton = (teacher: any) => {
+        if (teacher.uid === userId) return null;
+
+        const state = connState[teacher.uid] ?? { status: 'none', loading: false };
+
+        if (state.loading) {
+            return (
+                <Button variant="ghost" size="sm" disabled className="rounded-full px-3 h-8 text-[11px] font-bold">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                </Button>
+            );
+        }
+
+        switch (state.status) {
+            case 'none':
+                return (
+                    <Button
+                        size="sm"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-sm shadow-orange-100 active:scale-95 transition-all"
+                        onClick={() => handleConnect(teacher.uid)}
+                    >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Connect
+                    </Button>
+                );
+
+            case 'pending_sent':
+                return (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold text-slate-500 border-slate-200 hover:border-red-200 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                        onClick={() => handleWithdraw(teacher.uid)}
+                        title="Withdraw request"
+                    >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pending
+                    </Button>
+                );
+
+            case 'pending_received':
+                return (
+                    <div className="flex items-center gap-1">
+                        <Button
+                            size="sm"
+                            className="rounded-full px-3 h-8 text-[11px] font-bold bg-emerald-500 hover:bg-emerald-600 text-white active:scale-95 transition-all"
+                            onClick={() => handleAccept(teacher.uid)}
+                        >
+                            Accept
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full px-3 h-8 text-[11px] font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                            onClick={() => handleDecline(teacher.uid)}
+                        >
+                            Decline
+                        </Button>
+                    </div>
+                );
+
+            case 'connected':
+                return (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-500 border border-slate-100 active:scale-95 transition-all group/conn"
+                        onClick={() => handleDisconnect(teacher.uid)}
+                        title="Disconnect"
+                    >
+                        <UserCheck className="h-3 w-3 mr-1 group-hover/conn:hidden" />
+                        <UserMinus className="h-3 w-3 mr-1 hidden group-hover/conn:inline-block" />
+                        <span className="group-hover/conn:hidden">Connected</span>
+                        <span className="hidden group-hover/conn:inline">Disconnect</span>
+                    </Button>
+                );
+
+            default:
+                return null;
+        }
     };
 
     return (
@@ -116,38 +276,21 @@ export function TeacherDirectory() {
                         <div className="flex items-start justify-between gap-3">
                             <div
                                 className="cursor-pointer transition-transform duration-300 hover:scale-105"
-                                onClick={() => handleViewProfile(teacher.uid)}
+                                onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
                                 <Avatar className="h-14 w-14 ring-2 ring-slate-50 shadow-sm group-hover:ring-orange-100 transition-all duration-500">
-                                    <AvatarImage
-                                        src={teacher.photoURL}
-                                        className="object-cover"
-                                        referrerPolicy="no-referrer"
-                                    />
-                                    <AvatarFallback className={cn(
-                                        "text-white text-lg font-bold bg-gradient-to-br",
-                                        getAvatarGradient(teacher.displayName || teacher.uid)
-                                    )}>
+                                    <AvatarImage src={teacher.photoURL} className="object-cover" referrerPolicy="no-referrer" />
+                                    <AvatarFallback className={cn("text-white text-lg font-bold bg-gradient-to-br", getAvatarGradient(teacher.displayName || teacher.uid))}>
                                         {teacher.initial || teacher.displayName?.[0] || "T"}
                                     </AvatarFallback>
                                 </Avatar>
                             </div>
-                            <Button
-                                variant={followingIds.includes(teacher.uid) ? "secondary" : "default"}
-                                size="sm"
-                                className={`rounded-full px-4 h-8 text-[11px] font-bold transition-all shadow-sm active:scale-95 ${followingIds.includes(teacher.uid)
-                                    ? 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
-                                    : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-100'
-                                    }`}
-                                onClick={() => handleFollow(teacher.uid)}
-                            >
-                                {followingIds.includes(teacher.uid) ? 'Following' : 'Connect'}
-                            </Button>
+                            {renderConnectButton(teacher)}
                         </div>
                         <div className="mt-3 space-y-0.5">
                             <CardTitle
                                 className="text-base font-black text-slate-900 font-headline tracking-tight group-hover:text-orange-600 transition-colors truncate cursor-pointer"
-                                onClick={() => handleViewProfile(teacher.uid)}
+                                onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
                                 {teacher.displayName}
                             </CardTitle>
@@ -189,7 +332,7 @@ export function TeacherDirectory() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all"
-                                onClick={() => handleViewProfile(teacher.uid)}
+                                onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
                                 Profile
                             </Button>

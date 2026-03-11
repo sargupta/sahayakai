@@ -234,7 +234,9 @@ export type NotificationType =
     | 'LIKE'            // someone liked your library resource
     | 'RESOURCE_SAVED'  // someone saved your resource to their personal library
     | 'RESOURCE_USED'   // someone clicked "Use This" on your resource (routed to a tool)
-    | 'COMMENT';        // future: someone commented on your resource
+    | 'COMMENT'         // future: someone commented on your resource
+    | 'CONNECT_REQUEST' // someone sent a connection request — carries metadata.requestId
+    | 'CONNECT_ACCEPTED'; // your request was accepted
 
 export interface Notification {
     id: string;
@@ -246,6 +248,38 @@ export interface Notification {
     senderName?: string;
     senderPhotoURL?: string;
     link?: string;
+    metadata?: Record<string, string>; // e.g. { requestId } for CONNECT_REQUEST actions
     isRead: boolean;
     createdAt: string;
+}
+
+// --- Connections ---
+
+// What the current user's relationship with another teacher looks like from their POV
+export type ConnectionStatus =
+    | 'none'             // no relationship
+    | 'pending_sent'     // current user sent a request, awaiting acceptance
+    | 'pending_received' // other teacher sent a request to current user
+    | 'connected';       // mutual, accepted connection
+
+export interface ConnectionRequest {
+    id: string;          // Firestore docId: `{fromUid}_{toUid}`
+    fromUid: string;
+    toUid: string;
+    createdAt: string;
+    expiresAt: string;   // 30 days from creation
+}
+
+export interface Connection {
+    id: string;          // Firestore docId: sorted `{uid1}_{uid2}`
+    uids: [string, string]; // both participants — enables array-contains queries
+    initiatedBy: string; // who originally sent the request
+    connectedAt: string;
+}
+
+// Lightweight bundle the client gets in one round-trip for the teacher directory
+export interface MyConnectionData {
+    connectedUids: string[];
+    sentRequestUids: string[];
+    receivedRequests: { uid: string; requestId: string }[];
 }
