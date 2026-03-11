@@ -69,5 +69,44 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
     }
+
+    // --- Direct Messages & Group Conversations ---
+
+    match /conversations/{convId} {
+      // Only participants can read or update the conversation doc (e.g. unread counts)
+      allow read, update: if isSignedIn()
+        && request.auth.uid in resource.data.participantIds;
+
+      // Only authenticated users can create; they must include themselves as a participant
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participantIds;
+
+      match /messages/{msgId} {
+        // Only participants can read messages
+        allow read: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+
+        // Only a participant can create a message, and only as themselves
+        allow create: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text.size() <= 1000;
+
+        // readBy updates (mark as read) allowed for participants only
+        allow update: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+
+        allow delete: if false;
+      }
+    }
+
+    // Community chat (broadcast — all signed-in users)
+    match /community_chat/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.text.size() <= 500;
+      allow update, delete: if false;
+    }
   }
 }
