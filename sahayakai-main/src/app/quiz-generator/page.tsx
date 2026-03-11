@@ -33,6 +33,8 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
@@ -75,7 +77,7 @@ const translations: Record<string, Record<string, any>> = {
     numQuestionsLabel: "Number of Questions",
     questionTypesLabel: "Question Types",
     bloomsLabel: "Bloom's Taxonomy Levels",
-    gradeLevelLabel: "Grade Level",
+    gradeLevelLabel: "Class",
     subjectLabel: "Subject",
     languageLabel: "Language",
     submitButton: "Generate Quiz",
@@ -484,20 +486,47 @@ function QuizGeneratorContent() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
-
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: undefined, // Changed from "5th Grade" to avoid confusion
+      gradeLevel: undefined,
       numQuestions: 5,
       questionTypes: ["multiple_choice", "short_answer"],
       bloomsTaxonomyLevels: ['Remember', 'Understand'],
       subject: "General",
     },
   });
+
+  // ── VIDYA Form Sync: live awareness + persisted snapshot ─────────────────
+  const watchedTopic = form.watch("topic");
+  const watchedGrade = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang = form.watch("language");
+  const watchedNum = form.watch("numQuestions");
+  const savedSnapshot = useVidyaFormSync("quiz-generator", {
+    topic: watchedTopic,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
+    numQuestions: watchedNum,
+  });
+
+  // Restore snapshot on mount if no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    const id = searchParams.get("id");
+    if (topicParam || id || !savedSnapshot) return;
+    if (savedSnapshot.topic) form.setValue("topic", savedSnapshot.topic);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject) form.setValue("subject", savedSnapshot.subject);
+    if (savedSnapshot.language) form.setValue("language", savedSnapshot.language);
+    if (savedSnapshot.numQuestions) form.setValue("numQuestions", Number(savedSnapshot.numQuestions));
+  }, []); // empty array: runs once on mount only
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -601,7 +630,11 @@ function QuizGeneratorContent() {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ ...values, language: selectedLanguage })
+        body: JSON.stringify({
+          ...values,
+          language: values.language || selectedLanguage,
+          useRuralContext: true
+        })
       });
 
       if (!res.ok) {
@@ -615,6 +648,7 @@ function QuizGeneratorContent() {
 
       const result = await res.json();
       setQuiz(result);
+      clearFormSnapshot("quiz-generator");
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
@@ -632,8 +666,11 @@ function QuizGeneratorContent() {
     form.trigger("topic");
   };
 
-  const handleTranscript = (transcript: string) => {
+  const handleTranscript = (transcript: string, language?: string) => {
     form.setValue("topic", transcript);
+    if (language) {
+      form.setValue("language", language);
+    }
     form.trigger("topic");
     // Auto-submit after voice transcript to improve UX
     setTimeout(() => {
@@ -675,12 +712,6 @@ function QuizGeneratorContent() {
                       <FormItem>
                         <FormControl>
                           <div className="flex flex-col gap-4">
-                            <MicrophoneInput
-                              onTranscriptChange={handleTranscript}
-                              iconSize="lg"
-                              label={t.topicLabel + " (Speak)"}
-                              className="bg-white/50 backdrop-blur-sm"
-                            />
                             <Textarea
                               placeholder={t.topicPlaceholder}
                               {...field}

@@ -80,8 +80,13 @@ export async function getCachedLessonPlan(
         const doc = await docRef.get();
 
         if (doc.exists) {
+            const data = doc.data()!;
+            if (data._metadata?.expiresAt && data._metadata.expiresAt < Date.now()) {
+                docRef.delete().catch(console.warn); // expire stale cache
+                return null;
+            }
             logger.info(`Cache HIT for lesson plan`, 'CACHE', { cacheId });
-            return doc.data() as LessonPlanOutput;
+            return data as LessonPlanOutput;
         }
 
         logger.info(`Cache MISS for lesson plan`, 'CACHE', { cacheId });
@@ -119,7 +124,8 @@ export async function saveLessonPlanToCache(
                 originalTopic: topic,
                 originalGrade: grade,
                 originalLanguage: language,
-                usageCount: 1
+                usageCount: 1,
+                expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
             }
         });
         logger.info(`Saved lesson plan to cache`, 'CACHE', { cacheId });

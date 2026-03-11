@@ -1,6 +1,4 @@
-
 'use server';
-
 /**
  * @fileOverview Provides professional development advice and encouragement for teachers.
  *
@@ -14,7 +12,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
 const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
@@ -60,16 +58,16 @@ const teacherTrainingPrompt = ai.definePrompt({
   name: 'teacherTrainingPrompt',
   input: { schema: TeacherTrainingInputSchema },
   output: { schema: TeacherTrainingOutputSchema, format: 'json' },
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
-You are SahayakAI, a compassionate and experienced professional development coach for teachers in India. Your goal is to provide supportive, practical, and encouraging advice that is grounded in sound pedagogy.
+You are an expert pedagogical auditor and coach. Your goal is to provide rigorous, actionable, and truth-speaking advice that is grounded in sound pedagogy and the Bharat-First mission.
 
 **Instructions:**
-1.  **Empathy First:** Start with a supportive and understanding introduction that acknowledges the teacher's specific challenge.
-2.  **Actionable Strategies:** Provide a list of clear, concrete strategies. Each strategy should be a separate item in the 'advice' array.
-3.  **MANDATORY Pedagogy Connection:** For EACH strategy, you MUST identify the core pedagogical principle at play. Put the name of this principle in the \`pedagogy\` field.
-4.  **Explain the 'Why':** In the \`explanation\` field, briefly explain what the pedagogical principle means and why the strategy is effective. Use simple, relevant analogies (especially from an Indian context) to make the concept easier to understand.
-5.  **Encouraging Conclusion:** End with a warm, motivational closing statement to remind the teacher of their value.
+1.  **Direct Acknowledgment:** Start with a rigorous and direct introduction. Acknowledge the teacher's challenge but immediately frame it within the context of systemic standards and professional growth.
+2.  **Intellectually Rigorous Strategies:** Provide a list of concrete, high-impact strategies. If a teacher's current approach is problematic, be blunt about why and provide a superior, evidence-based alternative.
+3.  **MANDATORY Pedagogy Connection:** For EACH strategy, you MUST identify the core pedagogical principle. Put the name of this principle in the \`pedagogy\` field.
+4.  **The "Why" and the Contextual Analogy:** In the \`explanation\` field, provide a sophisticated explanation of the principle. Use sharp, culturally relevant Indian analogies (e.g., comparing classroom management to managing a village festival or irrigation system) to ground the theory.
+5.  **Authoritative Conclusion:** End with a dignified and high-frequency closing statement. Remind the teacher that the effort is worth the view, and excellence is the only sovereign path.
 6.  **Language:** Respond entirely in the specified \`language\`.
 7.  **JSON Output:** You MUST conform strictly to the required JSON output format.
 8.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Pedagogy, Classroom Management) and \`gradeLevel\` if not explicitly provided.

@@ -22,6 +22,8 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
 import { SubjectSelector } from "@/components/subject-selector";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 
@@ -32,8 +34,8 @@ const translations: Record<string, Record<string, string>> = {
     imageLabel: "Textbook Page Image",
     instructionsLabel: "Worksheet Instructions",
     speakLabel: "Describe the worksheet...",
-    placeholder: "e.g., Create 5 fill-in-the-blank questions for Grade 2...",
-    gradeLabel: "Grade Level",
+    placeholder: "e.g., Create 5 fill-in-the-blank questions for Class 2...",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Generate Worksheet",
     generating: "Generating...",
@@ -50,7 +52,7 @@ const translations: Record<string, Record<string, string>> = {
     instructionsLabel: "वर्कशीट निर्देश",
     speakLabel: "वर्कशीट का वर्णन करें...",
     placeholder: "जैसे, कक्षा 2 के लिए 5 रिक्त स्थान भरने वाले प्रश्न बनाएं...",
-    gradeLabel: "कक्षा स्तर",
+    gradeLabel: "कक्षा",
     languageLabel: "भाषा",
     submitButton: "वर्कशीट बनाएं",
     generating: "उत्पन्न कर रहा है...",
@@ -218,26 +220,49 @@ type FormValues = z.infer<typeof formSchema>;
 
 function WorksheetWizardContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const [worksheet, setWorksheet] = useState<string | null>(null);
+  const [worksheet, setWorksheet] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
       language: "en",
-      gradeLevel: "4th Grade",
+      gradeLevel: "Class 4",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync: live awareness + persisted snapshot ─────────────────
+  const watchedPrompt  = form.watch("prompt");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("worksheet-wizard", {
+    prompt: watchedPrompt,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
   const searchParams = useSearchParams();
 
-  // Auto-fill prompt from URL. Note: Works best if an image is already uploaded or optional.
-  // Ideally, the router would handle image parsing too, but for now we auto-fill the text prompt.
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt");
+    const id = searchParams.get("id");
+    if (promptParam || id || !savedSnapshot) return;
+    if (savedSnapshot.prompt) form.setValue("prompt", savedSnapshot.prompt);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // empty array: runs once on mount only
+
   useEffect(() => {
     const id = searchParams.get("id");
     const promptParam = searchParams.get("prompt");
@@ -263,7 +288,6 @@ function WorksheetWizardContent() {
           if (res.ok) {
             const content = await res.json();
             if (content.data) {
-              // For worksheets, the data is usually the string or object with worksheetContent
               setWorksheet(content.data.worksheetContent || content.data);
               form.reset({
                 prompt: content.topic || content.title,
@@ -287,7 +311,18 @@ function WorksheetWizardContent() {
       };
       fetchSavedContent();
     } else if (promptParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("prompt", promptParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ── FIX: auto-generate when VIDYA navigates here with a pre-filled prompt
+      setTimeout(() => form.handleSubmit(onSubmit)(), 300);
+      // ────────────────────────────────────────────────────────────────────
     }
   }, [searchParams, form, toast]);
 
@@ -308,7 +343,7 @@ function WorksheetWizardContent() {
       const res = await fetch("/api/ai/worksheet", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify(values)
+        body: JSON.stringify({ ...values, language: values.language || selectedLanguage })
       });
 
       if (!res.ok) {
@@ -322,6 +357,7 @@ function WorksheetWizardContent() {
 
       const result = await res.json();
       setWorksheet(result.worksheetContent);
+      clearFormSnapshot("worksheet-wizard");
     } catch (error) {
       console.error("Failed to generate worksheet:", error);
       toast({
@@ -406,14 +442,6 @@ function WorksheetWizardContent() {
                     <FormLabel className="font-headline">{t.instructionsLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => {
-                            field.onChange(transcript);
-                          }}
-                          iconSize="lg"
-                          label={t.speakLabel}
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}

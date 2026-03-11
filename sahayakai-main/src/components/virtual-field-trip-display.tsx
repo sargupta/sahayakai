@@ -135,11 +135,24 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({ trip
                             <h3 className="font-bold text-lg">{stop.name}</h3>
                             <p className="text-sm text-foreground/80">{stop.description}</p>
 
-                            <div className="bg-white/50 p-2 rounded text-xs">
-                                <strong>Fact:</strong> {stop.educationalFact}
+                            <div className="bg-white/50 p-3 rounded-lg text-xs space-y-2 border border-primary/5">
+                                <div className="flex items-start gap-2">
+                                    <strong className="text-primary/80">Context:</strong>
+                                    <span>{stop.culturalAnalogy}</span>
+                                </div>
+                                <div className="flex items-start gap-2 border-t border-primary/5 pt-2">
+                                    <strong className="text-primary/80">Pedagogy:</strong>
+                                    <span>{stop.explanation}</span>
+                                </div>
                             </div>
-                            <div className="bg-white/50 p-2 rounded text-xs italic">
-                                <strong>Ask:</strong> {stop.reflectionPrompt}
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-white/40 p-2 rounded text-xs">
+                                    <strong>Fact:</strong> {stop.educationalFact}
+                                </div>
+                                <div className="bg-white/40 p-2 rounded text-xs italic">
+                                    <strong>Ask:</strong> {stop.reflectionPrompt}
+                                </div>
                             </div>
 
                             <div className="pt-2">

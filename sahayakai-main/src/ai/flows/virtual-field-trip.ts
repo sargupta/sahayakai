@@ -13,7 +13,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 const VirtualFieldTripInputSchema = z.object({
@@ -32,9 +32,11 @@ const VirtualFieldTripOutputSchema = z.object({
     educationalFact: z.string().describe('A "wow-factor" educational fact about this location.'),
     reflectionPrompt: z.string().describe('A critical thinking question for students to answer at this stop.'),
     googleEarthUrl: z.string().describe('A valid Google Earth search URL.'),
+    culturalAnalogy: z.string().describe('A "Bharat-First" analogy (e.g., "Like the Western Ghats but in South America").'),
+    explanation: z.string().describe('The pedagogical reason for visiting this specific spot.'),
   })).describe('An array of stops.'),
-  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
-  subject: z.string().nullable().optional().describe('The academic subject.'),
+  gradeLevel: z.string().describe('The target grade level (Class X).'),
+  subject: z.string().describe('The academic subject.'),
 });
 export type VirtualFieldTripOutput = z.infer<typeof VirtualFieldTripOutputSchema>;
 
@@ -70,29 +72,32 @@ const virtualFieldTripPrompt = ai.definePrompt({
   name: 'virtualFieldTripPrompt',
   input: { schema: VirtualFieldTripInputSchema },
   output: { schema: VirtualFieldTripOutputSchema },
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
 
 **Instructions:**
 1.  **Title**: Create an adventurous and educational title.
 2.  **Curated Stops**: Identify 3-5 locations that perfectly illustrate the topic.
-3.  **Content per Stop**:
+3.  **Bharat-First Perspective**: YOU MUST provide a \`culturalAnalogy\` for every stop that relates the location to something students in rural India would know (e.g., relating the Amazon River to the Ganges, or the Andes to the Himalayas).
+4.  **Content per Stop**:
     - **Description**: Age-appropriate narrative of what students are seeing.
     - **Educational Fact**: A specific, high-value fact that isn't common knowledge.
-    - **Reflection Prompt**: A question that forces students to observe and think critically about the landscape or site.
-4.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`.
-5.  **Metadata**: Identify the most appropriate \`subject\` (e.g., Geography, History, Science) and \`gradeLevel\` if not explicitly provided.
-6.  **Language**: Respond in \`{{{language}}}\`.
+    - **Reflection Prompt**: A question that forces students to observe and think critically.
+    - **Explanation**: The pedagogical reasoning for including this stop in the curriculum.
+5.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`.
+6.  **Metadata**: Identify the most appropriate \`subject\` and \`gradeLevel\`.
+7.  **Language**: Respond in \`{{{language}}}\`.
 
 **Context:**
 - **Topic**: {{{topic}}}
 - **Grade**: {{{gradeLevel}}}
+- **Language**: {{{language}}}
 
 **Constraints:**
-- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
-- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
-- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}).
+- **No Repetition Loop**: Monitor your output for repetitive phrases.
+- **Scope Integrity**: Stay strictly within the scope of the educational task.
 `,
 });
 
@@ -142,10 +147,21 @@ const virtualFieldTripFlow = ai.defineFlow(
         );
       }
 
-      // Validate schema explicitly
+      // Validate and Sanitize
       try {
-        VirtualFieldTripOutputSchema.parse(output);
+        const { validateFieldTripOutput, sanitizeFieldTripOutput } = await import('./virtual-field-trip-validation');
+        const sanitized = sanitizeFieldTripOutput(output);
+        const validation = validateFieldTripOutput(sanitized);
+
+        if (!validation.valid) {
+          throw new SchemaValidationError(
+            `Virtual Field Trip validation failed:\n - ${validation.errors.join('\n - ')}`,
+            { validationErrors: validation.errors, rawOutput: sanitized }
+          );
+        }
+        VirtualFieldTripOutputSchema.parse(sanitized);
       } catch (validationError: any) {
+        if (validationError instanceof SchemaValidationError) throw validationError;
         throw new SchemaValidationError(
           `Schema validation failed: ${validationError.message}`,
           {

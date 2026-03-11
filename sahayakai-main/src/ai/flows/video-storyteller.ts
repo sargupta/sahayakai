@@ -2,7 +2,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
 import {
     VideoStorytellerInputSchema,
@@ -337,7 +337,7 @@ const videoStorytellerPrompt = ai.definePrompt({
     name: 'videoStorytellerPrompt',
     input: { schema: VideoStorytellerInputSchema },
     output: { schema: VideoStorytellerOutputSchema, format: 'json' },
-    prompt: `${SAHAYAK_SOUL_PROMPT}
+    prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are SahayakAI, a dedicated mentor for Indian teachers. Generate highly personalized YouTube search queries to help teachers find the best educational content, pedagogy guidance, and government updates.
 

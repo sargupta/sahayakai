@@ -21,7 +21,7 @@ const levels = [
     },
     {
         id: "standard",
-        title: "Standard (Grade Level)",
+        title: "Standard (Class Level)",
         icon: SignalMedium,
         color: "text-blue-600",
     },

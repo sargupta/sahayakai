@@ -41,7 +41,7 @@ interface VoiceAssistantProps {
 
 const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color: string; label: string }> = {
     "lesson-plan": {
-        route: "/lesson-plan-generator",
+        route: "/lesson-plan",
         icon: <BookOpen className="w-4 h-4" />,
         color: "bg-blue-50 border-blue-200 text-blue-700",
         label: "Lesson Plan",

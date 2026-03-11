@@ -31,30 +31,34 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
     const { user, loading: authLoading, openAuthModal } = useAuth();
     const [items, setItems] = useState<BaseContent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [totalFetched, setTotalFetched] = useState(0);
     const [query, setQuery] = useState("");
     const [typeFilter, setTypeFilter] = useState<string>(initialType || "all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-    const fetchContent = async () => {
+    const fetchPage = async (cursor?: string) => {
         if (authLoading) return;
         if (!user) {
             setLoading(false);
             return;
         }
 
-        setLoading(true);
+        if (!cursor) setLoading(true);
+        else setLoadingMore(true);
+
         try {
             const url = new URL("/api/content/list", window.location.origin);
             if (typeFilter !== "all") url.searchParams.append("type", typeFilter);
+            if (cursor) url.searchParams.append("cursor", cursor);
 
             const token = await user.getIdToken();
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            };
-
             const response = await fetch(url.toString(), {
-                headers: headers
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {
@@ -66,25 +70,38 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             }
 
             const data = await response.json();
-            setItems(data.items);
-            if (onCountChange) {
-                onCountChange(data.items?.length || 0);
+            if (cursor) {
+                // Append — but local search filter means we always show all fetched items
+                setItems(prev => {
+                    const merged = [...prev, ...(data.items ?? [])];
+                    setTotalFetched(merged.length);
+                    if (onCountChange) onCountChange(merged.length);
+                    return merged;
+                });
+            } else {
+                setItems(data.items ?? []);
+                setTotalFetched(data.items?.length ?? 0);
+                if (onCountChange) onCountChange(data.items?.length ?? 0);
             }
+            setNextCursor(data.nextCursor ?? null);
         } catch (error: any) {
             console.error(error);
             toast({
                 title: "Error",
                 description: error.message || "Could not load library. Please try again.",
-                variant: "destructive"
+                variant: "destructive",
             });
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
     useEffect(() => {
         if (!authLoading) {
-            fetchContent();
+            setItems([]);
+            setNextCursor(null);
+            fetchPage();
         }
     }, [typeFilter, userId, authLoading, user]);
 
@@ -92,6 +109,37 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         (item.title || "").toLowerCase().includes(query.toLowerCase()) ||
         (item.topic || "").toLowerCase().includes(query.toLowerCase())
     );
+    const hasMore = nextCursor !== null;
+
+    const handleDelete = async (resource: BaseContent) => {
+        try {
+            const token = await user?.getIdToken();
+            if (!token) throw new Error("Authentication required");
+
+            const response = await fetch(`/api/content/delete?id=${resource.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Failed to delete");
+            }
+
+            // Optimistically remove from local state
+            setItems(prev => prev.filter(item => item.id !== resource.id));
+            if (onCountChange) {
+                onCountChange(items.length - 1);
+            }
+            toast({ title: "Deleted", description: `"${resource.title}" removed from your library.` });
+        } catch (error: any) {
+            toast({
+                title: "Delete Failed",
+                description: error.message || "Could not delete item.",
+                variant: "destructive"
+            });
+        }
+    };
 
     const handleOpen = (resource: BaseContent) => {
         const routeMap: Record<string, string> = {
@@ -203,7 +251,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
     <h1>${content.title || content.topic || 'Content'}</h1>
     <div class="metadata">
         <p><strong>Type:</strong> ${type}</p>
-        ${content.grade_level ? `<p><strong>Grade:</strong> ${content.grade_level}</p>` : ''}
+        ${content.grade_level ? `<p><strong>Class:</strong> ${content.grade_level}</p>` : ''}
         ${content.language ? `<p><strong>Language:</strong> ${content.language}</p>` : ''}
         ${content.subject ? `<p><strong>Subject:</strong> ${content.subject}</p>` : ''}
     </div>
@@ -342,6 +390,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                     <p className="text-slate-500 font-medium animate-pulse">Fetching your creative workspace...</p>
                 </div>
             ) : filteredItems.length > 0 ? (
+                <div className="space-y-6">
                 <div className={cn(
                     "grid gap-6",
                     viewMode === "grid"
@@ -354,8 +403,23 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             resource={item}
                             onOpen={handleOpen}
                             onDownload={handleDownload}
+                            onDelete={handleDelete}
                         />
                     ))}
+                </div>
+                {hasMore && (
+                    <div className="flex justify-center">
+                        <Button
+                            variant="outline"
+                            onClick={() => fetchPage(nextCursor!)}
+                            disabled={loadingMore}
+                            className="gap-2"
+                        >
+                            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                            Load more
+                        </Button>
+                    </div>
+                )}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-32 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">

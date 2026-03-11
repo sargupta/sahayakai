@@ -112,10 +112,13 @@ export const dbAdapter = {
             limit?: number;
             gradeLevels?: string[];
             subjects?: string[];
+            cursorId?: string; // ID of the last doc from the previous page
         }
-    ): Promise<BaseContent[]> {
+    ): Promise<{ items: BaseContent[]; nextCursor?: string }> {
         const db = await getDb();
-        let query = db.collection(USERS_COLLECTION).doc(userId).collection(CONTENT_COLLECTION).orderBy('createdAt', 'desc');
+        const pageSize = filters?.limit ?? 20;
+        const collectionRef = db.collection(USERS_COLLECTION).doc(userId).collection(CONTENT_COLLECTION);
+        let query = collectionRef.orderBy('createdAt', 'desc');
 
         if (filters?.type) {
             query = query.where('type', '==', filters.type);
@@ -130,12 +133,56 @@ export const dbAdapter = {
             query = query.where('subject', 'in', filters.subjects.slice(0, 10));
         }
 
-        if (filters?.limit) {
-            query = query.limit(filters.limit);
+        // Resolve cursor document for startAfter
+        if (filters?.cursorId) {
+            const cursorDoc = await collectionRef.doc(filters.cursorId).get();
+            if (cursorDoc.exists) {
+                query = query.startAfter(cursorDoc);
+            }
         }
 
+        // Fetch one extra to know if there's a next page
+        query = query.limit(pageSize + 1);
+
         const snapshot = await query.get();
-        return snapshot.docs.map(doc => doc.data() as BaseContent);
+        const allDocs = snapshot.docs;
+        const hasMore = allDocs.length > pageSize;
+        const pageDocs = hasMore ? allDocs.slice(0, pageSize) : allDocs;
+
+        // Filter out soft-deleted items client-side — backward compatible with
+        // older documents that predate the deletedAt field (they're treated as active).
+        const items = pageDocs
+            .map(doc => doc.data() as BaseContent)
+            .filter(item => !item.deletedAt);
+
+        const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].id : undefined;
+        return { items, nextCursor };
+    },
+
+    async softDeleteContent(userId: string, contentId: string): Promise<string | null> {
+        const db = await getDb();
+        const docRef = db
+            .collection(USERS_COLLECTION)
+            .doc(userId)
+            .collection(CONTENT_COLLECTION)
+            .doc(contentId);
+
+        const doc = await docRef.get();
+        if (!doc.exists) return null;
+
+        const storagePath = (doc.data() as BaseContent)?.storagePath ?? null;
+
+        // expiresAt is the TTL field Firestore uses to auto-purge 30 days from now.
+        // deletedAt stays as the actual deletion timestamp for filtering/display.
+        const expiresAt = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+        await docRef.update({
+            deletedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            expiresAt,
+        });
+
+        logger.info(`Soft-deleted content ID: ${contentId}`, 'DATABASE', { userId, contentId });
+        return storagePath;
     },
 
     async deleteContent(userId: string, contentId: string): Promise<void> {

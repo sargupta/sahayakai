@@ -48,42 +48,62 @@ export async function POST(request: Request) {
         const { prompt, language } = body;
         promptText = prompt || 'Unknown Prompt';
 
-        // 1. Determine Intent
-        const { type: intent } = await agentRouterFlow({
+        // 1. Determine Intent and extract params
+        const {
+            type: intent,
+            topic: extractedTopic,
+            gradeLevel: extractedGrade,
+            subject: extractedSubject,
+            language: detectedLanguage
+        } = await agentRouterFlow({
             prompt,
             language,
             userId
         });
 
+        // Use extracted topic if prompt is generic, otherwise use prompt
+        const finalTopic = extractedTopic || prompt;
+        const finalLanguage = detectedLanguage || language || 'en';
+
         let result: any;
+        const queryParams = new URLSearchParams();
+        queryParams.set('topic', finalTopic);
+        if (extractedGrade) queryParams.set('gradeLevel', extractedGrade);
+        if (extractedSubject) queryParams.set('subject', extractedSubject);
+        if (finalLanguage) queryParams.set('language', finalLanguage);
+
+        const queryString = queryParams.toString();
 
         // 2. Route based on intent (Sync with processAgentRequest logic)
         switch (intent) {
             case 'lessonPlan':
-                result = { action: 'NAVIGATE', url: `/lesson-plan?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/lesson-plan?${queryString}` };
                 break;
             case 'quiz':
-                result = { action: 'NAVIGATE', url: `/quiz-generator?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/quiz-generator?${queryString}` };
                 break;
             case 'visualAid':
-                result = { action: 'NAVIGATE', url: `/visual-aid-designer?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/visual-aid-designer?${queryString}` };
                 break;
             case 'worksheet':
-                result = { action: 'NAVIGATE', url: `/worksheet-wizard?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/worksheet-wizard?${queryString}` };
                 break;
             case 'virtualFieldTrip':
-                result = { action: 'NAVIGATE', url: `/virtual-field-trip?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/virtual-field-trip?${queryString}` };
                 break;
             case 'teacherTraining':
-                result = { action: 'NAVIGATE', url: `/teacher-training?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/teacher-training?${queryString}` };
                 break;
             case 'rubric':
-                result = { action: 'NAVIGATE', url: `/rubric-generator?topic=${encodeURIComponent(prompt)}` };
+                result = { action: 'NAVIGATE', url: `/rubric-generator?${queryString}` };
+                break;
+            case 'videoStoryteller':
+                result = { action: 'NAVIGATE', url: `/video-storyteller?${queryString}` };
                 break;
             case 'instantAnswer':
                 const answer = await instantAnswer({
                     question: prompt,
-                    language: language,
+                    language: finalLanguage,
                     userId: userId,
                 });
                 result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };

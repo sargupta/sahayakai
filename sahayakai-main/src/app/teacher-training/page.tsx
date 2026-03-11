@@ -23,6 +23,8 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { VoiceAssistant } from "@/components/voice-assistant";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 const formSchema = z.object({
@@ -84,6 +86,7 @@ function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -94,21 +97,48 @@ function TeacherTrainingContent() {
     },
   });
 
+  // ── VIDYA Form Sync (no gradeLevel on this page) ──────────────────────────
+  const watchedQuestion = form.watch("question");
+  const watchedSubject  = form.watch("subject");
+  const watchedLang     = form.watch("language");
+  const savedSnapshot   = useVidyaFormSync("teacher-training", {
+    question: watchedQuestion,
+    subject: watchedSubject,
+    language: watchedLang,
+  });
+
   const selectedLanguage = form.watch("language") || 'en';
   const descriptionLines = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
   const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
   const searchParams = useSearchParams();
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const questionParam = searchParams.get("question") || searchParams.get("topic");
+    if (questionParam || !savedSnapshot) return;
+    if (savedSnapshot.question) form.setValue("question", savedSnapshot.question);
+    if (savedSnapshot.subject)  form.setValue("subject",  savedSnapshot.subject);
+    if (savedSnapshot.language) form.setValue("language", savedSnapshot.language);
+  }, []); // runs once on mount only
 
   useEffect(() => {
     // Router sends 'topic', internal links might use 'question'
     const questionParam = searchParams.get("question") || searchParams.get("topic");
 
     if (questionParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const languageParam = searchParams.get("language");
+
       form.setValue("question", questionParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ───────────────────────────────────────────────────────────────────
       // Determine intent: if it's a direct handoff, trigger submit
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 100);
+      }, 300);
     }
   }, [searchParams, form]);
 
@@ -132,7 +162,7 @@ function TeacherTrainingContent() {
         headers: headers,
         body: JSON.stringify({
           question: values.question,
-          language: values.language,
+          language: values.language || selectedLanguage,
           subject: values.subject,
         })
       });
@@ -148,6 +178,7 @@ function TeacherTrainingContent() {
 
       const result = await res.json();
       setAdvice(result);
+      clearFormSnapshot("teacher-training");
     } catch (error) {
       console.error("Failed to get advice:", error);
       toast({
@@ -160,9 +191,15 @@ function TeacherTrainingContent() {
     }
   };
 
-  const handleTranscript = (transcript: string) => {
+  const handleTranscript = (transcript: string, language?: string) => {
     form.setValue("question", transcript);
+    if (language) {
+      form.setValue("language", language);
+    }
     form.trigger("question");
+    setTimeout(() => {
+      form.handleSubmit(onSubmit)();
+    }, 100);
   };
 
   const handlePromptClick = (prompt: string) => {
@@ -203,14 +240,6 @@ function TeacherTrainingContent() {
                         <FormLabel className="font-headline text-lg">Your Question or Challenge</FormLabel>
                         <FormControl>
                           <div className="flex flex-col gap-4">
-                            <MicrophoneInput
-                              onTranscriptChange={(transcript) => {
-                                field.onChange(transcript);
-                              }}
-                              iconSize="lg"
-                              label="Speak your question..."
-                              className="bg-white/50 backdrop-blur-sm"
-                            />
                             <Textarea
                               placeholder={placeholder}
                               {...field}

@@ -125,33 +125,40 @@ const visualAidFlow = ai.defineFlow(
       });
 
       // Step 1: Generate the Image using the Prod Model
-      const { media } = await runResiliently(async (overrideConfig) => {
-        return await ai.generate({
-          model: 'googleai/gemini-3-pro-image-preview',
-          ...overrideConfig,
-          prompt: `
-            Create a blackboard chalk-style educational illustration.
-            Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
-            
-            Style: 
-            - High-fidelity white chalk lines on a dark black background.
-            - Professional, textbook-quality diagram.
-            
-            Labels:
-            - Accurately label the key parts of the diagram. 
-            - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
-            - Use simple block letters.
-          `,
-          config: {
-            ...overrideConfig.config,
-            responseModalities: ['IMAGE'],
-            temperature: 0.4,
-          },
-        });
-      });
+      // 90s hard timeout — the preview model can stall on complex prompts
+      const IMAGE_TIMEOUT_MS = 90_000;
+      const { media } = await Promise.race([
+        runResiliently(async (overrideConfig) => {
+          return await ai.generate({
+            model: 'googleai/gemini-3-pro-image-preview',
+            ...overrideConfig,
+            prompt: `
+              Create a blackboard chalk-style educational illustration.
+              Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
 
-      if (!media) {
-        throw new FlowExecutionError('Image generation failed to produce an image.', { step: 'image-generation' });
+              Style:
+              - High-fidelity white chalk lines on a dark black background.
+              - Professional, textbook-quality diagram.
+
+              Labels:
+              - Accurately label the key parts of the diagram.
+              - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
+              - Use simple block letters.
+            `,
+            config: {
+              ...overrideConfig.config,
+              responseModalities: ['IMAGE'],
+              temperature: 0.4,
+            },
+          });
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('IMAGE_GENERATION_TIMEOUT')), IMAGE_TIMEOUT_MS)
+        ),
+      ]);
+
+      if (!media?.url) {
+        throw new Error('IMAGE_GENERATION_EMPTY');
       }
 
       // Step 2: Generate the Metadata (Text)

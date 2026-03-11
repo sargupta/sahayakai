@@ -20,6 +20,7 @@ export type AnalyticsEventType =
     | 'content_exported'
     | 'content_shared'
     | 'content_regenerated'
+    | 'initiate_generation'
 
     // Feature events
     | 'feature_first_use'
@@ -113,6 +114,22 @@ export interface TeacherProfileUpdatedEvent extends BaseEvent {
     estimated_students: number;
 }
 
+export interface InitiateGenerationEvent extends BaseEvent {
+    event_type: 'initiate_generation';
+    content_type: string;
+}
+
+export interface ContentSharedEvent extends BaseEvent {
+    event_type: 'content_shared';
+    content_id: string;
+    platform?: 'community' | 'whatsapp' | 'other';
+}
+
+export interface GenericAnalyticsEvent extends BaseEvent {
+    event_type: AnalyticsEventType;
+    [key: string]: any;
+}
+
 export type AnalyticsEvent =
     | SessionStartEvent
     | SessionEndEvent
@@ -120,7 +137,10 @@ export type AnalyticsEvent =
     | ContentCreatedEvent
     | FeatureUseEvent
     | ChallengeDetectedEvent
-    | TeacherProfileUpdatedEvent;
+    | TeacherProfileUpdatedEvent
+    | InitiateGenerationEvent
+    | ContentSharedEvent
+    | GenericAnalyticsEvent;
 
 // ============================================================================
 // EVENT TRACKER

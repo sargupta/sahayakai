@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, Download, Calendar, BookOpen } from "lucide-react";
+import { ThumbsUp, Download, Calendar, BookOpen, Trash2 } from "lucide-react";
 import { FileTypeIcon } from "@/components/file-type-icon";
 import { cn } from "@/lib/utils";
 import { BaseContent } from "@/types";
@@ -13,6 +14,7 @@ interface LibraryCardProps {
     resource: BaseContent;
     onOpen?: (resource: BaseContent) => void;
     onDownload?: (resource: BaseContent) => void;
+    onDelete?: (resource: BaseContent) => void;
     onLike?: (id: string) => void;
     onFollow?: (authorId: string) => void;
     currentUserId?: string;
@@ -34,12 +36,14 @@ export function LibraryCard({
     resource,
     onOpen,
     onDownload,
+    onDelete,
     onLike,
     onFollow,
     currentUserId,
     isFollowing,
     showAuthor = false
 }: LibraryCardProps) {
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     // Format date safely
     const formattedDate = resource.updatedAt?.seconds
@@ -96,6 +100,39 @@ export function LibraryCard({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {onDelete && (
+                        confirmDelete ? (
+                            <>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-8 gap-1 font-bold px-3"
+                                    onClick={() => { onDelete(resource); setConfirmDelete(false); }}
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <span>Confirm</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 px-2 text-slate-500"
+                                    onClick={() => setConfirmDelete(false)}
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                onClick={() => setConfirmDelete(true)}
+                                title="Delete"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )
+                    )}
                     <Button
                         variant="ghost"
                         size="sm"

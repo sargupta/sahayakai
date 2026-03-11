@@ -1,6 +1,6 @@
-
 import { getDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
+import { calculateHealthScore, TeacherAnalytics } from "@/lib/analytics/impact-score";
 
 export async function aggregateUserMetrics(uid: string) {
     const db = await getDb();
@@ -27,38 +27,47 @@ export async function aggregateUserMetrics(uid: string) {
     });
 
     const resourceCount = allResources.length;
-    const quizCount = allResources.filter(r => r.type === 'quiz').length;
     const sharedCount = publicResources.length;
 
-    // 4. Fetch Posts (Engagement)
-    const postSnapshot = await db.collection('posts').where('authorId', '==', uid).get();
-    const postCount = postSnapshot.size;
+    // 4. Fetch Activity Logs for Last 7 days to fix content_created_last_7_days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentContentCount = allResources.filter(r => {
+        const created = r.createdAt?.toDate?.() || new Date(r.createdAt);
+        return created >= sevenDaysAgo;
+    }).length;
 
-    // Truthful Scoring Logic
-    // Logic: 10 pts/resource, 5 pts/quiz, 20 pts/share, 5 pts/post
-    const calculatedScore = Math.min((resourceCount * 10) + (quizCount * 5) + (sharedCount * 20) + (postCount * 5), 100);
+    // 5. Fetch Existing Analytics for stateful metrics (sessions, etc.)
+    const analyticsDoc = await db.collection('teacher_analytics').doc(uid).get();
+    const existingAnalytics = analyticsDoc.data() || {};
 
-    // FIX (Bug #3): Write field names that match the TeacherAnalytics interface
-    // consumed by GET /api/analytics/teacher-health/[userId]
-    await db.collection('teacher_analytics').doc(uid).set({
-        userId: uid,
-        // Engagement fields (matched to TeacherAnalytics interface)
+    // Prepare TeacherAnalytics Input
+    const analyticsInput: any = {
+        ...existingAnalytics,
+        user_id: uid,
         content_created_total: resourceCount,
+        content_created_last_7_days: recentContentCount,
         shared_to_community_count: sharedCount,
-        content_created_last_7_days: resourceCount, // Approximation; real-time route maintains exact 7-day window
-        // Session/activity will be kept from real-time updates via /api/teacher-activity
-        exported_content_count: postCount, // posts used as a proxy for export engagement
-        last_active: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        // Legacy fields kept for compatibility
-        score: calculatedScore,
-        level: calculatedScore > 50 ? 'expert' : 'novice',
+        // Keep other fields like sessions_last_7_days from existing analytics
+    };
+
+    // Calculate standardized score
+    const healthResult = calculateHealthScore(analyticsInput);
+    const finalScore = healthResult.score;
+
+    // Persist Harmonized Data
+    await db.collection('teacher_analytics').doc(uid).set({
+        ...analyticsInput,
+        score: finalScore,
+        lastUpdated: new Date().toISOString(),
     }, { merge: true });
 
-    // Update User Profile cache
+    // Update User Profile cache (North Star metric)
     await db.collection('users').doc(uid).update({
-        impactScore: calculatedScore
+        impactScore: finalScore
     });
 
-    return { score: calculatedScore, count: resourceCount };
+    logger.info(`Metrics updated: score ${finalScore}, count ${resourceCount}`, 'AGGREGATOR', { userId: uid });
+
+    return { score: finalScore, count: resourceCount };
 }

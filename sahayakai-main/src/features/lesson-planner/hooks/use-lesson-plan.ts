@@ -11,7 +11,7 @@ import { type DifficultyLevel } from "@/components/difficulty-selector";
 import { type QuickTemplate } from "@/data/quick-templates";
 import { offlineLessonPlans } from "@/data/offline-lesson-plans";
 import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson-plan";
-import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent } from "@/lib/indexed-db";
+import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent, pruneOldTelemetry } from "@/lib/indexed-db";
 import { logger } from "@/lib/logger";
 import { syncTelemetryEvents } from "@/app/actions/telemetry";
 import { formSchema, FormValues, topicPlaceholderTranslations, loadingMessages } from "../types";
@@ -21,6 +21,7 @@ import { useAuth } from "@/context/auth-context";
 import { useSearchParams } from "next/navigation";
 import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useJarvisStore } from "@/store/jarvisStore";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
@@ -34,6 +35,7 @@ export function useLessonPlan() {
     const { toast } = useToast();
     const { startAIGeneration, endAIGeneration } = usePerformanceTracking();
     const { trackContent, trackFeature, trackFriction } = useAnalytics();
+    const { setStructuredData, saveFormSnapshot, formSnapshots, clearFormSnapshot } = useJarvisStore();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -69,6 +71,7 @@ export function useLessonPlan() {
             toast({ title: "Back Online", description: "You are connected to the internet." });
 
             try {
+                await pruneOldTelemetry();
                 const pending = await getPendingEvents();
                 if (pending.length > 0) {
                     const events = pending.map(p => p.value);
@@ -111,25 +114,54 @@ export function useLessonPlan() {
         return () => subscription.unsubscribe();
     }, [form.watch]);
 
+    // ── VIDYA Form Sync: live awareness + debounced snapshot ──────────────
+    const watchedTopic   = form.watch("topic");
+    const watchedSubject = form.watch("subject");
     useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search);
-        if (searchParams.get("id")) return;
+        setStructuredData({
+            page: "lesson-plan",
+            topic: watchedTopic,
+            gradeLevels: selectedGradeLevels,
+            language: selectedLanguage,
+            subject: watchedSubject,
+        });
+        const timer = setTimeout(() => {
+            if (watchedTopic) {
+                saveFormSnapshot("lesson-plan", {
+                    topic: watchedTopic,
+                    gradeLevels: selectedGradeLevels,
+                    language: selectedLanguage,
+                    subject: watchedSubject,
+                });
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [watchedTopic, watchedSubject, selectedGradeLevels, selectedLanguage,
+        setStructuredData, saveFormSnapshot]);
+
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const id = searchParams.get("id");
+        const topicParam = searchParams.get("topic");
+        if (id || topicParam) return; // Don't restore draft if we are loading a specific ID or coming from VIDYA
 
         const loadDraft = async () => {
             if (typeof window !== 'undefined') {
                 try {
                     const savedDraft = await getDraft("lessonPlanDraft");
                     if (savedDraft && (savedDraft.language || savedDraft.gradeLevels)) {
-                        // Only restore preferences, not the topic content
+                        // Restore preferences; also restore topic from VIDYA snapshot if available
+                        const vidyaSnap = formSnapshots["lesson-plan"];
                         form.reset({
-                            topic: "", // Keep topic empty
+                            topic: vidyaSnap?.topic || "", // Restore topic from VIDYA snapshot
                             language: savedDraft.language || "en",
                             gradeLevels: savedDraft.gradeLevels || [],
                             imageDataUri: savedDraft.imageDataUri || "",
                         });
                         toast({
                             title: "Preferences Restored",
-                            description: "Your language and grade preferences have been restored.",
+                            description: "Your language and class preferences have been restored.",
                         });
                     }
                 } catch (e) {
@@ -138,9 +170,8 @@ export function useLessonPlan() {
             }
         };
         loadDraft();
-    }, [form.reset, toast]);
+    }, [form.reset, toast, searchParams]);
 
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         const id = searchParams.get("id");
@@ -376,6 +407,7 @@ export function useLessonPlan() {
             const apiDuration = Date.now() - apiStartTime;
 
             setLessonPlan(result);
+            clearFormSnapshot("lesson-plan");
 
             // Track successful generation (performance monitoring)
             endAIGeneration({

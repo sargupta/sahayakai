@@ -9,8 +9,11 @@ import { getAllTeachersAction, followTeacherAction, getFollowingIdsAction } from
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function TeacherDirectory() {
+    const router = useRouter();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -83,18 +86,48 @@ export function TeacherDirectory() {
         </div>
     );
 
+    // Dynamic professional gradients for avatars to avoid "Alphabet Soup" look
+    const getAvatarGradient = (name: string) => {
+        const colors = [
+            'from-indigo-500 to-purple-500',
+            'from-emerald-500 to-teal-500',
+            'from-blue-500 to-indigo-600',
+            'from-rose-500 to-orange-500',
+            'from-amber-400 to-orange-600',
+            'from-sky-400 to-blue-600',
+        ];
+        // Simple hash for consistency
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const handleViewProfile = (uid: string) => {
+        router.push(`/profile/${uid}`);
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
             {teachers.map((teacher) => (
                 <Card key={teacher.uid} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1.25rem] bg-white">
                     <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-3">
-                            <Avatar className="h-14 w-14 ring-2 ring-slate-50 shadow-sm group-hover:ring-orange-100 transition-all duration-500">
-                                <AvatarImage src={teacher.photoURL} className="object-cover" />
-                                <AvatarFallback className="bg-gradient-to-br from-orange-400 to-orange-600 text-white text-lg font-bold">
-                                    {teacher.initial || teacher.displayName?.[0] || "T"}
-                                </AvatarFallback>
-                            </Avatar>
+                            <div
+                                className="cursor-pointer transition-transform duration-300 hover:scale-105"
+                                onClick={() => handleViewProfile(teacher.uid)}
+                            >
+                                <Avatar className="h-14 w-14 ring-2 ring-slate-50 shadow-sm group-hover:ring-orange-100 transition-all duration-500">
+                                    <AvatarImage src={teacher.photoURL} className="object-cover" />
+                                    <AvatarFallback className={cn(
+                                        "text-white text-lg font-bold bg-gradient-to-br",
+                                        getAvatarGradient(teacher.displayName || teacher.uid)
+                                    )}>
+                                        {teacher.initial || teacher.displayName?.[0] || "T"}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </div>
                             <Button
                                 variant={followingIds.includes(teacher.uid) ? "secondary" : "default"}
                                 size="sm"
@@ -108,7 +141,10 @@ export function TeacherDirectory() {
                             </Button>
                         </div>
                         <div className="mt-3 space-y-0.5">
-                            <CardTitle className="text-base font-black text-slate-900 font-headline tracking-tight group-hover:text-orange-600 transition-colors truncate">
+                            <CardTitle
+                                className="text-base font-black text-slate-900 font-headline tracking-tight group-hover:text-orange-600 transition-colors truncate cursor-pointer"
+                                onClick={() => handleViewProfile(teacher.uid)}
+                            >
                                 {teacher.displayName}
                             </CardTitle>
                             <div className="flex items-center gap-1.5 text-slate-400 font-medium text-[11px]">
@@ -134,7 +170,7 @@ export function TeacherDirectory() {
                     </CardContent>
 
                     <CardFooter className="px-4 py-3 border-t border-slate-50 bg-slate-50/30 flex justify-between items-center mt-auto">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 text-slate-500">
                             <div className="flex flex-col">
                                 <span className="text-sm font-black text-slate-900 leading-none">{teacher.followersCount || 0}</span>
                                 <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mt-0.5">Followers</span>
@@ -144,7 +180,12 @@ export function TeacherDirectory() {
                                 <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mt-0.5">Impact</span>
                             </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all"
+                            onClick={() => handleViewProfile(teacher.uid)}
+                        >
                             Profile
                         </Button>
                     </CardFooter>

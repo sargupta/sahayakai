@@ -83,6 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
     const requireAuth = (): boolean => {
+        // [DEVELOPMENT BYPASS] Skip auth modal on localhost
+        if (process.env.NODE_ENV === 'development') return true;
+
         if (!user) {
             openAuthModal();
             return false;

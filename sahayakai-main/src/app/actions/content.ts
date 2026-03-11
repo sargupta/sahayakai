@@ -13,7 +13,7 @@ import { trackTeacherContent } from '@/lib/teacher-activity-tracker';
 
 export async function getUserContent(userId: string): Promise<BaseContent[]> {
     try {
-        const content = await dbAdapter.listContent(userId);
+        const { items: content } = await dbAdapter.listContent(userId, { limit: 100 });
 
         // Serialize Timestamps for client components as Next.js cannot serialize Class instances
         return content.map(item => ({
@@ -45,7 +45,7 @@ export async function searchContentAction(userId: string, query: string): Promis
         const profile = await dbAdapter.getUser(userId);
 
         // 2. Initial filter by user ID (Security boundary)
-        const allContent = await dbAdapter.listContent(userId);
+        const { items: allContent } = await dbAdapter.listContent(userId, { limit: 200 });
 
         // 3. Perform Smart Search & Ranking
         const searchTerms = query.toLowerCase().split(/\s+/);
@@ -207,23 +207,31 @@ export async function recordPdfDownload(userId: string, title: string, base64Dat
                 });
             });
 
-            // Track in DB as a PDF record
+            // Track in DB as a PDF record — roll back the GCS file if this write fails
+            // to prevent orphaned PDFs that can never be retrieved or deleted.
             const contentId = `pdf_${uuidv4().substring(0, 8)}`;
-            await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
-                const { Timestamp } = await import('firebase-admin/firestore');
-                await dbAdapter.saveContent(userId, {
-                    id: contentId,
-                    type: 'pdf' as any,
-                    title: title + " (PDF Export)",
-                    topic: title,
-                    storagePath: filePath,
-                    data: { format: 'pdf', timestamp: now.toISOString() },
-                    isPublic: false,
-                    isDraft: false,
-                    createdAt: Timestamp.fromDate(now),
-                    updatedAt: Timestamp.fromDate(now),
-                } as any);
-            });
+            try {
+                await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
+                    const { Timestamp } = await import('firebase-admin/firestore');
+                    await dbAdapter.saveContent(userId, {
+                        id: contentId,
+                        type: 'pdf' as any,
+                        title: title + " (PDF Export)",
+                        topic: title,
+                        storagePath: filePath,
+                        data: { format: 'pdf', timestamp: now.toISOString() },
+                        isPublic: false,
+                        isDraft: false,
+                        createdAt: Timestamp.fromDate(now),
+                        updatedAt: Timestamp.fromDate(now),
+                    } as any);
+                });
+            } catch (dbError: any) {
+                // Rollback: delete the orphaned GCS file
+                bucket.file(filePath).delete()
+                    .catch((cleanupErr: any) => logger.error('GCS PDF rollback failed', cleanupErr, 'STORAGE', { userId, filePath }));
+                throw dbError;
+            }
 
             pdfTimer.stop({ size: buffer.length });
             return { success: true, path: filePath };
