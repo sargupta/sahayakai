@@ -26,21 +26,32 @@ export function AppSidebar() {
 
   // Live unread badge — subscribe to conversation unread counts
   useEffect(() => {
+    // Hold the Firestore snapshot unsub outside the auth callback so we can
+    // clean it up when auth state changes or the component unmounts.
+    let unsubConv: (() => void) | undefined;
+
     const unsubAuth = onAuthStateChanged(auth, (user) => {
+      // Always tear down the previous snapshot before creating a new one
+      unsubConv?.();
+      unsubConv = undefined;
+
       if (!user) { setTotalUnread(0); return; }
 
       const q = query(
         collection(db, "conversations"),
         where("participantIds", "array-contains", user.uid),
       );
-      const unsubConv = onSnapshot(q, (snap) => {
+      unsubConv = onSnapshot(q, (snap) => {
         let count = 0;
         snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0; });
         setTotalUnread(count);
       });
-      return () => unsubConv();
     });
-    return () => unsubAuth();
+
+    return () => {
+      unsubAuth();
+      unsubConv?.();
+    };
   }, []);
 
   return (
