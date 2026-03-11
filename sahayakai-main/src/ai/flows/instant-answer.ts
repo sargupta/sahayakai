@@ -12,6 +12,7 @@ import { googleSearch } from '@/ai/tools/google-search';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { LANGUAGE_CODE_MAP } from '@/types/index';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 
 import { validateTopicSafety } from '@/lib/safety';
@@ -159,6 +160,16 @@ const instantAnswerFlow = ai.defineFlow(
           return await instantAnswerPrompt(normalizedInput, resilienceConfig);
         });
         output = result.output;
+
+        // Track usage if available
+        if (normalizedInput.userId) {
+          const usage = (result as any).usage;
+          if (usage) {
+            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+          }
+          // Since this prompt has googleSearch tool, we count it as a grounding call
+          UsageTracker.trackGrounding(normalizedInput.userId, normalizedInput.question);
+        }
       } catch (genkitError: any) {
         // Genkit throws INVALID_ARGUMENT when the model returns a wrong field name
         // (e.g. "response" instead of "answer"). Recover by surfacing a graceful message.

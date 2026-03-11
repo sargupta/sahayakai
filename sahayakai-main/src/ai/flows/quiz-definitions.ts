@@ -1,6 +1,7 @@
 import { ai } from '@/ai/genkit';
-import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { UsageTracker } from '@/lib/usage-tracker';
+import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
 
 export const quizGeneratorPrompt = ai.definePrompt({
   name: 'quizGeneratorPrompt',
@@ -105,12 +106,17 @@ export const quizGeneratorFlow = ai.defineFlow(
         }
       });
 
-      const { output } = await runResiliently(async (resilienceConfig) => {
+      const result = await runResiliently(async (resilienceConfig) => {
         return await quizGeneratorPrompt({
           ...input,
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
       });
+      const output = result.output;
+
+      if (input.userId && (result as any).usage) {
+        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, 'gemini-2.0-flash');
+      }
 
       if (!output) {
         throw new FlowExecutionError(
