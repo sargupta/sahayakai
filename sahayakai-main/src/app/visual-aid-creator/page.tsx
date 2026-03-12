@@ -15,7 +15,7 @@ export default function VisualAidDesignerPage() {
           <div className="flex justify-center items-center mb-4">
             <Images className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Visual Aid Designer</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">Visual Aid Designer</CardTitle>
           <CardDescription>
             This feature is coming soon. Generate beautiful visual aids from a simple description!
           </CardDescription>

@@ -37,10 +37,9 @@ import { logger } from '@/lib/logger';
  */
 export async function POST(request: Request) {
     try {
-        const userId = request.headers.get('x-user-id');
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
-        }
+        // userId is optional — used only for profile-based personalization.
+        // Video recommendations work without auth (RSS is free, no user data exposed).
+        const userId = request.headers.get('x-user-id') || undefined;
 
         const body = await request.json();
 

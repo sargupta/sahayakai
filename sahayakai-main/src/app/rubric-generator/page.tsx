@@ -243,7 +243,7 @@ function RubricGeneratorContent() {
           <div className="flex justify-center items-center mb-4">
             <ClipboardCheck className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription className="flex items-center justify-center gap-2">
             <span>{t.pageDescription}</span>
             <Dialog>

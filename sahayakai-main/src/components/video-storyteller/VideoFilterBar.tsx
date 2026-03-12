@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, Filter, BookOpen, GraduationCap, Languages, X } from "lucide-react";
+import React, { useState } from "react";
+import { Search, BookOpen, GraduationCap, Languages, X, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,114 +37,105 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
     const [language, setLanguage] = useState(initialFilters?.language || "English");
     const [searchQuery, setSearchQuery] = useState(initialFilters?.searchQuery || "");
 
-    const handleApply = () => {
-        onFilterChange({
-            subject: subject === "all" ? undefined : subject,
-            gradeLevel: gradeLevel === "all" ? undefined : gradeLevel,
-            language,
-            searchQuery: searchQuery.trim() === "" ? undefined : searchQuery,
-        });
-    };
+    const hasActiveFilters = subject !== "all" || gradeLevel !== "all" || language !== "English" || searchQuery !== "";
+
+    const buildFilters = () => ({
+        subject: subject === "all" ? undefined : subject,
+        gradeLevel: gradeLevel === "all" ? undefined : gradeLevel,
+        language,
+        searchQuery: searchQuery.trim() || undefined,
+    });
+
+    const handleApply = () => onFilterChange(buildFilters());
 
     const handleClear = () => {
         setSubject("all");
         setGradeLevel("all");
         setLanguage("English");
         setSearchQuery("");
-        onFilterChange({
-            subject: undefined,
-            gradeLevel: undefined,
-            language: "English",
-            searchQuery: undefined,
-        });
+        onFilterChange({ language: "English" });
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/80 rounded-[2.5rem] p-3 shadow-2xl shadow-slate-200/50 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="flex flex-col lg:flex-row items-center gap-3">
-                {/* Search Input */}
-                <div className="relative w-full lg:w-1/3 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+        <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-2">
+                {/* Search */}
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
-                        placeholder="Search for topics, chapters, or concepts..."
+                        placeholder="Search topics, chapters, concepts…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleApply()}
-                        className="pl-12 h-14 bg-slate-50/50 border-none rounded-full focus-visible:ring-2 focus-visible:ring-primary/20 text-base font-medium placeholder:text-slate-400"
+                        className="pl-9 h-9 text-sm border-slate-200 rounded-lg bg-slate-50 focus-visible:ring-1 focus-visible:ring-primary/30"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery("")}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
                         >
-                            <X className="w-4 h-4" />
+                            <X className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
 
-                <div className="h-4 w-px bg-slate-200 hidden lg:block mx-1" />
-
-                {/* Dynamic Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:flex-1">
-                    {/* Subject Select */}
+                {/* Filters row */}
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                     <Select value={subject} onValueChange={setSubject}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
-                            <BookOpen className="w-4 h-4 text-slate-400 shrink-0" />
-                            <SelectValue placeholder="All Subjects" />
+                        <SelectTrigger className="h-9 w-full sm:w-36 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="Subject" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
-                            <SelectItem value="all" className="font-bold">All Subjects</SelectItem>
+                        <SelectContent className="rounded-xl">
+                            <SelectItem value="all" className="text-xs font-semibold">All Subjects</SelectItem>
                             {SUBJECTS.map((s) => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                                <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
 
-                    {/* Class (Grade) Select */}
                     <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
-                            <GraduationCap className="w-4 h-4 text-slate-400 shrink-0" />
-                            <SelectValue placeholder="All Classes" />
+                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="Class" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
-                            <SelectItem value="all" className="font-bold">All Classes</SelectItem>
+                        <SelectContent className="rounded-xl">
+                            <SelectItem value="all" className="text-xs font-semibold">All Classes</SelectItem>
                             {GRADE_LEVELS.map((g) => (
-                                <SelectItem key={g} value={g}>{g}</SelectItem>
+                                <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
 
-                    {/* Language Select */}
                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="h-14 bg-slate-50 border border-slate-300 rounded-full focus:ring-2 focus:ring-primary/20 text-sm font-bold tracking-tight pl-5 pr-4 shadow-md hover:border-primary/40 transition-all gap-2">
-                            <Languages className="w-4 h-4 text-slate-400 shrink-0" />
-                            <SelectValue placeholder="All Languages" />
+                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
+                            <Languages className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <SelectValue placeholder="Language" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                        <SelectContent className="rounded-xl">
                             {LANGUAGES.map((l) => (
-                                <SelectItem key={l} value={l}>{l}</SelectItem>
+                                <SelectItem key={l} value={l} className="text-xs">{l}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
 
-                <div className="h-4 w-px bg-slate-200 hidden lg:block mx-1" />
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 w-full lg:w-auto">
                     <Button
                         onClick={handleApply}
-                        className="flex-1 lg:flex-none h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        size="sm"
+                        className="h-9 px-4 rounded-lg text-xs font-semibold shrink-0"
                     >
-                        Find Videos
+                        Find
                     </Button>
-                    {(subject !== "all" || gradeLevel !== "all" || language !== "English" || searchQuery !== "") && (
+
+                    {hasActiveFilters && (
                         <Button
                             variant="ghost"
+                            size="sm"
                             onClick={handleClear}
-                            className="h-14 w-14 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="h-9 w-9 p-0 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                            title="Clear filters"
                         >
-                            <Filter className="w-5 h-5 rotate-180" />
+                            <X className="w-4 h-4" />
                         </Button>
                     )}
                 </div>

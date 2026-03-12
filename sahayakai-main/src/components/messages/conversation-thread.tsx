@@ -94,7 +94,7 @@ function InlineResourcePicker({
     };
 
     return (
-        <div className="w-72 p-3 space-y-3">
+        <div className="w-[min(18rem,calc(100vw-2rem))] p-3 space-y-3">
             {step === "pick-type" ? (
                 <>
                     <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Share a resource</p>

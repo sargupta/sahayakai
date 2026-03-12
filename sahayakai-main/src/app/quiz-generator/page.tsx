@@ -686,7 +686,7 @@ function QuizGeneratorContent() {
         <div className="h-1.5 w-full bg-primary" />
 
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <CardHeader className="text-center pt-0">
             <div className="flex justify-center items-center mb-4">
               <div className="p-3 rounded-full bg-primary/10 text-primary">
@@ -694,7 +694,7 @@ function QuizGeneratorContent() {
               </div>
             </div>
 
-            <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+            <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
             <CardDescription>{t.pageDescription}</CardDescription>
           </CardHeader>
 
@@ -746,7 +746,7 @@ function QuizGeneratorContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-3 gap-3 pt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
                           {questionTypesData.map((item) => (
                             <SelectableCard
                               key={item.id}
@@ -776,12 +776,12 @@ function QuizGeneratorContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-white p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
+                <div className="lg:col-span-5 space-y-5 bg-white p-4 sm:p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
                   <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Quiz Settings</h3>
 
 
                   {/* Subject, Grade and Language Selection */}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                     <FormField
                       control={form.control}
                       name="subject"

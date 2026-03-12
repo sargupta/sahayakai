@@ -306,12 +306,12 @@ export function OmniOrb() {
     return (
         <div
             ref={orbRef}
-            className="fixed bottom-12 right-12 z-[9999]"
+            className="fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[9999]"
             style={{ transform: `translate(${orbPos.x}px, ${orbPos.y}px)` }}
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (
-                <div className="absolute bottom-24 right-0 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-bottom-5">
+                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-bottom-5">
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
@@ -369,7 +369,7 @@ export function OmniOrb() {
                 {/* Proactive daily-inspiration tip */}
                 {proactiveTip && (
                     <div
-                        className="absolute bottom-20 right-0 w-72 bg-white border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-slate-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
+                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-white border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-slate-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
                     >
                         <div className="flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />

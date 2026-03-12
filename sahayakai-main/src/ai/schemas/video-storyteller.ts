@@ -6,6 +6,8 @@ export const VideoStorytellerInputSchema = z.object({
     topic: z.string().optional().describe('An optional specific chapter or topic within the subject.'),
     language: z.string().optional().describe('The preferred language for the content (e.g., Hindi, Tamil, English).'),
     userId: z.string().optional().describe('The ID of the user for personalization context.'),
+    state: z.string().optional().describe('The Indian state or UT the teacher is from (e.g., Maharashtra, Tamil Nadu).'),
+    educationBoard: z.string().optional().describe('The education board the teacher follows (e.g., CBSE, Maharashtra State Board).'),
 });
 
 export const VideoStorytellerOutputSchema = z.object({

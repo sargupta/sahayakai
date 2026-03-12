@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Video, Loader2, Sparkles, MessageSquare } from "lucide-react";
+import {
+  Video, Loader2, Sparkles, RefreshCw, ArrowLeft,
+  Star, BookOpen, GraduationCap, Bell, School, type LucideIcon
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { VideoCard } from "@/components/video-storyteller/VideoCard";
 import { VideoCarousel } from "@/components/video-storyteller/VideoCarousel";
 import { YouTubeVideo } from "@/lib/youtube";
-import { CURATED_INDIAN_EDU_VIDEOS, mergeCuratedVideos } from "@/lib/curated-videos";
+import { mergeCuratedVideos } from "@/lib/curated-videos";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
@@ -25,35 +27,39 @@ interface VideoRecommendations {
   categorizedVideos: Record<string, YouTubeVideo[]>;
 }
 
+const CATEGORIES: { key: string; title: string; icon: LucideIcon }[] = [
+  { key: "topRecommended", title: "Top Recommended for You", icon: Star },
+  { key: "storytelling",   title: "Storytelling for Your Subjects", icon: BookOpen },
+  { key: "pedagogy",       title: "Pedagogy & Teaching Methods", icon: GraduationCap },
+  { key: "govtUpdates",    title: "Government Updates", icon: Bell },
+  { key: "courses",        title: "Teacher Training Courses", icon: School },
+];
 
 export default function VideoStorytellerPage() {
-  const { user, requireAuth } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<{ key: string, title: string } | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<{ key: string; title: string; icon: LucideIcon } | null>(null);
 
-  // Real-time intelligent filter state
   const [filters, setFilters] = useState<{
     subject?: string;
     gradeLevel?: string;
     language?: string;
     searchQuery?: string;
-  }>({
-    language: "English",
-  });
+  }>({ language: "English" });
 
   const fetchRecommendations = async (activeFilters = filters) => {
-    if (!requireAuth()) return;
-
     setLoading(true);
     try {
-      const token = await user?.getIdToken();
+      // Token is optional — video content is public; personalization degrades gracefully without auth
+      const token = await user?.getIdToken().catch(() => null);
+
       const response = await fetch("/api/ai/video-storyteller", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           subject: activeFilters.subject,
@@ -64,7 +70,8 @@ export default function VideoStorytellerPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch recommendations");
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(`API ${response.status}: ${errBody?.error || errBody?.code || "Unknown error"}`);
       }
 
       const data = await response.json();
@@ -73,28 +80,19 @@ export default function VideoStorytellerPage() {
     } catch (error) {
       console.error("Error fetching video recommendations:", error);
       setRecommendations({
-        categories: {
-          pedagogy: [],
-          storytelling: [],
-          govtUpdates: [],
-          courses: [],
-          topRecommended: [],
-        },
-        personalizedMessage:
-          "Namaste Adhyapak! Here are some carefully selected videos to help you deliver engaging lessons, stay updated on government policies, and grow as an educator. These are tailored for Indian classrooms.",
+        categories: { pedagogy: [], storytelling: [], govtUpdates: [], courses: [], topRecommended: [] },
+        personalizedMessage: "Namaste Adhyapak! Here are some carefully selected videos to help you deliver engaging lessons, stay updated on government policies, and grow as an educator.",
         categorizedVideos: mergeCuratedVideos({}),
       });
       toast({
         title: "Showing curated content",
         description: "Personalization is loading. Showing recommended Indian educational videos.",
-        variant: "default",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Load preferences from Teacher Profile on mount
   useEffect(() => {
     const loadProfile = async () => {
       if (user) {
@@ -116,7 +114,7 @@ export default function VideoStorytellerPage() {
     loadProfile();
   }, [user]);
 
-  const handleFilterChange = (newFilters: any) => {
+  const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
     fetchRecommendations(newFilters);
   };
@@ -125,32 +123,30 @@ export default function VideoStorytellerPage() {
     window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank");
   };
 
-  const CATEGORIES = [
-    { key: "topRecommended", title: "🌟 Top Recommended for You" },
-    { key: "storytelling", title: "📖 Storytelling for your Subjects" },
-    { key: "pedagogy", title: "🎓 Pedagogy & Teaching Methods (NEP/NCF)" },
-    { key: "govtUpdates", title: "📢 Government Updates & Resources" },
-    { key: "courses", title: "🏫 Teacher Training Courses" },
-  ];
-
+  // ── Expanded category view ──────────────────────────────────────────────────
   if (expandedCategory && recommendations) {
     const videos = recommendations.categorizedVideos[expandedCategory.key] || [];
+    const Icon = expandedCategory.icon;
     return (
-      <div className="container max-w-7xl mx-auto py-12 px-4 animate-in fade-in zoom-in-95 duration-500">
-        <div className="flex items-center gap-4 mb-10">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setExpandedCategory(null)}
-            className="rounded-full border-slate-200"
+            className="rounded-lg gap-1.5 h-8 text-xs"
           >
-            ← Back to Library
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
           </Button>
           <div className="h-4 w-px bg-slate-200" />
-          <h2 className="text-3xl font-headline font-bold text-slate-900">{expandedCategory.title}</h2>
+          <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4 text-primary" />
+            <h2 className="text-lg font-headline font-bold text-slate-900">{expandedCategory.title}</h2>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {videos.map(video => (
             <VideoCard key={video.id} video={video} onSelect={handleVideoSelect} />
           ))}
@@ -159,112 +155,106 @@ export default function VideoStorytellerPage() {
     );
   }
 
+  // ── Main view ───────────────────────────────────────────────────────────────
   return (
-    <div className="container max-w-7xl mx-auto py-12 px-4">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 relative">
-        <div className="relative z-10">
-          <div className="w-16 h-1 w-1/3 bg-primary mb-6 rounded-full" />
-          <h1 className="text-5xl font-headline font-black text-slate-900 tracking-tight flex items-center gap-4">
-            Video Storyteller
-          </h1>
-          <p className="text-slate-500 mt-4 text-xl font-medium max-w-2xl leading-relaxed">
-            Personalized educational stories and pedagogy to empower your classroom, aligned with <span className="text-primary font-bold">Bharat's educational mission</span>.
-          </p>
-        </div>
-        {/* Intelligent Filter Bar */}
-        <div className="mb-12">
-          <VideoFilterBar
-            onFilterChange={handleFilterChange}
-            initialFilters={filters}
-          />
-        </div>
+    <div className="w-full max-w-7xl mx-auto space-y-5">
 
-        <div className="flex justify-end mb-6">
-          <Button
-            onClick={() => fetchRecommendations()}
-            disabled={loading}
-            size="lg"
-            className="gap-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 shadow-sm rounded-full px-6 h-12 font-bold transition-all hover:scale-105 active:scale-95"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 text-primary" />
-            )}
-            Refresh Insights
-          </Button>
-        </div>
-      </div>
-
-      {loading && !recommendations && (
-        <div className="flex flex-col items-center justify-center py-32 gap-6 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100 mt-8">
-          <div className="relative">
-            <Loader2 className="w-20 h-20 text-primary animate-spin opacity-20" />
-            <Sparkles className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-bounce" />
-          </div>
-          <div className="text-center">
-            <p className="text-slate-900 font-headline font-bold text-2xl">Sahayak is Curating...</p>
-            <p className="text-slate-400 mt-1 font-medium italic">Finding the best Bharat-First content for you</p>
-          </div>
-        </div>
-      )}
-
-      {recommendations && (
-        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-          {/* AI Intro Message - Premium Guard Variant */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-[2rem] blur opacity-25 group-hover:opacity-100 transition duration-1000"></div>
-            <Card className="relative bg-white border-slate-100 shadow-xl shadow-slate-200/50 rounded-[2rem] overflow-hidden border-none ring-1 ring-slate-100">
-              <CardContent className="p-8 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-8">
-                <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 flex items-center justify-center shrink-0 shadow-inner">
-                  <MessageSquare className="w-10 h-10 text-primary" />
-                </div>
-                <div className="space-y-4 text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    Guru Insights
-                  </div>
-                  <h3 className="font-headline font-bold text-2xl text-slate-900 leading-tight">
-                    Guidance from Sahayak
-                  </h3>
-                  <p className="text-slate-600 leading-relaxed text-lg font-medium italic opacity-90">
-                    &quot;{recommendations.personalizedMessage}&quot;
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Video Carousels */}
-          <div className="divide-y divide-slate-100/50">
-            {CATEGORIES.map(cat => (
-              <VideoCarousel
-                key={cat.key}
-                categoryKey={cat.key}
-                title={cat.title}
-                videos={recommendations.categorizedVideos[cat.key]}
-                onVideoSelect={handleVideoSelect}
-                onViewAll={(key) => {
-                  const found = CATEGORIES.find(c => c.key === key);
-                  if (found) setExpandedCategory(found);
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!loading && !recommendations && user && (
-        <div className="text-center py-32 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100 flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-            <Video className="w-10 h-10 text-slate-300" />
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Video className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-slate-900 font-headline font-bold text-xl">Ready to Explore?</p>
-            <p className="text-slate-400 mt-1">
-              Click the refresh button above to start your personalized journey.
+            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-slate-900 leading-tight">
+              Video Storyteller
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Curated educational videos for Indian classrooms
             </p>
           </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchRecommendations()}
+          disabled={loading}
+          className="rounded-lg gap-1.5 h-8 text-xs shrink-0 mt-1"
+        >
+          {loading
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <RefreshCw className="w-3.5 h-3.5" />
+          }
+          Refresh
+        </Button>
+      </div>
+
+      {/* Filter bar */}
+      <VideoFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
+
+      {/* AI insight banner */}
+      {recommendations && (
+        <div className="flex items-start gap-2.5 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+          <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-700 leading-relaxed italic">
+            {recommendations.personalizedMessage}
+          </p>
+        </div>
+      )}
+
+      {/* Loading state — initial load */}
+      {loading && !recommendations && (
+        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <div className="relative">
+            <Loader2 className="w-10 h-10 text-primary/30 animate-spin" />
+            <Sparkles className="w-4 h-4 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-slate-700">Curating your videos…</p>
+            <p className="text-xs text-slate-400 mt-1">Finding Bharat-first content for your classroom</p>
+          </div>
+        </div>
+      )}
+
+      {/* Video carousels */}
+      {recommendations && (
+        <div className="divide-y divide-slate-100">
+          {CATEGORIES.map(cat => (
+            <VideoCarousel
+              key={cat.key}
+              categoryKey={cat.key}
+              title={cat.title}
+              icon={cat.icon}
+              videos={recommendations.categorizedVideos[cat.key]}
+              onVideoSelect={handleVideoSelect}
+              onViewAll={(key) => {
+                const found = CATEGORIES.find(c => c.key === key);
+                if (found) setExpandedCategory(found);
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Empty state — not loading, no data, user logged in */}
+      {!loading && !recommendations && user && (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+            <Video className="w-6 h-6 text-slate-300" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-slate-700">Ready to explore?</p>
+            <p className="text-xs text-slate-400 mt-1">Use the filters above to find videos for your classroom.</p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fetchRecommendations()}
+            className="rounded-lg gap-1.5 h-8 text-xs mt-1"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Load Recommendations
+          </Button>
         </div>
       )}
     </div>

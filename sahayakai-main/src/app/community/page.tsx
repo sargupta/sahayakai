@@ -461,7 +461,8 @@ export default function CommunityPage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchInput, setSearchInput]   = useState('');
   const [searchTerm, setSearchTerm]     = useState('');
-  const [activeTab, setActiveTab] = useState<'discover' | 'connect' | 'chat'>('discover');
+  // activeTab only used to pass to Tabs onValueChange — kept for future use
+  const [, setActiveTab] = useState<'discover' | 'connect' | 'chat'>('discover');
 
   const [resources, setResources]             = useState<Resource[]>([]);
   const [filteredResources, setFiltered]      = useState<Resource[]>([]);
@@ -628,7 +629,7 @@ export default function CommunityPage() {
       {/* ── Main tabs ──────────────────────────────────────────────────────── */}
       <Tabs
         defaultValue="discover"
-        onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+        onValueChange={(v) => setActiveTab(v as 'discover' | 'connect' | 'chat')}
         className="w-full"
       >
         <TabsList className="flex w-full bg-slate-100/60 p-1 rounded-2xl h-auto border border-slate-200/60 gap-0.5">
@@ -674,7 +675,7 @@ export default function CommunityPage() {
               <button
                 onClick={toggleVoice}
                 className={cn(
-                  "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
+                  "absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-lg transition-all",
                   isListening
                     ? "bg-red-100 text-red-500 animate-pulse"
                     : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
@@ -719,7 +720,7 @@ export default function CommunityPage() {
           </div>
 
           {/* Suggested educators horizontal strip */}
-          {activeTab === 'discover' && <TeacherStrip />}
+          <TeacherStrip />
 
           {/* Resource grid */}
           <ResourceList
@@ -744,7 +745,7 @@ export default function CommunityPage() {
       </Tabs>
 
       {/* ── Mobile FAB — Share button ─────────────────────────────────────── */}
-      <div className="fixed bottom-6 right-6 sm:hidden z-50">
+      <div className="fixed bottom-20 right-4 sm:hidden z-50">
         <CreatePostDialog
           onPostCreated={() => {}}
           trigger={

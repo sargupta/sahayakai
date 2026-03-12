@@ -118,7 +118,7 @@ export function CommunityChat() {
     };
 
     return (
-        <div className="flex flex-col min-h-[400px] h-[600px] bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mt-4">
+        <div className="flex flex-col min-h-[400px] h-[calc(100dvh-11rem)] sm:h-[600px] bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm mt-4">
             {/* Header */}
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 shrink-0">
                 <div className="p-1.5 bg-orange-100 rounded-lg">

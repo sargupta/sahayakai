@@ -40,7 +40,7 @@ export default function CommunityPage() {
             <div className="flex justify-center items-center mb-4">
                 <Library className="w-12 h-12 text-primary" />
             </div>
-            <CardTitle className="font-headline text-3xl">Community Library</CardTitle>
+            <CardTitle className="font-headline text-2xl sm:text-3xl">Community Library</CardTitle>
             <CardDescription>
                 Discover and share educational resources with fellow teachers.
             </CardDescription>

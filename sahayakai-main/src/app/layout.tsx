@@ -47,7 +47,7 @@ export default function RootLayout({
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
-                <header className="flex h-14 items-center justify-between border-b bg-background px-6">
+                <header className="flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
                   <div className="flex items-center gap-4">
                     <SidebarTrigger />
                     <div className="md:hidden">
@@ -58,7 +58,7 @@ export default function RootLayout({
                     <AuthButton />
                   </div>
                 </header>
-                <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center p-4 md:p-8">
+                <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center p-3 sm:p-4 md:p-8">
                   <AnalyticsProvider>
                     {children}
                   </AnalyticsProvider>

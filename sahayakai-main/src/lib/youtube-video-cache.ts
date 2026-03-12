@@ -20,6 +20,9 @@ export interface VideoCacheEntry {
     profileHash: string;
     subject: string;
     gradeLevel: string;
+    language?: string;
+    state?: string;
+    educationBoard?: string;
     categorizedVideos: Record<string, YouTubeVideo[]>;
     personalizedMessage: string;
     cachedAt: string; // ISO timestamp
@@ -31,11 +34,22 @@ export interface VideoCacheEntry {
  * Builds a deterministic cache key from teacher profile.
  * Same teacher context → same key → cache hit across all users with similar profiles.
  */
-export function buildCacheKey(subject: string, gradeLevel: string): string {
-    const normalizedSubject = subject.toLowerCase().trim();
-    const normalizedGrade = gradeLevel.toLowerCase().trim();
+export function buildCacheKey(
+    subject: string,
+    gradeLevel: string,
+    language?: string,
+    state?: string,
+    educationBoard?: string
+): string {
+    const parts = [
+        subject.toLowerCase().trim(),
+        gradeLevel.toLowerCase().trim(),
+        (language || 'english').toLowerCase().trim(),
+        (state || 'general').toLowerCase().trim(),
+        (educationBoard || 'cbse').toLowerCase().trim(),
+    ];
     return createHash('sha256')
-        .update(`${normalizedSubject}:${normalizedGrade}`)
+        .update(parts.join(':'))
         .digest('hex')
         .slice(0, 16); // 16-char hex is sufficient for uniqueness
 }
@@ -46,11 +60,14 @@ export function buildCacheKey(subject: string, gradeLevel: string): string {
  */
 export async function getCachedVideos(
     subject: string,
-    gradeLevel: string
+    gradeLevel: string,
+    language?: string,
+    state?: string,
+    educationBoard?: string
 ): Promise<VideoCacheEntry | null> {
     try {
         const db = await getDb();
-        const key = buildCacheKey(subject, gradeLevel);
+        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard);
         const doc = await db.collection(CACHE_COLLECTION).doc(key).get();
 
         if (!doc.exists) return null;
@@ -84,11 +101,14 @@ export async function setCachedVideos(
     subject: string,
     gradeLevel: string,
     categorizedVideos: Record<string, YouTubeVideo[]>,
-    personalizedMessage: string
+    personalizedMessage: string,
+    language?: string,
+    state?: string,
+    educationBoard?: string
 ): Promise<void> {
     try {
         const db = await getDb();
-        const key = buildCacheKey(subject, gradeLevel);
+        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard);
         const now = new Date();
         const expiresAt = new Date(now.getTime() + CACHE_TTL_HOURS * 60 * 60 * 1000);
 
@@ -96,6 +116,9 @@ export async function setCachedVideos(
             profileHash: key,
             subject,
             gradeLevel,
+            language,
+            state,
+            educationBoard,
             categorizedVideos,
             personalizedMessage,
             cachedAt: now.toISOString(),

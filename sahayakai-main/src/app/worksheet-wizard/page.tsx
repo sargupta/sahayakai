@@ -404,7 +404,7 @@ function WorksheetWizardContent() {
           <div className="flex justify-center items-center mb-4">
             <PencilRuler className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
