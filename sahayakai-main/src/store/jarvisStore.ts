@@ -123,23 +123,30 @@ export const useJarvisStore = create<JarvisState>()(
         }),
         {
             name: 'jarvis-storage',
+            version: 1,
             // Explicitly list keys to persist so future additions don't auto-persist sensitive data
             partialize: (state) => ({
                 chatHistory: state.chatHistory,
                 teacherProfile: state.teacherProfile,
                 formSnapshots: state.formSnapshots,
             }),
+            // Runs whenever the persisted schema version is older than `version`.
+            // Normalises any stale localStorage data to the current shape.
+            migrate: (persisted: any, _version: number) => {
+                const state = persisted as Partial<JarvisState>;
+                return {
+                    chatHistory: Array.isArray(state.chatHistory) ? state.chatHistory : [],
+                    teacherProfile: (typeof state.teacherProfile === 'object' && state.teacherProfile)
+                        ? { ...DEFAULT_PROFILE, ...state.teacherProfile }
+                        : DEFAULT_PROFILE,
+                    formSnapshots: (typeof state.formSnapshots === 'object' && state.formSnapshots)
+                        ? state.formSnapshots
+                        : {},
+                };
+            },
             onRehydrateStorage: () => (state, error) => {
                 if (error) {
                     console.warn('[jarvisStore] Rehydration failed — using defaults', error);
-                    return;
-                }
-                if (state) {
-                    if (!Array.isArray(state.chatHistory)) state.chatHistory = [];
-                    if (typeof state.teacherProfile !== 'object' || !state.teacherProfile)
-                        state.teacherProfile = DEFAULT_PROFILE;
-                    if (typeof state.formSnapshots !== 'object' || !state.formSnapshots)
-                        state.formSnapshots = {};
                 }
             },
         }
