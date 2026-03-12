@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
     signInWithPopup,
     GoogleAuthProvider,
-    onAuthStateChanged,
-    User,
     signOut
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -31,26 +29,8 @@ import { LogOut, User as UserIcon, ShieldCheck, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AuthButton() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useAuth();
     const { toast } = useToast();
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-
-        // Safety timeout: If Firebase takes too long, just show the sign-in button
-        const safetyTimer = setTimeout(() => {
-            setLoading(false);
-        }, 2000);
-
-        return () => {
-            unsubscribe();
-            clearTimeout(safetyTimer);
-        };
-    }, []);
 
     const handleSignIn = async () => {
         const provider = new GoogleAuthProvider();

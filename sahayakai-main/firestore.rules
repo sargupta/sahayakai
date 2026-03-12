@@ -8,9 +8,9 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // --- Feedback (open submission, no auth required) ---
+    // --- Feedback (signed-in users only) ---
     match /feedbacks/{document} {
-      allow create: if true;
+      allow create: if isSignedIn();
     }
 
     // --- Users ---
