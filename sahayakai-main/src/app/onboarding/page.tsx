@@ -128,24 +128,24 @@ export default function OnboardingPage() {
     );
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50/50 p-6">
-            <Card className="w-full max-w-2xl shadow-xl border-none">
-                <CardHeader className="text-center space-y-2 pb-8">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50/50 p-3 sm:p-6">
+            <Card className="w-full max-w-lg sm:max-w-2xl shadow-xl border-none">
+                <CardHeader className="text-center space-y-2 pb-4 sm:pb-8">
                     <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
                         <GraduationCap className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-3xl font-extrabold font-headline">{t("Finish your Profile")}</CardTitle>
+                    <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline">{t("Finish your Profile")}</CardTitle>
                     <CardDescription className="text-lg">Help us personalize your experience based on your local teaching context.</CardDescription>
 
                     {/* Step Indicator */}
                     <div className="flex justify-center gap-2 mt-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className={`h-1.5 w-12 rounded-full transition-colors ${step >= i ? "bg-primary" : "bg-slate-200"}`} />
+                            <div key={i} className={`h-1.5 w-8 sm:w-12 rounded-full transition-colors ${step >= i ? "bg-primary" : "bg-slate-200"}`} />
                         ))}
                     </div>
                 </CardHeader>
 
-                <CardContent className="space-y-8 px-8 min-h-[400px]">
+                <CardContent className="space-y-8 px-4 sm:px-8 min-h-[400px]">
                     {step === 1 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                             <div className="flex items-center gap-2 text-primary font-bold">
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
                                 <span>1. Your Role & Bio</span>
                             </div>
                             <div className="grid gap-6">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>Primary Department*</Label>
                                         <Select
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
                     )}
                 </CardContent>
 
-                <CardFooter className="flex justify-between px-8 py-8 border-t bg-slate-50/50 rounded-b-3xl">
+                <CardFooter className="flex justify-between px-4 sm:px-8 py-4 sm:py-8 border-t bg-slate-50/50 rounded-b-3xl">
                     <Button
                         variant="ghost"
                         onClick={() => setStep(prev => prev - 1)}

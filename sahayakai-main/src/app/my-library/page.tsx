@@ -87,7 +87,7 @@ export default function MyLibraryPage() {
         <CardContent className="p-0">
           <div className="p-6 border-b border-white/40">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
+              <h1 className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</h1>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
                 <Button variant="outline" className="hidden md:flex">

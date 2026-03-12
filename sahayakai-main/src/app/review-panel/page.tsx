@@ -12,7 +12,7 @@ export default function ReviewPanelPage() {
           <div className="flex justify-center items-center mb-4">
               <ShieldCheck className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Review Panel</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">Review Panel</CardTitle>
           <CardDescription>
             This feature is coming soon. (Admin-only) Review community-submitted content.
           </CardDescription>

@@ -381,7 +381,7 @@ function VisualAidContent() {
               <Images className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>

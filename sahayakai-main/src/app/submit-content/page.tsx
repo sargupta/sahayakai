@@ -12,7 +12,7 @@ export default function SubmitContentPage() {
           <div className="flex justify-center items-center mb-4">
               <Upload className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Submit Content</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">Submit Content</CardTitle>
           <CardDescription>
             This feature is coming soon. Submit your own content to the community library.
           </CardDescription>

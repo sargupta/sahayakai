@@ -117,7 +117,7 @@ function MessagesPageContent() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+        <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
             {/* ── Conversation List (Inbox) ─────────────────────────── */}
             <div className={cn(
                 "w-full lg:w-80 xl:w-96 shrink-0 lg:block",
@@ -156,7 +156,7 @@ function MessagesPageContent() {
 export default function MessagesPage() {
     return (
         <Suspense fallback={
-            <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+            <div className="flex items-center justify-center h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)]">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
             </div>
         }>
