@@ -87,17 +87,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
-        const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
-        const userFriendlyError = isAuthError
-            ? `Server Configuration Error: ${errorMessage}. Please ensure 'gcloud auth application-default login' has been run on the server.`
-            : errorMessage;
-
         return NextResponse.json(
-            {
-                error: userFriendlyError,
-                details: errorMessage,
-                code: (error as any).code || 'INTERNAL_ERROR'
-            },
+            { error: 'AI generation failed. Please try again.' },
             { status: 500 }
         );
     }

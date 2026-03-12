@@ -54,7 +54,19 @@ import { logger } from '@/lib/logger';
  */
 export async function POST(request: Request) {
     try {
+        // Auth check — middleware injects x-user-id from verified Firebase token
+        const requestingUserId = request.headers.get('x-user-id');
+        if (!requestingUserId) {
+            return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
+        }
+
         const body = await request.json();
+
+        // Ownership check — body.uid must match the authenticated user
+        if (body.uid && body.uid !== requestingUserId) {
+            logger.error('Profile ownership violation', new Error('uid mismatch'), 'PROFILE', { requestingUserId, bodyUid: body.uid });
+            return NextResponse.json({ error: 'Forbidden: Cannot modify another user\'s profile' }, { status: 403 });
+        }
 
         // Zod Validation
         const validationResult = UserProfileSchema.safeParse(body);
