@@ -13,6 +13,7 @@ import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 
 export const metadata: Metadata = {
@@ -59,9 +60,11 @@ export default function RootLayout({
                   </div>
                 </header>
                 <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center p-3 sm:p-4 md:p-8">
-                  <AnalyticsProvider>
-                    {children}
-                  </AnalyticsProvider>
+                  <ErrorBoundary>
+                    <AnalyticsProvider>
+                      {children}
+                    </AnalyticsProvider>
+                  </ErrorBoundary>
                 </main>
               </SidebarInset>
               <AuthDialog />
