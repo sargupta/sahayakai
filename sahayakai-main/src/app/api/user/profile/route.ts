@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     } catch (error) {
         logger.error('Profile Save API Failed', error, 'PROFILE');
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }
