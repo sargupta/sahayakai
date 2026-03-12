@@ -34,6 +34,37 @@ export const LANGUAGES = [
 ] as const;
 export type Language = typeof LANGUAGES[number];
 
+export const INDIAN_STATES = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+    'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    // Union Territories
+    'Delhi', 'Chandigarh', 'Jammu and Kashmir', 'Ladakh', 'Puducherry',
+    'Andaman and Nicobar Islands', 'Lakshadweep', 'Dadra and Nagar Haveli and Daman and Diu',
+] as const;
+export type IndianState = typeof INDIAN_STATES[number];
+
+export const EDUCATION_BOARDS = [
+    'CBSE', 'ICSE / ISC',
+    // State Boards
+    'Andhra Pradesh State Board', 'Assam State Board (SEBA)', 'Bihar State Board (BSEB)',
+    'Chhattisgarh State Board (CGBSE)', 'Goa Board of Secondary Education',
+    'Gujarat State Board (GSEB)', 'Haryana State Board (HBSE)',
+    'Himachal Pradesh State Board (HPBOSE)', 'Jharkhand Academic Council (JAC)',
+    'Karnataka State Board (KSEEB)', 'Kerala State Board (SCERT)',
+    'Madhya Pradesh State Board (MPBSE)', 'Maharashtra State Board (MSBSHSE)',
+    'Manipur State Board (COHSEM)', 'Meghalaya State Board (MBOSE)',
+    'Nagaland State Board (NBSE)', 'Odisha State Board (BSE Odisha)',
+    'Punjab State Board (PSEB)', 'Rajasthan State Board (RBSE)',
+    'Tamil Nadu State Board (SSLC)', 'Telangana State Board (TSBIE)',
+    'Tripura State Board (TBSE)', 'UP Board (UPMSP)',
+    'Uttarakhand State Board (UBSE)', 'West Bengal State Board (WBBSE)',
+    'Delhi Board (DBSE)', 'Puducherry Board',
+] as const;
+export type EducationBoard = typeof EDUCATION_BOARDS[number];
+
 export const LANGUAGE_CODE_MAP: Record<string, Language> = {
     'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada', 'ta': 'Tamil',
     'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali',
@@ -58,6 +89,8 @@ export interface UserProfile {
     schoolNormalized?: string; // For fuzzy matching
     district?: string;
     pincode?: string;
+    state?: string;
+    educationBoard?: string;
     verifiedStatus?: 'none' | 'pending' | 'verified';
     bio?: string;
     department?: string;

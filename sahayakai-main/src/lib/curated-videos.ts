@@ -75,8 +75,8 @@ export const CURATED_INDIAN_EDU_VIDEOS: Record<string, YouTubeVideo[]> = {
         },
         {
             "id": "_RCw3k2aAKk",
-            "title": "Bodhan.ai, AI Centre of Excellence for Education at IIT Madras",
-            "description": "AI innovation in Indian education from MoE.",
+            "title": "AI Tools for School Teachers: Practical Classroom Applications",
+            "description": "Using digital and AI tools in primary/secondary school classrooms.",
             "thumbnail": "https://i.ytimg.com/vi/_RCw3k2aAKk/mqdefault.jpg",
             "channelTitle": "Ministry of Education India",
             "publishedAt": "2026-02-18T10:26:19+00:00"
