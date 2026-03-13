@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
@@ -47,35 +47,41 @@ function MessagesPageContent() {
     const [autoOpenLoading, setAutoOpenLoading] = useState(!!(withUid || openId));
 
     // Helper: fetch a conversation doc from Firestore and open it
-    const openConversationById = async (conversationId: string) => {
+    const openConversationById = useCallback(async (conversationId: string) => {
         const snap = await getDoc(doc(db, "conversations", conversationId));
         if (snap.exists()) {
             setActiveConversation({ id: snap.id, ...snap.data() } as Conversation);
             setMobileView("thread");
         }
-    };
+    }, []);
 
-    // Auto-create/open DM when `?with=uid` is in the URL
+    // Auto-open conversation from URL params (`?with=` or `?open=`)
     useEffect(() => {
-        if (!withUid || !user) return;
-        setAutoOpenLoading(true);
-        getOrCreateDirectConversationAction(user.uid, withUid)
-            .then(({ conversationId }) => openConversationById(conversationId))
-            .then(() => router.replace("/messages"))
-            .catch(() => {})
-            .finally(() => setAutoOpenLoading(false));
-    }, [withUid, user]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (!user || (!withUid && !openId)) {
+            return;
+        }
 
-    // Open an existing conversation by ID when `?open=convId` is in the URL
-    // Used by notification deep-links
-    useEffect(() => {
-        if (!openId || !user) return;
-        setAutoOpenLoading(true);
-        openConversationById(openId)
-            .then(() => router.replace("/messages"))
-            .catch(() => {})
-            .finally(() => setAutoOpenLoading(false));
-    }, [openId, user]); // eslint-disable-line react-hooks/exhaustive-deps
+        let actionPromise: Promise<any> | undefined;
+
+        if (withUid) {
+            actionPromise = getOrCreateDirectConversationAction(user.uid, withUid)
+                .then(({ conversationId }) => openConversationById(conversationId));
+        } else if (openId) {
+            actionPromise = openConversationById(openId);
+        }
+
+        if (actionPromise) {
+            setAutoOpenLoading(true);
+            actionPromise
+                .catch(() => {
+                    // Handle or log error if necessary
+                })
+                .finally(() => {
+                    router.replace("/messages", { scroll: false });
+                    setAutoOpenLoading(false);
+                });
+        }
+    }, [user, withUid, openId, router, openConversationById]);
 
     const handleSelectConversation = (conv: Conversation) => {
         setActiveConversation(conv);

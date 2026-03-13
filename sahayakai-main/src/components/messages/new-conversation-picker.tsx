@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getAllTeachersAction } from "@/app/actions/community";
 import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
@@ -31,10 +31,10 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
     const [loading, setLoading] = useState(true);
     const [openingId, setOpeningId] = useState<string | null>(null);
     const [connectingId, setConnectingId] = useState<string | null>(null);
-    const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
+    const fetchInitialData = useCallback(() => {
         if (!user) return;
+        setLoading(true);
         Promise.all([
             getAllTeachersAction(user.uid),
             getMyConnectionDataAction(),
@@ -47,6 +47,10 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
             .finally(() => setLoading(false));
     }, [user]);
 
+    useEffect(() => {
+        fetchInitialData();
+    }, [fetchInitialData]);
+
     const filtered = search.trim()
         ? teachers.filter((t) =>
             t.displayName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,7 +60,6 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
 
     const isConnected = (uid: string) => connData.connectedUids.includes(uid);
     const hasPendingRequest = (uid: string) =>
-        sentIds.has(uid) ||
         connData.sentRequestUids.includes(uid) ||
         connData.receivedRequests.some((r) => r.uid === uid);
 
@@ -76,7 +79,8 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
         setConnectingId(teacher.uid);
         try {
             await sendConnectionRequestAction(teacher.uid);
-            setSentIds((prev) => new Set(prev).add(teacher.uid));
+            // Re-fetch connection data to update UI from the source of truth
+            getMyConnectionDataAction().then(setConnData);
         } catch {
             // silent
         } finally {
