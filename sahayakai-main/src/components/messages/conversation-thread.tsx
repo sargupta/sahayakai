@@ -179,6 +179,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     const [loading, setLoading] = useState(true);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
+    const sendingRef = useRef(false);
     const [resourceOpen, setResourceOpen] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -216,13 +217,14 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         audioUrl?: string,
         audioDuration?: number,
     ) => {
-        if (!user || sending) return;
+        if (!user || sendingRef.current) return;
         const trimmed = text.trim();
         if (!trimmed && type === "text") return;
         if (type === "audio" && !audioUrl) return;
 
         setInput("");
         setSending(true);
+        sendingRef.current = true;
         try {
             await sendMessageAction({
                 conversationId: conversation.id,
@@ -234,9 +236,10 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
             });
         } finally {
             setSending(false);
+            sendingRef.current = false;
             textareaRef.current?.focus();
         }
-    }, [user, sending, conversation.id]);
+    }, [user, conversation.id]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
