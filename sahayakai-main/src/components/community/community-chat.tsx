@@ -42,15 +42,8 @@ export function CommunityChat() {
     const bottomRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Real-time listener — wait for auth before subscribing (rules require isSignedIn())
+    // Real-time listener — limitToLast(100) gives the most recent 100 messages
     useEffect(() => {
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-
         const q = query(
             collection(db, "community_chat"),
             orderBy("createdAt", "asc"),
@@ -63,14 +56,10 @@ export function CommunityChat() {
                 ...(doc.data() as Omit<ChatMessage, "id">),
             })));
             setLoading(false);
-        }, (err) => {
-            console.error("community_chat onSnapshot error:", err);
-            setError("Failed to load messages. Please refresh.");
-            setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, []);
 
     // Auto-scroll on new messages
     useEffect(() => {

@@ -261,32 +261,6 @@ Per-User Cost:       ₹211.24/user/month
 - Optimization becomes critical as we grow
 - Caching can reduce costs by 40% across all scales
 
-### 4.5 Total Cost @ 100,000 DAU (1 Lakh Teachers) - B2G Quote Scenario
-
-This scenario models the cost for a large-scale government contract of 100,000 teachers, assuming they are all Daily Active Users (DAU).
-
-**Unoptimized Annual Cost:**
-- **Calculation:** 100,000 users * ₹211/user/month * 12 months
-- **Total:** **₹25.32 Crore / year**
-
-**Optimized Annual Cost (Target):**
-- **Assumption:** A ~60% cost reduction is achieved via the full optimization strategy (caching, image pre-generation, model routing).
-- **Calculation:** ₹25.32 Crore * (1 - 0.60)
-- **Total:** **~₹10.13 Crore / year**
-
-#### Government Quote Viability
-
-This table illustrates the financial viability when quoting a typical government price point of ₹1,000 per teacher per year.
-
-| Metric                      | Unoptimized Cost                | After Optimization (~60% Reduction) |
-| :-------------------------- | :------------------------------ | :---------------------------------- |
-| **Cost per Teacher**        | ₹2,532 / year                   | **~₹1,013 / year**                  |
-| **Total Annual Cost**       | **₹25.32 Crore**                | **~₹10.13 Crore**                   |
-| **Annual Revenue**<br>(@ ₹1,000/teacher) | ₹10 Crore                       | ₹10 Crore                           |
-| **Net Result**              | **-₹15.32 Crore (Major Loss)**  | **~₹-13 Lakh (Near Break-Even)**    |
-
-**Conclusion:** A government contract at this scale is only feasible if the full cost optimization plan is executed. The quote must be based on the optimized cost structure.
-
 ---
 
 ## 5. Future Feature Expansion Scenarios

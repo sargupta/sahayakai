@@ -31,16 +31,7 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
-            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com \
-            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248 \
-            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app \
-            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=640589855975 \
-            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=1:640589855975:web:624436f873a78069aa3642 \
-            --build-arg NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-273SVBVJ2L \
-            -t asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }} \
-            ./sahayakai-main
+          docker build -t asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }} ./sahayakai-main
           docker push asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }}
 
       - name: Deploy to Cloud Run
