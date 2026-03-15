@@ -13,7 +13,7 @@ import {
   SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -165,6 +165,14 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/attendance')} tooltip="Attendance">
+                <Link href="/attendance" onClick={() => handleNavClick('/attendance')}>
+                  <ClipboardList />
+                  <span>Attendance</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/my-library')} tooltip="My Library">
                 <Link href="/my-library" onClick={() => handleNavClick('/my-library')}>
