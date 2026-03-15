@@ -43,6 +43,7 @@ const ParentMessageInputSchema = z.object({
     className:                z.string().describe('Class name, e.g. "Class 6A"'),
     subject:                  z.string().describe('Subject the teacher teaches'),
     reason:                   z.enum(['consecutive_absences', 'poor_performance', 'behavioral_concern', 'positive_feedback']),
+    reasonContext:            z.string().describe('Specific guidance for how to handle this reason'),
     teacherNote:              z.string().optional().describe('Optional note from the teacher with specific details'),
     parentLanguage:           z.string().describe('Language to write the message in, e.g. "Hindi"'),
     consecutiveAbsentDays:    z.number().optional().describe('Number of consecutive absent days (for absence reason)'),
@@ -76,9 +77,7 @@ You are a caring and professional school teacher writing a message to a student'
 - Class: {{className}}
 - Subject: {{subject}}
 - Reason for outreach: {{reason}}
-- Specific guidance for this reason: ${Object.fromEntries(
-    Object.entries(REASON_CONTEXT).map(([k, v]) => [k, v])
-)['consecutive_absences']}
+- Specific guidance: {{reasonContext}}
 {{#if consecutiveAbsentDays}}
 - Days absent consecutively: {{consecutiveAbsentDays}}
 {{/if}}
@@ -135,7 +134,11 @@ const parentMessageFlow = ai.defineFlow(
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function generateParentMessage(input: ParentMessageInput): Promise<ParentMessageOutput> {
-    let enrichedInput = { ...input };
+    let enrichedInput = {
+        ...input,
+        // Always resolve reasonContext here — never rely on the template to do a dynamic lookup
+        reasonContext: REASON_CONTEXT[input.reason as OutreachReason] ?? REASON_CONTEXT.consecutive_absences,
+    };
 
     // Enrich with user profile if userId provided
     if (input.userId && (!input.teacherName || !input.schoolName)) {

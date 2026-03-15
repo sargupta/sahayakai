@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface AttendanceCalendarProps {
     classId: string;
+    initialSummaries?: StudentAttendanceSummary[]; // pass current-month data to avoid refetch
 }
 
 const MONTH_NAMES = [
@@ -16,20 +17,28 @@ const MONTH_NAMES = [
     "July","August","September","October","November","December",
 ];
 
-export function AttendanceCalendar({ classId }: AttendanceCalendarProps) {
+export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCalendarProps) {
     const now = new Date();
-    const [year, setYear] = useState(now.getFullYear());
-    const [month, setMonth] = useState(now.getMonth() + 1);
-    const [summaries, setSummaries] = useState<StudentAttendanceSummary[]>([]);
-    const [loading, setLoading] = useState(true);
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const [year, setYear] = useState(currentYear);
+    const [month, setMonth] = useState(currentMonth);
+    const [summaries, setSummaries] = useState<StudentAttendanceSummary[]>(initialSummaries ?? []);
+    const [loading, setLoading] = useState(!initialSummaries);
 
     useEffect(() => {
+        // Skip fetch for the current month if initial data was provided
+        if (year === currentYear && month === currentMonth && initialSummaries) {
+            setSummaries(initialSummaries);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         getStudentSummariesAction(classId, year, month)
             .then(setSummaries)
             .catch(() => setSummaries([]))
             .finally(() => setLoading(false));
-    }, [classId, year, month]);
+    }, [classId, year, month]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const prevMonth = () => {
         if (month === 1) { setMonth(12); setYear((y) => y - 1); }

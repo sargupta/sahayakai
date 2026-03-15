@@ -190,7 +190,7 @@ export default function ClassDetailPage() {
                 </TabsContent>
 
                 <TabsContent value="reports" className="mt-4">
-                    <AttendanceCalendar classId={classId} />
+                    <AttendanceCalendar classId={classId} initialSummaries={summaries} />
                 </TabsContent>
             </Tabs>
 
