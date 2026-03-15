@@ -76,12 +76,14 @@ export async function getClassesAction(): Promise<ClassRecord[]> {
     const uid = await getAuthUserId();
     const db = await getDb();
 
+    // No composite index needed — equality filter only, sort in JS
     const snap = await db.collection('classes')
         .where('teacherUid', '==', uid)
-        .orderBy('createdAt', 'desc')
         .get();
 
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ClassRecord));
+    return snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as ClassRecord))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function getClassAction(classId: string): Promise<ClassRecord | null> {
@@ -448,24 +450,23 @@ export async function getOutreachHistoryAction(
     const uid = await getAuthUserId();
     const db = await getDb();
 
-    // Two separate typed query paths — avoids `as any` and keeps classId scoping in both cases.
+    // No composite indexes needed — equality filters only, sort in JS
     const snap = studentId
         ? await db.collection('parent_outreach')
             .where('teacherUid', '==', uid)
             .where('studentId', '==', studentId)
-            .orderBy('createdAt', 'desc')
-            .limit(20)
             .get()
         : await db.collection('parent_outreach')
             .where('teacherUid', '==', uid)
             .where('classId', '==', classId)
-            .orderBy('createdAt', 'desc')
-            .limit(50)
             .get();
 
-    return dbAdapter.serialize(
-        snap.docs.map((d) => ({ id: d.id, ...d.data() } as ParentOutreach))
-    ) as ParentOutreach[];
+    const records = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as ParentOutreach))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, studentId ? 20 : 50);
+
+    return dbAdapter.serialize(records) as ParentOutreach[];
 }
 
 // ── Twilio config check ───────────────────────────────────────────────────────
