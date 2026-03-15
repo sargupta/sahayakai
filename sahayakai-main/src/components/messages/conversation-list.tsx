@@ -136,6 +136,9 @@ export function ConversationList({
         const unsub = onSnapshot(q, (snap) => {
             setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Conversation)));
             setLoading(false);
+        }, (err) => {
+            console.error("conversations onSnapshot error:", err);
+            setLoading(false);
         });
 
         return () => unsub();
