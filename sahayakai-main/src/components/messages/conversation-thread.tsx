@@ -176,6 +176,7 @@ interface ConversationThreadProps {
 export function ConversationThread({ conversation, onBack }: ConversationThreadProps) {
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [optimisticIds, setOptimisticIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -187,13 +188,25 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     const title = user ? getConversationTitle(conversation, user.uid) : "Chat";
     const photo = user ? getConversationPhoto(conversation, user.uid) : null;
 
-    // Real-time messages
+    // Real-time messages — drop any optimistic entries that the snapshot has confirmed
     useEffect(() => {
         const msgCol = collection(db, "conversations", conversation.id, "messages");
         const q = query(msgCol, orderBy("createdAt", "asc"), limitToLast(100));
 
         const unsub = onSnapshot(q, (snap) => {
-            setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
+            const real = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+            setMessages((prev) => {
+                // Keep optimistic messages that haven't been confirmed yet
+                const confirmedIds = new Set(real.map((m) => m.id));
+                const pending = prev.filter((m) => m.id.startsWith("optimistic_") && !confirmedIds.has(m.id));
+                return [...real, ...pending];
+            });
+            setOptimisticIds((prev) => {
+                if (prev.size === 0) return prev;
+                const confirmedIds = new Set(snap.docs.map((d) => d.id));
+                const next = new Set([...prev].filter((id) => !confirmedIds.has(id)));
+                return next.size === prev.size ? prev : next;
+            });
             setLoading(false);
         });
         return () => unsub();
@@ -223,8 +236,26 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         if (type === "audio" && !audioUrl) return;
 
         setInput("");
-        setSending(true);
         sendingRef.current = true;
+
+        // Optimistic insert — appears immediately, replaced by real snapshot
+        const optimisticId = `optimistic_${Date.now()}`;
+        const optimisticMsg: Message = {
+            id: optimisticId,
+            type,
+            text: trimmed,
+            senderId: user.uid,
+            senderName: user.displayName ?? "Teacher",
+            senderPhotoURL: user.photoURL ?? null,
+            readBy: [user.uid],
+            createdAt: { toDate: () => new Date(), seconds: Date.now() / 1000, nanoseconds: 0 } as any,
+            ...(type === "resource" && resource ? { resource } : {}),
+            ...(type === "audio" && audioUrl ? { audioUrl, audioDuration } : {}),
+        };
+        setMessages((prev) => [...prev, optimisticMsg]);
+        setOptimisticIds((prev) => new Set([...prev, optimisticId]));
+        setSending(true);
+
         try {
             await sendMessageAction({
                 conversationId: conversation.id,
@@ -234,6 +265,10 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                 audioUrl,
                 audioDuration,
             });
+        } catch {
+            // Remove the optimistic message on failure
+            setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+            setOptimisticIds((prev) => { const n = new Set(prev); n.delete(optimisticId); return n; });
         } finally {
             setSending(false);
             sendingRef.current = false;
@@ -296,14 +331,16 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         const isOwn = msg.senderId === user?.uid;
                         const prevMsg = messages[idx - 1];
                         const showAvatar = !prevMsg || prevMsg.senderId !== msg.senderId;
+                        const isPending = optimisticIds.has(msg.id);
                         return (
-                            <MessageBubble
-                                key={msg.id}
-                                message={msg}
-                                isOwn={isOwn}
-                                showAvatar={showAvatar}
-                                participantIds={conversation.participantIds}
-                            />
+                            <div key={msg.id} className={cn(isPending && "opacity-60")}>
+                                <MessageBubble
+                                    message={msg}
+                                    isOwn={isOwn}
+                                    showAvatar={showAvatar}
+                                    participantIds={conversation.participantIds}
+                                />
+                            </div>
                         );
                     })
                 )}
