@@ -89,15 +89,17 @@ export interface StudentAttendanceSummary {
 
 // ── Twilio language codes for <Say> ──────────────────────────────────────────
 
+// Polly.Aditi supports only Hindi and English.
+// All other Indian languages: no Polly voice available → WhatsApp copy only.
 export const TWILIO_LANGUAGE_MAP: Record<Language, string | null> = {
     English:   'en-IN',
     Hindi:     'hi-IN',
-    Tamil:     'ta-IN',
-    Telugu:    'te-IN',
-    Kannada:   'kn-IN',
-    Malayalam: 'ml-IN',
-    Bengali:   'bn-IN',
-    Marathi:   null,   // Twilio doesn't support Marathi — use WhatsApp copy
+    Tamil:     null,
+    Telugu:    null,
+    Kannada:   null,
+    Malayalam: null,
+    Bengali:   null,
+    Marathi:   null,
     Gujarati:  null,
     Punjabi:   null,
     Odia:      null,
