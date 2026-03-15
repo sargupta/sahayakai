@@ -124,7 +124,20 @@ export async function deleteClassAction(classId: string): Promise<void> {
     if (!doc.exists) throw new Error('Class not found');
     if (doc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
 
-    await db.collection('classes').doc(classId).delete();
+    // Cascade-delete subcollections — Firestore does NOT auto-delete children.
+    // students: max 40 docs — batch delete.
+    // attendance records: use recursiveDelete on the container doc.
+    const [studentsSnap] = await Promise.all([
+        db.collection('classes').doc(classId).collection('students').get(),
+    ]);
+
+    const batch = db.batch();
+    studentsSnap.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(db.collection('classes').doc(classId));
+    await batch.commit();
+
+    // recursiveDelete handles attendance/{classId}/records/* and the container doc
+    await db.recursiveDelete(db.collection('attendance').doc(classId));
 }
 
 // ── Student Management ────────────────────────────────────────────────────────
@@ -136,6 +149,7 @@ export async function addStudentAction(classId: string, data: {
     parentLanguage: Language;
 }): Promise<{ studentId: string }> {
     const uid = await getAuthUserId();
+    await requireProPlan(uid);
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -241,18 +255,20 @@ export async function saveAttendanceAction(
     records: Record<string, AttendanceStatus>,
 ): Promise<void> {
     const uid = await getAuthUserId();
+    await requireProPlan(uid);
     const db = await getDb();
 
-    // Validate date: not in future, not more than 7 days old
-    const targetDate = new Date(date);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // Validate date as strings to avoid UTC-vs-local issues with new Date('YYYY-MM-DD').
+    // YYYY-MM-DD strings sort lexicographically in the same order as dates.
+    const todayStr = new Date().toLocaleDateString('sv'); // 'sv' locale gives YYYY-MM-DD in local tz
+    const sevenDaysAgoStr = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        return d.toLocaleDateString('sv');
+    })();
 
-    if (targetDate > today) throw new Error('Cannot mark attendance for future dates');
-    if (targetDate < sevenDaysAgo) throw new Error('Cannot mark attendance older than 7 days');
+    if (date > todayStr) throw new Error('Cannot mark attendance for future dates');
+    if (date < sevenDaysAgoStr) throw new Error('Cannot mark attendance older than 7 days');
 
     const classDoc = await db.collection('classes').doc(classId).get();
     if (!classDoc.exists) throw new Error('Class not found');
@@ -326,11 +342,27 @@ export async function getStudentSummariesAction(
     month: number,
 ): Promise<StudentAttendanceSummary[]> {
     const uid = await getAuthUserId();
+    const db = await getDb();
 
-    const [students, attendanceMap] = await Promise.all([
-        getStudentsAction(classId),
-        getMonthlyAttendanceAction(classId, year, month),
+    const classDoc = await db.collection('classes').doc(classId).get();
+    if (!classDoc.exists) return [];
+    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+
+    // Query students and monthly attendance in parallel — avoids double auth round-trip
+    // of calling getStudentsAction + getMonthlyAttendanceAction (each re-checks auth).
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const nextMonth = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+    const [studentsSnap, attendanceSnap] = await Promise.all([
+        db.collection('classes').doc(classId).collection('students').orderBy('rollNumber', 'asc').get(),
+        db.collection('attendance').doc(classId).collection('records')
+            .where('date', '>=', startDate).where('date', '<', nextMonth).get(),
     ]);
+
+    const students = studentsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
+    const attendanceMap: Record<string, DailyAttendanceRecord> = {};
+    attendanceSnap.docs.forEach((d) => { attendanceMap[d.id] = d.data() as DailyAttendanceRecord; });
+
 
     const summaries: StudentAttendanceSummary[] = students.map((student) => {
         let presentDays = 0;
@@ -369,7 +401,7 @@ export async function getStudentSummariesAction(
 
 // ── Parent Outreach ───────────────────────────────────────────────────────────
 
-export async function saveOutreachRecordAction(data: {
+export async function saveOutreachRecordAction(data: {  // premium gate enforced here
     classId: string;
     className: string;
     studentId: string;
@@ -382,6 +414,7 @@ export async function saveOutreachRecordAction(data: {
     deliveryMethod: 'twilio_call' | 'whatsapp_copy';
 }): Promise<{ outreachId: string }> {
     const uid = await getAuthUserId();
+    await requireProPlan(uid);
     const db = await getDb();
 
     const now = new Date().toISOString();
@@ -415,21 +448,21 @@ export async function getOutreachHistoryAction(
     const uid = await getAuthUserId();
     const db = await getDb();
 
-    let q = db.collection('parent_outreach')
-        .where('teacherUid', '==', uid)
-        .where('classId', '==', classId)
-        .orderBy('createdAt', 'desc')
-        .limit(50);
-
-    if (studentId) {
-        q = db.collection('parent_outreach')
+    // Two separate typed query paths — avoids `as any` and keeps classId scoping in both cases.
+    const snap = studentId
+        ? await db.collection('parent_outreach')
             .where('teacherUid', '==', uid)
             .where('studentId', '==', studentId)
             .orderBy('createdAt', 'desc')
-            .limit(20) as any;
-    }
+            .limit(20)
+            .get()
+        : await db.collection('parent_outreach')
+            .where('teacherUid', '==', uid)
+            .where('classId', '==', classId)
+            .orderBy('createdAt', 'desc')
+            .limit(50)
+            .get();
 
-    const snap = await q.get();
     return dbAdapter.serialize(
         snap.docs.map((d) => ({ id: d.id, ...d.data() } as ParentOutreach))
     ) as ParentOutreach[];
