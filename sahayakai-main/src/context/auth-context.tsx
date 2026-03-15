@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, onIdTokenChanged, getRedirectResult, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
 import { syncUserAction } from '@/app/actions/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
@@ -36,6 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    // Handle OAuth redirect result (required for signInWithRedirect on Safari/mobile)
+    useEffect(() => {
+        getRedirectResult(auth).catch(() => {});
+    }, []);
 
     // Sync Firebase ID token → auth-token cookie on every token refresh
     useEffect(() => {
