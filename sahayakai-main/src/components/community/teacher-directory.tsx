@@ -47,76 +47,38 @@ export function TeacherDirectory() {
         return () => unsubscribe();
     }, []);
 
-    const buildConnStateMap = (allTeachers: any[], connData: MyConnectionData, uid: string) => {
-        const stateMap: Record<string, TeacherConnState> = {};
-        for (const t of allTeachers) {
-            if (t.uid === uid) continue;
-            const { connectedUids, sentRequestUids, receivedRequests } = connData;
-            if (connectedUids.includes(t.uid)) {
-                stateMap[t.uid] = { status: 'connected', loading: false };
-            } else if (sentRequestUids.includes(t.uid)) {
-                stateMap[t.uid] = { status: 'pending_sent', loading: false };
-            } else {
-                const received = receivedRequests.find((r) => r.uid === t.uid);
-                if (received) {
-                    stateMap[t.uid] = { status: 'pending_received', requestId: received.requestId, loading: false };
-                } else {
-                    stateMap[t.uid] = { status: 'none', loading: false };
-                }
-            }
-        }
-        return stateMap;
-    };
-
     const loadData = async (uid?: string) => {
         setLoading(true);
         try {
-            // Load teachers first — does not require auth cookie
-            const allTeachers = await getAllTeachersAction(uid);
+            const [allTeachers, connData] = await Promise.all([
+                getAllTeachersAction(uid),
+                uid ? getMyConnectionDataAction() : Promise.resolve<MyConnectionData>({ connectedUids: [], sentRequestUids: [], receivedRequests: [] }),
+            ]);
             setTeachers(allTeachers);
 
-            // Default all connection buttons to 'none' so the directory renders immediately
-            if (uid) {
-                const defaultMap: Record<string, TeacherConnState> = {};
-                for (const t of allTeachers) {
-                    if (t.uid !== uid) defaultMap[t.uid] = { status: 'none', loading: false };
+            // Build per-teacher state map
+            const stateMap: Record<string, TeacherConnState> = {};
+            for (const t of allTeachers) {
+                if (t.uid === uid) continue; // own card — skip
+                const { connectedUids, sentRequestUids, receivedRequests } = connData;
+                if (connectedUids.includes(t.uid)) {
+                    stateMap[t.uid] = { status: 'connected', loading: false };
+                } else if (sentRequestUids.includes(t.uid)) {
+                    stateMap[t.uid] = { status: 'pending_sent', loading: false };
+                } else {
+                    const received = receivedRequests.find((r) => r.uid === t.uid);
+                    if (received) {
+                        stateMap[t.uid] = { status: 'pending_received', requestId: received.requestId, loading: false };
+                    } else {
+                        stateMap[t.uid] = { status: 'none', loading: false };
+                    }
                 }
-                setConnState(defaultMap);
             }
+            setConnState(stateMap);
         } catch (error) {
             console.error("Failed to load teacher directory:", error);
         } finally {
             setLoading(false);
-        }
-
-        // Load connection data separately — requires auth cookie (set by onIdTokenChanged)
-        // Run after the teachers are already visible so a cookie race-condition doesn't
-        // blank the whole directory.
-        if (uid) {
-            try {
-                const connData = await getMyConnectionDataAction();
-                setConnState((prev) => {
-                    // Re-read latest teachers from closure isn't reliable; recompute from connData only
-                    const updated = { ...prev };
-                    const { connectedUids, sentRequestUids, receivedRequests } = connData;
-                    for (const tUid of Object.keys(updated)) {
-                        if (connectedUids.includes(tUid)) {
-                            updated[tUid] = { status: 'connected', loading: false };
-                        } else if (sentRequestUids.includes(tUid)) {
-                            updated[tUid] = { status: 'pending_sent', loading: false };
-                        } else {
-                            const received = receivedRequests.find((r) => r.uid === tUid);
-                            updated[tUid] = received
-                                ? { status: 'pending_received', requestId: received.requestId, loading: false }
-                                : { status: 'none', loading: false };
-                        }
-                    }
-                    return updated;
-                });
-            } catch (connError) {
-                // Connection data is non-critical — directory is already visible with 'none' buttons
-                console.error("Failed to load connection data (non-critical):", connError);
-            }
         }
     };
 
