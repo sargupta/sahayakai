@@ -7,7 +7,6 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { saveOutreachRecordAction } from "@/app/actions/attendance";
 import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
 import type { Student, OutreachReason } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
@@ -100,12 +99,11 @@ export function ContactParentModal({
         }
     };
 
-    const handleCall = async () => {
-        if (!generatedMessage) return;
-        setCalling(true);
-        try {
-            // Save record first
-            const { outreachId } = await saveOutreachRecordAction({
+    const saveOutreach = async (deliveryMethod: 'twilio_call' | 'whatsapp_copy') => {
+        const res = await fetch('/api/attendance/outreach', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                 classId,
                 className,
                 studentId: student.id,
@@ -115,8 +113,21 @@ export function ContactParentModal({
                 reason: reason!,
                 teacherNote: note || undefined,
                 generatedMessage,
-                deliveryMethod: 'twilio_call',
-            });
+                deliveryMethod,
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error ?? 'Failed to save outreach record');
+        }
+        return res.json() as Promise<{ outreachId: string }>;
+    };
+
+    const handleCall = async () => {
+        if (!generatedMessage) return;
+        setCalling(true);
+        try {
+            const { outreachId } = await saveOutreach('twilio_call');
 
             // Initiate call
             const res = await fetch('/api/attendance/call', {
@@ -145,18 +156,7 @@ export function ContactParentModal({
 
     const handleCopyWhatsApp = async () => {
         try {
-            await saveOutreachRecordAction({
-                classId,
-                className,
-                studentId: student.id,
-                studentName: student.name,
-                parentPhone: student.parentPhone,
-                parentLanguage: student.parentLanguage,
-                reason: reason!,
-                teacherNote: note || undefined,
-                generatedMessage,
-                deliveryMethod: 'whatsapp_copy',
-            });
+            await saveOutreach('whatsapp_copy');
         } catch { /* non-blocking */ }
 
         await navigator.clipboard.writeText(generatedMessage);
