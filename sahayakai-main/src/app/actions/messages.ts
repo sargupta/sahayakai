@@ -1,8 +1,9 @@
 'use server';
 
 import { getDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { headers } from 'next/headers';
-import { buildDirectConversationId, SharedResource } from '@/types/messages';
+import { buildDirectConversationId, SharedResource, Conversation } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
 import { createNotification } from './notifications';
 
@@ -21,27 +22,26 @@ async function getAuthUserId(): Promise<string> {
 export async function getOrCreateDirectConversationAction(
     myUid: string,
     otherUid: string,
-): Promise<{ conversationId: string }> {
+): Promise<{ conversationId: string; conversation: Conversation }> {
     const callerId = await getAuthUserId();
     if (callerId !== myUid) throw new Error('Unauthorized');
     if (myUid === otherUid) throw new Error('Cannot message yourself');
 
     const db = await getDb();
-    const { FieldValue } = await import('firebase-admin/firestore');
 
     const conversationId = buildDirectConversationId(myUid, otherUid);
     const convRef = db.collection('conversations').doc(conversationId);
-    const doc = await convRef.get();
+    const snap = await convRef.get();
 
-    if (!doc.exists) {
+    if (!snap.exists) {
         // Fetch both profiles to denormalize names/photos
         const [me, other] = await Promise.all([
             dbAdapter.getUser(myUid),
             dbAdapter.getUser(otherUid),
         ]);
 
-        await convRef.set({
-            type: 'direct',
+        const payload = {
+            type: 'direct' as const,
             participantIds: [myUid, otherUid],
             participants: {
                 [myUid]: {
@@ -61,10 +61,18 @@ export async function getOrCreateDirectConversationAction(
             unreadCount: { [myUid]: 0, [otherUid]: 0 },
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+        await convRef.set(payload);
+        return {
+            conversationId,
+            conversation: { id: conversationId, ...payload } as unknown as Conversation,
+        };
     }
 
-    return { conversationId };
+    return {
+        conversationId,
+        conversation: { id: snap.id, ...snap.data() } as Conversation,
+    };
 }
 
 // ── createGroupConversation ───────────────────────────────────────────────────
@@ -81,7 +89,6 @@ export async function createGroupConversationAction(
     if (!name.trim()) throw new Error('Group name is required');
 
     const db = await getDb();
-    const { FieldValue } = await import('firebase-admin/firestore');
 
     const allUids = Array.from(new Set([creatorUid, ...participantUids]));
 
@@ -146,7 +153,6 @@ export async function sendMessageAction({
     if (trimmed.length > 1000) throw new Error('Message too long (max 1000 chars)');
 
     const db = await getDb();
-    const { FieldValue } = await import('firebase-admin/firestore');
 
     const convRef = db.collection('conversations').doc(conversationId);
     const convDoc = await convRef.get();
@@ -241,7 +247,6 @@ export async function markConversationReadAction(
     if (callerId !== userId) throw new Error('Unauthorized');
 
     const db = await getDb();
-    const { FieldValue } = await import('firebase-admin/firestore');
 
     const convRef = db.collection('conversations').doc(conversationId);
 

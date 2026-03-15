@@ -44,9 +44,10 @@ function MessagesPageContent() {
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [showPicker, setShowPicker] = useState(false);
     const [mobileView, setMobileView] = useState<"list" | "thread">("list");
-    const [autoOpenLoading, setAutoOpenLoading] = useState(!!(withUid || openId));
+    // Only used to show a spinner in the thread panel, not to block the whole page
+    const [threadLoading, setThreadLoading] = useState(!!(withUid || openId));
 
-    // Helper: fetch a conversation doc from Firestore and open it
+    // Helper: fetch a conversation doc from Firestore and open it (used for ?open= param only)
     const openConversationById = useCallback(async (conversationId: string) => {
         const snap = await getDoc(doc(db, "conversations", conversationId));
         if (snap.exists()) {
@@ -58,29 +59,31 @@ function MessagesPageContent() {
     // Auto-open conversation from URL params (`?with=` or `?open=`)
     useEffect(() => {
         if (!user || (!withUid && !openId)) {
+            setThreadLoading(false);
             return;
         }
 
-        let actionPromise: Promise<any> | undefined;
+        setThreadLoading(true);
+
+        let actionPromise: Promise<any>;
 
         if (withUid) {
+            // Action now returns full conversation — no second getDoc needed
             actionPromise = getOrCreateDirectConversationAction(user.uid, withUid)
-                .then(({ conversationId }) => openConversationById(conversationId));
-        } else if (openId) {
-            actionPromise = openConversationById(openId);
+                .then(({ conversation }) => {
+                    setActiveConversation(conversation);
+                    setMobileView("thread");
+                });
+        } else {
+            actionPromise = openConversationById(openId!);
         }
 
-        if (actionPromise) {
-            setAutoOpenLoading(true);
-            actionPromise
-                .catch(() => {
-                    // Handle or log error if necessary
-                })
-                .finally(() => {
-                    router.replace("/messages", { scroll: false });
-                    setAutoOpenLoading(false);
-                });
-        }
+        actionPromise
+            .catch(() => {})
+            .finally(() => {
+                router.replace("/messages", { scroll: false });
+                setThreadLoading(false);
+            });
     }, [user, withUid, openId, router, openConversationById]);
 
     const handleSelectConversation = (conv: Conversation) => {
@@ -105,7 +108,7 @@ function MessagesPageContent() {
         setMobileView("list");
     };
 
-    if (authLoading || autoOpenLoading) {
+    if (authLoading) {
         return (
             <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
@@ -136,7 +139,7 @@ function MessagesPageContent() {
                 />
             </div>
 
-            {/* ── Right panel: picker → thread → empty state ───────── */}
+            {/* ── Right panel: picker → thread → loading → empty state ─ */}
             <div className={cn(
                 "flex-1 min-w-0 lg:block",
                 mobileView === "list" ? "hidden lg:flex" : "flex",
@@ -144,6 +147,10 @@ function MessagesPageContent() {
             )}>
                 {showPicker ? (
                     <NewConversationPicker onConversationReady={handlePickerReady} />
+                ) : threadLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                        <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+                    </div>
                 ) : activeConversation ? (
                     <ConversationThread
                         conversation={activeConversation}
