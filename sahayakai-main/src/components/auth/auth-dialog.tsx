@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
-    signInWithPopup,
+    signInWithRedirect,
     GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -29,12 +29,7 @@ export function AuthDialog() {
         });
 
         try {
-            await signInWithPopup(auth, provider);
-            toast({
-                title: "Welcome to SahayakAI!",
-                description: "You can now access all AI features.",
-            });
-            closeAuthModal();
+            await signInWithRedirect(auth, provider);
         } catch (error: any) {
             console.error("Auth Error:", error);
             toast({
