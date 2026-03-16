@@ -4,7 +4,6 @@ export const maxDuration = 120;
 
 import { NextResponse } from 'next/server';
 import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
-import { checkImageRateLimit } from '@/lib/server-safety';
 import { logger } from '@/lib/logger';
 
 /**
@@ -54,7 +53,8 @@ export async function POST(request: Request) {
         const body = await request.json();
         promptText = body.prompt || 'Unknown Prompt';
 
-        await checkImageRateLimit(userId);
+        // NOTE: checkImageRateLimit is called INSIDE generateVisualAid after
+        // the image is confirmed, so failed/timed-out generations don't consume quota.
 
         // Call the AI Flow
         const output = await generateVisualAid({

@@ -260,9 +260,40 @@ function InstantAnswerContent() {
   }, []); // runs once on mount only
 
   useEffect(() => {
+    const id = searchParams.get("id");
     const questionParam = searchParams.get("question") || searchParams.get("topic") || searchParams.get("prompt");
 
-    if (questionParam) {
+    if (id) {
+      // ── Library: load saved instant-answer by id ──────────────────────
+      const fetchSaved = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`/api/content/get?id=${id}`, { headers });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.topic) form.setValue("question", content.topic);
+            if (content.language) form.setValue("language", content.language);
+            if (content.gradeLevel) form.setValue("gradeLevel", content.gradeLevel);
+            if (content.subject) form.setValue("subject", content.subject);
+            if (content.data?.answer) {
+              setAnswer({
+                question: content.topic,
+                answer: content.data.answer,
+                videoSuggestionUrl: content.data.videoSuggestionUrl,
+              } as Answer);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved instant answer:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSaved();
+    } else if (questionParam) {
       // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
       const subjectParam = searchParams.get("subject");
       const gradeLevelParam = searchParams.get("gradeLevel");

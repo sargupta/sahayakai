@@ -90,7 +90,7 @@ export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
  * Audits materials list against activities to ensure consistency.
  * Returns merged materials list that includes items mentioned in activities.
  */
-async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
+async function auditMaterials(output: LessonPlanOutput, language?: string): Promise<string[]> {
   try {
     const activitiesText = output.activities
       .map(a => `${a.name}: ${a.description}`)
@@ -110,9 +110,9 @@ async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
   
   Task:
   1. Identify items/objects mentioned in activities that are NOT in the materials list.
-  2. Return ONLY a JSON array of missing items.
+  2. Return ONLY a JSON array of missing items written in ${language || 'English'}.
      Example: ["basket", "measuring tape"]
-     
+
   If no missing items, return: []
   
   Output ONLY the JSON array, no explanation.`,
@@ -209,7 +209,7 @@ You MUST organize the activities into the 5E Instructional Model:
 - **subject**: (e.g., "Science")
 
 **Constraints:**
-- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **Language Lock**: You MUST ONLY respond in {{{language}}}. Every single field — title, objectives, activity names, descriptions, teacherTips, understandingCheck, assessment, homework, keyVocabulary — MUST be written in {{{language}}}. Do NOT fall back to English or any other language under any circumstances. If {{{language}}} is not English, writing in English is a critical failure.
 - **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
 - **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 - **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").
@@ -338,7 +338,7 @@ const lessonPlanFlow = ai.defineFlow(
 
         // BUG FIX #2: Audit materials consistency
         try {
-          const auditedMaterials = await auditMaterials(output);
+          const auditedMaterials = await auditMaterials(output, normalizedInput.language);
           if (auditedMaterials.length > output.materials.length) {
             StructuredLogger.info('Materials audit detected missing items', {
               service: 'lesson-plan-flow',

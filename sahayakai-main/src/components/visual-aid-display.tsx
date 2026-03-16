@@ -122,13 +122,20 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
             </CardHeader>
             <CardContent className="flex flex-col items-center p-6 space-y-6">
                 <div className="w-full relative aspect-square max-w-[512px] border border-black/10 rounded-lg overflow-hidden bg-black/5">
-                    <Image
-                        src={visualAid.imageDataUri}
-                        alt={title || "Generated visual aid"}
-                        fill
-                        className="object-contain"
-                        unoptimized // Allow data URIs
-                    />
+                    {visualAid.imageDataUri ? (
+                        <Image
+                            src={visualAid.imageDataUri}
+                            alt={title || "Generated visual aid"}
+                            fill
+                            className="object-contain"
+                            unoptimized
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
+                            <Images className="h-10 w-10" />
+                            <p className="text-sm text-center px-4">Image not stored. Edit the prompt and click Generate to recreate.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="w-full space-y-4 text-left">

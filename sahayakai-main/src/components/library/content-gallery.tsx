@@ -143,13 +143,14 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
     const handleOpen = (resource: BaseContent) => {
         const routeMap: Record<string, string> = {
-            "lesson-plan": "/lesson-plan-generator",
+            "lesson-plan": "/lesson-plan",
             "quiz": "/quiz-generator",
             "worksheet": "/worksheet-wizard",
             "rubric": "/rubric-generator",
             "virtual-field-trip": "/virtual-field-trip",
             "visual-aid": "/visual-aid-designer",
-            "instant-answer": "/instant-answer"
+            "instant-answer": "/instant-answer",
+            "teacher-training": "/teacher-training",
         };
 
         const baseUrl = routeMap[resource.type] || "/library";
