@@ -48,7 +48,7 @@ export type NCERTSubject =
 
 /** NCF-2023: NCERT's new curriculum (grades 1–8).
  *  Rationalized-2022: NCERT rationalized books (grades 9–12).
- *  State-SCERT: State board textbook (DSERT/TNSCERT/MSCERT/WBBSE/GCERT/PSEB/KSCERT/AP-SCERT). */
+ *  State-SCERT: State board textbook (KTBS/TNSCERT/Balbharati/WBBSE/GSSTB/PSEB/SCERT-Kerala/TSCERT/APSCERT). */
 export type NCERTTextbookEdition = 'NCF-2023' | 'Rationalized-2022' | 'State-SCERT';
 
 export interface NCERTChapter {
