@@ -189,11 +189,11 @@ export function LessonPlanSidebar({
           </div>
 
           {/* NCERT Chapter Selector */}
-          {currentGrade && (
-            <div className="space-y-1 pt-2 border-t border-slate-100">
-              <FormLabel className="text-xs font-semibold text-slate-600">
-                {labels?.ncert || "Link NCERT Chapter (Optional)"}
-              </FormLabel>
+          <div className="space-y-1 pt-2 border-t border-slate-100">
+            <FormLabel className="text-xs font-semibold text-slate-600">
+              {labels?.ncert || "Link NCERT Chapter (Optional)"}
+            </FormLabel>
+            {currentGrade ? (
               <NCERTChapterSelector
                 selectedGrade={currentGrade}
                 onChapterSelect={(chapter) => {
@@ -203,8 +203,10 @@ export function LessonPlanSidebar({
                   }
                 }}
               />
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-slate-400 py-2">Select a class above to link an NCERT chapter.</p>
+            )}
+          </div>
         </div>
       )}
 

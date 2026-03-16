@@ -276,7 +276,9 @@ function VisualAidContent() {
           if (res.ok) {
             const content = await res.json();
             if (content.data) {
-              setVisualAid(content.data.imageDataUri ? content.data : { ...content.data, imageDataUri: content.data });
+              // imageDataUri is stripped on save (storageRef kept).
+              // VisualAidDisplay handles missing imageDataUri gracefully.
+              setVisualAid(content.data);
               form.reset({
                 prompt: content.topic || content.title,
                 gradeLevel: content.gradeLevel,

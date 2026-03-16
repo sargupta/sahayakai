@@ -123,10 +123,33 @@ function TeacherTrainingContent() {
   }, []); // runs once on mount only
 
   useEffect(() => {
-    // Router sends 'topic', internal links might use 'question'
+    const id = searchParams.get("id");
     const questionParam = searchParams.get("question") || searchParams.get("topic");
 
-    if (questionParam) {
+    if (id) {
+      // ── Library: load saved teacher-training advice by id ─────────────
+      const fetchSaved = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`/api/content/get?id=${id}`, { headers });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.topic) form.setValue("question", content.topic);
+            if (content.language) form.setValue("language", content.language);
+            if (content.subject) form.setValue("subject", content.subject);
+            if (content.data) setAdvice(content.data as TeacherTrainingOutput);
+          }
+        } catch (err) {
+          console.error("Failed to load saved teacher training:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSaved();
+    } else if (questionParam) {
       // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
       const subjectParam = searchParams.get("subject");
       const languageParam = searchParams.get("language");
@@ -135,7 +158,6 @@ function TeacherTrainingContent() {
       if (subjectParam) form.setValue("subject", subjectParam);
       if (languageParam) form.setValue("language", languageParam);
       // ───────────────────────────────────────────────────────────────────
-      // Determine intent: if it's a direct handoff, trigger submit
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
       }, 300);

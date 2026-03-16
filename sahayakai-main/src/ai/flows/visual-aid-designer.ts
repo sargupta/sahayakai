@@ -159,8 +159,11 @@ const visualAidFlow = ai.defineFlow(
         throw new Error('IMAGE_GENERATION_EMPTY');
       }
 
-      // Track Image Generation
+      // Rate limit + usage tracking — only reached on success, so failed/
+      // timed-out attempts don't consume the teacher's daily image quota.
       if (userId) {
+        const { checkImageRateLimit } = await import('@/lib/server-safety');
+        await checkImageRateLimit(userId);
         UsageTracker.trackImageGen(userId);
       }
 
@@ -182,10 +185,13 @@ const visualAidFlow = ai.defineFlow(
             Grade: ${gradeLevel || 'any'}
             Language: ${language || 'English'}
 
+            **LANGUAGE LOCK (CRITICAL):** You MUST write ALL text ONLY in ${language || 'English'}.
+            ${language && language !== 'English' ? `Do NOT write in English. Every word of pedagogicalContext and discussionSpark MUST be in ${language}.` : ''}
+
             Provide:
             1. Context: How to use a blackboard drawing of this topic to teach.
             2. Spark: A question to ask students about the drawing.
-            3. Subject: The academic subject area.
+            3. Subject: The academic subject area (always in English, e.g., "Science").
           `,
         });
       });
