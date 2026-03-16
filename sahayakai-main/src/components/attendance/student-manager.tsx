@@ -77,7 +77,10 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
             setSheetOpen(false);
             onRefresh();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            const description = err.message === 'PREMIUM_REQUIRED'
+                ? "Attendance is a Pro feature. Please upgrade your plan."
+                : err.message;
+            toast({ title: "Error", description, variant: "destructive" });
         } finally {
             setSaving(false);
         }

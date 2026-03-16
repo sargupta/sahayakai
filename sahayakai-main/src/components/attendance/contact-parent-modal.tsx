@@ -72,9 +72,14 @@ export function ContactParentModal({
         if (!reason) return;
         setGenerating(true);
         try {
+            const { auth } = await import('@/lib/firebase');
+            const token = await auth.currentUser?.getIdToken();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const res = await fetch('/api/ai/parent-message', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     studentName: student.name,
                     className,

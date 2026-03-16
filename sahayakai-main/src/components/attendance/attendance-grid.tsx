@@ -92,7 +92,10 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
             setSaved(true);
             toast({ title: "Attendance saved" });
         } catch (err: any) {
-            toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+            const description = err.message === 'PREMIUM_REQUIRED'
+                ? "Attendance is a Pro feature. Please upgrade your plan."
+                : err.message;
+            toast({ title: "Failed to save", description, variant: "destructive" });
         } finally {
             setSaving(false);
         }
