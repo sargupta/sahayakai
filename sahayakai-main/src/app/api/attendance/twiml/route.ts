@@ -26,8 +26,13 @@ export async function GET(req: NextRequest) {
         }
 
         const data = doc.data()!;
-        const message: string = data.generatedMessage;
+        const message: string = data.generatedMessage || '';
         const language = data.parentLanguage as Language;
+
+        if (!message) {
+            return new NextResponse(hangupXml(), { headers: { 'Content-Type': 'text/xml' } });
+        }
+
         const langCode = TWILIO_LANGUAGE_MAP[language] ?? 'en-IN';
 
         // Escape XML special characters in the message

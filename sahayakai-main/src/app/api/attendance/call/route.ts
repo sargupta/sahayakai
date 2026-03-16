@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to initiate call', detail: err.message }, { status: 502 });
         }
 
-        const { FieldValue } = await import('firebase-admin/firestore');
         const twilioData = await twilioRes.json();
         const callSid: string = twilioData.sid;
 

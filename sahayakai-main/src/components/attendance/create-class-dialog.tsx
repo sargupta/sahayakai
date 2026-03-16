@@ -50,7 +50,10 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
             onOpenChange(false);
             setForm((f) => ({ ...f, name: "", section: "" }));
         } catch (err: any) {
-            toast({ title: "Failed to create class", description: err.message, variant: "destructive" });
+            const description = err.message === 'PREMIUM_REQUIRED'
+                ? "Attendance is a Pro feature. Please upgrade your plan."
+                : err.message;
+            toast({ title: "Failed to create class", description, variant: "destructive" });
         } finally {
             setSaving(false);
         }

@@ -26,9 +26,11 @@ export default function AttendancePage() {
         getClassesAction()
             .then(setClasses)
             .catch((err) => {
-                if (err.message === 'PREMIUM_REQUIRED') {
-                    toast({ title: "Premium feature", description: "Attendance is available on Pro plan.", variant: "destructive" });
-                }
+                toast({
+                    title: "Failed to load classes",
+                    description: err.message || "Please try refreshing the page.",
+                    variant: "destructive",
+                });
             })
             .finally(() => setLoading(false));
     }, [toast]);
