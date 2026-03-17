@@ -9,7 +9,23 @@ const withPWA = require('next-pwa')({
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
+  // Cache-Control headers — prevents stale deployment errors.
+  // HTML pages: no-store so browsers always fetch fresh HTML with the current build ID.
+  // Static chunks: immutable (content-addressed filenames change with every build).
+  async headers() {
+    return [
+      {
+        // All HTML pages — never cache, always get fresh build ID from server
+        source: '/((?!_next/static|_next/image|favicon\\.ico).*)',
+        headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
+      },
+      {
+        // Static JS/CSS chunks are content-addressed — safe to cache forever
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: false,
   },
