@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/auth-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getClassAction, getStudentsAction, getStudentSummariesAction, getTwilioConfigStatusAction } from "@/app/actions/attendance";
@@ -35,6 +36,8 @@ export default function ClassDetailPage() {
 
     const [contactStudent, setContactStudent] = useState<Student | null>(null);
 
+    const { user, loading: authLoading, requireAuth } = useAuth();
+
     const loadAll = useCallback(async () => {
         try {
             const [classData, studentData, twilio] = await Promise.all([
@@ -57,7 +60,15 @@ export default function ClassDetailPage() {
         }
     }, [classId, toast]);
 
-    useEffect(() => { loadAll(); }, [loadAll]);
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            requireAuth();
+            setLoading(false);
+            return;
+        }
+        loadAll();
+    }, [authLoading, user, loadAll, requireAuth]);
 
     if (loading) {
         return (

@@ -12,13 +12,17 @@ import { allNCERTChapters, type NCERTChapter } from '@/data/ncert';
 
 const BATCH_SIZE = 400; // Firestore max is 500; stay comfortably under it
 
+const STATE_SCERT_SUBJECTS = new Set(['Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali', 'Gujarati', 'Punjabi', 'Malayalam']);
+
 /** Enrich a chapter with defaults for fields that may not be set in the static data */
 function enrich(chapter: NCERTChapter): Record<string, unknown> {
+    const isStateBoard = STATE_SCERT_SUBJECTS.has(chapter.subject);
     return {
         ...chapter,
-        board: 'NCERT',
+        board: isStateBoard ? 'State-SCERT' : 'NCERT',
         isActive: chapter.isActive ?? true,
-        textbookEdition: chapter.textbookEdition ?? (chapter.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022'),
+        // textbookEdition is already set explicitly in all source files; ?? is a safety fallback only
+        textbookEdition: chapter.textbookEdition ?? (isStateBoard ? 'State-SCERT' : chapter.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022'),
         dataVersion: chapter.dataVersion ?? (chapter.grade <= 8 ? '2025-ncert-ncf' : '2025-ncert-rationalized'),
         seededAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -32,13 +36,14 @@ function buildTextbooks(chapters: NCERTChapter[]): Map<string, Record<string, un
     for (const ch of chapters) {
         const key = `${ch.subject.toLowerCase().replace(/\s+/g, '-')}-${ch.textbookName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
         if (!books.has(key)) {
+            const isStateBoard = STATE_SCERT_SUBJECTS.has(ch.subject);
             books.set(key, {
                 id: key,
                 name: ch.textbookName,
                 subject: ch.subject,
                 grades: [ch.grade],
-                edition: ch.textbookEdition ?? (ch.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022'),
-                board: 'NCERT',
+                edition: ch.textbookEdition ?? (isStateBoard ? 'State-SCERT' : ch.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022'),
+                board: isStateBoard ? 'State-SCERT' : 'NCERT',
                 seededAt: FieldValue.serverTimestamp(),
             });
         } else {
