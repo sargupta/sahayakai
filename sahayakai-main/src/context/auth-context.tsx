@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, onIdTokenChanged, getRedirectResult, User } from 'firebase/auth';
+import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
 import { syncUserAction } from '@/app/actions/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
@@ -36,11 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-    // Handle OAuth redirect result (required for signInWithRedirect on Safari/mobile)
-    useEffect(() => {
-        getRedirectResult(auth).catch(() => {});
-    }, []);
 
     // Sync Firebase ID token → auth-token cookie on every token refresh
     useEffect(() => {
@@ -111,10 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user]);
 
 
-    const openAuthModal = () => setIsAuthModalOpen(true);
-    const closeAuthModal = () => setIsAuthModalOpen(false);
+    const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
+    const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
 
-    const requireAuth = (): boolean => {
+    const requireAuth = useCallback((): boolean => {
         // [DEVELOPMENT BYPASS] Skip auth modal on localhost
         if (process.env.NODE_ENV === 'development') return true;
 
@@ -123,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return false;
         }
         return true;
-    };
+    }, [user, openAuthModal]);
 
     return (
         <AuthContext.Provider value={{
