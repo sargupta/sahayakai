@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "predeploy": "npm run typecheck && npm run build",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "api:generate-spec": "ts-node scripts/generate-api-specs.ts",
