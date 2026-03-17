@@ -8,10 +8,11 @@
  */
 
 const REQUIRED_ENV_VARS: Record<string, string> = {
-    GOOGLE_GENAI_API_KEY:             'Gemini AI (lesson plan, visual aid, etc.)',
-    FIREBASE_SERVICE_ACCOUNT_KEY:     'Firebase Admin SDK (Firestore, Auth)',
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID:  'Firebase client SDK',
-    NEXT_PUBLIC_FIREBASE_API_KEY:     'Firebase client SDK',
+    GOOGLE_GENAI_API_KEY:         'Gemini AI (lesson plan, visual aid, etc.)',
+    FIREBASE_SERVICE_ACCOUNT_KEY: 'Firebase Admin SDK (Firestore, Auth)',
+    // Note: NEXT_PUBLIC_* vars are build-time only — not available as runtime
+    // process.env in Cloud Run. Firebase client uses hardcoded fallbacks in
+    // lib/firebase.ts so these do NOT need to be runtime-checked.
 };
 
 // Optional — warn if missing but don't crash
