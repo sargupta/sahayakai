@@ -7,6 +7,7 @@ import type { ClassRecord } from "@/types/attendance";
 import { CreateClassDialog } from "@/components/attendance/create-class-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 import {
     Plus, ClipboardList, Users, ChevronRight,
     CalendarDays, Loader2, Trash2, GraduationCap,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 export default function AttendancePage() {
     const { toast } = useToast();
     const router = useRouter();
+    const { user, loading: authLoading, requireAuth } = useAuth();
     const [classes, setClasses] = useState<ClassRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [createOpen, setCreateOpen] = useState(false);
@@ -35,7 +37,15 @@ export default function AttendancePage() {
             .finally(() => setLoading(false));
     }, [toast]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            requireAuth();
+            setLoading(false);
+            return;
+        }
+        load();
+    }, [authLoading, user, load, requireAuth]);
 
     const handleDelete = async (cls: ClassRecord, e: React.MouseEvent) => {
         e.stopPropagation();
