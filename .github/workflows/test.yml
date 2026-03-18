@@ -42,7 +42,40 @@ jobs:
         run: npm run lint
 
       - name: Unit & integration tests
-        run: npm test -- --ci --coverage
+        run: npm test -- --ci --coverage --json --outputFile=test-results.json 2>&1 | tee test-output.txt
+
+      - name: Test results & coverage summary
+        if: always() && matrix.node-version == 20
+        run: |
+          # Extract test summary from JSON
+          node -e "
+          const r = require('./test-results.json');
+          const passed = r.numPassedTests;
+          const failed = r.numFailedTests;
+          const total = r.numTotalTests;
+          const suites = r.numTotalTestSuites;
+          const time = (r.testResults.reduce((a,t) => a + (t.endTime - t.startTime), 0) / 1000).toFixed(1);
+          const icon = failed > 0 ? '❌' : '✅';
+
+          let md = '## ' + icon + ' Test Results\n\n';
+          md += '| Metric | Value |\n|--------|-------|\n';
+          md += '| Suites | ' + suites + ' |\n';
+          md += '| Tests passed | ' + passed + ' / ' + total + ' |\n';
+          md += '| Tests failed | ' + failed + ' |\n';
+          md += '| Duration | ' + time + 's |\n\n';
+
+          // Coverage from coverage-summary.json
+          try {
+            const cov = require('./coverage/coverage-summary.json').total;
+            md += '## 📊 Coverage\n\n';
+            md += '| Category | Covered | Total | % |\n|----------|---------|-------|---|\n';
+            for (const [k, v] of Object.entries(cov)) {
+              md += '| ' + k.charAt(0).toUpperCase() + k.slice(1) + ' | ' + v.covered + ' | ' + v.total + ' | **' + v.pct + '%** |\n';
+            }
+          } catch(e) { md += '_Coverage data not available_\n'; }
+
+          require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          "
 
       - name: Build
         run: npm run build
