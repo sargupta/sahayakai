@@ -23,6 +23,12 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
 
     const handleSave = async () => {
         try {
+            // If the generation flow already persisted this visual aid, nothing to do.
+            if (visualAid.storagePath) {
+                toast({ title: "Already in Library", description: "This visual aid was saved automatically when generated." });
+                return;
+            }
+
             const { auth } = await import('@/lib/firebase');
             let user = auth.currentUser;
             if (!user) {
