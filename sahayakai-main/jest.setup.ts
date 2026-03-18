@@ -6,12 +6,22 @@ import React from 'react';
 global.Response = class Response {
     constructor(body?: any, init?: any) {
         return {
-            ok: init?.status >= 200 && init?.status < 300,
+            ok: (init?.status ?? 200) >= 200 && (init?.status ?? 200) < 300,
             status: init?.status || 200,
             json: () => Promise.resolve(JSON.parse(body || '{}')),
             text: () => Promise.resolve(body || ''),
             headers: new Map(),
         } as any;
+    }
+    static json(data: any, init?: any) {
+        const body = JSON.stringify(data);
+        return {
+            ok: (init?.status ?? 200) >= 200 && (init?.status ?? 200) < 300,
+            status: init?.status || 200,
+            json: () => Promise.resolve(data),
+            text: () => Promise.resolve(body),
+            headers: new Map(),
+        };
     }
 } as any;
 
@@ -26,6 +36,11 @@ global.Request = class Request {
 } as any;
 
 global.Headers = class Headers extends Map { } as any;
+
+// Mock scrollIntoView
+if (typeof window !== 'undefined') {
+    Element.prototype.scrollIntoView = jest.fn();
+}
 
 // Mock IntersectionObserver
 const observe = jest.fn();
