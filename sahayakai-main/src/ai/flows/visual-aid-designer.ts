@@ -55,6 +55,7 @@ const VisualAidOutputSchema = z.object({
   pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
   discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
+  storagePath: z.string().optional().describe('GCS path if already persisted by generation flow.'),
 });
 export type VisualAidOutput = z.infer<typeof VisualAidOutputSchema>;
 
@@ -77,8 +78,9 @@ export async function generateVisualAid(input: VisualAidInput): Promise<VisualAi
   let localizedInput = { ...input };
 
   if (uid !== 'anonymous_user') {
-    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    const { checkServerRateLimit, checkImageRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
+    await checkImageRateLimit(uid);
 
     // Fetch user's profile for context (language, grade)
     if (!input.language || !input.gradeLevel) {
@@ -159,11 +161,8 @@ const visualAidFlow = ai.defineFlow(
         throw new Error('IMAGE_GENERATION_EMPTY');
       }
 
-      // Rate limit + usage tracking — only reached on success, so failed/
-      // timed-out attempts don't consume the teacher's daily image quota.
+      // Usage tracking — rate limit already checked pre-generation in generateVisualAid().
       if (userId) {
-        const { checkImageRateLimit } = await import('@/lib/server-safety');
-        await checkImageRateLimit(userId);
         UsageTracker.trackImageGen(userId);
       }
 
@@ -245,6 +244,9 @@ const visualAidFlow = ai.defineFlow(
             updatedAt: Timestamp.fromDate(new Date()),
             data: { ...finalOutput, imageDataUri: undefined, storageRef: filePath },
           });
+
+          // Mark output as already persisted so "Save to Library" skips re-upload
+          finalOutput.storagePath = filePath;
         } catch (e) {
           StructuredLogger.error('Persistence failed', {
             service: 'visual-aid-designer',
