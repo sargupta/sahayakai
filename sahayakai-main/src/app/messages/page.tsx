@@ -23,7 +23,7 @@ function NoConversationSelected() {
             </div>
             <div className="space-y-1 max-w-xs">
                 <h3 className="text-base font-bold text-slate-700">Select a conversation</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-500 leading-relaxed">
                     Choose a conversation from the left, or go to the Community page to start one with a fellow teacher.
                 </p>
             </div>

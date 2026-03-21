@@ -344,6 +344,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         className="pl-10 bg-white border-slate-200"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
+                        aria-label="Search your library"
                     />
                 </div>
 
@@ -367,16 +368,18 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="min-h-[44px] min-w-[44px] p-0"
                             onClick={() => setViewMode("grid")}
+                            aria-label="Grid view"
                         >
                             <Grid className="h-4 w-4" />
                         </Button>
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="min-h-[44px] min-w-[44px] p-0"
                             onClick={() => setViewMode("list")}
+                            aria-label="List view"
                         >
                             <ListIcon className="h-4 w-4" />
                         </Button>

@@ -265,7 +265,7 @@ function TeacherTrainingContent() {
                             <Textarea
                               placeholder={placeholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[150px] resize-none text-lg"
+                              className="bg-white/50 backdrop-blur-sm min-h-[120px] resize-none"
                             />
                           </div>
                         </FormControl>
@@ -335,7 +335,7 @@ function TeacherTrainingContent() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all">
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />

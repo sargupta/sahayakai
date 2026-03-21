@@ -56,14 +56,15 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
         <div className="space-y-4">
             {/* Month navigator */}
             <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" onClick={prevMonth} aria-label="Previous month">
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <p className="text-sm font-bold text-slate-900">{MONTH_NAMES[month - 1]} {year}</p>
                 <Button
-                    variant="ghost" size="icon" className="h-8 w-8"
+                    variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]"
                     onClick={nextMonth}
                     disabled={year === now.getFullYear() && month >= now.getMonth() + 1}
+                    aria-label="Next month"
                 >
                     <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -74,7 +75,7 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                     <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
                 </div>
             ) : summaries.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 text-sm">
+                <div className="text-center py-12 text-slate-500 text-sm">
                     No attendance data for this month.
                 </div>
             ) : (
