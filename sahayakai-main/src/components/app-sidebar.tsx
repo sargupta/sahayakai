@@ -13,7 +13,7 @@ import {
   SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Upload, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -212,14 +212,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/submit-content')} tooltip="Submit Content">
-                <Link href="/submit-content" onClick={() => handleNavClick('/submit-content')}>
-                  <Upload />
-                  <span>Submit Content</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* Submit Content — hidden until feature is built */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip="My Profile">
                 <Link href="/my-profile" onClick={() => handleNavClick('/my-profile')}>
@@ -267,14 +260,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/review-panel')} tooltip="Review Panel">
-                <Link href="/review-panel" onClick={() => handleNavClick('/review-panel')}>
-                  <ShieldCheck />
-                  <span>Review Panel</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* Review Panel — hidden until feature is built */}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarFooter>

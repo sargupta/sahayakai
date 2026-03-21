@@ -133,7 +133,7 @@ export default function Home() {
             <Icon className="h-6 w-6 md:h-8 md:w-8" />
           </div>
           <div className="space-y-1 md:space-y-2">
-            <h3 className="font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight">{title}</h3>
+            <h2 className="font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight">{title}</h2>
             <p className="text-xs md:text-sm text-slate-500 leading-relaxed md:line-clamp-none line-clamp-2">{description}</p>
           </div>
           <div className="mt-auto pt-2 md:pt-4 text-primary font-medium text-xs md:text-sm flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">

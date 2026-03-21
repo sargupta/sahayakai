@@ -27,12 +27,12 @@ export default function ContentCreatorPage() {
     },
     {
       title: "Video Storyteller",
-      description: "Create engaging video stories from prompts.",
+      description: "Discover curated educational videos for your lessons.",
       icon: Video,
       href: "/video-storyteller",
       color: "text-violet-600 bg-violet-50",
-      active: false,
-      buttonText: "Coming Soon"
+      active: true,
+      buttonText: "Browse Videos"
     }
   ];
 
