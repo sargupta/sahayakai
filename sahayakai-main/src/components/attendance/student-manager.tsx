@@ -137,12 +137,12 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px] text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`Edit ${s.name}`}>
+                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`Edit ${s.name}`}>
                                     <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                     variant="ghost" size="icon"
-                                    className="min-h-[44px] min-w-[44px] text-slate-400 hover:text-red-500"
+                                    className="h-10 w-10 text-slate-400 hover:text-red-500"
                                     onClick={() => handleDelete(s.id, s.name)}
                                     disabled={deleting === s.id}
                                     aria-label={`Delete ${s.name}`}

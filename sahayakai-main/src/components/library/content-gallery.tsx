@@ -368,7 +368,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
-                            className="min-h-[44px] min-w-[44px] p-0"
+                            className="h-10 w-10 p-0"
                             onClick={() => setViewMode("grid")}
                             aria-label="Grid view"
                         >
@@ -377,7 +377,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
                             size="sm"
-                            className="min-h-[44px] min-w-[44px] p-0"
+                            className="h-10 w-10 p-0"
                             onClick={() => setViewMode("list")}
                             aria-label="List view"
                         >

@@ -265,7 +265,7 @@ function TeacherTrainingContent() {
                             <Textarea
                               placeholder={placeholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[120px] resize-none"
+                              className="bg-white/50 backdrop-blur-sm min-h-[120px] resize-none text-lg"
                             />
                           </div>
                         </FormControl>
