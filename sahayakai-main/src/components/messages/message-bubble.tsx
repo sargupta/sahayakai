@@ -135,7 +135,7 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
                 style={{ colorScheme: "normal" }}
             />
             {duration && (
-                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-slate-400")}>
+                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-slate-500")}>
                     {formatDuration(duration)}
                 </span>
             )}

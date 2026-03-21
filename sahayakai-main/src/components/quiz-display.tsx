@@ -449,7 +449,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleEditToggle} className={cn("h-9 w-9 rounded-lg", editState.isEditing && "text-amber-600 bg-amber-50")}>
+                  <Button variant="ghost" size="icon" onClick={handleEditToggle} className={cn("h-9 w-9 rounded-lg", editState.isEditing && "text-amber-600 bg-amber-50")} aria-label={editState.isEditing ? 'Done editing' : 'Edit'}>
                     {editState.isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
                   </Button>
                 </TooltipTrigger>
@@ -490,21 +490,21 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleCopyText} className="h-9 w-9 rounded-lg"><Copy className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={handleCopyText} className="h-9 w-9 rounded-lg" aria-label="Copy text"><Copy className="h-4 w-4" /></Button>
                 </TooltipTrigger>
                 <TooltipContent><p>Copy Text</p></TooltipContent>
               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => window.print()} className="h-9 w-9 rounded-lg"><Printer className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => window.print()} className="h-9 w-9 rounded-lg" aria-label="Print"><Printer className="h-4 w-4" /></Button>
                 </TooltipTrigger>
                 <TooltipContent><p>Print</p></TooltipContent>
               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleDownloadPDF} className="h-9 w-9 rounded-lg"><Download className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={handleDownloadPDF} className="h-9 w-9 rounded-lg" aria-label="Download PDF"><Download className="h-4 w-4" /></Button>
                 </TooltipTrigger>
                 <TooltipContent><p>Download</p></TooltipContent>
               </Tooltip>
@@ -530,7 +530,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
             </div>
 
             <div className="flex gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setShowAnswers(!showAnswers)} title={showAnswers ? "Hide Key" : "Show Key"} className={cn("hover:bg-white/50", showAnswers && "text-indigo-600 bg-indigo-50")}>
+              <Button variant="ghost" size="icon" onClick={() => setShowAnswers(!showAnswers)} title={showAnswers ? "Hide Key" : "Show Key"} aria-label={showAnswers ? "Hide answer key" : "Show answer key"} className={cn("hover:bg-white/50", showAnswers && "text-indigo-600 bg-indigo-50")}>
                 {showAnswers ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </Button>
               <Button variant="outline" size="sm" onClick={handleSaveToLibrary} className="hidden md:flex gap-2 border-slate-200 hover:bg-white/50">
@@ -588,7 +588,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleFeedback(idx, 'up')} className="h-7 w-7 rounded-full text-slate-400 hover:text-green-500"><ThumbsUp className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleFeedback(idx, 'up')} className="h-7 w-7 rounded-full text-slate-400 hover:text-green-500" aria-label="Good question"><ThumbsUp className="h-3 w-3" /></Button>
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Good</TooltipContent>
                       </Tooltip>

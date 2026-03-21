@@ -132,19 +132,20 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                                 <p className="text-sm font-semibold text-slate-900 truncate">{s.name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <Phone className="h-3 w-3 text-slate-400" />
-                                    <span className="text-xs text-slate-400">{s.parentPhone}</span>
+                                    <span className="text-xs text-slate-500">{s.parentPhone}</span>
                                     <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{s.parentLanguage}</Badge>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)}>
+                                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px] text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`Edit ${s.name}`}>
                                     <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                     variant="ghost" size="icon"
-                                    className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                    className="min-h-[44px] min-w-[44px] text-slate-400 hover:text-red-500"
                                     onClick={() => handleDelete(s.id, s.name)}
                                     disabled={deleting === s.id}
+                                    aria-label={`Delete ${s.name}`}
                                 >
                                     {deleting === s.id
                                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />

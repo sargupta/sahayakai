@@ -110,6 +110,9 @@ export interface UserProfile {
     lastLogin: Timestamp;
     planType: 'free' | 'pro' | 'institution';
 
+    // UX flags
+    hasHeardGreeting?: boolean;
+
     // Gamification
     impactScore: number;
     contentSharedCount: number;

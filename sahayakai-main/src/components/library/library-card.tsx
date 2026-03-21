@@ -86,7 +86,7 @@ export function LibraryCard({
             </CardHeader>
 
             <CardContent className="flex-grow px-5 py-2">
-                <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
+                <div className="flex items-center gap-2 text-slate-500 text-xs mt-1">
                     <Calendar className="h-3 w-3" />
                     <span>Updated {formattedDate}</span>
                 </div>
@@ -125,9 +125,10 @@ export function LibraryCard({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                className="min-h-[44px] min-w-[44px] p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                                 onClick={() => setConfirmDelete(true)}
                                 title="Delete"
+                                aria-label="Delete"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
