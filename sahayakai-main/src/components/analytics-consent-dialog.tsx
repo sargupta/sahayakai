@@ -41,7 +41,6 @@ export function AnalyticsConsentDialog({
             setAnalyticsEnabled(true);
             onConsentGiven(true);
         } catch (error) {
-            console.error('Failed to save consent:', error);
         } finally {
             setIsLoading(false);
         }
@@ -54,7 +53,6 @@ export function AnalyticsConsentDialog({
             setAnalyticsEnabled(false);
             onConsentGiven(false);
         } catch (error) {
-            console.error('Failed to save consent:', error);
         } finally {
             setIsLoading(false);
         }

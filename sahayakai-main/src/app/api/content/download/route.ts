@@ -88,7 +88,7 @@ export async function GET(request: Request) {
     } catch (error) {
         logger.error('Download API Failed', error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

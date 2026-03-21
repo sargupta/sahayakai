@@ -7,9 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from './ui/button';
 import { Save, Download, Globe2, MapPin, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import Link from "next/link";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type VirtualFieldTripDisplayProps = {
     trip: VirtualFieldTripOutput;
@@ -61,7 +60,6 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({ trip
                 description: "Saved to your personal library.",
             });
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 variant: "destructive",
@@ -73,6 +71,11 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({ trip
     const handleDownloadPDF = async () => {
         const element = document.getElementById('field-trip-card');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+            import('jspdf'),
+            import('html2canvas'),
+        ]);
 
         const actionButtons = element.querySelector('.no-print');
         if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
@@ -97,7 +100,6 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({ trip
 
             toast({ title: "PDF Downloaded", description: "Your file is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -167,6 +169,13 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({ trip
                     </div>
                 ))}
             </CardContent>
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <FeedbackDialog
+                page="virtual-field-trip"
+                feature="virtual-field-trip-result"
+                context={{ title: trip.title }}
+              />
+            </div>
         </Card>
     );
 };

@@ -85,7 +85,6 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             }
             setNextCursor(data.nextCursor ?? null);
         } catch (error: any) {
-            console.error(error);
             toast({
                 title: "Error",
                 description: error.message || "Could not load library. Please try again.",
@@ -170,7 +169,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
                 const blob = createDownloadableContent(resource.data, resource.type);
                 const url = URL.createObjectURL(blob);
-                const cleanTitle = (resource.title || 'Untitled').replace(/[^a-z0-9]/gi, '_');
+                // Strip only filesystem-unsafe characters, preserving Indic/Unicode chars
+                const cleanTitle = (resource.title || 'Untitled').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'Untitled';
 
                 const link = document.createElement('a');
                 link.href = url;
@@ -221,7 +221,6 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             });
 
         } catch (error: any) {
-            console.error('Download failed:', error);
             toast({
                 title: "Download Failed",
                 description: error.message || "Could not retrieve file.",

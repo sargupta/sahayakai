@@ -11,8 +11,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useToast } from '@/hooks/use-toast';
 
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type WorksheetDisplayProps = {
     worksheet: {
@@ -24,9 +23,10 @@ type WorksheetDisplayProps = {
         learningObjectives?: string[];
     };
     title?: string;
+    selectedLanguage?: string;
 };
 
-export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }) => {
+export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title, selectedLanguage }) => {
     const { toast } = useToast();
 
     const handleCopy = () => {
@@ -40,6 +40,11 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
     const handleDownload = async () => {
         const element = document.getElementById('worksheet-pdf');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+          import('jspdf'),
+          import('html2canvas'),
+        ]);
 
         // Hide buttons for cleaner PDF
         const actionButtons = element.querySelector('.no-print');
@@ -73,7 +78,6 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
 
             toast({ title: "PDF Downloaded", description: "Your worksheet is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             // Restore buttons
@@ -102,7 +106,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 gradeLevel: worksheet.gradeLevel || 'Class 5',
                 subject: worksheet.subject || 'General',
                 topic: saveTitle,
-                language: 'English', // TODO: Pass language prop
+                language: selectedLanguage || 'en',
                 isPublic: false,
                 isDraft: false,
                 data: {
@@ -133,7 +137,6 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
             });
 
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 description: error instanceof Error ? error.message : "Could not save to library.",
@@ -176,6 +179,13 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                     {worksheet.worksheetContent}
                 </ReactMarkdown>
             </CardContent>
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <FeedbackDialog
+                page="worksheet"
+                feature="worksheet-result"
+                context={{ title: title || worksheet.title || "Worksheet" }}
+              />
+            </div>
         </Card>
     );
 };

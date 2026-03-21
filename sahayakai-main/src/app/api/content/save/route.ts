@@ -177,11 +177,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, id: validContent.id });
 
     } catch (error) {
-        console.error("DEBUG SAVE ERROR:", error);
+        // Error already logged by logger below
         const failedType = (request as any).body?.type || 'unknown';
         logger.error(`Save Content API Failed for type: ${failedType}`, error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

@@ -43,7 +43,7 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
 
         setIsLoading(true);
         try {
-            await createPostAction(user.uid, data.content, 'public'); // TODO: Pass Image URL when action supports it
+            await createPostAction(user.uid, data.content, 'public', data.imageUrl || undefined);
 
             toast({
                 title: "Post created!",

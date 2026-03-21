@@ -12,8 +12,6 @@ import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, S
 import { submitFeedback } from '@/app/actions/feedback';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
@@ -23,9 +21,13 @@ import { Edit, X, Save as SaveIcon } from 'lucide-react'; // Removing ThumbsUp/D
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
 // Simple markdown to HTML converter for basic formatting
+// Escapes HTML entities first to prevent XSS from AI-generated content
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const renderMarkdown = (text: string | null | undefined) => {
   if (!text) return '';
-  return text
+  return escapeHtml(text)
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>') // bold+italic
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // bold
     .replace(/\*(.+?)\*/g, '<em>$1</em>') // italic
@@ -243,6 +245,11 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
     const element = document.getElementById('lesson-plan-pdf');
     if (!element) return;
 
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas'),
+    ]);
+
     const actionButtons = element.querySelector('.no-print');
     if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
 
@@ -309,7 +316,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
         gradeLevel: lessonPlan.gradeLevel || 'Class 5',
         subject: lessonPlan.subject || 'General',
         topic: lessonPlan.title || 'Lesson', // Fallback for topic
-        language: 'English', // Defaulting for now, ideally input should provide this
+        language: selectedLanguage || 'en',
         isPublic: false,
         isDraft: false,
         data: lessonPlan

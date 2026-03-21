@@ -113,7 +113,6 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                     setHealthScore(data);
                 }
             } catch (error) {
-                console.error('Failed to fetch health score:', error);
             } finally {
                 setIsLoading(false);
             }

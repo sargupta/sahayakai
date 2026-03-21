@@ -292,7 +292,6 @@ export function OmniOrb() {
                 syncSessionTurn(updatedMessages, null);
             }
         } catch (e) {
-            console.error(e);
             tts.speak("I'm sorry, I encountered an issue connecting to my network. Please try again.", bcp47Lang);
         }
     };

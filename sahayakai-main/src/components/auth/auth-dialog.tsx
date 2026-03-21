@@ -31,7 +31,6 @@ export function AuthDialog() {
         try {
             await signInWithPopup(auth, provider);
         } catch (error: any) {
-            console.error("Auth Error:", error);
             toast({
                 title: "Sign-in Failed",
                 description: error.message,

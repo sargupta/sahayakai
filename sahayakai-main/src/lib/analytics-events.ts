@@ -270,7 +270,6 @@ class AnalyticsEventTracker {
                 keepalive: true,
             });
         } catch (error) {
-            console.error('[Analytics] Failed to send events:', error);
             // Re-queue with limit
             if (this.queue.length < 50) {
                 this.queue.unshift(...batch);

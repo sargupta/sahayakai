@@ -66,7 +66,6 @@ export async function POST(request: Request) {
         return NextResponse.json(
             {
                 error: userFriendlyError,
-                details: errorMessage,
                 code: (error as any).code || 'INTERNAL_ERROR'
             },
             { status: 500 }

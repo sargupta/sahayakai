@@ -92,7 +92,6 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         }
                     }
                 } catch (error) {
-                    console.error("Failed to load profile data:", error);
                 } finally {
                     setLoading(false);
                 }

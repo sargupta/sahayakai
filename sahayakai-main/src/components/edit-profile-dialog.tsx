@@ -37,7 +37,6 @@ export function EditProfileDialog({ userId, isOpen, onClose, initialData }: Edit
             });
             onClose();
         } catch (error) {
-            console.error("Failed to update profile:", error);
             toast({
                 title: "Update Failed",
                 description: "There was an error updating your profile. Please try again.",
