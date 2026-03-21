@@ -60,9 +60,8 @@ export async function POST(request: Request) {
     } catch (error) {
         logger.error(`Virtual Field Trip API Failed for topic: "${topicName}"`, error, 'VIRTUAL_FIELD_TRIP', { userId: request.headers.get('x-user-id') });
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

@@ -546,6 +546,7 @@ function WorksheetWizardContent() {
               subject: form.getValues("subject") || "General"
             }}
             title={form.getValues("prompt") || t.resultTitle}
+            selectedLanguage={selectedLanguage}
           />
         )
       }

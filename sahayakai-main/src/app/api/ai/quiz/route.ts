@@ -28,9 +28,8 @@ export async function POST(request: Request) {
     } catch (error) {
         logger.error(`Quiz API Failed for topic: "${topicText}"`, error, 'QUIZ', { userId: request.headers.get('x-user-id') });
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

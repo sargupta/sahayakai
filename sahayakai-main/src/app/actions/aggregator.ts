@@ -12,11 +12,11 @@ export async function aggregateUserMetrics(uid: string) {
     const userData = userDoc.data() || {};
 
     // 2. Fetch Content (Private)
-    const privateSnapshot = await db.collection('users').doc(uid).collection('content').get();
+    const privateSnapshot = await db.collection('users').doc(uid).collection('content').limit(500).get();
     const privateResources = privateSnapshot.docs.map(doc => doc.data());
 
     // 3. Fetch Content (Public)
-    const publicSnapshot = await db.collection('library_resources').where('authorId', '==', uid).get();
+    const publicSnapshot = await db.collection('library_resources').where('authorId', '==', uid).limit(500).get();
     const publicResources = publicSnapshot.docs.map(doc => doc.data());
 
     // Deduplicate

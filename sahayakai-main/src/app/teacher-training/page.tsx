@@ -359,7 +359,7 @@ function TeacherTrainingContent() {
         </Card>
       )}
 
-      {advice && <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} />}
+      {advice && <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} />}
 
       {/* Floating Assistant (Safe Mode) */}
       <VoiceAssistant

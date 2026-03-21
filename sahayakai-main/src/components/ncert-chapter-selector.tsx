@@ -90,11 +90,9 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                     if (serverChapters && serverChapters.length > 0) {
                         setChapters(serverChapters);
                     } else {
-                        console.log("Falling back to local NCERT data");
                         setChapters(getChaptersForGrade(selectedGrade, subject));
                     }
                 } catch (e) {
-                    console.error("Error fetching chapters, using fallback", e);
                     setChapters(getChaptersForGrade(selectedGrade, subject));
                 } finally {
                     setIsLoadingChapters(false);

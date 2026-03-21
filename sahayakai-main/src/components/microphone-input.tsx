@@ -110,7 +110,6 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       if (!isSpeakingRef.current && sustainedSpeechFramesRef.current >= MIN_SPEECH_FRAMES) {
         isSpeakingRef.current = true;
         speechStartTimeRef.current = Date.now();
-        console.log("🎤 VAD: Speech started! Energy:", maxVal);
         logger.info("VAD: Speech started", { volume: maxVal });
       }
 
@@ -120,7 +119,6 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       // SILENCE DETECTED
       if (!silenceStartTimeRef.current) {
         silenceStartTimeRef.current = Date.now();
-        console.log("🔇 VAD: Silence ticking...");
       }
 
       const silenceDuration = Date.now() - silenceStartTimeRef.current;
@@ -128,7 +126,6 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const maxAllowedSilence = isSpeakingRef.current ? SILENCE_DURATION_MS : INITIAL_SILENCE_TIMEOUT_MS;
 
       if (silenceDuration > maxAllowedSilence) {
-        console.log("⏹️ VAD: Auto-stopping due to silence", silenceDuration);
         logger.info("VAD: Auto-stopping due to silence", { duration: silenceDuration });
         handleStopRecording();
         return;
@@ -216,7 +213,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         recognition.start();
         recognitionRef.current = recognition;
       } catch (e) {
-        console.error("OS Web Speech API failed to start:", e);
+        logger.error("OS Web Speech API failed to start", e);
       }
     }
   };
@@ -252,7 +249,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       return { text: result.text, language: result.language };
     } catch (err) {
       if (attempt < MAX_RETRIES) {
-        console.warn(`[VoiceToText] Attempt ${attempt} failed, retrying in ${attempt * 1000}ms...`);
+        logger.warn(`[VoiceToText] Attempt ${attempt} failed, retrying in ${attempt * 1000}ms...`);
         await new Promise(resolve => setTimeout(resolve, attempt * 1000));
         return transcribeWithRetry(formData, attempt + 1);
       }
@@ -273,7 +270,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         try {
           await tts.speak(greetingText, "hi-IN");
         } catch (e) {
-          console.warn("Greeting interrupted or failed", e);
+          logger.warn("Greeting interrupted or failed");
         }
       }
 
@@ -318,7 +315,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       failsafeTimerRef.current = setTimeout(() => {
         failsafeTimerRef.current = null; // self-clear so the ref is clean
         if (mediaRecorderRef.current?.state === 'recording') {
-          console.warn("⚠️ FAILSAFE: Max recording time reached, forcing stop");
+          logger.warn("FAILSAFE: Max recording time reached, forcing stop");
           handleStopRecording();
         }
       }, MAX_RECORDING_TIME_MS);
@@ -346,7 +343,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         await stopFallbackRecognition(); // Wait for final onresult before reading the transcript
 
         if (!audioChunksRef.current || audioChunksRef.current.length === 0) {
-          console.warn("⏹️ MicrophoneInput: No audio chunks captured.");
+          logger.warn("MicrophoneInput: No audio chunks captured.");
           stream.getTracks().forEach(track => track.stop());
           setStatus('idle');
           return;
@@ -362,7 +359,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           if (!text || text.length < 2) {
             // Check fallback
             if (fallbackTranscriptRef.current && fallbackTranscriptRef.current.length >= 2) {
-              console.log("Using OS Speech Recognition Fallback (Server text was empty)");
+              logger.info("Using OS Speech Recognition Fallback (Server text was empty)");
               onTranscriptChange(fallbackTranscriptRef.current.trim(), language);
             } else {
               toast({
@@ -375,12 +372,11 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           }
           onTranscriptChange(text, language);
         } catch (error) {
-          console.error("Transcription error:", error);
           logger.error("Voice-to-text transcription failed", error);
 
           // Deep Failsafe: If cloud COMPLETELY fails, use offline OS fallback transcript if it captured anything
           if (fallbackTranscriptRef.current && fallbackTranscriptRef.current.length >= 2) {
-            console.warn("🌐 Cloud TTS Failed completely. Yielding to OS WebkitSpeechRecognition fallback.");
+            logger.warn("Cloud TTS Failed completely. Yielding to OS WebkitSpeechRecognition fallback.");
             onTranscriptChange(fallbackTranscriptRef.current.trim());
             toast({
               title: "Network Unstable",
@@ -411,7 +407,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       startFallbackRecognition();
 
     } catch (err) {
-      console.error("Microphone access denied:", err);
+      logger.error("Microphone access denied", err);
       toast({
         title: "Microphone Access Denied",
         description: "Please allow microphone access in your browser settings.",

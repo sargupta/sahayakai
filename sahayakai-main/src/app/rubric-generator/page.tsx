@@ -375,7 +375,7 @@ function RubricGeneratorContent() {
         </Card>
       )}
 
-      {rubric && <RubricDisplay rubric={rubric} />}
+      {rubric && <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />}
     </div>
   );
 }

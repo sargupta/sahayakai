@@ -66,16 +66,9 @@ export function AuthButton() {
                 });
             } catch (profileCheckError) {
                 // API error — don't block login with onboarding redirect
-                console.warn("Profile check failed, assuming existing user:", profileCheckError);
                 toast({ title: "Welcome back!", description: "Logging you in..." });
             }
         } catch (error: any) {
-            console.error("Auth Error Details:", {
-                code: error.code,
-                message: error.message,
-                domain: typeof window !== 'undefined' ? window.location.hostname : 'ssr',
-                authDomain: auth.config.authDomain
-            });
             toast({
                 title: "Sign-in Failed",
                 description: `Firebase Error: ${error.code} (${error.message})`,

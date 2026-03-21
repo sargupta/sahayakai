@@ -10,7 +10,7 @@ export function detectLangCode(text: string): string {
     return 'en-IN';
 }
 
-function stripMarkdown(text: string): string {
+export function stripMarkdown(text: string): string {
     return text
         .replace(/```[\s\S]*?```/g, '')           // remove fenced code blocks
         .replace(/`[^`]*`/g, '')                   // remove inline code
@@ -46,6 +46,10 @@ let activeAudio: HTMLAudioElement | null = null;
 // Resolve callback captured from speak()'s internal Promise so cancel() can unblock it
 let activeSpeakResolve: (() => void) | null = null;
 
+// In-memory cache for TTS audio to avoid re-fetching the same text
+const ttsCache = new Map<string, string>();
+const TTS_CACHE_MAX = 50;
+
 export const tts = {
     async speak(text: string, targetLang: string = 'en') {
         if (!text) return;
@@ -66,17 +70,32 @@ export const tts = {
                 // Non-critical — will still attempt the request, middleware will 401
             }
 
-            const response = await fetch('/api/tts', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ text, targetLang }),
-            });
+            // Use full text length in key to avoid prefix collisions
+            const cacheKey = `${targetLang}:${text.length}:${text.slice(0, 100)}`;
+            let audioContent = ttsCache.get(cacheKey);
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch TTS audio");
+            if (!audioContent) {
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ text, targetLang }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch TTS audio");
+                }
+
+                const data = await response.json();
+                audioContent = data.audioContent;
+
+                // Cache with eviction
+                if (ttsCache.size >= TTS_CACHE_MAX) {
+                    const firstKey = ttsCache.keys().next().value;
+                    if (firstKey !== undefined) ttsCache.delete(firstKey);
+                }
+                ttsCache.set(cacheKey, audioContent!);
             }
 
-            const { audioContent } = await response.json();
             const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
             activeAudio = audio;
 
@@ -104,7 +123,6 @@ export const tts = {
             activeSpeakResolve = null;
 
         } catch (e) {
-            console.warn("Cloud TTS Failed, using OS Fallback", e);
             speakFallback(text, targetLang);
         }
     },

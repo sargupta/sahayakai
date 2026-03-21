@@ -76,7 +76,6 @@ export function TeacherDirectory() {
             }
             setConnState(stateMap);
         } catch (error) {
-            console.error("Failed to load teacher directory:", error);
         } finally {
             setLoading(false);
         }

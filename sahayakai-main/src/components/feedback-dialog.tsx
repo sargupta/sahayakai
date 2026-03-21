@@ -53,7 +53,6 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
             setRating(null);
 
         } catch (error: any) {
-            console.error("Feedback Error:", error);
             toast({
                 title: "Error",
                 description: "Could not save feedback. Please check your connection.",

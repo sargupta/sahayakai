@@ -14,14 +14,14 @@ import {
 import { Button } from './ui/button';
 import { Download, Save, Copy, ClipboardCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type RubricDisplayProps = {
   rubric: RubricGeneratorOutput;
+  selectedLanguage?: string;
 };
 
-export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
+export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric, selectedLanguage }) => {
   const { toast } = useToast();
 
   if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
@@ -31,6 +31,11 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
   const handleDownload = async () => {
     const element = document.getElementById('rubric-pdf');
     if (!element) return;
+
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas'),
+    ]);
 
     // Hide action buttons for capture
     const actionButtons = element.querySelector('.no-print');
@@ -70,7 +75,6 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
 
       toast({ title: "PDF Downloaded", description: "Your file is ready." });
     } catch (error) {
-      console.error("PDF Error:", error);
       toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
     } finally {
       if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -95,7 +99,7 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
         gradeLevel: rubric.gradeLevel || 'Class 5',
         subject: rubric.subject || 'General',
         topic: rubric.title, // Use title as topic fallback
-        language: 'English', // Todo: Pass language prop
+        language: selectedLanguage || 'en',
         isPublic: false,
         isDraft: false,
         data: rubric
@@ -117,7 +121,6 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({ rubric }) => {
         description: "Saved to your personal library.",
       });
     } catch (error) {
-      console.error("Save Error:", error);
       toast({
         title: "Save Failed",
         variant: "destructive",
@@ -218,6 +221,13 @@ ${criterion.levels.map(level => `   • ${level.name} (${level.points} pts): ${l
           </Table>
         </div>
       </CardContent>
+      <div className="p-4 border-t border-slate-100 flex justify-end">
+        <FeedbackDialog
+          page="rubric"
+          feature="rubric-result"
+          context={{ title: rubric.title }}
+        />
+      </div>
     </Card>
   );
 };

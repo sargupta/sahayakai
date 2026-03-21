@@ -8,8 +8,7 @@ import { Button } from './ui/button';
 import { Save, Download, Images } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type VisualAidDisplayProps = {
     visualAid: VisualAidOutput;
@@ -67,7 +66,6 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
                 description: "Saved to your personal library.",
             });
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 variant: "destructive",
@@ -79,6 +77,11 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
     const handleDownloadPDF = async () => {
         const element = document.getElementById('visual-aid-card');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+            import('jspdf'),
+            import('html2canvas'),
+        ]);
 
         const actionButtons = element.querySelector('.no-print');
         if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
@@ -99,7 +102,6 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
 
             toast({ title: "PDF Downloaded", description: "Your file is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -155,6 +157,13 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
                     </div>
                 </div>
             </CardContent>
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <FeedbackDialog
+                page="visual-aid"
+                feature="visual-aid-result"
+                context={{ title }}
+              />
+            </div>
         </Card>
     );
 };
