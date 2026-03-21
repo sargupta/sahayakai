@@ -14,9 +14,10 @@ import { SUBJECTS, GRADE_LEVELS, LANGUAGES, DEPARTMENTS } from "@/types";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
-import { Loader2, GraduationCap, MapPin, BookOpen, Layers, UserCircle } from "lucide-react";
+import { Loader2, GraduationCap, MapPin, BookOpen, Layers, UserCircle, Shield } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -288,6 +289,14 @@ export default function OnboardingPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <Link
+                                href="/privacy-for-teachers"
+                                target="_blank"
+                                className="flex items-center gap-2 text-sm text-primary hover:underline pt-2"
+                            >
+                                <Shield className="h-4 w-4" />
+                                Your data is private and never shared with inspectors
+                            </Link>
                         </div>
                     )}
                 </CardContent>

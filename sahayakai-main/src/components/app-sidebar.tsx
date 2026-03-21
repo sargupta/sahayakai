@@ -236,6 +236,14 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/privacy-for-teachers')} tooltip="Privacy">
+                <Link href="/privacy-for-teachers" onClick={() => handleNavClick('/privacy-for-teachers')}>
+                  <ShieldCheck />
+                  <span>Privacy</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
