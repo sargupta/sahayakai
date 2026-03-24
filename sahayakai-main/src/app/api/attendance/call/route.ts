@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
+import { isValidE164 } from '@/lib/twilio-validate';
 import type { Language } from '@/types';
 
 export async function POST(req: NextRequest) {
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        if (!isValidE164(to)) {
+            return NextResponse.json({ error: 'Invalid phone number format. Must be E.164 (e.g. +919876543210)' }, { status: 400 });
+        }
+
         // Verify ownership of the outreach record
         const db = await getDb();
         const outreachDoc = await db.collection('parent_outreach').doc(outreachId).get();
@@ -45,9 +50,10 @@ export async function POST(req: NextRequest) {
         const statusCallbackUrl = `${protocol}://${host}/api/attendance/twiml-status`;
 
         // Initiate Twilio call via REST API
+        // Use Singapore edge for lower latency to India (asia-south1 deployment)
         const twilioAuth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
         const twilioRes = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`,
+            `https://api.singapore.us1.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`,
             {
                 method: 'POST',
                 headers: {
@@ -59,8 +65,10 @@ export async function POST(req: NextRequest) {
                     From:                TWILIO_PHONE_NUMBER,
                     Url:                 twimlUrl,
                     StatusCallback:      statusCallbackUrl,
-                    StatusCallbackEvent: 'completed failed no-answer busy',
+                    StatusCallbackEvent: 'initiated ringing answered completed failed no-answer busy canceled',
                     StatusCallbackMethod:'POST',
+                    Timeout:             '30',            // Ring for 30s before giving up
+                    MachineDetection:    'DetectMessageEnd', // Detect voicemail; wait for beep before playing message
                 }).toString(),
             }
         );
