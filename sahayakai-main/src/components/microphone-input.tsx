@@ -51,6 +51,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   const failsafeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordedMimeTypeRef = useRef<string>("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // VAD State Refs
   const isSpeakingRef = useRef<boolean>(false);
@@ -160,6 +161,37 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     animationFrameRef.current = requestAnimationFrame(drawWaveform);
   };
 
+  const forceReset = () => {
+    // Nuclear cancel — abort any in-flight transcription and reset to idle immediately
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = undefined;
+    }
+    if (failsafeTimerRef.current) {
+      clearTimeout(failsafeTimerRef.current);
+      failsafeTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().then(() => {
+        audioContextRef.current = null;
+        analyserRef.current = null;
+      });
+    }
+    void stopFallbackRecognition();
+    setStatus('idle');
+  };
+
   const handleStopRecording = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -243,7 +275,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const headers: Record<string, string> = {};
       const token = await auth.currentUser?.getIdToken();
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/ai/voice-to-text', { method: 'POST', headers, body: formData });
+      const res = await fetch('/api/ai/voice-to-text', { method: 'POST', headers, body: formData, signal: abortControllerRef.current?.signal });
       if (!res.ok) throw new Error((await res.json()).error || 'Transcription failed');
       const result = await res.json();
       return { text: result.text, language: result.language };
@@ -340,6 +372,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
       mediaRecorderRef.current.onstop = async () => {
         setStatus('processing');
+        abortControllerRef.current = new AbortController();
         await stopFallbackRecognition(); // Wait for final onresult before reading the transcript
 
         if (!audioChunksRef.current || audioChunksRef.current.length === 0) {
@@ -427,10 +460,14 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       e.preventDefault();
       e.stopPropagation();
     }
-    if (status === 'recording' || status === 'initializing') {
+    if (status === 'processing' || status === 'initializing') {
+      // User wants to cancel — force-reset everything immediately
+      forceReset();
+    } else if (status === 'recording') {
       stopRecording();
     } else if (status === 'greeting') {
       import('@/lib/tts').then(({ tts }) => tts.cancel());
+      setStatus('idle');
     } else {
       startRecording();
     }
@@ -444,6 +481,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       }
       if (failsafeTimerRef.current) {
         clearTimeout(failsafeTimerRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -481,9 +522,9 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   const getLabelString = () => {
     switch (status) {
       case 'greeting': return "नमस्ते! I'm listening..."; // Native Unicode Script overriding English parameter
-      case 'initializing': return "Getting ready...";
+      case 'initializing': return "Getting ready… tap to cancel";
       case 'recording': return "I'm listening...";
-      case 'processing': return "Sahayak is thinking...";
+      case 'processing': return "Thinking… tap to cancel";
       default: return label || "Tap to speak";
     }
   };
@@ -513,7 +554,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             status === 'recording'
               ? "bg-gradient-to-br from-destructive to-red-600 border-2 border-white/20 scale-110"
               : "bg-gradient-to-br from-primary to-orange-600 hover:scale-110",
-            status === 'processing' && "cursor-wait opacity-80",
+            status === 'processing' && "opacity-90",
             isFloating && "fixed bottom-8 right-8 z-50 border-4 border-white dark:border-slate-900",
             getButtonSize(),
             className,
@@ -521,9 +562,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             status !== 'recording' && "!bg-primary !text-primary-foreground hover:!bg-primary/95"
           )}
           onClick={handleMicClick}
-          disabled={status === 'processing' || status === 'initializing'}
           data-microphone="true"
-          aria-label={status === 'recording' ? "Stop recording" : "Start recording"}
+          aria-label={status === 'recording' || status === 'processing' || status === 'initializing' ? "Stop recording" : "Start recording"}
         >
           {/* Internal Glow for recording */}
           {status === 'recording' && (
@@ -534,7 +574,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             <div className="relative h-10 w-10">
               <div className="absolute inset-0 rounded-full border-4 border-white/20" />
               <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
-              <Sparkles className="absolute inset-0 m-auto h-4 w-4 text-white animate-pulse" />
+              <StopCircle className="absolute inset-0 m-auto h-4 w-4 text-white" />
             </div>
           ) : status === 'recording' ? (
             <StopCircle className={cn(getIconSize(), "relative z-30 text-white")} />

@@ -86,11 +86,14 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                 setIsLoadingChapters(true);
                 setChapters([]);
                 try {
+                    const staticChapters = getChaptersForGrade(selectedGrade, subject);
                     const serverChapters = await getNCERTChapters(selectedGrade, subject);
-                    if (serverChapters && serverChapters.length > 0) {
+                    // Use whichever source has more chapters — Firestore may be
+                    // partially seeded for some subjects (e.g. regional languages)
+                    if (serverChapters && serverChapters.length >= staticChapters.length) {
                         setChapters(serverChapters);
                     } else {
-                        setChapters(getChaptersForGrade(selectedGrade, subject));
+                        setChapters(staticChapters);
                     }
                 } catch (e) {
                     setChapters(getChaptersForGrade(selectedGrade, subject));
