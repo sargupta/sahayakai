@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid phone number format. Must be E.164 (e.g. +919876543210)' }, { status: 400 });
         }
 
+        // In test mode, override the destination number so all teachers can test
+        // without calling real parents. Remove this env var to go live.
+        const callTo = process.env.TWILIO_TEST_OVERRIDE_NUMBER || to;
+
         // Verify ownership of the outreach record
         const db = await getDb();
         const outreachDoc = await db.collection('parent_outreach').doc(outreachId).get();
@@ -61,7 +65,7 @@ export async function POST(req: NextRequest) {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: new URLSearchParams({
-                    To:                  to,
+                    To:                  callTo,
                     From:                TWILIO_PHONE_NUMBER,
                     Url:                 twimlUrl,
                     StatusCallback:      statusCallbackUrl,
