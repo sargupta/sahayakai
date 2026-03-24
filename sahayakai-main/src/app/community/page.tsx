@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft } from 'lucide-react';
+import { Users, Plus, ArrowLeft, UserSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -15,6 +15,7 @@ import { UnifiedFeed } from '@/components/community/unified-feed';
 import { GroupsSidebar } from '@/components/community/groups-sidebar';
 import GroupFeed from '@/components/community/group-feed';
 import { CommunityChat } from '@/components/community/community-chat';
+import { TeacherDirectory } from '@/components/community/teacher-directory';
 
 // Server actions
 import {
@@ -55,6 +56,7 @@ export default function CommunityPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const [showStaffRoom, setShowStaffRoom] = useState(false);
+  const [showTeacherDirectory, setShowTeacherDirectory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
@@ -175,6 +177,10 @@ export default function CommunityPage() {
     setShowStaffRoom(true);
   }, []);
 
+  const handleOpenTeacherDirectory = useCallback(() => {
+    setShowTeacherDirectory(true);
+  }, []);
+
   const handleRefreshFeed = useCallback(async () => {
     try {
       const feed = await getUnifiedFeedAction();
@@ -195,6 +201,29 @@ export default function CommunityPage() {
         group={activeGroup}
         onBack={() => setActiveGroup(null)}
       />
+    );
+  }
+
+  // ── Teacher Directory View ───────────────────────────────────────────────
+  if (showTeacherDirectory) {
+    return (
+      <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            onClick={() => setShowTeacherDirectory(false)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h2 className="font-headline text-lg font-bold text-slate-900">
+            Find Teachers
+          </h2>
+        </div>
+        <TeacherDirectory />
+      </div>
     );
   }
 
@@ -230,7 +259,7 @@ export default function CommunityPage() {
           <div className="p-3 bg-white rounded-2xl shadow-sm border border-orange-100 shrink-0">
             <Users className="w-6 h-6 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-headline text-2xl font-bold text-slate-900">
               Community
             </h1>
@@ -238,6 +267,15 @@ export default function CommunityPage() {
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5 text-xs font-bold border-orange-200 text-orange-600 hover:bg-orange-50"
+            onClick={handleOpenTeacherDirectory}
+          >
+            <UserSearch className="h-4 w-4" />
+            <span className="hidden sm:inline">Find Teachers</span>
+          </Button>
         </div>
       </div>
 
@@ -282,6 +320,7 @@ export default function CommunityPage() {
             onSelectGroup={handleOpenGroup}
             onJoinGroup={handleJoinGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
+            onOpenTeacherDirectory={handleOpenTeacherDirectory}
             onConnectTeacher={handleConnectTeacher}
           />
         </div>

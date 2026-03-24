@@ -27,6 +27,7 @@ interface GroupsSidebarProps {
   onSelectGroup: (groupId: string) => void;
   onJoinGroup: (groupId: string) => void;
   onOpenStaffRoom: () => void;
+  onOpenTeacherDirectory: () => void;
   onConnectTeacher: (uid: string) => void;
 }
 
@@ -37,6 +38,7 @@ export function GroupsSidebar({
   onSelectGroup,
   onJoinGroup,
   onOpenStaffRoom,
+  onOpenTeacherDirectory,
   onConnectTeacher,
 }: GroupsSidebarProps) {
   const router = useRouter();
@@ -144,14 +146,21 @@ export function GroupsSidebar({
       )}
 
       {/* People You May Know */}
-      {teacherSuggestions.length > 0 && (
-        <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             People You May Know
           </h3>
-          <Card className="p-4">
-            <div className="space-y-3">
-              {teacherSuggestions.slice(0, 3).map((teacher) => (
+          <button
+            onClick={onOpenTeacherDirectory}
+            className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+          >
+            View All
+          </button>
+        </div>
+        <Card className="p-4">
+          <div className="space-y-3">
+            {teacherSuggestions.length > 0 ? teacherSuggestions.slice(0, 5).map((teacher) => (
                 <div
                   key={teacher.uid}
                   className="flex items-center justify-between gap-2"
@@ -193,11 +202,20 @@ export function GroupsSidebar({
                     )}
                   </Button>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
+              )) : (
+              <p className="text-xs text-slate-400 text-center py-2">
+                No suggestions yet
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onOpenTeacherDirectory}
+            className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+          >
+            Browse All Teachers
+          </button>
+        </Card>
+      </div>
 
       {/* Staff Room */}
       <Card
