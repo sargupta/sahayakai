@@ -9,6 +9,7 @@ import { ConversationThread } from "@/components/messages/conversation-thread";
 import { NewConversationPicker } from "@/components/messages/new-conversation-picker";
 import { Conversation } from "@/types/messages";
 import { MessageCircle, Loader2 } from "lucide-react";
+import { PushPermissionBanner } from "@/components/notifications/push-permission-banner";
 import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -123,6 +124,8 @@ function MessagesPageContent() {
     }
 
     return (
+        <div className="w-full space-y-0">
+        <PushPermissionBanner />
         <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
             {/* ── Conversation List (Inbox) ─────────────────────────── */}
             <div className={cn(
@@ -153,6 +156,7 @@ function MessagesPageContent() {
                     <NoConversationSelected />
                 )}
             </div>
+        </div>
         </div>
     );
 }

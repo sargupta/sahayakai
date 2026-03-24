@@ -14,6 +14,7 @@ const firebaseConfig = {
 };
 
 import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // Initialize Firebase (Singleton pattern)
@@ -28,6 +29,7 @@ const db = initializeFirestore(app, {
 
 const auth = getAuth(app);
 const storage = getStorage(app);
+const rtdb = getDatabase(app, "https://sahayakai-b4248-default-rtdb.asia-southeast1.firebasedatabase.app");
 
 // Export instances
-export { app, db, auth, storage };
+export { app, db, auth, storage, rtdb };

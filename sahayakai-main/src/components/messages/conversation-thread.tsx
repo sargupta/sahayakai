@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-    collection, query, orderBy, limitToLast, onSnapshot,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { usePaginatedMessages } from "@/hooks/use-paginated-messages";
 import { useAuth } from "@/context/auth-context";
 import { Message, Conversation, SharedResource } from "@/types/messages";
-import { sendMessageAction, markConversationReadAction } from "@/app/actions/messages";
+import { markConversationReadAction } from "@/app/actions/messages";
 import { MessageBubble } from "./message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +14,10 @@ import {
     ClipboardCheck, FileSignature, Images, Globe2, GraduationCap, Wand2,
 } from "lucide-react";
 import { VoiceRecorder } from "./voice-recorder";
+import { useMessageOutbox } from "@/hooks/use-message-outbox";
+import { useTypingIndicator } from "@/hooks/use-typing-indicator";
+import { TypingIndicator } from "./typing-indicator";
+import { PresenceDot } from "./presence-dot";
 import { cn } from "@/lib/utils";
 import {
     Popover, PopoverContent, PopoverTrigger,
@@ -175,34 +176,27 @@ interface ConversationThreadProps {
 
 export function ConversationThread({ conversation, onBack }: ConversationThreadProps) {
     const { user } = useAuth();
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { messages, loading, loadingMore, hasMore, loadMore } = usePaginatedMessages(conversation.id);
     const [input, setInput] = useState("");
-    const [sending, setSending] = useState(false);
-    const sendingRef = useRef(false);
     const [resourceOpen, setResourceOpen] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const { outboxMessages, sendWithOutbox, retryMessage, mergeWithFirestore } = useMessageOutbox(conversation.id);
+    const { isOtherTyping, setTyping } = useTypingIndicator(conversation.id, user?.uid);
+
     const title = user ? getConversationTitle(conversation, user.uid) : "Chat";
     const photo = user ? getConversationPhoto(conversation, user.uid) : null;
+    const otherUid = conversation.type === 'direct'
+        ? conversation.participantIds.find(id => id !== user?.uid)
+        : undefined;
 
-    // Real-time messages
-    useEffect(() => {
-        const msgCol = collection(db, "conversations", conversation.id, "messages");
-        const q = query(msgCol, orderBy("createdAt", "asc"), limitToLast(100));
-
-        const unsub = onSnapshot(q, (snap) => {
-            setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
-            setLoading(false);
-        });
-        return () => unsub();
-    }, [conversation.id]);
+    const displayMessages = mergeWithFirestore(messages);
 
     // Auto-scroll on new messages
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    }, [displayMessages]);
 
     // Mark read when conversation opens
     useEffect(() => {
@@ -217,29 +211,22 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         audioUrl?: string,
         audioDuration?: number,
     ) => {
-        if (!user || sendingRef.current) return;
+        if (!user) return;
         const trimmed = text.trim();
         if (!trimmed && type === "text") return;
         if (type === "audio" && !audioUrl) return;
 
         setInput("");
-        setSending(true);
-        sendingRef.current = true;
-        try {
-            await sendMessageAction({
-                conversationId: conversation.id,
-                text: trimmed,
-                type,
-                resource,
-                audioUrl,
-                audioDuration,
-            });
-        } finally {
-            setSending(false);
-            sendingRef.current = false;
-            textareaRef.current?.focus();
-        }
-    }, [user, conversation.id]);
+        await sendWithOutbox({
+            conversationId: conversation.id,
+            text: trimmed,
+            type,
+            resource,
+            audioUrl,
+            audioDuration,
+        });
+        textareaRef.current?.focus();
+    }, [user, conversation.id, sendWithOutbox]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -261,12 +248,17 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                 )}
-                <Avatar className="h-9 w-9 ring-2 ring-slate-100">
-                    <AvatarImage src={photo ?? undefined} referrerPolicy="no-referrer" />
-                    <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-400 to-amber-500 text-white">
-                        {getInitials(title)}
-                    </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                    <Avatar className="h-9 w-9 ring-2 ring-slate-100">
+                        <AvatarImage src={photo ?? undefined} referrerPolicy="no-referrer" />
+                        <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-400 to-amber-500 text-white">
+                            {getInitials(title)}
+                        </AvatarFallback>
+                    </Avatar>
+                    {otherUid && (
+                        <PresenceDot uid={otherUid} className="absolute bottom-0 right-0" />
+                    )}
+                </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">{title}</p>
                     {conversation.type === "group" && (
@@ -279,11 +271,26 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-200">
+                {/* Load older messages */}
+                {hasMore && !loading && (
+                    <div className="flex justify-center py-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={loadMore}
+                            disabled={loadingMore}
+                            className="text-xs text-slate-400 hover:text-slate-600"
+                        >
+                            {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                            {loadingMore ? 'Loading...' : 'Load older messages'}
+                        </Button>
+                    </div>
+                )}
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
                     </div>
-                ) : messages.length === 0 ? (
+                ) : displayMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
                         <div className="p-4 bg-orange-50 rounded-full">
                             <Send className="h-8 w-8 text-orange-300" />
@@ -292,9 +299,9 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         <p className="text-xs text-slate-400">Send a message or share a teaching resource.</p>
                     </div>
                 ) : (
-                    messages.map((msg, idx) => {
+                    displayMessages.map((msg, idx) => {
                         const isOwn = msg.senderId === user?.uid;
-                        const prevMsg = messages[idx - 1];
+                        const prevMsg = displayMessages[idx - 1];
                         const showAvatar = !prevMsg || prevMsg.senderId !== msg.senderId;
                         return (
                             <MessageBubble
@@ -307,6 +314,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         );
                     })
                 )}
+                <TypingIndicator isTyping={isOtherTyping} />
                 <div ref={bottomRef} />
             </div>
 
@@ -344,29 +352,27 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         <Textarea
                             ref={textareaRef}
                             value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            onChange={(e) => { setInput(e.target.value); setTyping(); }}
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
                             className="flex-1 min-h-[40px] max-h-32 text-sm bg-slate-50 border-slate-200 rounded-xl resize-none focus-visible:ring-orange-400/30 placeholder:text-slate-400 py-2.5"
                             rows={1}
                             maxLength={1000}
-                            disabled={sending}
                         />
 
                         {/* Voice message */}
                         <VoiceRecorder
                             onSend={(audioUrl, duration) => handleSend("", "audio", undefined, audioUrl, duration)}
-                            disabled={sending}
                         />
 
                         {/* Send */}
                         <Button
                             size="icon"
                             onClick={() => handleSend(input)}
-                            disabled={!input.trim() || sending}
+                            disabled={!input.trim()}
                             className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-sm shrink-0"
                         >
-                            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            <Send className="h-4 w-4" />
                         </Button>
                     </div>
                 ) : (

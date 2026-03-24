@@ -40,6 +40,10 @@ export interface Message {
     audioDuration?: number;             // duration in seconds
     readBy: string[];                   // UIDs who have opened this message
     createdAt: Timestamp | null;
+    clientMessageId?: string;          // UUID for idempotent writes / dedup
+    deliveryStatus?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+    deliveredTo?: string[];            // UIDs that received the message
+    mediaStatus?: 'uploading' | 'ready' | 'failed';  // for async media uploads
 }
 
 // ── Conversation document (collection: conversations) ─────────────────────────
@@ -66,6 +70,22 @@ export interface Conversation {
 
     createdAt: Timestamp | null;
     updatedAt: Timestamp | null;
+}
+
+// ── Outbox item (queued in IndexedDB for offline-first sends) ─────────────────
+
+export interface OutboxMessage {
+    clientMessageId: string;
+    conversationId: string;
+    text: string;
+    type: MessageType;
+    resource?: SharedResource;
+    audioUrl?: string;
+    audioDuration?: number;
+    status: 'queued' | 'sending' | 'sent' | 'failed';
+    retryCount: number;
+    createdAt: number;  // Date.now()
+    localBlobUrl?: string;  // for voice messages before upload completes
 }
 
 // ── Helper: deterministic conversationId for 1:1 DMs ─────────────────────────
