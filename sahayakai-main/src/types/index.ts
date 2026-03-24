@@ -319,3 +319,5 @@ export interface MyConnectionData {
     sentRequestUids: string[];
     receivedRequests: { uid: string; requestId: string }[];
 }
+
+export type { Group, GroupMember, GroupPost, GroupChatMessage, PostType, PostAttachment, FeedItem, FeedItemType, ShareTemplate, GroupType } from './community';

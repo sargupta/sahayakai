@@ -1,759 +1,302 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import {
-  Card, CardContent, CardFooter, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
-import { LanguageSelector } from '@/components/language-selector';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  getLibraryResources, getFollowingIdsAction,
-  likeResourceAction, saveResourceToLibraryAction,
-  getRecommendedTeachersAction,
-} from '@/app/actions/community';
-import {
-  Loader2, Search, Library, Flame,
-  School, Bookmark, ArrowRight, Heart, MessageCircle,
-  Mic, MicOff, LayoutGrid, Users, Plus,
-} from 'lucide-react';
-import { CreatePostDialog } from '@/components/community/create-post-dialog';
-import { TeacherDirectory } from '@/components/community/teacher-directory';
-import { CommunityChat } from '@/components/community/community-chat';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { Users, Plus, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// New community components
+import GroupList from '@/components/community/group-list';
+import { ShareComposer } from '@/components/community/share-composer';
+import { UnifiedFeed } from '@/components/community/unified-feed';
+import { GroupsSidebar } from '@/components/community/groups-sidebar';
+import GroupFeed from '@/components/community/group-feed';
+import { CommunityChat } from '@/components/community/community-chat';
 
-type Resource = {
-  id: string;
-  title: string;
-  type: FileType;
-  author: string;
-  authorId: string;
-  likes: number;
-  language: string;
-  imageUrl?: string;
-  gradeLevel?: string;
-  subject?: string;
-};
+// Server actions
+import {
+  ensureUserGroupsAction,
+  getMyGroupsAction,
+  getUnifiedFeedAction,
+  discoverGroupsAction,
+  joinGroupAction,
+  likeGroupPostAction,
+} from '@/app/actions/groups';
+import {
+  getMyConnectionDataAction,
+  sendConnectionRequestAction,
+} from '@/app/actions/connections';
+import { getRecommendedTeachersAction } from '@/app/actions/community';
 
-// ── Resource-type config ─────────────────────────────────────────────────────
-
-const TYPE_CONFIG: Record<string, {
-  border: string; bg: string; text: string; label: string; route: string;
-}> = {
-  'lesson-plan':        { border: 'border-t-orange-400',  bg: 'bg-orange-50',  text: 'text-orange-600',  label: 'Lesson Plan',  route: 'lesson-planner' },
-  'quiz':               { border: 'border-t-blue-400',    bg: 'bg-blue-50',    text: 'text-blue-600',    label: 'Quiz',         route: 'quiz-generator' },
-  'worksheet':          { border: 'border-t-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Worksheet',    route: 'worksheet-wizard' },
-  'rubric':             { border: 'border-t-violet-400',  bg: 'bg-violet-50',  text: 'text-violet-600',  label: 'Rubric',       route: 'rubric-generator' },
-  'image':              { border: 'border-t-pink-400',    bg: 'bg-pink-50',    text: 'text-pink-600',    label: 'Visual Aid',   route: 'visual-aid-designer' },
-  'visual-aid':         { border: 'border-t-pink-400',    bg: 'bg-pink-50',    text: 'text-pink-600',    label: 'Visual Aid',   route: 'visual-aid-designer' },
-  'virtual-field-trip': { border: 'border-t-teal-400',   bg: 'bg-teal-50',    text: 'text-teal-600',    label: 'Field Trip',   route: 'virtual-field-trip' },
-  'teacher-training':   { border: 'border-t-amber-400',  bg: 'bg-amber-50',   text: 'text-amber-600',   label: 'Training',     route: 'teacher-training' },
-};
-
-const cfg = (type: string) =>
-  TYPE_CONFIG[type] ?? { border: 'border-t-slate-300', bg: 'bg-slate-50', text: 'text-slate-500', label: 'Resource', route: 'instant-answer' };
-
-// ── Localisation helpers ─────────────────────────────────────────────────────
-
-const LANG_SHORT: Record<string, string> = {
-  en: 'EN', hi: 'HI', bn: 'BN', te: 'TE', mr: 'MR',
-  ta: 'TA', gu: 'GU', kn: 'KN', pa: 'PA', ml: 'ML', or: 'OR',
-};
-
-// ── Type filter chips (with icons) ───────────────────────────────────────────
-
-const TYPE_CHIPS: { value: string; label: string; fileType?: FileType }[] = [
-  { value: 'all',                label: 'All' },
-  { value: 'lesson-plan',        label: 'Lessons',    fileType: 'lesson-plan' },
-  { value: 'quiz',               label: 'Quizzes',    fileType: 'quiz' },
-  { value: 'worksheet',          label: 'Worksheets', fileType: 'worksheet' },
-  { value: 'rubric',             label: 'Rubrics',    fileType: 'rubric' },
-  { value: 'visual-aid',         label: 'Visual Aids',fileType: 'visual-aid' },
-  { value: 'virtual-field-trip', label: 'Field Trips',fileType: 'virtual-field-trip' },
-];
-
-// ── Teacher suggestions horizontal strip ─────────────────────────────────────
-
-function TeacherStrip() {
-  const router = useRouter();
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) { setLoading(false); return; }
-      getRecommendedTeachersAction(user.uid)
-        .then((recs) => setSuggestions(recs))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    });
-    return () => unsub();
-  }, []);
-
-  if (loading || suggestions.length === 0) return null;
-
-  return (
-    <div className="space-y-2 mt-3">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-        <Users className="h-3.5 w-3.5" />
-        Suggested Educators
-      </p>
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-        {suggestions.map((t) => (
-          <button
-            key={t.uid}
-            onClick={() => router.push(`/profile/${t.uid}`)}
-            className="flex flex-col items-center gap-1.5 shrink-0 p-3 rounded-2xl bg-white border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all min-w-[88px]"
-          >
-            <Avatar className="h-11 w-11 ring-2 ring-white shadow-sm">
-              <AvatarImage src={t.photoURL} referrerPolicy="no-referrer" />
-              <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-400 to-amber-500 text-white">
-                {t.initial || t.displayName?.[0] || 'T'}
-              </AvatarFallback>
-            </Avatar>
-            <p className="text-[11px] font-bold text-slate-800 text-center leading-tight w-full truncate">
-              {t.displayName}
-            </p>
-            {t.recommendationReason && (
-              <span className="text-[9px] text-slate-400 font-medium truncate w-full text-center">
-                {t.recommendationReason}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Voice search hook ─────────────────────────────────────────────────────────
-
-function useVoiceSearch(onResult: (text: string) => void, lang: string) {
-  const [isListening, setIsListening] = useState(false);
-  const recRef = useRef<any>(null);
-
-  const toggle = useCallback(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    if (isListening) {
-      recRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
-
-    const rec = new SR();
-    rec.lang = lang !== 'all' ? lang : navigator.language;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-
-    rec.onresult = (e: any) => {
-      const transcript = e.results[0]?.[0]?.transcript ?? '';
-      if (transcript) onResult(transcript);
-    };
-    rec.onend = () => setIsListening(false);
-    rec.onerror = () => setIsListening(false);
-
-    recRef.current = rec;
-    rec.start();
-    setIsListening(true);
-  }, [isListening, lang, onResult]);
-
-  return { isListening, toggle };
-}
-
-// ── Skeleton card ────────────────────────────────────────────────────────────
-
-const CardSkeleton = () => (
-  <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden animate-pulse">
-    <div className="h-1.5 bg-slate-200 w-full" />
-    <div className="p-4 space-y-3">
-      <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-xl bg-slate-100 shrink-0" />
-        <div className="space-y-2 flex-1">
-          <div className="h-4 bg-slate-100 rounded w-4/5" />
-          <div className="h-3 bg-slate-100 rounded w-2/5" />
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <div className="h-5 w-16 bg-slate-100 rounded-full" />
-        <div className="h-5 w-12 bg-slate-100 rounded-full" />
-      </div>
-    </div>
-    <div className="px-4 py-3 border-t border-slate-50 flex justify-between">
-      <div className="h-6 w-10 bg-slate-100 rounded" />
-      <div className="flex gap-2">
-        <div className="h-7 w-14 bg-slate-100 rounded-lg" />
-        <div className="h-7 w-16 bg-orange-100 rounded-lg" />
-      </div>
-    </div>
-  </div>
-);
-
-// ── Resource card ────────────────────────────────────────────────────────────
-
-const ResourceCard = ({
-  resource,
-  isLiked,
-  isSaved,
-  onLike,
-  onSave,
-}: {
-  resource: Resource;
-  isLiked: boolean;
-  isSaved: boolean;
-  onLike: (r: Resource) => void;
-  onSave: (r: Resource) => void;
-}) => {
-  const router = useRouter();
-  const c = cfg(resource.type);
-
-  const handleUseThis = () => {
-    const params = new URLSearchParams();
-    if (resource.title)      params.set('topic', resource.title);
-    if (resource.gradeLevel) params.set('gradeLevel', resource.gradeLevel);
-    if (resource.subject)    params.set('subject', resource.subject);
-    if (resource.language)   params.set('language', resource.language);
-    router.push(`/${c.route}?${params.toString()}`);
-  };
-
-  const initials = resource.author
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
-
-  return (
-    <Card
-      className={cn(
-        'flex flex-col group transition-all duration-300',
-        'hover:shadow-lg hover:-translate-y-0.5',
-        'border border-slate-100 border-t-4 rounded-2xl bg-white overflow-hidden',
-        c.border,
-      )}
-    >
-      <CardHeader className="p-4 pb-2">
-        <div className="flex items-start gap-3">
-          <div className={cn('p-2 rounded-xl shrink-0 transition-all duration-200', c.bg, 'group-hover:scale-105')}>
-            <FileTypeIcon type={resource.type} className={cn('h-5 w-5', c.text)} />
-          </div>
-
-          <div className="flex-1 min-w-0 space-y-1">
-            <CardTitle className="text-sm font-bold leading-snug text-slate-900 group-hover:text-primary transition-colors line-clamp-2 font-headline">
-              {resource.title}
-            </CardTitle>
-
-            <div className="flex items-center gap-1.5">
-              <Avatar className={cn('h-5 w-5 ring-1 ring-white shadow-sm shrink-0')}>
-                <AvatarImage src={undefined} />
-                <AvatarFallback className={cn('text-[9px] font-bold', c.bg, c.text)}>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-semibold text-slate-500 truncate">
-                {resource.author}
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="px-4 py-2 flex-grow">
-        {resource.imageUrl ? (
-          <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-100 transition-all group-hover:border-slate-200">
-            <Image
-              src={resource.imageUrl}
-              alt={resource.title}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {resource.gradeLevel && (
-              <Badge className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold border-0 rounded-full">
-                {resource.gradeLevel}
-              </Badge>
-            )}
-            {resource.subject && (
-              <Badge className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 font-semibold border-0 rounded-full">
-                {resource.subject}
-              </Badge>
-            )}
-            <Badge className={cn('text-[10px] px-2 py-0.5 font-semibold border-0 rounded-full', c.bg, c.text)}>
-              {c.label}
-            </Badge>
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="px-4 py-2.5 border-t border-slate-50 bg-slate-50/40 flex justify-between items-center gap-2 mt-auto">
-        <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="bg-white border-slate-200 text-slate-500 text-[10px] font-bold px-1.5 py-0 rounded-md shrink-0"
-          >
-            {LANG_SHORT[resource.language] ?? resource.language?.toUpperCase() ?? 'EN'}
-          </Badge>
-
-          <button
-            onClick={() => onLike(resource)}
-            className={cn(
-              'flex items-center gap-1 text-xs font-bold transition-all duration-200 rounded-lg px-1.5 py-0.5',
-              isLiked
-                ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                : 'text-slate-400 hover:text-red-400 hover:bg-red-50',
-            )}
-            aria-label={isLiked ? 'Unlike this resource' : 'Like this resource'}
-          >
-            <Heart className={cn('h-3 w-3 transition-all', isLiked && 'fill-red-500')} />
-            <span>{resource.likes + (isLiked ? 0 : 0)}</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isSaved}
-            className={cn(
-              'h-7 px-2 text-[11px] font-semibold rounded-lg gap-1 transition-all',
-              isSaved
-                ? 'text-primary bg-primary/10 cursor-default'
-                : 'text-slate-500 hover:text-primary hover:bg-primary/5',
-            )}
-            onClick={() => !isSaved && onSave(resource)}
-          >
-            <Bookmark className={cn('h-3 w-3', isSaved && 'fill-primary')} />
-            {isSaved ? 'Saved' : 'Save'}
-          </Button>
-
-          <Button
-            size="sm"
-            className="h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-none"
-            onClick={handleUseThis}
-          >
-            Use
-            <ArrowRight className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
-  );
-};
-
-// ── Empty state ──────────────────────────────────────────────────────────────
-
-const EmptyState = ({ onCreatePost }: { onCreatePost?: () => void }) => (
-  <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 mt-4">
-    <div className="bg-orange-100 p-5 rounded-full">
-      <Library className="h-8 w-8 text-orange-500" />
-    </div>
-    <div className="max-w-sm space-y-1.5">
-      <h3 className="text-base font-bold text-slate-900 font-headline">The Community is Growing</h3>
-      <p className="text-sm text-slate-500 leading-relaxed">
-        Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.
-      </p>
-    </div>
-    <CreatePostDialog onPostCreated={onCreatePost ?? (() => {})} />
-  </div>
-);
-
-// ── Resource list with skeleton + load-more ───────────────────────────────────
-
-const INITIAL_VISIBLE = 20;
-const PAGE_SIZE = 20;
-
-const ResourceList = ({
-  resources,
-  loading,
-  likedIds,
-  savedIds,
-  onLike,
-  onSave,
-  onCreatePost,
-}: {
-  resources: Resource[];
-  loading: boolean;
-  likedIds: Set<string>;
-  savedIds: Set<string>;
-  onLike: (r: Resource) => void;
-  onSave: (r: Resource) => void;
-  onCreatePost?: () => void;
-}) => {
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
-
-  useEffect(() => { setVisibleCount(INITIAL_VISIBLE); }, [resources.length]);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
-        {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
-      </div>
-    );
-  }
-
-  if (resources.length === 0) {
-    return <EmptyState onCreatePost={onCreatePost} />;
-  }
-
-  const visible = resources.slice(0, visibleCount);
-  const hasMore = visibleCount < resources.length;
-  const remaining = resources.length - visibleCount;
-
-  return (
-    <div className="space-y-4 mt-4">
-      <p className="text-xs text-slate-400 font-semibold">
-        {resources.length} resource{resources.length !== 1 ? 's' : ''} found
-      </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {visible.map((resource) => (
-          <ResourceCard
-            key={resource.id}
-            resource={resource}
-            isLiked={likedIds.has(resource.id)}
-            isSaved={savedIds.has(resource.id)}
-            onLike={onLike}
-            onSave={onSave}
-          />
-        ))}
-      </div>
-
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-slate-600 border-slate-200 hover:border-primary hover:text-primary font-semibold rounded-xl px-5"
-            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-          >
-            <Loader2 className="h-3.5 w-3.5" />
-            Load {Math.min(PAGE_SIZE, remaining)} more
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
+// Types
+import type { Group, FeedItem } from '@/types/community';
+import type { MyConnectionData } from '@/types';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CommunityPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const composerRef = useRef<HTMLDivElement>(null);
 
-  const [languageFilter, setLanguageFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [searchInput, setSearchInput]   = useState('');
-  const [searchTerm, setSearchTerm]     = useState('');
-  // activeTab only used to pass to Tabs onValueChange — kept for future use
-  const [, setActiveTab] = useState<'discover' | 'connect' | 'chat'>('discover');
+  // ── State ────────────────────────────────────────────────────────────────
+  const [myGroups, setMyGroups] = useState<Group[]>([]);
+  const [suggestedGroups, setSuggestedGroups] = useState<Group[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [connectionData, setConnectionData] = useState<MyConnectionData>({
+    connectedUids: [],
+    sentRequestUids: [],
+    receivedRequests: [],
+  });
+  const [teacherSuggestions, setTeacherSuggestions] = useState<any[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+  const [showStaffRoom, setShowStaffRoom] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
-  const [resources, setResources]             = useState<Resource[]>([]);
-  const [filteredResources, setFiltered]      = useState<Resource[]>([]);
-  const [loading, setLoading]                 = useState(true);
-
-  const [likedIds, setLikedIds]   = useState<Set<string>>(new Set());
-  const [savedIds, setSavedIds]   = useState<Set<string>>(new Set());
-
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ── Voice search ──────────────────────────────────────────────────────────
-  const handleVoiceResult = useCallback((text: string) => {
-    setSearchInput(text);
-  }, []);
-  const { isListening, toggle: toggleVoice } = useVoiceSearch(handleVoiceResult, languageFilter);
-
-  // ── Debounced search ──────────────────────────────────────────────────────
+  // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setSearchTerm(searchInput), 300);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [searchInput]);
-
-  // ── Data fetching ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const trendingData = await getLibraryResources({
-          language: languageFilter === 'all' ? undefined : languageFilter,
-          excludeTypes: ['document'],
-        });
-
-        const transformed: Resource[] = (trendingData as any[]).map((r: any) => ({
-          id:         r.id,
-          title:      r.title,
-          type:       r.type,
-          author:     r.authorName || 'Teacher',
-          authorId:   r.authorId || r.userId || '',
-          likes:      r.stats?.likes || 0,
-          language:   r.language,
-          imageUrl:   r.imageUrl,
-          gradeLevel: r.gradeLevel,
-          subject:    r.subject,
-        }));
-
-        const unique = Array.from(new Map(transformed.map((r) => [r.id, r])).values());
-        setResources(unique);
-      } catch (error) {
-        console.error('Error loading community resources:', error);
-        toast({
-          title: "Couldn't load resources",
-          description: 'Please check your connection and try again.',
-          variant: 'destructive',
-        });
-      } finally {
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
         setLoading(false);
+        return;
       }
-    }
-    loadData();
-  }, [languageFilter, user]);
 
-  // ── Client-side filtering ─────────────────────────────────────────────────
-  useEffect(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = resources.filter((r) => {
-      const matchesSearch = !searchTerm || r.title.toLowerCase().includes(lowerSearch);
-      const matchesType   = typeFilter === 'all' || r.type === typeFilter;
-      return matchesSearch && matchesType;
+      // Fire-and-forget: auto-join groups based on profile
+      ensureUserGroupsAction().catch(() => {});
+
+      // Load all data in parallel — individual failures don't block others
+      Promise.allSettled([
+        getMyGroupsAction(),
+        getUnifiedFeedAction(),
+        getMyConnectionDataAction(),
+        discoverGroupsAction(),
+        getRecommendedTeachersAction(firebaseUser.uid),
+      ])
+        .then((results) => {
+          if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
+          if (results[1].status === 'fulfilled') setFeedItems(results[1].value);
+          if (results[2].status === 'fulfilled') setConnectionData(results[2].value);
+          if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
+          if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
+
+          // Log any failures
+          results.forEach((r, i) => {
+            if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
+          });
+        })
+        .finally(() => setLoading(false));
     });
-    setFiltered(filtered);
-  }, [resources, searchTerm, typeFilter]);
+    return () => unsub();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Filtered feed ────────────────────────────────────────────────────────
+  const filteredFeedItems = useMemo(() => {
+    if (!selectedGroupId) return feedItems;
+    return feedItems.filter((item) => item.groupId === selectedGroupId);
+  }, [feedItems, selectedGroupId]);
 
-  const handleLike = async (resource: Resource) => {
-    if (!user) {
-      toast({ title: 'Sign in to like resources', variant: 'destructive' });
-      return;
-    }
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(resource.id)) next.delete(resource.id);
-      else next.add(resource.id);
-      return next;
-    });
-    setResources((prev) =>
-      prev.map((r) =>
-        r.id === resource.id
-          ? { ...r, likes: r.likes + (likedIds.has(resource.id) ? -1 : 1) }
-          : r,
-      ),
-    );
-    try {
-      await likeResourceAction(resource.id, user.uid);
-    } catch {
-      setLikedIds((prev) => {
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleLikePost = useCallback(
+    async (groupId: string, postId: string) => {
+      // Optimistic update
+      setLikedPostIds((prev) => {
         const next = new Set(prev);
-        if (next.has(resource.id)) next.delete(resource.id);
-        else next.add(resource.id);
+        if (next.has(postId)) next.delete(postId);
+        else next.add(postId);
         return next;
       });
-      toast({ title: 'Could not update like', variant: 'destructive' });
-    }
-  };
+      try {
+        await likeGroupPostAction(groupId, postId);
+      } catch {
+        // Revert on failure
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(postId)) next.delete(postId);
+          else next.add(postId);
+          return next;
+        });
+        toast({ title: 'Could not update like', variant: 'destructive' });
+      }
+    },
+    [toast],
+  );
 
-  const handleSave = async (resource: Resource) => {
-    if (!user) {
-      toast({ title: 'Sign in to save resources', variant: 'destructive' });
-      return;
-    }
-    setSavedIds((prev) => new Set(prev).add(resource.id));
+  const handleConnectTeacher = useCallback(
+    async (uid: string) => {
+      try {
+        await sendConnectionRequestAction(uid);
+        setConnectionData((prev) => ({
+          ...prev,
+          sentRequestUids: [...prev.sentRequestUids, uid],
+        }));
+        toast({ title: 'Connection request sent' });
+      } catch {
+        toast({ title: 'Could not send request', variant: 'destructive' });
+      }
+    },
+    [toast],
+  );
+
+  const handleJoinGroup = useCallback(
+    async (groupId: string) => {
+      try {
+        await joinGroupAction(groupId);
+        const refreshed = await getMyGroupsAction();
+        setMyGroups(refreshed);
+        // Remove from suggested
+        setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
+        toast({ title: 'Joined group' });
+      } catch {
+        toast({ title: 'Could not join group', variant: 'destructive' });
+      }
+    },
+    [toast],
+  );
+
+  const handleSelectGroup = useCallback((groupId: string | null) => {
+    setSelectedGroupId(groupId);
+  }, []);
+
+  const handleOpenGroup = useCallback(
+    (groupId: string) => {
+      const group = myGroups.find((g) => g.id === groupId);
+      if (group) setActiveGroup(group);
+    },
+    [myGroups],
+  );
+
+  const handleOpenStaffRoom = useCallback(() => {
+    setShowStaffRoom(true);
+  }, []);
+
+  const handleRefreshFeed = useCallback(async () => {
     try {
-      const { alreadySaved } = await saveResourceToLibraryAction(
-        {
-          id:         resource.id,
-          title:      resource.title,
-          type:       resource.type,
-          authorId:   resource.authorId,
-          language:   resource.language,
-          gradeLevel: resource.gradeLevel,
-          subject:    resource.subject,
-        },
-        user.uid,
-      );
-      toast({
-        title: alreadySaved ? 'Already in your library' : 'Saved to your library',
-        description: alreadySaved
-          ? 'You already have this resource.'
-          : `"${resource.title.slice(0, 45)}${resource.title.length > 45 ? '…' : ''}" added.`,
-      });
+      const feed = await getUnifiedFeedAction();
+      setFeedItems(feed);
     } catch {
-      setSavedIds((prev) => { const next = new Set(prev); next.delete(resource.id); return next; });
-      toast({ title: 'Could not save resource', variant: 'destructive' });
+      // silent
     }
-  };
+  }, []);
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const handleLoadMore = useCallback(() => {
+    // Placeholder for pagination — currently all items loaded at once
+  }, []);
+
+  // ── Group Detail View ────────────────────────────────────────────────────
+  if (activeGroup) {
+    return (
+      <GroupFeed
+        group={activeGroup}
+        onBack={() => setActiveGroup(null)}
+      />
+    );
+  }
+
+  // ── Staff Room View ──────────────────────────────────────────────────────
+  if (showStaffRoom) {
+    return (
+      <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            onClick={() => setShowStaffRoom(false)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h2 className="font-headline text-lg font-bold text-slate-900">
+            Staff Room
+          </h2>
+        </div>
+        <CommunityChat />
+      </div>
+    );
+  }
+
+  // ── Main Feed View ───────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-4 pb-24 sm:pb-6">
-
-      {/* ── Header strip ─────────────────────────────────────────────────── */}
+    <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
+      {/* Header */}
       <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50/70 to-white border border-orange-100/70 shadow-sm">
-        <div className="px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-orange-100 shrink-0">
-              <Library className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-headline text-2xl font-bold text-slate-900 leading-tight">
-                Community Library
-              </h1>
-              <p className="text-sm text-slate-500 font-medium mt-0.5">
-                Discover and share resources with teachers across Bharat
-              </p>
-            </div>
+        <div className="px-6 py-5 flex items-center gap-4">
+          <div className="p-3 bg-white rounded-2xl shadow-sm border border-orange-100 shrink-0">
+            <Users className="w-6 h-6 text-primary" />
           </div>
-          <div className="shrink-0 hidden sm:block">
-            <CreatePostDialog onPostCreated={() => {}} />
+          <div>
+            <h1 className="font-headline text-2xl font-bold text-slate-900">
+              Community
+            </h1>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              Share, learn, and grow with teachers across Bharat
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ── Main tabs ──────────────────────────────────────────────────────── */}
-      <Tabs
-        defaultValue="discover"
-        onValueChange={(v) => setActiveTab(v as 'discover' | 'connect' | 'chat')}
-        className="w-full"
-      >
-        <TabsList className="flex w-full bg-slate-100/60 p-1 rounded-2xl h-auto border border-slate-200/60 gap-0.5">
-          <TabsTrigger
-            value="discover"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-          >
-            <Flame className="h-3.5 w-3.5 shrink-0" />
-            <span>Discover</span>
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="connect"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-          >
-            <School className="h-3.5 w-3.5 shrink-0" />
-            <span>Connect</span>
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="chat"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200 text-slate-500"
-          >
-            <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>Chat</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ── Discover tab ─────────────────────────────────────────────────── */}
-        <TabsContent value="discover" className="outline-none space-y-3 mt-3">
-
-          {/* Search + language row */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-grow">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              <Input
-                placeholder="Search lessons, quizzes, worksheets…"
-                className="pl-11 pr-12 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              {/* Voice search button */}
-              <button
-                onClick={toggleVoice}
-                className={cn(
-                  "absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-lg transition-all",
-                  isListening
-                    ? "bg-red-100 text-red-500 animate-pulse"
-                    : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
-                )}
-                title={isListening ? "Stop listening" : "Search by voice"}
-              >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </button>
-            </div>
-            <div className="w-full sm:w-48 h-12">
-              <LanguageSelector onValueChange={setLanguageFilter} defaultValue={languageFilter} />
-            </div>
-          </div>
-
-          {/* Type filter chips — with icons */}
-          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-            {TYPE_CHIPS.map((chip) => {
-              const isActive = typeFilter === chip.value;
-              return (
-                <button
-                  key={chip.value}
-                  onClick={() => setTypeFilter(chip.value)}
-                  className={cn(
-                    'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap',
-                    isActive
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:text-primary',
-                  )}
-                >
-                  {chip.fileType ? (
-                    <FileTypeIcon
-                      type={chip.fileType}
-                      className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")}
-                    />
-                  ) : (
-                    <LayoutGrid className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")} />
-                  )}
-                  {chip.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Suggested educators horizontal strip */}
-          <TeacherStrip />
-
-          {/* Resource grid */}
-          <ResourceList
-            resources={filteredResources}
-            loading={loading}
-            likedIds={likedIds}
-            savedIds={savedIds}
-            onLike={handleLike}
-            onSave={handleSave}
-          />
-        </TabsContent>
-
-        {/* ── Connect tab ──────────────────────────────────────────────────── */}
-        <TabsContent value="connect" className="outline-none mt-3">
-          <TeacherDirectory />
-        </TabsContent>
-
-        {/* ── Chat tab ─────────────────────────────────────────────────────── */}
-        <TabsContent value="chat" className="outline-none mt-3">
-          <CommunityChat />
-        </TabsContent>
-      </Tabs>
-
-      {/* ── Mobile FAB — Share button ─────────────────────────────────────── */}
-      <div className="fixed bottom-20 right-4 sm:hidden z-50">
-        <CreatePostDialog
-          onPostCreated={() => {}}
-          trigger={
-            <button className="h-14 w-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl flex items-center justify-center transition-all active:scale-95">
-              <Plus className="h-6 w-6" />
-            </button>
-          }
+      {/* Group chips */}
+      <div className="mt-4">
+        <GroupList
+          groups={myGroups}
+          selectedGroupId={selectedGroupId}
+          onSelectGroup={handleSelectGroup}
         />
+      </div>
+
+      {/* Main content area */}
+      <div className="mt-4 flex gap-6">
+        {/* Feed column */}
+        <div className="flex-1 min-w-0 space-y-4">
+          <div ref={composerRef}>
+            <ShareComposer
+              groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
+              onPostCreated={handleRefreshFeed}
+            />
+          </div>
+          <UnifiedFeed
+            feedItems={filteredFeedItems}
+            loading={loading}
+            connectionData={connectionData}
+            onLikePost={handleLikePost}
+            onConnectTeacher={handleConnectTeacher}
+            onOpenGroupChat={handleOpenGroup}
+            onLoadMore={handleLoadMore}
+            hasMore={false}
+            likedPostIds={likedPostIds}
+          />
+        </div>
+
+        {/* Sidebar — desktop only */}
+        <div className="hidden lg:block">
+          <GroupsSidebar
+            myGroups={myGroups}
+            suggestedGroups={suggestedGroups}
+            teacherSuggestions={teacherSuggestions}
+            onSelectGroup={handleOpenGroup}
+            onJoinGroup={handleJoinGroup}
+            onOpenStaffRoom={handleOpenStaffRoom}
+            onConnectTeacher={handleConnectTeacher}
+          />
+        </div>
+      </div>
+
+      {/* Mobile FAB */}
+      <div className="fixed bottom-20 right-4 sm:hidden z-50">
+        <button
+          onClick={() =>
+            composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+          className="h-14 w-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
       </div>
     </div>
   );
