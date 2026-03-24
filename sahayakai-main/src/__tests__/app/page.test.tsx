@@ -109,7 +109,7 @@ describe('Home Page', () => {
         // Use getAllByText for "Teacher" since it appears in greeting and cards
         const teacherElements = screen.getAllByText(/Teacher/i);
         expect(teacherElements.length).toBeGreaterThan(0);
-        expect(screen.getByText(/Sahayak, your personal AI companion/i)).toBeInTheDocument();
+        expect(screen.getByText(/SahayakAI, your personal AI companion/i)).toBeInTheDocument();
     });
 
     it('renders quick action cards', () => {
