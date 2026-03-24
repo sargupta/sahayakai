@@ -10,6 +10,8 @@ import { type Group, getGroupColor } from "@/types/community";
 import {
   Users,
   UserPlus,
+  UserCheck,
+  Clock,
   MessageCircle,
   ChevronRight,
 } from "lucide-react";
@@ -24,6 +26,8 @@ interface GroupsSidebarProps {
     photoURL?: string;
     recommendationReason: string;
   }>;
+  connectedUids: string[];
+  sentRequestUids: string[];
   onSelectGroup: (groupId: string) => void;
   onJoinGroup: (groupId: string) => void;
   onOpenStaffRoom: () => void;
@@ -35,6 +39,8 @@ export function GroupsSidebar({
   myGroups,
   suggestedGroups,
   teacherSuggestions,
+  connectedUids,
+  sentRequestUids,
   onSelectGroup,
   onJoinGroup,
   onOpenStaffRoom,
@@ -121,14 +127,17 @@ export function GroupsSidebar({
                   key={group.id}
                   className="flex items-center justify-between gap-2"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
+                  <button
+                    onClick={() => handleJoinGroup(group.id)}
+                    className="min-w-0 text-left hover:opacity-80 transition-opacity"
+                  >
+                    <p className="text-sm font-medium truncate hover:underline">
                       {group.name}
                     </p>
                     <p className="text-xs text-slate-500">
                       {group.memberCount} members
                     </p>
-                  </div>
+                  </button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -188,19 +197,24 @@ export function GroupsSidebar({
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 text-xs"
-                    disabled={connectingTeachers.has(teacher.uid)}
-                    onClick={() => handleConnect(teacher.uid)}
-                  >
-                    {connectingTeachers.has(teacher.uid) ? (
-                      "..."
-                    ) : (
+                  {connectedUids.includes(teacher.uid) ? (
+                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-emerald-600" disabled>
+                      <UserCheck className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : sentRequestUids.includes(teacher.uid) || connectingTeachers.has(teacher.uid) ? (
+                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-slate-400" disabled>
+                      <Clock className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 text-xs"
+                      onClick={() => handleConnect(teacher.uid)}
+                    >
                       <UserPlus className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
+                    </Button>
+                  )}
                 </div>
               )) : (
               <p className="text-xs text-slate-400 text-center py-2">
