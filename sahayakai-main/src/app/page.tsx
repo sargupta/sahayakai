@@ -159,7 +159,7 @@ export default function Home() {
           {greeting}, <span className="text-primary">Teacher.</span>
         </h1>
         <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
-          I am Sahayak, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
+          I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
         </p>
       </div>
 
