@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus } from "lucide-react";
+import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus, Search, Mic, MicOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { getAllTeachersAction } from "@/app/actions/community";
 import {
     sendConnectionRequestAction,
@@ -33,6 +34,9 @@ export function TeacherDirectory() {
     const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const recRef = useRef<any>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -143,6 +147,33 @@ export function TeacherDirectory() {
             setTeacherLoading(teacherUid, false);
         }
     };
+
+    const toggleVoice = useCallback(() => {
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SR) return;
+        if (isListening) { recRef.current?.stop(); setIsListening(false); return; }
+        const rec = new SR();
+        rec.lang = navigator.language;
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        rec.onresult = (e: any) => { const t = e.results[0]?.[0]?.transcript ?? ''; if (t) setSearchQuery(t); };
+        rec.onend = () => setIsListening(false);
+        rec.onerror = () => setIsListening(false);
+        recRef.current = rec;
+        rec.start();
+        setIsListening(true);
+    }, [isListening]);
+
+    const filteredTeachers = useMemo(() => {
+        if (!searchQuery.trim()) return teachers;
+        const q = searchQuery.toLowerCase();
+        return teachers.filter((t) =>
+            t.displayName?.toLowerCase().includes(q) ||
+            t.schoolName?.toLowerCase().includes(q) ||
+            t.subjects?.some((s: string) => s.toLowerCase().includes(q)) ||
+            t.bio?.toLowerCase().includes(q)
+        );
+    }, [teachers, searchQuery]);
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
@@ -255,8 +286,38 @@ export function TeacherDirectory() {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
-            {teachers.map((teacher) => (
+        <div className="space-y-4">
+            {/* Search bar */}
+            <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                    placeholder="Search by name, school, subject…"
+                    className="pl-11 pr-12 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button
+                    onClick={toggleVoice}
+                    className={cn(
+                        "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
+                        isListening
+                            ? "bg-red-100 text-red-500 animate-pulse"
+                            : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                    )}
+                    title={isListening ? "Stop listening" : "Search by voice"}
+                >
+                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+            </div>
+
+            {filteredTeachers.length === 0 && searchQuery.trim() ? (
+                <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                    <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 font-medium text-sm">No teachers found for &quot;{searchQuery}&quot;</p>
+                </div>
+            ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredTeachers.map((teacher) => (
                 <Card key={teacher.uid} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1.25rem] bg-white">
                     <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-3">
@@ -337,6 +398,8 @@ export function TeacherDirectory() {
                     </CardFooter>
                 </Card>
             ))}
+        </div>
+            )}
         </div>
     );
 }

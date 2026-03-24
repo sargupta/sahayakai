@@ -326,6 +326,8 @@ export default function CommunityPage() {
             myGroups={myGroups}
             suggestedGroups={suggestedGroups}
             teacherSuggestions={teacherSuggestions}
+            connectedUids={connectionData.connectedUids}
+            sentRequestUids={connectionData.sentRequestUids}
             onSelectGroup={handleOpenGroup}
             onJoinGroup={handleJoinGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
