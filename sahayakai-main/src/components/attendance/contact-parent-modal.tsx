@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
-import type { Student, OutreachReason } from "@/types/attendance";
+import type { Student, OutreachReason, CallSummary, TranscriptTurn } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import {
     Loader2, Phone, Copy, RefreshCw, CheckCircle2,
     CalendarX2, TrendingDown, AlertTriangle, Star,
+    MessageSquare, ClipboardList, ArrowRight, UserCircle, Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,16 @@ const REASONS: { value: OutreachReason; label: string; description: string; icon
     { value: "positive_feedback",    label: "Positive Feedback",    description: "Share an achievement or good news",         icon: Star },
 ];
 
-type Step = "reason" | "note" | "review";
+type Step = "reason" | "note" | "review" | "calling" | "summary";
+
+interface CallResult {
+    callStatus: string | null;
+    callDurationSeconds: number | null;
+    answeredBy: string | null;
+    turnCount: number;
+    transcript: TranscriptTurn[];
+    callSummary: CallSummary | null;
+}
 
 export function ContactParentModal({
     open, onOpenChange,
@@ -51,22 +61,67 @@ export function ContactParentModal({
     const [languageCode, setLanguageCode] = useState("en-IN");
     const [generating, setGenerating] = useState(false);
     const [calling, setCalling] = useState(false);
-    const [done, setDone] = useState(false);
+    const [outreachId, setOutreachId] = useState<string | null>(null);
+    const [callResult, setCallResult] = useState<CallResult | null>(null);
 
     const canCall = twilioConfigured && !!TWILIO_LANGUAGE_MAP[student.parentLanguage];
     const unsupportedForCall = twilioConfigured && !TWILIO_LANGUAGE_MAP[student.parentLanguage];
 
     const handleClose = () => {
         onOpenChange(false);
-        // Reset after animation
         setTimeout(() => {
             setStep("reason");
             setReason(null);
             setNote("");
             setGeneratedMessage("");
-            setDone(false);
+            setOutreachId(null);
+            setCallResult(null);
         }, 300);
     };
+
+    // Poll for call summary after call is initiated
+    const pollForSummary = useCallback(async (oid: string) => {
+        const maxPolls = 60; // 5 minutes at 5s intervals
+        let polls = 0;
+
+        const poll = async () => {
+            if (polls >= maxPolls) return;
+            polls++;
+
+            try {
+                const res = await fetch(`/api/attendance/call-summary?outreachId=${oid}`);
+                if (!res.ok) return;
+
+                const data: CallResult = await res.json();
+                setCallResult(data);
+
+                const terminal = ['completed', 'failed', 'no_answer', 'busy'];
+                if (data.callStatus && terminal.includes(data.callStatus)) {
+                    // If summary is ready, show it
+                    if (data.callSummary) {
+                        setStep("summary");
+                        return;
+                    }
+                    // Summary not yet generated — wait a bit more
+                    if (polls < maxPolls) {
+                        setTimeout(poll, 3000);
+                        return;
+                    }
+                    // Timed out waiting for summary — show what we have
+                    setStep("summary");
+                    return;
+                }
+
+                // Still in progress — keep polling
+                setTimeout(poll, 5000);
+            } catch {
+                if (polls < maxPolls) setTimeout(poll, 5000);
+            }
+        };
+
+        // Start polling after a short delay
+        setTimeout(poll, 3000);
+    }, []);
 
     const generateMessage = async () => {
         if (!reason) return;
@@ -132,14 +187,14 @@ export function ContactParentModal({
         if (!generatedMessage) return;
         setCalling(true);
         try {
-            const { outreachId } = await saveOutreach('twilio_call');
+            const { outreachId: oid } = await saveOutreach('twilio_call');
+            setOutreachId(oid);
 
-            // Initiate call
             const res = await fetch('/api/attendance/call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    outreachId,
+                    outreachId: oid,
                     to: student.parentPhone,
                     parentLanguage: student.parentLanguage,
                 }),
@@ -150,8 +205,8 @@ export function ContactParentModal({
                 throw new Error(err.error ?? 'Call failed');
             }
 
-            setDone(true);
-            toast({ title: `Calling ${student.name}'s parent…`, description: "The AI message will be played when they pick up." });
+            setStep("calling");
+            pollForSummary(oid);
         } catch (err: any) {
             toast({ title: "Call failed", description: err.message, variant: "destructive" });
         } finally {
@@ -165,13 +220,14 @@ export function ContactParentModal({
         } catch { /* non-blocking */ }
 
         await navigator.clipboard.writeText(generatedMessage);
-        setDone(true);
+        setStep("summary");
+        setCallResult({ callStatus: 'manual', callDurationSeconds: null, answeredBy: null, turnCount: 0, transcript: [], callSummary: null });
         toast({ title: "Copied to clipboard", description: "Paste in WhatsApp to send." });
     };
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-slate-900 font-black">
                         Contact {student.name}&apos;s Parent
@@ -181,15 +237,10 @@ export function ContactParentModal({
                     </p>
                 </DialogHeader>
 
-                {done ? (
-                    <div className="flex flex-col items-center py-8 space-y-3 text-center">
-                        <div className="p-4 bg-emerald-50 rounded-full">
-                            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-                        </div>
-                        <p className="font-bold text-slate-800">All done!</p>
-                        <p className="text-xs text-slate-400">Outreach logged for {student.name}.</p>
-                        <Button className="mt-2" variant="outline" onClick={handleClose}>Close</Button>
-                    </div>
+                {step === "calling" ? (
+                    <CallingView student={student} callResult={callResult} />
+                ) : step === "summary" ? (
+                    <SummaryView callResult={callResult} student={student} onClose={handleClose} />
                 ) : step === "reason" ? (
                     <div className="space-y-3 mt-2">
                         <p className="text-xs text-slate-500 font-medium">Select reason for outreach:</p>
@@ -251,7 +302,7 @@ export function ContactParentModal({
                                 disabled={generating}
                             >
                                 {generating
-                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
                                     : "Generate Message"
                                 }
                             </Button>
@@ -271,7 +322,7 @@ export function ContactParentModal({
                             disabled={generating}
                         >
                             {generating
-                                ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Regenerating…</>
+                                ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Regenerating...</>
                                 : <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
                             }
                         </Button>
@@ -299,7 +350,7 @@ export function ContactParentModal({
                                     disabled={calling}
                                 >
                                     {calling
-                                        ? <><Loader2 className="h-4 w-4 animate-spin" /> Calling…</>
+                                        ? <><Loader2 className="h-4 w-4 animate-spin" /> Calling...</>
                                         : <><Phone className="h-4 w-4" /> Call Parent</>
                                     }
                                 </Button>
@@ -309,5 +360,201 @@ export function ContactParentModal({
                 )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+// ── Calling in progress view ────────────────────────────────────────────────
+
+function CallingView({ student, callResult }: { student: Student; callResult: CallResult | null }) {
+    const status = callResult?.callStatus;
+    const turns = callResult?.turnCount ?? 0;
+
+    return (
+        <div className="flex flex-col items-center py-8 space-y-4 text-center">
+            <div className="relative">
+                <div className="p-4 bg-green-50 rounded-full">
+                    <Phone className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full animate-pulse" />
+            </div>
+            <p className="font-bold text-slate-800">
+                {!status || status === 'initiated' ? 'Calling...' :
+                 status === 'ringing' ? 'Ringing...' :
+                 'Conversation in progress'}
+            </p>
+            <p className="text-xs text-slate-400">
+                AI agent is talking with {student.name}&apos;s parent
+            </p>
+            {turns > 1 && (
+                <Badge variant="secondary" className="text-xs">
+                    <MessageSquare className="h-3 w-3 mr-1" />
+                    {turns} exchanges
+                </Badge>
+            )}
+            <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Summary will appear when the call ends
+            </div>
+        </div>
+    );
+}
+
+// ── Call summary view ───────────────────────────────────────────────────────
+
+function SummaryView({ callResult, student, onClose }: { callResult: CallResult | null; student: Student; onClose: () => void }) {
+    const summary = callResult?.callSummary;
+    const transcript = callResult?.transcript ?? [];
+    const isManual = callResult?.callStatus === 'manual';
+    const callFailed = callResult?.callStatus === 'failed' || callResult?.callStatus === 'no_answer' || callResult?.callStatus === 'busy';
+
+    if (isManual) {
+        return (
+            <div className="flex flex-col items-center py-8 space-y-3 text-center">
+                <div className="p-4 bg-emerald-50 rounded-full">
+                    <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                </div>
+                <p className="font-bold text-slate-800">Message copied!</p>
+                <p className="text-xs text-slate-400">Outreach logged for {student.name}. Paste in WhatsApp to send.</p>
+                <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
+            </div>
+        );
+    }
+
+    if (callFailed) {
+        return (
+            <div className="flex flex-col items-center py-8 space-y-3 text-center">
+                <div className="p-4 bg-amber-50 rounded-full">
+                    <Phone className="h-8 w-8 text-amber-500" />
+                </div>
+                <p className="font-bold text-slate-800">
+                    {callResult?.callStatus === 'busy' ? 'Line was busy' :
+                     callResult?.callStatus === 'no_answer' ? 'No answer' : 'Call could not connect'}
+                </p>
+                <p className="text-xs text-slate-400">You can try again later or use WhatsApp instead.</p>
+                <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4 mt-2">
+            {/* Status banner */}
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                <div>
+                    <p className="text-sm font-semibold text-emerald-800">Call completed</p>
+                    <p className="text-xs text-emerald-600">
+                        {callResult?.callDurationSeconds ? `${Math.ceil(callResult.callDurationSeconds / 60)} min` : ''} · {callResult?.turnCount ?? 0} exchanges
+                        {summary?.parentSentiment && ` · Parent was ${summary.parentSentiment}`}
+                    </p>
+                </div>
+            </div>
+
+            {/* Summary */}
+            {summary ? (
+                <div className="space-y-3">
+                    {/* Parent response */}
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500 mb-1">Parent Response</p>
+                        <p className="text-sm text-slate-700">{summary.parentResponse}</p>
+                    </div>
+
+                    {/* Concerns */}
+                    {summary.parentConcerns.length > 0 && (
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                            <p className="text-xs font-semibold text-amber-600 mb-1">Concerns Raised</p>
+                            <ul className="space-y-1">
+                                {summary.parentConcerns.map((c, i) => (
+                                    <li key={i} className="text-xs text-amber-800 flex gap-2">
+                                        <span className="shrink-0 mt-0.5">-</span> {c}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Parent commitments */}
+                    {summary.parentCommitments.length > 0 && (
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <p className="text-xs font-semibold text-blue-600 mb-1">Parent Commitments</p>
+                            <ul className="space-y-1">
+                                {summary.parentCommitments.map((c, i) => (
+                                    <li key={i} className="text-xs text-blue-800 flex gap-2">
+                                        <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5 text-blue-500" /> {c}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Action items for teacher */}
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <p className="text-xs font-semibold text-orange-600 mb-1 flex items-center gap-1">
+                            <ClipboardList className="h-3 w-3" /> Your Action Items
+                        </p>
+                        <ul className="space-y-1">
+                            {summary.actionItemsForTeacher.map((a, i) => (
+                                <li key={i} className="text-xs text-orange-800 flex gap-2">
+                                    <ArrowRight className="h-3 w-3 shrink-0 mt-0.5 text-orange-500" /> {a}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Guidance given */}
+                    {summary.guidanceGiven.length > 0 && (
+                        <div className="p-3 bg-violet-50 rounded-lg border border-violet-100">
+                            <p className="text-xs font-semibold text-violet-600 mb-1">Guidance Shared with Parent</p>
+                            <ul className="space-y-1">
+                                {summary.guidanceGiven.map((g, i) => (
+                                    <li key={i} className="text-xs text-violet-800 flex gap-2">
+                                        <span className="shrink-0 mt-0.5">-</span> {g}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Follow-up */}
+                    {summary.followUpNeeded && summary.followUpSuggestion && (
+                        <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
+                            <p className="text-xs font-semibold text-rose-600 mb-1">Follow-up Recommended</p>
+                            <p className="text-xs text-rose-800">{summary.followUpSuggestion}</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-400 py-4">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Generating summary...
+                </div>
+            )}
+
+            {/* Transcript (collapsible) */}
+            {transcript.length > 1 && (
+                <details className="group">
+                    <summary className="text-xs font-semibold text-slate-500 cursor-pointer hover:text-slate-700 flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        View conversation transcript ({transcript.length} messages)
+                    </summary>
+                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                        {transcript.map((turn, i) => (
+                            <div key={i} className={cn(
+                                "flex gap-2 text-xs",
+                                turn.role === 'agent' ? "text-slate-600" : "text-slate-800"
+                            )}>
+                                {turn.role === 'agent'
+                                    ? <Bot className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" />
+                                    : <UserCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-orange-400" />
+                                }
+                                <p className="leading-relaxed">{turn.text}</p>
+                            </div>
+                        ))}
+                    </div>
+                </details>
+            )}
+
+            <Button variant="outline" className="w-full mt-2" onClick={onClose}>Close</Button>
+        </div>
     );
 }
