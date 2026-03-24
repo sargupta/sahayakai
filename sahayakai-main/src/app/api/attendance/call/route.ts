@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
                     From:                TWILIO_PHONE_NUMBER,
                     Url:                 twimlUrl,
                     StatusCallback:      statusCallbackUrl,
-                    StatusCallbackEvent: 'initiated ringing answered completed failed no-answer busy canceled',
+                    StatusCallbackEvent: 'initiated ringing answered completed',
                     StatusCallbackMethod:'POST',
                     Timeout:             '30',            // Ring for 30s before giving up
                     MachineDetection:    'DetectMessageEnd', // Detect voicemail; wait for beep before playing message
