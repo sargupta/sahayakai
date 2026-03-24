@@ -15,13 +15,6 @@ function truncateName(name: string): string {
   return words.length > 2 ? words.slice(0, 2).join(" ") : name;
 }
 
-/** Extract the first "from-" color from a gradient class string for the dot indicator. */
-function dotColorFromGradient(gradient: string): string {
-  // e.g. "from-orange-400 to-amber-500" → pick the from- color as a bg- class
-  const match = gradient.match(/from-(\S+)/);
-  return match ? `bg-${match[1]}` : "bg-orange-400";
-}
-
 export default function GroupList({
   groups,
   selectedGroupId,
@@ -35,9 +28,10 @@ export default function GroupList({
         className={cn(
           "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
           selectedGroupId === null
-            ? "bg-gradient-to-r from-orange-400 to-amber-500 text-white border-transparent shadow-sm"
+            ? "text-white border-transparent shadow-sm"
             : "bg-white border-slate-200 text-slate-600 hover:border-orange-200"
         )}
+        style={selectedGroupId === null ? { background: "linear-gradient(135deg, #fb923c, #f59e0b)" } : undefined}
       >
         <LayoutGrid className="h-3.5 w-3.5" />
         All
@@ -55,13 +49,15 @@ export default function GroupList({
             className={cn(
               "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
               isSelected
-                ? `bg-gradient-to-r ${gradient} text-white border-transparent shadow-sm`
+                ? "text-white border-transparent shadow-sm"
                 : "bg-white border-slate-200 text-slate-600 hover:border-orange-200"
             )}
+            style={isSelected ? { background: gradient } : undefined}
           >
             {!isSelected && (
               <span
-                className={cn("h-1 w-1 rounded-full shrink-0", dotColorFromGradient(gradient))}
+                className="h-1 w-1 rounded-full shrink-0"
+                style={{ background: gradient }}
               />
             )}
             {truncateName(group.name)}

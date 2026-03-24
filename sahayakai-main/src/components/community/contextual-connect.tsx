@@ -4,14 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, UserPlus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ContextualConnectProps {
   authorUid: string;
   authorName: string;
   authorPhotoURL?: string | null;
   reason: string;
-  onConnect: (uid: string) => void;
+  onConnect: (uid: string) => void | Promise<void>;
   onDismiss: () => void;
 }
 
@@ -24,14 +24,23 @@ export function ContextualConnect({
   onDismiss,
 }: ContextualConnectProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "sent">("idle");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handleConnect = async () => {
     setStatus("loading");
-    onConnect(authorUid);
-    setStatus("sent");
-    setTimeout(() => {
-      onDismiss();
-    }, 2000);
+    try {
+      await onConnect(authorUid);
+      setStatus("sent");
+      timerRef.current = setTimeout(() => onDismiss(), 2000);
+    } catch {
+      setStatus("idle");
+    }
   };
 
   const initials = authorName

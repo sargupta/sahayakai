@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MessageCircle, ChevronRight } from "lucide-react";
 
@@ -49,15 +48,9 @@ export function ChatPreviewBanner({
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-blue-600 shrink-0 px-2 pointer-events-none"
-        tabIndex={-1}
-      >
-        Open
-        <ChevronRight className="h-4 w-4 ml-0.5" />
-      </Button>
+      <span className="flex items-center gap-1 text-xs font-bold text-blue-600">
+        Open <ChevronRight className="h-3 w-3" />
+      </span>
     </button>
   );
 }

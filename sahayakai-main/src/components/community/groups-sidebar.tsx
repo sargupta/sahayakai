@@ -12,8 +12,6 @@ import {
   UserPlus,
   MessageCircle,
   ChevronRight,
-  Hash,
-  Search,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -91,7 +89,7 @@ export function GroupsSidebar({
                 >
                   <span
                     className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: getGroupColor(group.name) }}
+                    style={{ background: getGroupColor(group.name) }}
                   />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">

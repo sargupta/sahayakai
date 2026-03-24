@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { getGroupColor, type GroupPost, type Group } from "@/types/community";
 import { getGroupPostsAction, likeGroupPostAction } from "@/app/actions/groups";
 import { getMyConnectionDataAction, sendConnectionRequestAction } from "@/app/actions/connections";

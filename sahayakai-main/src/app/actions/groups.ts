@@ -37,6 +37,7 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
     const uid = await getAuthUserId();
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
+    const now = new Date().toISOString();
 
     const userDoc = await db.collection('users').doc(uid).get();
     if (!userDoc.exists) throw new Error('User profile not found');
@@ -61,40 +62,35 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
             const groupRef = db.collection('groups').doc(groupId);
             const groupDoc = await groupRef.get();
 
-            if (!groupDoc.exists) {
+            const isNewGroup = !groupDoc.exists;
+            if (isNewGroup) {
                 const boardLabel = board || 'All Boards';
-                const groupData: Omit<Group, 'id'> = {
+                const groupData = {
                     name: `${grade} ${subject} — ${boardLabel}`,
                     description: `Teachers teaching ${subject} to ${grade} students (${boardLabel})`,
-                    type: 'subject_grade',
+                    type: 'subject_grade' as const,
                     coverColor: getGroupColor(`${subject}_${grade}`),
-                    memberCount: 1,
+                    memberCount: 0,
                     autoJoinRules: {
                         subjects: [subject],
                         grades: [grade],
                         ...(board ? { board } : {}),
                     },
-                    lastActivityAt: new Date().toISOString(),
+                    lastActivityAt: FieldValue.serverTimestamp(),
                     createdAt: new Date().toISOString(),
                     createdBy: 'system',
                 };
                 await groupRef.set(groupData);
-            } else {
-                // Group exists, check membership
-                const memberDoc = await groupRef.collection('members').doc(uid).get();
-                if (memberDoc.exists) {
-                    existingSet.add(groupId);
-                    continue;
-                }
-                await groupRef.update({ memberCount: FieldValue.increment(1) });
             }
 
-            await groupRef.collection('members').doc(uid).set({
-                uid,
-                joinedAt: new Date().toISOString(),
-                role: 'member',
-            });
-            newGroupIds.push(groupId);
+            try {
+                await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+                await groupRef.update({ memberCount: FieldValue.increment(1) });
+                newGroupIds.push(groupId);
+            } catch {
+                // Already a member — skip (create fails if doc exists)
+                newGroupIds.push(groupId);
+            }
         }
     }
 
@@ -111,26 +107,20 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                     description: `Teachers from ${schoolName}`,
                     type: 'school',
                     coverColor: getGroupColor(schoolName),
-                    memberCount: 1,
+                    memberCount: 0,
                     autoJoinRules: { school: schoolName },
-                    lastActivityAt: new Date().toISOString(),
+                    lastActivityAt: FieldValue.serverTimestamp(),
                     createdAt: new Date().toISOString(),
                     createdBy: 'system',
                 });
-            } else {
-                const memberDoc = await groupRef.collection('members').doc(uid).get();
-                if (!memberDoc.exists) {
-                    await groupRef.update({ memberCount: FieldValue.increment(1) });
-                }
             }
 
-            const memberDoc = await groupRef.collection('members').doc(uid).get();
-            if (!memberDoc.exists) {
-                await groupRef.collection('members').doc(uid).set({
-                    uid,
-                    joinedAt: new Date().toISOString(),
-                    role: 'member',
-                });
+            try {
+                await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+                await groupRef.update({ memberCount: FieldValue.increment(1) });
+                newGroupIds.push(schoolGroupId);
+            } catch {
+                // Already a member — skip (create fails if doc exists)
                 newGroupIds.push(schoolGroupId);
             }
         }
@@ -149,26 +139,20 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                     description: `All teachers in ${state}`,
                     type: 'region',
                     coverColor: getGroupColor(state),
-                    memberCount: 1,
+                    memberCount: 0,
                     autoJoinRules: { state },
-                    lastActivityAt: new Date().toISOString(),
+                    lastActivityAt: FieldValue.serverTimestamp(),
                     createdAt: new Date().toISOString(),
                     createdBy: 'system',
                 });
-            } else {
-                const memberDoc = await groupRef.collection('members').doc(uid).get();
-                if (!memberDoc.exists) {
-                    await groupRef.update({ memberCount: FieldValue.increment(1) });
-                }
             }
 
-            const memberDoc = await groupRef.collection('members').doc(uid).get();
-            if (!memberDoc.exists) {
-                await groupRef.collection('members').doc(uid).set({
-                    uid,
-                    joinedAt: new Date().toISOString(),
-                    role: 'member',
-                });
+            try {
+                await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+                await groupRef.update({ memberCount: FieldValue.increment(1) });
+                newGroupIds.push(stateGroupId);
+            } catch {
+                // Already a member — skip (create fails if doc exists)
                 newGroupIds.push(stateGroupId);
             }
         }
@@ -235,17 +219,17 @@ export async function joinGroupAction(groupId: string): Promise<void> {
     const groupDoc = await groupRef.get();
     if (!groupDoc.exists) throw new Error('Group not found');
 
-    const memberRef = groupRef.collection('members').doc(uid);
-    const memberDoc = await memberRef.get();
-    if (memberDoc.exists) return; // Already a member — idempotent
+    try {
+        await groupRef.collection('members').doc(uid).create({
+            joinedAt: new Date().toISOString(),
+            role: 'member',
+        });
+        await groupRef.update({ memberCount: FieldValue.increment(1) });
+    } catch {
+        // Already a member — create fails if doc exists, skip
+        return;
+    }
 
-    await memberRef.set({
-        uid,
-        joinedAt: new Date().toISOString(),
-        role: 'member',
-    });
-
-    await groupRef.update({ memberCount: FieldValue.increment(1) });
     await db.collection('users').doc(uid).update({
         groupIds: FieldValue.arrayUnion(groupId),
     });
@@ -266,7 +250,14 @@ export async function leaveGroupAction(groupId: string): Promise<void> {
     if (!memberDoc.exists) return; // Not a member — idempotent
 
     await memberRef.delete();
-    await groupRef.update({ memberCount: FieldValue.increment(-1) });
+    await db.runTransaction(async (t) => {
+        const groupDoc = await t.get(groupRef);
+        if (!groupDoc.exists) return;
+        const current = groupDoc.data()?.memberCount ?? 0;
+        if (current > 0) {
+            t.update(groupRef, { memberCount: FieldValue.increment(-1) });
+        }
+    });
     await db.collection('users').doc(uid).update({
         groupIds: FieldValue.arrayRemove(groupId),
     });
@@ -326,6 +317,10 @@ export async function createGroupPostAction(
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
+    // Membership check
+    const memberSnap = await db.collection('groups').doc(groupId).collection('members').doc(uid).get();
+    if (!memberSnap.exists) throw new Error('Not a member of this group');
+
     // Validate
     if (!content || content.length > 2000) {
         throw new Error('Post content must be between 1 and 2000 characters');
@@ -333,6 +328,7 @@ export async function createGroupPostAction(
     if (!VALID_POST_TYPES.includes(postType)) {
         throw new Error(`Invalid post type: ${postType}`);
     }
+    if (attachments.length > 5) throw new Error('Too many attachments');
 
     // Fetch author profile
     const author = await dbAdapter.getUser(uid);
@@ -377,6 +373,10 @@ export async function likeGroupPostAction(
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
+    // Membership check
+    const memberSnap = await db.collection('groups').doc(groupId).collection('members').doc(uid).get();
+    if (!memberSnap.exists) throw new Error('Not a member of this group');
+
     const postRef = db
         .collection('groups')
         .doc(groupId)
@@ -419,12 +419,19 @@ export async function sendGroupChatMessageAction(
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
+    // Membership check
+    const memberSnap = await db.collection('groups').doc(groupId).collection('members').doc(uid).get();
+    if (!memberSnap.exists) throw new Error('Not a member of this group');
+
     // Validate
     if (!text && !audioUrl) {
         throw new Error('Message must contain text or audio');
     }
     if (text && text.length > 500) {
         throw new Error('Message text must be 500 characters or less');
+    }
+    if (audioUrl && !audioUrl.startsWith('https://firebasestorage.googleapis.com/')) {
+        throw new Error('Invalid audio URL');
     }
 
     // Fetch author profile

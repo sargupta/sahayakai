@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Users, Plus, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -70,27 +69,24 @@ export default function CommunityPage() {
       // Fire-and-forget: auto-join groups based on profile
       ensureUserGroupsAction().catch(() => {});
 
-      // Load all data in parallel
-      Promise.all([
+      // Load all data in parallel — individual failures don't block others
+      Promise.allSettled([
         getMyGroupsAction(),
         getUnifiedFeedAction(),
         getMyConnectionDataAction(),
         discoverGroupsAction(),
         getRecommendedTeachersAction(firebaseUser.uid),
       ])
-        .then(([groups, feed, connData, suggested, teachers]) => {
-          setMyGroups(groups);
-          setFeedItems(feed);
-          setConnectionData(connData);
-          setSuggestedGroups(suggested);
-          setTeacherSuggestions(teachers);
-        })
-        .catch((err) => {
-          console.error('Error loading community data:', err);
-          toast({
-            title: "Couldn't load community",
-            description: 'Please check your connection and try again.',
-            variant: 'destructive',
+        .then((results) => {
+          if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
+          if (results[1].status === 'fulfilled') setFeedItems(results[1].value);
+          if (results[2].status === 'fulfilled') setConnectionData(results[2].value);
+          if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
+          if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
+
+          // Log any failures
+          results.forEach((r, i) => {
+            if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
           });
         })
         .finally(() => setLoading(false));
@@ -167,15 +163,7 @@ export default function CommunityPage() {
     setSelectedGroupId(groupId);
   }, []);
 
-  const handleOpenGroupFromSidebar = useCallback(
-    (groupId: string) => {
-      const group = myGroups.find((g) => g.id === groupId);
-      if (group) setActiveGroup(group);
-    },
-    [myGroups],
-  );
-
-  const handleOpenGroupChat = useCallback(
+  const handleOpenGroup = useCallback(
     (groupId: string) => {
       const group = myGroups.find((g) => g.id === groupId);
       if (group) setActiveGroup(group);
@@ -278,7 +266,7 @@ export default function CommunityPage() {
             connectionData={connectionData}
             onLikePost={handleLikePost}
             onConnectTeacher={handleConnectTeacher}
-            onOpenGroupChat={handleOpenGroupChat}
+            onOpenGroupChat={handleOpenGroup}
             onLoadMore={handleLoadMore}
             hasMore={false}
             likedPostIds={likedPostIds}
@@ -291,7 +279,7 @@ export default function CommunityPage() {
             myGroups={myGroups}
             suggestedGroups={suggestedGroups}
             teacherSuggestions={teacherSuggestions}
-            onSelectGroup={handleOpenGroupFromSidebar}
+            onSelectGroup={handleOpenGroup}
             onJoinGroup={handleJoinGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
             onConnectTeacher={handleConnectTeacher}

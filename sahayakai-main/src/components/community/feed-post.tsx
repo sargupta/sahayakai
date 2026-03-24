@@ -84,10 +84,8 @@ export default function FeedPost({
 }: FeedPostProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
-  const [liked, setLiked] = useState(isLiked);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
 
-  const typeConfig = POST_TYPE_CONFIG[post.postType];
+  const typeConfig = POST_TYPE_CONFIG[post.postType] ?? POST_TYPE_CONFIG.share;
   const TypeIcon = typeConfig.icon;
 
   const needsTruncation = post.content.length > READ_MORE_THRESHOLD;
@@ -108,8 +106,6 @@ export default function FeedPost({
   });
 
   function handleLike() {
-    setLiked((prev) => !prev);
-    setLikesCount((prev) => (liked ? prev - 1 : prev + 1));
     onLike?.(post.id);
   }
 
@@ -179,9 +175,9 @@ export default function FeedPost({
         </div>
 
         {/* Attachments */}
-        {post.attachments.length > 0 && (
+        {(post.attachments?.length ?? 0) > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {post.attachments.map((att, i) => (
+            {post.attachments?.map((att, i) => (
               <AttachmentCard key={i} attachment={att} />
             ))}
           </div>
@@ -189,7 +185,7 @@ export default function FeedPost({
 
         {/* Stats */}
         <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
-          <span>{likesCount} likes</span>
+          <span>{post.likesCount} likes</span>
           <span>{post.commentsCount} comments</span>
         </div>
 
@@ -200,12 +196,12 @@ export default function FeedPost({
             size="sm"
             className={cn(
               "gap-1.5 text-slate-600",
-              liked && "text-red-500 hover:text-red-600"
+              isLiked && "text-red-500 hover:text-red-600"
             )}
             onClick={handleLike}
           >
             <Heart
-              className={cn("h-4 w-4", liked && "fill-current")}
+              className={cn("h-4 w-4", isLiked && "fill-current")}
             />
             Like
           </Button>

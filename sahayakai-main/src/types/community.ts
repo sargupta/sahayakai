@@ -144,18 +144,18 @@ export const SHARE_TEMPLATES: ShareTemplate[] = [
   },
 ];
 
-// Group color palettes for deterministic assignment
+// Group color palettes for deterministic assignment (CSS gradient strings for inline styles)
 export const GROUP_COLORS: string[] = [
-  'from-orange-400 to-amber-500',
-  'from-blue-400 to-indigo-500',
-  'from-emerald-400 to-teal-500',
-  'from-purple-400 to-violet-500',
-  'from-rose-400 to-pink-500',
-  'from-sky-400 to-cyan-500',
+  'linear-gradient(135deg, #fb923c, #f59e0b)',  // orange to amber
+  'linear-gradient(135deg, #60a5fa, #6366f1)',  // blue to indigo
+  'linear-gradient(135deg, #34d399, #14b8a6)',  // emerald to teal
+  'linear-gradient(135deg, #a78bfa, #8b5cf6)',  // purple to violet
+  'linear-gradient(135deg, #fb7185, #ec4899)',  // rose to pink
+  'linear-gradient(135deg, #38bdf8, #06b6d4)',  // sky to cyan
 ];
 
 export function getGroupColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length];
+  return GROUP_COLORS[((hash % GROUP_COLORS.length) + GROUP_COLORS.length) % GROUP_COLORS.length];
 }

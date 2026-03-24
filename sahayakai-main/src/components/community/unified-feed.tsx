@@ -9,7 +9,6 @@ import { ContextualConnect } from "./contextual-connect";
 import { FeedSkeleton } from "./feed-skeleton";
 import { GroupCard } from "./group-card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { FeedItem, GroupPost } from "@/types/community";
 import type { ConnectionStatus, MyConnectionData } from "@/types";
 
@@ -20,7 +19,7 @@ interface UnifiedFeedProps {
   onLikePost: (groupId: string, postId: string) => void;
   onConnectTeacher: (uid: string) => void;
   onOpenGroupChat: (groupId: string) => void;
-  onLoadMore?: () => void;
+  onLoadMore?: () => void | Promise<void>;
   hasMore?: boolean;
   likedPostIds: Set<string>;
 }
@@ -88,7 +87,7 @@ export function UnifiedFeed({
     if (!onLoadMore) return;
     setLoadingMore(true);
     try {
-      onLoadMore();
+      await onLoadMore?.();
     } finally {
       setLoadingMore(false);
     }

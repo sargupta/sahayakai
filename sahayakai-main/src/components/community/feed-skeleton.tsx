@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 interface FeedSkeletonProps {
   count?: number;
 }
@@ -47,7 +45,7 @@ export function FeedSkeleton({ count = 4 }: FeedSkeletonProps) {
             </div>
             <div className="flex items-center gap-2">
               <div className="h-7 w-14 rounded bg-slate-100" />
-              <div className="h-7 w-18 rounded bg-slate-100" />
+              <div className="h-7 w-16 rounded bg-slate-100" />
             </div>
           </div>
         </div>
