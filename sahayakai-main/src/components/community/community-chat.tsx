@@ -5,6 +5,7 @@ import { collection, query, orderBy, limitToLast, onSnapshot, Timestamp } from "
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { sendChatMessageAction } from "@/app/actions/community";
+import { sendGroupChatMessageAction } from "@/app/actions/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,19 @@ function formatTime(ts: Timestamp | null) {
     try { return formatDistanceToNow(ts.toDate(), { addSuffix: true }); } catch { return ""; }
 }
 
-export function CommunityChat() {
+type CommunityChatProps = {
+    collectionPath?: string;
+    groupId?: string;
+    title?: string;
+    subtitle?: string;
+};
+
+export function CommunityChat({
+    collectionPath = "community_chat",
+    groupId,
+    title = "Community Chat",
+    subtitle = "Live discussion with teachers across Bharat",
+}: CommunityChatProps = {}) {
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
@@ -45,7 +58,7 @@ export function CommunityChat() {
     // Real-time listener — limitToLast(100) gives the most recent 100 messages
     useEffect(() => {
         const q = query(
-            collection(db, "community_chat"),
+            collection(db, collectionPath),
             orderBy("createdAt", "asc"),
             limitToLast(100),
         );
@@ -59,7 +72,7 @@ export function CommunityChat() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [collectionPath]);
 
     // Auto-scroll on new messages
     useEffect(() => {
@@ -88,7 +101,11 @@ export function CommunityChat() {
         setSending(true);
 
         try {
-            await sendChatMessageAction(audioUrl ? "" : text, audioUrl);
+            if (groupId) {
+                await sendGroupChatMessageAction(groupId, audioUrl ? "" : text, audioUrl);
+            } else {
+                await sendChatMessageAction(audioUrl ? "" : text, audioUrl);
+            }
         } catch (err: any) {
             // Rollback optimistic message and show error
             setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
@@ -125,8 +142,8 @@ export function CommunityChat() {
                     <MessageCircle className="h-4 w-4 text-orange-600" />
                 </div>
                 <div>
-                    <p className="text-sm font-bold text-slate-900">Community Chat</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Live discussion with teachers across Bharat</p>
+                    <p className="text-sm font-bold text-slate-900">{title}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{subtitle}</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1.5">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
