@@ -16,6 +16,7 @@ import { GroupsSidebar } from '@/components/community/groups-sidebar';
 import GroupFeed from '@/components/community/group-feed';
 import { CommunityChat } from '@/components/community/community-chat';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
+import { ResourceFeed } from '@/components/community/resource-feed';
 
 // Server actions
 import {
@@ -309,6 +310,14 @@ export default function CommunityPage() {
             hasMore={false}
             likedPostIds={likedPostIds}
           />
+
+          {/* Shared Resources — library resources with like/save/use */}
+          <div className="mt-6">
+            <h2 className="font-headline text-lg font-bold text-slate-900 mb-3">
+              Shared Resources
+            </h2>
+            <ResourceFeed />
+          </div>
         </div>
 
         {/* Sidebar — desktop only */}
