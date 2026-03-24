@@ -2,7 +2,7 @@ import 'server-only';
 import { SAFETY_CONFIG } from './safety';
 
 const IMAGE_RATE_LIMIT = {
-    MAX_PER_DAY: 5,
+    MAX_PER_DAY: 10,
     WINDOW_MS: 24 * 60 * 60 * 1000, // 24 hours
 };
 
@@ -32,7 +32,8 @@ export async function checkImageRateLimit(userId: string): Promise<void> {
         }
 
         requests.push(now);
-        await limitRef.set({ requests }, { merge: true });
+        // Write back only recent timestamps (prevents unbounded array growth)
+        await limitRef.set({ requests });
 
     } catch (error: any) {
         if (error.message?.includes('Daily image limit reached')) throw error;
