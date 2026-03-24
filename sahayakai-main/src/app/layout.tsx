@@ -12,6 +12,7 @@ import { LanguageProvider } from '@/context/language-context';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDialog } from '@/components/auth/auth-dialog';
+import { GlobalHooks } from '@/components/global-hooks';
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -72,6 +73,7 @@ export default function RootLayout({
             </SidebarProvider>
 
             {/* OmniOrb needs AuthProvider for useAuth — must live inside it */}
+            <GlobalHooks />
             <OmniOrb />
             <MotherTongueGreeting />
           </AuthProvider>

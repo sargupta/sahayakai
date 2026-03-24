@@ -13,10 +13,19 @@ interface SahayakDB extends DBSchema {
         key: number;
         value: any;
     };
+    message_outbox: {
+        key: string;
+        value: any;
+    };
+    message_cache: {
+        key: string;
+        value: any;
+        indexes: { conversationId: string };
+    };
 }
 
 const DB_NAME = 'sahayak-ai-db';
-const DB_VERSION = 2; // Increment version
+const DB_VERSION = 3; // Increment version
 
 export async function initDB() {
     return openDB<SahayakDB>(DB_NAME, DB_VERSION, {
@@ -29,6 +38,13 @@ export async function initDB() {
             }
             if (!db.objectStoreNames.contains('telemetry')) {
                 db.createObjectStore('telemetry', { autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('message_outbox')) {
+                db.createObjectStore('message_outbox');
+            }
+            if (!db.objectStoreNames.contains('message_cache')) {
+                const cacheStore = db.createObjectStore('message_cache');
+                cacheStore.createIndex('conversationId', 'conversationId');
             }
         },
     });

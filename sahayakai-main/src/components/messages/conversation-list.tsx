@@ -13,6 +13,7 @@ import { Loader2, MessageCircle, Search, Users, PenSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { PresenceDot } from './presence-dot';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ function ConversationListItem({
     const { name, photo } = getConversationLabel(conv, myUid);
     const unread = conv.unreadCount?.[myUid] ?? 0;
     const isMyLastMsg = conv.lastMessageSenderId === myUid;
+    const otherUid = conv.type === 'direct' ? conv.participantIds.find(id => id !== myUid) : undefined;
 
     return (
         <button
@@ -81,6 +83,9 @@ function ConversationListItem({
                     <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center">
                         {unread > 9 ? "9+" : unread}
                     </span>
+                )}
+                {otherUid && (
+                    <PresenceDot uid={otherUid} className="absolute bottom-0 right-0" />
                 )}
             </div>
 

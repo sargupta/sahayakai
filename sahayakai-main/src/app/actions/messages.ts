@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { buildDirectConversationId, SharedResource } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
 import { createNotification } from './notifications';
+import { sendPushToUser } from '@/lib/fcm-server';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ export async function sendMessageAction({
     resource,
     audioUrl,
     audioDuration,
+    clientMessageId,
 }: {
     conversationId: string;
     text: string;
@@ -136,6 +138,7 @@ export async function sendMessageAction({
     resource?: SharedResource;
     audioUrl?: string;
     audioDuration?: number;
+    clientMessageId?: string;
 }): Promise<{ messageId: string }> {
     // Identity always comes from the server — client never supplies senderId
     const senderId = await getAuthUserId();
@@ -149,6 +152,15 @@ export async function sendMessageAction({
     const { FieldValue } = await import('firebase-admin/firestore');
 
     const convRef = db.collection('conversations').doc(conversationId);
+
+    // Idempotency: if clientMessageId provided, check for existing doc (dedup)
+    if (clientMessageId) {
+        const existingDoc = await convRef.collection('messages').doc(clientMessageId).get();
+        if (existingDoc.exists) {
+            return { messageId: clientMessageId };
+        }
+    }
+
     const convDoc = await convRef.get();
     if (!convDoc.exists) throw new Error('Conversation not found');
 
@@ -159,7 +171,9 @@ export async function sendMessageAction({
     const senderSnap = convData.participants?.[senderId];
 
     // Atomic transaction: add message + update conversation preview + increment unread
-    const msgRef = convRef.collection('messages').doc();
+    const msgRef = clientMessageId
+        ? convRef.collection('messages').doc(clientMessageId)
+        : convRef.collection('messages').doc();
 
     await db.runTransaction(async (tx) => {
         const messagePayload: Record<string, any> = {
@@ -170,6 +184,7 @@ export async function sendMessageAction({
             senderPhotoURL: senderSnap?.photoURL ?? null,
             readBy: [senderId],
             createdAt: FieldValue.serverTimestamp(),
+            ...(clientMessageId ? { clientMessageId } : {}),
         };
         if (type === 'resource' && resource) {
             messagePayload.resource = resource;
@@ -224,6 +239,22 @@ export async function sendMessageAction({
             senderId,
             senderName: senderSnap?.displayName ?? 'Teacher',
             senderPhotoURL: senderSnap?.photoURL ?? undefined,
+            link: `/messages?open=${conversationId}`,
+        }).catch(() => {});
+    }
+
+    // FCM push notifications (fire-and-forget)
+    for (const recipientId of recipients) {
+        sendPushToUser(recipientId, {
+            title: conversationName ?? 'New message',
+            body: type === 'resource'
+                ? `📎 ${resource?.title ?? 'Shared a resource'}`
+                : type === 'audio'
+                ? 'Voice message'
+                : trimmed.slice(0, 100),
+        }, {
+            conversationId,
+            type: 'message',
             link: `/messages?open=${conversationId}`,
         }).catch(() => {});
     }
@@ -284,4 +315,27 @@ export async function getTotalUnreadCountAction(userId: string): Promise<number>
         total += data.unreadCount?.[userId] ?? 0;
     });
     return total;
+}
+
+// ── acknowledgeDelivery ─────────────────────────────────────────────────────
+
+export async function acknowledgeDeliveryAction(
+    conversationId: string,
+    messageIds: string[],
+): Promise<void> {
+    const userId = await getAuthUserId();
+    const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
+
+    const convRef = db.collection('conversations').doc(conversationId);
+    const batch = db.batch();
+
+    for (const msgId of messageIds.slice(0, 50)) {  // cap at 50 per batch
+        const msgRef = convRef.collection('messages').doc(msgId);
+        batch.update(msgRef, {
+            deliveredTo: FieldValue.arrayUnion(userId),
+        });
+    }
+
+    await batch.commit();
 }

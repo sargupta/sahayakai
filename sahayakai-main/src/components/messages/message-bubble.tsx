@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import {
     BookOpen, ClipboardCheck, FileSignature, Images,
     Globe2, GraduationCap, Wand2, ArrowRight, CheckCheck, Check, Mic,
+    Clock, AlertCircle, RotateCcw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -143,13 +144,46 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
     );
 }
 
-// ── Read receipt icon ─────────────────────────────────────────────────────────
+// ── Delivery status (WhatsApp-style ticks) ───────────────────────────────────
 
-function ReadReceipt({ readBy, participantIds }: { readBy: string[]; participantIds: string[] }) {
-    const allRead = participantIds.every((uid) => readBy.includes(uid));
-    return allRead
-        ? <CheckCheck className="h-3 w-3 text-blue-300 shrink-0" />
-        : <Check className="h-3 w-3 text-white/50 shrink-0" />;
+function DeliveryStatus({
+    message,
+    participantIds,
+    onRetry,
+}: {
+    message: Message;
+    participantIds: string[];
+    onRetry?: () => void;
+}) {
+    const status = message.deliveryStatus;
+
+    // Legacy: if no deliveryStatus, fall back to readBy-based logic
+    if (!status) {
+        const allRead = participantIds.every((uid) => message.readBy?.includes(uid));
+        return allRead
+            ? <CheckCheck className="h-3 w-3 text-blue-300 shrink-0" />
+            : <Check className="h-3 w-3 text-white/50 shrink-0" />;
+    }
+
+    switch (status) {
+        case 'sending':
+            return <Clock className="h-3 w-3 text-white/40 shrink-0 animate-pulse" />;
+        case 'sent':
+            return <Check className="h-3 w-3 text-white/50 shrink-0" />;
+        case 'delivered':
+            return <CheckCheck className="h-3 w-3 text-white/50 shrink-0" />;
+        case 'read':
+            return <CheckCheck className="h-3 w-3 text-blue-300 shrink-0" />;
+        case 'failed':
+            return (
+                <button onClick={onRetry} className="flex items-center gap-0.5 shrink-0">
+                    <AlertCircle className="h-3 w-3 text-red-300" />
+                    <RotateCcw className="h-2.5 w-2.5 text-red-300" />
+                </button>
+            );
+        default:
+            return <Check className="h-3 w-3 text-white/50 shrink-0" />;
+    }
 }
 
 // ── MessageBubble ─────────────────────────────────────────────────────────────
@@ -159,9 +193,10 @@ interface MessageBubbleProps {
     isOwn: boolean;
     showAvatar: boolean;      // false when consecutive messages from same sender
     participantIds: string[]; // for read receipt logic
+    onRetry?: () => void;     // for failed outbox messages
 }
 
-export function MessageBubble({ message, isOwn, showAvatar, participantIds }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRetry }: MessageBubbleProps) {
     return (
         <div className={cn("flex items-end gap-2", isOwn && "flex-row-reverse")}>
             {/* Avatar — placeholder space when hidden to keep alignment */}
@@ -189,7 +224,9 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds }: Me
                     "px-3.5 py-2.5 rounded-2xl",
                     isOwn
                         ? "bg-orange-500 text-white rounded-br-sm"
-                        : "bg-slate-100 text-slate-800 rounded-bl-sm"
+                        : "bg-slate-100 text-slate-800 rounded-bl-sm",
+                    message.deliveryStatus === 'sending' && "opacity-70",
+                    message.deliveryStatus === 'failed' && "ring-1 ring-red-400/60",
                 )}>
                     {/* Text */}
                     {message.text && (
@@ -210,7 +247,7 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds }: Me
                 {/* Timestamp + read receipt */}
                 <div className={cn("flex items-center gap-1 px-1", isOwn && "flex-row-reverse")}>
                     <p className="text-[10px] text-slate-400">{formatTime(message.createdAt)}</p>
-                    {isOwn && <ReadReceipt readBy={message.readBy} participantIds={participantIds} />}
+                    {isOwn && <DeliveryStatus message={message} participantIds={participantIds} onRetry={onRetry} />}
                 </div>
             </div>
         </div>
