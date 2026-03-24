@@ -8,6 +8,10 @@ import { NextRequest } from 'next/server';
  * See: https://www.twilio.com/docs/usage/security#validating-requests
  *
  * Skipped in development (localhost) where Twilio can't reach our server directly.
+ *
+ * IMPORTANT: On Cloud Run behind a load balancer, req.url returns the internal
+ * URL (e.g. http://localhost:8080/...) — NOT the public URL Twilio signed against.
+ * We reconstruct the canonical URL from X-Forwarded-Proto + Host headers.
  */
 export function validateTwilioSignature(req: NextRequest): boolean {
     const host = req.headers.get('host') ?? '';
@@ -19,14 +23,7 @@ export function validateTwilioSignature(req: NextRequest): boolean {
     const signature = req.headers.get('x-twilio-signature');
     if (!signature) return false;
 
-    // Build the full URL Twilio used (protocol + host + path + query)
-    const url = req.url;
-
-    // For GET requests, params are in the URL; for POST (form), params are in the body.
-    // Twilio signs GET requests using only the URL (no body params).
-    // For POST, we need sorted form params — but our twiml route is GET-based
-    // and twiml-status uses formData which we validate separately.
-    // This helper handles the GET case; POST callers pass params explicitly.
+    const url = getCanonicalUrl(req);
     return verifySignature(authToken, signature, url, {});
 }
 
@@ -46,8 +43,19 @@ export function validateTwilioSignaturePost(
     const signature = req.headers.get('x-twilio-signature');
     if (!signature) return false;
 
-    const url = req.url;
+    const url = getCanonicalUrl(req);
     return verifySignature(authToken, signature, url, params);
+}
+
+/**
+ * Reconstruct the public-facing URL that Twilio used for signing.
+ * Cloud Run sets X-Forwarded-Proto and forwards the original Host header.
+ */
+function getCanonicalUrl(req: NextRequest): string {
+    const proto = req.headers.get('x-forwarded-proto') ?? 'https';
+    const host = req.headers.get('host') ?? '';
+    const parsed = new URL(req.url);
+    return `${proto}://${host}${parsed.pathname}${parsed.search}`;
 }
 
 function verifySignature(
