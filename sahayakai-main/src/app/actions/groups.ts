@@ -158,6 +158,66 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
         }
     }
 
+    // Auto-join "Education Updates" group (system group for all users)
+    const eduGroupId = 'education_updates';
+    if (!existingSet.has(eduGroupId)) {
+        const eduRef = db.collection('groups').doc(eduGroupId);
+        const eduDoc = await eduRef.get();
+
+        if (!eduDoc.exists) {
+            await eduRef.set({
+                name: 'Education Updates',
+                description: 'Official CBSE circulars, board notifications, and education policy updates — auto-posted daily by SahayakAI.',
+                type: 'interest' as const,
+                coverColor: 'linear-gradient(135deg, #f97316, #dc2626)',
+                memberCount: 0,
+                autoJoinRules: {},
+                lastActivityAt: FieldValue.serverTimestamp(),
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isSystem: true,
+            });
+        }
+
+        try {
+            await eduRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+            await eduRef.update({ memberCount: FieldValue.increment(1) });
+            newGroupIds.push(eduGroupId);
+        } catch {
+            newGroupIds.push(eduGroupId);
+        }
+    }
+
+    // Auto-join "Community" general group (open to all for posting)
+    const communityGroupId = 'community_general';
+    if (!existingSet.has(communityGroupId)) {
+        const commRef = db.collection('groups').doc(communityGroupId);
+        const commDoc = await commRef.get();
+
+        if (!commDoc.exists) {
+            await commRef.set({
+                name: 'Community',
+                description: 'Open discussion for all teachers — share ideas, ask questions, celebrate wins.',
+                type: 'interest' as const,
+                coverColor: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                memberCount: 0,
+                autoJoinRules: {},
+                lastActivityAt: FieldValue.serverTimestamp(),
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isSystem: true,
+            });
+        }
+
+        try {
+            await commRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+            await commRef.update({ memberCount: FieldValue.increment(1) });
+            newGroupIds.push(communityGroupId);
+        } catch {
+            newGroupIds.push(communityGroupId);
+        }
+    }
+
     // Persist groupIds on user doc
     if (newGroupIds.length > 0) {
         await db.collection('users').doc(uid).update({
