@@ -254,7 +254,10 @@ export async function getMyGroupsAction(): Promise<Group[]> {
     }
 
     // Sort by lastActivityAt desc
-    groups.sort((a, b) => (b.lastActivityAt ?? '').localeCompare(a.lastActivityAt ?? ''));
+    groups.sort((a, b) => {
+        const toStr = (v: unknown) => typeof v === 'string' ? v : (v as any)?.toDate?.().toISOString?.() ?? '';
+        return toStr(b.lastActivityAt).localeCompare(toStr(a.lastActivityAt));
+    });
 
     return dbAdapter.serialize(groups);
 }
@@ -622,7 +625,8 @@ export async function getUnifiedFeedAction(
     const allPosts = results.flat();
 
     // Sort by createdAt desc and take top N
-    allPosts.sort((a, b) => (b.post.createdAt ?? '').localeCompare(a.post.createdAt ?? ''));
+    const toStr = (v: unknown) => typeof v === 'string' ? v : (v as any)?.toDate?.().toISOString?.() ?? '';
+    allPosts.sort((a, b) => toStr(b.post.createdAt).localeCompare(toStr(a.post.createdAt)));
     const topPosts = allPosts.slice(0, limit);
 
     const feedItems: FeedItem[] = topPosts.map(({ post, groupId, groupName }) => ({
