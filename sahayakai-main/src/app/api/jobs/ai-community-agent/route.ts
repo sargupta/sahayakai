@@ -27,8 +27,12 @@ import {
     AI_TEACHER_PERSONAS,
     pickRandomPersonas,
     buildPersonaSystemPrompt,
+    buildMemoryContext,
+    loadPersonaMemory,
+    savePersonaMemory,
     getPersonaUserDoc,
     type AITeacherPersona,
+    type PersonaMemory,
 } from '@/lib/ai-teacher-personas';
 
 export const maxDuration = 120;
@@ -80,14 +84,20 @@ async function ensureAITeacherProfiles(db: FirebaseFirestore.Firestore) {
 async function postStaffRoomChat(
     db: FirebaseFirestore.Firestore,
     persona: AITeacherPersona,
-    recentMessages: string[],
+    recentMessages: Array<{ authorName: string; text: string }>,
 ) {
     const { FieldValue } = await import('firebase-admin/firestore');
 
+    // Load persona memory
+    const memory = await loadPersonaMemory(db, persona.id);
+    const memoryCtx = buildMemoryContext(memory);
+
+    const recentText = recentMessages.map(m => `${m.authorName}: ${m.text}`).join('\n');
     const systemPrompt = buildPersonaSystemPrompt(
         persona,
         recentMessages.length > 0 ? 'reply_to_chat' : 'staff_room_chat',
-        recentMessages.length > 0 ? recentMessages.join('\n') : undefined,
+        recentMessages.length > 0 ? recentText : undefined,
+        memoryCtx,
     );
 
     const hour = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: true });
@@ -109,6 +119,49 @@ async function postStaffRoomChat(
         authorPhotoURL: null,
         timestamp: FieldValue.serverTimestamp(),
     });
+
+    // Update memory: record what we sent + what we saw
+    memory.recentInteractions.unshift({
+        type: 'sent',
+        context: 'staff_room',
+        authorName: persona.displayName,
+        text: message,
+        timestamp: new Date().toISOString(),
+    });
+    for (const msg of recentMessages.slice(0, 5)) {
+        // Remember real teachers we've seen
+        if (!msg.authorName.startsWith('AI_')) {
+            memory.recentInteractions.unshift({
+                type: 'seen',
+                context: 'staff_room',
+                authorName: msg.authorName,
+                text: msg.text,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    }
+
+    // Extract topic from our message (first 6 words as rough topic)
+    const topic = message.split(/\s+/).slice(0, 6).join(' ');
+    memory.topicsDiscussed.unshift(topic);
+
+    // Remember real teachers from chat
+    for (const msg of recentMessages) {
+        if (msg.authorName !== persona.displayName && !msg.authorName.startsWith('AI_')) {
+            const existing = memory.knownTeachers[msg.authorName];
+            if (!existing) {
+                memory.knownTeachers[msg.authorName] = {
+                    displayName: msg.authorName,
+                    lastInteraction: new Date().toISOString(),
+                    relationship: `Chatted in staff room about: "${msg.text.substring(0, 50)}"`,
+                };
+            } else {
+                existing.lastInteraction = new Date().toISOString();
+            }
+        }
+    }
+
+    await savePersonaMemory(db, memory);
 
     logger.info(`Staff room chat by ${persona.displayName}: ${message.substring(0, 50)}...`, 'AI_AGENT');
 }
@@ -140,7 +193,11 @@ async function createGroupPost(
     const groupDoc = await db.collection('groups').doc(groupId).get();
     const groupName = groupDoc.data()?.name ?? groupId;
 
-    const systemPrompt = buildPersonaSystemPrompt(persona, 'group_post', groupName);
+    // Load memory for context-aware posting
+    const memory = await loadPersonaMemory(db, persona.id);
+    const memoryCtx = buildMemoryContext(memory);
+
+    const systemPrompt = buildPersonaSystemPrompt(persona, 'group_post', groupName, memoryCtx);
     const userPrompt = 'Write a community post for this group. Share something useful — a tip, an experience, a question, or a resource recommendation.';
 
     const content = await generateContent(systemPrompt, userPrompt);
@@ -166,6 +223,19 @@ async function createGroupPost(
     await db.collection('groups').doc(groupId).update({
         lastActivityAt: FieldValue.serverTimestamp(),
     });
+
+    // Update memory
+    memory.recentInteractions.unshift({
+        type: 'sent',
+        context: 'group_post',
+        authorName: persona.displayName,
+        text: content,
+        timestamp: new Date().toISOString(),
+        groupId,
+    });
+    const postTopic = content.split(/\s+/).slice(0, 6).join(' ');
+    memory.topicsDiscussed.unshift(postTopic);
+    await savePersonaMemory(db, memory);
 
     logger.info(`Group post by ${persona.displayName} in ${groupName}: ${content.substring(0, 50)}...`, 'AI_AGENT');
 }
@@ -259,6 +329,72 @@ async function autoJoinPersona(db: FirebaseFirestore.Firestore, persona: AITeach
     }
 }
 
+async function collectEngagementSignals(
+    db: FirebaseFirestore.Firestore,
+    persona: AITeacherPersona,
+) {
+    const memory = await loadPersonaMemory(db, persona.id);
+    const userDoc = await db.collection('users').doc(persona.uid).get();
+    const groupIds: string[] = userDoc.data()?.groupIds ?? [];
+
+    // Check recent posts by this persona for likes/comments
+    for (const groupId of groupIds.slice(0, 3)) {
+        const posts = await db
+            .collection(`groups/${groupId}/posts`)
+            .where('authorUid', '==', persona.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(5)
+            .get();
+
+        for (const postDoc of posts.docs) {
+            const data = postDoc.data();
+            const likes = data.likesCount ?? 0;
+            const replies = data.commentsCount ?? 0;
+            if (likes + replies === 0) continue;
+
+            // Check if we already recorded this
+            const alreadyRecorded = memory.engagementSignals.some(
+                s => s.content === data.content?.substring(0, 80),
+            );
+            if (alreadyRecorded) continue;
+
+            memory.engagementSignals.unshift({
+                content: data.content?.substring(0, 80) ?? '',
+                likes,
+                replies,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    }
+
+    // Also learn from staff room — extract opinions from real teachers
+    const recentChat = await db
+        .collection('community_chat')
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
+
+    for (const chatDoc of recentChat.docs) {
+        const data = chatDoc.data();
+        // Skip own messages and other AI messages
+        if (data.authorId?.startsWith('AI_TEACHER_')) continue;
+
+        // If a real teacher shared a substantive opinion (>30 chars), learn from it
+        if (data.text?.length > 30) {
+            const exists = memory.evolvedOpinions.some(
+                o => o.includes(data.authorName),
+            );
+            if (!exists && memory.evolvedOpinions.length < 10) {
+                memory.evolvedOpinions.unshift(
+                    `${data.authorName} shared: "${data.text.substring(0, 60)}..."`,
+                );
+            }
+        }
+    }
+
+    await savePersonaMemory(db, memory);
+}
+
 // ── Main Handler ─────────────────────────────────────────────────────────────
 
 export async function POST() {
@@ -284,12 +420,23 @@ export async function POST() {
             .limit(10)
             .get();
         const recentMessages = recentChat.docs
-            .map(d => `${d.data().authorName}: ${d.data().text}`)
+            .map(d => ({
+                authorName: d.data().authorName as string,
+                text: d.data().text as string,
+            }))
             .reverse();
 
-        // Step 3: Execute actions in parallel where possible
+        // Step 3: Collect engagement signals (learn from past performance)
+        const engagementPersona = pickRandomPersonas(1)[0];
+        if (engagementPersona) {
+            await collectEngagementSignals(db, engagementPersona).catch(err =>
+                logger.warn(`Engagement collection failed: ${err}`, 'AI_AGENT'),
+            );
+        }
+
+        // Step 4: Execute actions in parallel where possible
         const results = await Promise.allSettled([
-            // Staff room chats (stagger slightly)
+            // Staff room chats
             postStaffRoomChat(db, chatPersonas[0], recentMessages),
             chatPersonas[1]
                 ? postStaffRoomChat(db, chatPersonas[1], recentMessages)

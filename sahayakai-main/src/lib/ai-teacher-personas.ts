@@ -306,6 +306,7 @@ export function buildPersonaSystemPrompt(
     persona: AITeacherPersona,
     context: 'staff_room_chat' | 'group_post' | 'reply_to_chat' | 'reply_to_post',
     additionalContext?: string,
+    memoryContext?: string,
 ): string {
     const base = `You are ${persona.displayName}, a real teacher in India. You are NOT an AI — you are a human teacher participating in an online teacher community called SahayakAI.
 
@@ -344,7 +345,8 @@ CRITICAL RULES:
 6. Reference real Indian education context: CBSE circulars, NEP 2020, state board changes, exam pressure, parent meetings, etc.
 7. Sometimes be imperfect — make minor typos, use incomplete sentences, use "..." for trailing thoughts
 8. React to things emotionally like a real teacher would — frustration with system, pride in students, tiredness after exams
-9. NEVER start with greetings like "Hello everyone!" — just jump into what you want to say, like real chat`;
+9. NEVER start with greetings like "Hello everyone!" — just jump into what you want to say, like real chat
+10. If you know specific teachers from past interactions, reference them naturally (e.g., "like Rajesh was saying..." or "I tried what Priya suggested...")${memoryContext ?? ''}`;
 
     const contextPrompts: Record<typeof context, string> = {
         staff_room_chat: `
@@ -387,6 +389,142 @@ export function pickRandomPersonas(count: number, exclude: string[] = []): AITea
     const available = AI_TEACHER_PERSONAS.filter(p => !exclude.includes(p.id));
     const shuffled = [...available].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
+}
+
+// ── Memory System ────────────────────────────────────────────────────────────
+
+/**
+ * Evolving memory for each AI persona. Stored at `ai_teacher_memory/{personaId}`.
+ * This is what makes them learn from real interactions over time.
+ */
+export interface PersonaMemory {
+    personaId: string;
+
+    /** Rolling window of recent messages seen/sent (max 30). Newest first. */
+    recentInteractions: Array<{
+        type: 'sent' | 'seen';
+        context: 'staff_room' | 'group_post' | 'group_chat';
+        authorName: string;
+        text: string;
+        timestamp: string;
+        groupId?: string;
+    }>;
+
+    /** Real teachers this persona has interacted with. Keyed by uid. */
+    knownTeachers: Record<string, {
+        displayName: string;
+        subjects?: string[];
+        lastInteraction: string;
+        relationship: string; // e.g., "agreed about NEP 2020", "asked me about lab setup"
+    }>;
+
+    /** Topics recently discussed — used to avoid repetition */
+    topicsDiscussed: string[];
+
+    /** Opinions/insights formed from real interactions */
+    evolvedOpinions: string[];
+
+    /** Which of their posts resonated (got likes/replies) — reinforcement signal */
+    engagementSignals: Array<{
+        content: string;
+        likes: number;
+        replies: number;
+        timestamp: string;
+    }>;
+
+    /** Last updated */
+    updatedAt: string;
+}
+
+const MEMORY_CAP = {
+    recentInteractions: 30,
+    topicsDiscussed: 20,
+    evolvedOpinions: 10,
+    engagementSignals: 15,
+};
+
+/**
+ * Load a persona's memory from Firestore. Returns empty memory if none exists.
+ */
+export async function loadPersonaMemory(
+    db: FirebaseFirestore.Firestore,
+    personaId: string,
+): Promise<PersonaMemory> {
+    const doc = await db.doc(`ai_teacher_memory/${personaId}`).get();
+    if (doc.exists) return doc.data() as PersonaMemory;
+
+    return {
+        personaId,
+        recentInteractions: [],
+        knownTeachers: {},
+        topicsDiscussed: [],
+        evolvedOpinions: [],
+        engagementSignals: [],
+        updatedAt: new Date().toISOString(),
+    };
+}
+
+/**
+ * Save persona memory back to Firestore, enforcing caps.
+ */
+export async function savePersonaMemory(
+    db: FirebaseFirestore.Firestore,
+    memory: PersonaMemory,
+): Promise<void> {
+    // Enforce rolling window caps
+    memory.recentInteractions = memory.recentInteractions.slice(0, MEMORY_CAP.recentInteractions);
+    memory.topicsDiscussed = memory.topicsDiscussed.slice(0, MEMORY_CAP.topicsDiscussed);
+    memory.evolvedOpinions = memory.evolvedOpinions.slice(0, MEMORY_CAP.evolvedOpinions);
+    memory.engagementSignals = memory.engagementSignals.slice(0, MEMORY_CAP.engagementSignals);
+    memory.updatedAt = new Date().toISOString();
+
+    await db.doc(`ai_teacher_memory/${memory.personaId}`).set(memory);
+}
+
+/**
+ * Build the memory context block for injection into system prompt.
+ */
+export function buildMemoryContext(memory: PersonaMemory): string {
+    const parts: string[] = [];
+
+    // Recent interactions — what's been happening in the community
+    if (memory.recentInteractions.length > 0) {
+        const recent = memory.recentInteractions.slice(0, 10);
+        parts.push(`RECENT COMMUNITY ACTIVITY (what you've seen/participated in):\n${recent.map(i =>
+            `- ${i.authorName} (${i.context}): "${i.text.substring(0, 100)}"`
+        ).join('\n')}`);
+    }
+
+    // Known teachers — people you've connected with
+    const known = Object.entries(memory.knownTeachers);
+    if (known.length > 0) {
+        parts.push(`TEACHERS YOU KNOW:\n${known.slice(0, 8).map(([, t]) =>
+            `- ${t.displayName}: ${t.relationship}`
+        ).join('\n')}`);
+    }
+
+    // Topics discussed recently — avoid repeating yourself
+    if (memory.topicsDiscussed.length > 0) {
+        parts.push(`TOPICS YOU RECENTLY DISCUSSED (don't repeat these — say something new):\n${memory.topicsDiscussed.slice(0, 8).map(t => `- ${t}`).join('\n')}`);
+    }
+
+    // Evolved opinions — things you've learned
+    if (memory.evolvedOpinions.length > 0) {
+        parts.push(`THINGS YOU'VE LEARNED FROM OTHER TEACHERS (reference these naturally):\n${memory.evolvedOpinions.map(o => `- ${o}`).join('\n')}`);
+    }
+
+    // What resonated — do more of this
+    if (memory.engagementSignals.length > 0) {
+        const best = memory.engagementSignals
+            .sort((a, b) => (b.likes + b.replies) - (a.likes + a.replies))
+            .slice(0, 3);
+        parts.push(`YOUR POSTS THAT RESONATED (teachers liked these — do more of this style):\n${best.map(s =>
+            `- "${s.content.substring(0, 80)}..." (${s.likes} likes, ${s.replies} replies)`
+        ).join('\n')}`);
+    }
+
+    if (parts.length === 0) return '';
+    return '\n\nYOUR MEMORY (accumulated from real interactions on this platform):\n' + parts.join('\n\n');
 }
 
 /**
