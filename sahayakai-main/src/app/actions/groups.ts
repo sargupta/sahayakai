@@ -520,6 +520,12 @@ export async function sendGroupChatMessageAction(
     });
 
     logger.info(`sendGroupChat: uid=${uid}, groupId=${groupId}, msgId=${msgRef.id}`);
+
+    // Fire-and-forget: trigger AI reactive reply for group chat
+    import('@/lib/ai-reactive-trigger').then(({ triggerAIReactiveReply }) => {
+        triggerAIReactiveReply(`groups/${groupId}/chat`, text || '', authorName);
+    }).catch(() => {});
+
     return msgRef.id;
 }
 

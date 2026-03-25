@@ -45,7 +45,7 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
 
     const result = await runResiliently(async (override) => {
         return ai.generate({
-            model: 'googleai/gemini-2.0-flash',
+            model: 'googleai/gemini-2.0-flash-lite',
             system: systemPrompt,
             prompt: userPrompt,
             config: {

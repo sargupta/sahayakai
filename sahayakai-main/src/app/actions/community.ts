@@ -645,4 +645,8 @@ export async function sendChatMessageAction(text: string, audioUrl?: string) {
     if (audioUrl) payload.audioUrl = audioUrl;
 
     await db.collection("community_chat").add(payload);
+
+    // Fire-and-forget: trigger AI reactive reply (non-blocking)
+    const { triggerAIReactiveReply } = await import("@/lib/ai-reactive-trigger");
+    triggerAIReactiveReply("community_chat", trimmed || '', authorName);
 }
