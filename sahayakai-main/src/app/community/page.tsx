@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-// New community components
+// Community components
 import GroupList from '@/components/community/group-list';
 import { ShareComposer } from '@/components/community/share-composer';
 import { UnifiedFeed } from '@/components/community/unified-feed';
@@ -17,6 +17,7 @@ import GroupFeed from '@/components/community/group-feed';
 import { CommunityChat } from '@/components/community/community-chat';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
 import { ResourceFeed } from '@/components/community/resource-feed';
+import { ExploreGroups } from '@/components/community/explore-groups';
 
 // Server actions
 import {
@@ -58,21 +59,27 @@ export default function CommunityPage() {
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const [showStaffRoom, setShowStaffRoom] = useState(false);
   const [showTeacherDirectory, setShowTeacherDirectory] = useState(false);
+  const [showExploreGroups, setShowExploreGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
   // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setLoading(false);
         return;
       }
 
-      // Fire-and-forget: auto-join groups based on profile
-      ensureUserGroupsAction().catch(() => {});
+      // Step 1: Auto-join groups FIRST — ensures membership is settled
+      // before we query myGroups and discover
+      try {
+        await ensureUserGroupsAction();
+      } catch {
+        // Non-fatal — continue loading
+      }
 
-      // Load all data in parallel — individual failures don't block others
+      // Step 2: Load all data in parallel — now that membership is settled
       Promise.allSettled([
         getMyGroupsAction(),
         getUnifiedFeedAction(),
@@ -87,7 +94,6 @@ export default function CommunityPage() {
           if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
           if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
 
-          // Log any failures
           results.forEach((r, i) => {
             if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
           });
@@ -107,7 +113,6 @@ export default function CommunityPage() {
 
   const handleLikePost = useCallback(
     async (groupId: string, postId: string) => {
-      // Optimistic update
       setLikedPostIds((prev) => {
         const next = new Set(prev);
         if (next.has(postId)) next.delete(postId);
@@ -117,7 +122,6 @@ export default function CommunityPage() {
       try {
         await likeGroupPostAction(groupId, postId);
       } catch {
-        // Revert on failure
         setLikedPostIds((prev) => {
           const next = new Set(prev);
           if (next.has(postId)) next.delete(postId);
@@ -146,6 +150,7 @@ export default function CommunityPage() {
     [toast],
   );
 
+  /** Join group from any surface — updates myGroups, removes from suggested */
   const handleJoinGroup = useCallback(
     async (groupId: string) => {
       try {
@@ -165,6 +170,7 @@ export default function CommunityPage() {
     setSelectedGroupId(groupId);
   }, []);
 
+  /** Open a group the user IS a member of */
   const handleOpenGroup = useCallback(
     (groupId: string) => {
       const group = myGroups.find((g) => g.id === groupId);
@@ -173,15 +179,14 @@ export default function CommunityPage() {
     [myGroups],
   );
 
+  /** Open a group for preview — works for both member and non-member */
   const handlePreviewGroup = useCallback(
     (groupId: string) => {
-      // Check myGroups first — if already a member, open normally
       const myGroup = myGroups.find((g) => g.id === groupId);
       if (myGroup) {
         setActiveGroup(myGroup);
         return;
       }
-      // Otherwise open from suggestedGroups in preview mode
       const suggested = suggestedGroups.find((g) => g.id === groupId);
       if (suggested) setActiveGroup(suggested);
     },
@@ -196,6 +201,10 @@ export default function CommunityPage() {
     setShowTeacherDirectory(true);
   }, []);
 
+  const handleOpenExploreGroups = useCallback(() => {
+    setShowExploreGroups(true);
+  }, []);
+
   const handleRefreshFeed = useCallback(async () => {
     try {
       const feed = await getUnifiedFeedAction();
@@ -206,7 +215,7 @@ export default function CommunityPage() {
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    // Placeholder for pagination — currently all items loaded at once
+    // Placeholder for pagination
   }, []);
 
   // ── Group Detail View ────────────────────────────────────────────────────
@@ -222,7 +231,6 @@ export default function CommunityPage() {
           const refreshed = await getMyGroupsAction();
           setMyGroups(refreshed);
           setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
-          // Update activeGroup reference from refreshed list
           const updated = refreshed.find((g) => g.id === groupId);
           if (updated) setActiveGroup(updated);
         }}
@@ -276,6 +284,33 @@ export default function CommunityPage() {
     );
   }
 
+  // ── Explore Groups View ────────────────────────────────────────────────
+  if (showExploreGroups) {
+    return (
+      <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            onClick={() => setShowExploreGroups(false)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h2 className="font-headline text-lg font-bold text-slate-900">
+            Explore Groups
+          </h2>
+        </div>
+        <ExploreGroups
+          groups={suggestedGroups}
+          onJoinGroup={handleJoinGroup}
+          onPreviewGroup={handlePreviewGroup}
+        />
+      </div>
+    );
+  }
+
   // ── Main Feed View ───────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
@@ -305,12 +340,14 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      {/* Group chips */}
+      {/* Group chips — with Explore entry point for mobile */}
       <div className="mt-4">
         <GroupList
           groups={myGroups}
           selectedGroupId={selectedGroupId}
           onSelectGroup={handleSelectGroup}
+          onExploreGroups={handleOpenExploreGroups}
+          hasDiscoverableGroups={suggestedGroups.length > 0}
         />
       </div>
 
@@ -336,7 +373,7 @@ export default function CommunityPage() {
             likedPostIds={likedPostIds}
           />
 
-          {/* Shared Resources — library resources with like/save/use */}
+          {/* Shared Resources */}
           <div className="mt-6">
             <h2 className="font-headline text-lg font-bold text-slate-900 mb-3">
               Shared Resources

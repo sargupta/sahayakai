@@ -242,29 +242,39 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
       {memberState ? (
         <ShareComposer groupId={group.id} onPostCreated={handlePostCreated} />
       ) : (
-        <Card className="flex items-center justify-between gap-3 px-4 py-3">
-          <p className="text-sm text-muted-foreground">
-            Join this group to post and chat
-          </p>
-          <Button
-            size="sm"
-            disabled={joining}
-            onClick={async () => {
-              if (!onJoinGroup) return;
-              setJoining(true);
-              try {
-                await onJoinGroup(group.id);
-                setMemberState(true);
-                toast({ title: "Joined group" });
-              } catch {
-                toast({ title: "Could not join group", variant: "destructive" });
-              } finally {
-                setJoining(false);
-              }
+        <Card className="overflow-hidden">
+          <div
+            className="px-4 py-6 text-center"
+            style={{
+              background: `linear-gradient(135deg, ${gradientColor}11, ${gradientColor}08)`,
             }}
           >
-            {joining ? "Joining..." : "Join Group"}
-          </Button>
+            <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground/60" />
+            <p className="text-sm font-medium text-slate-700">
+              Join this group to share, post, and chat with members
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
+              {group.memberCount} teachers are already here
+            </p>
+            <Button
+              disabled={joining}
+              onClick={async () => {
+                if (!onJoinGroup) return;
+                setJoining(true);
+                try {
+                  await onJoinGroup(group.id);
+                  setMemberState(true);
+                  toast({ title: "Joined group" });
+                } catch {
+                  toast({ title: "Could not join group", variant: "destructive" });
+                } finally {
+                  setJoining(false);
+                }
+              }}
+            >
+              {joining ? "Joining..." : "Join Group"}
+            </Button>
+          </div>
         </Card>
       )}
 

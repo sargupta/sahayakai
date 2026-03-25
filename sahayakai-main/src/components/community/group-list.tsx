@@ -2,12 +2,14 @@
 
 import { cn } from "@/lib/utils";
 import { getGroupColor, Group } from "@/types/community";
-import { LayoutGrid } from "lucide-react";
+import { Compass, LayoutGrid } from "lucide-react";
 
 interface GroupListProps {
   groups: Group[];
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string | null) => void;
+  onExploreGroups?: () => void;
+  hasDiscoverableGroups?: boolean;
 }
 
 function truncateName(name: string): string {
@@ -19,6 +21,8 @@ export default function GroupList({
   groups,
   selectedGroupId,
   onSelectGroup,
+  onExploreGroups,
+  hasDiscoverableGroups,
 }: GroupListProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -64,6 +68,17 @@ export default function GroupList({
           </button>
         );
       })}
+
+      {/* Explore chip — visible when there are groups to discover */}
+      {hasDiscoverableGroups && onExploreGroups && (
+        <button
+          onClick={onExploreGroups}
+          className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border border-dashed border-orange-300 text-orange-500 hover:bg-orange-50 transition-all"
+        >
+          <Compass className="h-3.5 w-3.5" />
+          Explore
+        </button>
+      )}
     </div>
   );
 }
