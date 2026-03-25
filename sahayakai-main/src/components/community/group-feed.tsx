@@ -19,14 +19,18 @@ import type { MyConnectionData, ConnectionStatus } from "@/types";
 interface GroupFeedProps {
   group: Group;
   onBack: () => void;
+  isMember?: boolean;
+  onJoinGroup?: (groupId: string) => Promise<void>;
 }
 
 const PAGE_SIZE = 20;
 
-export default function GroupFeed({ group, onBack }: GroupFeedProps) {
+export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup }: GroupFeedProps) {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const [memberState, setMemberState] = useState(isMember);
+  const [joining, setJoining] = useState(false);
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -214,15 +218,17 @@ export default function GroupFeed({ group, onBack }: GroupFeedProps) {
             </div>
           </div>
 
-          <Button
-            variant={chatOpen ? "default" : "outline"}
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={() => setChatOpen((o) => !o)}
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Chat</span>
-          </Button>
+          {memberState && (
+            <Button
+              variant={chatOpen ? "default" : "outline"}
+              size="sm"
+              className="shrink-0 gap-1.5"
+              onClick={() => setChatOpen((o) => !o)}
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Chat</span>
+            </Button>
+          )}
         </div>
 
         {group.description && (
@@ -232,8 +238,45 @@ export default function GroupFeed({ group, onBack }: GroupFeedProps) {
         )}
       </Card>
 
-      {/* ── Share Composer ───────────────────────────────────────────────────── */}
-      <ShareComposer groupId={group.id} onPostCreated={handlePostCreated} />
+      {/* ── Share Composer / Join Banner ─────────────────────────────────────── */}
+      {memberState ? (
+        <ShareComposer groupId={group.id} onPostCreated={handlePostCreated} />
+      ) : (
+        <Card className="overflow-hidden">
+          <div
+            className="px-4 py-6 text-center"
+            style={{
+              background: `linear-gradient(135deg, ${gradientColor}11, ${gradientColor}08)`,
+            }}
+          >
+            <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground/60" />
+            <p className="text-sm font-medium text-slate-700">
+              Join this group to share, post, and chat with members
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
+              {group.memberCount} teachers are already here
+            </p>
+            <Button
+              disabled={joining}
+              onClick={async () => {
+                if (!onJoinGroup) return;
+                setJoining(true);
+                try {
+                  await onJoinGroup(group.id);
+                  setMemberState(true);
+                  toast({ title: "Joined group" });
+                } catch {
+                  toast({ title: "Could not join group", variant: "destructive" });
+                } finally {
+                  setJoining(false);
+                }
+              }}
+            >
+              {joining ? "Joining..." : "Join Group"}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* ── Posts Feed ───────────────────────────────────────────────────────── */}
       {loading ? (
