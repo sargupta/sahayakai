@@ -30,6 +30,7 @@ interface GroupsSidebarProps {
   sentRequestUids: string[];
   onSelectGroup: (groupId: string) => void;
   onJoinGroup: (groupId: string) => Promise<void>;
+  onPreviewGroup?: (groupId: string) => void;
   onOpenStaffRoom: () => void;
   onOpenTeacherDirectory: () => void;
   onConnectTeacher: (uid: string) => void;
@@ -43,6 +44,7 @@ export function GroupsSidebar({
   sentRequestUids,
   onSelectGroup,
   onJoinGroup,
+  onPreviewGroup,
   onOpenStaffRoom,
   onOpenTeacherDirectory,
   onConnectTeacher,
@@ -130,14 +132,17 @@ export function GroupsSidebar({
                   key={group.id}
                   className="flex items-center justify-between gap-2"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
+                  <button
+                    className="min-w-0 text-left"
+                    onClick={() => onPreviewGroup?.(group.id)}
+                  >
+                    <p className="text-sm font-medium truncate hover:underline">
                       {group.name}
                     </p>
                     <p className="text-xs text-slate-500">
                       {group.memberCount} members
                     </p>
-                  </div>
+                  </button>
                   <Button
                     size="sm"
                     variant={joinedGroups.has(group.id) ? "ghost" : "outline"}

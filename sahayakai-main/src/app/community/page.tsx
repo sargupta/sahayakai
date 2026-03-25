@@ -154,12 +154,6 @@ export default function CommunityPage() {
         setMyGroups(refreshed);
         setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
         toast({ title: 'Joined group' });
-
-        // Auto-navigate into the joined group after a brief delay
-        const joinedGroup = refreshed.find((g) => g.id === groupId);
-        if (joinedGroup) {
-          setTimeout(() => setActiveGroup(joinedGroup), 600);
-        }
       } catch {
         toast({ title: 'Could not join group', variant: 'destructive' });
       }
@@ -177,6 +171,21 @@ export default function CommunityPage() {
       if (group) setActiveGroup(group);
     },
     [myGroups],
+  );
+
+  const handlePreviewGroup = useCallback(
+    (groupId: string) => {
+      // Check myGroups first — if already a member, open normally
+      const myGroup = myGroups.find((g) => g.id === groupId);
+      if (myGroup) {
+        setActiveGroup(myGroup);
+        return;
+      }
+      // Otherwise open from suggestedGroups in preview mode
+      const suggested = suggestedGroups.find((g) => g.id === groupId);
+      if (suggested) setActiveGroup(suggested);
+    },
+    [myGroups, suggestedGroups],
   );
 
   const handleOpenStaffRoom = useCallback(() => {
@@ -202,10 +211,21 @@ export default function CommunityPage() {
 
   // ── Group Detail View ────────────────────────────────────────────────────
   if (activeGroup) {
+    const isMember = myGroups.some((g) => g.id === activeGroup.id);
     return (
       <GroupFeed
         group={activeGroup}
         onBack={() => setActiveGroup(null)}
+        isMember={isMember}
+        onJoinGroup={async (groupId) => {
+          await joinGroupAction(groupId);
+          const refreshed = await getMyGroupsAction();
+          setMyGroups(refreshed);
+          setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
+          // Update activeGroup reference from refreshed list
+          const updated = refreshed.find((g) => g.id === groupId);
+          if (updated) setActiveGroup(updated);
+        }}
       />
     );
   }
@@ -335,6 +355,7 @@ export default function CommunityPage() {
             sentRequestUids={connectionData.sentRequestUids}
             onSelectGroup={handleOpenGroup}
             onJoinGroup={handleJoinGroup}
+            onPreviewGroup={handlePreviewGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
             onOpenTeacherDirectory={handleOpenTeacherDirectory}
             onConnectTeacher={handleConnectTeacher}
