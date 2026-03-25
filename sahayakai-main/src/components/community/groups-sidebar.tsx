@@ -29,7 +29,7 @@ interface GroupsSidebarProps {
   connectedUids: string[];
   sentRequestUids: string[];
   onSelectGroup: (groupId: string) => void;
-  onJoinGroup: (groupId: string) => void;
+  onJoinGroup: (groupId: string) => Promise<void>;
   onOpenStaffRoom: () => void;
   onOpenTeacherDirectory: () => void;
   onConnectTeacher: (uid: string) => void;
@@ -49,6 +49,7 @@ export function GroupsSidebar({
 }: GroupsSidebarProps) {
   const router = useRouter();
   const [joiningGroups, setJoiningGroups] = useState<Set<string>>(new Set());
+  const [joinedGroups, setJoinedGroups] = useState<Set<string>>(new Set());
   const [connectingTeachers, setConnectingTeachers] = useState<Set<string>>(
     new Set()
   );
@@ -57,6 +58,8 @@ export function GroupsSidebar({
     setJoiningGroups((prev) => new Set(prev).add(groupId));
     try {
       await onJoinGroup(groupId);
+      // Show "Joined!" briefly — parent will navigate into the group
+      setJoinedGroups((prev) => new Set(prev).add(groupId));
     } finally {
       setJoiningGroups((prev) => {
         const next = new Set(prev);
@@ -122,30 +125,34 @@ export function GroupsSidebar({
           </h3>
           <Card className="p-4">
             <div className="space-y-3">
-              {suggestedGroups.slice(0, 3).map((group) => (
+              {suggestedGroups.slice(0, 5).map((group) => (
                 <div
                   key={group.id}
                   className="flex items-center justify-between gap-2"
                 >
-                  <button
-                    onClick={() => handleJoinGroup(group.id)}
-                    className="min-w-0 text-left hover:opacity-80 transition-opacity"
-                  >
-                    <p className="text-sm font-medium truncate hover:underline">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
                       {group.name}
                     </p>
                     <p className="text-xs text-slate-500">
                       {group.memberCount} members
                     </p>
-                  </button>
+                  </div>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="shrink-0 text-xs"
-                    disabled={joiningGroups.has(group.id)}
+                    variant={joinedGroups.has(group.id) ? "ghost" : "outline"}
+                    className={cn(
+                      "shrink-0 text-xs",
+                      joinedGroups.has(group.id) && "text-emerald-600"
+                    )}
+                    disabled={joiningGroups.has(group.id) || joinedGroups.has(group.id)}
                     onClick={() => handleJoinGroup(group.id)}
                   >
-                    {joiningGroups.has(group.id) ? "Joining..." : "Join"}
+                    {joinedGroups.has(group.id)
+                      ? "Joined"
+                      : joiningGroups.has(group.id)
+                        ? "Joining..."
+                        : "Join"}
                   </Button>
                 </div>
               ))}

@@ -152,9 +152,14 @@ export default function CommunityPage() {
         await joinGroupAction(groupId);
         const refreshed = await getMyGroupsAction();
         setMyGroups(refreshed);
-        // Remove from suggested
         setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
         toast({ title: 'Joined group' });
+
+        // Auto-navigate into the joined group after a brief delay
+        const joinedGroup = refreshed.find((g) => g.id === groupId);
+        if (joinedGroup) {
+          setTimeout(() => setActiveGroup(joinedGroup), 600);
+        }
       } catch {
         toast({ title: 'Could not join group', variant: 'destructive' });
       }
