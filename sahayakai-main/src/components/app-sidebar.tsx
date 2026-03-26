@@ -13,7 +13,8 @@ import {
   SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
+import { UsageDisplay } from "@/components/usage-display"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, Settings, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -222,6 +223,14 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')} tooltip="Settings">
+                <Link href="/settings" onClick={() => handleNavClick('/settings')}>
+                  <Settings />
+                  <span>Settings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/notifications')} tooltip="Notifications">
                 <Link href="/notifications" onClick={() => handleNavClick('/notifications')}>
                   <Sparkles className="text-orange-500" />
@@ -241,6 +250,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <UsageDisplay />
         <SidebarGroup>
           <SidebarGroupLabel>Admin</SidebarGroupLabel>
           <SidebarMenu>

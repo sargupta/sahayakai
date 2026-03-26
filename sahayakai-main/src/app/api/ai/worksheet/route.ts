@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { generateWorksheet } from '@/ai/flows/worksheet-wizard';
 import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -44,7 +45,7 @@ import { logger } from '@/lib/logger';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
     let promptText = 'Unknown Prompt';
     try {
         const userId = request.headers.get('x-user-id');
@@ -80,3 +81,5 @@ export async function POST(request: Request) {
         );
     }
 }
+
+export const POST = withPlanCheck('worksheet')(_handler);

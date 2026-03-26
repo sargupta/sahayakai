@@ -8,6 +8,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Check if caller is an admin of the given org
+    function isOrgAdmin(orgId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // =============================================
+    // EXISTING COLLECTIONS
+    // =============================================
+
     // --- Feedback (signed-in users only) ---
     match /feedbacks/{document} {
       allow create: if isSignedIn();
@@ -16,8 +30,8 @@ service cloud.firestore {
     // --- Users ---
     // Each user can only read/write their own document
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
-      allow create: if request.auth.uid == userId;
+      allow read, update: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     // --- Content ---
@@ -37,26 +51,21 @@ service cloud.firestore {
     // --- Direct Messages & Group Conversations ---
 
     match /conversations/{convId} {
-      // Only participants can read or update the conversation doc (e.g. unread counts)
       allow read, update: if isSignedIn()
         && request.auth.uid in resource.data.participantIds;
 
-      // Only authenticated users can create; they must include themselves as a participant
       allow create: if isSignedIn()
         && request.auth.uid in request.resource.data.participantIds;
 
       match /messages/{msgId} {
-        // Only participants can read messages
         allow read: if isSignedIn()
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
 
-        // Only a participant can create a message, and only as themselves
         allow create: if isSignedIn()
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.text.size() <= 1000;
 
-        // readBy updates (mark as read) allowed for participants only
         allow update: if isSignedIn()
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
 
@@ -73,42 +82,103 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // --- Connection Requests (pending invitations) ---
-    // Created by sender; readable/deletable by either party; never mutated (update: false)
+    // --- Connection Requests ---
     match /connection_requests/{reqId} {
-      // Sender must be signed in, must be themselves, and cannot self-connect
       allow create: if isSignedIn()
         && request.resource.data.fromUid == request.auth.uid
         && request.resource.data.fromUid != request.resource.data.toUid;
 
-      // Both sender and recipient can read (to check pending state)
       allow read: if isSignedIn()
         && (request.auth.uid == resource.data.fromUid
             || request.auth.uid == resource.data.toUid);
 
-      // Either party can delete (sender withdraws / recipient declines)
       allow delete: if isSignedIn()
         && (request.auth.uid == resource.data.fromUid
             || request.auth.uid == resource.data.toUid);
 
-      // Requests are immutable — accept/decline = delete + write to /connections
       allow update: if false;
     }
 
     // --- Connections (accepted, symmetric) ---
-    // Written only by Admin SDK (server action); clients can read + self-disconnect
     match /connections/{connId} {
-      // Any signed-in user can query connections (needed for directory lookups)
       allow read: if isSignedIn();
-
-      // Only Admin SDK server action can create (accept request)
       allow create: if false;
-
-      // Either participant can disconnect (delete the document)
       allow delete: if isSignedIn()
         && request.auth.uid in resource.data.uids;
-
       allow update: if false;
     }
+
+    // =============================================
+    // BILLING & ORGANIZATION COLLECTIONS
+    // =============================================
+
+    // --- Credit Ledger ---
+    // Stores balance, plan, cycle dates per user.
+    // Read: owner only. Write: Admin SDK only (server-side billing logic).
+    match /credit_ledger/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // --- Organizations ---
+    // School/chain info, Razorpay IDs, seat counts.
+    // Read: org admins only (via get() on members subcollection).
+    // Write: Admin SDK only.
+    match /organizations/{orgId} {
+      allow read: if isOrgAdmin(orgId);
+      allow write: if false;
+
+      // --- Organization Members ---
+      // Read: org admins can list all members; teachers can read their own doc.
+      // Write: Admin SDK only (invite/remove handled server-side).
+      match /members/{memberId} {
+        allow read: if isOwner(memberId) || isOrgAdmin(orgId);
+        allow write: if false;
+      }
+    }
+
+    // --- Webhook Events ---
+    // Razorpay idempotency tracking. Completely backend-only.
+    match /webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // --- Config: Plans ---
+    // Feature limits per plan. Readable by any authenticated user.
+    // Written only via Admin SDK or Firebase console.
+    match /config/plans {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // --- Usage Counters ---
+    // Per-user monthly/daily usage counters for subscription gating.
+    // Read: owner only. Write: Admin SDK only (incremented server-side).
+    match /usageCounters/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // --- Subscriptions ---
+    // Razorpay subscription tracking. Read: owner only. Write: Admin SDK only.
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // --- System Config ---
+    // Feature flags, rollout config. Readable by authenticated users.
+    match /system_config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // =============================================
+    // DEFAULT DENY
+    // =============================================
+    // Any collection not matched above is denied by default.
+    // This explicit rule documents the intent — Firestore denies
+    // unmatched paths anyway, but this makes audits clearer.
   }
 }

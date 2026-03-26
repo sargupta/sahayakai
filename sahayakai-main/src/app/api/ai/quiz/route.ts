@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
 import { QuizGeneratorInputSchema } from '@/ai/schemas/quiz-generator-schemas';
 import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
-export async function POST(request: Request) {
+async function _handler(request: Request) {
     let topicText = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
@@ -34,3 +35,5 @@ export async function POST(request: Request) {
         );
     }
 }
+
+export const POST = withPlanCheck('quiz')(_handler);

@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen } from 'lucide-react';
+import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen, Lock } from 'lucide-react';
 import { submitFeedback } from '@/app/actions/feedback';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
@@ -205,6 +206,7 @@ const displayTranslations: Record<string, any> = {
 
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en' }) => {
   const { toast } = useToast();
+  const { canExport } = useSubscription();
   const t = displayTranslations[selectedLanguage] || displayTranslations.en;
   const [editablePlan, setEditablePlan] = useState(lessonPlan);
   const [isEditing, setIsEditing] = useState(false);
@@ -460,16 +462,16 @@ ${editablePlan.assessment}
                   <Edit className="mr-2 h-4 w-4" />
                   {t.buttons.edit}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleCopy}>
-                  <Copy className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={canExport ? handleCopy : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to copy and export lesson plans.' })}>
+                  {canExport ? <Copy className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
                   {t.buttons.copy}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleSave}>
                   <Save className="mr-2 h-4 w-4" />
                   {t.buttons.save}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={canExport ? handleDownload : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to download PDF.' })}>
+                  {canExport ? <Download className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
                   {t.buttons.pdf}
                 </Button>
               </>

@@ -67,7 +67,9 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/assistant') ||
         pathname.startsWith('/api/auth/') ||
         pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
-        pathname.startsWith('/api/jobs/');  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
+        pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
+        pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
+        pathname.startsWith('/api/billing/callback');  // Razorpay redirect — verified via signature  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
 
     if (isPublicApi) {
         return NextResponse.next();
@@ -89,10 +91,20 @@ export async function middleware(request: NextRequest) {
         if (process.env.NODE_ENV === 'development' && rawToken === 'dev-token') {
             // Dev bypass — inject mock UID when using the dev token placeholder
             requestHeaders.set('x-user-id', 'dev-user-123');
+            requestHeaders.set('x-user-plan', 'pro');
         } else {
             const decoded = await verifyIdToken(rawToken);
             if (decoded?.sub) {
                 requestHeaders.set('x-user-id', decoded.sub);
+                // Plan from Firebase custom claims — set via Admin SDK when plan changes
+                // Falls back to 'free' if claim not yet set (new users, pre-migration users)
+                const plan = (decoded as Record<string, unknown>).planType;
+                // Normalize legacy values: 'institution' → 'premium'; 'pro'/'gold'/'premium' pass through
+                const VALID_PLANS = ['free', 'pro', 'gold', 'premium'];
+                const LEGACY: Record<string, string> = { institution: 'premium' };
+                const raw = typeof plan === 'string' ? plan : '';
+                const resolved = LEGACY[raw] ?? (VALID_PLANS.includes(raw) ? raw : 'free');
+                requestHeaders.set('x-user-plan', resolved);
             } else if (isApiOrAdmin) {
                 // Invalid token on protected routes → reject
                 return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
@@ -103,6 +115,7 @@ export async function middleware(request: NextRequest) {
             // No token at all on protected API/admin routes
             if (process.env.NODE_ENV === 'development') {
                 requestHeaders.set('x-user-id', 'dev-user-123');
+                requestHeaders.set('x-user-plan', 'pro');
             } else {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }

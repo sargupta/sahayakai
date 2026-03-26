@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { instantAnswer } from '@/ai/flows/instant-answer';
 import { logger } from '@/lib/utils';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -38,7 +39,7 @@ import { logger } from '@/lib/utils';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
     let questionText = 'Unknown Question';
     try {
         const userId = request.headers.get('x-user-id');
@@ -79,3 +80,5 @@ export async function POST(request: Request) {
         );
     }
 }
+
+export const POST = withPlanCheck('instant-answer')(_handler);
