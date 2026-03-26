@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UsageDisplay } from "@/components/usage-display"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, Settings, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle } from "lucide-react"
+import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, Settings, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle, Gauge } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -222,6 +222,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <UsageDisplay />
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')} tooltip="Settings">
                 <Link href="/settings" onClick={() => handleNavClick('/settings')}>
@@ -250,7 +251,6 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <UsageDisplay />
         <SidebarGroup>
           <SidebarGroupLabel>Admin</SidebarGroupLabel>
           <SidebarMenu>
