@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateAvatar } from '@/ai/flows/avatar-generator';
 import { checkImageRateLimit } from '@/lib/server-safety';
 import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
-export async function POST(request: NextRequest) {
+async function _handler(request: NextRequest) {
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -22,3 +23,5 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Image generation failed. Please try again.' }, { status: 500 });
     }
 }
+
+export const POST = withPlanCheck('avatar')(_handler);

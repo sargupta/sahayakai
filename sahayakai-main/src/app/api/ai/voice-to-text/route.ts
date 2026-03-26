@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { voiceToTextFormData } from '@/ai/flows/voice-to-text';
 import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
-export async function POST(request: NextRequest) {
+async function _handler(request: NextRequest) {
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -18,3 +19,5 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: message }, { status: 500 });
     }
 }
+
+export const POST = withPlanCheck('voice-to-text')(_handler);

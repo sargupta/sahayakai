@@ -387,42 +387,36 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         formData.append("audio", audioBlob, "recording.webm");
 
         try {
+          // COST OPTIMIZATION: Use browser SpeechRecognition first (free).
+          // Only fall back to cloud (₹1-2/call) if browser didn't capture anything.
+          const browserTranscript = fallbackTranscriptRef.current?.trim();
+
+          if (browserTranscript && browserTranscript.length >= 2) {
+            logger.info("Using browser SpeechRecognition (free, no cloud call)");
+            onTranscriptChange(browserTranscript);
+            return;
+          }
+
+          // Browser didn't capture — use cloud transcription
           const { text, language } = await transcribeWithRetry(formData);
 
           if (!text || text.length < 2) {
-            // Check fallback
-            if (fallbackTranscriptRef.current && fallbackTranscriptRef.current.length >= 2) {
-              logger.info("Using OS Speech Recognition Fallback (Server text was empty)");
-              onTranscriptChange(fallbackTranscriptRef.current.trim(), language);
-            } else {
-              toast({
-                title: "No Speech Detected",
-                description: "We couldn't hear you clearly.",
-                variant: "default",
-              });
-            }
+            toast({
+              title: "No Speech Detected",
+              description: "We couldn't hear you clearly.",
+              variant: "default",
+            });
             return;
           }
           onTranscriptChange(text, language);
         } catch (error) {
           logger.error("Voice-to-text transcription failed", error);
 
-          // Deep Failsafe: If cloud COMPLETELY fails, use offline OS fallback transcript if it captured anything
-          if (fallbackTranscriptRef.current && fallbackTranscriptRef.current.length >= 2) {
-            logger.warn("Cloud TTS Failed completely. Yielding to OS WebkitSpeechRecognition fallback.");
-            onTranscriptChange(fallbackTranscriptRef.current.trim());
-            toast({
-              title: "Network Unstable",
-              description: "Switched to offline speech recognition due to poor connection.",
-              variant: "default",
-            });
-          } else {
-            toast({
-              title: "Error",
-              description: "Failed to transcribe audio. Please try again.",
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Error",
+            description: "Failed to transcribe audio. Please try again.",
+            variant: "destructive",
+          });
         } finally {
           setStatus('idle');
           // Always release stream tracks — the mic-in-use indicator must turn off

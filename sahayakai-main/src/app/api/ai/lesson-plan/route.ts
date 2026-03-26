@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { z } from 'zod';
 import { logger } from '@/lib/utils';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -54,7 +55,7 @@ import { logger } from '@/lib/utils';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
     let topicText = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
@@ -93,3 +94,5 @@ export async function POST(request: Request) {
         );
     }
 }
+
+export const POST = withPlanCheck('lesson-plan')(_handler);
