@@ -22,12 +22,14 @@ import { useSearchParams } from "next/navigation";
 import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useJarvisStore } from "@/store/jarvisStore";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
     const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState("");
+    const { limitState, checkResponse, clearLimit } = useLimitGuard();
     const [selectedChapter, setSelectedChapter] = useState<NCERTChapter | null>(null);
     const [resourceLevel, setResourceLevel] = useState<ResourceLevel>('low');
     const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('standard');
@@ -400,8 +402,13 @@ export function useLessonPlan() {
                     throw new Error("Please sign in to generate lesson plans");
                 }
                 const errorData = await res.json();
+                if (checkResponse(res.status, errorData)) {
+                    setIsLoading(false);
+                    return; // limit hit — UI will show UpgradePrompt
+                }
                 throw new Error(errorData.error || "Failed to generate lesson plan");
             }
+            clearLimit();
 
             const result = await res.json();
             const apiDuration = Date.now() - apiStartTime;
@@ -524,5 +531,6 @@ export function useLessonPlan() {
         handleTranscript,
         handlePromptClick,
         handleTemplateSelect,
+        limitState,
     };
 }

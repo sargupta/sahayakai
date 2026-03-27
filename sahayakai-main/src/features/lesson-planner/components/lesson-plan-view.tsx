@@ -8,6 +8,8 @@ import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { LessonPlanHeader } from "@/components/lesson-plan/lesson-plan-header";
 import { LessonPlanInputSection } from "@/components/lesson-plan/lesson-plan-input-section";
 import { LessonPlanSidebar } from "@/components/lesson-plan/lesson-plan-sidebar";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { useLessonPlan } from "../hooks/use-lesson-plan";
 
 type LessonPlanViewProps = ReturnType<typeof useLessonPlan>;
@@ -300,20 +302,34 @@ export function LessonPlanView({
     handlePromptClick,
     handleTemplateSelect,
     loadingMessage,
+    limitState,
 }: LessonPlanViewProps) {
     const t = translations[selectedLanguage] || translations.en;
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12">
 
+            {/* Limit-hit: show UpgradePrompt instead of form */}
+            {(limitState.limitReached || limitState.upgradeRequired) && (
+                <div className="mb-6">
+                    <UpgradePrompt
+                        feature={limitState.feature || 'lesson-plan'}
+                        used={limitState.used ?? 0}
+                        limit={limitState.limit ?? 0}
+                    />
+                </div>
+            )}
+
             <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                 {/* Clean Top Bar */}
                 <div className="h-1.5 w-full bg-primary" />
-
 
                 <LessonPlanHeader
                     title={t.title}
                     description={t.description}
                 />
+                <div className="flex justify-center -mt-3 mb-2">
+                    <UsageRemainingBadge feature="lesson-plan" />
+                </div>
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

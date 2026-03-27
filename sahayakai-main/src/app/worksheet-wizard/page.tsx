@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PencilRuler, Download, Save } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
@@ -221,6 +224,7 @@ function WorksheetWizardContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [worksheet, setWorksheet] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { limitState, checkResponse, clearLimit } = useLimitGuard();
   const { toast } = useToast();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -351,9 +355,14 @@ function WorksheetWizardContent() {
           throw new Error("Please sign in to generate worksheets");
         }
         const errorData = await res.json();
+        if (checkResponse(res.status, errorData)) {
+          setIsLoading(false);
+          return;
+        }
         throw new Error(errorData.error || "Failed to generate worksheet");
       }
 
+      clearLimit();
       const result = await res.json();
       setWorksheet(result.worksheetContent);
       clearFormSnapshot("worksheet-wizard");
@@ -408,7 +417,17 @@ function WorksheetWizardContent() {
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
+          <UsageRemainingBadge feature="worksheet" />
         </CardHeader>
+
+        {(limitState.limitReached || limitState.upgradeRequired) && (
+          <UpgradePrompt
+            feature="worksheet"
+            used={limitState.used ?? 0}
+            limit={limitState.limit ?? 0}
+          />
+        )}
+
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
