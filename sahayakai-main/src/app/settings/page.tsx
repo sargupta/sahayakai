@@ -3,9 +3,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
+import { useSubscription } from '@/hooks/use-subscription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +21,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Download, Trash2, Shield, Loader2 } from 'lucide-react';
+import {
+  Globe, CreditCard, Shield, Download, Trash2, Loader2,
+  Crown, ArrowRight, ChevronRight,
+} from 'lucide-react';
+import { LANGUAGES, type Language } from '@/types';
+import Link from 'next/link';
 
 interface ConsentPrefs {
   analytics: boolean;
@@ -28,11 +37,14 @@ interface ConsentPrefs {
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { language, setLanguage } = useLanguage();
+  const { plan, isPro, loading: planLoading } = useSubscription();
   const getIdToken = useCallback(async () => {
     if (!user) throw new Error('Not authenticated');
     return user.getIdToken();
   }, [user]);
   const router = useRouter();
+
   const [consent, setConsent] = useState<ConsentPrefs | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,7 +62,6 @@ export default function SettingsPage() {
       const data = await res.json();
       setConsent(data.consent);
     } catch {
-      // Use defaults
       setConsent({ analytics: true, communityVisibility: true, productUpdates: true, aiTrainingData: false });
     } finally {
       setLoading(false);
@@ -74,7 +85,7 @@ export default function SettingsPage() {
         body: JSON.stringify({ [key]: value }),
       });
     } catch {
-      setConsent({ ...consent, [key]: prev }); // revert
+      setConsent({ ...consent, [key]: prev });
     } finally {
       setSaving(false);
     }
@@ -151,46 +162,121 @@ export default function SettingsPage() {
     );
   }
 
-  return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
 
-      {/* Privacy & Consent */}
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className="space-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your preferences, plan, and data</p>
+      </div>
+
+      {/* ─── Language ─── */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Language</p>
+              <p className="text-xs text-muted-foreground">App interface & AI output language</p>
+            </div>
+          </div>
+          <Select
+            value={language}
+            onValueChange={(val) => setLanguage(val as Language, true)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGES.map((lang) => (
+                <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* ─── Plan & Billing ─── */}
+      <Card>
+        <CardContent className="py-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-5 w-5 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Plan & Billing</p>
+                <p className="text-xs text-muted-foreground">Manage your subscription</p>
+              </div>
+            </div>
+            <Badge
+              variant="outline"
+              className={isPro
+                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+              }
+            >
+              {isPro && <Crown className="h-3 w-3 mr-1" />}
+              {planLabel}
+            </Badge>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" asChild className="flex-1">
+              <Link href="/usage">
+                View Usage <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </Button>
+            {!isPro ? (
+              <Button size="sm" asChild className="flex-1 bg-amber-600 hover:bg-amber-700">
+                <Link href="/pricing">
+                  Upgrade to Pro <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href="/pricing">
+                  Manage Plan <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Privacy & Consent ─── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Shield className="h-5 w-5" />
-            Privacy & Data Consent
+            Privacy & Data
           </CardTitle>
-          <CardDescription>
-            Control how your data is used. Changes take effect immediately.
-          </CardDescription>
+          <CardDescription>Control how your data is used</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5">
           <ConsentRow
             label="Usage Analytics"
-            description="Help us improve SahayakAI by sharing anonymized usage patterns"
+            description="Help improve SahayakAI with anonymized usage patterns"
             checked={consent?.analytics ?? true}
             onChange={(v) => updateConsent('analytics', v)}
             disabled={saving}
           />
           <ConsentRow
             label="Community Visibility"
-            description="Make your profile visible to other teachers in the community"
+            description="Make your profile visible to other teachers"
             checked={consent?.communityVisibility ?? true}
             onChange={(v) => updateConsent('communityVisibility', v)}
             disabled={saving}
           />
           <ConsentRow
             label="Product Updates"
-            description="Receive notifications about new features and improvements"
+            description="Receive notifications about new features"
             checked={consent?.productUpdates ?? true}
             onChange={(v) => updateConsent('productUpdates', v)}
             disabled={saving}
           />
           <ConsentRow
             label="AI Training Data"
-            description="Allow your anonymized content to help improve our AI models"
+            description="Allow anonymized content to improve AI models"
             checked={consent?.aiTrainingData ?? false}
             onChange={(v) => updateConsent('aiTrainingData', v)}
             disabled={saving}
@@ -198,40 +284,35 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Data Export */}
+      {/* ─── Data Export ─── */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5" />
-            Export Your Data
-          </CardTitle>
-          <CardDescription>
-            Download all your lesson plans, quizzes, and content. Available as a ZIP file with JSON and printable HTML formats.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleExport} disabled={exporting} variant="outline">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-            {exporting ? 'Preparing export...' : 'Download All Data'}
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            <Download className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Export Your Data</p>
+              <p className="text-xs text-muted-foreground">Download all content as ZIP</p>
+            </div>
+          </div>
+          <Button onClick={handleExport} disabled={exporting} variant="outline" size="sm">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Export'}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Delete Account */}
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <Trash2 className="h-5 w-5" />
-            Delete Account
-          </CardTitle>
-          <CardDescription>
-            Permanently delete your account and all associated data. You will have 30 days to download your content before it is erased.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* ─── Danger Zone ─── */}
+      <Card className="border-destructive/30">
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            <Trash2 className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-destructive">Delete Account</p>
+              <p className="text-xs text-muted-foreground">30-day grace period to export data</p>
+            </div>
+          </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Delete My Account</Button>
+              <Button variant="destructive" size="sm">Delete</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -273,11 +354,7 @@ export default function SettingsPage() {
 }
 
 function ConsentRow({
-  label,
-  description,
-  checked,
-  onChange,
-  disabled,
+  label, description, checked, onChange, disabled,
 }: {
   label: string;
   description: string;
@@ -286,12 +363,12 @@ function ConsentRow({
   disabled: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex-1">
+    <div className="flex items-start sm:items-center justify-between gap-4">
+      <div className="flex-1 min-w-0">
         <p className="font-medium text-sm">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} className="shrink-0" />
     </div>
   );
 }

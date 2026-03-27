@@ -34,6 +34,9 @@ import { WorksheetDisplay } from "@/components/worksheet-display";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
@@ -483,6 +486,7 @@ function QuizGeneratorContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [quiz, setQuiz] = useState<QuizVariantsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { limitState, checkResponse, clearLimit } = useLimitGuard();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const { clearFormSnapshot } = useJarvisStore();
@@ -642,9 +646,14 @@ function QuizGeneratorContent() {
           throw new Error("Please sign in to generate quizzes");
         }
         const errorData = await res.json();
+        if (checkResponse(res.status, errorData)) {
+          setIsLoading(false);
+          return;
+        }
         throw new Error(errorData.error || "Failed to generate quiz");
       }
 
+      clearLimit();
       const result = await res.json();
       setQuiz(result);
       clearFormSnapshot("quiz-generator");
@@ -696,7 +705,16 @@ function QuizGeneratorContent() {
 
             <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
             <CardDescription>{t.pageDescription}</CardDescription>
+            <UsageRemainingBadge feature="quiz" />
           </CardHeader>
+
+          {(limitState.limitReached || limitState.upgradeRequired) && (
+            <UpgradePrompt
+              feature="quiz"
+              used={limitState.used ?? 0}
+              limit={limitState.limit ?? 0}
+            />
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
