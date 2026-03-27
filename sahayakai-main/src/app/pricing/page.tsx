@@ -224,7 +224,7 @@ function PricingContent() {
                                 </li>
                             </ul>
                             <Button variant="outline" className="mt-4 w-full" asChild>
-                                <a href="https://wa.me/919XXXXXXXXX?text=I'm%20interested%20in%20SahayakAI%20for%20my%20school" target="_blank" rel="noopener noreferrer">
+                                <a href="https://wa.me/916363740720?text=I'm%20interested%20in%20SahayakAI%20for%20my%20school" target="_blank" rel="noopener noreferrer">
                                     Talk to us
                                 </a>
                             </Button>
