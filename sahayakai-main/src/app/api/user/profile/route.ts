@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { UserProfileSchema } from '@/ai/schemas/content-schemas';
-import { UserProfile } from '@/types';
+import { UserProfile, ADMINISTRATIVE_ROLES, QUALIFICATIONS } from '@/types';
 import { logger } from '@/lib/logger';
 
 /**
@@ -104,5 +104,63 @@ export async function POST(request: Request) {
             { error: 'Internal Server Error' },
             { status: 500 }
         );
+    }
+}
+
+export async function PATCH(request: Request) {
+    try {
+        const userId = request.headers.get('x-user-id');
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
+        }
+
+        const body = await request.json() as {
+            yearsOfExperience?: unknown;
+            administrativeRole?: unknown;
+            qualifications?: unknown;
+        };
+
+        const partialData: Partial<UserProfile> = {};
+
+        if (body.yearsOfExperience !== undefined) {
+            const years = Number(body.yearsOfExperience);
+            if (!Number.isFinite(years) || years < 0 || years > 60) {
+                return NextResponse.json({ error: 'yearsOfExperience must be between 0 and 60' }, { status: 400 });
+            }
+            partialData.yearsOfExperience = years;
+        }
+
+        if (body.administrativeRole !== undefined) {
+            if (!ADMINISTRATIVE_ROLES.includes(body.administrativeRole as typeof ADMINISTRATIVE_ROLES[number])) {
+                return NextResponse.json(
+                    { error: `administrativeRole must be one of: ${ADMINISTRATIVE_ROLES.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+            partialData.administrativeRole = body.administrativeRole as typeof ADMINISTRATIVE_ROLES[number];
+        }
+
+        if (body.qualifications !== undefined) {
+            if (!Array.isArray(body.qualifications)) {
+                return NextResponse.json({ error: 'qualifications must be an array' }, { status: 400 });
+            }
+            const validQuals = QUALIFICATIONS as readonly string[];
+            const invalid = (body.qualifications as unknown[]).find((q) => !validQuals.includes(q as string));
+            if (invalid) {
+                return NextResponse.json(
+                    { error: `Invalid qualification: ${invalid}. Must be one of: ${QUALIFICATIONS.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+            partialData.qualifications = body.qualifications as typeof QUALIFICATIONS[number][];
+        }
+
+        await dbAdapter.updateUser(userId, partialData);
+
+        return NextResponse.json({ success: true });
+
+    } catch (error) {
+        logger.error('Profile PATCH API Failed', error, 'PROFILE');
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

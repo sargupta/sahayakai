@@ -20,6 +20,7 @@ const RubricGeneratorInputSchema = z.object({
   subject: z.string().optional().describe('The academic subject.'),
   language: z.string().optional().describe('The language for the rubric.'),
   userId: z.string().optional().describe('The ID of the user for whom the rubric is being generated.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 export type RubricGeneratorInput = z.infer<typeof RubricGeneratorInputSchema>;
 
@@ -65,6 +66,16 @@ export async function generateRubric(input: RubricGeneratorInput): Promise<Rubri
     localizedInput.gradeLevel = extractedGrade;
   }
 
+  // Fetch teacher context for AI personalisation
+  if (uid && uid !== 'anonymous_user') {
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
+  }
+
   return rubricGeneratorFlow(localizedInput);
 }
 
@@ -73,6 +84,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
   input: { schema: RubricGeneratorInputSchema },
   output: { schema: RubricGeneratorOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
 

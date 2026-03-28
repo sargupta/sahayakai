@@ -72,9 +72,25 @@ export const LANGUAGE_CODE_MAP: Record<string, Language> = {
 } as const;
 
 export const CONTENT_TYPES = [
-    'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training',
+    'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper',
 ] as const;
 export type ContentType = typeof CONTENT_TYPES[number];
+
+// --- Teacher Career Stage ---
+export const ADMINISTRATIVE_ROLES = ['hod', 'coordinator', 'exam_controller', 'vice_principal', 'principal', 'none'] as const;
+export type AdministrativeRole = typeof ADMINISTRATIVE_ROLES[number];
+
+export const QUALIFICATIONS = ['D.El.Ed', 'B.Ed', 'M.Ed', 'B.A', 'M.A', 'B.Sc', 'M.Sc', 'NET', 'Ph.D', 'Other'] as const;
+export type Qualification = typeof QUALIFICATIONS[number];
+
+export type TeacherCareerStage = 'early' | 'mid' | 'senior' | 'leadership';
+
+export function getCareerStage(yearsOfExperience: number): TeacherCareerStage {
+    if (yearsOfExperience <= 3) return 'early';
+    if (yearsOfExperience <= 7) return 'mid';
+    if (yearsOfExperience <= 15) return 'senior';
+    return 'leadership';
+}
 
 // --- Core Entities ---
 
@@ -97,6 +113,11 @@ export interface UserProfile {
     designation?: string;
     badges: string[];
 
+    // Experience & Role (Advisory Council features)
+    yearsOfExperience?: number;
+    administrativeRole?: AdministrativeRole;
+    qualifications?: Qualification[];
+
     teachingGradeLevels: GradeLevel[];
     subjects: Subject[];
     preferredLanguage: Language;
@@ -108,7 +129,7 @@ export interface UserProfile {
     // Usage Metadata
     createdAt: Timestamp;
     lastLogin: Timestamp;
-    planType: 'free' | 'pro' | 'institution';
+    planType: 'free' | 'pro' | 'gold' | 'premium';
 
     // UX flags
     hasHeardGreeting?: boolean;
