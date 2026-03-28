@@ -5,7 +5,7 @@
     "subject": "science",
     "class": 9,
     "year": 2015,
-    "chapter": "Is Matter Around Us Pure",
+    "chapter": "Atoms and Molecules",
     "section": "Chemistry",
     "topic": "Laws of chemical combination",
     "marks": 1,
@@ -466,7 +466,7 @@
   },
   {
     "id": "cbse_c9_science_2017_007",
-    "question": "A sound source produces 40 crests and 40 troughs in 0.4 s. Find the frequency of the wave.",
+    "question": "A sound source produces 40 compressions and 40 rarefactions in 0.4 s. Find the frequency of the wave.",
     "subject": "science",
     "class": 9,
     "year": 2017,
@@ -477,7 +477,7 @@
     "type": "SA",
     "board": "CBSE",
     "exam_type": "SA2",
-    "answer": "40 crests and 40 troughs = 40 complete waves. Frequency = number of waves / time = 40 / 0.4 = 100 Hz."
+    "answer": "40 compressions and 40 rarefactions = 40 complete sound waves. Frequency = number of waves / time = 40 / 0.4 = 100 Hz."
   },
   {
     "id": "cbse_c9_science_2017_008",

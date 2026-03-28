@@ -309,7 +309,7 @@
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Total = 100. (i) P(white) = 25/100 = 1/4. (ii) Not blue = 25+40 = 65. P = 65/100 = 13/20. Wait: not blue = white + red = 75. P = 75/100 = 3/4. (iii) Neither white nor blue = red = 40. P = 40/100 = 2/5"
+    "answer": "Total = 35+25+40 = 100. (i) P(white) = 25/100 = 1/4. (ii) Not blue = white + red = 25+40 = 65. P = 65/100 = 13/20. (iii) Neither white nor blue = red only = 40. P = 40/100 = 2/5"
   },
   {
     "id": "cbse_c10_math_prob_025",
@@ -348,7 +348,7 @@
     "marks": 1,
     "type": "VSA",
     "board": "CBSE",
-    "answer": "Using area of triangle = 0: (1/2)|x(4-(-5)) + (-3)((-5)-2) + 7(2-4)| = 0. 9x + 21 - 14 = 0. 9x = -7. x = -63/9 = -7. (Some sources give x = -63 depending on rounding; standard answer: x = -7)"
+    "answer": "Using area of triangle = 0: (1/2)|x(4−(−5)) + (−3)((−5)−2) + 7(2−4)| = 0. x×9 + (−3)(−7) + 7(−2) = 0. 9x + 21 − 14 = 0. 9x + 7 = 0. x = −7/9"
   },
   {
     "id": "cbse_c10_math_coord_003",
@@ -530,7 +530,7 @@
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "For collinear points, area of triangle = 0. (1/2)|( k+1)(2k+3-5k) + 3k(5k-2k) + (5k-1)(2k-2k-3)| = 0. Simplifying: (k+1)(3-3k) + 3k(3k) + (5k-1)(-3) = 0. (3-3k+3k-3k²) + 9k² + (-15k+3) = 0. 6k²-12k+6 = 0. k²-2k+1=0. (k-1)²=0. k=1. (Some versions also give k=2 depending on formulation.)"
+    "answer": "For collinear points, area of triangle = 0. (1/2)|(k+1)(2k+3−5k) + 3k(5k−2k) + (5k−1)(2k−(2k+3))| = 0. = (1/2)|(k+1)(3−3k) + 3k(3k) + (5k−1)(−3)| = 0. Expanding: 3(k+1)(1−k) + 9k² − 15k + 3 = 0. 3(1−k²) + 9k² − 15k + 3 = 0. 3 − 3k² + 9k² − 15k + 3 = 0. 6k² − 15k + 6 = 0. 2k² − 5k + 2 = 0. (2k−1)(k−2) = 0. k = 1/2 or k = 2."
   },
   {
     "id": "cbse_c10_math_coord_017",
@@ -608,7 +608,7 @@
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Diagonals bisect each other. Midpoint of AC = midpoint of BD. Mid AC = ((3-6)/2, (4+2)/2) = (-3/2, 3). (-1+x)/2 = -3/2 → x = -2. (-3+y)/2 = 3 → y = 9. D = (-2, 9). Area of parallelogram = 2 × area of triangle ABC = 2 × (1/2)|3(-3-2)+(-1)(2-4)+(-6)(4+3)| = |3(-5)-1(-2)-6(7)| = |-15+2-42| = 55 = not standard; area = 15 sq units using standard computation"
+    "answer": "Diagonals bisect each other. Midpoint of AC = midpoint of BD. Mid AC = ((3+(−6))/2, (4+2)/2) = (−3/2, 3). (−1+x)/2 = −3/2 → x = −2. (−3+y)/2 = 3 → y = 9. D = (−2, 9). Area of parallelogram = 2 × area of △ABC = 2 × (1/2)|3(−3−2)+(−1)(2−4)+(−6)(4+3)| = |3(−5)+(−1)(−2)+(−6)(7)| = |−15+2−42| = |−55| = 55 sq units."
   },
   {
     "id": "cbse_c10_math_coord_023",

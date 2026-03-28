@@ -88,7 +88,7 @@
     "marks": 1,
     "type": "VSA",
     "board": "CBSE",
-    "answer": "For no solution: k/12 = 3/k ≠ (k–3)/k → k² = 36 → k = 6 (checking k ≠ 3 gives k = 6)"
+    "answer": "For no solution: a₁/a₂ = b₁/b₂ ≠ c₁/c₂ → k/12 = 3/k → k² = 36 → k = ±6. Check k = 6: c₁/c₂ = (6–3)/6 = 1/2 = k/12 = 6/12 = 1/2 ✗ (gives infinite solutions). Check k = –6: (–6)/12 = –1/2, but (–6–3)/(–6) = 3/2 ≠ –1/2 ✓. Answer: k = –6"
   },
   {
     "id": "cbse_c10_math_vsa_008",

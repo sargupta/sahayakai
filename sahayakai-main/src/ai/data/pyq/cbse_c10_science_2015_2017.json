@@ -133,7 +133,7 @@
     "year": 2015,
     "chapter": "Human Eye and the Colourful World",
     "section": "Physics",
-    "topic": "scattering of light, Tyndall effect",
+    "topic": "scattering of light, Rayleigh scattering",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
@@ -302,8 +302,8 @@
     "chapter": "Carbon and its Compounds",
     "section": "Chemistry",
     "topic": "alcohols, structural formula",
-    "marks": 1,
-    "type": "VSA",
+    "marks": 2,
+    "type": "SA",
     "board": "CBSE",
     "answer": "Propanol (Propan-1-ol). Structure: CH3-CH2-CH2-OH"
   },
@@ -389,7 +389,7 @@
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "R burns to give 2CO2 + 3H2O → R is C2H6 (ethane, a saturated compound with 2 carbons). Q + H2 → R (ethane) → Q is C2H4 (ethene). P with H2SO4 gives ethene → P is C2H5OH (ethanol). Equations: (i) Dehydration: C2H5OH → (conc. H2SO4, 170°C) → C2H4 + H2O. (ii) Hydrogenation: C2H4 + H2 → (Ni catalyst) → C2H6. (iii) Combustion: 2C2H6 + 7O2 → 4CO2 + 6H2O (for 2 molecules, giving 4CO2 + 6H2O, or C2H6 + 7/2 O2 → 2CO2 + 3H2O)."
+    "answer": "R burns to give 2CO2 + 3H2O → R is C2H6 (ethane, a saturated compound with 2 carbons). Q + H2 → R (ethane) → Q is C2H4 (ethene). P with H2SO4 gives ethene → P is C2H5OH (ethanol). Equations: (i) Dehydration: C2H5OH → (conc. H2SO4, 170°C) → C2H4 + H2O. (ii) Hydrogenation: C2H4 + H2 → (Ni catalyst) → C2H6. (iii) Combustion: C2H6 + 7/2 O2 → 2CO2 + 3H2O (balanced form: 2C2H6 + 7O2 → 4CO2 + 6H2O). This confirms R gives 2CO2 + 3H2O per molecule."
   },
   {
     "id": "cbse_c10_science_2016_014",
@@ -426,7 +426,7 @@
     "class": 10,
     "year": 2016,
     "chapter": "Sources of Energy",
-    "section": "Chemistry",
+    "section": "Physics",
     "topic": "fossil fuels, global warming, greenhouse effect",
     "marks": 2,
     "type": "SA",

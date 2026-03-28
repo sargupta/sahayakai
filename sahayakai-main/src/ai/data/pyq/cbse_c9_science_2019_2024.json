@@ -15,17 +15,17 @@
   },
   {
     "id": "cbse_c9_science_2019_002",
-    "question": "A radar signal is reflected and received after 2×10⁻⁵ s. If the speed of radio waves is 3×10⁸ m/s, calculate the distance of the object from the radar.",
+    "question": "A SONAR signal is reflected from the sea bed and received after 2×10⁻² s. If the speed of sound in water is 1500 m/s, calculate the depth of the sea.",
     "subject": "science",
     "class": 9,
     "year": 2019,
     "chapter": "Sound",
     "section": "Physics",
-    "topic": "echo and reflection of sound",
+    "topic": "SONAR and reflection of sound",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Distance = (speed × time) / 2 = (3×10⁸ × 2×10⁻⁵) / 2 = 3000 m = 3 km"
+    "answer": "Depth = (speed × time) / 2 = (1500 × 2×10⁻²) / 2 = 30 / 2 = 15 m. The sea depth is 15 m. (SONAR uses ultrasonic sound waves; depth = v×t/2 because sound travels to the sea bed and back.)"
   },
   {
     "id": "cbse_c9_science_2019_003",
@@ -809,7 +809,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Acceleration due to gravity (g) is the acceleration experienced by an object falling freely under the force of gravity near Earth's surface. g_Earth = 9.8 m/s². g_Moon = g_Earth/6 (because Moon's mass is 1/100 of Earth and radius is 1/4 of Earth). Therefore weight on Moon = mg_Moon = m × (g_Earth/6) = Weight on Earth / 6. An object weighing 60 N on Earth weighs 10 N on Moon."
+    "answer": "Acceleration due to gravity (g) is the acceleration experienced by an object falling freely under the force of gravity near Earth's surface. g_Earth = 9.8 m/s². g_Moon ≈ g_Earth/6 because: using g = GM/R², the Moon's mass is approximately 1/81 of Earth's mass and the Moon's radius is approximately 1/4 of Earth's radius. Therefore g_Moon/g_Earth = (1/81) × (4)² = 16/81 ≈ 1/6. Therefore weight on Moon = mg_Moon = m × (g_Earth/6) = Weight on Earth / 6. An object weighing 60 N on Earth weighs 10 N on Moon."
   },
   {
     "id": "cbse_c9_science_2023_007",
@@ -977,7 +977,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "g (acceleration due to gravity): varies from place to place (9.8 m/s² at Earth's surface, less at poles, more at equator); depends on mass and radius of planet; unit is m/s². G (universal gravitational constant): same everywhere in the universe (universal constant); SI unit: N m² kg⁻²; value = 6.67 × 10⁻¹¹ N m² kg⁻²."
+    "answer": "g (acceleration due to gravity): varies from place to place (9.8 m/s² at Earth's surface); g is MORE at the poles (Earth is flattened at poles, so poles are closer to Earth's centre) and LESS at the equator (Earth bulges at equator, so equator is farther from Earth's centre); depends on mass and radius of planet; unit is m/s². G (universal gravitational constant): same everywhere in the universe (universal constant); SI unit: N m² kg⁻²; value = 6.67 × 10⁻¹¹ N m² kg⁻²."
   },
   {
     "id": "cbse_c9_science_2024_006",

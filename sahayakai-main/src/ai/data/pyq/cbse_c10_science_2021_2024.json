@@ -15,7 +15,7 @@
   },
   {
     "id": "cbse_c10_science_2024_002",
-    "question": "Select a decomposition reaction in which light is used as the source of energy. (a) 2H₂O → 2H₂ + O₂  (b) 2AgBr → 2Ag + Br₂  (c) 2AgBr → 2Ag + Br₂  (d) CaCO₃ → CaO + CO₂",
+    "question": "Select a decomposition reaction in which light is used as the source of energy. (a) 2H₂O → 2H₂ + O₂  (b) 2AgBr → 2Ag + Br₂  (c) 2AgCl → 2Ag + Cl₂  (d) CaCO₃ → CaO + CO₂",
     "subject": "science",
     "class": 10,
     "year": 2024,
@@ -95,7 +95,7 @@
     "marks": 1,
     "type": "MCQ",
     "board": "CBSE",
-    "answer": "(c) Neuromuscular junction"
+    "answer": "(d) Synapse — the synaptic terminal is where the electrical signal is converted to a chemical signal (neurotransmitter release) in nerve cells"
   },
   {
     "id": "cbse_c10_science_2024_008",
@@ -179,7 +179,7 @@
     "marks": 1,
     "type": "MCQ",
     "board": "CBSE",
-    "answer": "(c) A is true; R is false (reason given is incorrect explanation)"
+    "answer": "(a) Both A and R are true; R is the correct explanation — dissolved oxygen in water (~7 ppm) is far less than oxygen in air (~21%), so aquatic organisms must breathe faster to meet oxygen demand"
   },
   {
     "id": "cbse_c10_science_2024_014",
@@ -361,7 +361,7 @@
     "marks": 1,
     "type": "MCQ",
     "board": "CBSE",
-    "answer": "(d) Oxalic acid"
+    "answer": "(b) Citric acid — tomatoes primarily contain citric acid (oxalic acid is found in spinach/sorrel)"
   },
   {
     "id": "cbse_c10_science_2023_004",
@@ -918,7 +918,7 @@
     "type": "MCQ",
     "board": "CBSE",
     "exam_term": "Term 1",
-    "answer": "(b) Both true; R is not the correct explanation of A (correct reason is that it neutralizes excess stomach acid)"
+    "answer": "(a) Both A and R are true; R is the correct explanation — NaHCO₃ is a mild, non-corrosive basic salt that safely neutralizes excess stomach acid without causing harm to stomach lining"
   },
   {
     "id": "cbse_c10_science_2021_014",
@@ -948,7 +948,7 @@
     "type": "case_study",
     "board": "CBSE",
     "exam_term": "Term 1",
-    "answer": "(i) R (likely sodium/potassium) — highly reactive with water/air; stored in kerosene to prevent reaction. (ii) Q = Magnesium (reddish-brown on iron = copper would displace, but context suggests Mg displacing iron from FeSO₄). (iii) P forms amphoteric oxide — P = Aluminium (Al₂O₃ reacts with both acid and base). (iv) Increasing reactivity: S < P < Q < R."
+    "answer": "(i) R (sodium/potassium) — highly reactive metal; stored in kerosene to prevent reaction with water and air. (ii) Q = Copper — copper (Cu) deposits as reddish-brown residue when a more reactive metal like iron is placed in copper sulphate solution; here Q is identified by the reddish-brown colour of copper. (iii) P forms amphoteric oxide — P = Aluminium (Al₂O₃ reacts with both acids and bases). (iv) Increasing reactivity: Q (Cu) < P (Al) < S < R (Na/K)."
   },
   {
     "id": "cbse_c10_science_2021_016",

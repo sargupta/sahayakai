@@ -459,7 +459,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "f = -10 cm, u = -15 cm, h = 4 cm\n1/v = 1/f - 1/u = -1/10 + 1/15 = -3/30 + 2/30 = -1/30\nWait — 1/v = 1/(-10) - 1/(-15) = -1/10 + 1/15 = -3/30 + 2/30 = -1/30\nv = -30 cm\nm = -v/u = -(-30)/(-15) = -2\nh' = m × h = -2 × 4 = -8 cm\nImage is real, inverted, magnified (8 cm tall), formed 30 cm in front of mirror."
+    "answer": "f = -10 cm, u = -15 cm, h = 4 cm\nUsing mirror formula: 1/v + 1/u = 1/f\n1/v = 1/f - 1/u = 1/(-10) - 1/(-15) = -1/10 + 1/15 = -3/30 + 2/30 = -1/30\nv = -30 cm\nm = -v/u = -(-30)/(-15) = -2\nh' = m × h = -2 × 4 = -8 cm\nImage is real, inverted, magnified (8 cm tall), formed 30 cm in front of mirror."
   },
   {
     "id": "cbse_c10_sci_phy_034",

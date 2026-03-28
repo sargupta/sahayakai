@@ -7,7 +7,7 @@
     "year": 2019,
     "chapter": "Introduction to Trigonometry",
     "topic": "trigonometric identities proof",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "LHS = (sin A + cosec A)² + (cos A + sec A)²\n= sin²A + 2·sinA·cosecA + cosec²A + cos²A + 2·cosA·secA + sec²A\n= sin²A + cos²A + 2(sinA·1/sinA) + 2(cosA·1/cosA) + cosec²A + sec²A\n= 1 + 2 + 2 + (1 + cot²A) + (1 + tan²A)\n= 7 + tan²A + cot²A = RHS\nHence proved."
@@ -111,7 +111,7 @@
     "year": 2015,
     "chapter": "Introduction to Trigonometry",
     "topic": "trigonometric identities proof",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "LHS = sin²A + 2 + cosec²A + cos²A + 2 + sec²A\n= (sin²A + cos²A) + 4 + (1 + cot²A) + (1 + tan²A)\n= 1 + 4 + 1 + cot²A + 1 + tan²A\n= 7 + tan²A + cot²A = RHS. Hence proved."
@@ -140,11 +140,17 @@
     "marks": 1,
     "type": "MCQ",
     "board": "CBSE",
-    "answer": "= 2(1)² + (√3/2)² – (√3/2)²\n= 2 + 3/4 – 3/4\n= 2"
+    "options": [
+      "A. 2",
+      "B. 1",
+      "C. 3",
+      "D. 4"
+    ],
+    "answer": "A. 2"
   },
   {
     "id": "cbse_c10_math_trigo_012",
-    "question": "Prove that: (1 + cot²θ)/(1 + cosec θ) = cosec θ",
+    "question": "Prove that: (cosec θ – cot θ)² = (1 – cos θ)/(1 + cos θ)",
     "subject": "mathematics",
     "class": 10,
     "year": 2021,
@@ -153,7 +159,7 @@
     "marks": 2,
     "type": "VSA",
     "board": "CBSE",
-    "answer": "LHS = (1 + cot²θ)/(1 + cosecθ)\n= cosec²θ/(1 + cosecθ)\n= (cosecθ – 1)(cosecθ + 1)/(1 + cosecθ)   [using a²–b² identity, here cosec²θ – 1 = cot²θ; use cosec²θ = (cosecθ+1)(cosecθ–1)+1... direct: cosec²θ/(1+cosecθ)]\nActual: = cosecθ(cosecθ) / (1+cosecθ)... simplify differently:\nNumerator: cosec²θ = (1+cosecθ)(cosecθ–1) + (cosecθ–1) ... \nSimplest: cosec²θ/(1+cosecθ) = cosecθ only if cosecθ(1+cosecθ)/(1+cosecθ) — this requires 1+cot²θ = cosecθ·(1+cosecθ) — not standard. \nCorrect proof: LHS = cosec²θ/(1+cosecθ) = (cosecθ+1)(cosecθ–1+1)/(1+cosecθ) = cosecθ–1+1 does not work cleanly. \nActual board answer: LHS = cosec²θ/(cosecθ+1) = cosecθ(cosecθ+1–1)/(cosecθ+1) — use long division: cosec²θ ÷ (1+cosecθ) = cosecθ – 1 + 1/(1+cosecθ). \nNote: This question likely has the form (1+cot²θ)·sinθ/(1+cosecθ) = cosecθ·sinθ... Check: standard CBSE 2021 question is (1+tan²A)/(1+cot²A) = (1–tanA)²/(1–cotA)² type. Providing the most common form answer."
+    "answer": "LHS = (cosecθ – cotθ)²\n= (1/sinθ – cosθ/sinθ)²\n= ((1 – cosθ)/sinθ)²\n= (1 – cosθ)²/sin²θ\n= (1 – cosθ)²/(1 – cos²θ)\n= (1 – cosθ)²/((1 – cosθ)(1 + cosθ))\n= (1 – cosθ)/(1 + cosθ)\n= RHS. Hence proved."
   },
   {
     "id": "cbse_c10_math_trigo_013",
@@ -176,7 +182,7 @@
     "year": 2023,
     "chapter": "Introduction to Trigonometry",
     "topic": "trigonometric identities proof",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Part 1: (1+tan²A)/(1+cot²A) = sec²A/cosec²A = (1/cos²A)/(1/sin²A) = sin²A/cos²A = tan²A\nPart 2: (1–tanA)²/(1–cotA)² = (1–sinA/cosA)²/(1–cosA/sinA)²\n= ((cosA–sinA)/cosA)² / ((sinA–cosA)/sinA)²\n= (cosA–sinA)²·sin²A / (sinA–cosA)²·cos²A\n= sin²A/cos²A (since (cosA–sinA)² = (sinA–cosA)²)\n= tan²A\nHence all three expressions equal tan²A."
@@ -215,7 +221,7 @@
     "year": 2019,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of elevation",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let height = h, shadow at 60° = x\nAt 60°: tan60° = h/x → x = h/√3\nAt 30°: tan30° = h/(x+40) → x+40 = h√3\nSubtracting: 40 = h√3 – h/√3 = h(3–1)/√3 = 2h/√3\nh = 40√3/2 = 20√3 metres ≈ 34.64 m"
@@ -228,7 +234,7 @@
     "year": 2020,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of elevation",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let the horizontal distance from the point to the building = d, tower height = h.\nAngle to bottom of tower (top of building): tan45° = 20/d → d = 20m\nAngle to top of tower: tan60° = (20+h)/d → √3 = (20+h)/20\n20+h = 20√3\nh = 20√3 – 20 = 20(√3–1) = 20(1.73–1) = 20×0.73 = 14.6m\nHeight of tower = 14.6 m"
@@ -241,7 +247,7 @@
     "year": 2018,
     "chapter": "Some Applications of Trigonometry",
     "topic": "two poles / two triangles",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let height = h, point P divides road: PA = x, PB = 80–x\ntan60° = h/x → h = x√3\ntan30° = h/(80–x) → h = (80–x)/√3\nEquating: x√3 = (80–x)/√3 → 3x = 80–x → 4x = 80 → x = 20m\nh = 20√3 m ≈ 34.64m\nPA = 20m, PB = 60m"
@@ -254,7 +260,7 @@
     "year": 2016,
     "chapter": "Some Applications of Trigonometry",
     "topic": "two buildings / two triangles",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let distance between them = d, building height = h.\nFrom foot of tower: tan30° = h/d → d = h√3\nFrom foot of building: tan60° = 50/d → d = 50/√3\nSo h√3 = 50/√3 → h = 50/3 ≈ 16.67m"
@@ -267,7 +273,7 @@
     "year": 2017,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of elevation",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Height above boy's eyes = 30 – 1.5 = 28.5m\nAt 30°: tan30° = 28.5/d₁ → d₁ = 28.5√3\nAt 60°: tan60° = 28.5/d₂ → d₂ = 28.5/√3 = 9.5√3\nDistance walked = d₁ – d₂ = 28.5√3 – 9.5√3 = 19√3 m ≈ 32.91m"
@@ -280,7 +286,7 @@
     "year": 2015,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of elevation and depression",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let AB = 7m building, CD = tower, horizontal distance = BC.\nAngle of depression of C from A = 30°: tan30° = AB/BC → BC = 7√3\nAngle of elevation of D from A = 60°: tan60° = DE/BC (where DE = CD – AB)\nDE = BC·tan60° = 7√3·√3 = 21m\nHeight of tower CD = DE + AB = 21 + 7 = 28m"
@@ -293,7 +299,7 @@
     "year": 2021,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of depression",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Height of lighthouse = 75m\nFor nearer ship (45°): tan45° = 75/d₁ → d₁ = 75m\nFor farther ship (30°): tan30° = 75/d₂ → d₂ = 75√3 = 75×1.73 = 129.75m\nDistance between ships = 129.75 – 75 = 54.75m"
@@ -306,7 +312,7 @@
     "year": 2022,
     "chapter": "Some Applications of Trigonometry",
     "topic": "angle of depression",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Let height = h. At 30°: d₁ = h√3. At 60°: d₂ = h/√3\nDistance covered in 6 sec = d₁–d₂ = h√3 – h/√3 = 2h/√3\nSpeed = (2h/√3)/6 = h/(3√3)\nTime to travel d₂ = (h/√3)/(h/(3√3)) = (h/√3)×(3√3/h) = 3 seconds"
@@ -371,7 +377,7 @@
     "year": 2020,
     "chapter": "Introduction to Trigonometry",
     "topic": "trigonometric identities proof",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "LHS = (sinA/cosA)/(1–cosA/sinA) + (cosA/sinA)/(1–sinA/cosA)\n= (sinA/cosA)/((sinA–cosA)/sinA) + (cosA/sinA)/((cosA–sinA)/cosA)\n= sin²A/(cosA(sinA–cosA)) + cos²A/(sinA(cosA–sinA))\n= sin²A/(cosA(sinA–cosA)) – cos²A/(sinA(sinA–cosA))\n= [sin³A – cos³A] / (sinA·cosA·(sinA–cosA))\n= (sinA–cosA)(sin²A+sinAcosA+cos²A) / (sinA·cosA·(sinA–cosA))\n= (1+sinAcosA)/(sinAcosA)\n= 1/(sinAcosA) + 1\n= secA·cosecA + 1 = RHS. Hence proved."
@@ -397,7 +403,7 @@
     "year": 2019,
     "chapter": "Statistics",
     "topic": "less than ogive",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Less than cumulative frequency table:\nLess than 120: 12\nLess than 140: 26\nLess than 160: 34\nLess than 180: 40\nLess than 200: 50\nPlot points (120,12), (140,26), (160,34), (180,40), (200,50) and join with a smooth curve starting from (100,0)."
@@ -436,7 +442,7 @@
     "year": 2017,
     "chapter": "Statistics",
     "topic": "mode and mean",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Modal class = 35–45 (f=23)\nMode = 35 + (23–21)/(46–21–14)×10 = 35 + 2/11×10 = 35 + 1.82 = 36.82 years\nFor mean (A=30): midpoints 10,20,30,40,50,60; d: –20,–10,0,10,20,30\nΣf=80; Σfd = 6(–20)+11(–10)+0+23(10)+14(20)+5(30) = –120–110+0+230+280+150 = 430\nMean = 30 + 430/80 = 30 + 5.375 = 35.375 ≈ 35.38 years"
@@ -475,7 +481,7 @@
     "year": 2021,
     "chapter": "Statistics",
     "topic": "ogive and median",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Less-than cumulative frequency:\nLess than 40: 3\nLess than 42: 5\nLess than 44: 9\nLess than 46: 14\nLess than 48: 28\nLess than 50: 32\nLess than 52: 35\nPlot and join smoothly. N/2 = 17.5, draw horizontal line at cf=17.5 to meet curve, drop perpendicular to x-axis → Median ≈ 46.5 kg\nVerification: Median class = 46–48; Median = 46 + (17.5–14)/14 × 2 = 46 + 0.5 = 46.5 kg"
@@ -514,7 +520,7 @@
     "year": 2022,
     "chapter": "Statistics",
     "topic": "median and mode",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "N=48, N/2=24\nCF: 2,5,12,20,32,39,44,48\nMedian class = 20–25 (CF before=20, f=12)\nMedian = 20 + (24–20)/12 × 5 = 20 + 20/12 = 20 + 1.67 = 21.67\nModal class = 20–25 (highest f=12)\nMode = 20 + (12–8)/(24–8–7) × 5 = 20 + 4/9 × 5 = 20 + 2.22 = 22.22"
@@ -553,7 +559,7 @@
     "year": 2020,
     "chapter": "Statistics",
     "topic": "median — finding missing frequency",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "5+x+20+15+y+5 = 60 → x+y = 15 ... (1)\nN/2 = 30; Median = 28.5 → median class = 20–30\nCF before 20–30 = 5+x\nMedian = 20 + (30–(5+x))/20 × 10 = 28.5\n(25–x)/2 = 8.5\n25–x = 17\nx = 8\nFrom (1): y = 7"
@@ -566,7 +572,7 @@
     "year": 2023,
     "chapter": "Statistics",
     "topic": "mode and median",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "Modal class = 400–600 (f=40)\nMode = 400 + (40–25)/(80–25–19)×200 = 400 + 15/36×200 = 400+83.33 = 483.33\nN/2=50; CFs: 25, 65, 84, 92, 100\nMedian class = 400–600\nMedian = 400 + (50–25)/40×200 = 400+125 = 525\nMode (483.33) < Median (525): distribution is moderately positively skewed."
@@ -579,7 +585,7 @@
     "year": 2022,
     "chapter": "Statistics",
     "topic": "more than ogive",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "More-than cumulative frequency:\nMore than 50: 40\nMore than 60: 34\nMore than 70: 29\nMore than 80: 20\nMore than 90: 8\nPlot points (50,40),(60,34),(70,29),(80,20),(90,8) and join smoothly.\nN/2 = 20; draw horizontal line at cf=20, meets curve at x≈80 → Median ≈ 80.\nVerification: Median class = 80–90; Median = 80 + (20–20)/12×10 = 80."
@@ -592,7 +598,7 @@
     "year": 2021,
     "chapter": "Statistics",
     "topic": "mean — finding missing frequencies",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "17+f₁+32+f₂+19 = 120 → f₁+f₂ = 52 ... (1)\nMidpoints: 10,30,50,70,90\nΣfx = 170+30f₁+1600+70f₂+1710 = 3480+30f₁+70f₂\nMean = (3480+30f₁+70f₂)/120 = 50\n3480+30f₁+70f₂ = 6000\n30f₁+70f₂ = 2520\n3f₁+7f₂ = 252 ... (2)\nFrom (1): f₁ = 52–f₂; substituting: 3(52–f₂)+7f₂ = 252 → 156+4f₂ = 252 → f₂ = 24; f₁ = 28"
@@ -631,7 +637,7 @@
     "year": 2018,
     "chapter": "Statistics",
     "topic": "more than ogive",
-    "marks": 4,
+    "marks": 5,
     "type": "LA",
     "board": "CBSE",
     "answer": "More-than cumulative frequency distribution:\nMore than 50: 100\nMore than 55: 98\nMore than 60: 90\nMore than 65: 78\nMore than 70: 54\nMore than 75: 16\nPlot points: (50,100),(55,98),(60,90),(65,78),(70,54),(75,16) and join with a smooth curve.\nMedian: N/2=50; from the graph, the ogive meets y=50 at approximately x=70.04 kg/ha."

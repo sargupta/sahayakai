@@ -595,7 +595,7 @@
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Diagonals bisect each other: OA = 10 cm, OB = 12 cm. In triangle AOB (right triangle if it's a rectangle; but for parallelogram use Pythagorean approximation if applicable). AB = √(OA² + OB²) = √(100 + 144) = √244 = 2√61 cm."
+    "answer": "Diagonals of a parallelogram bisect each other: OA = AC/2 = 10 cm, OB = BD/2 = 12 cm. However, the side AB of a general parallelogram cannot be determined from diagonal lengths alone — the angle between the diagonals is not known. If additional information (e.g., that ABCD is a rectangle) were given, AB could be found. As stated, the problem is incomplete. Note: if the diagonals were perpendicular (rhombus), AB = √(10² + 12²) = √244 = 2√61 cm."
   },
   {
     "id": "cbse_c9_math_2017_016",
@@ -751,7 +751,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "∠ABC = 90° (angle in semicircle). In triangle ABC: ∠BAC = 90° − 50° = 40°. Tangent AT at A makes ∠BAT = ∠ACB = 50° (alternate segment theorem). ∠ATB: in triangle ABT, ∠TAB = 50°, ∠ABT = 180° − 90° = 90°, so ∠ATB = 40°."
+    "answer": "[NOTE: This question uses the Alternate Segment Theorem, which is a Class 10 topic (CBSE). It is beyond the Class 9 syllabus.] ∠ABC = 90° (angle in semicircle, since AOC is a diameter). In triangle ABC: ∠BAC = 180° − 90° − 50° = 40°. The tangent AT at A is perpendicular to the radius OA, so ∠OAT = 90°. ∠OAB = ∠OBA (OA = OB, radii) — but OA is the radius. By the Alternate Segment Theorem (Class 10): ∠BAT = ∠ACB = 50°. In triangle ABT: ∠TAB = 50°, ∠ABT = 180° − ∠ABC = 90°, so ∠ATB = 180° − 50° − 90° = 40°."
   },
   {
     "id": "cbse_c9_math_2018_012",

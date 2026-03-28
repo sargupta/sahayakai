@@ -187,7 +187,7 @@
     "subject": "mathematics",
     "class": 10,
     "year": 2018,
-    "chapter": "Coordinate Geometry",
+    "chapter": "Circles",
     "topic": "Tangent to a circle",
     "marks": 3,
     "type": "SA",
@@ -304,7 +304,7 @@
     "subject": "mathematics",
     "class": 10,
     "year": 2018,
-    "chapter": "Coordinate Geometry",
+    "chapter": "Constructions",
     "topic": "Construction of similar triangles",
     "marks": 4,
     "type": "LA",
@@ -525,7 +525,7 @@
     "subject": "mathematics",
     "class": 10,
     "year": 2019,
-    "chapter": "Coordinate Geometry",
+    "chapter": "Circles",
     "topic": "Tangent from external point",
     "marks": 3,
     "type": "SA",
@@ -616,7 +616,7 @@
     "subject": "mathematics",
     "class": 10,
     "year": 2019,
-    "chapter": "Coordinate Geometry",
+    "chapter": "Constructions",
     "topic": "Construction of similar triangles",
     "marks": 4,
     "type": "LA",
@@ -885,7 +885,7 @@
   },
   {
     "id": "cbse_c10_math_2020_020",
-    "question": "Prove that if tan θ + cot θ = √3, then sin θ + cos θ = 1 (or prove that tan θ + cot θ = 1 given sin θ + cos θ = √3, whichever form was set).",
+    "question": "If sin θ + cos θ = √2, prove that tan θ + cot θ = 2.",
     "subject": "mathematics",
     "class": 10,
     "year": 2020,
@@ -894,7 +894,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "If sin θ + cos θ = √3, squaring: 1 + 2sinθcosθ = 3 → sinθcosθ = 1. Then tanθ + cotθ = sinθ/cosθ + cosθ/sinθ = (sin²θ + cos²θ)/(sinθcosθ) = 1/1 = 1."
+    "answer": "Given sinθ + cosθ = √2. Squaring both sides: sin²θ + 2sinθcosθ + cos²θ = 2 → 1 + 2sinθcosθ = 2 → sinθcosθ = 1/2. Then tanθ + cotθ = sinθ/cosθ + cosθ/sinθ = (sin²θ + cos²θ)/(sinθcosθ) = 1/(1/2) = 2. ✓"
   },
   {
     "id": "cbse_c10_math_2020_021",

@@ -73,7 +73,7 @@
     "chapter": "Triangles",
     "topic": "isosceles triangle",
     "marks": 2,
-    "type": "VSA",
+    "type": "SA",
     "board": "CBSE",
     "answer": "Since AB = AC, ∠B = ∠C = 65°. ∠A = 180° − 65° − 65° = 50°."
   },
@@ -335,7 +335,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "30–40: 2, 40–50: 8, 50–60: 10, 60–70: 6, 70–80: 4. Total: 30."
+    "answer": "Sorting the data into class intervals (each interval includes the lower bound but not the upper bound, except the last class 70–80 which includes 80): 30–40: 35, 38 → 2; 40–50: 40, 43, 45, 40, 42, 48, 45, 48 → 8; 50–60: 52, 55, 55, 58, 50, 55, 58, 55, 50 → 9; 60–70: 60, 65, 62, 60, 65, 62 → 6; 70–80: 72, 70, 70, 75, 80 → 5. Total: 2+8+9+6+5 = 30 ✓."
   },
   {
     "id": "cbse_c9_math_2020_012",
@@ -452,7 +452,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "∠POY = 90°, so ∠POX = 90°. a + b = 90° and a:b = 2:3, so a = 36°, b = 54°. c = ∠MOX = 180° − b (linear pair with ∠MOY). But ∠MOY = b (vertically opposite to ∠NOX... ). Since MN is a straight line, a + b + c = 180° → c = 180° − 36° − 54° + additional... Actually c = ∠b (vertically opposite) = 54°... Correct: c + b = 180° → c = 126°."
+    "answer": "XY and MN are straight lines intersecting at O. Ray OP is such that ∠POY = 90°, so ∠POX = 90° (angles on straight line XY). Let a = ∠MOX and b = ∠NOX (on the X–Y line side). Since MN is a straight line, ∠MON = 180°, but the angles between OP and the arms of MN satisfy: a + b = ∠POX = 90° (because OP is between OM and OX or similarly arranged). With a : b = 2 : 3 and a + b = 90°: a = 36°, b = 54°. Now c = ∠MOY (vertically opposite to ∠NOX, or as the angle supplementary to b on the straight line): c + b = 180° (linear pair, since MN is a straight line and ∠YON + ∠YOM = 180°) → c = 180° − 54° = 126°."
   },
   {
     "id": "cbse_c9_math_2021_006",
@@ -478,7 +478,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "In triangles BAC and CAD: ∠BAC = ∠ADC (given), ∠BCA = ∠DCA (common angle C). By AA similarity: △BAC ~ △CAD. Therefore CA/CD = CB/CA → CA² = CB × CD."
+    "answer": "[NOTE: This problem requires AA Similarity of triangles, which is a Class 10 topic (CBSE Chapter: Triangles). It is beyond the Class 9 syllabus.] In triangles BAC and CAD: ∠BAC = ∠ADC (given), ∠BCA = ∠DCA (common angle C). By AA similarity (Class 10): △BAC ~ △CAD. Therefore CA/CD = CB/CA → CA² = CB × CD."
   },
   {
     "id": "cbse_c9_math_2021_008",
@@ -504,7 +504,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "s = (120 + 80 + 50)/2 = 125. Area = √[125 × 5 × 45 × 75] = √[125 × 5 × 3375] = √[2109375] ≈ 1452.4 m². Note: These sides violate triangle inequality (50 + 80 < 120 is false barely: 130 > 120). Area = √[s(s−a)(s−b)(s−c)] = √[125 × 5 × 45 × 75] = √[2109375] ≈ 1452.4 m²."
+    "answer": "Triangle inequality check: 50 + 80 = 130 > 120 ✓ (valid triangle). s = (120 + 80 + 50)/2 = 125. Area = √[s(s−a)(s−b)(s−c)] = √[125 × 5 × 45 × 75] = √2109375 ≈ 1452.4 m²."
   },
   {
     "id": "cbse_c9_math_2021_010",
@@ -560,7 +560,7 @@
   },
   {
     "id": "cbse_c9_math_2021_014",
-    "question": "Three coins are tossed simultaneously 100 times with the following frequencies of different outcomes: 3 heads: 23; 2 heads: 72; 1 head: 77; no head: 28. Find the probability of getting: (i) 3 heads (ii) at least 2 heads (iii) at most 2 heads.",
+    "question": "Three coins are tossed simultaneously 200 times with the following frequencies of different outcomes: 3 heads: 23; 2 heads: 72; 1 head: 77; no head: 28. Find the probability of getting: (i) 3 heads (ii) at least 2 heads (iii) at most 2 heads.",
     "subject": "mathematics",
     "class": 9,
     "year": 2021,
@@ -920,7 +920,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "∠ACB = 90° (angle in semicircle). In triangle ABC: ∠BAC = 180° − 115° − 90° = −25°... Corrected approach: ∠ABC + ∠ADC = 180° (cyclic quad). ∠BCA = 90°. ∠CAB = 180° − 90° − ∠ABC + correction... ∠CAO = 25°, ∠COB = 50°."
+    "answer": "AOB is a diameter, so O is the centre. ∠ABC is an inscribed angle subtending arc AC (not containing B). By the inscribed angle theorem: reflex ∠AOC = 2 × ∠ABC = 2 × 115° = 230°. Therefore ∠AOC (minor) = 360° − 230° = 130°. Since AOB is a diameter, ∠AOB = 180°. So ∠COB = ∠AOB − ∠AOC = 180° − 130° = 50°. In triangle OAC: OA = OC (radii), so ∠OAC = ∠OCA = (180° − 130°)/2 = 25°. Therefore ∠CAO = 25° and ∠COB = 50°."
   },
   {
     "id": "cbse_c9_math_2023_012",
@@ -1123,12 +1123,12 @@
     "subject": "mathematics",
     "class": 9,
     "year": 2024,
-    "chapter": "Introduction to Euclid's Geometry",
-    "topic": "Euclid's algorithm",
+    "chapter": "Number Systems",
+    "topic": "Euclid's division algorithm",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "867 = 255 × 3 + 102. 255 = 102 × 2 + 51. 102 = 51 × 2 + 0. HCF = 51."
+    "answer": "[NOTE: Euclid's Division Algorithm for finding HCF is a Class 10 topic (CBSE: Real Numbers). Class 9 'Introduction to Euclid's Geometry' covers postulates, axioms, and theorems — not the division algorithm for HCF.] 867 = 255 × 3 + 102. 255 = 102 × 2 + 51. 102 = 51 × 2 + 0. HCF = 51."
   },
   {
     "id": "cbse_c9_math_2024_013",

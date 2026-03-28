@@ -375,7 +375,7 @@
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "m = v/u = −2/3 (real, inverted). u = −12 cm → v = (−2/3) × (−12) = −8 cm. Using lens formula: 1/f = 1/v − 1/u = 1/(−8) − 1/(−12) = −3/24 + 2/24 = −1/24; f = −24 cm (concave lens). Alternatively if virtual erect: m = +2/3, v = +8 cm; 1/f = 1/8 − 1/(−12) = 3/24+2/24 = 5/24; f = 4.8 cm"
+    "answer": "A convex lens forms a real, inverted image, so m = −2/3. u = −12 cm; m = v/u → v = m × u = (−2/3) × (−12) = +8 cm. Using lens formula: 1/f = 1/v − 1/u = 1/8 − 1/(−12) = 3/24 + 2/24 = 5/24; f = +4.8 cm (convex lens, positive focal length ✓). Image is real, inverted, diminished, formed 8 cm on the other side of the lens."
   },
   {
     "id": "cbse_c10_science_num_028",
@@ -383,7 +383,7 @@
     "subject": "science",
     "class": 10,
     "year": 2022,
-    "chapter": "Magnetic Effects of Electric Current",
+    "chapter": "Electricity",
     "section": "Physics",
     "topic": "overloading — circuit fuse",
     "marks": 3,
