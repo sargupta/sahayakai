@@ -23,6 +23,7 @@ export const QuizGeneratorInputSchema = z.object({
   userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
   subject: z.string().optional().describe('The academic subject of the quiz.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 

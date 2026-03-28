@@ -27,6 +27,7 @@ const WorksheetWizardInputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
   subject: z.string().optional().describe('The academic subject.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 
 export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
@@ -79,6 +80,16 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
     localizedInput.gradeLevel = extractedGrade;
   }
 
+  // Fetch teacher context for AI personalisation
+  if (uid && uid !== 'anonymous_user') {
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
+  }
+
   // Normalize input
   if (localizedInput.language) {
     localizedInput.language = LANGUAGE_CODE_MAP[localizedInput.language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || localizedInput.language;
@@ -94,6 +105,7 @@ const worksheetWizardPrompt = ai.definePrompt({
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator who creates engaging and effective worksheets for rural Indian classrooms.
 

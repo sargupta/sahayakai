@@ -8,6 +8,7 @@ export const quizGeneratorPrompt = ai.definePrompt({
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator who excels at creating assessments that are both challenging and informative. Generate a quiz based on the provided inputs.
 

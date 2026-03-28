@@ -23,10 +23,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Globe, CreditCard, Shield, Download, Trash2, Loader2,
-  Crown, ArrowRight, ChevronRight,
+  Crown, ArrowRight, ChevronRight, GraduationCap,
 } from 'lucide-react';
-import { LANGUAGES, type Language } from '@/types';
+import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+
+const ADMIN_ROLE_LABELS: Record<string, string> = {
+  hod: 'Head of Department',
+  coordinator: 'Coordinator',
+  exam_controller: 'Exam Controller',
+  vice_principal: 'Vice Principal',
+  principal: 'Principal',
+  none: 'None / Class Teacher',
+};
 
 interface ConsentPrefs {
   analytics: boolean;
@@ -51,6 +63,13 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Professional Profile state
+  const [profYears, setProfYears] = useState<string>('');
+  const [profRole, setProfRole] = useState<AdministrativeRole | ''>('');
+  const [profQuals, setProfQuals] = useState<Qualification[]>([]);
+  const [profSaving, setProfSaving] = useState(false);
+  const [profSaved, setProfSaved] = useState(false);
 
   const fetchConsent = useCallback(async () => {
     if (!user) return;
@@ -146,6 +165,35 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveProfProfile = async () => {
+    if (!user) return;
+    setProfSaving(true);
+    try {
+      const token = await getIdToken();
+      const body: Record<string, unknown> = {};
+      if (profYears !== '') body.yearsOfExperience = Number(profYears);
+      if (profRole !== '') body.administrativeRole = profRole;
+      if (profQuals.length > 0) body.qualifications = profQuals;
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      setProfSaved(true);
+      setTimeout(() => setProfSaved(false), 2500);
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setProfSaving(false);
+    }
+  };
+
+  const toggleQual = (q: Qualification) => {
+    setProfQuals((prev) =>
+      prev.includes(q) ? prev.filter((x) => x !== q) : [...prev, q]
+    );
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -170,6 +218,76 @@ export default function SettingsPage() {
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your preferences, plan, and data</p>
       </div>
+
+      {/* ─── Professional Profile ─── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <GraduationCap className="h-5 w-5" />
+            Professional Profile
+          </CardTitle>
+          <CardDescription>Help AI tailor responses to your experience level</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Years of Experience */}
+          <div className="space-y-1.5">
+            <Label htmlFor="prof-years" className="text-sm font-medium">Years of Experience</Label>
+            <Input
+              id="prof-years"
+              type="number"
+              min={0}
+              max={60}
+              placeholder="e.g. 8"
+              value={profYears}
+              onChange={(e) => setProfYears(e.target.value)}
+              className="max-w-[160px]"
+            />
+          </div>
+
+          {/* Administrative Role */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Administrative Role</Label>
+            <Select value={profRole} onValueChange={(v) => setProfRole(v as AdministrativeRole)}>
+              <SelectTrigger className="max-w-[260px]">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {ADMINISTRATIVE_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {ADMIN_ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Qualifications */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Qualifications</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {QUALIFICATIONS.map((q) => (
+                <div key={q} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`qual-${q}`}
+                    checked={profQuals.includes(q)}
+                    onCheckedChange={() => toggleQual(q)}
+                  />
+                  <label htmlFor={`qual-${q}`} className="text-sm cursor-pointer select-none">{q}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Save */}
+          <div className="flex items-center gap-3 pt-1">
+            <Button size="sm" onClick={handleSaveProfProfile} disabled={profSaving}>
+              {profSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Save Profile
+            </Button>
+            {profSaved && <span className="text-sm text-green-600 font-medium">Saved</span>}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ─── Language ─── */}
       <Card>

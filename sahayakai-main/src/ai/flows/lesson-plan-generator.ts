@@ -27,6 +27,7 @@ const LessonPlanInputSchema = z.object({
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
   userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
   ncertChapter: z.object({
     title: z.string(),
@@ -171,18 +172,28 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
         localizedInput.language = profile.preferredLanguage;
       }
     }
+
+    // Fetch teacher context for AI personalisation
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
   }
 
   return lessonPlanFlow(localizedInput);
 }
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { generateLessonPlanCacheKey, getCachedLessonPlan, setCachedLessonPlan } from '@/lib/lesson-plan-cache';
 
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
 
@@ -281,6 +292,71 @@ const lessonPlanFlow = ai.defineFlow(
           }
         });
 
+        // 0. Cache Lookup (skip if image provided — unique per user)
+        const cacheKey = !normalizedInput.imageDataUri
+          ? generateLessonPlanCacheKey(normalizedInput)
+          : null;
+
+        if (cacheKey) {
+          const cached = await getCachedLessonPlan(cacheKey);
+          if (cached) {
+            const duration = Date.now() - startTime;
+            StructuredLogger.info('Serving lesson plan from cache', {
+              service: 'lesson-plan-flow',
+              operation: 'cacheHit',
+              requestId,
+              duration,
+              metadata: { cacheKey }
+            });
+
+            // Still persist to this user's personal library
+            const userId = input.userId;
+            if (userId) {
+              try {
+                const storage = await getStorageInstance();
+                const now = new Date();
+                const timestamp = format(now, 'yyyyMMdd_HHmmss');
+                const contentId = crypto.randomUUID();
+                const safeTitle = (cached.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+                const fileName = `${timestamp}_${safeTitle}.json`;
+                const filePath = `users/${userId}/lesson-plans/${fileName}`;
+                const file = storage.bucket().file(filePath);
+                const downloadToken = crypto.randomUUID();
+                await file.save(JSON.stringify(cached), {
+                  resumable: false,
+                  metadata: { contentType: 'application/json', metadata: { firebaseStorageDownloadTokens: downloadToken } },
+                });
+                const { dbAdapter } = await import('@/lib/db/adapter');
+                const { Timestamp } = await import('firebase-admin/firestore');
+                await dbAdapter.saveContent(userId, {
+                  id: contentId,
+                  type: 'lesson-plan',
+                  title: cached.title || `Lesson Plan: ${input.topic}`,
+                  gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
+                  subject: cached.subject as any || 'Science',
+                  topic: input.topic,
+                  language: input.language as any || 'English',
+                  storagePath: filePath,
+                  isPublic: false,
+                  isDraft: false,
+                  createdAt: Timestamp.fromDate(now),
+                  updatedAt: Timestamp.fromDate(now),
+                  data: cached,
+                });
+              } catch (persistErr) {
+                StructuredLogger.warn('Cache hit: persistence failed (non-blocking)', {
+                  service: 'lesson-plan-flow',
+                  operation: 'persistCachedContent',
+                  requestId,
+                  metadata: { error: String(persistErr) }
+                });
+              }
+            }
+
+            return cached;
+          }
+        }
+
         // 1. AI Generation Phase
         const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: normalizedInput.topic }); // Legacy logger
 
@@ -361,6 +437,11 @@ const lessonPlanFlow = ai.defineFlow(
           });
         }
 
+
+        // Cache the result for future identical requests
+        if (cacheKey) {
+          setCachedLessonPlan(cacheKey, output, normalizedInput);
+        }
 
         const userId = input.userId;
         if (userId) {

@@ -26,6 +26,14 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
         localizedInput.language = profile.preferredLanguage;
       }
     }
+
+    // Fetch teacher context for AI personalisation
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
   }
 
   const difficulties = ['easy', 'medium', 'hard'] as const;
