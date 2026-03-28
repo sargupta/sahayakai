@@ -65,7 +65,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const app = admin.app();
   const credential = app.options.credential as admin.credential.Credential;
-  let tokenResult: admin.credential.AccessToken;
+  let tokenResult: { access_token: string; expires_in?: number };
   try {
     tokenResult = await credential.getAccessToken();
   } catch (err) {
