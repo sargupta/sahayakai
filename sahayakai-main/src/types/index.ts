@@ -86,9 +86,11 @@ export type Qualification = typeof QUALIFICATIONS[number];
 export type TeacherCareerStage = 'early' | 'mid' | 'senior' | 'leadership';
 
 export function getCareerStage(yearsOfExperience: number): TeacherCareerStage {
-    if (yearsOfExperience <= 3) return 'early';
-    if (yearsOfExperience <= 7) return 'mid';
-    if (yearsOfExperience <= 15) return 'senior';
+    // Clamp negatives (malformed data) to 0 so they map to 'early'
+    const years = Math.max(0, yearsOfExperience);
+    if (years <= 3) return 'early';
+    if (years <= 7) return 'mid';
+    if (years <= 15) return 'senior';
     return 'leadership';
 }
 
