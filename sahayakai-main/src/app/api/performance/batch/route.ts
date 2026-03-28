@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { performanceAdapter, verifyClassOwnership } from '@/lib/db/performance-adapter';
 import { logger } from '@/lib/logger';
 import type { BatchMarksInput } from '@/types/performance';
+import { ASSESSMENT_TYPES, TERMS } from '@/types/performance';
 
 // POST — Save a batch of student marks
 export async function POST(request: Request) {
@@ -13,8 +14,21 @@ export async function POST(request: Request) {
 
         const body: BatchMarksInput = await request.json();
 
-        if (!body.classId || !body.name || !body.type || !body.subject || !body.maxMarks || !body.marks?.length) {
+        if (!body.classId || !body.name || !body.type || !body.subject || body.maxMarks == null || !body.marks?.length) {
             return NextResponse.json({ error: 'Missing required fields: classId, name, type, subject, maxMarks, marks' }, { status: 400 });
+        }
+
+        // Explicit positive-number guard (negative maxMarks passes !body.maxMarks falsy check)
+        if (body.maxMarks <= 0) {
+            return NextResponse.json({ error: 'maxMarks must be greater than 0' }, { status: 400 });
+        }
+
+        // Validate enum fields
+        if (!ASSESSMENT_TYPES.includes(body.type)) {
+            return NextResponse.json({ error: `Invalid type. Must be one of: ${ASSESSMENT_TYPES.join(', ')}` }, { status: 400 });
+        }
+        if (!TERMS.includes(body.term)) {
+            return NextResponse.json({ error: `Invalid term. Must be one of: ${TERMS.join(', ')}` }, { status: 400 });
         }
 
         // Verify the requesting user is the teacher for this class
@@ -25,6 +39,9 @@ export async function POST(request: Request) {
 
         // Validate marks entries
         for (const entry of body.marks) {
+            if (!entry.studentId) {
+                return NextResponse.json({ error: 'Each marks entry must include a non-empty studentId' }, { status: 400 });
+            }
             if (entry.marksObtained < 0 || entry.marksObtained > body.maxMarks) {
                 return NextResponse.json({
                     error: `Invalid marks for student ${entry.studentName || entry.studentId}: ${entry.marksObtained} (max: ${body.maxMarks})`
