@@ -61,6 +61,8 @@ import { withPlanCheck } from '@/lib/plan-guard';
  *       500:
  *         description: AI Generation failed
  */
+const VALID_DIFFICULTIES = ['easy', 'moderate', 'hard', 'mixed'] as const;
+
 async function _handler(request: Request) {
     let paperDesc = 'Unknown Paper';
     try {
@@ -69,12 +71,25 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
+        let body: Record<string, unknown>;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+        }
+
         paperDesc = `${body.board || ''} ${body.gradeLevel || ''} ${body.subject || ''}`.trim() || 'Unknown Paper';
 
-        if (!body.board || !body.gradeLevel || !body.subject || !body.chapters?.length) {
+        if (!body.board || !body.gradeLevel || !body.subject || !Array.isArray(body.chapters) || !(body.chapters as unknown[]).length) {
             return NextResponse.json(
                 { error: 'Missing required fields: board, gradeLevel, subject, chapters' },
+                { status: 400 }
+            );
+        }
+
+        if (body.difficulty && !VALID_DIFFICULTIES.includes(body.difficulty as typeof VALID_DIFFICULTIES[number])) {
+            return NextResponse.json(
+                { error: `Invalid difficulty. Must be one of: ${VALID_DIFFICULTIES.join(', ')}` },
                 { status: 400 }
             );
         }
@@ -82,7 +97,7 @@ async function _handler(request: Request) {
         const output = await generateExamPaper({
             ...body,
             userId: userId
-        });
+        } as Parameters<typeof generateExamPaper>[0]);
 
         return NextResponse.json(output);
 
@@ -97,3 +112,66 @@ async function _handler(request: Request) {
 }
 
 export const POST = withPlanCheck('exam-paper')(_handler);
+
+/**
+ * PUT /api/ai/exam-paper
+ * Save a previously generated exam paper to the user's content library.
+ * The paper JSON is passed in the request body; this handler persists it
+ * to Firestore + Firebase Storage under the authenticated user's path.
+ */
+async function _saveHandler(request: Request) {
+    try {
+        const userId = request.headers.get('x-user-id');
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        if (!body.paper || typeof body.paper !== 'object') {
+            return NextResponse.json({ error: 'Missing required field: paper' }, { status: 400 });
+        }
+
+        const { dbAdapter } = await import('@/lib/db/adapter');
+        const { getStorageInstance } = await import('@/lib/firebase-admin');
+        const { Timestamp } = await import('firebase-admin/firestore');
+        const { v4: uuidv4 } = await import('uuid');
+        const { format } = await import('date-fns');
+
+        const paper = body.paper;
+        const contentId = uuidv4();
+        const now = new Date();
+        const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
+        const fileName = `${timestamp}-${contentId}.json`;
+        const filePath = `users/${userId}/exam-papers/${fileName}`;
+
+        const storage = await getStorageInstance();
+        const file = storage.bucket().file(filePath);
+        await file.save(JSON.stringify(paper), { contentType: 'application/json' });
+
+        await dbAdapter.saveContent(userId, {
+            id: contentId,
+            type: 'exam-paper' as const,
+            title: paper.title || `${paper.board || ''} ${paper.gradeLevel || ''} ${paper.subject || ''} Exam Paper`.trim(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            gradeLevel: (paper.gradeLevel || 'Class 10') as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            subject: (paper.subject || 'General') as any,
+            topic: Array.isArray(paper.chapters) ? paper.chapters.join(', ') : (paper.subject || ''),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            language: (paper.language ?? 'English') as any,
+            storagePath: filePath,
+            isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: paper,
+        });
+
+        return NextResponse.json({ success: true, contentId });
+    } catch (error) {
+        logger.error('Exam Paper Save Failed', error, 'EXAM_PAPER_SAVE', { userId: request.headers.get('x-user-id') });
+        return NextResponse.json({ error: 'Failed to save exam paper' }, { status: 500 });
+    }
+}
+
+export const PUT = withPlanCheck('exam-paper')(_saveHandler);
