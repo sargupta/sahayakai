@@ -65,7 +65,12 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const app = admin.app();
   const credential = app.options.credential as admin.credential.Credential;
-  const tokenResult = await credential.getAccessToken();
+  let tokenResult: admin.credential.AccessToken;
+  try {
+    tokenResult = await credential.getAccessToken();
+  } catch (err) {
+    throw new Error(`Failed to acquire Vertex AI access token: ${String(err)}`);
+  }
 
   const endpoint =
     `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1` +
@@ -74,6 +79,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const response = await fetch(endpoint, {
     method: 'POST',
+    signal: AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Bearer ${tokenResult.access_token}`,
       'Content-Type': 'application/json',
@@ -172,6 +178,13 @@ export async function retrievePYQs(
     if (results.length >= limit) break;
   }
 
+  if (results.length < limit) {
+    console.warn(
+      `[pyq-retrieval] retrievePYQs: returned ${results.length} < requested ${limit} ` +
+        `— vector fetch cap (${fetchLimit}) may have filtered too aggressively`
+    );
+  }
+
   return results;
 }
 
@@ -191,14 +204,32 @@ export async function getPYQsByChapter(
 ): Promise<PYQQuestion[]> {
   const db = await getDb();
 
+  // Fetch more than limit so we can sort by frequency correctly.
+  // NOTE: orderBy('frequency') on a string enum is lexicographically wrong
+  // ('medium' > 'low' > 'high'), so we sort client-side with a numeric rank.
   const snapshot = await db
     .collection(COLLECTION)
     .where('chapter', '==', chapter)
     .where('subject', '==', subject)
     .where('class', '==', classNum)
-    .orderBy('frequency', 'desc')
-    .limit(limit)
+    .limit(limit * 3)
     .get();
 
-  return snapshot.docs.map((doc) => docToPYQ(doc.id, doc.data()));
+  const freqRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sorted = snapshot.docs
+    .map((doc) => docToPYQ(doc.id, doc.data()))
+    .sort((a, b) => {
+      const ra = freqRank[a.frequency ?? ''] ?? 3;
+      const rb = freqRank[b.frequency ?? ''] ?? 3;
+      return ra - rb;
+    });
+
+  if (sorted.length < limit && snapshot.docs.length === limit * 3) {
+    console.warn(
+      `[pyq-retrieval] getPYQsByChapter: returned ${sorted.length} < requested ${limit} ` +
+        `after sorting — fetch cap may have been hit`
+    );
+  }
+
+  return sorted.slice(0, limit);
 }
