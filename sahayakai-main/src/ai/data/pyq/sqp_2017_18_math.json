@@ -254,7 +254,7 @@
     "options": null,
     "answer": "Let n = 3k, 3k+1, or 3k+2. In each case exactly one of n, n+2, n+4 is divisible by 3 (verified by substitution for all three cases).",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Real Numbers",
     "topic": "Divisibility / Euclid's Division Lemma",
     "frequency": null
@@ -274,7 +274,7 @@
     "options": null,
     "answer": "Dividing by (3x²–5) gives quotient x²+2x+1 = (x+1)². Other zeroes: x = –1, –1. All zeroes: √(5/3), –√(5/3), –1, –1.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Polynomials",
     "topic": "Zeroes of a Polynomial / Division Algorithm",
     "frequency": null
@@ -294,7 +294,7 @@
     "options": null,
     "answer": "Let tens digit = y, units digit = x. 7(10y+x) = 4(10x+y) gives x = 2y. Also x–y = 3. Solving: y = 3, x = 6. The number is 36.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Pair of Linear Equations in Two Variables",
     "topic": "Word Problems – Linear Equations",
     "frequency": null
@@ -314,7 +314,7 @@
     "options": null,
     "answer": "Ratio = 6:7. Coordinates of point = (–34/13, 0).\nOR\nAB = 5 units. Area(△ABC) = 49/2 sq units. Using (1/2)×AB×h = Area: h = 49/5 = 9.8 units.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Coordinate Geometry",
     "topic": "Section Formula / Area of Triangle",
     "frequency": null
@@ -334,7 +334,7 @@
     "options": null,
     "answer": "From △NSQ ≅ △MTR: ∠SQN = ∠TRM (CPCT). Since ∠1 = ∠2, using angle sum property ∠1 = ∠PQR and ∠2 = ∠PRQ. Also ∠SPT = ∠QPR (common). By AAA, △PTS ~ △PRQ.\nOR\nDraw AP ⊥ BC. Use Pythagoras in △ADP: AD² = AP² + DP² = AP² + (BP–BD)². Expanding and using AP² = AB² – BP² = AB² – (BC/2)²: 9AD² = 7AB².",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Triangles",
     "topic": "Similarity of Triangles / Pythagoras Theorem",
     "frequency": null
@@ -354,7 +354,7 @@
     "options": null,
     "answer": "Join OC. In △OPA and △OCA: OP = OC (radii), PA = CA (tangent lengths), AO = AO (common). By SSS, △OPA ≅ △OCA so ∠1 = ∠2. Similarly ∠3 = ∠4. Since ∠PAB + ∠QBA = 180°, we get 2∠2 + 2∠4 = 180°, so ∠2 + ∠4 = 90°, i.e. ∠AOB = 90°.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Circles",
     "topic": "Tangents to a Circle",
     "frequency": null
@@ -374,7 +374,7 @@
     "options": null,
     "answer": "= 1 – 1/2 = 1/2. (Using complementary angle identities to simplify each part to 1 and 1/2.)\nOR\n(sinθ + cosθ)² = 2 ⟹ 1 + 2sinθcosθ = 2 ⟹ sinθcosθ = 1/2. tan θ + cot θ = (sin²θ + cos²θ)/(sinθcosθ) = 1/(1/2) = 2.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Introduction to Trigonometry",
     "topic": "Trigonometric Identities / Complementary Angles",
     "frequency": null
@@ -394,7 +394,7 @@
     "options": null,
     "answer": "BC = 14√2 cm. Area of shaded region = Area(△ACB) + Area(semicircle on BC) – Area(quadrant ABPC) = (1/2)r² + (π/2)(r/√2)² – (1/4)πr² = r²/2 = 196/2 = 98 cm².",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Areas Related to Circles",
     "topic": "Areas of Sectors and Segments",
     "frequency": null
@@ -414,7 +414,7 @@
     "options": null,
     "answer": "Volume of water in 30 min = 5000 × 6 × 1.5 = 45000 m³. Area = 45000 × 100/8 = 562500 m².\nOR\nSlant height l = √(7² + 14²) = 7√5. Surface area = 6×14² – πr² + πrl = 1176 – 154 + 154√5 = (1022 + 154√5) cm².",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Surface Areas and Volumes",
     "topic": "Volume Conversion / Surface Area of Combined Solids",
     "frequency": null
@@ -434,7 +434,7 @@
     "options": null,
     "answer": "Modal class = 60–80. Mode = 68. Using 3 Median = Mode + 2 Mean: 3 Median = 68 + 106 = 174. Median = 58 marks.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Statistics",
     "topic": "Mode and Empirical Relationship between Mean, Median and Mode",
     "frequency": null
