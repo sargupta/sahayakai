@@ -47,7 +47,7 @@ function matchSubjectAndClass(
 }
 
 function normaliseChapter(ch: string): string {
-  return ch.toLowerCase().trim();
+  return ch.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

@@ -30,8 +30,9 @@ const PYQ_DATA_DIR = path.resolve(__dirname, '../ai/data/pyq');
 // Firestore batch limit
 const BATCH_SIZE = 500;
 
-// Pause between embedding API calls (ms) to avoid rate-limit bursts
-const EMBED_DELAY_MS = 100;
+// Pause between embedding API calls (ms) to avoid rate-limit bursts.
+// 200ms = 5 QPS — leaves 50% headroom below the 10 QPS Vertex AI default quota.
+const EMBED_DELAY_MS = 200;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,10 +42,39 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Build the text that will be embedded for a question.
- * Format: "{chapter} {topic}: {question}"
+ * Includes board/subject/class as prefix so cross-class/cross-subject questions
+ * produce distinct vectors even when the question text is identical.
+ * Format: "{board} {subject} Class {class} — {chapter} {topic}: {question}"
  */
 function buildEmbedText(q: Omit<PYQQuestion, 'id'>): string {
-  return `${q.chapter} ${q.topic}: ${q.question}`;
+  const topic = q.topic ?? ''; // guard against undefined rendering as "undefined"
+  return `${q.board} ${q.subject} Class ${q.class} — ${q.chapter}${topic ? ` ${topic}` : ''}: ${q.question}`;
+}
+
+/**
+ * Retry an async operation with exponential backoff.
+ * Treats HTTP 429 responses (rate limit) as retryable.
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 4,
+  baseDelayMs = 500
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      const isRateLimit =
+        err instanceof Error &&
+        (err.message.includes('429') || err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('rate'));
+      if (!isRateLimit || attempt === maxAttempts) throw err;
+      const delay = baseDelayMs * Math.pow(2, attempt - 1);
+      console.warn(`[seed-pyqs]   Rate-limited (attempt ${attempt}/${maxAttempts}). Retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+  // unreachable but satisfies TypeScript
+  throw new Error('withRetry: exhausted retries');
 }
 
 /**
@@ -167,10 +197,10 @@ async function main() {
 
       let embedding: number[];
       try {
-        embedding = await generateEmbedding(buildEmbedText(q));
+        embedding = await withRetry(() => generateEmbedding(buildEmbedText(q)));
       } catch (err) {
         console.error(
-          `[seed-pyqs]   ERROR generating embedding for doc ${docId}:`,
+          `[seed-pyqs]   ERROR generating embedding for doc ${docId} (all retries exhausted):`,
           err
         );
         skippedCount++;
