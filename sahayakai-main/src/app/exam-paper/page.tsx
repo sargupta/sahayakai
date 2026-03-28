@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getAuthToken } from "@/lib/get-auth-token";
@@ -88,7 +88,8 @@ export default function ExamPaperPage() {
   const [board, setBoard] = useState("CBSE");
   const [gradeLevel, setGradeLevel] = useState("Class 10");
   const [subject, setSubject] = useState("");
-  const [chapters, setChapters] = useState("");
+  const [chapters, setChapters] = useState<string[]>([]);
+  const [chaptersInput, setChaptersInput] = useState(""); // free-text fallback
   const [difficulty, setDifficulty] = useState("mixed");
   const [language, setLanguage] = useState("English");
   const [includeAnswerKey, setIncludeAnswerKey] = useState(true);
@@ -125,14 +126,25 @@ export default function ExamPaperPage() {
     return [...new Set(subjects)];
   }, [board, gradeLevel, availableBlueprints]);
 
-  // Reset subject when board/grade changes if current subject not available
+  // Reset subject + chapters when board/grade changes if current subject not available
   useEffect(() => {
     if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) {
       setSubject(availableSubjects[0]);
+      setChapters([]);
     } else if (availableSubjects.length === 0) {
       setSubject("");
+      setChapters([]);
     }
   }, [availableSubjects, subject]);
+
+  // Reset chapters when subject changes
+  const prevSubjectRef = React.useRef(subject);
+  useEffect(() => {
+    if (prevSubjectRef.current !== subject) {
+      prevSubjectRef.current = subject;
+      setChapters([]);
+    }
+  }, [subject]);
 
   const matchedBlueprint: ExamBlueprint | undefined = useMemo(() => {
     if (!board || !gradeLevel || !subject) return undefined;
@@ -187,10 +199,9 @@ export default function ExamPaperPage() {
           board,
           gradeLevel,
           subject,
-          chapters: chapters
-            .split(",")
-            .map((c) => c.trim())
-            .filter(Boolean),
+          chapters: chapters.length > 0
+            ? chapters
+            : chaptersInput.split(",").map((c) => c.trim()).filter(Boolean),
           difficulty,
           language,
           includeAnswerKey,
@@ -364,43 +375,61 @@ export default function ExamPaperPage() {
 
           {/* Chapters */}
           <div className="space-y-2">
-            <Label htmlFor="chapters">
+            <Label>
               Chapters{" "}
               <span className="text-muted-foreground font-normal">
-                (comma-separated, optional)
+                (optional — select from list or type below)
               </span>
             </Label>
-            <Input
-              id="chapters"
-              placeholder="e.g. Real Numbers, Polynomials, Triangles"
-              value={chapters}
-              onChange={(e) => setChapters(e.target.value)}
-            />
-            {chapterSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {chapterSuggestions.map((ch) => (
-                  <button
-                    key={ch}
-                    type="button"
-                    onClick={() => {
-                      const current = chapters
-                        .split(",")
-                        .map((c) => c.trim())
-                        .filter(Boolean);
-                      if (!current.includes(ch)) {
-                        setChapters(
-                          current.length > 0
-                            ? `${chapters.trimEnd()}, ${ch}`
-                            : ch
-                        );
-                      }
-                    }}
-                    className="text-xs px-2 py-0.5 rounded-full border hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    + {ch}
-                  </button>
-                ))}
+            {chapterSuggestions.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {chapterSuggestions.map((ch) => {
+                    const selected = chapters.includes(ch);
+                    return (
+                      <button
+                        key={ch}
+                        type="button"
+                        onClick={() => {
+                          setChapters((prev) =>
+                            selected
+                              ? prev.filter((c) => c !== ch)
+                              : [...prev, ch]
+                          );
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                        }`}
+                      >
+                        {selected ? "✓ " : "+ "}
+                        {ch}
+                      </button>
+                    );
+                  })}
+                </div>
+                {chapters.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {chapters.length} chapter{chapters.length !== 1 ? "s" : ""} selected
+                    {" · "}
+                    <button
+                      type="button"
+                      className="underline hover:no-underline"
+                      onClick={() => setChapters([])}
+                    >
+                      Clear all
+                    </button>
+                  </p>
+                )}
               </div>
+            ) : (
+              <Input
+                id="chapters"
+                placeholder="e.g. Real Numbers, Polynomials, Triangles"
+                value={chaptersInput}
+                onChange={(e) => setChaptersInput(e.target.value)}
+              />
             )}
           </div>
 
@@ -538,6 +567,14 @@ export default function ExamPaperPage() {
           </Card>
 
           {/* Sections with Questions */}
+          {(!paper.sections || paper.sections.length === 0) && (
+            <Card>
+              <CardContent className="pt-6 text-center text-sm text-muted-foreground py-8">
+                <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                No sections were generated. Please try again.
+              </CardContent>
+            </Card>
+          )}
           {paper.sections?.map((section, si) => (
             <Card key={si}>
               <CardHeader className="pb-2">
@@ -686,9 +723,9 @@ export default function ExamPaperPage() {
               )}
               {saved ? "Saved to Library" : "Save to Library"}
             </Button>
-            <Button variant="outline" className="flex-1" disabled>
+            <Button variant="outline" className="flex-1" disabled title="PDF export coming soon">
               <Download className="w-4 h-4 mr-2" />
-              Download PDF
+              PDF (Coming Soon)
             </Button>
           </div>
         </div>
