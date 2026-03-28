@@ -4,7 +4,7 @@
     "question": "Draw a labelled diagram of the human heart and explain the circulation of blood through it. Why is human circulation called 'double circulation'?",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "human heart and blood circulation",
@@ -12,14 +12,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "The human heart is a four-chambered muscular organ divided into right atrium, right ventricle, left atrium, and left ventricle. It is divided by a septum that prevents mixing of oxygenated and deoxygenated blood.\n\nDiagram labels: Right Atrium, Right Ventricle, Left Atrium, Left Ventricle, Superior Vena Cava, Inferior Vena Cava, Pulmonary Artery, Pulmonary Vein, Aorta, Bicuspid valve (mitral), Tricuspid valve, Semi-lunar valves.\n\nBlood flow explanation:\n1. PULMONARY CIRCUIT: Deoxygenated blood from the body enters the right atrium via superior and inferior vena cava → passes to right ventricle → pumped to lungs via pulmonary artery → oxygenated in lungs.\n2. SYSTEMIC CIRCUIT: Oxygenated blood returns from lungs via pulmonary veins into left atrium → passes to left ventricle → pumped to entire body via aorta.\n\nDouble circulation: Blood passes through the heart twice in one complete cycle — once through the pulmonary circuit (heart → lungs → heart) and once through the systemic circuit (heart → body → heart). This ensures complete separation of oxygenated and deoxygenated blood, providing efficient oxygen supply to all body tissues."
+    "answer": "The human heart is a four-chambered muscular organ divided into right atrium, right ventricle, left atrium, and left ventricle. It is divided by a septum that prevents mixing of oxygenated and deoxygenated blood.\n\nDiagram labels: Right Atrium, Right Ventricle, Left Atrium, Left Ventricle, Superior Vena Cava, Inferior Vena Cava, Pulmonary Artery, Pulmonary Vein, Aorta, Bicuspid valve (mitral), Tricuspid valve, Semi-lunar valves.\n\nBlood flow explanation:\n1. PULMONARY CIRCUIT: Deoxygenated blood from the body enters the right atrium via superior and inferior vena cava → passes to right ventricle → pumped to lungs via pulmonary artery → oxygenated in lungs.\n2. SYSTEMIC CIRCUIT: Oxygenated blood returns from lungs via pulmonary veins into left atrium → passes to left ventricle → pumped to entire body via aorta.\n\nDouble circulation: Blood passes through the heart twice in one complete cycle — once through the pulmonary circuit (heart → lungs → heart) and once through the systemic circuit (heart → body → heart). This ensures complete separation of oxygenated and deoxygenated blood, providing efficient oxygen supply to all body tissues.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_002",
     "question": "Draw a labelled diagram of the human digestive system and describe the role of each organ in the digestion of food.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "human digestive system",
@@ -27,14 +28,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Diagram labels: Mouth (buccal cavity), Salivary glands (parotid, sublingual, submandibular), Oesophagus, Stomach, Liver, Gall bladder, Pancreas, Small intestine (duodenum, jejunum, ileum), Large intestine (colon), Rectum, Anus.\n\nRole of each organ:\n1. Mouth: Teeth mechanically break food. Salivary glands secrete saliva containing salivary amylase (ptyalin) which begins digestion of starch into maltose.\n2. Oesophagus: Transports food to the stomach by peristaltic movements. No digestion occurs here.\n3. Stomach: Secretes gastric juice containing HCl (kills bacteria, activates pepsinogen), pepsin (digests proteins into peptides), and mucus (protects stomach lining). Food is churned into chyme.\n4. Liver: Produces bile juice (stored in gall bladder) which emulsifies fats into smaller droplets (no enzyme, physical action) and neutralises the acidic chyme.\n5. Pancreas: Secretes pancreatic juice containing trypsin (digests proteins), lipase (digests fats into fatty acids + glycerol), and amylase (digests starch).\n6. Small intestine: Intestinal juice (succus entericus) completes digestion of all food types. Finger-like villi increase surface area for absorption of digested food into blood capillaries (sugars, amino acids) and lacteals (fatty acids, glycerol).\n7. Large intestine: Absorbs water and minerals from undigested material; forms faeces.\n8. Rectum/Anus: Temporarily stores and then expels faeces."
+    "answer": "Diagram labels: Mouth (buccal cavity), Salivary glands (parotid, sublingual, submandibular), Oesophagus, Stomach, Liver, Gall bladder, Pancreas, Small intestine (duodenum, jejunum, ileum), Large intestine (colon), Rectum, Anus.\n\nRole of each organ:\n1. Mouth: Teeth mechanically break food. Salivary glands secrete saliva containing salivary amylase (ptyalin) which begins digestion of starch into maltose.\n2. Oesophagus: Transports food to the stomach by peristaltic movements. No digestion occurs here.\n3. Stomach: Secretes gastric juice containing HCl (kills bacteria, activates pepsinogen), pepsin (digests proteins into peptides), and mucus (protects stomach lining). Food is churned into chyme.\n4. Liver: Produces bile juice (stored in gall bladder) which emulsifies fats into smaller droplets (no enzyme, physical action) and neutralises the acidic chyme.\n5. Pancreas: Secretes pancreatic juice containing trypsin (digests proteins), lipase (digests fats into fatty acids + glycerol), and amylase (digests starch).\n6. Small intestine: Intestinal juice (succus entericus) completes digestion of all food types. Finger-like villi increase surface area for absorption of digested food into blood capillaries (sugars, amino acids) and lacteals (fatty acids, glycerol).\n7. Large intestine: Absorbs water and minerals from undigested material; forms faeces.\n8. Rectum/Anus: Temporarily stores and then expels faeces.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_003",
     "question": "Draw a labelled diagram of a nephron and explain the process of urine formation.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "nephron and urine formation",
@@ -42,14 +44,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Diagram labels: Bowman's capsule, Glomerulus, Afferent arteriole, Efferent arteriole, Proximal convoluted tubule (PCT), Loop of Henle (descending and ascending limb), Distal convoluted tubule (DCT), Collecting duct, Peritubular capillaries.\n\nUrine formation occurs in three stages:\n1. ULTRAFILTRATION: Blood enters glomerulus through afferent arteriole under high pressure. Small molecules — water, glucose, urea, uric acid, salts, amino acids — are filtered into Bowman's capsule forming the glomerular filtrate. Large molecules like proteins and RBCs remain in blood.\n2. SELECTIVE REABSORPTION: As filtrate passes through PCT, loop of Henle, and DCT, useful substances are reabsorbed back into surrounding peritubular capillaries: all glucose and amino acids, most water, necessary salts. This occurs by active transport and osmosis.\n3. SECRETION: Additional waste products like creatinine, excess salts, and H⁺ ions are secreted from blood into the tubule.\n\nThe concentrated urine flows from collecting duct → renal pelvis → ureter → urinary bladder → urethra → expelled from body."
+    "answer": "Diagram labels: Bowman's capsule, Glomerulus, Afferent arteriole, Efferent arteriole, Proximal convoluted tubule (PCT), Loop of Henle (descending and ascending limb), Distal convoluted tubule (DCT), Collecting duct, Peritubular capillaries.\n\nUrine formation occurs in three stages:\n1. ULTRAFILTRATION: Blood enters glomerulus through afferent arteriole under high pressure. Small molecules — water, glucose, urea, uric acid, salts, amino acids — are filtered into Bowman's capsule forming the glomerular filtrate. Large molecules like proteins and RBCs remain in blood.\n2. SELECTIVE REABSORPTION: As filtrate passes through PCT, loop of Henle, and DCT, useful substances are reabsorbed back into surrounding peritubular capillaries: all glucose and amino acids, most water, necessary salts. This occurs by active transport and osmosis.\n3. SECRETION: Additional waste products like creatinine, excess salts, and H⁺ ions are secreted from blood into the tubule.\n\nThe concentrated urine flows from collecting duct → renal pelvis → ureter → urinary bladder → urethra → expelled from body.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_004",
     "question": "Draw a labelled diagram of a neuron. Explain how nerve impulse is transmitted from one neuron to another.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Control and Coordination",
     "section": "Biology",
     "topic": "neuron structure and nerve impulse",
@@ -57,14 +60,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Diagram labels: Cell body (soma/cyton), Nucleus, Dendrites, Axon, Myelin sheath, Node of Ranvier, Axon terminals (synaptic knobs), Synapse.\n\nNeuron structure: The cell body contains the nucleus and cytoplasm. Dendrites are short branched extensions that receive nerve impulses. The axon is a long single fibre that carries impulse away from cell body. Myelin sheath insulates the axon and speeds up impulse conduction. Nodes of Ranvier are gaps in the myelin sheath.\n\nTransmission of nerve impulse:\n1. Within a neuron: When a stimulus is received at dendrites, an electrochemical change (action potential) is generated. This electrical impulse travels along the axon from dendrite → cell body → axon terminals.\n2. At the synapse (junction between two neurons): When the impulse reaches the axon terminals (synaptic knob), it triggers release of chemical neurotransmitters (e.g., acetylcholine) into the synaptic cleft. These chemicals diffuse across the cleft and bind to receptors on the dendrites of the next neuron, generating a new electrical impulse. This is called synaptic transmission.\n\nThe impulse thus moves: Stimulus → Receptor → Sensory neuron → Relay neuron (spinal cord/brain) → Motor neuron → Effector (muscle/gland)."
+    "answer": "Diagram labels: Cell body (soma/cyton), Nucleus, Dendrites, Axon, Myelin sheath, Node of Ranvier, Axon terminals (synaptic knobs), Synapse.\n\nNeuron structure: The cell body contains the nucleus and cytoplasm. Dendrites are short branched extensions that receive nerve impulses. The axon is a long single fibre that carries impulse away from cell body. Myelin sheath insulates the axon and speeds up impulse conduction. Nodes of Ranvier are gaps in the myelin sheath.\n\nTransmission of nerve impulse:\n1. Within a neuron: When a stimulus is received at dendrites, an electrochemical change (action potential) is generated. This electrical impulse travels along the axon from dendrite → cell body → axon terminals.\n2. At the synapse (junction between two neurons): When the impulse reaches the axon terminals (synaptic knob), it triggers release of chemical neurotransmitters (e.g., acetylcholine) into the synaptic cleft. These chemicals diffuse across the cleft and bind to receptors on the dendrites of the next neuron, generating a new electrical impulse. This is called synaptic transmission.\n\nThe impulse thus moves: Stimulus → Receptor → Sensory neuron → Relay neuron (spinal cord/brain) → Motor neuron → Effector (muscle/gland).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_005",
     "question": "In Mendel's monohybrid cross experiment with pea plants, a pure tall plant (TT) was crossed with a pure dwarf plant (tt). (a) Draw a Punnett square showing the F1 and F2 generations. (b) State the ratio of tall to dwarf plants in F2. (c) What is the significance of this experiment?",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Heredity",
     "section": "Biology",
     "topic": "monohybrid cross and Mendel's laws",
@@ -72,14 +76,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "F1 Cross — TT × tt:\nPunnett square:\n     T    T\n  t [Tt] [Tt]\n  t [Tt] [Tt]\nAll F1 plants are Tt (tall) — only dominant trait is expressed.\n\nF2 Cross — Tt × Tt (self-pollination of F1):\nPunnett square:\n     T    t\n  T [TT] [Tt]\n  t [Tt] [tt]\nGenotypes: 1TT : 2Tt : 1tt\nPhenotypes: 3 Tall : 1 Dwarf\n\n(b) The ratio of tall to dwarf plants in F2 is 3:1 (phenotypic ratio). The genotypic ratio is 1:2:1.\n\n(c) Significance:\n1. Law of Dominance: In F1, only the dominant character (tallness) appears while recessive (dwarfness) remains hidden.\n2. Law of Segregation: In F2, the recessive character reappears, proving that alleles separate during gamete formation and do not blend permanently.\n3. Concept of hereditary units (genes): Traits are controlled by factors (genes) that are inherited from both parents, one from each.\n4. This experiment formed the foundation of modern genetics."
+    "answer": "F1 Cross — TT × tt:\nPunnett square:\n     T    T\n  t [Tt] [Tt]\n  t [Tt] [Tt]\nAll F1 plants are Tt (tall) — only dominant trait is expressed.\n\nF2 Cross — Tt × Tt (self-pollination of F1):\nPunnett square:\n     T    t\n  T [TT] [Tt]\n  t [Tt] [tt]\nGenotypes: 1TT : 2Tt : 1tt\nPhenotypes: 3 Tall : 1 Dwarf\n\n(b) The ratio of tall to dwarf plants in F2 is 3:1 (phenotypic ratio). The genotypic ratio is 1:2:1.\n\n(c) Significance:\n1. Law of Dominance: In F1, only the dominant character (tallness) appears while recessive (dwarfness) remains hidden.\n2. Law of Segregation: In F2, the recessive character reappears, proving that alleles separate during gamete formation and do not blend permanently.\n3. Concept of hereditary units (genes): Traits are controlled by factors (genes) that are inherited from both parents, one from each.\n4. This experiment formed the foundation of modern genetics.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_006",
     "question": "Draw ray diagrams to show the formation of image when an object is placed (i) between centre of curvature and focus of a concave mirror, and (ii) beyond the centre of curvature of a concave mirror. State the position, nature, and size of the image in each case.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "image formation by concave mirror",
@@ -87,14 +92,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Case (i) — Object between C and F:\nRay diagram: Draw concave mirror. Object AB between C and F.\n- Ray 1: Parallel to principal axis → reflects through focus F.\n- Ray 2: Through centre of curvature C → reflects back along same path.\n- Intersection: Beyond C, on the same side as the object.\nImage: Beyond C, Real, Inverted, Magnified (larger than object).\n\nCase (ii) — Object beyond C:\nRay diagram: Object AB beyond C.\n- Ray 1: Parallel to principal axis → reflects through focus F.\n- Ray 2: Through centre of curvature C → reflects back along same path.\n- Intersection: Between C and F, on same side as object.\nImage: Between C and F, Real, Inverted, Diminished (smaller than object).\n\nKey rules used in ray diagrams:\n1. A ray parallel to the principal axis reflects through the principal focus.\n2. A ray passing through the centre of curvature reflects back along the same path.\n3. A ray through the principal focus reflects parallel to the principal axis."
+    "answer": "Case (i) — Object between C and F:\nRay diagram: Draw concave mirror. Object AB between C and F.\n- Ray 1: Parallel to principal axis → reflects through focus F.\n- Ray 2: Through centre of curvature C → reflects back along same path.\n- Intersection: Beyond C, on the same side as the object.\nImage: Beyond C, Real, Inverted, Magnified (larger than object).\n\nCase (ii) — Object beyond C:\nRay diagram: Object AB beyond C.\n- Ray 1: Parallel to principal axis → reflects through focus F.\n- Ray 2: Through centre of curvature C → reflects back along same path.\n- Intersection: Between C and F, on same side as object.\nImage: Between C and F, Real, Inverted, Diminished (smaller than object).\n\nKey rules used in ray diagrams:\n1. A ray parallel to the principal axis reflects through the principal focus.\n2. A ray passing through the centre of curvature reflects back along the same path.\n3. A ray through the principal focus reflects parallel to the principal axis.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_007",
     "question": "Draw ray diagrams to show image formation by a convex lens when the object is placed (i) at 2F and (ii) between F and optical centre. State the nature, position, and size of the image in each case.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "image formation by convex lens",
@@ -102,14 +108,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Case (i) — Object at 2F:\nRay diagram: Draw convex lens with principal axis. Object AB placed at 2F₁ (left side).\n- Ray 1: Parallel to principal axis → refracts through focus F₂.\n- Ray 2: Through optical centre O → passes straight (no bending).\n- Intersection: At 2F₂ on the other side.\nImage: At 2F₂ (opposite side), Real, Inverted, Same size as object.\n\nCase (ii) — Object between F and optical centre:\nRay diagram: Object AB placed between F₁ and optical centre O.\n- Ray 1: Parallel to principal axis → refracts through F₂.\n- Ray 2: Through optical centre O → passes straight.\n- Rays diverge after refraction; extend backwards (dotted lines) to find virtual intersection.\nImage: On the same side as object, behind object, Virtual, Erect, Magnified.\n\nApplication: This is the principle of a simple magnifying glass — placing the object between F and O gives an erect, virtual, magnified image."
+    "answer": "Case (i) — Object at 2F:\nRay diagram: Draw convex lens with principal axis. Object AB placed at 2F₁ (left side).\n- Ray 1: Parallel to principal axis → refracts through focus F₂.\n- Ray 2: Through optical centre O → passes straight (no bending).\n- Intersection: At 2F₂ on the other side.\nImage: At 2F₂ (opposite side), Real, Inverted, Same size as object.\n\nCase (ii) — Object between F and optical centre:\nRay diagram: Object AB placed between F₁ and optical centre O.\n- Ray 1: Parallel to principal axis → refracts through F₂.\n- Ray 2: Through optical centre O → passes straight.\n- Rays diverge after refraction; extend backwards (dotted lines) to find virtual intersection.\nImage: On the same side as object, behind object, Virtual, Erect, Magnified.\n\nApplication: This is the principle of a simple magnifying glass — placing the object between F and O gives an erect, virtual, magnified image.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_008",
     "question": "A concave mirror has a focal length of 15 cm. An object of height 4 cm is placed 30 cm in front of the mirror. Find (i) the position of the image, (ii) the size of the image. Draw the ray diagram.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "concave mirror numerical with ray diagram",
@@ -117,14 +124,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Given: f = −15 cm (concave mirror), u = −30 cm (object in front), h = 4 cm.\n\nUsing mirror formula: 1/v + 1/u = 1/f\n1/v + 1/(−30) = 1/(−15)\n1/v = −1/15 + 1/30 = −2/30 + 1/30 = −1/30\nv = −30 cm\n\n(i) Image is formed 30 cm in front of the mirror (negative sign means in front → real image).\n\nMagnification: m = −v/u = −(−30)/(−30) = −1\n\n(ii) Image height = m × object height = −1 × 4 = −4 cm\nThe image is 4 cm tall. Negative sign means inverted.\n\nNature: Real, inverted, same size as object, formed at the centre of curvature C.\n\nRay diagram: Object AB at C (30 cm). Ray through C reflects back on itself. Ray parallel to axis reflects through F. Both rays meet at C on the same side. Image A'B' is real, inverted, same size at C."
+    "answer": "Given: f = −15 cm (concave mirror), u = −30 cm (object in front), h = 4 cm.\n\nUsing mirror formula: 1/v + 1/u = 1/f\n1/v + 1/(−30) = 1/(−15)\n1/v = −1/15 + 1/30 = −2/30 + 1/30 = −1/30\nv = −30 cm\n\n(i) Image is formed 30 cm in front of the mirror (negative sign means in front → real image).\n\nMagnification: m = −v/u = −(−30)/(−30) = −1\n\n(ii) Image height = m × object height = −1 × 4 = −4 cm\nThe image is 4 cm tall. Negative sign means inverted.\n\nNature: Real, inverted, same size as object, formed at the centre of curvature C.\n\nRay diagram: Object AB at C (30 cm). Ray through C reflects back on itself. Ray parallel to axis reflects through F. Both rays meet at C on the same side. Image A'B' is real, inverted, same size at C.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_009",
     "question": "State and explain Ohm's Law. Draw a labelled circuit diagram to verify Ohm's Law in the laboratory. Sketch the V-I graph and explain how resistance is determined from it.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "Ohm's law and V-I graph",
@@ -132,14 +140,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Ohm's Law: At constant temperature, the potential difference (V) across a metallic conductor is directly proportional to the current (I) flowing through it.\nMathematically: V ∝ I → V = IR, where R is the resistance of the conductor.\n\nCircuit diagram components: Battery (B), Rheostat (Rh), Plug key (K), Ammeter (A) — in series; Voltmeter (V) — in parallel across the conductor/resistor under test.\n\nProcedure to verify:\n1. Set up the circuit with a resistor.\n2. Use the rheostat to vary current through the circuit.\n3. Record corresponding values of voltmeter (V) and ammeter (I) readings.\n4. Calculate V/I for each reading — it remains constant = R.\n\nV-I Graph:\n- Plot V on Y-axis, I on X-axis.\n- A straight line passing through the origin is obtained.\n- The slope of the line = V/I = R (resistance).\n\nConclusion: Since V/I = constant and the graph is a straight line through origin, Ohm's Law is verified. Resistance R = slope of V-I graph = V/I (in ohms, Ω)."
+    "answer": "Ohm's Law: At constant temperature, the potential difference (V) across a metallic conductor is directly proportional to the current (I) flowing through it.\nMathematically: V ∝ I → V = IR, where R is the resistance of the conductor.\n\nCircuit diagram components: Battery (B), Rheostat (Rh), Plug key (K), Ammeter (A) — in series; Voltmeter (V) — in parallel across the conductor/resistor under test.\n\nProcedure to verify:\n1. Set up the circuit with a resistor.\n2. Use the rheostat to vary current through the circuit.\n3. Record corresponding values of voltmeter (V) and ammeter (I) readings.\n4. Calculate V/I for each reading — it remains constant = R.\n\nV-I Graph:\n- Plot V on Y-axis, I on X-axis.\n- A straight line passing through the origin is obtained.\n- The slope of the line = V/I = R (resistance).\n\nConclusion: Since V/I = constant and the graph is a straight line through origin, Ohm's Law is verified. Resistance R = slope of V-I graph = V/I (in ohms, Ω).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_010",
     "question": "Derive the expression for the equivalent resistance when three resistors R₁, R₂, and R₃ are connected in series. Draw the circuit diagram. If R₁ = 3Ω, R₂ = 4Ω, R₃ = 5Ω are connected in series across a 12V battery, find (i) equivalent resistance (ii) current through circuit (iii) potential difference across each resistor.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "series resistance derivation and numerical",
@@ -147,14 +156,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Circuit diagram: Battery (V) connected to R₁, R₂, R₃ in series with switch K and ammeter A.\n\nDerivation:\nIn series connection, same current I flows through all resistors.\nPotential difference across each: V₁ = IR₁, V₂ = IR₂, V₃ = IR₃.\nTotal potential difference: V = V₁ + V₂ + V₃ = IR₁ + IR₂ + IR₃ = I(R₁ + R₂ + R₃).\nIf Rₛ is equivalent resistance: V = IRₛ\nTherefore: Rₛ = R₁ + R₂ + R₃\n\nNumerical:\nGiven: R₁ = 3Ω, R₂ = 4Ω, R₃ = 5Ω, V = 12V.\n\n(i) Equivalent resistance: Rₛ = 3 + 4 + 5 = 12Ω\n\n(ii) Current: I = V/Rₛ = 12/12 = 1A\n\n(iii) Potential difference across each:\nV₁ = IR₁ = 1 × 3 = 3V\nV₂ = IR₂ = 1 × 4 = 4V\nV₃ = IR₃ = 1 × 5 = 5V\nCheck: V₁ + V₂ + V₃ = 3 + 4 + 5 = 12V ✓"
+    "answer": "Circuit diagram: Battery (V) connected to R₁, R₂, R₃ in series with switch K and ammeter A.\n\nDerivation:\nIn series connection, same current I flows through all resistors.\nPotential difference across each: V₁ = IR₁, V₂ = IR₂, V₃ = IR₃.\nTotal potential difference: V = V₁ + V₂ + V₃ = IR₁ + IR₂ + IR₃ = I(R₁ + R₂ + R₃).\nIf Rₛ is equivalent resistance: V = IRₛ\nTherefore: Rₛ = R₁ + R₂ + R₃\n\nNumerical:\nGiven: R₁ = 3Ω, R₂ = 4Ω, R₃ = 5Ω, V = 12V.\n\n(i) Equivalent resistance: Rₛ = 3 + 4 + 5 = 12Ω\n\n(ii) Current: I = V/Rₛ = 12/12 = 1A\n\n(iii) Potential difference across each:\nV₁ = IR₁ = 1 × 3 = 3V\nV₂ = IR₂ = 1 × 4 = 4V\nV₃ = IR₃ = 1 × 5 = 5V\nCheck: V₁ + V₂ + V₃ = 3 + 4 + 5 = 12V ✓",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_011",
     "question": "Derive the expression for equivalent resistance when three resistors R₁, R₂, and R₃ are connected in parallel. An electric iron consumes energy at a rate of 840W when heating and 360W when keeping warm. Find the current flowing through its resistive element at 220V. At what rate is heat developed in each case?",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "parallel resistance derivation and power numerical",
@@ -162,14 +172,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Circuit diagram: Battery connected to R₁, R₂, R₃ in parallel — each resistor directly connected between the two common nodes.\n\nDerivation:\nIn parallel, same potential difference V appears across each resistor.\nCurrent through each: I₁ = V/R₁, I₂ = V/R₂, I₃ = V/R₃.\nTotal current: I = I₁ + I₂ + I₃ = V(1/R₁ + 1/R₂ + 1/R₃).\nIf Rₚ is equivalent resistance: I = V/Rₚ\nTherefore: 1/Rₚ = 1/R₁ + 1/R₂ + 1/R₃\n\nNumerical:\nGiven: V = 220V, P₁ (heating) = 840W, P₂ (warm) = 360W.\nUsing P = VI:\n\nHeating mode: I₁ = P₁/V = 840/220 = 3.82 A\nHeat developed = 840 W (rate = 840 J/s)\n\nWarming mode: I₂ = P₂/V = 360/220 = 1.636 A\nHeat developed = 360 W (rate = 360 J/s)"
+    "answer": "Circuit diagram: Battery connected to R₁, R₂, R₃ in parallel — each resistor directly connected between the two common nodes.\n\nDerivation:\nIn parallel, same potential difference V appears across each resistor.\nCurrent through each: I₁ = V/R₁, I₂ = V/R₂, I₃ = V/R₃.\nTotal current: I = I₁ + I₂ + I₃ = V(1/R₁ + 1/R₂ + 1/R₃).\nIf Rₚ is equivalent resistance: I = V/Rₚ\nTherefore: 1/Rₚ = 1/R₁ + 1/R₂ + 1/R₃\n\nNumerical:\nGiven: V = 220V, P₁ (heating) = 840W, P₂ (warm) = 360W.\nUsing P = VI:\n\nHeating mode: I₁ = P₁/V = 840/220 = 3.82 A\nHeat developed = 840 W (rate = 840 J/s)\n\nWarming mode: I₂ = P₂/V = 360/220 = 1.636 A\nHeat developed = 360 W (rate = 360 J/s)",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_012",
     "question": "Draw a labelled diagram of the human eye. Explain the defect of vision called myopia. Draw ray diagrams to show (i) the defect and (ii) how it is corrected using a suitable lens.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "The Human Eye and the Colourful World",
     "section": "Physics",
     "topic": "human eye and myopia correction",
@@ -177,14 +188,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Eye diagram labels: Cornea, Iris, Pupil, Crystalline lens, Ciliary muscles, Aqueous humour, Vitreous humour, Retina (with fovea), Optic nerve, Blind spot.\n\nMyopia (Short-sightedness):\nDefinition: A person with myopia can see nearby objects clearly but cannot see distant objects distinctly.\nCause: (i) Increase in length of the eyeball, or (ii) increase in curvature (decrease in focal length) of the eye lens. Image of distant object forms in front of the retina.\n\nRay diagram — Defect: Parallel rays from a distant object converge before reaching the retina (in front of retina).\n\nCorrection: A concave (diverging) lens of appropriate power is used. The concave lens diverges the incoming rays before they enter the eye, so they now appear to come from the near point of the defective eye and converge on the retina.\n\nRay diagram — Correction: Parallel rays → diverged by concave lens → converge exactly on retina.\n\nCorrection lens: Concave lens. Power = negative. The focal length of the corrective lens = far point of the myopic eye."
+    "answer": "Eye diagram labels: Cornea, Iris, Pupil, Crystalline lens, Ciliary muscles, Aqueous humour, Vitreous humour, Retina (with fovea), Optic nerve, Blind spot.\n\nMyopia (Short-sightedness):\nDefinition: A person with myopia can see nearby objects clearly but cannot see distant objects distinctly.\nCause: (i) Increase in length of the eyeball, or (ii) increase in curvature (decrease in focal length) of the eye lens. Image of distant object forms in front of the retina.\n\nRay diagram — Defect: Parallel rays from a distant object converge before reaching the retina (in front of retina).\n\nCorrection: A concave (diverging) lens of appropriate power is used. The concave lens diverges the incoming rays before they enter the eye, so they now appear to come from the near point of the defective eye and converge on the retina.\n\nRay diagram — Correction: Parallel rays → diverged by concave lens → converge exactly on retina.\n\nCorrection lens: Concave lens. Power = negative. The focal length of the corrective lens = far point of the myopic eye.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_013",
     "question": "What is refraction of light? State the laws of refraction. A ray of light passes from air into a glass slab making an angle of 30° with the normal. If the refractive index of glass is 1.5, find the angle of refraction. Draw the ray diagram.",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "refraction laws and numerical",
@@ -192,14 +204,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Refraction: The bending of light as it travels from one transparent medium to another (due to change in speed) is called refraction.\n\nLaws of Refraction:\n1. The incident ray, refracted ray, and normal at the point of incidence all lie in the same plane.\n2. Snell's Law: The ratio of sine of angle of incidence (i) to sine of angle of refraction (r) is constant for a given pair of media.\nMathematically: sin i / sin r = n₂₁ (refractive index of medium 2 w.r.t. medium 1).\n\nNumerical:\nGiven: Angle of incidence i = 30°, refractive index n (glass w.r.t. air) = 1.5.\nUsing Snell's Law: n = sin i / sin r\n1.5 = sin 30° / sin r\n1.5 = 0.5 / sin r\nsin r = 0.5 / 1.5 = 0.333\nr = sin⁻¹(0.333) ≈ 19.47° ≈ 19.5°\n\nRay diagram: Draw air-glass boundary (flat surface). Normal perpendicular to boundary. Incident ray at 30° to normal in air, bending towards the normal in glass at r = 19.5° (glass is optically denser, so ray bends toward normal)."
+    "answer": "Refraction: The bending of light as it travels from one transparent medium to another (due to change in speed) is called refraction.\n\nLaws of Refraction:\n1. The incident ray, refracted ray, and normal at the point of incidence all lie in the same plane.\n2. Snell's Law: The ratio of sine of angle of incidence (i) to sine of angle of refraction (r) is constant for a given pair of media.\nMathematically: sin i / sin r = n₂₁ (refractive index of medium 2 w.r.t. medium 1).\n\nNumerical:\nGiven: Angle of incidence i = 30°, refractive index n (glass w.r.t. air) = 1.5.\nUsing Snell's Law: n = sin i / sin r\n1.5 = sin 30° / sin r\n1.5 = 0.5 / sin r\nsin r = 0.5 / 1.5 = 0.333\nr = sin⁻¹(0.333) ≈ 19.47° ≈ 19.5°\n\nRay diagram: Draw air-glass boundary (flat surface). Normal perpendicular to boundary. Incident ray at 30° to normal in air, bending towards the normal in glass at r = 19.5° (glass is optically denser, so ray bends toward normal).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_014",
     "question": "What is the saponification reaction? Write the balanced chemical equation for the saponification of ethyl ester (ethyl ethanoate) using sodium hydroxide. Explain how soap works to clean oily clothes. What is a micelle?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Carbon and its Compounds",
     "section": "Chemistry",
     "topic": "saponification and cleansing action of soap",
@@ -207,14 +220,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Saponification: The process of hydrolysis of an ester with a base (alkali) to produce alcohol and the sodium salt of carboxylic acid (soap) is called saponification.\n\nChemical equation:\nCH₃COOC₂H₅ + NaOH → CH₃COONa + C₂H₅OH\n(Ethyl ethanoate) + (Sodium hydroxide) → (Sodium ethanoate/soap) + (Ethanol)\n\nIndustrially: Animal fats or vegetable oils (triglycerides) + NaOH → Soap + Glycerol.\n\nCleansing action of soap:\nSoap molecules have two ends:\n- Hydrophilic end (ionic -COO⁻Na⁺): attracted to water.\n- Hydrophobic end (long carbon chain): attracted to oil/grease.\n\nWhen soap is added to oily clothes in water:\n1. The hydrophobic tails of soap molecules insert themselves into the oil/grease droplets.\n2. The hydrophilic heads remain in water, pointing outward.\n3. This forms a spherical cluster called a MICELLE — with oil trapped in the centre and ionic heads on the outside.\n4. The micelles are suspended in water (emulsification) and can be rinsed away, removing the dirt/oil.\n\nMicelle: A spherical cluster formed by soap molecules in which the hydrophobic (water-repelling) tails are oriented inward toward the trapped oil/grease, and hydrophilic (water-attracting) heads face outward toward water."
+    "answer": "Saponification: The process of hydrolysis of an ester with a base (alkali) to produce alcohol and the sodium salt of carboxylic acid (soap) is called saponification.\n\nChemical equation:\nCH₃COOC₂H₅ + NaOH → CH₃COONa + C₂H₅OH\n(Ethyl ethanoate) + (Sodium hydroxide) → (Sodium ethanoate/soap) + (Ethanol)\n\nIndustrially: Animal fats or vegetable oils (triglycerides) + NaOH → Soap + Glycerol.\n\nCleansing action of soap:\nSoap molecules have two ends:\n- Hydrophilic end (ionic -COO⁻Na⁺): attracted to water.\n- Hydrophobic end (long carbon chain): attracted to oil/grease.\n\nWhen soap is added to oily clothes in water:\n1. The hydrophobic tails of soap molecules insert themselves into the oil/grease droplets.\n2. The hydrophilic heads remain in water, pointing outward.\n3. This forms a spherical cluster called a MICELLE — with oil trapped in the centre and ionic heads on the outside.\n4. The micelles are suspended in water (emulsification) and can be rinsed away, removing the dirt/oil.\n\nMicelle: A spherical cluster formed by soap molecules in which the hydrophobic (water-repelling) tails are oriented inward toward the trapped oil/grease, and hydrophilic (water-attracting) heads face outward toward water.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_015",
     "question": "Write the chemical equations for the following reactions of ethanoic acid: (i) with sodium carbonate, (ii) with sodium hydroxide, (iii) with ethanol. Name the products in each case and identify which is the saponification and which is the esterification reaction.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Carbon and its Compounds",
     "section": "Chemistry",
     "topic": "reactions of ethanoic acid",
@@ -222,14 +236,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "(i) With sodium carbonate (Na₂CO₃):\n2CH₃COOH + Na₂CO₃ → 2CH₃COONa + H₂O + CO₂↑\nProducts: Sodium ethanoate (salt) + Water + Carbon dioxide gas.\nThe brisk effervescence of CO₂ is observed.\n\n(ii) With sodium hydroxide (NaOH) — Neutralisation:\nCH₃COOH + NaOH → CH₃COONa + H₂O\nProducts: Sodium ethanoate (salt) + Water.\nThis is a neutralisation reaction (acid-base reaction). Note: Saponification specifically refers to hydrolysis of an ester with alkali, not of an acid.\n\n(iii) With ethanol (C₂H₅OH) — Esterification:\nCH₃COOH + C₂H₅OH ⇌ CH₃COOC₂H₅ + H₂O\n(Ethanoic acid) + (Ethanol) ⇌ (Ethyl ethanoate/ester) + (Water)\n[Concentrated H₂SO₄ as catalyst, gentle heating]\nProduct: Ethyl ethanoate — a sweet-smelling ester.\nThis is called ESTERIFICATION (reaction of acid and alcohol to form ester and water).\n\nSaponification is the reverse: hydrolysis of ethyl ethanoate with NaOH → sodium ethanoate + ethanol.\nEsterification is (iii) above."
+    "answer": "(i) With sodium carbonate (Na₂CO₃):\n2CH₃COOH + Na₂CO₃ → 2CH₃COONa + H₂O + CO₂↑\nProducts: Sodium ethanoate (salt) + Water + Carbon dioxide gas.\nThe brisk effervescence of CO₂ is observed.\n\n(ii) With sodium hydroxide (NaOH) — Neutralisation:\nCH₃COOH + NaOH → CH₃COONa + H₂O\nProducts: Sodium ethanoate (salt) + Water.\nThis is a neutralisation reaction (acid-base reaction). Note: Saponification specifically refers to hydrolysis of an ester with alkali, not of an acid.\n\n(iii) With ethanol (C₂H₅OH) — Esterification:\nCH₃COOH + C₂H₅OH ⇌ CH₃COOC₂H₅ + H₂O\n(Ethanoic acid) + (Ethanol) ⇌ (Ethyl ethanoate/ester) + (Water)\n[Concentrated H₂SO₄ as catalyst, gentle heating]\nProduct: Ethyl ethanoate — a sweet-smelling ester.\nThis is called ESTERIFICATION (reaction of acid and alcohol to form ester and water).\n\nSaponification is the reverse: hydrolysis of ethyl ethanoate with NaOH → sodium ethanoate + ethanol.\nEsterification is (iii) above.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_016",
     "question": "Draw the electron dot structure (Lewis structure) for: (i) methane (CH₄), (ii) ethene (C₂H₄), (iii) ethyne (C₂H₂). State the type of bond between carbon atoms in each molecule and define covalent bond.",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Carbon and its Compounds",
     "section": "Chemistry",
     "topic": "carbon compound structures and covalent bonds",
@@ -237,14 +252,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Covalent bond: A bond formed by mutual sharing of electron pairs between two atoms (of same or different non-metals) to attain the nearest noble gas configuration is called a covalent bond.\n\n(i) Methane (CH₄):\nCarbon (4 valence electrons) shares 1 electron with each of 4 hydrogen atoms.\nElectron dot structure: C at centre with 4 single bonds to H (showing shared pairs).\nBond type: Single covalent bonds (C-H), tetrahedral shape.\nNo C-C bond.\n\n(ii) Ethene (C₂H₄):\nTwo carbon atoms share 2 pairs of electrons between them.\nEach C also bonds to 2 H atoms.\nElectron dot structure: H₂C=CH₂ with 4 shared electrons shown between C-C.\nBond type: C=C double bond (one sigma + one pi bond).\n\n(iii) Ethyne (C₂H₂):\nTwo carbon atoms share 3 pairs of electrons between them.\nEach C bonds to 1 H atom.\nElectron dot structure: H-C≡C-H with 6 shared electrons shown between C-C.\nBond type: C≡C triple bond (one sigma + two pi bonds).\n\nSummary: CH₄ = single bond; C₂H₄ = double bond; C₂H₂ = triple bond."
+    "answer": "Covalent bond: A bond formed by mutual sharing of electron pairs between two atoms (of same or different non-metals) to attain the nearest noble gas configuration is called a covalent bond.\n\n(i) Methane (CH₄):\nCarbon (4 valence electrons) shares 1 electron with each of 4 hydrogen atoms.\nElectron dot structure: C at centre with 4 single bonds to H (showing shared pairs).\nBond type: Single covalent bonds (C-H), tetrahedral shape.\nNo C-C bond.\n\n(ii) Ethene (C₂H₄):\nTwo carbon atoms share 2 pairs of electrons between them.\nEach C also bonds to 2 H atoms.\nElectron dot structure: H₂C=CH₂ with 4 shared electrons shown between C-C.\nBond type: C=C double bond (one sigma + one pi bond).\n\n(iii) Ethyne (C₂H₂):\nTwo carbon atoms share 3 pairs of electrons between them.\nEach C bonds to 1 H atom.\nElectron dot structure: H-C≡C-H with 6 shared electrons shown between C-C.\nBond type: C≡C triple bond (one sigma + two pi bonds).\n\nSummary: CH₄ = single bond; C₂H₄ = double bond; C₂H₂ = triple bond.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_017",
     "question": "What are homologous series? Give the homologous series of alkanes and alkanols (alcohols) starting from C1 to C5. State any four characteristics of a homologous series.",
     "subject": "science",
     "class": 10,
-    "year": 2020,
+    "year": null,
     "chapter": "Carbon and its Compounds",
     "section": "Chemistry",
     "topic": "homologous series",
@@ -252,14 +268,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Homologous Series: A series of organic compounds that have the same functional group and similar chemical properties, with each successive member differing by -CH₂- unit (14 mass units) is called a homologous series.\n\nAlkanes (CₙH₂ₙ₊₂):\nC1: CH₄ — Methane\nC2: C₂H₆ — Ethane\nC3: C₃H₈ — Propane\nC4: C₄H₁₀ — Butane\nC5: C₅H₁₂ — Pentane\n\nAlkanols/Alcohols (-OH functional group, CₙH₂ₙ₊₁OH):\nC1: CH₃OH — Methanol\nC2: C₂H₅OH — Ethanol\nC3: C₃H₇OH — Propanol\nC4: C₄H₉OH — Butanol\nC5: C₅H₁₁OH — Pentanol\n\nFour characteristics of homologous series:\n1. All members have the same functional group and general formula.\n2. Successive members differ by -CH₂- (14 atomic mass units).\n3. All members can be prepared by the same general method.\n4. Physical properties (boiling point, melting point, solubility) show a gradual change with increase in molecular mass.\n5. All members show similar chemical properties."
+    "answer": "Homologous Series: A series of organic compounds that have the same functional group and similar chemical properties, with each successive member differing by -CH₂- unit (14 mass units) is called a homologous series.\n\nAlkanes (CₙH₂ₙ₊₂):\nC1: CH₄ — Methane\nC2: C₂H₆ — Ethane\nC3: C₃H₈ — Propane\nC4: C₄H₁₀ — Butane\nC5: C₅H₁₂ — Pentane\n\nAlkanols/Alcohols (-OH functional group, CₙH₂ₙ₊₁OH):\nC1: CH₃OH — Methanol\nC2: C₂H₅OH — Ethanol\nC3: C₃H₇OH — Propanol\nC4: C₄H₉OH — Butanol\nC5: C₅H₁₁OH — Pentanol\n\nFour characteristics of homologous series:\n1. All members have the same functional group and general formula.\n2. Successive members differ by -CH₂- (14 atomic mass units).\n3. All members can be prepared by the same general method.\n4. Physical properties (boiling point, melting point, solubility) show a gradual change with increase in molecular mass.\n5. All members show similar chemical properties.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_018",
     "question": "Explain the reflex arc with a neat labelled diagram. What is a reflex action? Give two examples. Why are reflex actions important?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Control and Coordination",
     "section": "Biology",
     "topic": "reflex arc and reflex action",
@@ -267,14 +284,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Reflex action: An automatic, rapid, involuntary response of the body to a stimulus — one that does not require conscious thinking — is called a reflex action.\nExamples: (i) Withdrawing the hand on touching a hot object. (ii) Blinking of eyes in bright light. (iii) Knee-jerk reflex.\n\nReflex arc — the pathway followed by a nerve impulse during reflex action:\nDiagram labels: Receptor (sense organ/skin), Sensory (afferent) neuron, Spinal cord (relay neuron in grey matter), Motor (efferent) neuron, Effector (muscle/gland).\n\nPathway:\nStimulus (e.g., touching hot object) → Receptor (skin) → Sensory neuron (carries impulse to spinal cord) → Relay neuron in spinal cord (integrates and relays) → Motor neuron (carries command away) → Effector muscle (contracts → hand withdraws).\n\nSimultaneously, spinal cord sends signal to brain (for conscious awareness of pain), but the protective response occurs before the brain processes it.\n\nImportance of reflex actions:\n1. They protect the body from harm by producing extremely fast responses (faster than voluntary actions through the brain).\n2. They reduce the burden on the brain by handling routine/emergency responses automatically.\n3. They allow the brain to focus on complex decision-making while the spinal cord handles quick protective responses."
+    "answer": "Reflex action: An automatic, rapid, involuntary response of the body to a stimulus — one that does not require conscious thinking — is called a reflex action.\nExamples: (i) Withdrawing the hand on touching a hot object. (ii) Blinking of eyes in bright light. (iii) Knee-jerk reflex.\n\nReflex arc — the pathway followed by a nerve impulse during reflex action:\nDiagram labels: Receptor (sense organ/skin), Sensory (afferent) neuron, Spinal cord (relay neuron in grey matter), Motor (efferent) neuron, Effector (muscle/gland).\n\nPathway:\nStimulus (e.g., touching hot object) → Receptor (skin) → Sensory neuron (carries impulse to spinal cord) → Relay neuron in spinal cord (integrates and relays) → Motor neuron (carries command away) → Effector muscle (contracts → hand withdraws).\n\nSimultaneously, spinal cord sends signal to brain (for conscious awareness of pain), but the protective response occurs before the brain processes it.\n\nImportance of reflex actions:\n1. They protect the body from harm by producing extremely fast responses (faster than voluntary actions through the brain).\n2. They reduce the burden on the brain by handling routine/emergency responses automatically.\n3. They allow the brain to focus on complex decision-making while the spinal cord handles quick protective responses.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_019",
     "question": "What are plant hormones? Name the different types of plant hormones and describe the role of each. How does auxin help in the bending of a plant shoot towards light?",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Control and Coordination",
     "section": "Biology",
     "topic": "plant hormones and phototropism",
@@ -282,14 +300,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Plant hormones (phytohormones): Chemical substances produced naturally in plants that control and coordinate their growth, development, and responses to the environment.\n\nTypes and roles:\n1. AUXIN (e.g., IAA): Promotes cell elongation. Responsible for phototropism and geotropism. Produced at shoot tips.\n2. GIBBERELLIN: Promotes stem elongation, seed germination, and flowering. Helps plants grow taller.\n3. CYTOKININ: Promotes cell division (cytokinesis). Delays ageing of leaves. Found in areas of rapid cell division (fruits, roots, seeds).\n4. ABSCISIC ACID (ABA): Growth inhibitor. Causes dormancy of seeds and buds. Promotes stomatal closure during drought (stress hormone).\n5. ETHYLENE: Promotes ripening of fruits, ageing, and abscission (leaf/fruit fall). Gaseous hormone.\n\nAuxin and phototropism (bending towards light):\nWhen light falls on one side of a shoot:\n1. Auxin migrates from the illuminated side to the shaded side.\n2. Higher auxin concentration on the shaded side causes more cell elongation on that side.\n3. Lower auxin on the illuminated side means less elongation.\n4. This unequal growth causes the shoot to bend towards the light source (positive phototropism).\nThis is detected by the shoot tip (apex), which is the site of auxin production."
+    "answer": "Plant hormones (phytohormones): Chemical substances produced naturally in plants that control and coordinate their growth, development, and responses to the environment.\n\nTypes and roles:\n1. AUXIN (e.g., IAA): Promotes cell elongation. Responsible for phototropism and geotropism. Produced at shoot tips.\n2. GIBBERELLIN: Promotes stem elongation, seed germination, and flowering. Helps plants grow taller.\n3. CYTOKININ: Promotes cell division (cytokinesis). Delays ageing of leaves. Found in areas of rapid cell division (fruits, roots, seeds).\n4. ABSCISIC ACID (ABA): Growth inhibitor. Causes dormancy of seeds and buds. Promotes stomatal closure during drought (stress hormone).\n5. ETHYLENE: Promotes ripening of fruits, ageing, and abscission (leaf/fruit fall). Gaseous hormone.\n\nAuxin and phototropism (bending towards light):\nWhen light falls on one side of a shoot:\n1. Auxin migrates from the illuminated side to the shaded side.\n2. Higher auxin concentration on the shaded side causes more cell elongation on that side.\n3. Lower auxin on the illuminated side means less elongation.\n4. This unequal growth causes the shoot to bend towards the light source (positive phototropism).\nThis is detected by the shoot tip (apex), which is the site of auxin production.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_020",
     "question": "What is the importance of variation to a species? Explain how sex is determined in human beings using a diagram. What is the role of X and Y chromosomes?",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Heredity",
     "section": "Biology",
     "topic": "sex determination in humans",
@@ -297,14 +316,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Importance of variation:\n1. Variations provide the raw material for evolution — beneficial variations are selected by natural selection over generations.\n2. Variations allow a species to adapt to changing environments and avoid extinction.\n3. Genetic diversity increases a population's resilience to diseases and environmental changes.\n4. Variations can lead to formation of new species over time.\n\nSex determination in humans:\nHumans have 23 pairs of chromosomes. The 23rd pair is the sex chromosomes:\n- Females: XX (two X chromosomes)\n- Males: XY (one X and one Y chromosome)\n\nDuring gamete formation (meiosis):\n- Females produce eggs, all carrying X chromosome.\n- Males produce two types of sperm: 50% carry X and 50% carry Y.\n\nCross diagram:\nMother (XX) × Father (XY)\nEggs: X, X\nSperm: X, Y\nPunnett square:\n     X    X\n  X [XX] [XX]  → Female\n  Y [XY] [XY]  → Male\n\nResult: 50% XX (female) : 50% XY (male)\n\nConclusion: Sex of a child is determined by the sperm (father), not the egg (mother). If X-bearing sperm fertilises the egg → girl (XX). If Y-bearing sperm fertilises → boy (XY). Hence, it is biologically incorrect to blame the mother for the sex of the child."
+    "answer": "Importance of variation:\n1. Variations provide the raw material for evolution — beneficial variations are selected by natural selection over generations.\n2. Variations allow a species to adapt to changing environments and avoid extinction.\n3. Genetic diversity increases a population's resilience to diseases and environmental changes.\n4. Variations can lead to formation of new species over time.\n\nSex determination in humans:\nHumans have 23 pairs of chromosomes. The 23rd pair is the sex chromosomes:\n- Females: XX (two X chromosomes)\n- Males: XY (one X and one Y chromosome)\n\nDuring gamete formation (meiosis):\n- Females produce eggs, all carrying X chromosome.\n- Males produce two types of sperm: 50% carry X and 50% carry Y.\n\nCross diagram:\nMother (XX) × Father (XY)\nEggs: X, X\nSperm: X, Y\nPunnett square:\n     X    X\n  X [XX] [XX]  → Female\n  Y [XY] [XY]  → Male\n\nResult: 50% XX (female) : 50% XY (male)\n\nConclusion: Sex of a child is determined by the sperm (father), not the egg (mother). If X-bearing sperm fertilises the egg → girl (XX). If Y-bearing sperm fertilises → boy (XY). Hence, it is biologically incorrect to blame the mother for the sex of the child.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_021",
     "question": "Draw ray diagrams to show the path of a ray of light when it passes from a denser medium to a rarer medium at angles (i) less than critical angle, (ii) equal to critical angle, (iii) greater than critical angle. Name the phenomenon in case (iii) and give one application.",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "total internal reflection",
@@ -312,14 +332,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Setup: Light ray in glass (denser medium) striking the glass-air boundary.\n\nCase (i) — Angle of incidence < Critical angle:\nRay refracts away from normal into air (bends away from normal as it goes to rarer medium). Partially reflected ray also exists but refracted ray is the main transmitted ray.\nDiagram: Ray bends away from normal at boundary.\n\nCase (ii) — Angle of incidence = Critical angle (C):\nThe refracted ray travels along the boundary (angle of refraction = 90°). A weak refracted ray grazes the surface.\nDiagram: Refracted ray runs along the surface.\n\nCase (iii) — Angle of incidence > Critical angle:\nNo refraction occurs. The entire light is reflected back into the denser medium (glass). This is TOTAL INTERNAL REFLECTION.\nDiagram: Ray reflects back into glass following laws of reflection.\n\nTotal Internal Reflection: When light travels from a denser to a rarer medium at an angle of incidence greater than the critical angle, it is completely reflected back into the denser medium.\n\nApplication: Optical fibres — light signals are transmitted over long distances inside a glass/silica fibre by repeated total internal reflection, with negligible energy loss. Used in telecommunications, medical endoscopy."
+    "answer": "Setup: Light ray in glass (denser medium) striking the glass-air boundary.\n\nCase (i) — Angle of incidence < Critical angle:\nRay refracts away from normal into air (bends away from normal as it goes to rarer medium). Partially reflected ray also exists but refracted ray is the main transmitted ray.\nDiagram: Ray bends away from normal at boundary.\n\nCase (ii) — Angle of incidence = Critical angle (C):\nThe refracted ray travels along the boundary (angle of refraction = 90°). A weak refracted ray grazes the surface.\nDiagram: Refracted ray runs along the surface.\n\nCase (iii) — Angle of incidence > Critical angle:\nNo refraction occurs. The entire light is reflected back into the denser medium (glass). This is TOTAL INTERNAL REFLECTION.\nDiagram: Ray reflects back into glass following laws of reflection.\n\nTotal Internal Reflection: When light travels from a denser to a rarer medium at an angle of incidence greater than the critical angle, it is completely reflected back into the denser medium.\n\nApplication: Optical fibres — light signals are transmitted over long distances inside a glass/silica fibre by repeated total internal reflection, with negligible energy loss. Used in telecommunications, medical endoscopy.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_022",
     "question": "An electric lamp of 100W, a toaster of 750W, and a water filter of 500W are connected to a 220V source. What is the resistance of each appliance? If all three are switched on simultaneously, what is the total current drawn from the source?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "electric power and resistance numerical",
@@ -327,14 +348,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Given: V = 220V\nP_lamp = 100W, P_toaster = 750W, P_filter = 500W\n\nUsing P = V²/R → R = V²/P:\n\nResistance of lamp: R₁ = (220)² / 100 = 48400 / 100 = 484 Ω\n\nResistance of toaster: R₂ = (220)² / 750 = 48400 / 750 = 64.53 Ω\n\nResistance of water filter: R₃ = (220)² / 500 = 48400 / 500 = 96.8 Ω\n\nAll appliances are connected in parallel (as is standard in household circuits).\n\nTotal power consumed: P_total = 100 + 750 + 500 = 1350 W\n\nTotal current drawn: I = P_total / V = 1350 / 220 = 6.14 A\n\nAlternatively, using I = P/V for each:\nI_lamp = 100/220 = 0.45 A\nI_toaster = 750/220 = 3.41 A\nI_filter = 500/220 = 2.27 A\nTotal I = 0.45 + 3.41 + 2.27 = 6.13 A ≈ 6.14 A ✓\n\nNote: Domestic circuits use parallel connections so each appliance gets full 220V and can be operated independently."
+    "answer": "Given: V = 220V\nP_lamp = 100W, P_toaster = 750W, P_filter = 500W\n\nUsing P = V²/R → R = V²/P:\n\nResistance of lamp: R₁ = (220)² / 100 = 48400 / 100 = 484 Ω\n\nResistance of toaster: R₂ = (220)² / 750 = 48400 / 750 = 64.53 Ω\n\nResistance of water filter: R₃ = (220)² / 500 = 48400 / 500 = 96.8 Ω\n\nAll appliances are connected in parallel (as is standard in household circuits).\n\nTotal power consumed: P_total = 100 + 750 + 500 = 1350 W\n\nTotal current drawn: I = P_total / V = 1350 / 220 = 6.14 A\n\nAlternatively, using I = P/V for each:\nI_lamp = 100/220 = 0.45 A\nI_toaster = 750/220 = 3.41 A\nI_filter = 500/220 = 2.27 A\nTotal I = 0.45 + 3.41 + 2.27 = 6.13 A ≈ 6.14 A ✓\n\nNote: Domestic circuits use parallel connections so each appliance gets full 220V and can be operated independently.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_023",
     "question": "What is Joule's law of heating? Write its mathematical expression and explain each term. A wire of resistance 15Ω carries a current of 2A for 10 minutes. Calculate the heat produced in the wire.",
     "subject": "science",
     "class": 10,
-    "year": 2020,
+    "year": null,
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "Joule's heating law and numerical",
@@ -342,14 +364,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Joule's Law of Heating: The heat produced in a resistor is directly proportional to (i) the square of current (I²), (ii) the resistance (R) of the conductor, and (iii) the time (t) for which the current flows.\n\nMathematical expression: H = I²Rt\nWhere:\n- H = heat produced (in joules, J)\n- I = current through the conductor (in amperes, A)\n- R = resistance of the conductor (in ohms, Ω)\n- t = time for which current flows (in seconds, s)\n\nDerivation basis: Work done in moving charge Q through potential difference V = QV = VIt = I²Rt (using V=IR). This work appears as heat energy.\n\nNumerical:\nGiven: R = 15Ω, I = 2A, t = 10 min = 10 × 60 = 600 s.\n\nH = I²Rt = (2)² × 15 × 600\nH = 4 × 15 × 600\nH = 36,000 J\nH = 36 kJ\n\nThe heat produced in the wire is 36,000 joules (36 kJ)."
+    "answer": "Joule's Law of Heating: The heat produced in a resistor is directly proportional to (i) the square of current (I²), (ii) the resistance (R) of the conductor, and (iii) the time (t) for which the current flows.\n\nMathematical expression: H = I²Rt\nWhere:\n- H = heat produced (in joules, J)\n- I = current through the conductor (in amperes, A)\n- R = resistance of the conductor (in ohms, Ω)\n- t = time for which current flows (in seconds, s)\n\nDerivation basis: Work done in moving charge Q through potential difference V = QV = VIt = I²Rt (using V=IR). This work appears as heat energy.\n\nNumerical:\nGiven: R = 15Ω, I = 2A, t = 10 min = 10 × 60 = 600 s.\n\nH = I²Rt = (2)² × 15 × 600\nH = 4 × 15 × 600\nH = 36,000 J\nH = 36 kJ\n\nThe heat produced in the wire is 36,000 joules (36 kJ).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_024",
     "question": "Draw a labelled diagram of the excretory system in humans. Name two nitrogenous waste products excreted and name the organ that excretes each. What are the two main processes by which plants excrete waste?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "human excretory system",
@@ -357,14 +380,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Diagram labels: Two kidneys (left and right), Renal artery (brings blood to kidney), Renal vein (takes purified blood away), Ureter (one from each kidney), Urinary bladder, Urethra.\n\nNitrogenous wastes and organs:\n1. Urea — excreted by kidneys (filtered from blood in nephrons). Urea is produced in the liver from breakdown of excess amino acids.\n2. Uric acid — excreted by kidneys (birds, reptiles excrete mainly uric acid; humans excrete small amounts).\n3. CO₂ — excreted by lungs (though it is carbon-based, not nitrogenous).\n4. Ammonia — excreted directly by aquatic organisms; in humans it is converted to urea in liver first.\n\nWaste excretion in plants:\n1. Gaseous exchange: CO₂ is excreted through stomata and lenticels during respiration. O₂ is excreted through stomata during photosynthesis.\n2. Excretion into soil: Some plants excrete excess salts and organic waste through roots into the soil.\n3. Storage in leaves: Some waste products (tannins, resins, gums, oils) are stored in leaves which fall off — this is an indirect excretory method.\n4. Transpiration: Excess water is released as water vapour through stomata.\n\nPlants have slow metabolism and produce less toxic waste, so they lack a dedicated excretory system unlike animals."
+    "answer": "Diagram labels: Two kidneys (left and right), Renal artery (brings blood to kidney), Renal vein (takes purified blood away), Ureter (one from each kidney), Urinary bladder, Urethra.\n\nNitrogenous wastes and organs:\n1. Urea — excreted by kidneys (filtered from blood in nephrons). Urea is produced in the liver from breakdown of excess amino acids.\n2. Uric acid — excreted by kidneys (birds, reptiles excrete mainly uric acid; humans excrete small amounts).\n3. CO₂ — excreted by lungs (though it is carbon-based, not nitrogenous).\n4. Ammonia — excreted directly by aquatic organisms; in humans it is converted to urea in liver first.\n\nWaste excretion in plants:\n1. Gaseous exchange: CO₂ is excreted through stomata and lenticels during respiration. O₂ is excreted through stomata during photosynthesis.\n2. Excretion into soil: Some plants excrete excess salts and organic waste through roots into the soil.\n3. Storage in leaves: Some waste products (tannins, resins, gums, oils) are stored in leaves which fall off — this is an indirect excretory method.\n4. Transpiration: Excess water is released as water vapour through stomata.\n\nPlants have slow metabolism and produce less toxic waste, so they lack a dedicated excretory system unlike animals.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_025",
     "question": "What is photosynthesis? Write the overall balanced chemical equation. Draw a labelled diagram of a chloroplast. Explain the role of light and CO₂ in photosynthesis.",
     "subject": "science",
     "class": 10,
-    "year": 2019,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "photosynthesis and chloroplast",
@@ -372,14 +396,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Photosynthesis: The process by which green plants (and other autotrophs) use sunlight, water, and carbon dioxide to produce glucose and oxygen is called photosynthesis.\n\nBalanced equation:\n6CO₂ + 6H₂O + Light energy → C₆H₁₂O₆ + 6O₂\n(Carbon dioxide + Water → Glucose + Oxygen)\n\nChloroplast diagram labels: Outer membrane, Inner membrane, Granum (stack of thylakoids), Thylakoid disc, Stroma (fluid-filled space), Lamellae (thylakoid membranes), Starch grains.\n\nRole of light:\n1. Light energy is absorbed by chlorophyll in the thylakoid membranes.\n2. Light splits water molecules (photolysis): H₂O → 2H⁺ + ½O₂ + 2e⁻. The oxygen is released as a by-product.\n3. Light energy is converted to chemical energy (ATP and NADPH) used in the next stage.\n\nRole of CO₂:\n1. CO₂ enters through stomata and diffuses into the mesophyll cells.\n2. In the stroma (Calvin cycle/dark reaction), CO₂ is fixed (incorporated) using the ATP and NADPH produced by light reactions.\n3. CO₂ is reduced to form glucose (C₆H₁₂O₆) — the food stored by the plant.\n\nConditions necessary for photosynthesis: Sunlight, chlorophyll, water, and carbon dioxide."
+    "answer": "Photosynthesis: The process by which green plants (and other autotrophs) use sunlight, water, and carbon dioxide to produce glucose and oxygen is called photosynthesis.\n\nBalanced equation:\n6CO₂ + 6H₂O + Light energy → C₆H₁₂O₆ + 6O₂\n(Carbon dioxide + Water → Glucose + Oxygen)\n\nChloroplast diagram labels: Outer membrane, Inner membrane, Granum (stack of thylakoids), Thylakoid disc, Stroma (fluid-filled space), Lamellae (thylakoid membranes), Starch grains.\n\nRole of light:\n1. Light energy is absorbed by chlorophyll in the thylakoid membranes.\n2. Light splits water molecules (photolysis): H₂O → 2H⁺ + ½O₂ + 2e⁻. The oxygen is released as a by-product.\n3. Light energy is converted to chemical energy (ATP and NADPH) used in the next stage.\n\nRole of CO₂:\n1. CO₂ enters through stomata and diffuses into the mesophyll cells.\n2. In the stroma (Calvin cycle/dark reaction), CO₂ is fixed (incorporated) using the ATP and NADPH produced by light reactions.\n3. CO₂ is reduced to form glucose (C₆H₁₂O₆) — the food stored by the plant.\n\nConditions necessary for photosynthesis: Sunlight, chlorophyll, water, and carbon dioxide.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_026",
     "question": "Explain anaerobic and aerobic respiration in humans with the help of chemical equations. Where in the cell does each process occur? What is the significance of ATP?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "aerobic and anaerobic respiration",
@@ -387,14 +412,15 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Respiration: The process of breaking down glucose to release energy for cellular activities is called respiration.\n\nAerobic Respiration (in presence of oxygen):\nLocation: Cytoplasm (glycolysis) + Mitochondria (Krebs cycle + electron transport chain).\nEquation:\nC₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + Energy (38 ATP)\n(Glucose) + (Oxygen) → (Carbon dioxide) + (Water) + Energy\n\nSteps: (1) Glycolysis: Glucose → 2 Pyruvate (in cytoplasm, anaerobic step). (2) Pyruvate enters mitochondria → acetyl CoA → Krebs cycle → CO₂ released. (3) Electron transport chain → water formed, large amount of ATP produced.\n\nAnaerobic Respiration (in absence of oxygen):\nLocation: Cytoplasm only.\nIn yeast (fermentation):\nC₆H₁₂O₆ → 2C₂H₅OH + 2CO₂ + Energy (2 ATP)\n(Glucose → Ethanol + Carbon dioxide + Energy)\n\nIn human muscle cells (during vigorous exercise):\nC₆H₁₂O₆ → 2C₃H₆O₃ + Energy (2 ATP)\n(Glucose → Lactic acid + Energy)\nLactic acid accumulation causes muscle cramps.\n\nSignificance of ATP (Adenosine Triphosphate):\nATP is the universal energy currency of the cell. Energy released during respiration is stored in ATP's phosphate bonds. When energy is needed, ATP breaks down (ATP → ADP + Pᵢ + Energy), releasing energy for cellular work — muscle contraction, active transport, biosynthesis, nerve impulse, etc."
+    "answer": "Respiration: The process of breaking down glucose to release energy for cellular activities is called respiration.\n\nAerobic Respiration (in presence of oxygen):\nLocation: Cytoplasm (glycolysis) + Mitochondria (Krebs cycle + electron transport chain).\nEquation:\nC₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + Energy (38 ATP)\n(Glucose) + (Oxygen) → (Carbon dioxide) + (Water) + Energy\n\nSteps: (1) Glycolysis: Glucose → 2 Pyruvate (in cytoplasm, anaerobic step). (2) Pyruvate enters mitochondria → acetyl CoA → Krebs cycle → CO₂ released. (3) Electron transport chain → water formed, large amount of ATP produced.\n\nAnaerobic Respiration (in absence of oxygen):\nLocation: Cytoplasm only.\nIn yeast (fermentation):\nC₆H₁₂O₆ → 2C₂H₅OH + 2CO₂ + Energy (2 ATP)\n(Glucose → Ethanol + Carbon dioxide + Energy)\n\nIn human muscle cells (during vigorous exercise):\nC₆H₁₂O₆ → 2C₃H₆O₃ + Energy (2 ATP)\n(Glucose → Lactic acid + Energy)\nLactic acid accumulation causes muscle cramps.\n\nSignificance of ATP (Adenosine Triphosphate):\nATP is the universal energy currency of the cell. Energy released during respiration is stored in ATP's phosphate bonds. When energy is needed, ATP breaks down (ATP → ADP + Pᵢ + Energy), releasing energy for cellular work — muscle contraction, active transport, biosynthesis, nerve impulse, etc.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_027",
     "question": "Draw a labelled diagram of a convex lens and show three principal rays used to draw ray diagrams. An object of 6 cm height is placed 20 cm in front of a convex lens of focal length 10 cm. Find the image distance, image height, and state the nature of the image.",
     "subject": "science",
     "class": 10,
-    "year": 2024,
+    "year": null,
     "chapter": "Light — Reflection and Refraction",
     "section": "Physics",
     "topic": "convex lens ray diagram and numerical",
@@ -402,14 +428,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Convex lens diagram labels: Principal axis, Optical centre (O), Focus F₁ (left), Focus F₂ (right), 2F₁ (left), 2F₂ (right), Object (AB).\n\nThree principal rays:\n1. A ray parallel to the principal axis → after refraction, passes through the principal focus F₂.\n2. A ray passing through the optical centre O → passes straight without bending.\n3. A ray passing through focus F₁ → after refraction, emerges parallel to the principal axis.\n\nNumerical:\nGiven: Object height h = 6 cm, u = −20 cm (object on left), f = +10 cm (convex lens).\n\nUsing lens formula: 1/v − 1/u = 1/f\n1/v − 1/(−20) = 1/10\n1/v + 1/20 = 1/10\n1/v = 1/10 − 1/20 = 2/20 − 1/20 = 1/20\nv = +20 cm\n\nImage is formed 20 cm on the other side of the lens (positive → real).\n\nMagnification: m = v/u = 20/(−20) = −1\nImage height = m × h = −1 × 6 = −6 cm\n\nNature of image: Real, inverted, same size as object, formed at 2F₂ (20 cm from lens on the other side).\nThis position (object at 2F) is used in photocopiers to produce same-size copies."
+    "answer": "Convex lens diagram labels: Principal axis, Optical centre (O), Focus F₁ (left), Focus F₂ (right), 2F₁ (left), 2F₂ (right), Object (AB).\n\nThree principal rays:\n1. A ray parallel to the principal axis → after refraction, passes through the principal focus F₂.\n2. A ray passing through the optical centre O → passes straight without bending.\n3. A ray passing through focus F₁ → after refraction, emerges parallel to the principal axis.\n\nNumerical:\nGiven: Object height h = 6 cm, u = −20 cm (object on left), f = +10 cm (convex lens).\n\nUsing lens formula: 1/v − 1/u = 1/f\n1/v − 1/(−20) = 1/10\n1/v + 1/20 = 1/10\n1/v = 1/10 − 1/20 = 2/20 − 1/20 = 1/20\nv = +20 cm\n\nImage is formed 20 cm on the other side of the lens (positive → real).\n\nMagnification: m = v/u = 20/(−20) = −1\nImage height = m × h = −1 × 6 = −6 cm\n\nNature of image: Real, inverted, same size as object, formed at 2F₂ (20 cm from lens on the other side).\nThis position (object at 2F) is used in photocopiers to produce same-size copies.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_028",
     "question": "What is meant by dispersion of light? With a diagram, explain how a glass prism disperses white light into its constituent colours. Name the colours in order and state why violet deviates most.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "The Human Eye and the Colourful World",
     "section": "Physics",
     "topic": "dispersion of light by prism",
@@ -417,14 +444,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Dispersion of light: The splitting of white light into its constituent colours (spectrum) when it passes through a transparent medium like a prism is called dispersion of light.\n\nExplanation with prism diagram:\n1. White light enters one face of the triangular glass prism and strikes the second face.\n2. At the first surface, light refracts (bends towards the normal as it enters denser glass).\n3. Different colours of light have different wavelengths and travel at slightly different speeds in glass.\n4. At the second surface, light refracts again (bends away from normal as it enters rarer air).\n5. The bending is different for different wavelengths → they emerge at different angles.\n\nOrder of colours (VIBGYOR — from most to least deviation):\nViolet → Indigo → Blue → Green → Yellow → Orange → Red\n\nViolet deviates most, red deviates least.\n\nDiagram labels: Incident white light, Prism (with angle A), Refracted white light splitting, Spectrum showing VIBGYOR from bottom (violet) to top (red).\n\nReason violet deviates most:\nViolet light has the shortest wavelength and highest frequency. The refractive index of glass is highest for violet and lowest for red. Since deviation ∝ refractive index, violet is deviated (bent) the most and red the least. This is the basis for dispersion — different refractive indices for different colours."
+    "answer": "Dispersion of light: The splitting of white light into its constituent colours (spectrum) when it passes through a transparent medium like a prism is called dispersion of light.\n\nExplanation with prism diagram:\n1. White light enters one face of the triangular glass prism and strikes the second face.\n2. At the first surface, light refracts (bends towards the normal as it enters denser glass).\n3. Different colours of light have different wavelengths and travel at slightly different speeds in glass.\n4. At the second surface, light refracts again (bends away from normal as it enters rarer air).\n5. The bending is different for different wavelengths → they emerge at different angles.\n\nOrder of colours (VIBGYOR — from most to least deviation):\nViolet → Indigo → Blue → Green → Yellow → Orange → Red\n\nViolet deviates most, red deviates least.\n\nDiagram labels: Incident white light, Prism (with angle A), Refracted white light splitting, Spectrum showing VIBGYOR from bottom (violet) to top (red).\n\nReason violet deviates most:\nViolet light has the shortest wavelength and highest frequency. The refractive index of glass is highest for violet and lowest for red. Since deviation ∝ refractive index, violet is deviated (bent) the most and red the least. This is the basis for dispersion — different refractive indices for different colours.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_029",
     "question": "What is electromagnetic induction? State Fleming's right-hand rule. Describe with a diagram how an AC generator works. What is the difference between AC and DC?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "AC generator and electromagnetic induction",
@@ -432,14 +460,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Electromagnetic Induction: The phenomenon of producing an electric current in a conductor when it is placed in a changing magnetic field (or moved through a magnetic field) is called electromagnetic induction. Discovered by Michael Faraday.\n\nFleming's Right-Hand Rule (for generator): Stretch the thumb, index finger, and middle finger of the right hand mutually perpendicular. If the index finger points in the direction of the magnetic field (B) and the thumb points in the direction of motion of the conductor, then the middle finger points in the direction of the induced current.\n\nAC Generator diagram labels: Armature coil (ABCD), Strong magnet (N and S poles), Slip rings (two rings), Carbon brushes, External circuit/load, Axis of rotation.\n\nWorking:\n1. The rectangular armature coil is rotated in a magnetic field.\n2. When coil sides AB and CD cut magnetic field lines, an EMF is induced (by Faraday's law).\n3. As the coil rotates, the direction of induced current alternates every half rotation (180°).\n4. Current flows: AB → external circuit → CD in first half; reverses in second half.\n5. Slip rings maintain continuous contact with brushes, allowing current to flow to external circuit.\n6. The output is alternating current (AC) — its direction reverses periodically.\n\nAC vs DC:\n- AC (Alternating Current): Direction reverses periodically; easier to transmit over long distances at high voltage; used in household supply (50 Hz in India).\n- DC (Direct Current): Flows in one direction only; used in batteries, electronic devices."
+    "answer": "Electromagnetic Induction: The phenomenon of producing an electric current in a conductor when it is placed in a changing magnetic field (or moved through a magnetic field) is called electromagnetic induction. Discovered by Michael Faraday.\n\nFleming's Right-Hand Rule (for generator): Stretch the thumb, index finger, and middle finger of the right hand mutually perpendicular. If the index finger points in the direction of the magnetic field (B) and the thumb points in the direction of motion of the conductor, then the middle finger points in the direction of the induced current.\n\nAC Generator diagram labels: Armature coil (ABCD), Strong magnet (N and S poles), Slip rings (two rings), Carbon brushes, External circuit/load, Axis of rotation.\n\nWorking:\n1. The rectangular armature coil is rotated in a magnetic field.\n2. When coil sides AB and CD cut magnetic field lines, an EMF is induced (by Faraday's law).\n3. As the coil rotates, the direction of induced current alternates every half rotation (180°).\n4. Current flows: AB → external circuit → CD in first half; reverses in second half.\n5. Slip rings maintain continuous contact with brushes, allowing current to flow to external circuit.\n6. The output is alternating current (AC) — its direction reverses periodically.\n\nAC vs DC:\n- AC (Alternating Current): Direction reverses periodically; easier to transmit over long distances at high voltage; used in household supply (50 Hz in India).\n- DC (Direct Current): Flows in one direction only; used in batteries, electronic devices.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_030",
     "question": "Draw a labelled diagram showing the magnetic field lines around a current-carrying straight conductor. State the right-hand thumb rule. How does increasing the current change the magnetic field? What is solenoid and what is its magnetic field like?",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "magnetic field due to current and solenoid",
@@ -447,14 +476,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Magnetic field around a straight conductor:\nDiagram: Straight wire with current flowing upward (out of page). Concentric circular field lines around the wire. Arrow on circles showing direction (anticlockwise when current comes toward you).\nLabels: Current direction (I), Magnetic field lines (B), Distance (r) from wire.\n\nRight-Hand Thumb Rule: If a current-carrying conductor is held in the right hand such that the thumb points in the direction of current, then the fingers curl around the conductor in the direction of the magnetic field lines.\n\nEffect of increasing current:\n1. Increasing current → stronger magnetic field (B ∝ I).\n2. The magnetic field intensity increases but the circular pattern of field lines remains the same.\n3. Field lines become more closely spaced (higher flux density).\n\nSolenoid: A long coil of wire consisting of many circular turns of insulated wire wound closely together is called a solenoid. It is essentially many loops of wire in series.\n\nMagnetic field of a solenoid:\nThe magnetic field inside a solenoid resembles that of a bar magnet — it is uniform and parallel to the axis. One end acts as a North pole, the other as a South pole.\nDiagram: Solenoid with current shown, parallel horizontal field lines inside, looped field lines outside emerging from N pole and entering S pole.\n\nStrong electromagnets are made using solenoids with iron cores inside them."
+    "answer": "Magnetic field around a straight conductor:\nDiagram: Straight wire with current flowing upward (out of page). Concentric circular field lines around the wire. Arrow on circles showing direction (anticlockwise when current comes toward you).\nLabels: Current direction (I), Magnetic field lines (B), Distance (r) from wire.\n\nRight-Hand Thumb Rule: If a current-carrying conductor is held in the right hand such that the thumb points in the direction of current, then the fingers curl around the conductor in the direction of the magnetic field lines.\n\nEffect of increasing current:\n1. Increasing current → stronger magnetic field (B ∝ I).\n2. The magnetic field intensity increases but the circular pattern of field lines remains the same.\n3. Field lines become more closely spaced (higher flux density).\n\nSolenoid: A long coil of wire consisting of many circular turns of insulated wire wound closely together is called a solenoid. It is essentially many loops of wire in series.\n\nMagnetic field of a solenoid:\nThe magnetic field inside a solenoid resembles that of a bar magnet — it is uniform and parallel to the axis. One end acts as a North pole, the other as a South pole.\nDiagram: Solenoid with current shown, parallel horizontal field lines inside, looped field lines outside emerging from N pole and entering S pole.\n\nStrong electromagnets are made using solenoids with iron cores inside them.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_031",
     "question": "What is an electric motor? Draw a labelled diagram of a DC electric motor and explain its working principle. State Fleming's left-hand rule.",
     "subject": "science",
     "class": 10,
-    "year": 2024,
+    "year": null,
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "DC electric motor",
@@ -462,14 +492,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Electric motor: A device that converts electrical energy into mechanical (rotational) energy using the principle that a current-carrying conductor experiences a force when placed in a magnetic field.\n\nFleming's Left-Hand Rule: Stretch the thumb, index finger, and middle finger of the left hand mutually perpendicular. If the index finger points in the direction of the magnetic field (B) and the middle finger points in the direction of the current (I), the thumb points in the direction of the force (motion) on the conductor.\n\nDC Motor diagram labels: Rectangular coil (ABCD), Strong permanent magnet (N and S poles), Split-ring commutator (two half-rings), Carbon brushes (X and Y), Battery and switch, Axis of rotation.\n\nWorking:\n1. Current enters armature coil ABCD through brush X.\n2. AB side (in magnetic field): Current in one direction → force upward (by Fleming's LHR).\n3. CD side: Current in opposite direction → force downward.\n4. These two opposing forces create a couple/torque that rotates the coil.\n5. After half rotation, the split-ring commutator reverses the current direction through the coil, so the torque always acts in the same direction — keeping the coil rotating continuously.\n\nApplications: Fans, pumps, washing machines, electric vehicles, mixers, drills."
+    "answer": "Electric motor: A device that converts electrical energy into mechanical (rotational) energy using the principle that a current-carrying conductor experiences a force when placed in a magnetic field.\n\nFleming's Left-Hand Rule: Stretch the thumb, index finger, and middle finger of the left hand mutually perpendicular. If the index finger points in the direction of the magnetic field (B) and the middle finger points in the direction of the current (I), the thumb points in the direction of the force (motion) on the conductor.\n\nDC Motor diagram labels: Rectangular coil (ABCD), Strong permanent magnet (N and S poles), Split-ring commutator (two half-rings), Carbon brushes (X and Y), Battery and switch, Axis of rotation.\n\nWorking:\n1. Current enters armature coil ABCD through brush X.\n2. AB side (in magnetic field): Current in one direction → force upward (by Fleming's LHR).\n3. CD side: Current in opposite direction → force downward.\n4. These two opposing forces create a couple/torque that rotates the coil.\n5. After half rotation, the split-ring commutator reverses the current direction through the coil, so the torque always acts in the same direction — keeping the coil rotating continuously.\n\nApplications: Fans, pumps, washing machines, electric vehicles, mixers, drills.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_032",
     "question": "What are biodegradable and non-biodegradable waste? Explain the importance of waste management. What is biomagnification? Give one example with a diagram showing how pesticides accumulate through a food chain.",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "Our Environment",
     "section": "Biology",
     "topic": "waste management and biomagnification",
@@ -477,14 +508,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Biodegradable waste: Waste that can be broken down by microorganisms (bacteria, fungi) into simpler substances. Examples: kitchen waste, food scraps, paper, agricultural residue, animal dung.\n\nNon-biodegradable waste: Waste that cannot be decomposed by microorganisms and persists in the environment for very long periods. Examples: plastics, glass, metals, DDT, synthetic fibres, nuclear waste.\n\nImportance of waste management:\n1. Prevents soil, water, and air pollution.\n2. Conserves natural resources through recycling (e.g., paper recycling saves trees).\n3. Prevents spread of disease by limiting breeding grounds for pathogens.\n4. Reduces greenhouse gas emissions (methane from landfills).\n5. Maintains ecological balance and protects biodiversity.\n\nBiomagnification: The progressive increase in concentration of harmful, non-biodegradable substances (like DDT, heavy metals, pesticides) at successive trophic levels in a food chain is called biological magnification (biomagnification).\n\nDiagram: Food chain with increasing DDT concentration:\nWater/Soil → Phytoplankton (0.04 ppm) → Small fish (0.5 ppm) → Larger fish (2 ppm) → Fish-eating birds/humans (25 ppm).\n\nExample: DDT sprayed on crops → washes into water → absorbed by algae → small fish eat algae → larger fish eat small fish → fish-eating birds (like ospreys) accumulate highest DDT levels → causes thinning of eggshells → population decline."
+    "answer": "Biodegradable waste: Waste that can be broken down by microorganisms (bacteria, fungi) into simpler substances. Examples: kitchen waste, food scraps, paper, agricultural residue, animal dung.\n\nNon-biodegradable waste: Waste that cannot be decomposed by microorganisms and persists in the environment for very long periods. Examples: plastics, glass, metals, DDT, synthetic fibres, nuclear waste.\n\nImportance of waste management:\n1. Prevents soil, water, and air pollution.\n2. Conserves natural resources through recycling (e.g., paper recycling saves trees).\n3. Prevents spread of disease by limiting breeding grounds for pathogens.\n4. Reduces greenhouse gas emissions (methane from landfills).\n5. Maintains ecological balance and protects biodiversity.\n\nBiomagnification: The progressive increase in concentration of harmful, non-biodegradable substances (like DDT, heavy metals, pesticides) at successive trophic levels in a food chain is called biological magnification (biomagnification).\n\nDiagram: Food chain with increasing DDT concentration:\nWater/Soil → Phytoplankton (0.04 ppm) → Small fish (0.5 ppm) → Larger fish (2 ppm) → Fish-eating birds/humans (25 ppm).\n\nExample: DDT sprayed on crops → washes into water → absorbed by algae → small fish eat algae → larger fish eat small fish → fish-eating birds (like ospreys) accumulate highest DDT levels → causes thinning of eggshells → population decline.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_033",
     "question": "Draw a food web with at least three food chains linking grass, grasshoppers, frogs, snakes, and hawks. Explain the 10% energy rule. What happens to energy at each trophic level?",
     "subject": "science",
     "class": 10,
-    "year": 2021,
+    "year": null,
     "chapter": "Our Environment",
     "section": "Biology",
     "topic": "food web and energy flow",
@@ -492,14 +524,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Food web diagram:\nGrass → Grasshopper → Frog → Snake → Hawk\nGrass → Grasshopper → Frog → Hawk\nGrass → Mouse → Snake → Hawk\n(Arrows represent direction of energy flow — from prey to predator)\n\nTrophic levels:\n1. Grass — Producer (1st trophic level)\n2. Grasshopper/Mouse — Primary consumer (2nd trophic level)\n3. Frog — Secondary consumer (3rd trophic level)\n4. Snake — Tertiary consumer (4th trophic level)\n5. Hawk — Quaternary consumer (5th trophic level)\n\n10% Energy Rule (Lindemann's Law):\nOnly 10% of the energy stored at one trophic level is transferred to the next trophic level. The remaining 90% is lost as:\n- Heat (during respiration and metabolic processes)\n- Excretory products\n- Undigested materials\n\nExample:\nIf grass (producers) store 1000J of energy:\n→ Grasshoppers receive 100J (10% of 1000)\n→ Frogs receive 10J (10% of 100)\n→ Snakes receive 1J (10% of 10)\n→ Hawks receive 0.1J (10% of 1)\n\nConclusion: This is why food chains rarely have more than 4-5 trophic levels — too little energy remains for higher consumers. It also explains why eating lower in the food chain (vegetarian diet) is more energy-efficient."
+    "answer": "Food web diagram:\nGrass → Grasshopper → Frog → Snake → Hawk\nGrass → Grasshopper → Frog → Hawk\nGrass → Mouse → Snake → Hawk\n(Arrows represent direction of energy flow — from prey to predator)\n\nTrophic levels:\n1. Grass — Producer (1st trophic level)\n2. Grasshopper/Mouse — Primary consumer (2nd trophic level)\n3. Frog — Secondary consumer (3rd trophic level)\n4. Snake — Tertiary consumer (4th trophic level)\n5. Hawk — Quaternary consumer (5th trophic level)\n\n10% Energy Rule (Lindemann's Law):\nOnly 10% of the energy stored at one trophic level is transferred to the next trophic level. The remaining 90% is lost as:\n- Heat (during respiration and metabolic processes)\n- Excretory products\n- Undigested materials\n\nExample:\nIf grass (producers) store 1000J of energy:\n→ Grasshoppers receive 100J (10% of 1000)\n→ Frogs receive 10J (10% of 100)\n→ Snakes receive 1J (10% of 10)\n→ Hawks receive 0.1J (10% of 1)\n\nConclusion: This is why food chains rarely have more than 4-5 trophic levels — too little energy remains for higher consumers. It also explains why eating lower in the food chain (vegetarian diet) is more energy-efficient.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_034",
     "question": "Explain the dihybrid cross performed by Mendel. A plant with round yellow seeds (RRYY) is crossed with a plant having wrinkled green seeds (rryy). Draw the Punnett square for the F2 generation and state the phenotypic ratio.",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Heredity",
     "section": "Biology",
     "topic": "dihybrid cross and law of independent assortment",
@@ -507,14 +540,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Dihybrid cross: Mendel's cross involving two pairs of contrasting characters (traits) simultaneously.\n\nParental cross: RRYY (Round, Yellow) × rryy (Wrinkled, Green)\nR = round (dominant), r = wrinkled (recessive), Y = yellow (dominant), y = green (recessive)\n\nF1 generation: All offspring = RrYy (Round, Yellow) — only dominant traits expressed.\n\nF2 generation — Cross: RrYy × RrYy\nGametes produced by each parent: RY, Ry, rY, ry\n\nPunnett square (4×4):\n       RY      Ry      rY      ry\nRY  [RRYY]  [RRYy]  [RrYY]  [RrYy]\nRy  [RRYy]  [RRyy]  [RrYy]  [Rryy]\nrY  [RrYY]  [RrYy]  [rrYY]  [rrYy]\nry  [RrYy]  [Rryy]  [rrYy]  [rryy]\n\nPhenotypic ratio in F2:\n- Round Yellow (R_Y_): 9\n- Round Green (R_yy): 3\n- Wrinkled Yellow (rrY_): 3\n- Wrinkled Green (rryy): 1\nRatio = 9:3:3:1\n\nLaw of Independent Assortment: Mendel concluded that different pairs of genes (R/r and Y/y) assort independently of each other during gamete formation — they are inherited independently. New combinations (Round Green and Wrinkled Yellow) appear in F2 that were not present in the parents."
+    "answer": "Dihybrid cross: Mendel's cross involving two pairs of contrasting characters (traits) simultaneously.\n\nParental cross: RRYY (Round, Yellow) × rryy (Wrinkled, Green)\nR = round (dominant), r = wrinkled (recessive), Y = yellow (dominant), y = green (recessive)\n\nF1 generation: All offspring = RrYy (Round, Yellow) — only dominant traits expressed.\n\nF2 generation — Cross: RrYy × RrYy\nGametes produced by each parent: RY, Ry, rY, ry\n\nPunnett square (4×4):\n       RY      Ry      rY      ry\nRY  [RRYY]  [RRYy]  [RrYY]  [RrYy]\nRy  [RRYy]  [RRyy]  [RrYy]  [Rryy]\nrY  [RrYY]  [RrYy]  [rrYY]  [rrYy]\nry  [RrYy]  [Rryy]  [rrYy]  [rryy]\n\nPhenotypic ratio in F2:\n- Round Yellow (R_Y_): 9\n- Round Green (R_yy): 3\n- Wrinkled Yellow (rrY_): 3\n- Wrinkled Green (rryy): 1\nRatio = 9:3:3:1\n\nLaw of Independent Assortment: Mendel concluded that different pairs of genes (R/r and Y/y) assort independently of each other during gamete formation — they are inherited independently. New combinations (Round Green and Wrinkled Yellow) appear in F2 that were not present in the parents.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_035",
     "question": "Draw a labelled diagram showing the cross-section of a leaf. Explain how leaves are adapted for photosynthesis. What are stomata and what is their role in gaseous exchange?",
     "subject": "science",
     "class": 10,
-    "year": 2020,
+    "year": null,
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "leaf structure and stomata",
@@ -522,14 +556,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Cross-section of leaf diagram labels: Cuticle (waxy layer on epidermis), Upper epidermis (single layer), Palisade mesophyll (elongated cells, densely packed with chloroplasts), Spongy mesophyll (loosely packed, air spaces), Lower epidermis, Stomata (pores), Guard cells (kidney-shaped), Vascular bundle (xylem above, phloem below), Midrib.\n\nAdaptations of leaves for photosynthesis:\n1. Broad, flat lamina — maximises surface area for light absorption.\n2. Thin structure — short distance for CO₂ to diffuse into all cells.\n3. Transparent upper epidermis — allows light to reach mesophyll cells.\n4. Palisade mesophyll cells — contain numerous chloroplasts, tightly packed to maximise light absorption.\n5. Spongy mesophyll with air spaces — allows CO₂ and O₂ to move freely between cells.\n6. Extensive network of veins — supply water and minerals (via xylem) and remove sugars (via phloem).\n7. Stomata — allow entry of CO₂ and exit of O₂.\n\nStomata: Tiny pores on the surface of leaves (mostly on lower epidermis) surrounded by two guard cells.\n\nRole in gaseous exchange:\n1. CO₂ enters through stomata for photosynthesis.\n2. O₂ produced during photosynthesis exits through stomata.\n3. O₂ enters during respiration, CO₂ exits during respiration.\n4. Water vapour exits during transpiration.\n\nOpening/Closing: Guard cells swell (absorb water → turgid) → stomata open. Guard cells shrink (lose water → flaccid) → stomata close (during water stress, at night)."
+    "answer": "Cross-section of leaf diagram labels: Cuticle (waxy layer on epidermis), Upper epidermis (single layer), Palisade mesophyll (elongated cells, densely packed with chloroplasts), Spongy mesophyll (loosely packed, air spaces), Lower epidermis, Stomata (pores), Guard cells (kidney-shaped), Vascular bundle (xylem above, phloem below), Midrib.\n\nAdaptations of leaves for photosynthesis:\n1. Broad, flat lamina — maximises surface area for light absorption.\n2. Thin structure — short distance for CO₂ to diffuse into all cells.\n3. Transparent upper epidermis — allows light to reach mesophyll cells.\n4. Palisade mesophyll cells — contain numerous chloroplasts, tightly packed to maximise light absorption.\n5. Spongy mesophyll with air spaces — allows CO₂ and O₂ to move freely between cells.\n6. Extensive network of veins — supply water and minerals (via xylem) and remove sugars (via phloem).\n7. Stomata — allow entry of CO₂ and exit of O₂.\n\nStomata: Tiny pores on the surface of leaves (mostly on lower epidermis) surrounded by two guard cells.\n\nRole in gaseous exchange:\n1. CO₂ enters through stomata for photosynthesis.\n2. O₂ produced during photosynthesis exits through stomata.\n3. O₂ enters during respiration, CO₂ exits during respiration.\n4. Water vapour exits during transpiration.\n\nOpening/Closing: Guard cells swell (absorb water → turgid) → stomata open. Guard cells shrink (lose water → flaccid) → stomata close (during water stress, at night).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_036",
     "question": "What are the differences between sexual and asexual reproduction? Describe binary fission in Amoeba and budding in Hydra with diagrams. What is the advantage of sexual reproduction over asexual reproduction?",
     "subject": "science",
     "class": 10,
-    "year": 2023,
+    "year": null,
     "chapter": "How do Organisms Reproduce?",
     "section": "Biology",
     "topic": "asexual reproduction methods",
@@ -537,14 +572,15 @@
     "type": "LA",
     "requires_diagram": true,
     "board": "CBSE",
-    "answer": "Differences:\nAsexual reproduction: Only one parent, no gametes, offspring are genetically identical (clones), faster process. Examples: Amoeba, Hydra, Planaria.\nSexual reproduction: Two parents, involves gametes (male and female), offspring show genetic variation, slower process. Examples: humans, flowering plants.\n\nBinary fission in Amoeba:\n1. Amoeba's nucleus elongates and divides into two (karyokinesis).\n2. Cytoplasm divides in the middle (cytokinesis).\n3. Result: Two daughter cells, each genetically identical to the parent.\nDiagram: Amoeba → nucleus starts elongating → two nuclei → cell pinches in middle → two daughter Amoeba cells.\n\nBudding in Hydra:\n1. A small outgrowth (bud) develops on the body wall of Hydra due to repeated cell division.\n2. The bud grows, develops tentacles and a mouth.\n3. The bud eventually detaches from the parent and becomes an independent Hydra.\nDiagram: Hydra with bud growing from side → bud enlarging with tentacles → bud detaching → two separate Hydra.\n\nAdvantage of sexual reproduction over asexual:\n1. Genetic variation — offspring are not identical to parents, creating diversity. This variation is the raw material for evolution and allows the species to adapt to changing environments.\n2. Harmful mutations can be masked by dominant alleles from the other parent.\n3. Disease resistance — greater genetic diversity means entire population is less likely to be wiped out by a single pathogen.\n4. Evolutionary advantage — variation enables natural selection to operate."
+    "answer": "Differences:\nAsexual reproduction: Only one parent, no gametes, offspring are genetically identical (clones), faster process. Examples: Amoeba, Hydra, Planaria.\nSexual reproduction: Two parents, involves gametes (male and female), offspring show genetic variation, slower process. Examples: humans, flowering plants.\n\nBinary fission in Amoeba:\n1. Amoeba's nucleus elongates and divides into two (karyokinesis).\n2. Cytoplasm divides in the middle (cytokinesis).\n3. Result: Two daughter cells, each genetically identical to the parent.\nDiagram: Amoeba → nucleus starts elongating → two nuclei → cell pinches in middle → two daughter Amoeba cells.\n\nBudding in Hydra:\n1. A small outgrowth (bud) develops on the body wall of Hydra due to repeated cell division.\n2. The bud grows, develops tentacles and a mouth.\n3. The bud eventually detaches from the parent and becomes an independent Hydra.\nDiagram: Hydra with bud growing from side → bud enlarging with tentacles → bud detaching → two separate Hydra.\n\nAdvantage of sexual reproduction over asexual:\n1. Genetic variation — offspring are not identical to parents, creating diversity. This variation is the raw material for evolution and allows the species to adapt to changing environments.\n2. Harmful mutations can be masked by dominant alleles from the other parent.\n3. Disease resistance — greater genetic diversity means entire population is less likely to be wiped out by a single pathogen.\n4. Evolutionary advantage — variation enables natural selection to operate.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_la_037",
     "question": "What are fossil fuels? Why is there a need to conserve them? Explain any two sources of renewable energy, including their working principle. What are the limitations of solar energy and wind energy?",
     "subject": "science",
     "class": 10,
-    "year": 2022,
+    "year": null,
     "chapter": "Sources of Energy",
     "section": "Physics",
     "topic": "fossil fuels and renewable energy sources",
@@ -552,6 +588,7 @@
     "type": "LA",
     "requires_diagram": false,
     "board": "CBSE",
-    "answer": "Fossil fuels: Non-renewable energy sources formed from the decomposed remains of ancient organisms (plants and animals) buried under earth over millions of years. Examples: coal, petroleum, natural gas.\n\nNeed for conservation:\n1. Non-renewable — took millions of years to form; cannot be replaced on human timescale.\n2. Burning causes air pollution (SO₂, CO₂, NOₓ) contributing to acid rain and climate change.\n3. CO₂ from combustion is the primary driver of global warming.\n4. Supplies are finite — projected to deplete within decades to a few centuries.\n5. Oil spills harm marine ecosystems.\n\nRenewable Energy Sources:\n\n1. Solar Energy (Solar Panels/Photovoltaic cells):\nPrinciple: Photovoltaic cells convert sunlight directly into electricity using the photoelectric effect (light photons excite electrons in silicon wafers). Solar thermal collectors convert sunlight to heat water.\nApplication: Solar cookers, solar water heaters, solar power plants.\nLimitations of solar energy: (i) Works only during daytime (not at night or on cloudy days). (ii) High initial cost of installation. (iii) Requires large land area for high output. (iv) Efficiency is still low (~20%).\n\n2. Wind Energy:\nPrinciple: Kinetic energy of wind turns large wind turbine blades, which rotate a generator to produce electricity. Wind farms are built in areas of consistent strong winds.\nApplication: Wind farms for electricity generation.\nLimitations of wind energy: (i) Wind is intermittent and unpredictable. (ii) Wind farms require very large land areas. (iii) Noise pollution and visual impact. (iv) Threats to birds and wildlife. (v) Only viable in specific high-wind geographic locations."
+    "answer": "Fossil fuels: Non-renewable energy sources formed from the decomposed remains of ancient organisms (plants and animals) buried under earth over millions of years. Examples: coal, petroleum, natural gas.\n\nNeed for conservation:\n1. Non-renewable — took millions of years to form; cannot be replaced on human timescale.\n2. Burning causes air pollution (SO₂, CO₂, NOₓ) contributing to acid rain and climate change.\n3. CO₂ from combustion is the primary driver of global warming.\n4. Supplies are finite — projected to deplete within decades to a few centuries.\n5. Oil spills harm marine ecosystems.\n\nRenewable Energy Sources:\n\n1. Solar Energy (Solar Panels/Photovoltaic cells):\nPrinciple: Photovoltaic cells convert sunlight directly into electricity using the photoelectric effect (light photons excite electrons in silicon wafers). Solar thermal collectors convert sunlight to heat water.\nApplication: Solar cookers, solar water heaters, solar power plants.\nLimitations of solar energy: (i) Works only during daytime (not at night or on cloudy days). (ii) High initial cost of installation. (iii) Requires large land area for high output. (iv) Efficiency is still low (~20%).\n\n2. Wind Energy:\nPrinciple: Kinetic energy of wind turns large wind turbine blades, which rotate a generator to produce electricity. Wind farms are built in areas of consistent strong winds.\nApplication: Wind farms for electricity generation.\nLimitations of wind energy: (i) Wind is intermittent and unpredictable. (ii) Wind farms require very large land areas. (iii) Noise pollution and visual impact. (iv) Threats to birds and wildlife. (v) Only viable in specific high-wind geographic locations.",
+    "source": "practice"
   }
 ]

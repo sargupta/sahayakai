@@ -6,13 +6,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2021, 2022],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2021,
+      2022
+    ],
     "chapter": "Quadratic Equations",
     "topic": "word problems – geometry",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Let base = x cm, altitude = (x − 7) cm. By Pythagoras: x² + (x−7)² = 13² → 2x² − 14x + 49 = 169 → 2x² − 14x − 120 = 0 → x² − 7x − 60 = 0 → (x − 12)(x + 5) = 0. Since x > 0, x = 12. Base = 12 cm, Altitude = 5 cm."
+    "answer": "Let base = x cm, altitude = (x − 7) cm. By Pythagoras: x² + (x−7)² = 13² → 2x² − 14x + 49 = 169 → 2x² − 14x − 120 = 0 → x² − 7x − 60 = 0 → (x − 12)(x + 5) = 0. Since x > 0, x = 12. Base = 12 cm, Altitude = 5 cm.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_002",
@@ -21,13 +27,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2019, 2020, 2023],
+    "appeared_in_years": [
+      2017,
+      2019,
+      2020,
+      2023
+    ],
     "chapter": "Quadratic Equations",
     "topic": "word problems – work and time",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Let smaller tap take x hours, larger takes (x−10) hours. 1/x + 1/(x−10) = 8/75 → 75(2x−10) = 8x(x−10) → 8x² − 230x + 750 = 0 → 4x² − 115x + 375 = 0 → (x−25)(4x−15) = 0. x = 25 (since x = 15/4 < 10 is not valid). Smaller tap: 25 hours, Larger tap: 15 hours."
+    "answer": "Let smaller tap take x hours, larger takes (x−10) hours. 1/x + 1/(x−10) = 8/75 → 75(2x−10) = 8x(x−10) → 8x² − 230x + 750 = 0 → 4x² − 115x + 375 = 0 → (x−25)(4x−15) = 0. x = 25 (since x = 15/4 < 10 is not valid). Smaller tap: 25 hours, Larger tap: 15 hours.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_003",
@@ -36,13 +48,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2016, 2018, 2019, 2022],
+    "appeared_in_years": [
+      2016,
+      2018,
+      2019,
+      2022
+    ],
     "chapter": "Quadratic Equations",
     "topic": "word problems – speed, distance, time",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Let speed = x km/h. 360/x − 360/(x+5) = 1 → 360(x+5) − 360x = x(x+5) → 1800 = x² + 5x → x² + 5x − 1800 = 0 → (x + 45)(x − 40) = 0. x = 40 km/h."
+    "answer": "Let speed = x km/h. 360/x − 360/(x+5) = 1 → 360(x+5) − 360x = x(x+5) → 1800 = x² + 5x → x² + 5x − 1800 = 0 → (x + 45)(x − 40) = 0. x = 40 km/h.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_004",
@@ -51,13 +69,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2017, 2019, 2023],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2017,
+      2019,
+      2023
+    ],
     "chapter": "Quadratic Equations",
     "topic": "nature of roots – discriminant",
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "kx² − 2kx + 6 = 0. For equal roots, D = 0. b² − 4ac = 0 → 4k² − 24k = 0 → 4k(k − 6) = 0. k = 0 or k = 6. Since k = 0 makes it non-quadratic, k = 6."
+    "answer": "kx² − 2kx + 6 = 0. For equal roots, D = 0. b² − 4ac = 0 → 4k² − 24k = 0 → 4k(k − 6) = 0. k = 0 or k = 6. Since k = 0 makes it non-quadratic, k = 6.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_005",
@@ -66,13 +91,18 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2018, 2020],
+    "appeared_in_years": [
+      2015,
+      2018,
+      2020
+    ],
     "chapter": "Quadratic Equations",
     "topic": "word problems – ages",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Let present age = x years. 1/(x−3) + 1/(x+5) = 1/3 → 3(2x+2) = (x−3)(x+5) → 6x + 6 = x² + 2x − 15 → x² − 4x − 21 = 0 → (x−7)(x+3) = 0. x = 7 years."
+    "answer": "Let present age = x years. 1/(x−3) + 1/(x+5) = 1/3 → 3(2x+2) = (x−3)(x+5) → 6x + 6 = x² + 2x − 15 → x² − 4x − 21 = 0 → (x−7)(x+3) = 0. x = 7 years.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_006",
@@ -81,13 +111,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2016, 2018, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2016,
+      2018,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Arithmetic Progressions",
     "topic": "nth term and sum formula",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Sₙ = n/2(a + l) → 400 = n/2(5 + 45) → n = 16. aₙ = a + (n−1)d → 45 = 5 + 15d → d = 8/3. No. of terms = 16, d = 8/3."
+    "answer": "Sₙ = n/2(a + l) → 400 = n/2(5 + 45) → n = 16. aₙ = a + (n−1)d → 45 = 5 + 15d → d = 8/3. No. of terms = 16, d = 8/3.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_007",
@@ -96,13 +133,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2017, 2019, 2022],
+    "appeared_in_years": [
+      2013,
+      2017,
+      2019,
+      2022
+    ],
     "chapter": "Arithmetic Progressions",
     "topic": "counting terms in an AP",
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Three-digit numbers divisible by 7: 105, 112, ..., 994. a = 105, d = 7, aₙ = 994. n = (994 − 105)/7 + 1 = 889/7 + 1 = 127 + 1 = 128."
+    "answer": "Three-digit numbers divisible by 7: 105, 112, ..., 994. a = 105, d = 7, aₙ = 994. n = (994 − 105)/7 + 1 = 889/7 + 1 = 127 + 1 = 128.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_008",
@@ -111,13 +154,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2016, 2019, 2021],
+    "appeared_in_years": [
+      2015,
+      2016,
+      2019,
+      2021
+    ],
     "chapter": "Arithmetic Progressions",
     "topic": "system of equations using AP terms",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "a₄ + a₈ = 24 → (a+3d) + (a+7d) = 24 → 2a + 10d = 24 ...(i). a₆ + a₁₀ = 44 → 2a + 14d = 44 ...(ii). Subtracting: 4d = 20 → d = 5. From (i): 2a = 24 − 50 = −26 → a = −13. First three terms: −13, −8, −3."
+    "answer": "a₄ + a₈ = 24 → (a+3d) + (a+7d) = 24 → 2a + 10d = 24 ...(i). a₆ + a₁₀ = 44 → 2a + 14d = 44 ...(ii). Subtracting: 4d = 20 → d = 5. From (i): 2a = 24 − 50 = −26 → a = −13. First three terms: −13, −8, −3.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_009",
@@ -126,13 +175,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2012, 2015, 2018, 2020],
+    "appeared_in_years": [
+      2012,
+      2015,
+      2018,
+      2020
+    ],
     "chapter": "Arithmetic Progressions",
     "topic": "word problems – AP application",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Prizes form an AP with d = −20, n = 7, Sₙ = 700. Sₙ = n/2[2a + (n−1)d] → 700 = 7/2[2a − 120] → 200 = 2a − 120 → a = 160. Prizes: ₹160, ₹140, ₹120, ₹100, ₹80, ₹60, ₹40."
+    "answer": "Prizes form an AP with d = −20, n = 7, Sₙ = 700. Sₙ = n/2[2a + (n−1)d] → 700 = 7/2[2a − 120] → 200 = 2a − 120 → a = 160. Prizes: ₹160, ₹140, ₹120, ₹100, ₹80, ₹60, ₹40.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_010",
@@ -141,13 +196,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2022, 2023],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2022,
+      2023
+    ],
     "chapter": "Arithmetic Progressions",
     "topic": "ratio of sums – standard result",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Ratio of nth terms = (7(2n−1)+1) / (4(2n−1)+27). For 9th term, put n = 9: Numerator = 7(17)+1 = 120; Denominator = 4(17)+27 = 95. Ratio = 24:19."
+    "answer": "Ratio of nth terms = (7(2n−1)+1) / (4(2n−1)+27). For 9th term, put n = 9: Numerator = 7(17)+1 = 120; Denominator = 4(17)+27 = 95. Ratio = 24:19.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_011",
@@ -156,13 +218,24 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2013,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Triangles",
     "topic": "proof – Basic Proportionality Theorem (BPT)",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Given: In △ABC, DE ∥ BC where D is on AB and E is on AC. To prove: AD/DB = AE/EC. Construction: Draw EM ⊥ AB and DN ⊥ AC; join BE and CD. ar(ADE)/ar(BDE) = (½ × AD × EM)/(½ × DB × EM) = AD/DB. Similarly ar(ADE)/ar(CDE) = AE/EC. Since ar(BDE) = ar(CDE) (same base DE, same parallels), AD/DB = AE/EC. Hence proved."
+    "answer": "Given: In △ABC, DE ∥ BC where D is on AB and E is on AC. To prove: AD/DB = AE/EC. Construction: Draw EM ⊥ AB and DN ⊥ AC; join BE and CD. ar(ADE)/ar(BDE) = (½ × AD × EM)/(½ × DB × EM) = AD/DB. Similarly ar(ADE)/ar(CDE) = AE/EC. Since ar(BDE) = ar(CDE) (same base DE, same parallels), AD/DB = AE/EC. Hence proved.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_012",
@@ -171,13 +244,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2017, 2019, 2021],
+    "appeared_in_years": [
+      2014,
+      2017,
+      2019,
+      2021
+    ],
     "chapter": "Triangles",
     "topic": "application of BPT",
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "By BPT: AD/DB = AE/EC. DB = AB − AD = 4 cm. 3/4 = AE/3 → AE = 9/4 = 2.25 cm."
+    "answer": "By BPT: AD/DB = AE/EC. DB = AB − AD = 4 cm. 3/4 = AE/3 → AE = 9/4 = 2.25 cm.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_013",
@@ -186,13 +265,21 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2015, 2017, 2018, 2019, 2022],
+    "appeared_in_years": [
+      2013,
+      2015,
+      2017,
+      2018,
+      2019,
+      2022
+    ],
     "chapter": "Triangles",
     "topic": "proof – area ratio of similar triangles",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Given: △ABC ~ △DEF. Draw AM ⊥ BC and DN ⊥ EF. ar(ABC)/ar(DEF) = (½ × BC × AM)/(½ × EF × DN). In △ABM and △DEN: ∠B = ∠E (similar triangles) and ∠AMB = ∠DNE = 90°, so △ABM ~ △DEN → AM/DN = AB/DE. ar(ABC)/ar(DEF) = (BC/EF) × (AM/DN) = (BC/EF) × (AB/DE) = (AB/DE)² (since AB/DE = BC/EF for similar triangles). Hence proved."
+    "answer": "Given: △ABC ~ △DEF. Draw AM ⊥ BC and DN ⊥ EF. ar(ABC)/ar(DEF) = (½ × BC × AM)/(½ × EF × DN). In △ABM and △DEN: ∠B = ∠E (similar triangles) and ∠AMB = ∠DNE = 90°, so △ABM ~ △DEN → AM/DN = AB/DE. ar(ABC)/ar(DEF) = (BC/EF) × (AM/DN) = (BC/EF) × (AB/DE) = (AB/DE)² (since AB/DE = BC/EF for similar triangles). Hence proved.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_014",
@@ -201,13 +288,26 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Triangles",
     "topic": "proof – Pythagoras Theorem",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Given: △ABC, right-angled at B. Draw BD ⊥ AC. In △ADB and △ABC: ∠A is common, ∠ADB = ∠ABC = 90° → △ADB ~ △ABC → AD/AB = AB/AC → AB² = AD × AC ...(i). Similarly △BDC ~ △ABC → BC² = DC × AC ...(ii). Adding (i) and (ii): AB² + BC² = AC(AD + DC) = AC². Hence proved."
+    "answer": "Given: △ABC, right-angled at B. Draw BD ⊥ AC. In △ADB and △ABC: ∠A is common, ∠ADB = ∠ABC = 90° → △ADB ~ △ABC → AD/AB = AB/AC → AB² = AD × AC ...(i). Similarly △BDC ~ △ABC → BC² = DC × AC ...(ii). Adding (i) and (ii): AB² + BC² = AC(AD + DC) = AC². Hence proved.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_015",
@@ -216,13 +316,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2020],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2020
+    ],
     "chapter": "Triangles",
     "topic": "Pythagoras theorem application",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Distance north = 1000 × 1.5 = 1500 km. Distance west = 1200 × 1.5 = 1800 km. Distance apart = √(1500² + 1800²) = √(2250000 + 3240000) = √5490000 = 300√61 km."
+    "answer": "Distance north = 1000 × 1.5 = 1500 km. Distance west = 1200 × 1.5 = 1800 km. Distance apart = √(1500² + 1800²) = √(2250000 + 3240000) = √5490000 = 300√61 km.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_016",
@@ -231,13 +337,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2016, 2018, 2019, 2020, 2022],
+    "appeared_in_years": [
+      2016,
+      2018,
+      2019,
+      2020,
+      2022
+    ],
     "chapter": "Trigonometry",
     "topic": "complementary angles – evaluation",
     "marks": 1,
     "type": "MCQ",
     "board": "CBSE",
-    "answer": "sin 63° = cos 27°, so sin²63° + sin²27° = cos²27° + sin²27° = 1. cos 17° = sin 73°, so cos²17° + cos²73° = sin²73° + cos²73° = 1. Answer = 1/1 = 1."
+    "answer": "sin 63° = cos 27°, so sin²63° + sin²27° = cos²27° + sin²27° = 1. cos 17° = sin 73°, so cos²17° + cos²73° = sin²73° + cos²73° = 1. Answer = 1/1 = 1.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_017",
@@ -246,13 +359,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Trigonometry",
     "topic": "trigonometric identity proof",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Divide numerator and denominator by cos θ: LHS = (tan θ − 1 + sec θ) / (tan θ + 1 − sec θ). Multiply numerator and denominator by (sec θ + tan θ): After simplification using sec²θ − tan²θ = 1, LHS = (sec θ + tan θ − 1) / (sec²θ − tan²θ − (sec θ − tan θ)) = ... = 1/(sec θ − tan θ) = RHS. Hence proved."
+    "answer": "Divide numerator and denominator by cos θ: LHS = (tan θ − 1 + sec θ) / (tan θ + 1 − sec θ). Multiply numerator and denominator by (sec θ + tan θ): After simplification using sec²θ − tan²θ = 1, LHS = (sec θ + tan θ − 1) / (sec²θ − tan²θ − (sec θ − tan θ)) = ... = 1/(sec θ − tan θ) = RHS. Hence proved.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_018",
@@ -261,13 +381,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2017,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Trigonometry",
     "topic": "trigonometric identity proof",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "m² − n² = (m+n)(m−n) = (2 tan θ)(2 sin θ) = 4 tan θ sin θ. mn = (tan θ + sin θ)(tan θ − sin θ) = tan²θ − sin²θ = sin²θ/cos²θ − sin²θ = sin²θ(1−cos²θ)/cos²θ = sin²θ tan²θ. So 4√(mn) = 4√(sin²θ tan²θ) = 4 sin θ tan θ. Hence m² − n² = 4√(mn)."
+    "answer": "m² − n² = (m+n)(m−n) = (2 tan θ)(2 sin θ) = 4 tan θ sin θ. mn = (tan θ + sin θ)(tan θ − sin θ) = tan²θ − sin²θ = sin²θ/cos²θ − sin²θ = sin²θ(1−cos²θ)/cos²θ = sin²θ tan²θ. So 4√(mn) = 4√(sin²θ tan²θ) = 4 sin θ tan θ. Hence m² − n² = 4√(mn).",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_019",
@@ -276,13 +402,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2022],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2022
+    ],
     "chapter": "Trigonometry",
     "topic": "trigonometric identity proof",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "LHS = (cos²A/sin A)(sin²A/cos A) = sin A cos A. RHS = 1/(sin A/cos A + cos A/sin A) = sin A cos A/(sin²A + cos²A) = sin A cos A. LHS = RHS. Hence proved."
+    "answer": "LHS = (cos²A/sin A)(sin²A/cos A) = sin A cos A. RHS = 1/(sin A/cos A + cos A/sin A) = sin A cos A/(sin²A + cos²A) = sin A cos A. LHS = RHS. Hence proved.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_020",
@@ -291,13 +423,21 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2015, 2016, 2017, 2019, 2022],
+    "appeared_in_years": [
+      2013,
+      2015,
+      2016,
+      2017,
+      2019,
+      2022
+    ],
     "chapter": "Trigonometry",
     "topic": "heights and distances",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Let height of building = h, horizontal distance = d. tan 45° = 30/d → d = 30 m. tan 30° = h/d → h = 30/√3 = 10√3 m ≈ 17.32 m."
+    "answer": "Let height of building = h, horizontal distance = d. tan 45° = 30/d → d = 30 m. tan 30° = h/d → h = 30/√3 = 10√3 m ≈ 17.32 m.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_021",
@@ -306,13 +446,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2019, 2023],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2019,
+      2023
+    ],
     "chapter": "Trigonometry",
     "topic": "heights and distances – two angles",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Let building AB = 60 m, tower CD = h, horizontal distance = d. tan 60° = 60/d → d = 60/√3 = 20√3 m. tan 45° = (60−h)/d → 1 = (60−h)/(20√3) → 60−h = 20√3 → h = 60 − 20√3 = 20(3−√3) m. Horizontal distance = 20√3 m ≈ 34.64 m."
+    "answer": "Let building AB = 60 m, tower CD = h, horizontal distance = d. tan 60° = 60/d → d = 60/√3 = 20√3 m. tan 45° = (60−h)/d → 1 = (60−h)/(20√3) → 60−h = 20√3 → h = 60 − 20√3 = 20(3−√3) m. Horizontal distance = 20√3 m ≈ 34.64 m.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_022",
@@ -321,13 +468,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2018, 2020, 2022],
+    "appeared_in_years": [
+      2013,
+      2018,
+      2020,
+      2022
+    ],
     "chapter": "Trigonometry",
     "topic": "heights and distances – observer height",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Let height of chimney = h. Eye level = 1.5 m above ground. tan 45° = (h − 1.5)/28.5 → 1 = (h − 1.5)/28.5 → h = 30 m."
+    "answer": "Let height of chimney = h. Eye level = 1.5 m above ground. tan 45° = (h − 1.5)/28.5 → 1 = (h − 1.5)/28.5 → h = 30 m.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_023",
@@ -336,13 +489,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Areas Related to Circles",
     "topic": "area of shaded region – squares and circles",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Area of square = 14² = 196 cm². Area of 4 circles = 4 × π × 3.5² = 4 × (22/7) × 12.25 = 154 cm². Shaded area = 196 − 154 = 42 cm²."
+    "answer": "Area of square = 14² = 196 cm². Area of 4 circles = 4 × π × 3.5² = 4 × (22/7) × 12.25 = 154 cm². Shaded area = 196 − 154 = 42 cm².",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_024",
@@ -351,13 +511,21 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2017, 2018, 2020, 2022],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2017,
+      2018,
+      2020,
+      2022
+    ],
     "chapter": "Areas Related to Circles",
     "topic": "arc length, sector area, segment area",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "(i) Arc length = (θ/360) × 2πr = (60/360) × 2 × (22/7) × 21 = 22 cm. (ii) Area of sector = (θ/360) × πr² = (60/360) × (22/7) × 441 = 231 cm². (iii) The chord for a 60° arc in a circle of radius 21 cm forms an equilateral triangle (since OA = OB = 21 and ∠AOB = 60°, triangle OAB is equilateral with side 21 cm). Area of equilateral triangle OAB = (√3/4) × 21² = (√3/4) × 441 = 441√3/4. Using √3 = 1.732: = 441 × 1.732/4 = 763.812/4 = 190.953 cm². Area of segment = 231 − 190.953 ≈ 40.05 cm²."
+    "answer": "(i) Arc length = (θ/360) × 2πr = (60/360) × 2 × (22/7) × 21 = 22 cm. (ii) Area of sector = (θ/360) × πr² = (60/360) × (22/7) × 441 = 231 cm². (iii) The chord for a 60° arc in a circle of radius 21 cm forms an equilateral triangle (since OA = OB = 21 and ∠AOB = 60°, triangle OAB is equilateral with side 21 cm). Area of equilateral triangle OAB = (√3/4) × 21² = (√3/4) × 441 = 441√3/4. Using √3 = 1.732: = 441 × 1.732/4 = 763.812/4 = 190.953 cm². Area of segment = 231 − 190.953 ≈ 40.05 cm².",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_025",
@@ -366,13 +534,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2012, 2015, 2019, 2021],
+    "appeared_in_years": [
+      2012,
+      2015,
+      2019,
+      2021
+    ],
     "chapter": "Areas Related to Circles",
     "topic": "sector area – quadrant application",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "(i) Area = (90/360) × π × 5² = (1/4) × 3.14 × 25 = 19.625 m². (ii) Area with 10 m rope = (1/4) × 3.14 × 100 = 78.5 m². Increase = 78.5 − 19.625 = 58.875 m²."
+    "answer": "(i) Area = (90/360) × π × 5² = (1/4) × 3.14 × 25 = 19.625 m². (ii) Area with 10 m rope = (1/4) × 3.14 × 100 = 78.5 m². Increase = 78.5 − 19.625 = 58.875 m².",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_026",
@@ -381,13 +555,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2020],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2020
+    ],
     "chapter": "Surface Areas and Volumes",
     "topic": "volume of combined solids – cylinder + hemispheres",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Radius = 1.4 cm. Length of cylindrical part = 5 − 2×1.4 = 2.2 cm. Volume of one gulab jamun = π(1.4)²(2.2) + (4/3)π(1.4)³ = (22/7)[1.96×2.2 + (4/3)×2.744] = (22/7)[4.312 + 3.658] = (22/7) × 7.97 ≈ 25.05 cm³. Total volume of 45 = 45 × 25.05 ≈ 1127.25 cm³. Syrup = 30% of 1127.25 ≈ 338.2 cm³."
+    "answer": "Radius = 1.4 cm. Length of cylindrical part = 5 − 2×1.4 = 2.2 cm. Volume of one gulab jamun = π(1.4)²(2.2) + (4/3)π(1.4)³ = (22/7)[1.96×2.2 + (4/3)×2.744] = (22/7)[4.312 + 3.658] = (22/7) × 7.97 ≈ 25.05 cm³. Total volume of 45 = 45 × 25.05 ≈ 1127.25 cm³. Syrup = 30% of 1127.25 ≈ 338.2 cm³.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_027",
@@ -396,13 +576,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2019, 2022],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2019,
+      2022
+    ],
     "chapter": "Surface Areas and Volumes",
     "topic": "volume of combined cylinders",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Volume of larger cylinder = π(12)²(220) = 3.14 × 144 × 220 = 99475.2 cm³. Volume of smaller cylinder = 3.14 × 64 × 60 = 12057.6 cm³. Total volume = 111532.8 cm³. Mass = 111532.8 × 8 = 892262.4 g ≈ 892.26 kg."
+    "answer": "Volume of larger cylinder = π(12)²(220) = 3.14 × 144 × 220 = 99475.2 cm³. Volume of smaller cylinder = 3.14 × 64 × 60 = 12057.6 cm³. Total volume = 111532.8 cm³. Mass = 111532.8 × 8 = 892262.4 g ≈ 892.26 kg.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_028",
@@ -411,13 +597,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2016, 2019, 2021],
+    "appeared_in_years": [
+      2013,
+      2016,
+      2019,
+      2021
+    ],
     "chapter": "Surface Areas and Volumes",
     "topic": "volume of hollow hemisphere",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Inner radius r = 1 m = 100 cm, outer radius R = 101 cm. Volume = (2/3)π(R³ − r³) = (2/3) × (22/7) × (101³ − 100³). 101³ − 100³ = (101−100)(101² + 101×100 + 100²) = 30301. Volume = (2/3) × (22/7) × 30301 ≈ 63487 cm³ ≈ 0.06349 m³."
+    "answer": "Inner radius r = 1 m = 100 cm, outer radius R = 101 cm. Volume = (2/3)π(R³ − r³) = (2/3) × (22/7) × (101³ − 100³). 101³ − 100³ = (101−100)(101² + 101×100 + 100²) = 30301. Volume = (2/3) × (22/7) × 30301 ≈ 63487 cm³ ≈ 0.06349 m³.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_029",
@@ -426,13 +618,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2020, 2022, 2023],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2020,
+      2022,
+      2023
+    ],
     "chapter": "Surface Areas and Volumes",
     "topic": "volume conversion – canal and irrigation",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Length of water flowing in 30 min = (10 × 1000)/2 = 5000 m. Volume of water = 6 × 1.5 × 5000 = 45000 m³. Area irrigated = 45000 / 0.08 = 562500 m²."
+    "answer": "Length of water flowing in 30 min = (10 × 1000)/2 = 5000 m. Volume of water = 6 × 1.5 × 5000 = 45000 m³. Area irrigated = 45000 / 0.08 = 562500 m².",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_030",
@@ -441,13 +640,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2012, 2015, 2018, 2020, 2022],
+    "appeared_in_years": [
+      2012,
+      2015,
+      2018,
+      2020,
+      2022
+    ],
     "chapter": "Statistics",
     "topic": "mean, median, mode – grouped data",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Median: n=68, n/2=34. cf values: 4,9,22,42. Median class: 125–145. Median = 125 + [(34−22)/20] × 20 = 125 + 12 = 137 units. Mode: Max frequency = 20, modal class = 125–145. Mode = 125 + [(20−13)/(2×20−13−14)] × 20 = 125 + (7/13) × 20 ≈ 135.77 units. Mean using assumed mean (a=135, h=20): step deviations give Σf×u = 7, mean = 135 + (7/68) × 20 ≈ 137.06 units."
+    "answer": "Median: n=68, n/2=34. cf values: 4,9,22,42. Median class: 125–145. Median = 125 + [(34−22)/20] × 20 = 125 + 12 = 137 units. Mode: Max frequency = 20, modal class = 125–145. Mode = 125 + [(20−13)/(2×20−13−14)] × 20 = 125 + (7/13) × 20 ≈ 135.77 units. Mean using assumed mean (a=135, h=20): step deviations give Σf×u = 7, mean = 135 + (7/68) × 20 ≈ 137.06 units.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_031",
@@ -456,13 +662,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Statistics",
     "topic": "finding missing frequency using mean",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Σf = 43 + p. Σfx = 8×5 + p×15 + 12×25 + 13×35 + 10×45 = 40 + 15p + 300 + 455 + 450 = 1245 + 15p. Mean = (1245 + 15p)/(43 + p) = 27 → 1245 + 15p = 27(43 + p) → 1245 + 15p = 1161 + 27p → 84 = 12p → p = 7."
+    "answer": "Σf = 43 + p. Σfx = 8×5 + p×15 + 12×25 + 13×35 + 10×45 = 40 + 15p + 300 + 455 + 450 = 1245 + 15p. Mean = (1245 + 15p)/(43 + p) = 27 → 1245 + 15p = 27(43 + p) → 1245 + 15p = 1161 + 27p → 84 = 12p → p = 7.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_032",
@@ -471,13 +684,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2016, 2018, 2020, 2022],
+    "appeared_in_years": [
+      2013,
+      2016,
+      2018,
+      2020,
+      2022
+    ],
     "chapter": "Statistics",
     "topic": "ogive – more than type",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "More than type: more than 50: 100, more than 55: 98, more than 60: 90, more than 65: 78, more than 70: 54, more than 75: 16. Plot points (50,100), (55,98), (60,90), (65,78), (70,54), (75,16) and join with smooth curve. The ogive is a downward sloping curve."
+    "answer": "More than type: more than 50: 100, more than 55: 98, more than 60: 90, more than 65: 78, more than 70: 54, more than 75: 16. Plot points (50,100), (55,98), (60,90), (65,78), (70,54), (75,16) and join with smooth curve. The ogive is a downward sloping curve.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_033",
@@ -486,13 +706,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2019, 2021, 2023],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2019,
+      2021,
+      2023
+    ],
     "chapter": "Statistics",
     "topic": "finding missing frequencies using median",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Σf = 76 + x + y = 100 → x + y = 24 ...(i). Median = 525, so median class = 500–600. cf before 500–600 = 2+5+x+12+17 = 36+x. Median = l + [(n/2 − cf)/f] × h → 525 = 500 + [(50 − 36 − x)/20] × 100 → 25 = 5(14 − x) → 5 = 14 − x → x = 9. From (i): y = 15."
+    "answer": "Σf = 76 + x + y = 100 → x + y = 24 ...(i). Median = 525, so median class = 500–600. cf before 500–600 = 2+5+x+12+17 = 36+x. Median = l + [(n/2 − cf)/f] × h → 525 = 500 + [(50 − 36 − x)/20] × 100 → 25 = 5(14 − x) → 5 = 14 − x → x = 9. From (i): y = 15.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_034",
@@ -501,13 +728,21 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2015, 2017, 2019, 2021, 2022],
+    "appeared_in_years": [
+      2013,
+      2015,
+      2017,
+      2019,
+      2021,
+      2022
+    ],
     "chapter": "Probability",
     "topic": "cards – combined events",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "(i) P(king or queen) = (4+4)/52 = 8/52 = 2/13. (ii) P(non-ace) = (52−4)/52 = 48/52 = 12/13. (iii) Black face cards = 6 (J, Q, K of spades and clubs). P = 6/52 = 3/26."
+    "answer": "(i) P(king or queen) = (4+4)/52 = 8/52 = 2/13. (ii) P(non-ace) = (52−4)/52 = 48/52 = 12/13. (iii) Black face cards = 6 (J, Q, K of spades and clubs). P = 6/52 = 3/26.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_035",
@@ -516,13 +751,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2016, 2018, 2020, 2022],
+    "appeared_in_years": [
+      2014,
+      2016,
+      2018,
+      2020,
+      2022
+    ],
     "chapter": "Probability",
     "topic": "two dice – sum problems",
     "marks": 3,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Total outcomes = 36. (i) Sum=8: (2,6),(3,5),(4,4),(5,3),(6,2) = 5 outcomes. P = 5/36. (ii) Sum=13: impossible with two dice. P = 0. (iii) Sum ≤ 12: all 36 outcomes qualify. P = 36/36 = 1."
+    "answer": "Total outcomes = 36. (i) Sum=8: (2,6),(3,5),(4,4),(5,3),(6,2) = 5 outcomes. P = 5/36. (ii) Sum=13: impossible with two dice. P = 0. (iii) Sum ≤ 12: all 36 outcomes qualify. P = 36/36 = 1.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_036",
@@ -531,13 +773,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2012, 2015, 2017, 2019, 2021],
+    "appeared_in_years": [
+      2012,
+      2015,
+      2017,
+      2019,
+      2021
+    ],
     "chapter": "Probability",
     "topic": "setting up probability equations",
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Let number of blue balls = x. P(red) = 5/(5+x), P(blue) = x/(5+x). Given: x/(5+x) = 2 × 5/(5+x) → x = 10. Number of blue balls = 10."
+    "answer": "Let number of blue balls = x. P(red) = 5/(5+x), P(blue) = x/(5+x). Given: x/(5+x) = 2 × 5/(5+x) → x = 10. Number of blue balls = 10.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_037",
@@ -546,13 +795,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2013, 2016, 2018, 2020],
+    "appeared_in_years": [
+      2013,
+      2016,
+      2018,
+      2020
+    ],
     "chapter": "Probability",
     "topic": "coins – complementary events",
     "marks": 2,
     "type": "SA",
     "board": "CBSE",
-    "answer": "Total outcomes = 8 (HHH, HHT, HTH, THH, HTT, THT, TTH, TTT). Winning outcomes = {HHH, TTT} = 2. P(win) = 2/8 = 1/4. P(lose) = 1 − 1/4 = 3/4."
+    "answer": "Total outcomes = 8 (HHH, HHT, HTH, THH, HTT, THT, TTH, TTT). Winning outcomes = {HHH, TTT} = 2. P(win) = 2/8 = 1/4. P(lose) = 1 − 1/4 = 3/4.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_038",
@@ -561,13 +816,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2014, 2018, 2020, 2023],
+    "appeared_in_years": [
+      2014,
+      2018,
+      2020,
+      2023
+    ],
     "chapter": "Statistics",
     "topic": "mean, median, mode – combined",
     "marks": 5,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Median: n/2=50. cf: 6, 36, 76. Median class: 7–10. Median = 7 + [(50−36)/40] × 3 = 7 + 1.05 = 8.05. Mode: max f=40, modal class = 7–10. Mode = 7 + [(40−30)/(80−30−16)] × 3 = 7 + (10/34) × 3 ≈ 7.88. Mean = [6×2.5 + 30×5.5 + 40×8.5 + 16×11.5 + 4×14.5 + 4×17.5]/100 = [15+165+340+184+58+70]/100 = 832/100 = 8.32."
+    "answer": "Median: n/2=50. cf: 6, 36, 76. Median class: 7–10. Median = 7 + [(50−36)/40] × 3 = 7 + 1.05 = 8.05. Mode: max f=40, modal class = 7–10. Mode = 7 + [(40−30)/(80−30−16)] × 3 = 7 + (10/34) × 3 ≈ 7.88. Mean = [6×2.5 + 30×5.5 + 40×8.5 + 16×11.5 + 4×14.5 + 4×17.5]/100 = [15+165+340+184+58+70]/100 = 832/100 = 8.32.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_039",
@@ -576,13 +837,20 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2016, 2018, 2019, 2021, 2022],
+    "appeared_in_years": [
+      2016,
+      2018,
+      2019,
+      2021,
+      2022
+    ],
     "chapter": "Areas Related to Circles",
     "topic": "minor segment and major sector",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "(i) Area of minor sector = (90/360) × 3.14 × 100 = 78.5 cm². Area of right triangle = ½ × 10 × 10 = 50 cm². Area of minor segment = 78.5 − 50 = 28.5 cm². (ii) Area of major sector = (270/360) × 3.14 × 100 = 235.5 cm²."
+    "answer": "(i) Area of minor sector = (90/360) × 3.14 × 100 = 78.5 cm². Area of right triangle = ½ × 10 × 10 = 50 cm². Area of minor segment = 78.5 − 50 = 28.5 cm². (ii) Area of major sector = (270/360) × 3.14 × 100 = 235.5 cm².",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_math_imp_040",
@@ -591,12 +859,19 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2015, 2017, 2018, 2020, 2023],
+    "appeared_in_years": [
+      2015,
+      2017,
+      2018,
+      2020,
+      2023
+    ],
     "chapter": "Trigonometry",
     "topic": "heights and distances – opposite sides",
     "marks": 4,
     "type": "LA",
     "board": "CBSE",
-    "answer": "Height of tower AB = 100 m. For car at 30°: tan 30° = 100/d₁ → d₁ = 100√3 m. For car at 45°: tan 45° = 100/d₂ → d₂ = 100 m. Distance between cars = d₁ + d₂ = 100√3 + 100 = 100(√3 + 1) = 100 × 2.73 = 273 m."
+    "answer": "Height of tower AB = 100 m. For car at 30°: tan 30° = 100/d₁ → d₁ = 100√3 m. For car at 45°: tan 45° = 100/d₂ → d₂ = 100 m. Distance between cars = d₁ + d₂ = 100√3 + 100 = 100(√3 + 1) = 100 × 2.73 = 273 m.",
+    "source": "practice"
   }
 ]

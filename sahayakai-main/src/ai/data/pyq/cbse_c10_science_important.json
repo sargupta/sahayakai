@@ -6,7 +6,13 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "lens formula and magnification",
@@ -14,7 +20,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Using lens formula: 1/v – 1/u = 1/f. Given v = +20 cm, f = +10 cm. So 1/u = 1/20 – 1/10 = –1/20, therefore u = –20 cm. The object is placed 20 cm in front of the lens. Magnification m = v/u = 20/(–20) = –1 (real, inverted, same size as object).",
-    "importance_note": "Lens formula numericals appear in almost every board paper as a 3 or 5 mark question. Consistently the most repeated numerical in Physics section."
+    "importance_note": "Lens formula numericals appear in almost every board paper as a 3 or 5 mark question. Consistently the most repeated numerical in Physics section.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_002",
@@ -23,7 +30,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "concave mirror ray diagram",
@@ -31,7 +45,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Ray diagram: Draw two rays from object tip – one parallel to principal axis (reflects through focus F), another through centre of curvature C (reflects back). Image: virtual, erect, magnified, and formed behind the mirror. This is the principle of a shaving/makeup mirror.",
-    "importance_note": "Ray diagram questions for mirrors and lenses are guaranteed in every board paper. Concave mirror between F and P is the most frequently tested case."
+    "importance_note": "Ray diagram questions for mirrors and lenses are guaranteed in every board paper. Concave mirror between F and P is the most frequently tested case.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_003",
@@ -40,7 +55,12 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2019, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2019,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "lens formula numerical",
@@ -48,7 +68,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Using lens formula: 1/v – 1/u = 1/f. u = –25 cm, f = +10 cm. 1/v = 1/10 + 1/(–25) = 1/10 – 1/25 = (5–2)/50 = 3/50. So v = +50/3 ≈ +16.67 cm. Magnification m = v/u = (50/3)/(–25) = –2/3. Image height = 5 × (–2/3) = –10/3 ≈ –3.33 cm. Image: real, inverted, diminished, formed at 16.67 cm on the other side of the lens.",
-    "importance_note": "Standard 5-mark numerical combining lens formula with magnification and image size calculation. Appeared nearly every year."
+    "importance_note": "Standard 5-mark numerical combining lens formula with magnification and image size calculation. Appeared nearly every year.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_004",
@@ -57,7 +78,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "Ohm's law",
@@ -65,7 +94,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Ohm's Law: At constant temperature, the current (I) flowing through a conductor is directly proportional to the potential difference (V) across its ends. V ∝ I, or V = IR, where R is resistance. Circuit: battery, key, ammeter (in series), voltmeter (in parallel with resistor), rheostat. V-I graph: a straight line passing through origin, slope = resistance R.",
-    "importance_note": "Ohm's law is a foundational concept tested every year in some form – definition, circuit diagram, or V-I graph interpretation."
+    "importance_note": "Ohm's law is a foundational concept tested every year in some form – definition, circuit diagram, or V-I graph interpretation.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_005",
@@ -74,7 +104,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "series and parallel circuits numerical",
@@ -82,7 +119,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "(i) Series: R_total = 4+6 = 10 Ω. I = V/R = 12/10 = 1.2 A. Power P = I²R = (1.2)² × 10 = 14.4 W. (ii) Parallel: 1/R = 1/4 + 1/6 = 5/12, R = 12/5 = 2.4 Ω. I = 12/2.4 = 5 A. Power P = V²/R = 144/2.4 = 60 W. Parallel circuit draws more current and dissipates more power.",
-    "importance_note": "Series and parallel resistor numericals with power calculations are the most common 3-5 mark questions in Electricity. High CBSE blueprint weightage."
+    "importance_note": "Series and parallel resistor numericals with power calculations are the most common 3-5 mark questions in Electricity. High CBSE blueprint weightage.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_006",
@@ -91,7 +129,12 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2021, 2022],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2021,
+      2022
+    ],
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "resistance and dimensions",
@@ -99,7 +142,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Resistance R = ρL/A. When wire is stretched to double length (2L), volume is conserved, so new area A' = A/2. New resistance R' = ρ(2L)/(A/2) = 4ρL/A = 4R. The new resistance is 4 times the original resistance.",
-    "importance_note": "Resistance-dimension relationship is a frequently tested conceptual + numerical question, appearing in 2-mark and 3-mark formats."
+    "importance_note": "Resistance-dimension relationship is a frequently tested conceptual + numerical question, appearing in 2-mark and 3-mark formats.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_007",
@@ -108,7 +152,13 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2020, 2021, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2020,
+      2021,
+      2023
+    ],
     "chapter": "Electricity",
     "section": "Physics",
     "topic": "heating effect of electric current",
@@ -116,7 +166,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Alloys like nichrome are preferred because: (1) They have higher resistivity than pure metals, producing more heat for same current. (2) They do not oxidise (burn) easily at high temperatures. (3) They have higher melting points, so they can withstand high operating temperatures without melting.",
-    "importance_note": "Joule's heating effect application questions are standard 2-3 mark questions. This specific question has appeared in multiple years."
+    "importance_note": "Joule's heating effect application questions are standard 2-3 mark questions. This specific question has appeared in multiple years.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_008",
@@ -125,7 +176,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "electric generator",
@@ -133,7 +192,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "AC Generator: Principle – electromagnetic induction (changing magnetic flux induces EMF). Construction – rectangular coil ABCD, strong horseshoe magnet, two slip rings, two carbon brushes, external circuit. Working – when coil rotates in magnetic field, flux changes, inducing alternating EMF; current direction reverses every half rotation. Rule: Fleming's Right-Hand Rule – thumb = motion of conductor, index = magnetic field direction, middle finger = induced current direction.",
-    "importance_note": "Electric generator is one of the most consistently asked 5-mark questions in Class 10 Science board exams. Required diagram + principle + rule."
+    "importance_note": "Electric generator is one of the most consistently asked 5-mark questions in Class 10 Science board exams. Required diagram + principle + rule.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_009",
@@ -142,7 +202,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "electric motor",
@@ -150,7 +218,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Electric Motor: Principle – a current-carrying conductor in a magnetic field experiences a force (Fleming's Left-Hand Rule). Construction – rectangular coil ABCD between poles of a magnet, split ring commutator, carbon brushes, battery. Working – current flows through coil; AB and CD experience forces in opposite directions causing rotation; after half rotation commutator reverses current direction maintaining continuous rotation. Function of commutator: reverses current direction every half turn to keep the motor rotating in one direction.",
-    "importance_note": "Electric motor appears as a 5-mark question in almost every alternate year. Often paired with generator as a choice question."
+    "importance_note": "Electric motor appears as a 5-mark question in almost every alternate year. Often paired with generator as a choice question.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_010",
@@ -159,7 +228,12 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2021, 2022],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2021,
+      2022
+    ],
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "Fleming's left-hand rule",
@@ -167,7 +241,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Fleming's Left-Hand Rule: Stretch the thumb, index finger, and middle finger of the left hand mutually perpendicular. If index finger = direction of magnetic field, middle finger = direction of current, then thumb = direction of force on conductor. For the given case: current (east), field (downward) → force is directed towards the south.",
-    "importance_note": "Fleming's rules are tested every year in 1–3 mark formats, either as definition or application."
+    "importance_note": "Fleming's rules are tested every year in 1–3 mark formats, either as definition or application.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_011",
@@ -176,7 +251,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Chemical Reactions and Equations",
     "section": "Chemistry",
     "topic": "balancing chemical equations",
@@ -184,7 +267,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "(i) 3Fe + 4H₂O → Fe₃O₄ + 4H₂ (ii) 2HNO₃ + Ca(OH)₂ → Ca(NO₃)₂ + 2H₂O (iii) 2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O",
-    "importance_note": "Balancing chemical equations is asked in every CBSE board paper, usually in 1-mark MCQ and 2-3 mark written format. Highest frequency topic in Chemistry."
+    "importance_note": "Balancing chemical equations is asked in every CBSE board paper, usually in 1-mark MCQ and 2-3 mark written format. Highest frequency topic in Chemistry.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_012",
@@ -193,7 +277,13 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Chemical Reactions and Equations",
     "section": "Chemistry",
     "topic": "types of chemical reactions",
@@ -201,7 +291,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "A displacement reaction is one in which a more reactive element displaces a less reactive element from its compound's solution. Example: Fe(s) + CuSO₄(aq) → FeSO₄(aq) + Cu(s). Iron displaces copper because iron is higher in the reactivity series than copper and can more easily lose electrons to form ions.",
-    "importance_note": "Types of reactions (displacement, double displacement, combination, decomposition) are tested in every board paper with equations."
+    "importance_note": "Types of reactions (displacement, double displacement, combination, decomposition) are tested in every board paper with equations.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_013",
@@ -210,7 +301,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Chemical Reactions and Equations",
     "section": "Chemistry",
     "topic": "oxidation and reduction",
@@ -218,7 +316,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "A redox reaction is a reaction in which oxidation and reduction occur simultaneously. In CuO + H₂ → Cu + H₂O: H₂ is oxidised (gains oxygen to form water); CuO is reduced (loses oxygen to form Cu). CuO acts as an oxidising agent; H₂ acts as a reducing agent.",
-    "importance_note": "Redox reaction identification is a standard 2–3 mark question tested frequently. This exact reaction (CuO + H₂) appears in several years' board papers."
+    "importance_note": "Redox reaction identification is a standard 2–3 mark question tested frequently. This exact reaction (CuO + H₂) appears in several years' board papers.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_014",
@@ -227,7 +326,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Acids, Bases and Salts",
     "section": "Chemistry",
     "topic": "reactions of acids",
@@ -235,7 +342,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "(i) Mg + 2HCl → MgCl₂ + H₂↑ (hydrogen gas evolved, ribbon dissolves) (ii) HCl + NaOH → NaCl + H₂O (neutralisation, no visible change) (iii) 2HCl + Na₂CO₃ → 2NaCl + H₂O + CO₂↑ (brisk effervescence, CO₂ gas turns lime water milky)",
-    "importance_note": "Reactions of acids with metals, bases, and carbonates are the most tested topic in Acids & Bases chapter. Appears in 3-mark format almost every year."
+    "importance_note": "Reactions of acids with metals, bases, and carbonates are the most tested topic in Acids & Bases chapter. Appears in 3-mark format almost every year.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_015",
@@ -244,7 +352,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Acids, Bases and Salts",
     "section": "Chemistry",
     "topic": "pH scale",
@@ -252,7 +367,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "pH is a scale (0–14) indicating hydrogen ion concentration; pH < 7 = acidic, pH = 7 = neutral, pH > 7 = basic. (i) Adding acid lowers pH (below 7). (ii) Adding base raises pH (above 7). Everyday importance: (1) Our stomach has pH ~2 (HCl) for digestion; antacids neutralise excess acid. (2) Tooth decay occurs when pH drops below 5.5; toothpaste (basic) neutralises acid produced by bacteria.",
-    "importance_note": "pH scale is a guaranteed question in Chemistry. Application examples from daily life are required for full marks."
+    "importance_note": "pH scale is a guaranteed question in Chemistry. Application examples from daily life are required for full marks.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_016",
@@ -261,7 +377,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Acids, Bases and Salts",
     "section": "Chemistry",
     "topic": "important salts",
@@ -269,7 +393,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "(i) Washing soda – Na₂CO₃·10H₂O – used for cleaning, softening hard water. (ii) Baking soda – NaHCO₃ – used in baking powder, antacids. (iii) Bleaching powder – CaOCl₂ – used for disinfecting water, bleaching cotton. (iv) Plaster of Paris – CaSO₄·½H₂O – used for plastering fractured bones, making casts.",
-    "importance_note": "Compounds of sodium, calcium and their uses appear in every board paper. Usually 1 mark each for formula + use."
+    "importance_note": "Compounds of sodium, calcium and their uses appear in every board paper. Usually 1 mark each for formula + use.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_017",
@@ -278,7 +403,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Carbon and Its Compounds",
     "section": "Chemistry",
     "topic": "soaps and detergents",
@@ -286,7 +418,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Soaps are sodium/potassium salts of long-chain fatty acids (biodegradable); detergents are sodium salts of sulphonic acids (may not be biodegradable). Soaps in hard water: Ca²⁺ and Mg²⁺ ions react with soap to form insoluble scum (calcium/magnesium stearate), making soap ineffective. Detergents work in hard water. Micelle formation: soap molecules have a hydrophilic (water-loving) head and hydrophobic (water-repelling) tail. In water, they arrange with tails pointing inward enclosing the grease/oil droplet, and heads pointing outward toward water – forming a cluster called a micelle – which can be washed away with water.",
-    "importance_note": "Soaps vs detergents and micelle formation is one of the highest-scoring 5-mark questions in Carbon Compounds. Appears almost every year."
+    "importance_note": "Soaps vs detergents and micelle formation is one of the highest-scoring 5-mark questions in Carbon Compounds. Appears almost every year.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_018",
@@ -295,7 +428,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Carbon and Its Compounds",
     "section": "Chemistry",
     "topic": "ethanol and ethanoic acid",
@@ -303,7 +443,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Esterification: Reaction of a carboxylic acid with an alcohol in presence of concentrated H₂SO₄ to form an ester and water. CH₃COOH + C₂H₅OH ⇌ CH₃COOC₂H₅ + H₂O (conc. H₂SO₄, heat). Distinguishing test: Add Na₂CO₃ solution – ethanoic acid produces brisk effervescence (CO₂ gas); ethanol shows no reaction. OR: Add blue litmus – ethanoic acid turns it red; ethanol does not.",
-    "importance_note": "Esterification reaction and distinguishing tests for ethanol vs ethanoic acid are standard 3-mark board questions."
+    "importance_note": "Esterification reaction and distinguishing tests for ethanol vs ethanoic acid are standard 3-mark board questions.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_019",
@@ -312,7 +453,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Carbon and Its Compounds",
     "section": "Chemistry",
     "topic": "nomenclature of carbon compounds",
@@ -320,7 +468,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Homologous series: A series of organic compounds with the same functional group, same general formula, and differing by –CH₂– (14 mass units) each time. Characteristics: (1) Each member differs by –CH₂– from next. (2) Physical properties vary gradually; chemical properties are similar. IUPAC names: CH₃CHO = Ethanal; CH₃COCH₃ = Propanone; CH₃CH₂OH = Ethanol; CH₃COOH = Ethanoic acid.",
-    "importance_note": "Homologous series definition and IUPAC nomenclature questions appear every year. Nomenclature is very high frequency in Carbon Compounds."
+    "importance_note": "Homologous series definition and IUPAC nomenclature questions appear every year. Nomenclature is very high frequency in Carbon Compounds.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_020",
@@ -329,7 +478,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Carbon and Its Compounds",
     "section": "Chemistry",
     "topic": "properties of carbon – catenation and tetravalency",
@@ -337,7 +494,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Carbon forms a huge number of compounds due to: (1) Catenation – carbon atoms can bond with each other to form long chains, branched chains, and rings. This is possible because C–C bonds are very strong and stable. (2) Tetravalency – carbon has a valency of 4, so it can form four covalent bonds simultaneously with other carbon atoms or atoms of other elements (H, O, N, S, Cl). These two properties together allow the formation of millions of organic compounds.",
-    "importance_note": "This conceptual question is asked almost every year as a 2–3 mark question. It is the foundational concept of the entire Carbon chapter."
+    "importance_note": "This conceptual question is asked almost every year as a 2–3 mark question. It is the foundational concept of the entire Carbon chapter.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_021",
@@ -346,7 +504,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "human heart and circulation",
@@ -354,7 +520,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Labelled diagram should show: right and left atria, right and left ventricles, aorta, pulmonary artery, pulmonary vein, vena cava, valves (tricuspid, bicuspid, semi-lunar). Double circulation: Blood passes through the heart twice per complete circuit. (1) Pulmonary circulation – deoxygenated blood from right ventricle goes to lungs via pulmonary artery; oxygenated blood returns to left atrium via pulmonary vein. (2) Systemic circulation – oxygenated blood from left ventricle goes to body via aorta; deoxygenated blood returns to right atrium via vena cava. Advantage: complete separation of oxygenated and deoxygenated blood ensuring efficient oxygen delivery.",
-    "importance_note": "The human heart diagram with double circulation is the single most frequently asked 5-mark Biology question in CBSE Class 10 boards."
+    "importance_note": "The human heart diagram with double circulation is the single most frequently asked 5-mark Biology question in CBSE Class 10 boards.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_022",
@@ -363,7 +530,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "excretion – nephron and urine formation",
@@ -371,7 +546,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Nephron diagram labels: Bowman's capsule, glomerulus, proximal convoluted tubule (PCT), loop of Henle, distal convoluted tubule (DCT), collecting duct, afferent and efferent arterioles. Urine formation – 3 steps: (1) Filtration – blood under pressure is filtered in glomerulus; filtrate enters Bowman's capsule containing water, salts, glucose, urea. (2) Reabsorption – useful substances (glucose, amino acids, water, salts) are reabsorbed from PCT and loop of Henle back into blood. (3) Secretion – remaining waste (creatinine, extra H⁺) is secreted into filtrate in DCT. Final urine passes through collecting duct to ureter.",
-    "importance_note": "Nephron diagram and urine formation is the second most frequently asked 5-mark Biology question. Almost guaranteed in board exams."
+    "importance_note": "Nephron diagram and urine formation is the second most frequently asked 5-mark Biology question. Almost guaranteed in board exams.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_023",
@@ -380,7 +556,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Control and Coordination",
     "section": "Biology",
     "topic": "human brain",
@@ -388,7 +571,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Brain diagram labels: cerebrum, cerebellum, medulla oblongata, pons, mid-brain. Functions: (1) Cerebrum (forebrain) – voluntary actions, thinking, memory, intelligence, consciousness, vision, speech. (2) Cerebellum (hindbrain) – coordinates muscular movements, maintains posture and balance. (3) Medulla oblongata (hindbrain) – controls involuntary actions like heartbeat, breathing, blood pressure, vomiting.",
-    "importance_note": "Human brain diagram appears frequently as a 5-mark question. Also asked as 3-mark with function-only format."
+    "importance_note": "Human brain diagram appears frequently as a 5-mark question. Also asked as 3-mark with function-only format.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_024",
@@ -397,7 +581,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "aerobic vs anaerobic respiration",
@@ -405,7 +596,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Aerobic respiration: occurs with oxygen, in cytoplasm and mitochondria, produces CO₂ + H₂O + 38 ATP (high energy). Anaerobic respiration: occurs without oxygen, only in cytoplasm, produces lactic acid (in muscles) or ethanol + CO₂ (in yeast), releases only 2 ATP. In human muscles during vigorous exercise, insufficient oxygen leads to anaerobic respiration, producing lactic acid – causing muscle cramps.",
-    "importance_note": "Aerobic vs anaerobic respiration is asked in 2–3 mark format nearly every year. Lactic acid cramp connection is a common 1-mark quick question."
+    "importance_note": "Aerobic vs anaerobic respiration is asked in 2–3 mark format nearly every year. Lactic acid cramp connection is a common 1-mark quick question.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_025",
@@ -414,7 +606,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "photosynthesis",
@@ -422,7 +622,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Photosynthesis: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ (in presence of sunlight and chlorophyll). Two stages: (1) Light reaction (in grana of chloroplast) – chlorophyll absorbs light energy; water splits (photolysis) releasing O₂; ATP and NADPH are produced. (2) Dark reaction / Calvin cycle (in stroma) – CO₂ is fixed using ATP and NADPH to produce glucose (C₆H₁₂O₆). Does not directly require light.",
-    "importance_note": "Photosynthesis equation and stages are asked every year. The equation alone is 1 mark; detailed explanation is 3–5 marks."
+    "importance_note": "Photosynthesis equation and stages are asked every year. The equation alone is 1 mark; detailed explanation is 3–5 marks.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_026",
@@ -431,7 +632,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Control and Coordination",
     "section": "Biology",
     "topic": "neuron structure and nerve impulse",
@@ -439,7 +647,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Neuron diagram labels: cell body (cyton), nucleus, dendrites, axon, myelin sheath, nodes of Ranvier, axon terminals (synaptic knob). Nerve impulse transmission: Dendrites receive stimulus → electrical impulse travels along axon → at synapse (junction), neurotransmitters are released → they cross the synaptic cleft → bind to receptors on next neuron's dendrites → impulse continues. Reflex arc involves: receptor → sensory neuron → spinal cord → motor neuron → effector (muscle/gland).",
-    "importance_note": "Neuron diagram is a high-frequency 5-mark question. Often combined with reflex arc in board exams."
+    "importance_note": "Neuron diagram is a high-frequency 5-mark question. Often combined with reflex arc in board exams.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_027",
@@ -448,7 +657,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Heredity and Evolution",
     "section": "Biology",
     "topic": "Mendel's laws and monohybrid cross",
@@ -456,7 +673,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "Law of Segregation: Alleles for a trait separate during gamete formation so each gamete carries only one allele for each trait. Monohybrid cross: P: TT (tall) × tt (dwarf). F1: All Tt (tall – dominant). F1 × F1: Tt × Tt. F2 Punnett square: TT : Tt : tt = 1:2:1. Phenotypic ratio = 3 tall : 1 dwarf. Genotypic ratio = 1TT : 2Tt : 1tt. Tall is dominant over dwarf.",
-    "importance_note": "Monohybrid cross with Punnett square is the most tested Heredity question – 5 marks, appears in nearly every board paper."
+    "importance_note": "Monohybrid cross with Punnett square is the most tested Heredity question – 5 marks, appears in nearly every board paper.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_028",
@@ -465,7 +683,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Heredity and Evolution",
     "section": "Biology",
     "topic": "sex determination in humans",
@@ -473,7 +699,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Humans have 46 chromosomes (23 pairs). Females: 44 autosomes + XX (sex chromosomes). Males: 44 autosomes + XY. During reproduction, all eggs carry X chromosome. Sperm can carry either X or Y. If X-sperm fertilises egg → XX = daughter. If Y-sperm fertilises egg → XY = son. Therefore, sex of child is determined by the father's sperm, not the mother. Probability of boy/girl is always 50:50.",
-    "importance_note": "Sex determination in humans is asked every year as 3-mark question. Blaming mother for child's sex is a social misconception this question addresses."
+    "importance_note": "Sex determination in humans is asked every year as 3-mark question. Blaming mother for child's sex is a social misconception this question addresses.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_029",
@@ -482,7 +709,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Heredity and Evolution",
     "section": "Biology",
     "topic": "evolution – homologous and analogous organs",
@@ -490,7 +724,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Homologous organs: Same structural origin and basic anatomy but perform different functions. Example: human arm, whale flipper, bat wing, frog forelimb – all have same bone arrangement (humerus, radius, ulna). Indicate divergent evolution from a common ancestor. Analogous organs: Different structural origin but perform similar functions. Example: wings of a bird and wings of an insect. Indicate convergent evolution – different organisms evolving similar features to adapt to similar environments.",
-    "importance_note": "Homologous vs analogous organs is a standard 3-mark question in Heredity and Evolution, tested almost every year."
+    "importance_note": "Homologous vs analogous organs is a standard 3-mark question in Heredity and Evolution, tested almost every year.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_030",
@@ -499,7 +734,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "How do Organisms Reproduce?",
     "section": "Biology",
     "topic": "asexual reproduction methods",
@@ -507,7 +750,8 @@
     "type": "LA",
     "board": "CBSE",
     "answer": "(i) Binary fission (Amoeba): Cell elongates → nucleus divides (mitosis) → cytoplasm divides → two daughter cells. Each daughter is genetically identical. (ii) Budding (Hydra): A small outgrowth (bud) appears on parent body → develops into a miniature Hydra → detaches to form new organism. (iii) Spore formation (Rhizopus): Sporangium (spore case) forms at tips of hyphae → spores develop inside → sporangium bursts under suitable conditions → spores dispersed by air/water → germinate into new Rhizopus.",
-    "importance_note": "Asexual reproduction methods with diagrams are asked in 3–5 mark format. Binary fission and budding are the most tested."
+    "importance_note": "Asexual reproduction methods with diagrams are asked in 3–5 mark format. Binary fission and budding are the most tested.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_031",
@@ -516,7 +760,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "How do Organisms Reproduce?",
     "section": "Biology",
     "topic": "reproduction in plants – fertilisation",
@@ -524,7 +775,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Pollination transfers pollen grain to stigma. Pollen germinates, forming pollen tube through style into ovary → reaches ovule. Male gamete travels through pollen tube → fuses with egg cell in ovule (fertilisation/syngamy) → forms zygote. Post-fertilisation changes: Zygote → embryo; ovule → seed; ovary wall → fruit (pericarp); petals, stamens, sepals wither and fall off; calyx may persist in some plants.",
-    "importance_note": "Fertilisation in flowering plants and post-fertilisation changes are tested every year in 3-mark format."
+    "importance_note": "Fertilisation in flowering plants and post-fertilisation changes are tested every year in 3-mark format.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_032",
@@ -533,7 +785,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "mirror formula numerical",
@@ -541,7 +800,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Mirror formula: 1/v + 1/u = 1/f. Sign convention: distances measured from pole; in front of mirror is negative. Given: u = –15 cm, f = –10 cm (concave mirror). 1/v = 1/f – 1/u = 1/(–10) – 1/(–15) = –1/10 + 1/15 = (–3+2)/30 = –1/30. So v = –30 cm. Image is formed 30 cm in front of the mirror (real, inverted, magnified). Magnification m = –v/u = –(–30)/(–15) = –2 (inverted, twice the size).",
-    "importance_note": "Mirror formula numericals are asked in almost every board paper alongside lens formula questions."
+    "importance_note": "Mirror formula numericals are asked in almost every board paper alongside lens formula questions.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_033",
@@ -550,7 +810,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "refraction and refractive index",
@@ -558,7 +825,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Refraction: Bending of light as it passes from one transparent medium to another due to change in speed. Snell's Law: sin i / sin r = n₂/n₁ = constant (where i = angle of incidence, r = angle of refraction). Refractive index of glass w.r.t. air = n_g = 1.5. Refractive index of air w.r.t. glass = 1/n_g = 1/1.5 = 2/3 ≈ 0.67.",
-    "importance_note": "Refraction, Snell's Law, and refractive index reciprocal relationship are tested in every alternate year as 2–3 mark questions."
+    "importance_note": "Refraction, Snell's Law, and refractive index reciprocal relationship are tested in every alternate year as 2–3 mark questions.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_034",
@@ -567,7 +835,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "power of lens",
@@ -575,7 +850,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Power of a lens (P) = 1/f (in metres). Unit: dioptre (D). Convex lens: f = +25 cm = +0.25 m → P₁ = +4 D. Concave lens: f = –50 cm = –0.5 m → P₂ = –2 D. Combined power = P₁ + P₂ = 4 + (–2) = +2 D. Positive value means the combination acts as a convex (converging) lens.",
-    "importance_note": "Power of lens and combination of lenses is a standard numerical asked in 2–3 mark format every year."
+    "importance_note": "Power of lens and combination of lenses is a standard numerical asked in 2–3 mark format every year.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_035",
@@ -584,7 +860,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Acids, Bases and Salts",
     "section": "Chemistry",
     "topic": "indicators and their behaviour",
@@ -592,7 +875,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Indicator | In Acid | In Base. (i) Litmus: turns red | turns blue. (ii) Phenolphthalein: colourless | pink/magenta. (iii) Methyl orange: turns red/pink | turns yellow. Turmeric: Turmeric stains are not washed out by soap (a base); the stain turns reddish-brown in base (turmeric contains curcumin, a natural indicator). None of the three listed indicators is in turmeric; turmeric itself is a natural indicator.",
-    "importance_note": "Indicators and their colour changes are very commonly tested in 1-mark MCQ and 3-mark short answer questions."
+    "importance_note": "Indicators and their colour changes are very commonly tested in 1-mark MCQ and 3-mark short answer questions.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_036",
@@ -601,7 +885,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Chemical Reactions and Equations",
     "section": "Chemistry",
     "topic": "corrosion",
@@ -609,7 +901,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Corrosion: Slow deterioration of metals due to reaction with moisture, oxygen or other chemicals in the environment. Example: Iron rusts, silver tarnishes, copper turns green. Chemical formula of rust: Fe₂O₃·xH₂O (hydrated iron(III) oxide). Prevention: (1) Painting or greasing the iron surface to prevent contact with oxygen/moisture. (2) Galvanisation – coating iron with zinc (zinc is more reactive, acts as sacrificial anode). Others: alloying, electroplating, using anti-rust solutions.",
-    "importance_note": "Corrosion and rancidity are commonly asked 2–3 mark questions. Rust formula and prevention methods appear in multiple years."
+    "importance_note": "Corrosion and rancidity are commonly asked 2–3 mark questions. Rust formula and prevention methods appear in multiple years.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_037",
@@ -618,7 +911,13 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "Life Processes",
     "section": "Biology",
     "topic": "respiration – experimental evidence",
@@ -626,7 +925,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Activity: Take a flask with germinating seeds. Pass exhaled air (or air from the flask) through lime water [Ca(OH)₂ solution] using a delivery tube. Observation: Lime water turns milky. Inference: CO₂ is produced during respiration, as CO₂ reacts with lime water – Ca(OH)₂ + CO₂ → CaCO₃ (white precipitate) + H₂O. Conclusion: Respiration produces carbon dioxide.",
-    "importance_note": "Activity-based questions with observations and inferences are a growing part of CBSE boards (3-mark format). Respiration CO₂ test is classic."
+    "importance_note": "Activity-based questions with observations and inferences are a growing part of CBSE boards (3-mark format). Respiration CO₂ test is classic.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_038",
@@ -635,7 +935,14 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
     "chapter": "How do Organisms Reproduce?",
     "section": "Biology",
     "topic": "sexual vs asexual reproduction",
@@ -643,7 +950,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Advantages of sexual reproduction over asexual: (1) Produces genetic variation in offspring (combining DNA from two parents) → helps adaptation and evolution. (2) Variations help species survive changing environments. (3) Harmful mutations can be masked by dominant alleles. Disadvantages: (1) Requires finding a mate – needs more energy and time. (2) Produces fewer offspring compared to asexual reproduction. (3) More complex process. Asexual reproduction advantage: faster, requires only one parent, produces large numbers quickly.",
-    "importance_note": "Comparison between sexual and asexual reproduction is a standard 3-mark question in the Reproduction chapter."
+    "importance_note": "Comparison between sexual and asexual reproduction is a standard 3-mark question in the Reproduction chapter.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_039",
@@ -652,7 +960,15 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Magnetic Effects of Electric Current",
     "section": "Physics",
     "topic": "electromagnetic induction",
@@ -660,7 +976,8 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Electromagnetic induction: The phenomenon of generating an electric current in a conductor by changing the magnetic flux through it. Faraday's Law: (1) An EMF is induced in a conductor when there is a change in magnetic flux linked with it. (2) The magnitude of the induced EMF is directly proportional to the rate of change of magnetic flux. Applications: (1) AC generator / dynamo – converts mechanical energy to electrical energy. (2) Electric transformer – steps up or steps down AC voltage.",
-    "importance_note": "Electromagnetic induction and Faraday's law is tested in 3-mark format. Applications are required for full marks."
+    "importance_note": "Electromagnetic induction and Faraday's law is tested in 3-mark format. Applications are required for full marks.",
+    "source": "practice"
   },
   {
     "id": "cbse_c10_science_imp_040",
@@ -669,7 +986,13 @@
     "class": 10,
     "year": null,
     "frequency": "high",
-    "appeared_in_years": [2019, 2020, 2021, 2022, 2023],
+    "appeared_in_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
     "chapter": "Light – Reflection and Refraction",
     "section": "Physics",
     "topic": "lens formula – practical numerical",
@@ -677,6 +1000,7 @@
     "type": "SA",
     "board": "CBSE",
     "answer": "Given: v = +60 cm, f = +15 cm. Using lens formula: 1/u = 1/v – 1/f = 1/60 – 1/15 = (1–4)/60 = –3/60 = –1/20. So u = –20 cm. Place candle 20 cm in front of the lens. Magnification m = v/u = 60/(–20) = –3. Nature: real, inverted, magnified (3× the object size).",
-    "importance_note": "Practical scenario-based lens formula numericals are increasingly common in CBSE boards as competency-based questions."
+    "importance_note": "Practical scenario-based lens formula numericals are increasingly common in CBSE boards as competency-based questions.",
+    "source": "practice"
   }
 ]
