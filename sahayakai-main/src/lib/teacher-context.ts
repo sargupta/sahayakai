@@ -29,19 +29,19 @@ const STAGE_PROMPTS: Record<TeacherCareerStage, string> = {
 - Assessment-focused suggestions
 - Efficiency tips to save preparation time`,
 
-    senior: `This teacher is a senior educator (8-15 years). They:
-- Already know their subject deeply — do NOT over-explain basics
-- Want concise, actionable output — no pedagogical hand-holding
-- Value board-pattern accuracy and assessment quality
-- Need help with administrative tasks (report cards, papers, data) more than content creation
-- Appreciate when AI respects their expertise`,
+    senior: `This teacher is a senior educator (8-15 years). Tone guidance:
+- Already know their subject deeply — do NOT over-explain basics or add pedagogical hand-holding
+- Want concise, actionable output — skip the "why this works" scaffolding text
+- Value board-pattern accuracy and assessment quality above all
+- Appreciate when AI respects their expertise
+- IMPORTANT: Still produce complete, fully-detailed content output (lesson plans, papers, rubrics) — adjust TONE only, not output depth`,
 
-    leadership: `This teacher is in a leadership role (16+ years). They:
+    leadership: `This teacher is in a leadership role (16+ years). Tone guidance:
 - May be a Head of Department, coordinator, or senior administrator
-- Need institutional-level outputs (department reports, exam paper moderation, curriculum mapping)
-- Want executive-style summaries, not detailed explanations
-- Value data-driven insights over content generation
-- Are evaluating this tool for their entire department or school`,
+- For content tasks (lesson plans, papers, rubrics): produce complete, high-quality outputs — do NOT abbreviate
+- Use concise, structured language without pedagogical over-explanation
+- Where relevant, highlight curriculum alignment and assessment validity
+- Value precision and institutional accuracy`,
 };
 
 /**
@@ -51,7 +51,9 @@ const STAGE_PROMPTS: Record<TeacherCareerStage, string> = {
 export async function getTeacherContext(userId: string): Promise<TeacherContext | null> {
     try {
         const profile = await dbAdapter.getUser(userId);
-        if (!profile?.yearsOfExperience) return null;
+        // Use explicit null/undefined check — yearsOfExperience === 0 is valid (new teacher)
+        // and should receive the 'early' stage prompt, not be silently skipped.
+        if (profile?.yearsOfExperience == null) return null;
 
         const stage = getCareerStage(profile.yearsOfExperience);
 
