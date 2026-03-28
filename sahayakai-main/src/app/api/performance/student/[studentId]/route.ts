@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { performanceAdapter } from '@/lib/db/performance-adapter';
+import { performanceAdapter, verifyClassOwnership } from '@/lib/db/performance-adapter';
 import { logger } from '@/lib/logger';
 
 // GET — Get a student's assessments and performance trend
@@ -24,6 +24,12 @@ export async function GET(
             return NextResponse.json({ error: 'Missing classId parameter' }, { status: 400 });
         }
 
+        // Verify the requesting user is the teacher for this class
+        const isOwner = await verifyClassOwnership(classId, userId);
+        if (!isOwner) {
+            return NextResponse.json({ error: 'Forbidden: You do not have access to this class' }, { status: 403 });
+        }
+
         const [assessments, trend] = await Promise.all([
             performanceAdapter.getStudentAssessments(classId, studentId, { subject, term, academicYear }),
             performanceAdapter.getStudentPerformanceTrend(classId, studentId),
@@ -34,7 +40,7 @@ export async function GET(
             assessments,
             trend,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('[performance] Failed to get student assessments', error);
         return NextResponse.json({ error: 'Failed to load student data' }, { status: 500 });
     }

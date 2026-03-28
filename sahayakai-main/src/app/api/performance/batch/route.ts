@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { performanceAdapter } from '@/lib/db/performance-adapter';
+import { performanceAdapter, verifyClassOwnership } from '@/lib/db/performance-adapter';
 import { logger } from '@/lib/logger';
 import type { BatchMarksInput } from '@/types/performance';
 
@@ -15,6 +15,12 @@ export async function POST(request: Request) {
 
         if (!body.classId || !body.name || !body.type || !body.subject || !body.maxMarks || !body.marks?.length) {
             return NextResponse.json({ error: 'Missing required fields: classId, name, type, subject, maxMarks, marks' }, { status: 400 });
+        }
+
+        // Verify the requesting user is the teacher for this class
+        const isOwner = await verifyClassOwnership(body.classId, userId);
+        if (!isOwner) {
+            return NextResponse.json({ error: 'Forbidden: You do not have access to this class' }, { status: 403 });
         }
 
         // Validate marks entries
@@ -35,7 +41,7 @@ export async function POST(request: Request) {
             batchId,
             studentCount: body.marks.length,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('[performance] Failed to save assessment batch', error);
         return NextResponse.json({ error: 'Failed to save marks' }, { status: 500 });
     }
@@ -56,10 +62,16 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Missing classId parameter' }, { status: 400 });
         }
 
+        // Verify the requesting user is the teacher for this class
+        const isOwner = await verifyClassOwnership(classId, userId);
+        if (!isOwner) {
+            return NextResponse.json({ error: 'Forbidden: You do not have access to this class' }, { status: 403 });
+        }
+
         const batches = await performanceAdapter.listAssessmentBatches(classId);
 
         return NextResponse.json({ batches });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('[performance] Failed to list assessment batches', error);
         return NextResponse.json({ error: 'Failed to load batches' }, { status: 500 });
     }
