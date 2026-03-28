@@ -5,6 +5,18 @@ import type { Assessment, AssessmentBatch, BatchMarksInput, ClassAssessmentSumma
 
 const CLASSES_COLLECTION = 'classes';
 
+/**
+ * Verify that userId is the teacher for classId.
+ * Returns true if ownership confirmed, false otherwise.
+ * Throws if Firestore is unreachable.
+ */
+export async function verifyClassOwnership(classId: string, userId: string): Promise<boolean> {
+    const db = await getDb();
+    const classDoc = await db.collection(CLASSES_COLLECTION).doc(classId).get();
+    if (!classDoc.exists) return false;
+    return classDoc.data()?.teacherUid === userId;
+}
+
 export const performanceAdapter = {
 
     // --- Assessment Batch Operations ---
