@@ -437,8 +437,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
 
           await dbAdapter.saveContent(input.userId, {
             id: contentId,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            type: 'exam_paper' as any,
+            type: 'exam-paper' as const,
             title: output.title || `${input.board} ${input.gradeLevel} ${input.subject} Exam Paper`,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 10') as any,

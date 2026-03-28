@@ -198,7 +198,7 @@ export const ExamPaperDataSchema = z.object({
             internalChoice: z.string().optional(),
             answerKey: z.string().optional(),
             markingScheme: z.string().optional(),
-            source: z.string().optional(),
+            source: z.string().default('AI Generated'),
         })),
     })),
     blueprintSummary: z.object({
