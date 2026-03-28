@@ -72,6 +72,10 @@ export default function MarksEntryPage() {
                 getClassAction(classId),
                 getStudentsAction(classId),
             ]);
+            if (!classData) {
+                toast({ title: 'Class not found', description: 'This class does not exist or you do not have access.', variant: 'destructive' });
+                return;
+            }
             setCls(classData);
             setStudents(studentData);
             // Pre-fill subject from class
