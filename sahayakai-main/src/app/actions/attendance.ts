@@ -8,6 +8,7 @@ import type {
     ParentOutreach, StudentAttendanceSummary, AttendanceStatus, OutreachReason,
 } from '@/types/attendance';
 import type { Language, GradeLevel, Subject } from '@/types';
+import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ async function getAuthUserId(): Promise<string> {
 async function requireProPlan(uid: string): Promise<void> {
     const profile = await dbAdapter.getUser(uid);
     if (!profile) throw new Error('User not found');
-    if (profile.planType !== 'pro' && profile.planType !== 'institution') {
+    if (!hasAdvancedPlan(profile.planType)) {
         throw new Error('PREMIUM_REQUIRED');
     }
 }
@@ -126,20 +127,25 @@ export async function deleteClassAction(classId: string): Promise<void> {
     if (!doc.exists) throw new Error('Class not found');
     if (doc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
 
-    // Cascade-delete subcollections — Firestore does NOT auto-delete children.
-    // students: max 40 docs — batch delete.
-    // attendance records: use recursiveDelete on the container doc.
-    const [studentsSnap] = await Promise.all([
-        db.collection('classes').doc(classId).collection('students').get(),
+    // Cascade-delete all subcollections — Firestore does NOT auto-delete children.
+    // Run all deep deletes in parallel before removing the class doc itself.
+    await Promise.all([
+        // attendance/{classId}/** (records subcollection)
+        db.recursiveDelete(db.collection('attendance').doc(classId)),
+        // classes/{classId}/assessment_batches/**
+        db.recursiveDelete(
+            db.collection('classes').doc(classId).collection('assessment_batches')
+        ),
+        // classes/{classId}/students/{studentId}/assessments/** — recursiveDelete
+        // on the students collection handles both student docs and their assessments
+        // subcollections in one pass.
+        db.recursiveDelete(
+            db.collection('classes').doc(classId).collection('students')
+        ),
     ]);
 
-    const batch = db.batch();
-    studentsSnap.docs.forEach((d) => batch.delete(d.ref));
-    batch.delete(db.collection('classes').doc(classId));
-    await batch.commit();
-
-    // recursiveDelete handles attendance/{classId}/records/* and the container doc
-    await db.recursiveDelete(db.collection('attendance').doc(classId));
+    // Only delete the class doc once all subcollections are gone
+    await db.collection('classes').doc(classId).delete();
 }
 
 // ── Student Management ────────────────────────────────────────────────────────

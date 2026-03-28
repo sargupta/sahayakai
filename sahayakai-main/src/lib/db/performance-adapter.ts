@@ -96,12 +96,13 @@ export const performanceAdapter = {
         filters?: { subject?: string; term?: string; academicYear?: string }
     ): Promise<Assessment[]> {
         const db = await getDb();
+        // Apply where() filters BEFORE orderBy() to avoid requiring separate
+        // composite indexes for every filter+orderBy combination.
         let query = db.collection(CLASSES_COLLECTION)
             .doc(classId)
             .collection('students')
             .doc(studentId)
-            .collection('assessments')
-            .orderBy('date', 'desc') as FirebaseFirestore.Query;
+            .collection('assessments') as FirebaseFirestore.Query;
 
         if (filters?.subject) {
             query = query.where('subject', '==', filters.subject);
@@ -112,6 +113,8 @@ export const performanceAdapter = {
         if (filters?.academicYear) {
             query = query.where('academicYear', '==', filters.academicYear);
         }
+
+        query = query.orderBy('date', 'desc');
 
         const snapshot = await query.get();
         return snapshot.docs.map(doc => doc.data() as Assessment);
@@ -132,28 +135,17 @@ export const performanceAdapter = {
         if (!batchDoc.exists) return null;
         const batchData = batchDoc.data() as AssessmentBatch;
 
-        // Get all students in the class
-        const studentsSnapshot = await db.collection(CLASSES_COLLECTION)
-            .doc(classId)
-            .collection('students')
+        // Single collectionGroup query instead of N+1 per-student queries.
+        // Requires the Firestore composite index on assessments: [batchId, classId].
+        const assessmentSnapshot = await db
+            .collectionGroup('assessments')
+            .where('batchId', '==', batchId)
+            .where('classId', '==', classId)
             .get();
 
-        // For each student, get their assessment for this batch
-        const assessments: Assessment[] = [];
-        for (const studentDoc of studentsSnapshot.docs) {
-            const assessmentSnapshot = await db.collection(CLASSES_COLLECTION)
-                .doc(classId)
-                .collection('students')
-                .doc(studentDoc.id)
-                .collection('assessments')
-                .where('batchId', '==', batchId)
-                .limit(1)
-                .get();
-
-            if (!assessmentSnapshot.empty) {
-                assessments.push(assessmentSnapshot.docs[0].data() as Assessment);
-            }
-        }
+        const assessments: Assessment[] = assessmentSnapshot.docs.map(
+            (doc) => doc.data() as Assessment
+        );
 
         if (assessments.length === 0) return null;
 
