@@ -221,7 +221,7 @@
     "question_number": 9,
     "question": "In the given figure, DE ∥ BC, AE = a units, EC = b units, DE = x units and BC = y units. Which of the following is true?",
     "options": {
-      "A": "x = ay/(a+b)",
+      "A": "x = (a+b)/(ay)",
       "B": "y = ax/(a+b)",
       "C": "x = ay/(a+b)",
       "D": "x/y = a/b"
@@ -552,9 +552,9 @@
     "paper_code": "041",
     "section": "B",
     "question_number": 22,
-    "question": "In the given figure below, AD/AE = AC/BD and ∠1 = ∠2. Show that ∆BAE ~ ∆CAD.",
+    "question": "In the given figure below, AE = BD and ∠1 = ∠2. Show that ∆BAE ~ ∆CAD.",
     "options": null,
-    "answer": "Using AD/AE = AC/BD and ∠1 = ∠2 (so AB = BD), we get AC/AB = AD/AE. With ∠A = ∠A (common), by SAS similarity ∆BAE ~ ∆CAD.",
+    "answer": "∠1 = ∠2 ⟹ AB = BD ...(i). Given AE = BD, so AE = AB from (i), hence AD/AE = AC/AB. With ∠A = ∠A (common), by SAS similarity ∆BAE ~ ∆CAD.",
     "marks": 2,
     "type": "SAQ",
     "chapter": "Triangles",

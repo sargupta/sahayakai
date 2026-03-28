@@ -70,7 +70,7 @@
     "paper_type": "SQP",
     "section": "A",
     "question_number": 4,
-    "question": "An object of height 1.2 m is placed before a concave mirror of focal length 20 cm so that a real image is formed at a distance of 60 cm from it. Find the position of the object. What will be the height of the image formed?",
+    "question": "An object of height 1.2 m is placed before a concave mirror of focal length 20 cm so that a real image is formed at a distance of 60 cm from it. Find the position of an object. What will be the height of the image formed?",
     "options": null,
     "answer": "Using mirror formula: 1/u = 1/f – 1/v = 1/(-20) – 1/(-60) = –1/30. So u = –30 cm. Height of image: hᵢ/hₒ = –v/u = –(–60)/(–30) = –2. hᵢ = –2 × 1.2 = –2.4 cm (real, inverted, magnified).",
     "marks": 2,
@@ -114,7 +114,7 @@
     "options": null,
     "answer": "Electric Generator. Principle: Electromagnetic induction – electric current is induced in a closed circuit because of changing magnetic field. (Labelled diagram of AC generator required.)\nOR\n(i) Earth wire saves us from electric shocks by providing a path for leakage current to earth. (ii) When live and neutral wires come into direct contact accidentally, it is called short circuiting. (iii)(a) 5A (b) 15A.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Magnetic Effects of Electric Current",
     "topic": "Electric Generator / Household Circuits",
     "frequency": null
@@ -134,7 +134,7 @@
     "options": null,
     "answer": "Maximum current through 4Ω resistor: I = √(P/R) = √(16/4) = 2A. Maximum current through each 8Ω resistor: 1A (since current splits equally, total 2A through parallel combination).",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Electricity",
     "topic": "Resistors in Series and Parallel / Electric Power",
     "frequency": null
@@ -154,7 +154,7 @@
     "options": null,
     "answer": "(a) Cathode: Hydrogen; Anode: Oxygen. (b) Water has two parts hydrogen to one part oxygen; hydrogen volume is double. (c) Pure water is a bad conductor of electricity; dilute H₂SO₄ makes it a good conductor. Without it, electrolysis would not occur.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Chemical Reactions and Equations",
     "topic": "Electrolysis of Water",
     "frequency": null
@@ -174,7 +174,7 @@
     "options": null,
     "answer": "Mendeleev's Periodic Table: (1) Elements arranged by increasing atomic masses. (2) Position of isotopes not justified. (3) Position of hydrogen not justified as it resembles both alkali metals and halogens. Modern Periodic Table: (1) Elements arranged by increasing atomic numbers. (2) No problem in placing isotopes. (3) Hydrogen given a unique position due to its dual resemblance.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Periodic Classification of Elements",
     "topic": "Mendeleev's vs. Modern Periodic Table",
     "frequency": null
@@ -194,7 +194,7 @@
     "options": null,
     "answer": "Anaerobic breakdown: Glucose → Pyruvate (in cytoplasm). (1) In bacteria (fermentation): Pyruvate → Ethyl alcohol + CO₂ (2) In muscle cells: Pyruvate → Lactic acid. Very less energy is released in both cases.\nOR\n(1) Arteries carry blood away from heart; veins carry blood towards heart. (2) Arteries are thick-walled; veins are thin-walled. (3) Valves absent in arteries; valves present in veins to ensure unidirectional flow.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Life Processes",
     "topic": "Anaerobic Respiration / Blood Vessels",
     "frequency": null
@@ -214,7 +214,7 @@
     "options": null,
     "answer": "Mendel conducted a monohybrid cross and observed that one contrasting character disappears in F₁ generation. This character reappears in F₂ (obtained by selfing F₁) in 25% of the progeny. The character expressing itself in F₁ is dominant; the one that cannot express though present (appears only in pure form in 25% F₂ individuals) is recessive.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Heredity and Evolution",
     "topic": "Mendel's Laws – Dominant and Recessive Traits",
     "frequency": null
@@ -234,7 +234,7 @@
     "options": null,
     "answer": "(i) u = 50 – 26 = –24 cm, v = 74 – 50 = 24 cm. Since |u| = |v|, object is at 2f. f = 12 cm. (ii) New u = 50 – 38 = –12 cm = –f. Object is at focus; image is formed at infinity. (iii) Ray diagram showing rays parallel after refraction (image at infinity).",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Light – Reflection and Refraction",
     "topic": "Convex Lens – Lens Formula and Ray Diagrams",
     "frequency": null
@@ -254,7 +254,7 @@
     "options": null,
     "answer": "Three examples: (1) pH sensitivity of plants and animals – organisms survive only in narrow pH range. (2) pH of soil – plants need specific pH for healthy growth. (3) pH in digestion – stomach HCl aids digestion; excess acid causes indigestion. (Also acceptable: tooth decay below pH 5.5; bee sting acid relief with mild base.)\nOR\nCompound: Plaster of Paris. Formula: CaSO₄·½H₂O. Equation: CaSO₄·2H₂O → CaSO₄·½H₂O + 1½H₂O. Use: In hospitals as plaster to support fractured bones.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Acids, Bases and Salts",
     "topic": "Importance of pH / Plaster of Paris",
     "frequency": null
@@ -274,7 +274,7 @@
     "options": null,
     "answer": "Fossils provide evidence in favour of evolution / establish evolutionary relationships by providing missing links. Two ways to estimate age: (1) Relative method – fossils found closer to the surface are more recent than those in deeper layers. (2) By detecting the ratios of different isotopes of the same element in the fossil material (radioactive dating).",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "Heredity and Evolution",
     "topic": "Fossils and Evolution",
     "frequency": null
@@ -294,7 +294,7 @@
     "options": null,
     "answer": "(a) AIDS belongs to the Viral / STD (Sexually Transmitted Disease) category. Causative organism: HIV (Human Immunodeficiency Virus). (b) Sensitivity and awareness among citizens towards leading a healthy and fit life.",
     "marks": 3,
-    "type": "LA",
+    "type": "SA",
     "chapter": "How do Organisms Reproduce?",
     "topic": "Sexually Transmitted Diseases / Value-Based Question",
     "frequency": null

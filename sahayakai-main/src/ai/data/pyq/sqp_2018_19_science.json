@@ -55,8 +55,8 @@
     "answer": "Mg (2,8,2) loses 2 electrons to form Mg²⁺ and two Cl (2,8,7) atoms each gain 1 electron to form Cl⁻ ions → MgCl₂ is formed. Solution of MgCl₂ conducts electricity because an ionic compound dissociates into ions when dissolved in water and hence conducts electricity.",
     "marks": 2,
     "type": "SA",
-    "chapter": "Acids, Bases and Salts",
-    "topic": "Ionic compounds and electrolytes",
+    "chapter": "Metals and Non-metals",
+    "topic": "Ionic compounds formation",
     "frequency": null
   },
   {
@@ -92,7 +92,7 @@
     "question_number": 5,
     "question": "A ray of light enters into benzene from air. If the refractive index of benzene is 1.50, by what percent does the speed of light reduce on entering the benzene?",
     "options": null,
-    "answer": "n = c/v, so v = c/n = (3×10⁸)/1.50 = 2×10⁸ m/s. % decrease = [(3×10⁸ − 2×10⁸)/3×10⁸] × 100% = 33.3%. (Note: the speed reduces by 33.3%, the marking scheme states 66.7% which refers to the remaining speed as a percentage — correct % reduction is 33.3%.)",
+    "answer": "n = c/v, so v = c/n = (3×10⁸)/1.50 = 2×10⁸ m/s. % decrease in speed = [(3×10⁸ − 2×10⁸)/3×10⁸] × 100% = 33.3%.",
     "marks": 2,
     "type": "SA",
     "chapter": "Light – Reflection and Refraction",
@@ -310,9 +310,9 @@
     "paper_type": "SQP",
     "section": "C",
     "question_number": 13,
-    "question": "The figure below shows three cylindrical copper conductors along with their face areas and lengths: (a) length L, area A; (b) length L/3, area A/3; (c) length 3L, area 3A. Compare the resistance and the resistivity of the three conductors. Justify your answer.",
+    "question": "The figure below shows three cylindrical copper conductors along with their face areas and lengths: (a) length L, area A; (b) length 3L, area A/3; (c) length L/3, area 3A. Compare the resistance and the resistivity of the three conductors. Justify your answer.",
     "options": null,
-    "answer": "Ra = ρL/A. Rb = ρ(L/3)/(A/3) = ρL/A = Ra. Rc = ρ(3L)/(3A) = ρL/A = Ra. Hence Rb = Ra = Rc (Wait — the MS says Rb > Ra > Rc, let us recalculate): Rb = ρ(L/3)/(A/3) = ρL/A = Ra. Rc = ρ(3L)/(3A) = ρL/A = Ra. All resistances are equal. Resistivity: ρa = ρb = ρc because all three conductors are made of the same material (copper).",
+    "answer": "Ra = ρL/A. Rb = ρ(3L)/(A/3) = 9ρL/A = 9Ra. Rc = ρ(L/3)/(3A) = ρL/(9A) = Ra/9. Hence Rb > Ra > Rc. Resistivity: ρa = ρb = ρc — all three conductors are made of the same material (copper), so resistivity is the same for all.",
     "marks": 3,
     "type": "SA",
     "chapter": "Electricity",
@@ -574,7 +574,7 @@
     "options": null,
     "answer": "The colour of the dilute NaOH solution turns pink on adding phenolphthalein as NaOH is a base. When excess HCl is added, the final mixture becomes colourless due to neutralisation of the base with the acid (NaOH + HCl → NaCl + H₂O; the solution becomes neutral/acidic and phenolphthalein is colourless in neutral/acidic medium).",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Acids, Bases and Salts",
     "topic": "Indicators and neutralisation",
     "frequency": null
@@ -594,7 +594,7 @@
     "options": null,
     "answer": "Increasing order of reactivity: Copper < Iron < Zinc < Magnesium. Observations when iron filings are added to copper sulphate solution: 1. Colour of the solution changes from blue to green (iron sulphate is green). 2. Reddish-brown deposits of copper are seen on the iron filings.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Metals and Non-metals",
     "topic": "Reactivity series",
     "frequency": null
@@ -614,7 +614,7 @@
     "options": null,
     "answer": "a) Sodium hydrogen carbonate (NaHCO₃). Equation: CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑. b) CO₂ gas is tested by passing it through lime water (Ca(OH)₂) — lime water turns milky due to formation of CaCO₃.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Carbon and its Compounds",
     "topic": "Acetic acid properties",
     "frequency": null
@@ -634,7 +634,7 @@
     "options": null,
     "answer": "Yeast. Budding: The parent yeast cell produces a small protuberance that grows to form a bud. The nucleus of the parent cell divides such that the daughter nucleus moves into the daughter cell. The process continues to form a chain of buds.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "How do Organisms Reproduce?",
     "topic": "Asexual reproduction - budding",
     "frequency": null
@@ -654,7 +654,7 @@
     "options": null,
     "answer": "In absence of KOH, the CO₂ released by germinating seeds is not absorbed; a partial vacuum is not created in the conical flask; air pressure in the flask is not reduced; as a result, water level does not rise in the delivery tube — the experiment will appear to show no CO₂ release, giving an incorrect result.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Life Processes",
     "topic": "Respiration experiment",
     "frequency": null
@@ -674,7 +674,7 @@
     "options": null,
     "answer": "1. Soft/ruptured seed coat. 2. Radicle (root) emerges first. 3. Leafy plumule appears. 4. The two cotyledons are visible between which the plumule grows.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Life Processes",
     "topic": "Seed germination",
     "frequency": null
@@ -694,7 +694,7 @@
     "options": null,
     "answer": "Least count of ammeter = 0.02 A. Least count of voltmeter = 0.1 V. Current = 15 × 0.02 A = 0.3 A. Potential difference = 21 × 0.1 V = 2.1 V.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Electricity",
     "topic": "Measuring instruments - ammeter and voltmeter",
     "frequency": null
@@ -712,9 +712,9 @@
     "question_number": 27,
     "question": "Consider the path of a ray of light passing through a rectangular glass slab for different angles of incidence. (i) Which one is greater: angle of incidence or angle of refraction? (ii) What happens to the emergent angle on increasing the incident angle at air-glass interface? (iii) State the conditions when no bending occurs.",
     "options": null,
-    "answer": "(i) Angle of incidence = Angle of emergence (they are equal for a glass slab with parallel faces). The angle of refraction (inside glass) is less than angle of incidence. (ii) The emergent angle also increases (since angle of emergence = angle of incidence). (iii) No bending occurs when: the light ray falls along the normal (i.e., angle of incidence = 0°), or when the refractive index of the two optical media are equal.",
+    "answer": "(i) Angle of incidence is greater than angle of refraction (since light travels from a rarer medium, air, to a denser medium, glass — it bends towards the normal, so ∠r < ∠i). (ii) The emergent angle also increases when incident angle is increased (since angle of emergence = angle of incidence for parallel-faced glass slab). (iii) No bending occurs when: (a) the light ray falls along the normal (angle of incidence = 0°), or (b) the refractive index of the two optical media are equal.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Light – Reflection and Refraction",
     "topic": "Refraction through glass slab",
     "frequency": null
@@ -734,7 +734,7 @@
     "options": null,
     "answer": "(i) Concave mirror. Focal length f = 35 − 15 = 20 cm. (ii) Sunita gets a sharp image of the distant building at 35 cm mark because incident rays from a distant object are parallel to each other; after reflection from the concave mirror, they converge at the focus (principal focus) and produce a sharp image at the focal point.",
     "marks": 2,
-    "type": "SA",
+    "type": "practical",
     "chapter": "Light – Reflection and Refraction",
     "topic": "Concave mirror and focal length",
     "frequency": null

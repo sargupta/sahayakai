@@ -488,7 +488,7 @@
     },
     "answer": "A",
     "marks": 1,
-    "type": "MCQ",
+    "type": "MCQ_Assertion_Reason",
     "chapter": "Surface Areas and Volumes",
     "topic": "Surface area of combined solids",
     "frequency": null
@@ -514,7 +514,7 @@
     },
     "answer": "C",
     "marks": 1,
-    "type": "MCQ",
+    "type": "MCQ_Assertion_Reason",
     "chapter": "Arithmetic Progressions",
     "topic": "Arithmetic Progression",
     "frequency": null
@@ -535,7 +535,7 @@
     "options": null,
     "answer": "Assume √2 = a/b where a and b are coprime integers. Then 2b² = a², so 2 divides a. Write a = 2c, then 2b² = 4c², so b² = 2c², meaning 2 divides b. This contradicts a and b being coprime. Hence √2 is irrational.",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Real Numbers",
     "topic": "Irrationality of √2",
     "frequency": null
@@ -556,7 +556,7 @@
     "options": null,
     "answer": "Using AA similarity, △APO ~ △CQO. AP = 2a/5, CQ = a/5. Therefore OA/OC = AP/CQ = 2, so OC = OA/2.",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Triangles",
     "topic": "Similar triangles",
     "frequency": null
@@ -577,7 +577,7 @@
     "options": null,
     "answer": "Perimeter of △PCD = PA + PB = 2PA = 2(10) = 20 cm",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Circles",
     "topic": "Tangents from an external point",
     "frequency": null
@@ -598,7 +598,7 @@
     "options": null,
     "answer": "tan(A+B) = √3 ⟹ A+B = 60°; tan(A-B) = 1/√3 ⟹ A-B = 30°. Solving: A = 45°, B = 15°.",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Introduction to Trigonometry",
     "topic": "Trigonometric ratios of specific angles",
     "frequency": null
@@ -619,7 +619,7 @@
     "options": null,
     "answer": "2(4) + x(3/4) – (1/4)(1/3)×3 = 10 → 8 + 3x/4 – 1/4 = 10 → 32 + 3x – 1 = 40 → 3x = 9 → x = 3",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Introduction to Trigonometry",
     "topic": "Trigonometric ratios of specific angles",
     "frequency": null
@@ -640,7 +640,7 @@
     "options": null,
     "answer": "Total area removed = (∠A + ∠B + ∠C)/360 × πr² = (180°/360°) × π × 14² = 308 cm²",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Areas Related to Circles",
     "topic": "Area of sector",
     "frequency": null
@@ -661,7 +661,7 @@
     "options": null,
     "answer": "Side of square = 4 cm (since 2a = 8, a = 4). Area = (4)² + 4 × π(2)² / 2 = 16 + 8π cm²",
     "marks": 2,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Areas Related to Circles",
     "topic": "Area of combined figures",
     "frequency": null
@@ -682,7 +682,7 @@
     "options": null,
     "answer": "HCF(60, 84, 108) = 12. Students per group = 12. Groups: Music = 60/12 = 5, Dance = 84/12 = 7, Handicrafts = 108/12 = 9. Total rooms = 5+7+9 = 21.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Real Numbers",
     "topic": "HCF application",
     "frequency": null
@@ -703,7 +703,7 @@
     "options": null,
     "answer": "α+β = -1, αβ = 1/5. (1) α²+β² = (α+β)² - 2αβ = 1 - 2/5 = 3/5. (2) α⁻¹+β⁻¹ = (α+β)/(αβ) = (-1)/(1/5) = -5.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Polynomials",
     "topic": "Relationship between zeroes and coefficients",
     "frequency": null
@@ -724,7 +724,7 @@
     "options": null,
     "answer": "Let digits be x and y. x+y = 6; x-y = ±2. If x-y=2: x=4,y=2 → number is 42. If y-x=2: x=2,y=4 → number is 24. There are two such numbers: 42 and 24.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Pair of Linear Equations in Two Variables",
     "topic": "Word problems on linear equations",
     "frequency": null
@@ -745,7 +745,7 @@
     "options": null,
     "answer": "Let m = 1/√x and n = 1/√y. Then: 2m+3n=2 and 4m-9n=-1. Solving: n=1/3, m=1/2. So √x=2 → x=4 and √y=3 → y=9.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Pair of Linear Equations in Two Variables",
     "topic": "Equations reducible to linear form",
     "frequency": null
@@ -766,7 +766,7 @@
     "options": null,
     "answer": "∠OAB = 30°, ∠OAP = 90°, so ∠PAB = 60°. △ABP is equilateral, so PA = AB = 6 cm. In right △OAP, tan30° = OA/PA, so OA = PA/√3 = 6/√3 = 2√3 cm.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Circles",
     "topic": "Tangents and chord properties",
     "frequency": null
@@ -787,7 +787,7 @@
     "options": null,
     "answer": "Let ∠TPQ = θ. Since TP=TQ, ∠TPQ=∠TQP=θ. In △PQT: ∠PTQ = 180°-2θ. Also ∠OPT=90°, so ∠OPQ = 90°-θ. Therefore ∠PTQ = 180°-2θ = 2(90°-θ) = 2∠OPQ.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Circles",
     "topic": "Tangents from an external point",
     "frequency": null
@@ -808,7 +808,7 @@
     "options": null,
     "answer": "Divide both sides by cos²θ: sec²θ + tan²θ = 3tanθ → 1+2tan²θ = 3tanθ → 2tan²θ - 3tanθ + 1 = 0 → (tanθ-1)(2tanθ-1) = 0 → tanθ = 1 or tanθ = 1/2.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Introduction to Trigonometry",
     "topic": "Trigonometric identities",
     "frequency": null
@@ -829,7 +829,7 @@
     "options": null,
     "answer": "Using assumed mean a = 149 and step deviation method with d values (-27,-18,-9,0,9,18,27) and frequencies (3,5,9,12,5,4,2): Σfd = -81-90-81+0+45+72+54 = -81. Mean = 149 + (-81/40) = 149 – 2.025 = 146.975 mm.",
     "marks": 3,
-    "type": "Short Answer",
+    "type": "SAQ",
     "chapter": "Statistics",
     "topic": "Mean of grouped data",
     "frequency": null
@@ -850,7 +850,7 @@
     "options": null,
     "answer": "Let speed of stream = x km/h. Time upstream – time downstream = 1: 24/(18-x) – 24/(18+x) = 1. Solving: x² + 48x – 324 = 0 → x = 6 or x = -54. Since speed cannot be negative, speed of stream = 6 km/h.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Quadratic Equations",
     "topic": "Word problems on quadratic equations",
     "frequency": null
@@ -871,7 +871,7 @@
     "options": null,
     "answer": "Let smaller tap take x hours, larger takes (x-10) hours. 1/x + 1/(x-10) = 8/75. Solving: 8x²-230x+750=0 → x=25 or x=3.75. x=3.75 rejected (larger tap would be negative). Smaller tap: 25 hours, larger tap: 15 hours.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Quadratic Equations",
     "topic": "Word problems on quadratic equations",
     "frequency": null
@@ -892,7 +892,7 @@
     "options": null,
     "answer": "(a) BPT: A line drawn parallel to one side of a triangle divides the other two sides proportionally. Proof by construction and area method. (b) Draw DG ∥ BE. By BPT in △ABE: AB/BD = AE/GE. GE = CE (midpoint theorem). ∠CEF=∠CFE → CF=CE → CF=GE. CF=FD (F midpoint). So GE=FD → AE/GE = AE/FE → AB/BD = AE/FE.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Triangles",
     "topic": "Basic Proportionality Theorem",
     "frequency": null
@@ -913,7 +913,7 @@
     "options": null,
     "answer": "Volume of pond = 50×44×0.21 = 462 m³. Radius of pipe = 0.07 m. Area of cross-section = π×(0.07)² = 22/7×0.0049 m². Volume per hour at 15 km/h = (22/7×0.0049)×15000 = 231 m³. Time = 462/231 = 2 hours. Speed for 1 hour = 15×2 = 30 km/h.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Surface Areas and Volumes",
     "topic": "Volume of cylinder and cuboid",
     "frequency": null
@@ -934,7 +934,7 @@
     "options": null,
     "answer": "Height of cone = 13.5-3 = 10.5 m, r = 14 m. Slant height = √(10.5²+14²) = √306.25 = 17.5 m. CSA of cylinder = 2π×14×3 = 264 m². CSA of cone = π×14×17.5 = 770 m². Total = 264+770+26 = 1060 m². Cost = 500×1060 = ₹5,30,000.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Surface Areas and Volumes",
     "topic": "Surface area of combined solids",
     "frequency": null
@@ -955,7 +955,7 @@
     "options": null,
     "answer": "p+q+78=90 → p+q=12. Median=50, so median class is 50-60. Using median formula: 50=50 + [(45-(p+40))/20]×10 → 45-(p+40)=0 → p=5. q=12-5=7. Mode = 40 + [25-15/(2×25-15-20)]×10 = 40+6.67 = 46.67.",
     "marks": 5,
-    "type": "Long Answer",
+    "type": "LAQ",
     "chapter": "Statistics",
     "topic": "Median and mode of grouped data",
     "frequency": null
@@ -976,7 +976,7 @@
     "options": null,
     "answer": "a = 40, d = 12. t₁₁ = 40 + 10×12 = 160 throws.",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Arithmetic Progressions",
     "topic": "nth term of an AP",
     "frequency": null
@@ -995,9 +995,9 @@
     "question_number": 36,
     "question": "Manpreet Kaur is the national record holder for women in the shot-put discipline. Her throw of 18.86m at the Asian Grand Prix in 2017 is the maximum distance for an Indian female athlete. Keeping her as a role model, Sanjitha is determined to earn gold in Olympics one day. Initially her throw reached 7.56m only. Being an athlete in school, she regularly practiced both in the mornings and in the evenings and was able to improve the distance by 9cm every week. During the special camp for 15 days, she started with 40 throws and every day kept increasing the number of throws by 12 to achieve this remarkable progress.\n\n(ii) What would be Sanjitha's throw distance at the end of 6 weeks?\n[OR] When will she be able to achieve a throw of 11.16 m?",
     "options": null,
-    "answer": "a = 7.56 m, d = 0.09 m, n = 6. t₆ = 7.56 + 5×0.09 = 7.56 + 0.45 = but using tn = a+(n-1)d: t₇ = 7.56+6×0.09 = 8.10 m (after 6 complete weeks). [OR] 11.16 = 7.56 + (n-1)×0.09 → n-1=40 → n=41 weeks.",
+    "answer": "a = 7.56 m, d = 0.09 m. At end of 6 weeks (6 increments from initial): distance = 7.56 + 6×0.09 = 7.56 + 0.54 = 8.10 m. [OR] 11.16 = 7.56 + (n-1)×0.09 → n-1 = 40 → n = 41 weeks.",
     "marks": 2,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Arithmetic Progressions",
     "topic": "nth term of an AP",
     "frequency": null
@@ -1018,7 +1018,7 @@
     "options": null,
     "answer": "S₁₅ = (15/2)[2×40 + 14×12] = (15/2)[80+168] = (15/2)×248 = 1860 throws.",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Arithmetic Progressions",
     "topic": "Sum of n terms of an AP",
     "frequency": null
@@ -1039,7 +1039,7 @@
     "options": null,
     "answer": "Midpoint of AC = midpoint of BD. ((1+6)/2, (2+6)/2) = ((4+a)/2, (3+b)/2) → a=3, b=5. D is at (3,5).",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Coordinate Geometry",
     "topic": "Midpoint formula and properties of parallelogram",
     "frequency": null
@@ -1060,7 +1060,7 @@
     "options": null,
     "answer": "GH=√52=2√13, GK=√13, HK=√13. GK+HK=2√13=GH → G, H, K are collinear. [OR] CJ=√41, CI=√41, so J and I are equidistant from C. Midpoint of IJ = ((5-4)/2, (-3+6)/2) = (1/2, 3/2) ≠ (0,1). So C is NOT the midpoint of IJ.",
     "marks": 2,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Coordinate Geometry",
     "topic": "Distance formula and collinearity",
     "frequency": null
@@ -1081,7 +1081,7 @@
     "options": null,
     "answer": "B is midpoint of AE. (1+a)/2=2 → a=3; (4+b)/2=-3 → b=-10. E is at (3,-10).",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Coordinate Geometry",
     "topic": "Midpoint formula",
     "frequency": null
@@ -1102,7 +1102,7 @@
     "options": null,
     "answer": "tan45° = 80/CB → CB = 80 m.",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Some Applications of Trigonometry",
     "topic": "Angle of elevation",
     "frequency": null
@@ -1123,7 +1123,7 @@
     "options": null,
     "answer": "tan30° = 80/CE → CE = 80√3. Distance bird flew = CE - CB = 80√3 - 80 = 80(√3-1) m. [OR] tan60° = 80/CG → CG = 80/√3. Ball travelled GB = CB - CG = 80 - 80/√3 = 80(1 - 1/√3) m.",
     "marks": 2,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Some Applications of Trigonometry",
     "topic": "Angle of elevation",
     "frequency": null
@@ -1144,7 +1144,7 @@
     "options": null,
     "answer": "Speed = distance/time = 20(√3+1)/2 m/sec = 10(√3+1) m/sec = 10(√3+1)×60 m/min = 600(√3+1) m/min.",
     "marks": 1,
-    "type": "Case Study",
+    "type": "Case_Study",
     "chapter": "Some Applications of Trigonometry",
     "topic": "Angle of elevation",
     "frequency": null

@@ -141,7 +141,7 @@
     "paper_code": "041",
     "section": "A",
     "question_number": 6,
-    "question": "If tanθ = 5/9 then (4 sinθ + cosθ) / (4 sinθ − cosθ) is equal to",
+    "question": "If tanθ = 5/2 then (4 sinθ + cosθ) / (4 sinθ − cosθ) is equal to",
     "options": {
       "A": "11/9",
       "B": "3/2",
@@ -351,7 +351,7 @@
     "question_number": 14,
     "question": "In a bag containing 24 balls, 4 are blue, 11 are green and the rest are white. One ball is drawn at random. The probability that drawn ball is white in colour is",
     "options": {
-      "A": "6/24",
+      "A": "6/11",
       "B": "3/8",
       "C": "8/11",
       "D": "11/24"

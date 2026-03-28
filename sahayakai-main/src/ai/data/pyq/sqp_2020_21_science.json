@@ -452,7 +452,7 @@
       "c": "A is true, but R is false.",
       "d": "A is false, but R is true."
     },
-    "answer": "a) Both A and R are true, and R is the correct explanation of the assertion. (Note: The answer given in MS is (a) but the reason is scientifically debatable — white gene is recessive, not absent)",
+    "answer": "a) Both A and R are true, and R is the correct explanation of the assertion.",
     "marks": 1,
     "type": "Assertion-Reason",
     "chapter": "Heredity and Evolution",
@@ -577,7 +577,7 @@
       "c": "Amount of ATP: Aerobic - High, Anaerobic - Low",
       "d": "Oxygen: Aerobic - Needed, Anaerobic - Not needed"
     },
-    "answer": "a) Location: Aerobic - Cytoplasm, Anaerobic - Mitochondria (incorrect; aerobic respiration occurs in mitochondria, anaerobic in cytoplasm)",
+    "answer": "a) Location: Aerobic - Cytoplasm, Anaerobic - Mitochondria",
     "marks": 1,
     "type": "MCQ",
     "chapter": "Life Processes",
@@ -1255,7 +1255,7 @@
     "answer": "a. Ca has 2 valence electrons, Cl has 7 valence electrons. Ca donates 2 electrons, one each to 2 Cl atoms. Each Cl attains 8 electrons (noble gas config), Ca becomes Ca²⁺, each Cl becomes Cl⁻, forming CaCl₂.\nb. Ionic compounds do not conduct electricity in solid state due to absence of free ions but they conduct electricity in molten and aqueous state due to presence of free ions.",
     "marks": 3,
     "type": "SA",
-    "chapter": "Chemical Bonding",
+    "chapter": "Metals and Non-metals",
     "topic": "Ionic Compounds",
     "frequency": null
   },
@@ -1292,7 +1292,7 @@
     "question_number": 34,
     "question": "Match the following pH values 1, 7, 10, 13 to the solutions given below:\n• Milk of magnesia\n• Gastric juices\n• Brine\n• Aqueous Sodium hydroxide.\nAmit and Rita decided to bake a cake and added baking soda to the cake batter. Explain with a balanced reaction, the role of the baking soda. Mention any other use of baking soda.",
     "options": null,
-    "answer": "Milk of magnesia-10; Gastric juices-1; Brine-7; Aqueous Sodium hydroxide-13.\nBaking soda (NaHCO₃) undergoes thermal decomposition: NaHCO₃ →(Heat) Na₂CO₃ + CO₂ + H₂O. CO₂ makes the cake fluffy and soft.\nOther use: Used in fire extinguishers / antacid to neutralize excess acid in stomach / to neutralize the effect of acid in insect sting.",
+    "answer": "Milk of magnesia-10; Gastric juices-1; Brine-7; Aqueous Sodium hydroxide-13.\nBaking soda (NaHCO₃) undergoes thermal decomposition: 2NaHCO₃ →(Heat) Na₂CO₃ + CO₂ + H₂O. CO₂ makes the cake fluffy and soft.\nOther use: Used in fire extinguishers / antacid to neutralize excess acid in stomach / to neutralize the effect of acid in insect sting.",
     "marks": 5,
     "type": "LA",
     "chapter": "Acids, Bases and Salts",

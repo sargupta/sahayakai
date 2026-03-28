@@ -99,7 +99,7 @@
     "marks": 1,
     "type": "MCQ",
     "section_subject": "Chemistry",
-    "chapter": "Chemical Reactions and Equations",
+    "chapter": "Acids, Bases and Salts",
     "topic": "Properties and uses of common gases",
     "frequency": null
   },
@@ -742,7 +742,7 @@
     "question_number": 31,
     "question": "(a) A lens of focal length 5 cm is being used by Debashree in the laboratory as a magnifying glass. Her least distance of distinct vision is 25 cm.\n(i) What is the magnification obtained by using the glass?\n(ii) She keeps a book at a distance 10 cm from her eyes and tries to read. She is unable to read. What is the reason for this?\n(b) Ravi kept a book at a distance of 10 cm from the eyes of his friend Hari. Hari is not able to read anything written in the book. Give reasons for this?",
     "options": null,
-    "answer": "(a)(i) Magnification m = 1 + D/f = 1 + 25/5 = 6\n(a)(ii) The least distance of distinct vision is 25 cm; the book is placed at only 10 cm which is less than 25 cm, so the eye cannot form a clear image.\n(b) Hari's least distance of distinct vision is greater than 10 cm (far-sightedness / hypermetropia), so he cannot see objects placed as close as 10 cm clearly.",
+    "answer": "(a)(i) Magnification m = 1 + D/f = 1 + 25/5 = 6\n(a)(ii) The least distance of distinct vision is 25 cm; the book is placed at only 10 cm which is less than 25 cm (the near point), so the eye cannot form a clear image.\n(b) The least distance of distinct vision is 25 cm. Since Ravi has placed the book at 10 cm, which is less than the minimum distance (25 cm) required for distinct vision, Hari cannot read it clearly.",
     "marks": 3,
     "type": "Short Answer",
     "section_subject": "Physics",
