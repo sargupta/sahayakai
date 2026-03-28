@@ -21,6 +21,12 @@ export interface SectionBlueprint {
     questionCount: number;
     totalMarks: number;
     instructions?: string;
+    /**
+     * When two entries share the same section name (e.g. Section A has both
+     * MCQ and Assertion-Reason sub-blocks), set subsectionOf to the parent
+     * name so renderers can group them under a single section header.
+     */
+    subsectionOf?: string;
 }
 
 export interface ExamBlueprint {
@@ -70,6 +76,7 @@ export const CBSE_CLASS10_MATH: ExamBlueprint = {
             questionType: { type: 'assertion_reason', marksPerQuestion: 1, internalChoice: false },
             questionCount: 2,
             totalMarks: 2,
+            subsectionOf: 'Section A',
         },
         {
             name: 'Section B',
@@ -100,21 +107,22 @@ export const CBSE_CLASS10_MATH: ExamBlueprint = {
             totalMarks: 12,
         },
     ],
+    // Weightages scaled to sum to maxMarks (80) per CBSE curriculum distribution
     chapterWeightage: {
-        'Real Numbers': 6,
-        'Polynomials': 7,
-        'Pair of Linear Equations in Two Variables': 8,
-        'Quadratic Equations': 7,
-        'Arithmetic Progressions': 7,
-        'Triangles': 9,
-        'Coordinate Geometry': 7,
+        'Real Numbers': 5,
+        'Polynomials': 6,
+        'Pair of Linear Equations in Two Variables': 7,
+        'Quadratic Equations': 6,
+        'Arithmetic Progressions': 6,
+        'Triangles': 8,
+        'Coordinate Geometry': 6,
         'Introduction to Trigonometry': 7,
         'Some Applications of Trigonometry': 5,
         'Circles': 5,
-        'Areas Related to Circles': 5,
-        'Surface Areas and Volumes': 7,
+        'Areas Related to Circles': 4,
+        'Surface Areas and Volumes': 6,
         'Statistics': 5,
-        'Probability': 5,
+        'Probability': 4,
     },
 };
 
@@ -123,9 +131,9 @@ export const CBSE_CLASS10_SCIENCE: ExamBlueprint = {
     gradeLevel: 'Class 10',
     subject: 'Science',
     duration: 180,
-    maxMarks: 80,
+    maxMarks: 70,
     generalInstructions: [
-        'This question paper contains 39 questions. All questions are compulsory.',
+        'This question paper contains 36 questions. All questions are compulsory.',
         'This question paper is divided into FIVE sections — A, B, C, D and E.',
         'In Section A, Questions 1 to 20 are MCQs of 1 mark each.',
         'In Section B, Questions 21 to 25 are Very Short Answer (VSA) type questions, carrying 2 marks each.',
@@ -172,20 +180,21 @@ export const CBSE_CLASS10_SCIENCE: ExamBlueprint = {
             totalMarks: 12,
         },
     ],
+    // Weightages scaled to sum to maxMarks (70) per CBSE curriculum distribution
     chapterWeightage: {
-        'Chemical Reactions and Equations': 7,
-        'Acids, Bases and Salts': 7,
-        'Metals and Non-metals': 7,
-        'Carbon and its Compounds': 7,
+        'Chemical Reactions and Equations': 6,
+        'Acids, Bases and Salts': 6,
+        'Metals and Non-metals': 6,
+        'Carbon and its Compounds': 6,
         'Life Processes': 7,
-        'Control and Coordination': 7,
-        'How do Organisms Reproduce?': 7,
-        'Heredity': 5,
+        'Control and Coordination': 6,
+        'How do Organisms Reproduce?': 6,
+        'Heredity': 4,
         'Light — Reflection and Refraction': 7,
-        'The Human Eye and the Colourful World': 5,
-        'Electricity': 7,
-        'Magnetic Effects of Electric Current': 5,
-        'Our Environment': 3,
+        'The Human Eye and the Colourful World': 4,
+        'Electricity': 6,
+        'Magnetic Effects of Electric Current': 4,
+        'Our Environment': 2,
     },
 };
 
@@ -211,25 +220,26 @@ export const CBSE_CLASS9_MATH: ExamBlueprint = {
     ],
     sections: [
         { name: 'Section A', label: 'MCQs', questionType: { type: 'mcq', marksPerQuestion: 1, internalChoice: false }, questionCount: 18, totalMarks: 18 },
-        { name: 'Section A', label: 'Assertion-Reason', questionType: { type: 'assertion_reason', marksPerQuestion: 1, internalChoice: false }, questionCount: 2, totalMarks: 2 },
+        { name: 'Section A', label: 'Assertion-Reason', questionType: { type: 'assertion_reason', marksPerQuestion: 1, internalChoice: false }, questionCount: 2, totalMarks: 2, subsectionOf: 'Section A' },
         { name: 'Section B', label: 'VSA (2 marks)', questionType: { type: 'very_short', marksPerQuestion: 2, internalChoice: true }, questionCount: 5, totalMarks: 10 },
         { name: 'Section C', label: 'SA (3 marks)', questionType: { type: 'short', marksPerQuestion: 3, internalChoice: true }, questionCount: 6, totalMarks: 18 },
         { name: 'Section D', label: 'LA (5 marks)', questionType: { type: 'long', marksPerQuestion: 5, internalChoice: true }, questionCount: 4, totalMarks: 20 },
         { name: 'Section E', label: 'Case Study (4 marks)', questionType: { type: 'case_study', marksPerQuestion: 4, internalChoice: true }, questionCount: 3, totalMarks: 12 },
     ],
+    // Weightages scaled to sum to maxMarks (80) per CBSE curriculum distribution
     chapterWeightage: {
-        'Number Systems': 8,
-        'Polynomials': 7,
+        'Number Systems': 7,
+        'Polynomials': 6,
         'Coordinate Geometry': 6,
-        'Linear Equations in Two Variables': 8,
+        'Linear Equations in Two Variables': 7,
         'Introduction to Euclid\'s Geometry': 6,
         'Lines and Angles': 6,
-        'Triangles': 9,
-        'Quadrilaterals': 8,
-        'Circles': 7,
+        'Triangles': 8,
+        'Quadrilaterals': 7,
+        'Circles': 6,
         'Heron\'s Formula': 5,
-        'Surface Areas and Volumes': 7,
-        'Statistics': 6,
+        'Surface Areas and Volumes': 6,
+        'Statistics': 5,
         'Probability': 5,
     },
 };
@@ -239,9 +249,9 @@ export const CBSE_CLASS9_SCIENCE: ExamBlueprint = {
     gradeLevel: 'Class 9',
     subject: 'Science',
     duration: 180,
-    maxMarks: 80,
+    maxMarks: 70,
     generalInstructions: [
-        'This question paper contains 39 questions. All questions are compulsory.',
+        'This question paper contains 36 questions. All questions are compulsory.',
         'Divided into FIVE sections — A, B, C, D and E.',
         'Section A: MCQs (1 mark each). Section B: VSA (2 marks). Section C: SA (3 marks).',
         'Section D: LA (5 marks). Section E: Case Study (4 marks).',
@@ -254,20 +264,21 @@ export const CBSE_CLASS9_SCIENCE: ExamBlueprint = {
         { name: 'Section D', label: 'LA (5 marks)', questionType: { type: 'long', marksPerQuestion: 5, internalChoice: true }, questionCount: 2, totalMarks: 10 },
         { name: 'Section E', label: 'Case Study (4 marks)', questionType: { type: 'case_study', marksPerQuestion: 4, internalChoice: true }, questionCount: 3, totalMarks: 12 },
     ],
+    // Weightages scaled to sum to maxMarks (70) per CBSE curriculum distribution
     chapterWeightage: {
-        'Matter in Our Surroundings': 7,
-        'Is Matter Around Us Pure': 7,
-        'Atoms and Molecules': 7,
-        'Structure of the Atom': 7,
-        'The Fundamental Unit of Life': 7,
-        'Tissues': 5,
+        'Matter in Our Surroundings': 6,
+        'Is Matter Around Us Pure': 6,
+        'Atoms and Molecules': 6,
+        'Structure of the Atom': 6,
+        'The Fundamental Unit of Life': 6,
+        'Tissues': 4,
         'Motion': 7,
         'Force and Laws of Motion': 7,
-        'Gravitation': 7,
-        'Work and Energy': 7,
-        'Sound': 5,
-        'Improvement in Food Resources': 5,
-        'Natural Resources': 3,
+        'Gravitation': 6,
+        'Work and Energy': 6,
+        'Sound': 4,
+        'Improvement in Food Resources': 4,
+        'Natural Resources': 2,
     },
 };
 
@@ -287,8 +298,12 @@ const ALL_BLUEPRINTS: ExamBlueprint[] = [
  * Returns undefined if no matching blueprint exists.
  */
 export function findBlueprint(board: string, gradeLevel: string, subject: string): ExamBlueprint | undefined {
+    const norm = (s: string) => s.trim().toLowerCase();
     return ALL_BLUEPRINTS.find(
-        bp => bp.board === board && bp.gradeLevel === gradeLevel && bp.subject === subject
+        bp =>
+            norm(bp.board) === norm(board) &&
+            norm(bp.gradeLevel) === norm(gradeLevel) &&
+            norm(bp.subject) === norm(subject)
     );
 }
 
