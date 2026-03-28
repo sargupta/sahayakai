@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
@@ -70,6 +70,8 @@ export default function SettingsPage() {
   const [profQuals, setProfQuals] = useState<Qualification[]>([]);
   const [profSaving, setProfSaving] = useState(false);
   const [profSaved, setProfSaved] = useState(false);
+  const [profError, setProfError] = useState<string | null>(null);
+  const profSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchConsent = useCallback(async () => {
     if (!user) return;
@@ -87,9 +89,34 @@ export default function SettingsPage() {
     }
   }, [user, getIdToken]);
 
+  const fetchProfProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await getIdToken();
+      const res = await fetch('/api/user/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const profile = data.profile ?? data;
+      if (typeof profile.yearsOfExperience === 'number') {
+        setProfYears(String(profile.yearsOfExperience));
+      }
+      if (profile.administrativeRole) {
+        setProfRole(profile.administrativeRole as AdministrativeRole);
+      }
+      if (Array.isArray(profile.qualifications) && profile.qualifications.length > 0) {
+        setProfQuals(profile.qualifications as Qualification[]);
+      }
+    } catch {
+      // Non-blocking — form stays blank, user can fill manually
+    }
+  }, [user, getIdToken]);
+
   useEffect(() => {
     fetchConsent();
-  }, [fetchConsent]);
+    fetchProfProfile();
+  }, [fetchConsent, fetchProfProfile]);
 
   const updateConsent = async (key: keyof ConsentPrefs, value: boolean) => {
     if (!user || !consent) return;
@@ -168,21 +195,31 @@ export default function SettingsPage() {
   const handleSaveProfProfile = async () => {
     if (!user) return;
     setProfSaving(true);
+    setProfError(null);
     try {
       const token = await getIdToken();
-      const body: Record<string, unknown> = {};
+      // Always send all three fields so users can clear values (e.g. remove all quals)
+      const body: Record<string, unknown> = {
+        qualifications: profQuals,
+      };
       if (profYears !== '') body.yearsOfExperience = Number(profYears);
       if (profRole !== '') body.administrativeRole = profRole;
-      if (profQuals.length > 0) body.qualifications = profQuals;
-      await fetch('/api/user/profile', {
+
+      const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error ?? `Server error ${res.status}`);
+      }
       setProfSaved(true);
-      setTimeout(() => setProfSaved(false), 2500);
-    } catch {
-      // silently ignore — user can retry
+      // Clear any previous timer before scheduling a new one
+      if (profSavedTimerRef.current) clearTimeout(profSavedTimerRef.current);
+      profSavedTimerRef.current = setTimeout(() => setProfSaved(false), 2500);
+    } catch (err) {
+      setProfError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
     } finally {
       setProfSaving(false);
     }
@@ -279,12 +316,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Save */}
-          <div className="flex items-center gap-3 pt-1">
-            <Button size="sm" onClick={handleSaveProfProfile} disabled={profSaving}>
-              {profSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Save Profile
-            </Button>
-            {profSaved && <span className="text-sm text-green-600 font-medium">Saved</span>}
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex items-center gap-3">
+              <Button size="sm" onClick={handleSaveProfProfile} disabled={profSaving}>
+                {profSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Save Profile
+              </Button>
+              {profSaved && <span className="text-sm text-green-600 font-medium">Saved</span>}
+            </div>
+            {profError && <p className="text-sm text-destructive">{profError}</p>}
           </div>
         </CardContent>
       </Card>
