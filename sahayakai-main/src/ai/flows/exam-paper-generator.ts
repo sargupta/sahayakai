@@ -16,10 +16,10 @@ const ExamPaperInputSchema = z.object({
   board: z.string().describe("The education board (e.g., 'CBSE', 'ICSE')."),
   gradeLevel: z.string().describe("The grade level (e.g., 'Class 10')."),
   subject: z.string().describe("The subject (e.g., 'Mathematics')."),
-  chapters: z.array(z.string()).describe("Selected chapters to cover in the paper."),
+  chapters: z.array(z.string()).min(1).describe("Selected chapters to cover in the paper."),
   duration: z.number().optional().describe("Exam duration in minutes. Defaults to blueprint value."),
   maxMarks: z.number().optional().describe("Maximum marks. Defaults to blueprint value."),
-  language: z.string().optional().describe("Language for the paper (e.g., 'English', 'Hindi')."),
+  language: z.string().default('English').describe("Language for the paper (e.g., 'English', 'Hindi')."),
   difficulty: z.enum(['easy', 'moderate', 'hard', 'mixed']).default('mixed').describe("Overall difficulty distribution."),
   includeAnswerKey: z.boolean().default(true).describe("Whether to generate answer keys."),
   includeMarkingScheme: z.boolean().default(true).describe("Whether to generate marking schemes."),
@@ -72,10 +72,10 @@ export async function generateExamPaper(input: ExamPaperInput): Promise<ExamPape
   let localizedInput = { ...input };
 
   if (uid) {
-    if (!input.language) {
+    if (!input.language || input.language === 'English') {
       const { dbAdapter } = await import('@/lib/db/adapter');
       const profile = await dbAdapter.getUser(uid);
-      if (!input.language && profile?.preferredLanguage) {
+      if (profile?.preferredLanguage) {
         localizedInput.language = profile.preferredLanguage;
       }
     }
@@ -181,7 +181,7 @@ You are an expert exam paper setter for Indian board examinations. Generate a co
 - **Include Answer Key**: {{includeAnswerKey}}
 - **Include Marking Scheme**: {{includeMarkingScheme}}
 
-{{{pyqContext}}}
+{{#if pyqContext}}{{{pyqContext}}}{{/if}}
 
 ## Question Generation Rules:
 1. **MCQs**: Generate exactly 4 options labelled (a), (b), (c), (d). Only one correct answer.
@@ -192,9 +192,12 @@ You are an expert exam paper setter for Indian board examinations. Generate a co
 6. **Marking Scheme**: If requested, provide step-wise marks breakdown (e.g., "1 mark for formula, 1 mark for substitution, 1 mark for answer").
 7. **Chapter Coverage**: Distribute questions across the selected chapters proportionally based on chapter weightage.
 8. **Difficulty Distribution**: For 'mixed' difficulty, use approximately 30% easy, 40% moderate, 30% hard. For specific difficulty levels, weight 70% toward that level.
-9. **PYQ Usage**: If previous year questions were provided above, use approximately 70% of questions based on or directly adapted from those PYQs. Generate 30% new questions in the same style and difficulty. Never alter the mathematical or factual correctness of any PYQ.
+{{#if pyqContext}}9. **PYQ Usage**: Use approximately 70% of questions based on or directly adapted from the PYQs provided above. Generate 30% new questions in the same style and difficulty. Never alter the mathematical or factual correctness of any PYQ.
 10. **Source Tagging**: Tag questions adapted from PYQs as "PYQ <year>" (e.g., "PYQ 2023"). Tag wholly new questions as "AI Generated".
 11. **pyqSources**: In the pyqSources field, list every PYQ that was used or adapted: include its id, year, and chapter exactly as provided.
+{{else}}9. **Source Tagging**: Tag all questions as "AI Generated" since no PYQ bank was available.
+10. **pyqSources**: Leave pyqSources as an empty array.
+{{/if}}
 
 ## Constraints:
 - **Language Lock**: You MUST respond ONLY in {{language}}. Do NOT shift into other languages unless explicitly requested.
@@ -253,8 +256,29 @@ const examPaperGeneratorFlow = ai.defineFlow(
       let retrievedPYQs: PYQQuestion[] = [];
       try {
         const rawClass = parseInt(input.gradeLevel.replace(/\D/g, ''), 10);
+        if (isNaN(rawClass)) {
+          StructuredLogger.warn('Could not parse gradeLevel as number — defaulting to Class 10', {
+            service: 'exam-paper-generator-flow', operation: 'retrievePYQs', requestId,
+            metadata: { gradeLevel: input.gradeLevel },
+          });
+        }
         const classNum = (rawClass === 9 || rawClass === 10 ? rawClass : 10) as 9 | 10;
-        const subjectNorm = input.subject.toLowerCase() as 'mathematics' | 'science';
+
+        const subjectLower = input.subject.toLowerCase();
+        const PYQ_SUPPORTED_SUBJECTS = ['mathematics', 'science'] as const;
+        type PYQSubject = typeof PYQ_SUPPORTED_SUBJECTS[number];
+        const subjectNorm: PYQSubject | null = (PYQ_SUPPORTED_SUBJECTS as readonly string[]).includes(subjectLower)
+          ? (subjectLower as PYQSubject)
+          : null;
+
+        if (!subjectNorm) {
+          StructuredLogger.warn('Subject not in PYQ store — skipping PYQ retrieval', {
+            service: 'exam-paper-generator-flow', operation: 'retrievePYQs', requestId,
+            metadata: { subject: input.subject },
+          });
+          // Jump past PYQ retrieval — retrievedPYQs stays []
+          throw new Error(`__NO_PYQ_SUBJECT__`);
+        }
 
         // ── 1. In-memory store (pyq-store.ts) ──────────────────────────────
         const {
@@ -274,28 +298,31 @@ const examPaperGeneratorFlow = ai.defineFlow(
             metadata: { storeSize },
           });
 
-          const storeResults = input.chapters.flatMap((chapter) => {
+          const globalSeen = new Set<string>();
+          const storeResults: PYQQuestion[] = [];
+
+          for (const chapter of input.chapters) {
             const byChapter = getPYQsByChapterAndType(subjectNorm, classNum, chapter, undefined, 15);
-            // Supplement with keyword search for broader coverage
             const byKeyword = searchPYQs(subjectNorm, classNum, [chapter], 10);
-            // Merge, dedup by id
-            const seen = new Set<string>();
-            const merged: PYQQuestion[] = [];
             for (const q of [...byChapter, ...byKeyword]) {
-              if (!seen.has(q.id)) {
-                seen.add(q.id);
-                merged.push(q);
+              if (!globalSeen.has(q.id)) {
+                globalSeen.add(q.id);
+                storeResults.push(q);
               }
             }
-            return merged;
-          });
+          }
 
           // Also pull by marks to ensure each mark-band has representation
-          const marksBands = [1, 2, 3, 5];
+          // Use blueprint-derived marks bands if available, else fall back to CBSE defaults
+          const blueprint = findBlueprint(input.board, input.gradeLevel, input.subject);
+          const marksBands = blueprint
+            ? [...new Set(blueprint.sections.map(s => s.questionType.marksPerQuestion))]
+            : [1, 2, 3, 4, 5];
           for (const marks of marksBands) {
             const byMarks = getPYQsByMarks(subjectNorm, classNum, marks, undefined, 5);
             for (const q of byMarks) {
-              if (!storeResults.some((r) => r.id === q.id)) {
+              if (!globalSeen.has(q.id)) {
+                globalSeen.add(q.id);
                 storeResults.push(q);
               }
             }
@@ -345,12 +372,15 @@ const examPaperGeneratorFlow = ai.defineFlow(
           metadata: { pyqCount: retrievedPYQs.length, chapters: input.chapters },
         });
       } catch (pyqError: unknown) {
-        StructuredLogger.warn('PYQ retrieval failed — generating without PYQs', {
-          service: 'exam-paper-generator-flow',
-          operation: 'retrievePYQs',
-          requestId,
-          metadata: { error: pyqError instanceof Error ? pyqError.message : String(pyqError) },
-        });
+        const msg = pyqError instanceof Error ? pyqError.message : String(pyqError);
+        if (msg !== '__NO_PYQ_SUBJECT__') {
+          StructuredLogger.warn('PYQ retrieval failed — generating without PYQs', {
+            service: 'exam-paper-generator-flow',
+            operation: 'retrievePYQs',
+            requestId,
+            metadata: { error: msg },
+          });
+        }
         // Graceful fallback: proceed without PYQs
       }
 
@@ -376,11 +406,12 @@ const examPaperGeneratorFlow = ai.defineFlow(
 
       try {
         ExamPaperOutputSchema.parse(output);
-      } catch (validationError: any) {
+      } catch (validationError: unknown) {
+        const ve = validationError as { message?: string; errors?: unknown };
         throw new SchemaValidationError(
-          `Schema validation failed: ${validationError.message}`,
+          `Schema validation failed: ${ve.message ?? String(validationError)}`,
           {
-            parseErrors: validationError.errors,
+            parseErrors: ve.errors,
             rawOutput: output,
             expectedSchema: 'ExamPaperOutputSchema'
           }
@@ -406,12 +437,16 @@ const examPaperGeneratorFlow = ai.defineFlow(
 
           await dbAdapter.saveContent(input.userId, {
             id: contentId,
-            type: 'exam-paper' as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            type: 'exam_paper' as any,
             title: output.title || `${input.board} ${input.gradeLevel} ${input.subject} Exam Paper`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 10') as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             subject: (input.subject || output.subject || 'General') as any,
-            topic: input.chapters.join(', '),
-            language: input.language as any || 'English',
+            topic: input.chapters.length > 0 ? input.chapters.join(', ') : input.subject,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            language: (input.language ?? 'English') as any,
             storagePath: filePath,
             isPublic: false,
             isDraft: false,
@@ -428,7 +463,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
             metadata: { contentId }
           });
 
-        } catch (persistenceError: any) {
+        } catch (persistenceError: unknown) {
           StructuredLogger.error(
             'Failed to persist exam paper',
             {
