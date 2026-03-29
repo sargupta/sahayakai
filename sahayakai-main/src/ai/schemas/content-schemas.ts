@@ -207,8 +207,8 @@ export const ExamPaperDataSchema = z.object({
     }),
     pyqSources: z.array(z.object({
         id: z.string(),
-        year: z.number().nullable(),
-        chapter: z.string(),
+        year: z.number().nullable().optional(),
+        chapter: z.string().optional(),
     })).optional().describe("PYQ source attributions: which prior-year questions were used or adapted."),
 });
 
