@@ -43,12 +43,18 @@ import {
 // ── Types for generated paper ────────────────────────────────────────────
 
 interface GeneratedQuestion {
-  questionNumber: number;
+  // Flow returns `number`, not `questionNumber`
+  number?: number;
+  questionNumber?: number;
   text: string;
   options?: string[];
   marks: number;
+  // Flow embeds answer per-question as `answerKey` (string), not `answer`
+  answerKey?: string;
   answer?: string;
   markingScheme?: string;
+  internalChoice?: string;
+  source?: string;
 }
 
 interface GeneratedSection {
@@ -64,11 +70,11 @@ interface GeneratedPaper {
   board: string;
   gradeLevel: string;
   subject: string;
-  duration: number;
+  duration: string | number; // Flow returns string e.g. "3 Hours"
   maxMarks: number;
   generalInstructions: string[];
   sections: GeneratedSection[];
-  answerKey?: GeneratedQuestion[];
+  answerKey?: GeneratedQuestion[]; // Not in flow output — derived from sections
   blueprintSummary?: { chapterWise: { chapter: string; marks: number }[]; difficultyWise: { level: string; percentage: number }[] } | string;
 }
 
@@ -558,7 +564,7 @@ export default function ExamPaperPage() {
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
-                  {paper.duration} min
+                  {typeof paper.duration === 'number' ? `${paper.duration} min` : paper.duration}
                 </span>
                 <span className="flex items-center gap-1">
                   <Award className="w-3.5 h-3.5" />
@@ -622,7 +628,7 @@ export default function ExamPaperPage() {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <p>
-                        <span className="font-medium">Q{q.questionNumber}.</span>{" "}
+                        <span className="font-medium">Q{q.number ?? q.questionNumber}.</span>{" "}
                         {q.text}
                       </p>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -644,43 +650,44 @@ export default function ExamPaperPage() {
             </Card>
           ))}
 
-          {/* Answer Key (Collapsible) */}
-          {includeAnswerKey && paper.answerKey && paper.answerKey.length > 0 && (
-            <Card>
-              <button
-                type="button"
-                className="w-full flex items-center justify-between p-4 text-left"
-                onClick={() => setAnswerKeyOpen(!answerKeyOpen)}
-              >
-                <span className="font-headline font-semibold flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Answer Key
-                </span>
-                {answerKeyOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
+          {/* Answer Key (Collapsible) — derived from per-question answerKey fields */}
+          {includeAnswerKey && (() => {
+            const allQs = paper.sections?.flatMap(s => s.questions) ?? [];
+            const withAnswers = allQs.filter(q => q.answerKey || q.answer);
+            if (!withAnswers.length) return null;
+            return (
+              <Card>
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between p-4 text-left"
+                  onClick={() => setAnswerKeyOpen(!answerKeyOpen)}
+                >
+                  <span className="font-headline font-semibold flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Answer Key
+                  </span>
+                  {answerKeyOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {answerKeyOpen && (
+                  <CardContent className="pt-0 space-y-2">
+                    {withAnswers.map((q, i) => (
+                      <div key={i} className="text-sm flex gap-2">
+                        <span className="font-medium shrink-0">Q{q.number ?? q.questionNumber ?? i + 1}:</span>
+                        <span className="text-muted-foreground">{q.answerKey ?? q.answer}</span>
+                      </div>
+                    ))}
+                  </CardContent>
                 )}
-              </button>
-              {answerKeyOpen && (
-                <CardContent className="pt-0 space-y-2">
-                  {paper.answerKey.map((q, i) => (
-                    <div key={i} className="text-sm flex gap-2">
-                      <span className="font-medium shrink-0">
-                        Q{q.questionNumber}:
-                      </span>
-                      <span className="text-muted-foreground">{q.answer}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              )}
-            </Card>
-          )}
+              </Card>
+            );
+          })()}
 
-          {/* Marking Scheme (Collapsible) */}
-          {includeMarkingScheme &&
-            paper.answerKey &&
-            paper.answerKey.some((q) => q.markingScheme) && (
+          {/* Marking Scheme (Collapsible) — derived from per-question markingScheme fields */}
+          {includeMarkingScheme && (() => {
+            const allQs = paper.sections?.flatMap(s => s.questions) ?? [];
+            const withScheme = allQs.filter(q => q.markingScheme);
+            if (!withScheme.length) return null;
+            return (
               <Card>
                 <button
                   type="button"
@@ -691,28 +698,21 @@ export default function ExamPaperPage() {
                     <Award className="w-4 h-4" />
                     Marking Scheme
                   </span>
-                  {markingSchemeOpen ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
+                  {markingSchemeOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {markingSchemeOpen && (
                   <CardContent className="pt-0 space-y-3">
-                    {paper.answerKey
-                      .filter((q) => q.markingScheme)
-                      .map((q, i) => (
-                        <div key={i} className="text-sm border-b border-border last:border-0 pb-2 last:pb-0">
-                          <span className="font-medium">Q{q.questionNumber}:</span>
-                          <p className="text-muted-foreground ml-4 whitespace-pre-line">
-                            {q.markingScheme}
-                          </p>
-                        </div>
-                      ))}
+                    {withScheme.map((q, i) => (
+                      <div key={i} className="text-sm border-b border-border last:border-0 pb-2 last:pb-0">
+                        <span className="font-medium">Q{q.number ?? q.questionNumber ?? i + 1}:</span>
+                        <p className="text-muted-foreground ml-4 whitespace-pre-line">{q.markingScheme}</p>
+                      </div>
+                    ))}
                   </CardContent>
                 )}
               </Card>
-            )}
+            );
+          })()}
 
           {/* Blueprint Summary */}
           {paper.blueprintSummary && (
