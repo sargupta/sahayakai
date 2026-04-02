@@ -344,10 +344,17 @@ export default function ExamPaperPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                  <Info className="w-4 h-4 shrink-0" />
-                  No blueprint available for {board} {gradeLevel} yet. The AI will
-                  generate a standard pattern.
+                <div className="space-y-2">
+                  <Input
+                    id="subject"
+                    placeholder="e.g. Mathematics, Science, English"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                  />
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    No blueprint for {board} {gradeLevel} — AI will generate a standard pattern.
+                  </p>
                 </div>
               )}
             </div>
