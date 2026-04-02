@@ -106,10 +106,10 @@ export default function AttendancePage() {
             ) : (
                 <div className="grid gap-3">
                     {classes.map((cls) => (
-                        <button
+                        <div
                             key={cls.id}
                             onClick={() => router.push(`/attendance/${cls.id}`)}
-                            className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group shadow-sm"
+                            className="w-full flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group shadow-soft cursor-pointer"
                         >
                             <div className="p-3 bg-primary/10 rounded-xl shrink-0">
                                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -149,7 +149,7 @@ export default function AttendancePage() {
                                 </Button>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
                             </div>
-                        </button>
+                        </div>
                     ))}
                 </div>
             )}

@@ -413,7 +413,8 @@ function VisualAidContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
 
-              <div className="card-section grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="card-section-warm grid grid-cols-1 md:grid-cols-3 gap-6">
+                <span className="card-section-label">Configuration</span>
                 <FormField
                   control={form.control}
                   name="gradeLevel"
@@ -497,12 +498,19 @@ function VisualAidContent() {
 
       {
         visualAid && (
-          <div className="result-accent pl-4"><VisualAidDisplay
+          <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><VisualAidDisplay
             visualAid={visualAid}
             title={form.getValues('prompt')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
           /></div>
+          </>
         )
       }
     </div>

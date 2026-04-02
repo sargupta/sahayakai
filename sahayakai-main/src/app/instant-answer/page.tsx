@@ -377,7 +377,8 @@ function InstantAnswerContent() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="card-section space-y-6">
+              <div className="card-section-warm space-y-6">
+              <span className="card-section-label">Configuration</span>
               <FormField
                 control={form.control}
                 name="question"
@@ -480,7 +481,13 @@ function InstantAnswerContent() {
       )}
 
       {answer && (
-        <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up result-accent">
+        <>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -511,7 +518,8 @@ function InstantAnswerContent() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </div>
+        </>
       )}
     </div>
   );

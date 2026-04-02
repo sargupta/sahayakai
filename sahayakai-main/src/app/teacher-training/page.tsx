@@ -359,7 +359,16 @@ function TeacherTrainingContent() {
         </Card>
       )}
 
-      {advice && <div className="result-accent pl-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>}
+      {advice && (
+        <>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
+        </>
+      )}
 
       {/* Floating Assistant (Safe Mode) */}
       <VoiceAssistant

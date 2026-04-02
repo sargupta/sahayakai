@@ -292,7 +292,8 @@ export default function ExamPaperPage() {
         <div className="card-accent-bar" />
         <CardContent className="pt-6 space-y-5">
           {/* Row: Board + Grade */}
-          <div className="card-section space-y-4">
+          <div className="card-section-warm space-y-4">
+            <span className="card-section-label">Configuration</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="board">Board</Label>
@@ -535,7 +536,13 @@ export default function ExamPaperPage() {
 
       {/* Generated Paper Preview */}
       {paper && !generating && (
-        <div className="space-y-4 result-accent">
+        <div className="space-y-4">
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 space-y-4">
           {/* Paper Header */}
           <Card>
             <CardHeader className="pb-3">
@@ -731,6 +738,7 @@ export default function ExamPaperPage() {
               PDF (Coming Soon)
             </Button>
           </div>
+        </div>
         </div>
       )}
     </div>

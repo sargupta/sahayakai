@@ -127,7 +127,7 @@ export default function Home() {
 
   const QuickActionCard = ({ title, icon: Icon, href, color, description }: { title: string, icon: any, href: string, color: string, description: string }) => (
     <Link href={href} className="group">
-      <Card className="h-full border-border bg-card hover:shadow-elevated transition-all duration-200">
+      <Card className="h-full border border-border border-l-[3px] border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary transition-colors duration-150 overflow-hidden">
         <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
           <div className={cn("p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/15 transition-all duration-200")}>
             <Icon className="h-6 w-6 md:h-8 md:w-8" />
@@ -147,18 +147,18 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12 relative">
       {/* Clean Top Bar for Consistency */}
-      <div className="absolute top-0 left-0 w-full card-accent-bar" />
+      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-xl" />
 
       {/* Hero Section */}
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 text-primary text-xs md:text-sm font-medium border border-primary/15 mb-2 md:mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4">
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-6xl font-bold text-foreground tracking-tight">
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
           {greeting}, <span className="text-primary">Teacher.</span>
         </h1>
-        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
+        <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
           I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
         </p>
       </div>

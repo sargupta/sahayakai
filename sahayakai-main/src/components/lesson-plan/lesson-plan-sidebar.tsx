@@ -88,67 +88,70 @@ export function LessonPlanSidebar({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name="gradeLevels"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.grade || "Class"}
-              </FormLabel>
-              <FormControl>
-                <GradeLevelSelector
-                  value={field.value || []}
-                  onValueChange={field.onChange}
-                  language={selectedLanguage}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="card-section-warm">
+        <span className="card-section-label">Configuration</span>
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={control}
+            name="gradeLevels"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.grade || "Class"}
+                </FormLabel>
+                <FormControl>
+                  <GradeLevelSelector
+                    value={field.value || []}
+                    onValueChange={field.onChange}
+                    language={selectedLanguage}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={control}
-          name="subject"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.subject || "Subject"}
-              </FormLabel>
-              <FormControl>
-                <SubjectSelector
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  language={selectedLanguage}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          <FormField
+            control={control}
+            name="subject"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.subject || "Subject"}
+                </FormLabel>
+                <FormControl>
+                  <SubjectSelector
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    language={selectedLanguage}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      <div className="mt-4">
-        <FormField
-          control={control}
-          name="language"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.language || "Language"}
-              </FormLabel>
-              <FormControl>
-                <LanguageSelector
-                  onValueChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="mt-4">
+          <FormField
+            control={control}
+            name="language"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.language || "Language"}
+                </FormLabel>
+                <FormControl>
+                  <LanguageSelector
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
 
       <div className="col-span-2 h-px bg-border my-4"></div>

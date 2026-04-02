@@ -797,8 +797,8 @@ function QuizGeneratorContent() {
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
                 <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
-                  <h3 className="font-headline text-xs font-semibold text-muted-foreground uppercase tracking-wider">Quiz Settings</h3>
-
+                  <div className="card-section-warm">
+                  <span className="card-section-label">Configuration</span>
 
                   {/* Subject, Grade and Language Selection */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
@@ -855,6 +855,7 @@ function QuizGeneratorContent() {
                         </FormItem>
                       )}
                     />
+                  </div>
                   </div>
 
                   <FormField
@@ -987,9 +988,18 @@ function QuizGeneratorContent() {
       </div>
 
       {/* Results Section */}
-      <div className="mt-8 result-accent">
-        {quiz && <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />}
-      </div>
+      {quiz && (
+        <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+            <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

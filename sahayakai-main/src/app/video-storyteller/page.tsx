@@ -190,7 +190,8 @@ export default function VideoStorytellerPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="card-section shadow-soft">
+      <div className="card-section-warm shadow-soft">
+        <span className="card-section-label">Configuration</span>
         <VideoFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
       </div>
 
@@ -220,6 +221,12 @@ export default function VideoStorytellerPage() {
 
       {/* Video carousels */}
       {recommendations && (
+        <div>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
         <div className="divide-y divide-border">
           {CATEGORIES.map(cat => (
             <VideoCarousel
@@ -235,6 +242,7 @@ export default function VideoStorytellerPage() {
               }}
             />
           ))}
+        </div>
         </div>
       )}
 

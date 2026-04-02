@@ -275,7 +275,8 @@ function RubricGeneratorContent() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="card-section space-y-6">
+              <div className="card-section-warm space-y-6">
+              <span className="card-section-label">Configuration</span>
               <FormField
                 control={form.control}
                 name="assignmentDescription"
@@ -377,7 +378,18 @@ function RubricGeneratorContent() {
         </Card>
       )}
 
-      {rubric && <div className="result-accent"><RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} /></div>}
+      {rubric && (
+        <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+            <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

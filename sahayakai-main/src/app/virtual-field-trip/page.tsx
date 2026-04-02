@@ -379,20 +379,18 @@ function VirtualFieldTripContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
-                    <div className="flex flex-col gap-4">
-                      <FormControl>
-                        <Textarea
-                          placeholder={t.placeholder}
-                          {...field}
-                          className="bg-muted/20 min-h-[120px]"
-                        />
-                      </FormControl>
-                      <MicrophoneInput
-                        onTranscriptChange={(text) => form.setValue("topic", text)}
-                        label={t.speakLabel}
-                        iconSize="sm"
+                    <FormControl>
+                      <Textarea
+                        placeholder={t.placeholder}
+                        {...field}
+                        className="bg-muted/20 min-h-[120px]"
                       />
-                    </div>
+                    </FormControl>
+                    <MicrophoneInput
+                      onTranscriptChange={(text) => form.setValue("topic", text)}
+                      label={t.speakLabel}
+                      iconSize="sm"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -402,7 +400,8 @@ function VirtualFieldTripContent() {
                 <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
               </div>
 
-              <div className="card-section grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="card-section-warm grid grid-cols-1 md:grid-cols-3 gap-6">
+                <span className="card-section-label col-span-full">Configuration</span>
                 <FormField
                   control={form.control}
                   name="gradeLevel"
@@ -486,12 +485,19 @@ function VirtualFieldTripContent() {
 
       {
         trip && (
-          <div className="result-accent pl-4"><VirtualFieldTripDisplay
+          <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><VirtualFieldTripDisplay
             trip={trip}
             topic={form.getValues('topic')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
           /></div>
+          </>
         )
       }
     </div>
