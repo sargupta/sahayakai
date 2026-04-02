@@ -80,9 +80,9 @@ async function _handler(request: Request) {
 
         paperDesc = `${body.board || ''} ${body.gradeLevel || ''} ${body.subject || ''}`.trim() || 'Unknown Paper';
 
-        if (!body.board || !body.gradeLevel || !body.subject || !Array.isArray(body.chapters) || !(body.chapters as unknown[]).length) {
+        if (!body.board || !body.gradeLevel || !body.subject) {
             return NextResponse.json(
-                { error: 'Missing required fields: board, gradeLevel, subject, chapters' },
+                { error: 'Missing required fields: board, gradeLevel, subject' },
                 { status: 400 }
             );
         }
