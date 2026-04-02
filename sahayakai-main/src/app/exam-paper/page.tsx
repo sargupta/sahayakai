@@ -69,7 +69,7 @@ interface GeneratedPaper {
   generalInstructions: string[];
   sections: GeneratedSection[];
   answerKey?: GeneratedQuestion[];
-  blueprintSummary?: string;
+  blueprintSummary?: { chapterWise: { chapter: string; marks: number }[]; difficultyWise: { level: string; percentage: number }[] } | string;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -718,7 +718,32 @@ export default function ExamPaperPage() {
           {paper.blueprintSummary && (
             <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border border-border">
               <p className="font-medium mb-1">Blueprint Summary</p>
-              <p>{paper.blueprintSummary}</p>
+              {typeof paper.blueprintSummary === 'string' ? (
+                <p>{paper.blueprintSummary}</p>
+              ) : (
+                <div className="space-y-2">
+                  {paper.blueprintSummary.chapterWise?.length > 0 && (
+                    <div>
+                      <p className="font-medium text-foreground/70 mb-0.5">Chapter-wise</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {paper.blueprintSummary.chapterWise.map((c, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{c.chapter}: {c.marks}m</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {paper.blueprintSummary.difficultyWise?.length > 0 && (
+                    <div>
+                      <p className="font-medium text-foreground/70 mb-0.5">Difficulty</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {paper.blueprintSummary.difficultyWise.map((d, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{d.level}: {d.percentage}%</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
