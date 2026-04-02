@@ -278,7 +278,7 @@ export default function ExamPaperPage() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl font-headline tracking-tight flex items-center gap-2">
           <FileText className="w-6 h-6 text-primary" />
           Board Exam Paper Generator
         </h1>
@@ -289,65 +289,68 @@ export default function ExamPaperPage() {
 
       {/* Form */}
       <Card>
+        <div className="card-accent-bar" />
         <CardContent className="pt-6 space-y-5">
           {/* Row: Board + Grade */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="board">Board</Label>
-              <Select value={board} onValueChange={setBoard}>
-                <SelectTrigger id="board">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EDUCATION_BOARDS.map((b) => (
-                    <SelectItem key={b} value={b}>
-                      {b}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="grade">Grade Level</Label>
-              <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                <SelectTrigger id="grade">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRADE_OPTIONS.map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Subject */}
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            {availableSubjects.length > 0 ? (
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger id="subject">
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSubjects.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                <Info className="w-4 h-4 shrink-0" />
-                No blueprint available for {board} {gradeLevel} yet. The AI will
-                generate a standard pattern.
+          <div className="card-section space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="board">Board</Label>
+                <Select value={board} onValueChange={setBoard}>
+                  <SelectTrigger id="board">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EDUCATION_BOARDS.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <Label htmlFor="grade">Grade Level</Label>
+                <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                  <SelectTrigger id="grade">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_OPTIONS.map((g) => (
+                      <SelectItem key={g} value={g}>
+                        {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              {availableSubjects.length > 0 ? (
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubjects.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
+                  <Info className="w-4 h-4 shrink-0" />
+                  No blueprint available for {board} {gradeLevel} yet. The AI will
+                  generate a standard pattern.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Blueprint preview */}
@@ -374,7 +377,7 @@ export default function ExamPaperPage() {
           )}
 
           {/* Chapters */}
-          <div className="space-y-2">
+          <div className="card-section space-y-2">
             <Label>
               Chapters{" "}
               <span className="text-muted-foreground font-normal">
@@ -490,7 +493,7 @@ export default function ExamPaperPage() {
           <Button
             onClick={handleGenerate}
             disabled={generating || !subject}
-            className="w-full"
+            className="w-full py-5 text-base font-headline bg-primary hover:bg-primary/90"
             size="lg"
           >
             {generating ? (
@@ -532,11 +535,11 @@ export default function ExamPaperPage() {
 
       {/* Generated Paper Preview */}
       {paper && !generating && (
-        <div className="space-y-4">
+        <div className="space-y-4 result-accent">
           {/* Paper Header */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-center">
+              <CardTitle className="font-headline text-lg text-center">
                 {paper.title || `${paper.board} ${paper.gradeLevel} ${paper.subject}`}
               </CardTitle>
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
@@ -552,7 +555,7 @@ export default function ExamPaperPage() {
             </CardHeader>
             {paper.generalInstructions && paper.generalInstructions.length > 0 && (
               <CardContent className="pt-0">
-                <div className="text-sm space-y-1 border-t pt-3">
+                <div className="text-sm space-y-1 border-t border-border pt-3">
                   <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                     General Instructions
                   </p>
@@ -602,7 +605,7 @@ export default function ExamPaperPage() {
                 {section.questions?.map((q, qi) => (
                   <div
                     key={qi}
-                    className="text-sm border-b last:border-0 pb-3 last:pb-0"
+                    className="text-sm border-b border-border last:border-0 pb-3 last:pb-0"
                   >
                     <div className="flex justify-between items-start gap-2">
                       <p>
@@ -636,7 +639,7 @@ export default function ExamPaperPage() {
                 className="w-full flex items-center justify-between p-4 text-left"
                 onClick={() => setAnswerKeyOpen(!answerKeyOpen)}
               >
-                <span className="font-semibold flex items-center gap-2">
+                <span className="font-headline font-semibold flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
                   Answer Key
                 </span>
@@ -671,7 +674,7 @@ export default function ExamPaperPage() {
                   className="w-full flex items-center justify-between p-4 text-left"
                   onClick={() => setMarkingSchemeOpen(!markingSchemeOpen)}
                 >
-                  <span className="font-semibold flex items-center gap-2">
+                  <span className="font-headline font-semibold flex items-center gap-2">
                     <Award className="w-4 h-4" />
                     Marking Scheme
                   </span>
@@ -686,7 +689,7 @@ export default function ExamPaperPage() {
                     {paper.answerKey
                       .filter((q) => q.markingScheme)
                       .map((q, i) => (
-                        <div key={i} className="text-sm border-b last:border-0 pb-2 last:pb-0">
+                        <div key={i} className="text-sm border-b border-border last:border-0 pb-2 last:pb-0">
                           <span className="font-medium">Q{q.questionNumber}:</span>
                           <p className="text-muted-foreground ml-4 whitespace-pre-line">
                             {q.markingScheme}
@@ -700,7 +703,7 @@ export default function ExamPaperPage() {
 
           {/* Blueprint Summary */}
           {paper.blueprintSummary && (
-            <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border">
+            <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border border-border">
               <p className="font-medium mb-1">Blueprint Summary</p>
               <p>{paper.blueprintSummary}</p>
             </div>

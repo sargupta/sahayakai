@@ -690,9 +690,9 @@ function QuizGeneratorContent() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
 
         <div className="p-4 sm:p-6">
@@ -732,7 +732,7 @@ function QuizGeneratorContent() {
                             <Textarea
                               placeholder={t.topicPlaceholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[120px] resize-none"
+                              className="bg-muted/20 min-h-[120px] resize-none"
                             />
                           </div>
                         </FormControl>
@@ -764,23 +764,25 @@ function QuizGeneratorContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                          {questionTypesData.map((item) => (
-                            <SelectableCard
-                              key={item.id}
-                              icon={item.icon}
-                              label={t.questionTypes[item.id]}
-                              isSelected={field.value?.includes(item.id)}
-                              onSelect={() => {
-                                const currentValues = field.value || [];
-                                const newValues = currentValues.includes(item.id)
-                                  ? currentValues.filter((v) => v !== item.id)
-                                  : [...currentValues, item.id];
-                                field.onChange(newValues);
-                              }}
-                              className="h-20"
-                            />
-                          ))}
+                        <div className="card-section">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {questionTypesData.map((item) => (
+                              <SelectableCard
+                                key={item.id}
+                                icon={item.icon}
+                                label={t.questionTypes[item.id]}
+                                isSelected={field.value?.includes(item.id)}
+                                onSelect={() => {
+                                  const currentValues = field.value || [];
+                                  const newValues = currentValues.includes(item.id)
+                                    ? currentValues.filter((v) => v !== item.id)
+                                    : [...currentValues, item.id];
+                                  field.onChange(newValues);
+                                }}
+                                className="h-20"
+                              />
+                            ))}
+                          </div>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -794,8 +796,8 @@ function QuizGeneratorContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-white p-4 sm:p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
-                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Quiz Settings</h3>
+                <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
+                  <h3 className="font-headline text-xs font-semibold text-muted-foreground uppercase tracking-wider">Quiz Settings</h3>
 
 
                   {/* Subject, Grade and Language Selection */}
@@ -805,7 +807,7 @@ function QuizGeneratorContent() {
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                           <FormControl>
                             <SubjectSelector
                               value={field.value}
@@ -823,7 +825,7 @@ function QuizGeneratorContent() {
                       name="gradeLevel"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.gradeLevelLabel}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.gradeLevelLabel}</FormLabel>
                           <FormControl>
                             <GradeLevelSelector
                               value={field.value ? [field.value] : []}
@@ -842,7 +844,7 @@ function QuizGeneratorContent() {
                       name="language"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                           <FormControl>
                             <LanguageSelector
                               onValueChange={field.onChange}
@@ -860,7 +862,7 @@ function QuizGeneratorContent() {
                     name="numQuestions"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.numQuestionsLabel}</FormLabel>
                         <FormControl>
                           <div className="flex items-center gap-4">
                             <Slider
@@ -871,7 +873,7 @@ function QuizGeneratorContent() {
                               onValueChange={(vals) => field.onChange(vals[0])}
                               className="flex-1"
                             />
-                            <span className="font-bold text-primary bg-white px-3 py-1 rounded border border-primary/20 min-w-[3rem] text-center">{field.value}</span>
+                            <span className="font-semibold text-primary bg-primary/8 px-3 py-1 rounded-lg border border-primary/15 min-w-[3rem] text-center">{field.value}</span>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -884,10 +886,10 @@ function QuizGeneratorContent() {
                     name="questionTypes"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.questionTypesLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.questionTypesLabel}</FormLabel>
                         <div className="grid grid-cols-2 gap-2">
                           {['multiple_choice', 'short_answer', 'fill_in_the_blanks', 'true_false'].map((type) => (
-                            <div key={type} className="flex items-center space-x-2 bg-white/50 p-2 rounded border border-white/80">
+                            <div key={type} className="flex items-center space-x-2 bg-muted/20 p-2 rounded border border-border/50">
                               <CheckboxUI
                                 id={type}
                                 checked={field.value?.includes(type as any)}
@@ -899,7 +901,7 @@ function QuizGeneratorContent() {
                                   }
                                 }}
                               />
-                              <label htmlFor={type} className="text-xs text-slate-700 cursor-pointer">
+                              <label htmlFor={type} className="text-xs text-foreground cursor-pointer">
                                 {t.questionTypes[type] || type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                               </label>
                             </div>
@@ -915,15 +917,15 @@ function QuizGeneratorContent() {
                     name="bloomsTaxonomyLevels"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.bloomsLabel}</FormLabel>
                         <TooltipProvider>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="card-section flex flex-wrap gap-2">
                             {['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'].map((level) => (
                               <Tooltip key={level}>
                                 <TooltipTrigger asChild>
                                   <Badge
                                     variant={field.value?.includes(level) ? "default" : "outline"}
-                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-white/50 hover:bg-white text-slate-600"}`}
+                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-muted/20 hover:bg-muted/40 text-muted-foreground"}`}
                                     onClick={() => {
                                       if (field.value?.includes(level)) {
                                         field.onChange(field.value.filter((l: string) => l !== level));
@@ -944,17 +946,17 @@ function QuizGeneratorContent() {
                         </TooltipProvider>
 
                         {field.value && field.value.length > 0 && (
-                          <div className="mt-3 p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="mt-3 p-3 bg-muted/20 rounded-xl border border-border/50 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
                               <Brain className="w-3 h-3" />
                               Pedagogical Strategy
                             </div>
                             <div className="space-y-2">
                               {field.value.map((level: string) => (
-                                <div key={level} className="text-[11px] leading-relaxed text-slate-700 flex items-start gap-2">
+                                <div key={level} className="text-[11px] leading-relaxed text-foreground flex items-start gap-2">
                                   <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                                   <span>
-                                    <span className="font-bold text-slate-900">{t.blooms[level]}:</span>{" "}
+                                    <span className="font-bold text-foreground">{t.blooms[level]}:</span>{" "}
                                     {t.bloomsHints?.[level] || (translations.en as any).bloomsHints[level]}
                                   </span>
                                 </div>
@@ -967,7 +969,7 @@ function QuizGeneratorContent() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
+                  <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -985,7 +987,7 @@ function QuizGeneratorContent() {
       </div>
 
       {/* Results Section */}
-      <div className="mt-8">
+      <div className="mt-8 result-accent">
         {quiz && <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />}
       </div>
     </div>

@@ -7,7 +7,7 @@ import { Images } from "lucide-react";
 export default function VisualAidDesignerPage() {
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-xl overflow-hidden">
         {/* Clean Top Bar */}
         <div className="h-1.5 w-full bg-primary" />
 

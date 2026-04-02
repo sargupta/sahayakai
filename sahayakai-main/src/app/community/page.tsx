@@ -246,13 +246,13 @@ export default function CommunityPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={() => setShowTeacherDirectory(false)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <h2 className="font-headline text-lg font-bold text-slate-900">
+          <h2 className="font-headline text-lg font-bold text-foreground">
             Find Teachers
           </h2>
         </div>
@@ -269,13 +269,13 @@ export default function CommunityPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={() => setShowStaffRoom(false)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <h2 className="font-headline text-lg font-bold text-slate-900">
+          <h2 className="font-headline text-lg font-bold text-foreground">
             Staff Room
           </h2>
         </div>
@@ -292,13 +292,13 @@ export default function CommunityPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-slate-600 hover:text-slate-900"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={() => setShowExploreGroups(false)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <h2 className="font-headline text-lg font-bold text-slate-900">
+          <h2 className="font-headline text-lg font-bold text-foreground">
             Explore Groups
           </h2>
         </div>
@@ -315,23 +315,23 @@ export default function CommunityPage() {
   return (
     <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
       {/* Header */}
-      <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50/70 to-white border border-orange-100/70 shadow-sm">
+      <div className="rounded-3xl overflow-hidden bg-background border border-border shadow-soft">
         <div className="px-6 py-5 flex items-center gap-4">
-          <div className="p-3 bg-white rounded-2xl shadow-sm border border-orange-100 shrink-0">
+          <div className="p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
             <Users className="w-6 h-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h1 className="font-headline text-2xl font-bold text-slate-900">
+            <h1 className="font-headline text-2xl font-bold text-foreground">
               Community
             </h1>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">
+            <p className="text-sm text-muted-foreground font-medium mt-0.5">
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 gap-1.5 text-xs font-bold border-orange-200 text-orange-600 hover:bg-orange-50"
+            className="shrink-0 gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
             onClick={handleOpenTeacherDirectory}
           >
             <UserSearch className="h-4 w-4" />
@@ -375,7 +375,7 @@ export default function CommunityPage() {
 
           {/* Shared Resources */}
           <div className="mt-6">
-            <h2 className="font-headline text-lg font-bold text-slate-900 mb-3">
+            <h2 className="font-headline text-lg font-bold text-foreground mb-3">
               Shared Resources
             </h2>
             <ResourceFeed />
@@ -406,7 +406,7 @@ export default function CommunityPage() {
           onClick={() =>
             composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
-          className="h-14 w-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
         >
           <Plus className="h-6 w-6" />
         </button>

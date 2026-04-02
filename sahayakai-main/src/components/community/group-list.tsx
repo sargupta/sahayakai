@@ -32,10 +32,9 @@ export default function GroupList({
         className={cn(
           "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
           selectedGroupId === null
-            ? "text-white border-transparent shadow-sm"
-            : "bg-white border-slate-200 text-slate-600 hover:border-orange-200"
+            ? "bg-primary text-primary-foreground border-transparent shadow-soft"
+            : "bg-card border-border text-foreground hover:border-primary/30"
         )}
-        style={selectedGroupId === null ? { background: "linear-gradient(135deg, #fb923c, #f59e0b)" } : undefined}
       >
         <LayoutGrid className="h-3.5 w-3.5" />
         All
@@ -53,8 +52,8 @@ export default function GroupList({
             className={cn(
               "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
               isSelected
-                ? "text-white border-transparent shadow-sm"
-                : "bg-white border-slate-200 text-slate-600 hover:border-orange-200"
+                ? "text-white border-transparent shadow-soft"
+                : "bg-card border-border text-foreground hover:border-primary/30"
             )}
             style={isSelected ? { background: gradient } : undefined}
           >
@@ -73,7 +72,7 @@ export default function GroupList({
       {hasDiscoverableGroups && onExploreGroups && (
         <button
           onClick={onExploreGroups}
-          className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border border-dashed border-orange-300 text-orange-500 hover:bg-orange-50 transition-all"
+          className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-all"
         >
           <Compass className="h-3.5 w-3.5" />
           Explore

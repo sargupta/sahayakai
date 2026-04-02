@@ -53,23 +53,23 @@ export function ContextualConnect({
   return (
     <div
       className={cn(
-        "relative flex items-start gap-3 rounded-2xl border border-orange-100",
-        "bg-gradient-to-r from-orange-50 to-amber-50 p-3",
+        "relative flex items-start gap-3 rounded-2xl border border-primary/20",
+        "bg-gradient-to-r from-primary/5 to-primary/10 p-3",
         "animate-in slide-in-from-bottom-4 fade-in duration-300"
       )}
     >
       <Avatar className="h-10 w-10 shrink-0">
         <AvatarImage src={authorPhotoURL ?? undefined} alt={authorName} />
-        <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
+        <AvatarFallback className="bg-primary/10 text-primary text-xs">
           {initials}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-slate-900">
+        <p className="text-sm font-bold text-foreground">
           Connect with {authorName}?
         </p>
-        <p className="text-xs text-slate-500 italic truncate">{reason}</p>
+        <p className="text-xs text-muted-foreground italic truncate">{reason}</p>
 
         {status === "sent" ? (
           <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-green-600">
@@ -82,12 +82,12 @@ export function ContextualConnect({
             onClick={handleConnect}
             disabled={status === "loading"}
             className={cn(
-              "mt-1.5 h-7 rounded-full bg-orange-500 px-3 text-xs text-white",
-              "hover:bg-orange-600"
+              "mt-1.5 h-7 rounded-full bg-primary px-3 text-xs text-primary-foreground",
+              "hover:bg-primary/90"
             )}
           >
             {status === "loading" ? (
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
             ) : (
               <UserPlus className="mr-1 h-3.5 w-3.5" />
             )}
@@ -100,7 +100,7 @@ export function ContextualConnect({
         variant="ghost"
         size="icon"
         onClick={onDismiss}
-        className="absolute right-1 top-1 h-6 w-6 text-slate-400 hover:text-slate-600"
+        className="absolute right-1 top-1 h-6 w-6 text-muted-foreground hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
       </Button>

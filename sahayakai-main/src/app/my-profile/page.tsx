@@ -11,7 +11,7 @@ export default function MyProfilePage() {
                 <Skeleton className="h-20 w-20 rounded-full" />
                 <Skeleton className="h-8 w-48 rounded-lg" />
                 <Skeleton className="h-4 w-64 rounded-lg" />
-                <p className="text-slate-400 font-medium">Loading professional profile...</p>
+                <p className="text-muted-foreground font-medium">Loading professional profile...</p>
             </div>
         }>
             <ProfileView />

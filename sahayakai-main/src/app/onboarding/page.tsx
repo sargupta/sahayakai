@@ -122,26 +122,26 @@ export default function OnboardingPage() {
     };
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-4">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-slate-500 font-medium">Initializing onboarding...</p>
+            <p className="text-muted-foreground font-medium">Initializing onboarding...</p>
         </div>
     );
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50/50 p-3 sm:p-6">
-            <Card className="w-full max-w-lg sm:max-w-2xl shadow-xl border-none">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
+            <Card className="w-full max-w-lg sm:max-w-2xl rounded-2xl border border-border shadow-soft">
                 <CardHeader className="text-center space-y-2 pb-4 sm:pb-8">
                     <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
                         <GraduationCap className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline">{t("Finish your Profile")}</CardTitle>
+                    <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline tracking-tight">{t("Finish your Profile")}</CardTitle>
                     <CardDescription className="text-lg">Help us personalize your experience based on your local teaching context.</CardDescription>
 
                     {/* Step Indicator */}
-                    <div className="flex justify-center gap-2 mt-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className={`h-1.5 w-8 sm:w-12 rounded-full transition-colors ${step >= i ? "bg-primary" : "bg-slate-200"}`} />
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                        {[1, 2, 3, 4].map(s => (
+                            <div key={s} className={cn("h-2 rounded-full transition-all", s === step ? "w-8 bg-primary" : s < step ? "w-2 bg-primary/60" : "w-2 bg-border")} />
                         ))}
                     </div>
                 </CardHeader>
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
                                 <UserCircle className="h-5 w-5" />
                                 <span>1. Your Role & Bio</span>
                             </div>
-                            <div className="grid gap-6">
+                            <div className="card-section grid gap-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>Primary Department*</Label>
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
                                             value={formData.department}
                                             onValueChange={(v) => setFormData(prev => ({ ...prev, department: v }))}
                                         >
-                                            <SelectTrigger className="h-12 shadow-sm">
+                                            <SelectTrigger className="h-12 shadow-soft">
                                                 <SelectValue placeholder="Select Dept" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
                                             placeholder="e.g. Senior Teacher"
                                             value={formData.designation}
                                             onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
-                                            className="h-12 shadow-sm"
+                                            className="h-12 shadow-soft"
                                         />
                                     </div>
                                 </div>
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
                                         placeholder="Tell us about your teaching philosophy..."
                                         value={formData.bio}
                                         onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                                        className="h-24 shadow-sm"
+                                        className="h-24 shadow-soft"
                                     />
                                 </div>
                             </div>
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
                                 <MapPin className="h-5 w-5" />
                                 <span>2. Location & Institution</span>
                             </div>
-                            <div className="grid gap-6">
+                            <div className="card-section grid gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="school">School / Institution Name*</Label>
                                     <Input
@@ -208,7 +208,7 @@ export default function OnboardingPage() {
                                         placeholder="e.g. Kendriya Vidyalaya, Delhi"
                                         value={formData.schoolName}
                                         onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
-                                        className="h-12 text-lg shadow-sm"
+                                        className="h-12 text-lg shadow-soft"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
                                         placeholder="e.g. North Delhi"
                                         value={formData.district}
                                         onChange={(e) => setFormData(prev => ({ ...prev, district: e.target.value }))}
-                                        className="h-12 shadow-sm"
+                                        className="h-12 shadow-soft"
                                     />
                                 </div>
                             </div>
@@ -231,11 +231,11 @@ export default function OnboardingPage() {
                                 <BookOpen className="h-5 w-5" />
                                 <span>3. Your Subjects*</span>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div className="card-section grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {SUBJECTS.map((subject) => (
                                     <div key={subject} className={cn(
                                         "flex items-center space-x-2 p-3 border rounded-xl transition-all cursor-pointer group hover:border-primary/50",
-                                        formData.subjects.includes(subject) ? "bg-primary/5 border-primary shadow-sm" : "bg-white"
+                                        formData.subjects.includes(subject) ? "bg-primary/5 border-primary shadow-soft" : "bg-card"
                                     )} onClick={() => handleSubjectChange(subject)}>
                                         <Checkbox
                                             id={`sub-${subject}`}
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
                                 <Layers className="h-5 w-5" />
                                 <span>4. Classes & Language*</span>
                             </div>
-                            <div className="space-y-4">
+                            <div className="card-section space-y-4">
                                 <Label>Which classes do you teach?</Label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                                     {GRADE_LEVELS.slice(3).map((grade) => (
@@ -264,8 +264,8 @@ export default function OnboardingPage() {
                                             key={grade}
                                             onClick={() => handleGradeChange(grade)}
                                             className={`px-3 py-2.5 text-sm font-semibold rounded-xl border transition-all ${formData.gradeLevels.includes(grade)
-                                                ? "bg-primary text-white border-primary shadow-lg scale-[1.02]"
-                                                : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
+                                                ? "bg-primary text-white border-primary shadow-lg"
+                                                : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:shadow-soft"
                                                 }`}
                                         >
                                             {grade}
@@ -279,7 +279,7 @@ export default function OnboardingPage() {
                                     value={formData.preferredLanguage}
                                     onValueChange={(v) => setFormData(prev => ({ ...prev, preferredLanguage: v }))}
                                 >
-                                    <SelectTrigger className="h-12 shadow-sm rounded-xl">
+                                    <SelectTrigger className="h-12 shadow-soft rounded-xl">
                                         <SelectValue placeholder="Select Language" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -301,7 +301,7 @@ export default function OnboardingPage() {
                     )}
                 </CardContent>
 
-                <CardFooter className="flex justify-between px-4 sm:px-8 py-4 sm:py-8 border-t bg-slate-50/50 rounded-b-3xl">
+                <CardFooter className="flex justify-between px-4 sm:px-8 py-4 sm:py-8 border-t bg-muted/20 rounded-b-3xl">
                     <Button
                         variant="ghost"
                         onClick={() => setStep(prev => prev - 1)}

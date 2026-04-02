@@ -23,7 +23,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Introduction to Fractions using daily life examples',
         subject: 'Mathematics',
         gradeLevel: '5th Grade',
-        icon: '🍰',
+        icon: 'Slice',
         color: 'bg-blue-100 text-blue-700',
     },
     {
@@ -33,7 +33,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Identifying 2D shapes (Circle, Square, Triangle) in the classroom',
         subject: 'Mathematics',
         gradeLevel: '3rd Grade',
-        icon: '🔺',
+        icon: 'Triangle',
         color: 'bg-indigo-100 text-indigo-700',
     },
     {
@@ -43,7 +43,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Understanding Profit and Loss using a village market scenario',
         subject: 'Mathematics',
         gradeLevel: '7th Grade',
-        icon: '💰',
+        icon: 'Coins',
         color: 'bg-green-100 text-green-700',
     },
 
@@ -55,7 +55,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'How plants make food (Photosynthesis) using sunlight',
         subject: 'Science',
         gradeLevel: '7th Grade',
-        icon: '🌱',
+        icon: 'Sprout',
         color: 'bg-emerald-100 text-emerald-700',
     },
     {
@@ -65,7 +65,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'The Water Cycle: Evaporation, Condensation, Precipitation',
         subject: 'Science',
         gradeLevel: '6th Grade',
-        icon: '💧',
+        icon: 'Droplets',
         color: 'bg-cyan-100 text-cyan-700',
     },
     {
@@ -75,7 +75,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Human Digestive System and healthy eating habits',
         subject: 'Science',
         gradeLevel: '7th Grade',
-        icon: '🍎',
+        icon: 'Apple',
         color: 'bg-rose-100 text-rose-700',
     },
 
@@ -87,7 +87,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'The Solar System: Planets and the Sun',
         subject: 'Social Studies',
         gradeLevel: '6th Grade',
-        icon: '🪐',
+        icon: 'Orbit',
         color: 'bg-purple-100 text-purple-700',
     },
     {
@@ -97,7 +97,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'States and Capitals of India',
         subject: 'Social Studies',
         gradeLevel: '5th Grade',
-        icon: '🗺️',
+        icon: 'Map',
         color: 'bg-orange-100 text-orange-700',
     },
     {
@@ -107,7 +107,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Role and functions of Gram Panchayat in villages',
         subject: 'Social Studies',
         gradeLevel: '6th Grade',
-        icon: '🗳️',
+        icon: 'Vote',
         color: 'bg-amber-100 text-amber-700',
     },
 
@@ -119,7 +119,7 @@ export const quickTemplates: QuickTemplate[] = [
         topic: 'Naming words (Nouns): Person, Place, Animal, Thing',
         subject: 'English',
         gradeLevel: '4th Grade',
-        icon: '📝',
+        icon: 'FileEdit',
         color: 'bg-pink-100 text-pink-700',
     },
 ];

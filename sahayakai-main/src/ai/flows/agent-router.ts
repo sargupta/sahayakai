@@ -50,6 +50,9 @@ export async function processAgentRequest(input: AgentRouterInput): Promise<Agen
     case 'rubric':
       result = { action: 'NAVIGATE', url: `/rubric-generator?${queryString}` };
       break;
+    case 'examPaper':
+      result = { action: 'NAVIGATE', url: `/exam-paper?${queryString}` };
+      break;
     case 'videoStoryteller':
       result = { action: 'NAVIGATE', url: `/video-storyteller?${queryString}` };
       break;

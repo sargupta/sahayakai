@@ -22,7 +22,7 @@ export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptPro
 
     if (inline) {
         return (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm dark:border-amber-800 dark:bg-amber-950">
+            <div className="flex items-center gap-3 rounded-xl border border-amber-200/60 bg-amber-50/80 px-4 py-2.5 text-sm dark:border-amber-800/60 dark:bg-amber-950/80">
                 <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                 <span className="text-amber-800 dark:text-amber-200">
                     You&apos;ve created {used} {featureLabel}s this month.{' '}
@@ -36,11 +36,11 @@ export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptPro
     }
 
     return (
-        <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-800 dark:from-amber-950 dark:to-orange-950">
+        <Card className="border-amber-200/60 bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:border-amber-800/60 dark:from-amber-950/60 dark:to-orange-950/40">
             <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
                 <Sparkles className="h-8 w-8 text-amber-600" />
                 <div>
-                    <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
+                    <h3 className="font-headline text-lg font-semibold text-amber-900 dark:text-amber-100">
                         Great work this month!
                     </h3>
                     <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
@@ -48,7 +48,7 @@ export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptPro
                         Upgrade to Pro for higher limits and better AI quality.
                     </p>
                 </div>
-                <Button asChild className="bg-amber-600 hover:bg-amber-700">
+                <Button asChild className="bg-amber-500 hover:bg-amber-600 shadow-sm">
                     <Link href="/pricing">
                         <Sparkles className="mr-2 h-4 w-4" />
                         Upgrade to Pro — ₹149/month

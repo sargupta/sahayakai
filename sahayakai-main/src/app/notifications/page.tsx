@@ -32,8 +32,8 @@ export default function NotificationsPage() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-40">
-                <Loader2 className="h-10 w-10 text-orange-500 animate-spin" />
-                <p className="mt-4 text-gray-500">Loading your updates...</p>
+                <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                <p className="mt-4 text-muted-foreground">Loading your updates...</p>
             </div>
         );
     }
@@ -41,12 +41,12 @@ export default function NotificationsPage() {
     if (!firebaseUser) {
         return (
             <div className="w-full max-w-md mx-auto px-4 py-20 text-center space-y-6">
-                <div className="bg-orange-50 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-                    <Bell className="h-10 w-10 text-orange-500" />
+                <div className="bg-primary/8 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
+                    <Bell className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Sign-in Required</h1>
-                    <p className="text-gray-500">Please sign in to view your notifications.</p>
+                    <p className="text-muted-foreground">Please sign in to view your notifications.</p>
                 </div>
                 <Button onClick={() => document.getElementById('auth-button')?.click()} className="w-full">
                     Go to Header to Sign In
@@ -58,13 +58,13 @@ export default function NotificationsPage() {
     return (
         <div className="container max-w-4xl mx-auto py-10 px-4 min-h-screen">
             <div className="space-y-8">
-                <div className="flex items-center gap-3 border-b pb-6 border-orange-100">
-                    <div className="bg-orange-100 p-3 rounded-2xl">
-                        <Bell className="h-6 w-6 text-orange-600" />
+                <div className="flex items-center gap-3 border-b pb-6 border-primary/20">
+                    <div className="bg-primary/10 p-3 rounded-2xl">
+                        <Bell className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Notifications</h1>
-                        <p className="text-gray-500 mt-1">Stay updated with your community activity</p>
+                        <h1 className="text-3xl font-bold font-headline tracking-tight text-foreground">Notifications</h1>
+                        <p className="text-muted-foreground mt-1">Stay updated with your community activity</p>
                     </div>
                 </div>
 

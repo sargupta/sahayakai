@@ -357,15 +357,15 @@ function VirtualFieldTripContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Globe2 className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
@@ -384,7 +384,7 @@ function VirtualFieldTripContent() {
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[120px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </FormControl>
                       <MicrophoneInput
@@ -402,13 +402,13 @@ function VirtualFieldTripContent() {
                 <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="card-section grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -427,7 +427,7 @@ function VirtualFieldTripContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           value={field.value}
@@ -445,7 +445,7 @@ function VirtualFieldTripContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -475,7 +475,7 @@ function VirtualFieldTripContent() {
 
       {
         isLoading && (
-          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+          <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
               <p className="text-muted-foreground">{t.planningText}</p>
@@ -486,12 +486,12 @@ function VirtualFieldTripContent() {
 
       {
         trip && (
-          <VirtualFieldTripDisplay
+          <div className="result-accent pl-4"><VirtualFieldTripDisplay
             trip={trip}
             topic={form.getValues('topic')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
-          />
+          /></div>
         )
       }
     </div>

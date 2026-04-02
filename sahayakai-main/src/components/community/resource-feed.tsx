@@ -45,7 +45,7 @@ type Resource = {
 const TYPE_CONFIG: Record<string, {
   border: string; bg: string; text: string; label: string; route: string;
 }> = {
-  'lesson-plan':        { border: 'border-t-orange-400',  bg: 'bg-orange-50',  text: 'text-orange-600',  label: 'Lesson Plan',  route: 'lesson-planner' },
+  'lesson-plan':        { border: 'border-t-primary/60',  bg: 'bg-primary/8',  text: 'text-primary',    label: 'Lesson Plan',  route: 'lesson-planner' },
   'quiz':               { border: 'border-t-blue-400',    bg: 'bg-blue-50',    text: 'text-blue-600',    label: 'Quiz',         route: 'quiz-generator' },
   'worksheet':          { border: 'border-t-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Worksheet',    route: 'worksheet-wizard' },
   'rubric':             { border: 'border-t-violet-400',  bg: 'bg-violet-50',  text: 'text-violet-600',  label: 'Rubric',       route: 'rubric-generator' },
@@ -56,7 +56,7 @@ const TYPE_CONFIG: Record<string, {
 };
 
 const cfg = (type: string) =>
-  TYPE_CONFIG[type] ?? { border: 'border-t-slate-300', bg: 'bg-slate-50', text: 'text-slate-500', label: 'Resource', route: 'instant-answer' };
+  TYPE_CONFIG[type] ?? { border: 'border-t-border', bg: 'bg-muted/50', text: 'text-muted-foreground', label: 'Resource', route: 'instant-answer' };
 
 const LANG_SHORT: Record<string, string> = {
   en: 'EN', hi: 'HI', bn: 'BN', te: 'TE', mr: 'MR',
@@ -112,26 +112,26 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
 // ── Skeleton card ────────────────────────────────────────────────────────────
 
 const CardSkeleton = () => (
-  <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden animate-pulse">
-    <div className="h-1.5 bg-slate-200 w-full" />
+  <div className="rounded-2xl border border-border bg-card overflow-hidden animate-pulse">
+    <div className="h-1.5 bg-muted w-full" />
     <div className="p-4 space-y-3">
       <div className="flex items-start gap-3">
-        <div className="h-9 w-9 rounded-xl bg-slate-100 shrink-0" />
+        <div className="h-9 w-9 rounded-xl bg-muted shrink-0" />
         <div className="space-y-2 flex-1">
-          <div className="h-4 bg-slate-100 rounded w-4/5" />
-          <div className="h-3 bg-slate-100 rounded w-2/5" />
+          <div className="h-4 bg-muted rounded w-4/5" />
+          <div className="h-3 bg-muted rounded w-2/5" />
         </div>
       </div>
       <div className="flex gap-2">
-        <div className="h-5 w-16 bg-slate-100 rounded-full" />
-        <div className="h-5 w-12 bg-slate-100 rounded-full" />
+        <div className="h-5 w-16 bg-muted rounded-full" />
+        <div className="h-5 w-12 bg-muted rounded-full" />
       </div>
     </div>
-    <div className="px-4 py-3 border-t border-slate-50 flex justify-between">
-      <div className="h-6 w-10 bg-slate-100 rounded" />
+    <div className="px-4 py-3 border-t border-border flex justify-between">
+      <div className="h-6 w-10 bg-muted rounded" />
       <div className="flex gap-2">
-        <div className="h-7 w-14 bg-slate-100 rounded-lg" />
-        <div className="h-7 w-16 bg-orange-100 rounded-lg" />
+        <div className="h-7 w-14 bg-muted rounded-lg" />
+        <div className="h-7 w-16 bg-primary/10 rounded-lg" />
       </div>
     </div>
   </div>
@@ -175,19 +175,19 @@ const ResourceCard = ({
     <Card
       className={cn(
         'flex flex-col group transition-all duration-300',
-        'hover:shadow-lg hover:-translate-y-0.5',
-        'border border-slate-100 border-t-4 rounded-2xl bg-white overflow-hidden',
+        'hover:shadow-elevated',
+        'border border-border border-t-4 rounded-2xl bg-card overflow-hidden',
         c.border,
       )}
     >
       <CardHeader className="p-4 pb-2">
         <div className="flex items-start gap-3">
-          <div className={cn('p-2 rounded-xl shrink-0 transition-all duration-200', c.bg, 'group-hover:scale-105')}>
+          <div className={cn('p-2 rounded-xl shrink-0', c.bg)}>
             <FileTypeIcon type={resource.type} className={cn('h-5 w-5', c.text)} />
           </div>
 
           <div className="flex-1 min-w-0 space-y-1">
-            <CardTitle className="text-sm font-bold leading-snug text-slate-900 group-hover:text-primary transition-colors line-clamp-2 font-headline">
+            <CardTitle className="text-sm font-bold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2 font-headline">
               {resource.title}
             </CardTitle>
 
@@ -197,7 +197,7 @@ const ResourceCard = ({
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs font-semibold text-slate-500 truncate">
+              <span className="text-xs font-semibold text-muted-foreground truncate">
                 {resource.author}
               </span>
             </div>
@@ -207,7 +207,7 @@ const ResourceCard = ({
 
       <CardContent className="px-4 py-2 flex-grow">
         {resource.imageUrl ? (
-          <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-100 transition-all group-hover:border-slate-200">
+          <div className="relative h-28 w-full overflow-hidden rounded-xl border border-border transition-all group-hover:border-border/80">
             <Image
               src={resource.imageUrl}
               alt={resource.title}
@@ -219,7 +219,7 @@ const ResourceCard = ({
         ) : (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {resource.gradeLevel && (
-              <Badge className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold border-0 rounded-full">
+              <Badge className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground font-semibold border-0 rounded-full">
                 {resource.gradeLevel}
               </Badge>
             )}
@@ -235,11 +235,11 @@ const ResourceCard = ({
         )}
       </CardContent>
 
-      <CardFooter className="px-4 py-2.5 border-t border-slate-50 bg-slate-50/40 flex justify-between items-center gap-2 mt-auto">
+      <CardFooter className="px-4 py-2.5 border-t border-border bg-muted/20 flex justify-between items-center gap-2 mt-auto">
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="bg-white border-slate-200 text-slate-500 text-[10px] font-bold px-1.5 py-0 rounded-md shrink-0"
+            className="bg-card border-border text-muted-foreground text-[10px] font-bold px-1.5 py-0 rounded-md shrink-0"
           >
             {LANG_SHORT[resource.language] ?? resource.language?.toUpperCase() ?? 'EN'}
           </Badge>
@@ -250,7 +250,7 @@ const ResourceCard = ({
               'flex items-center gap-1 text-xs font-bold transition-all duration-200 rounded-lg px-1.5 py-0.5',
               isLiked
                 ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                : 'text-slate-400 hover:text-red-400 hover:bg-red-50',
+                : 'text-muted-foreground/70 hover:text-red-400 hover:bg-red-50',
             )}
             aria-label={isLiked ? 'Unlike this resource' : 'Like this resource'}
           >
@@ -324,13 +324,13 @@ const ResourceList = ({
 
   if (resources.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 mt-4">
-        <div className="bg-orange-100 p-5 rounded-full">
-          <Library className="h-8 w-8 text-orange-500" />
+      <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-4 bg-muted/30 rounded-2xl border-2 border-dashed border-border mt-4">
+        <div className="bg-primary/10 p-5 rounded-full">
+          <Library className="h-8 w-8 text-primary" />
         </div>
         <div className="max-w-sm space-y-1.5">
-          <h3 className="text-base font-bold text-slate-900 font-headline">No resources yet</h3>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <h3 className="text-base font-bold text-foreground font-headline">No resources yet</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.
           </p>
         </div>
@@ -344,7 +344,7 @@ const ResourceList = ({
 
   return (
     <div className="space-y-4 mt-4">
-      <p className="text-xs text-slate-400 font-semibold">
+      <p className="text-xs text-muted-foreground/60 font-semibold">
         {resources.length} resource{resources.length !== 1 ? 's' : ''} found
       </p>
 
@@ -366,7 +366,7 @@ const ResourceList = ({
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 text-slate-600 border-slate-200 hover:border-primary hover:text-primary font-semibold rounded-xl px-5"
+            className="gap-2 text-muted-foreground border-border hover:border-primary hover:text-primary font-semibold rounded-xl px-5"
             onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
           >
             <Loader2 className="h-3.5 w-3.5" />
@@ -530,10 +530,10 @@ export function ResourceFeed() {
       {/* Search + language row */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-grow">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
           <Input
             placeholder="Search lessons, quizzes, worksheets…"
-            className="pl-11 pr-12 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
+            className="pl-11 pr-12 h-12 bg-card border-border rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 shadow-soft"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -543,7 +543,7 @@ export function ResourceFeed() {
               "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
               isListening
                 ? "bg-red-100 text-red-500 animate-pulse"
-                : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                : "text-muted-foreground/60 hover:text-primary hover:bg-primary/8"
             )}
             title={isListening ? "Stop listening" : "Search by voice"}
           >
@@ -567,16 +567,16 @@ export function ResourceFeed() {
                 'shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap',
                 isActive
                   ? 'bg-primary text-white border-primary shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:text-primary',
+                  : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-primary',
               )}
             >
               {chip.fileType ? (
                 <FileTypeIcon
                   type={chip.fileType}
-                  className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")}
+                  className={cn("h-3 w-3", isActive ? "text-white" : "text-muted-foreground/60")}
                 />
               ) : (
-                <LayoutGrid className={cn("h-3 w-3", isActive ? "text-white" : "text-slate-400")} />
+                <LayoutGrid className={cn("h-3 w-3", isActive ? "text-white" : "text-muted-foreground/60")} />
               )}
               {chip.label}
             </button>

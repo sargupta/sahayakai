@@ -57,7 +57,7 @@ export function ExploreGroups({
         return (
           <Card
             key={group.id}
-            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+            className="overflow-hidden cursor-pointer hover:shadow-elevated transition-shadow"
             onClick={() => onPreviewGroup(group.id)}
           >
             <div className="h-1.5" style={{ background: color }} />

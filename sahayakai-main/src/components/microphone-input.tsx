@@ -547,13 +547,13 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             "relative transition-all duration-500 flex items-center justify-center overflow-hidden z-20 shadow-2xl",
             status === 'recording'
               ? "bg-gradient-to-br from-destructive to-red-600 border-2 border-white/20 scale-110"
-              : "bg-gradient-to-br from-primary to-orange-600 hover:scale-110",
+              : "bg-gradient-to-br from-primary to-primary/80",
             status === 'processing' && "opacity-90",
-            isFloating && "fixed bottom-8 right-8 z-50 border-4 border-white dark:border-slate-900",
+            isFloating && "fixed bottom-8 right-8 z-50 border-4 border-white dark:border-background",
             getButtonSize(),
             className,
             "rounded-full transition-all duration-300 ease-in-out border-4 border-white",
-            status !== 'recording' && "!bg-primary !text-primary-foreground hover:!bg-primary/95"
+            status !== 'recording' && "!bg-gradient-to-br !from-primary !to-primary/80 !text-primary-foreground hover:!from-primary/95 hover:!to-primary/75 animate-pulse [animation-duration:3s]"
           )}
           onClick={handleMicClick}
           data-microphone="true"
@@ -586,7 +586,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             ? "bg-destructive/10 text-destructive border-destructive/20"
             : status === 'processing' || status === 'initializing'
               ? "bg-primary/10 text-primary border-primary/20"
-              : "bg-white/90 text-slate-700 border-slate-200"
+              : "bg-background/90 text-foreground border-border"
         )}>
           <div className="flex items-center gap-3">
             {status === 'recording' && (

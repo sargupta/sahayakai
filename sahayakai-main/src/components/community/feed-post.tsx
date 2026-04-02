@@ -65,9 +65,9 @@ const READ_MORE_THRESHOLD = 280;
 
 function AttachmentCard({ attachment }: { attachment: PostAttachment }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-      <FileText className="h-4 w-4 shrink-0 text-slate-500" />
-      <span className="truncate text-sm text-slate-700">
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2">
+      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="truncate text-sm text-foreground/80">
         {attachment.title || attachment.type}
       </span>
     </div>
@@ -110,7 +110,7 @@ export default function FeedPost({
   }
 
   return (
-    <Card className="rounded-2xl transition-shadow hover:shadow-lg">
+    <Card className="rounded-xl border border-border transition-shadow hover:shadow-soft">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start gap-3">
@@ -119,7 +119,7 @@ export default function FeedPost({
             onClick={() => router.push(`/profile/${post.authorUid}`)}
           >
             <AvatarImage src={post.authorPhotoURL ?? undefined} />
-            <AvatarFallback className="bg-orange-100 text-sm font-medium text-orange-700">
+            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -128,18 +128,18 @@ export default function FeedPost({
             <div className="flex items-center gap-1.5 text-sm">
               <button
                 onClick={() => router.push(`/profile/${post.authorUid}`)}
-                className="truncate font-semibold text-slate-900 hover:underline"
+                className="truncate font-semibold text-foreground hover:underline"
               >
                 {post.authorName}
               </button>
               {groupName && (
                 <>
-                  <span className="text-slate-400">&middot;</span>
-                  <span className="truncate text-slate-500">{groupName}</span>
+                  <span className="text-muted-foreground/60">&middot;</span>
+                  <span className="truncate text-muted-foreground">{groupName}</span>
                 </>
               )}
-              <span className="text-slate-400">&middot;</span>
-              <span className="shrink-0 text-slate-400">{timeAgo}</span>
+              <span className="text-muted-foreground/60">&middot;</span>
+              <span className="shrink-0 text-muted-foreground/60">{timeAgo}</span>
             </div>
           </div>
         </div>
@@ -161,13 +161,13 @@ export default function FeedPost({
 
         {/* Content */}
         <div className="mt-3">
-          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/80">
             {displayContent}
           </p>
           {needsTruncation && (
             <button
               onClick={() => setExpanded((prev) => !prev)}
-              className="mt-1 text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="mt-1 text-sm font-medium text-primary hover:text-primary/80"
             >
               {expanded ? "Show less" : "Read more"}
             </button>
@@ -184,18 +184,18 @@ export default function FeedPost({
         )}
 
         {/* Stats */}
-        <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
           <span>{post.likesCount} likes</span>
           <span>{post.commentsCount} comments</span>
         </div>
 
         {/* Actions */}
-        <div className="mt-2 flex items-center gap-1 border-t border-slate-100 pt-2">
+        <div className="mt-2 flex items-center gap-1 border-t border-border pt-2">
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "gap-1.5 text-slate-600",
+              "gap-1.5 text-muted-foreground hover:bg-muted/60",
               isLiked && "text-red-500 hover:text-red-600"
             )}
             onClick={handleLike}
@@ -206,7 +206,7 @@ export default function FeedPost({
             Like
           </Button>
 
-          <Button variant="ghost" size="sm" className="gap-1.5 text-slate-600">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:bg-muted/60">
             <MessageCircle className="h-4 w-4" />
             Comment
           </Button>
@@ -215,7 +215,7 @@ export default function FeedPost({
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto gap-1.5 rounded-full border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
+              className="ml-auto gap-1.5 rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/20"
               onClick={() => onConnect(post.authorUid)}
             >
               <UserPlus className="h-4 w-4" />

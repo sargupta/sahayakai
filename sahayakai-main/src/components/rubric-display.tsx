@@ -158,7 +158,7 @@ ${criterion.levels.map(level => `   • ${level.name} (${level.points} pts): ${l
   })) || [];
 
   return (
-    <Card id="rubric-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+    <Card id="rubric-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
       <CardHeader className="space-y-3">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 space-y-2">
@@ -221,7 +221,7 @@ ${criterion.levels.map(level => `   • ${level.name} (${level.points} pts): ${l
           </Table>
         </div>
       </CardContent>
-      <div className="p-4 border-t border-slate-100 flex justify-end">
+      <div className="p-4 border-t border-border flex justify-end">
         <FeedbackDialog
           page="rubric"
           feature="rubric-result"

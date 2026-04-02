@@ -13,7 +13,7 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
@@ -127,14 +127,14 @@ export default function Home() {
 
   const QuickActionCard = ({ title, icon: Icon, href, color, description }: { title: string, icon: any, href: string, color: string, description: string }) => (
     <Link href={href} className="group">
-      <Card className="h-full border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <Card className="h-full border-border bg-card hover:shadow-elevated transition-all duration-200">
         <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
-          <div className={cn("p-3 md:p-4 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300")}>
+          <div className={cn("p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/15 transition-all duration-200")}>
             <Icon className="h-6 w-6 md:h-8 md:w-8" />
           </div>
           <div className="space-y-1 md:space-y-2">
-            <h2 className="font-headline text-base md:text-lg font-semibold text-slate-800 leading-tight">{title}</h2>
-            <p className="text-xs md:text-sm text-slate-500 leading-relaxed md:line-clamp-none line-clamp-2">{description}</p>
+            <h2 className="font-headline text-base font-semibold text-foreground leading-tight">{title}</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
           </div>
           <div className="mt-auto pt-2 md:pt-4 text-primary font-medium text-xs md:text-sm flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             Start <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
@@ -147,18 +147,18 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12 relative">
       {/* Clean Top Bar for Consistency */}
-      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-xl" />
+      <div className="absolute top-0 left-0 w-full card-accent-bar" />
 
       {/* Hero Section */}
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 text-primary text-xs md:text-sm font-medium border border-primary/15 mb-2 md:mb-4">
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
+        <h1 className="font-headline text-4xl md:text-6xl font-bold text-foreground tracking-tight">
           {greeting}, <span className="text-primary">Teacher.</span>
         </h1>
-        <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
           I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
         </p>
       </div>
@@ -172,16 +172,16 @@ export default function Home() {
             onTranscriptChange={handleTranscript}
             iconSize="xl"
             label="Speak your topic"
-            className="hover:scale-105 transition-transform"
+            className=""
           />
-          <p className="text-slate-500 font-medium text-sm md:text-base animate-pulse">
+          <p className="text-muted-foreground text-sm md:text-sm">
             Tap the microphone and tell Sahayak what you want to teach today
           </p>
         </div>
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
-          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm ring-2 ring-slate-200 transition-all focus-within:ring-primary/50 focus-within:ring-4">
+          <Card className="border-none shadow-xl bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-all focus-within:ring-primary/40 focus-within:ring-2">
             <CardContent className="p-2">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function Home() {
                   <Button
                     type="submit"
                     size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95"
+                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all active:scale-95"
                     aria-label="Generate Lesson Plan"
                   >
                     <ArrowRight className="h-5 w-5" />
@@ -214,35 +214,39 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-center text-xs md:text-sm text-slate-500 font-medium px-4 line-clamp-1">
+          <p className="text-center text-xs text-muted-foreground px-4">
             try: "Quiz about photosynthesis" or "Lesson plan for solar system"
           </p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[10px] text-muted-foreground">
             Sahayak can make mistakes. Please review generated content.
           </p>
 
           {/* Thinking Indicator */}
           {isThinking && (
-            <div className="flex items-center gap-2 text-primary font-medium mt-2 animate-pulse">
-              {/* <Loader2 className="h-4 w-4 animate-spin" /> */}
-              <span>Thinking...</span>
+            <div className="flex items-center gap-2 text-primary font-medium mt-2">
+              <span className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                <span className="ml-2">Thinking</span>
+              </span>
             </div>
           )}
 
           {/* Instant Answer Card */}
           {answer && (
-            <Card className="w-full max-w-2xl mt-4 border-primary/20 bg-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            <Card className="w-full max-w-2xl mt-4 border-primary/20 bg-card shadow-lg animate-in fade-in slide-in-from-bottom-2 border-l-4 border-primary">
               <CardContent className="p-4 md:p-6 relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-2 h-6 w-6 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-muted-foreground"
                   onClick={() => setAnswer(null)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                <div className="prose prose-sm max-w-none text-slate-700">
-                  <h3 className="text-primary font-bold mb-2 text-lg">Answer</h3>
+                <div className="prose prose-sm max-w-none text-foreground">
+                  <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
                   <div className="whitespace-pre-wrap">{answer}</div>
                 </div>
               </CardContent>

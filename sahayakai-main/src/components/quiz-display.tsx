@@ -66,7 +66,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({ quiz, onRegenerate, selected
 
   if (!currentQuiz) {
     return (
-      <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+      <Card className="mt-8 w-full max-w-4xl bg-card/30 backdrop-blur-lg border-white/40 shadow-xl">
         <CardContent className="p-8 text-center text-muted-foreground">
           No quiz generated for this difficulty level.
         </CardContent>
@@ -395,10 +395,10 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         {/* Difficulty Tabs */}
         <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <TabsList className="grid w-full md:w-[360px] grid-cols-3 bg-slate-100 border border-slate-200 shadow-sm p-1 rounded-xl">
-            <TabsTrigger value="easy" disabled={!quiz.easy} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Easy</TabsTrigger>
-            <TabsTrigger value="medium" disabled={!quiz.medium} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Medium</TabsTrigger>
-            <TabsTrigger value="hard" disabled={!quiz.hard} className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-semibold transition-all">Hard</TabsTrigger>
+          <TabsList className="grid w-full md:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-xl">
+            <TabsTrigger value="easy" disabled={!quiz.easy} className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all">Easy</TabsTrigger>
+            <TabsTrigger value="medium" disabled={!quiz.medium} className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all">Medium</TabsTrigger>
+            <TabsTrigger value="hard" disabled={!quiz.hard} className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all">Hard</TabsTrigger>
           </TabsList>
 
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
@@ -406,7 +406,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
               variant="outline"
               size="sm"
               onClick={onRegenerate}
-              className="bg-white border-primary/20 text-primary hover:bg-primary/5 gap-2 rounded-full h-10 px-4 whitespace-nowrap"
+              className="bg-card border-primary/20 text-primary hover:bg-primary/5 gap-2 rounded-full h-10 px-4 whitespace-nowrap"
             >
               <RotateCw className="h-4 w-4" />
               Regenerate All
@@ -443,9 +443,9 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
           </div>
         </div>
 
-        <Card className="bg-white/60 backdrop-blur-xl border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-visible relative group/card">
+        <Card className="bg-card/60 backdrop-blur-xl border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-visible relative group/card">
           {/* Action Bar (Standardized) */}
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-2xl opacity-0 translate-y-2 group-hover/card:opacity-100 group-hover/card:translate-y-0 transition-all duration-300">
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 bg-card/90 backdrop-blur-md border border-border rounded-xl shadow-2xl opacity-0 translate-y-2 group-hover/card:opacity-100 group-hover/card:translate-y-0 transition-all duration-300">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -456,7 +456,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                 <TooltipContent><p>{editState.isEditing ? 'Done' : 'Edit'}</p></TooltipContent>
               </Tooltip>
 
-              <div className="w-px h-6 bg-slate-200 mx-1" />
+              <div className="w-px h-6 bg-border mx-1" />
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -486,7 +486,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                 <TooltipContent><p>Not helpful</p></TooltipContent>
               </Tooltip>
 
-              <div className="w-px h-6 bg-slate-200 mx-1" />
+              <div className="w-px h-6 bg-border mx-1" />
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -511,29 +511,29 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
             </TooltipProvider>
           </div>
 
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100/50 pb-6 bg-slate-50/30">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 pb-6 bg-muted/30">
             <div className="space-y-1 flex-1 mr-4">
               {editState.isEditing ? (
                 <Input
                   value={currentQuiz.title}
                   onChange={(e) => handleVariantChange('title', e.target.value)}
-                  className="text-2xl font-bold font-headline bg-white border-slate-200 focus-visible:ring-indigo-500"
+                  className="text-2xl font-bold font-headline bg-card border-border focus-visible:ring-indigo-500"
                 />
               ) : (
-                <CardTitle className="font-headline text-2xl md:text-3xl text-slate-900">{currentQuiz.title}</CardTitle>
+                <CardTitle className="font-headline text-2xl md:text-3xl text-foreground">{currentQuiz.title}</CardTitle>
               )}
               <CardDescription className="flex items-center gap-2 mt-1">
                 Difficulty: <Badge variant="secondary" className="uppercase text-[10px] font-bold tracking-wider px-2 h-5">{activeTab}</Badge>
-                <div className="w-1 h-1 rounded-full bg-slate-300 mx-1" />
+                <div className="w-1 h-1 rounded-full bg-border mx-1" />
                 <span className="text-xs">{currentQuiz.questions.length} Questions</span>
               </CardDescription>
             </div>
 
             <div className="flex gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setShowAnswers(!showAnswers)} title={showAnswers ? "Hide Key" : "Show Key"} aria-label={showAnswers ? "Hide answer key" : "Show answer key"} className={cn("hover:bg-white/50", showAnswers && "text-indigo-600 bg-indigo-50")}>
+              <Button variant="ghost" size="icon" onClick={() => setShowAnswers(!showAnswers)} title={showAnswers ? "Hide Key" : "Show Key"} aria-label={showAnswers ? "Hide answer key" : "Show answer key"} className={cn("hover:bg-card/50", showAnswers && "text-indigo-600 bg-indigo-50")}>
                 {showAnswers ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleSaveToLibrary} className="hidden md:flex gap-2 border-slate-200 hover:bg-white/50">
+              <Button variant="outline" size="sm" onClick={handleSaveToLibrary} className="hidden md:flex gap-2 border-border hover:bg-card/50">
                 <Save className="h-4 w-4" />
                 Save Library
               </Button>
@@ -541,17 +541,17 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
           </CardHeader>
 
           <TabsContent value={activeTab} className="m-0 focus-visible:ring-0 focus-visible:outline-none">
-            <CardContent id="quiz-sheet" className="p-8 space-y-4 bg-white/40 min-h-[500px]">
+            <CardContent id="quiz-sheet" className="p-8 space-y-4 bg-card min-h-[500px]">
               {currentQuiz.questions.map((q, idx) => (
                 <div
                   key={idx}
                   onMouseEnter={() => setHoveredQuestion(idx)}
                   onMouseLeave={() => setHoveredQuestion(null)}
-                  className="relative group p-6 rounded-2xl hover:bg-white/60 transition-all duration-300 border border-transparent hover:border-slate-100 hover:shadow-sm"
+                  className="relative group p-6 rounded-2xl hover:bg-card/60 transition-all duration-300 border border-transparent hover:border-border hover:shadow-soft"
                 >
                   {/* QUESTION TOOLBAR (Minimalist) */}
                   <div className={cn(
-                    "absolute -top-3 right-6 z-10 flex border bg-white shadow-lg rounded-full p-1 border-slate-200 opacity-0 scale-95 transition-all duration-200",
+                    "absolute -top-3 right-6 z-10 flex border bg-card shadow-lg rounded-full p-1 border-border opacity-0 scale-95 transition-all duration-200",
                     (hoveredQuestion === idx || isRefining === idx) && "opacity-100 scale-100"
                   )}>
                     <TooltipProvider delayDuration={100}>
@@ -568,7 +568,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                         <TooltipContent className="text-[10px]">Improve</TooltipContent>
                       </Tooltip>
 
-                      <div className="w-px h-4 bg-slate-100 mx-1 self-center" />
+                      <div className="w-px h-4 bg-border mx-1 self-center" />
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -584,11 +584,11 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                         </DropdownMenuContent>
                       </DropdownMenu>
 
-                      <div className="w-px h-4 bg-slate-100 mx-1 self-center" />
+                      <div className="w-px h-4 bg-border mx-1 self-center" />
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleFeedback(idx, 'up')} className="h-7 w-7 rounded-full text-slate-400 hover:text-green-500" aria-label="Good question"><ThumbsUp className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleFeedback(idx, 'up')} className="h-7 w-7 rounded-full text-muted-foreground/70 hover:text-green-500" aria-label="Good question"><ThumbsUp className="h-3 w-3" /></Button>
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">Good</TooltipContent>
                       </Tooltip>
@@ -598,18 +598,18 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1 mr-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-slate-400 text-xs tracking-tight">QUESTION {idx + 1}</span>
-                        <div className="h-1 w-1 rounded-full bg-slate-300" />
+                        <span className="font-bold text-muted-foreground/70 text-xs tracking-tight">QUESTION {idx + 1}</span>
+                        <div className="h-1 w-1 rounded-full bg-border" />
                         <span className="text-[10px] uppercase font-bold text-indigo-600/70">{questionTypeLabel(q.questionType)}</span>
                       </div>
                       {editState.isEditing ? (
                         <Textarea
                           value={q.questionText}
                           onChange={(e) => handleVariantChange('questionText', e.target.value, idx)}
-                          className="font-semibold text-lg bg-white border-slate-200 min-h-[60px] focus-visible:ring-indigo-500"
+                          className="font-semibold text-lg bg-card border-border min-h-[60px] focus-visible:ring-indigo-500"
                         />
                       ) : (
-                        <p className="font-semibold text-lg text-slate-800 leading-snug">{q.questionText}</p>
+                        <p className="font-semibold text-lg text-foreground leading-snug">{q.questionText}</p>
                       )}
                     </div>
                   </div>
@@ -619,18 +619,18 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                     {(q.questionType === 'multiple_choice' || q.questionType === 'true_false') && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {q.options?.map((opt, optIdx) => (
-                          <div key={optIdx} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white transition-colors">
-                            <div className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 bg-white">
+                          <div key={optIdx} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/50 hover:bg-card transition-colors">
+                            <div className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-[10px] font-black text-muted-foreground/70 bg-card">
                               {String.fromCharCode(65 + optIdx)}
                             </div>
                             {editState.isEditing ? (
                               <Input
                                 value={opt}
                                 onChange={(e) => handleVariantChange('options', e.target.value, idx, optIdx)}
-                                className="text-sm bg-white border-slate-200 h-9"
+                                className="text-sm bg-card border-border h-9"
                               />
                             ) : (
-                              <span className="text-sm font-medium text-slate-700">{opt}</span>
+                              <span className="text-sm font-medium text-foreground">{opt}</span>
                             )}
                           </div>
                         ))}
@@ -638,7 +638,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
                     )}
 
                     {(q.questionType === 'short_answer' || q.questionType === 'fill_in_the_blanks') && (
-                      <div className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg bg-white/10 flex items-center justify-center text-gray-400 text-sm">
+                      <div className="w-full h-24 border-2 border-dashed border-border rounded-xl bg-card/10 flex items-center justify-center text-muted-foreground/70 text-sm">
                         Student Answer Area
                       </div>
                     )}
@@ -646,28 +646,28 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
 
                   {/* Answer Key Section (Hidden unless toggled) */}
                   <div className={cn(
-                    "mt-4 pt-4 border-t border-slate-100 transition-all duration-300 origin-top overflow-hidden",
+                    "mt-4 pt-4 border-t border-border transition-all duration-300 origin-top overflow-hidden",
                     showAnswers ? "opacity-100 max-h-96" : "opacity-0 max-h-0 py-0 border-none"
                   )}>
                     <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 text-sm">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <Check className="h-4 w-4 text-green-600" />
-                          <span className="font-bold text-slate-700 uppercase text-[10px] tracking-wider">Correct Answer</span>
+                          <span className="font-bold text-foreground uppercase text-[10px] tracking-wider">Correct Answer</span>
                         </div>
                         {editState.isEditing ? (
                           <Input
                             value={q.correctAnswer}
                             onChange={(e) => handleVariantChange('correctAnswer', e.target.value, idx)}
-                            className="h-9 w-full bg-white text-slate-800 border-slate-200"
+                            className="h-9 w-full bg-card text-foreground border-border"
                           />
                         ) : (
-                          <span className="text-slate-800 font-bold bg-white/50 px-3 py-1.5 rounded-lg border border-white inline-block w-fit">{q.correctAnswer}</span>
+                          <span className="text-foreground font-bold bg-card/50 px-3 py-1.5 rounded-lg border border-border inline-block w-fit">{q.correctAnswer}</span>
                         )}
 
                         <div className="mt-2 space-y-1">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Explanation</span>
-                          <p className="text-slate-600 leading-relaxed text-xs">
+                          <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-tighter">Explanation</span>
+                          <p className="text-muted-foreground leading-relaxed text-xs">
                             {q.explanation}
                           </p>
                         </div>
@@ -685,7 +685,7 @@ ${showAnswers ? `\nAnswer: ${q.correctAnswer}\nExplanation: ${q.explanation}` : 
       <div id="print-area" className="hidden print:block">
         <div className="print-header mb-8 text-center border-b pb-4">
           <h1 className="text-3xl font-bold">{currentQuiz.title}</h1>
-          <p className="text-sm text-gray-500 uppercase tracking-widest">{activeTab} Difficulty</p>
+          <p className="text-sm text-muted-foreground uppercase tracking-widest">{activeTab} Difficulty</p>
         </div>
 
         <div className="print-questions space-y-8">

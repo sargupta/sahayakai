@@ -74,7 +74,7 @@ export default function UsagePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Usage</h1>
+                    <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">Usage</h1>
                     <p className="text-xs text-muted-foreground">Resets {resetLabel}</p>
                 </div>
                 <Badge
@@ -102,7 +102,9 @@ export default function UsagePage() {
                                     href={meta?.href ?? '#'}
                                     className="flex items-center gap-2.5 text-sm font-medium hover:underline"
                                 >
-                                    <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+                                    <div className="p-1.5 rounded-lg bg-muted/50">
+                                        <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+                                    </div>
                                     {meta?.label ?? f.key}
                                 </Link>
                                 <span className="text-lg font-semibold tabular-nums">
@@ -132,7 +134,7 @@ export default function UsagePage() {
             {unlimited.length > 0 && (
                 <Card>
                     <CardContent className="py-4">
-                        <p className="text-xs font-medium text-muted-foreground mb-3">UNLIMITED ON YOUR PLAN</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Unlimited on your plan</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {unlimited.map((f) => {
                                 const meta = FEATURE_META[f.key];

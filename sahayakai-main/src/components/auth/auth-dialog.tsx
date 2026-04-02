@@ -41,7 +41,7 @@ export function AuthDialog() {
 
     return (
         <Dialog open={isAuthModalOpen} onOpenChange={closeAuthModal}>
-            <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-md">
+            <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-background/95 backdrop-blur-md">
                 <div className="relative overflow-hidden pt-8 pb-6 px-6">
                     {/* Decorative Background Elements */}
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
@@ -62,7 +62,7 @@ export function AuthDialog() {
                     <div className="relative z-10 mt-8 space-y-4">
                         <div className="grid gap-3">
                             <FeatureItem
-                                icon={<Zap className="h-5 w-5 text-orange-500" />}
+                                icon={<Zap className="h-5 w-5 text-primary" />}
                                 title="Fast AI Generation"
                                 description="Lessons, quizzes, and worksheets in seconds."
                             />
@@ -99,7 +99,7 @@ export function AuthDialog() {
 
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
     return (
-        <div className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+        <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
             <div className="flex-shrink-0 mt-0.5">
                 {icon}
             </div>

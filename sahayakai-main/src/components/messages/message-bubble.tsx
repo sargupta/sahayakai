@@ -224,7 +224,7 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
                     "px-3.5 py-2.5 rounded-2xl",
                     isOwn
                         ? "bg-orange-500 text-white rounded-br-sm"
-                        : "bg-slate-100 text-slate-800 rounded-bl-sm",
+                        : "bg-slate-100 text-slate-800 rounded-bl-sm border border-border/40",
                     message.deliveryStatus === 'sending' && "opacity-70",
                     message.deliveryStatus === 'failed' && "ring-1 ring-red-400/60",
                 )}>

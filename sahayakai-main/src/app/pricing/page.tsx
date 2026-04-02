@@ -94,7 +94,7 @@ function PricingContent() {
                 )}
 
                 <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold tracking-tight">Choose Your Plan</h1>
+                    <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">Choose Your Plan</h1>
                     <p className="mt-2 text-muted-foreground">
                         All plans include full community access and unlimited voice
                     </p>
@@ -104,13 +104,13 @@ function PricingContent() {
                 <div className="mb-8 flex items-center justify-center gap-3">
                     <button
                         onClick={() => setBillingPeriod('monthly')}
-                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'monthly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'monthly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Monthly
                     </button>
                     <button
                         onClick={() => setBillingPeriod('annual')}
-                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'annual' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'annual' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Annual <span className="text-xs opacity-75">(2 months free)</span>
                     </button>
@@ -120,9 +120,9 @@ function PricingContent() {
                     {/* Free */}
                     <Card className={`relative ${plan === 'free' ? 'ring-2 ring-primary' : ''}`}>
                         <CardHeader>
-                            <CardTitle className="text-lg">Free</CardTitle>
+                            <CardTitle className="font-headline text-lg">Free</CardTitle>
                             <div className="mt-2">
-                                <span className="text-3xl font-bold">₹0</span>
+                                <span className="font-headline text-3xl font-bold">₹0</span>
                                 <span className="text-muted-foreground">/month</span>
                             </div>
                         </CardHeader>
@@ -144,17 +144,17 @@ function PricingContent() {
                     </Card>
 
                     {/* Pro */}
-                    <Card className={`relative border-amber-300 shadow-lg ${plan === 'pro' ? 'ring-2 ring-amber-500' : ''}`}>
+                    <Card className={`relative ring-2 ring-primary/40 shadow-elevated ${plan === 'pro' ? 'ring-primary/60' : ''}`}>
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-0.5 text-xs font-medium text-white">
                             Most Popular
                         </div>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
+                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
                                 <Sparkles className="h-5 w-5 text-amber-500" />
                                 Pro
                             </CardTitle>
                             <div className="mt-2">
-                                <span className="text-3xl font-bold">
+                                <span className="font-headline text-3xl font-bold">
                                     ₹{billingPeriod === 'monthly' ? '149' : '1,399'}
                                 </span>
                                 <span className="text-muted-foreground">
@@ -180,7 +180,7 @@ function PricingContent() {
                                 </div>
                             ) : (
                                 <Button
-                                    className="mt-4 w-full bg-amber-600 hover:bg-amber-700"
+                                    className="mt-4 w-full rounded-xl bg-amber-600 hover:bg-amber-700"
                                     onClick={() => handleSubscribe(billingPeriod === 'monthly' ? 'pro_monthly' : 'pro_annual')}
                                     disabled={creating || loading}
                                 >
@@ -194,12 +194,12 @@ function PricingContent() {
                     {/* Schools */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
+                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
                                 <School className="h-5 w-5" />
                                 Schools
                             </CardTitle>
                             <div className="mt-2">
-                                <span className="text-lg font-medium text-muted-foreground">
+                                <span className="font-headline text-lg font-medium text-muted-foreground">
                                     Custom pricing
                                 </span>
                             </div>
@@ -223,7 +223,7 @@ function PricingContent() {
                                     Free 45-day pilot
                                 </li>
                             </ul>
-                            <Button variant="outline" className="mt-4 w-full" asChild>
+                            <Button variant="outline" className="mt-4 w-full rounded-xl" asChild>
                                 <a href="https://wa.me/916363740720?text=I'm%20interested%20in%20SahayakAI%20for%20my%20school" target="_blank" rel="noopener noreferrer">
                                     Talk to us
                                 </a>

@@ -11,7 +11,7 @@ export function LessonPlanHeader({
 }: LessonPlanHeaderProps) {
   return (
     <CardHeader className="text-center">
-      <CardTitle className="font-headline text-3xl text-slate-900">{title}</CardTitle>
+      <CardTitle className="font-headline text-3xl text-foreground">{title}</CardTitle>
       <CardDescription>
         {description}
       </CardDescription>

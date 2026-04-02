@@ -251,15 +251,16 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className="card-accent-bar rounded-t-xl" />
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your preferences, plan, and data</p>
       </div>
 
       {/* ─── Professional Profile ─── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-base font-headline">
             <GraduationCap className="h-5 w-5" />
             Professional Profile
           </CardTitle>
@@ -301,17 +302,19 @@ export default function SettingsPage() {
           {/* Qualifications */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Qualifications</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {QUALIFICATIONS.map((q) => (
-                <div key={q} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`qual-${q}`}
-                    checked={profQuals.includes(q)}
-                    onCheckedChange={() => toggleQual(q)}
-                  />
-                  <label htmlFor={`qual-${q}`} className="text-sm cursor-pointer select-none">{q}</label>
-                </div>
-              ))}
+            <div className="card-section">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {QUALIFICATIONS.map((q) => (
+                  <div key={q} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`qual-${q}`}
+                      checked={profQuals.includes(q)}
+                      onCheckedChange={() => toggleQual(q)}
+                    />
+                    <label htmlFor={`qual-${q}`} className="text-sm cursor-pointer select-none">{q}</label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -370,7 +373,7 @@ export default function SettingsPage() {
               variant="outline"
               className={isPro
                 ? 'bg-amber-100 text-amber-700 border-amber-200'
-                : 'bg-gray-100 text-gray-600 border-gray-200'
+                : 'bg-muted/40 text-muted-foreground border-border'
               }
             >
               {isPro && <Crown className="h-3 w-3 mr-1" />}
@@ -404,7 +407,7 @@ export default function SettingsPage() {
       {/* ─── Privacy & Consent ─── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-base font-headline">
             <Shield className="h-5 w-5" />
             Privacy & Data
           </CardTitle>
@@ -459,7 +462,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* ─── Danger Zone ─── */}
-      <Card className="border-destructive/30">
+      <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-3">
             <Trash2 className="h-5 w-5 text-destructive shrink-0" />
@@ -521,7 +524,7 @@ function ConsentRow({
   disabled: boolean;
 }) {
   return (
-    <div className="flex items-start sm:items-center justify-between gap-4">
+    <div className="flex items-start sm:items-center justify-between gap-4 border-b border-border/50 pb-4 last:border-0 last:pb-0">
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
