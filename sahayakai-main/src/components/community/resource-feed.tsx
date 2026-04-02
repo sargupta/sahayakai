@@ -268,7 +268,7 @@ const ResourceCard = ({
               'h-7 px-2 text-[11px] font-semibold rounded-lg gap-1 transition-all',
               isSaved
                 ? 'text-primary bg-primary/10 cursor-default'
-                : 'text-slate-500 hover:text-primary hover:bg-primary/5',
+                : 'text-muted-foreground hover:text-primary hover:bg-primary/5',
             )}
             onClick={() => !isSaved && onSave(resource)}
           >
