@@ -305,16 +305,6 @@
     }
   }
 
-  /* Warm inner section for tool page form zones */
-  .card-section-warm {
-    @apply bg-amber-50/40 dark:bg-amber-950/20 rounded-xl p-4 border border-amber-100/60 dark:border-amber-900/40;
-  }
-
-  /* Section heading chip inside card-section-warm */
-  .card-section-label {
-    @apply inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1 mb-3;
-  }
-
   /* Input/output divider between form and AI result */
   .result-divider {
     @apply my-8 flex items-center gap-3;

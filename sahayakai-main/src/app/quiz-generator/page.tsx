@@ -797,11 +797,8 @@ function QuizGeneratorContent() {
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
                 <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
-                  <div className="card-section-warm">
-                  <span className="card-section-label">Configuration</span>
-
                   {/* Subject, Grade and Language Selection */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border/30 pt-4 mt-2">
                     <FormField
                       control={form.control}
                       name="subject"
@@ -855,7 +852,6 @@ function QuizGeneratorContent() {
                         </FormItem>
                       )}
                     />
-                  </div>
                   </div>
 
                   <FormField

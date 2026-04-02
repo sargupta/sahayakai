@@ -413,8 +413,7 @@ function VisualAidContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
 
-              <div className="card-section-warm grid grid-cols-1 md:grid-cols-3 gap-6">
-                <span className="card-section-label">Configuration</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"

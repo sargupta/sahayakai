@@ -400,8 +400,7 @@ function VirtualFieldTripContent() {
                 <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
               </div>
 
-              <div className="card-section-warm grid grid-cols-1 md:grid-cols-3 gap-6">
-                <span className="card-section-label col-span-full">Configuration</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"

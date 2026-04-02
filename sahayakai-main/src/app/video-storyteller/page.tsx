@@ -190,10 +190,7 @@ export default function VideoStorytellerPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="card-section-warm shadow-soft">
-        <span className="card-section-label">Configuration</span>
-        <VideoFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
-      </div>
+      <VideoFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
 
       {/* AI insight banner */}
       {recommendations && (

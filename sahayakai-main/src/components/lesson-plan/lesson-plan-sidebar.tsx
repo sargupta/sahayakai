@@ -88,9 +88,7 @@ export function LessonPlanSidebar({
         />
       </div>
 
-      <div className="card-section-warm">
-        <span className="card-section-label">Configuration</span>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 border-t border-border/30 pt-4 mt-2">
           <FormField
             control={control}
             name="gradeLevels"
@@ -152,7 +150,6 @@ export function LessonPlanSidebar({
             )}
           />
         </div>
-      </div>
 
       <div className="col-span-2 h-px bg-border my-4"></div>
 

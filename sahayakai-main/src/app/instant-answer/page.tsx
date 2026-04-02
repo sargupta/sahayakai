@@ -377,8 +377,6 @@ function InstantAnswerContent() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="card-section-warm space-y-6">
-              <span className="card-section-label">Configuration</span>
               <FormField
                 control={form.control}
                 name="question"
@@ -401,7 +399,7 @@ function InstantAnswerContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="instant-answer" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
@@ -453,7 +451,6 @@ function InstantAnswerContent() {
                     </FormItem>
                   )}
                 />
-              </div>
               </div>
 
               <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">

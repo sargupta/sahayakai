@@ -292,8 +292,7 @@ export default function ExamPaperPage() {
         <div className="card-accent-bar" />
         <CardContent className="pt-6 space-y-5">
           {/* Row: Board + Grade */}
-          <div className="card-section-warm space-y-4">
-            <span className="card-section-label">Configuration</span>
+          <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="board">Board</Label>
