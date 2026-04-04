@@ -22,11 +22,18 @@ function NoConversationSelected() {
             <div className="p-6 bg-primary/10 rounded-full shadow-soft border border-border/50">
                 <MessageCircle className="h-12 w-12 text-primary" />
             </div>
-            <div className="space-y-1 max-w-xs">
-                <h3 className="text-base font-bold font-headline text-foreground">Select a conversation</h3>
+            <div className="space-y-2 max-w-xs">
+                <h3 className="text-base font-bold font-headline text-foreground">Your Messages</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                    Choose a conversation from the left, or go to the Community page to start one with a fellow teacher.
+                    Connect with teachers in the Community to start messaging. When someone accepts your connection request, you can chat here.
                 </p>
+                <a
+                    href="/community"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-2"
+                >
+                    Find Teachers
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </a>
             </div>
         </div>
     );

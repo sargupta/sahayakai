@@ -23,6 +23,7 @@ import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 
 const translations: Record<string, Record<string, string>> = {
   en: {
@@ -508,7 +509,9 @@ function VisualAidContent() {
             title={form.getValues('prompt')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
-          /></div>
+          />
+          <ShareToCommunityCTA contentType="visual-aid" className="mt-3" />
+          </div>
           </>
         )
       }

@@ -610,6 +610,26 @@ export async function publishContentToLibraryAction(
     return { resourceId };
 }
 
+/**
+ * Share the user's most recently generated content of a given type to the community.
+ * Finds the latest content doc by type, then delegates to publishContentToLibraryAction.
+ */
+export async function shareLatestContentAction(contentType: string): Promise<{ resourceId: string }> {
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const userId = h.get("x-user-id");
+    if (!userId) throw new Error("Unauthorized");
+
+    // Find the user's most recent content of this type
+    const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
+    if (!items.length) throw new Error('No content found to share. Generate something first!');
+
+    const latestContent = items[0];
+    if (latestContent.isPublic) throw new Error('This content is already shared.');
+
+    return publishContentToLibraryAction(latestContent.id, userId);
+}
+
 export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // 1. Authenticate via middleware-injected header — never trust client-supplied identity
     const { headers } = await import("next/headers");

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { LessonPlanHeader } from "@/components/lesson-plan/lesson-plan-header";
 import { LessonPlanInputSection } from "@/components/lesson-plan/lesson-plan-input-section";
 import { LessonPlanSidebar } from "@/components/lesson-plan/lesson-plan-sidebar";
@@ -391,6 +392,7 @@ export function LessonPlanView({
                     <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
                         <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
                     </div>
+                    <ShareToCommunityCTA contentType="lesson-plan" className="mt-3" />
                 </>
             )}
         </div>

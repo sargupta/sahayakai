@@ -69,7 +69,7 @@ describe('MessagesPage', () => {
 
     it('shows empty state text when no conversation selected', () => {
         render(<MessagesPage />);
-        expect(screen.getByText(/select a conversation/i)).toBeInTheDocument();
+        expect(screen.getByText(/Your Messages/i)).toBeInTheDocument();
     });
 
     it('renders loading spinner while auth loading', () => {

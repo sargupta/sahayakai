@@ -43,9 +43,9 @@ describe('Card Components', () => {
       </Card>
     );
 
-    expect(screen.getByTestId('card')).toHaveClass('rounded-lg border bg-card');
+    expect(screen.getByTestId('card')).toHaveClass('rounded-2xl border bg-card');
     expect(screen.getByTestId('header')).toHaveClass('flex flex-col space-y-1.5 p-4 md:p-6');
-    expect(screen.getByTestId('title')).toHaveClass('text-2xl font-semibold');
+    expect(screen.getByTestId('title')).toHaveClass('font-headline text-xl font-semibold');
     expect(screen.getByTestId('desc')).toHaveClass('text-sm text-muted-foreground');
     expect(screen.getByTestId('content')).toHaveClass('p-4 md:p-6 pt-0');
     expect(screen.getByTestId('footer')).toHaveClass('flex items-center p-4 md:p-6 pt-0');

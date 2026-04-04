@@ -18,7 +18,7 @@ import { BarChart, Bell, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, 
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot } from "firebase/firestore"
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 
@@ -27,6 +27,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const [totalUnread, setTotalUnread] = useState(0);
+  const [showCommunityNew, setShowCommunityNew] = useState(false);
 
   const handleNavClick = (href: string) => {
     setOpenMobile(false); // always close — no-op on desktop
@@ -44,7 +45,13 @@ export function AppSidebar() {
       unsubConv?.();
       unsubConv = undefined;
 
-      if (!user) { setTotalUnread(0); return; }
+      if (!user) { setTotalUnread(0); setShowCommunityNew(false); return; }
+
+      // Check communityIntroState for "New" badge
+      getDoc(doc(db, "users", user.uid)).then((snap) => {
+        const state = snap.data()?.communityIntroState;
+        setShowCommunityNew(state === 'ready');
+      }).catch(() => {});
 
       const q = query(
         collection(db, "conversations"),
@@ -192,9 +199,23 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip="Community Library">
-                <Link href="/community" onClick={() => handleNavClick('/community')}>
-                  <Library />
-                  <span>Community Library</span>
+                <Link href="/community" onClick={() => {
+                  handleNavClick('/community');
+                  if (showCommunityNew) {
+                    setShowCommunityNew(false);
+                    const u = auth.currentUser;
+                    if (u) updateDoc(doc(db, "users", u.uid), { communityIntroState: 'visited' }).catch(() => {});
+                  }
+                }} className="flex items-center justify-between w-full">
+                  <span className="flex items-center gap-2">
+                    <Library />
+                    <span>Community Library</span>
+                  </span>
+                  {showCommunityNew && (
+                    <span className="ml-auto h-[18px] px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">
+                      New
+                    </span>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
