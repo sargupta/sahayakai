@@ -16,7 +16,7 @@ const ExamPaperInputSchema = z.object({
   board: z.string().describe("The education board (e.g., 'CBSE', 'ICSE')."),
   gradeLevel: z.string().describe("The grade level (e.g., 'Class 10')."),
   subject: z.string().describe("The subject (e.g., 'Mathematics')."),
-  chapters: z.array(z.string()).min(1).describe("Selected chapters to cover in the paper."),
+  chapters: z.array(z.string()).describe("Selected chapters to cover. Empty array means cover all chapters for the subject."),
   duration: z.number().optional().describe("Exam duration in minutes. Defaults to blueprint value."),
   maxMarks: z.number().optional().describe("Maximum marks. Defaults to blueprint value."),
   language: z.string().default('English').describe("Language for the paper (e.g., 'English', 'Hindi')."),

@@ -39,12 +39,12 @@ export const UsageTracker = {
         );
     },
 
-    trackTTS(userId: string, characterCount: number, cacheHit: boolean = false) {
+    trackTTS(userId: string, characterCount: number, cacheHit: boolean = false, provider: 'google' | 'sarvam' = 'google') {
         this.logUsage({
             userId,
             type: 'tts_characters',
             value: characterCount,
-            metadata: { cacheHit }
+            metadata: { cacheHit, provider }
         });
     },
 

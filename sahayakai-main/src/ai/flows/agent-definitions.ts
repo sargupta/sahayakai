@@ -10,6 +10,7 @@ const AgentTypeSchema = z.enum([
   'virtualFieldTrip',
   'teacherTraining',
   'rubric',
+  'examPaper',
   'instantAnswer',
   'videoStoryteller',
   'unknown'
@@ -60,6 +61,7 @@ const intentPrompt = ai.definePrompt({
         - 'virtualFieldTrip': Planning virtual field trips, "take me to...".
         - 'teacherTraining': Professional development, classroom management (मैनेजमेंट), coaching.
         - 'rubric': Creating grading rubrics, assessment criteria.
+        - 'examPaper': Creating board exam papers, question papers (प्रश्न पत्र), "CBSE paper", "board pattern paper", "sample paper", "previous year paper", "model paper", "pre-board paper".
         - 'instantAnswer': Direct questions (What is...), definitions, quick facts.
         - 'videoStoryteller': Finding educational videos, YouTube.
         - 'unknown': If the intent is unclear or just a greeting.

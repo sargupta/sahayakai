@@ -231,9 +231,9 @@ function TeacherTrainingContent() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
@@ -241,7 +241,7 @@ function TeacherTrainingContent() {
               <GraduationCap className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="font-headline text-2xl sm:text-3xl">Teacher Training</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">Teacher Training</CardTitle>
           <CardDescription>
             <p>{descriptionLines[0]}</p>
             <p>{descriptionLines[1]}</p>
@@ -265,7 +265,7 @@ function TeacherTrainingContent() {
                             <Textarea
                               placeholder={placeholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[120px] resize-none text-lg"
+                              className="bg-muted/20 min-h-[120px] resize-none text-lg"
                             />
                           </div>
                         </FormControl>
@@ -281,7 +281,7 @@ function TeacherTrainingContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-[#FFF8F0]/60 backdrop-blur-sm p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
+                <div className="lg:col-span-5 space-y-5 border border-border rounded-2xl p-4 md:p-5 bg-card shadow-soft h-fit">
                   <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Settings</h3>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -290,7 +290,7 @@ function TeacherTrainingContent() {
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">Subject</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">Subject</FormLabel>
                           <FormControl>
                             <SubjectSelector
                               onValueChange={field.onChange}
@@ -308,7 +308,7 @@ function TeacherTrainingContent() {
                       name="language"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">Language</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">Language</FormLabel>
                           <FormControl>
                             <LanguageSelector
                               onValueChange={field.onChange}
@@ -321,14 +321,14 @@ function TeacherTrainingContent() {
                     />
                   </div>
 
-                  <div className="bg-blue-50/50 p-4 rounded-md border-l-4 border-blue-500">
+                  <div className="bg-primary/5 p-4 rounded-r-lg border-l-2 border-primary/40">
                     <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                       <div>
-                        <p className="font-semibold text-blue-900 text-sm mb-1">Pro Tip</p>
-                        <p className="text-sm text-blue-800">Be specific about your students' age group and the context (e.g., "Class 5 students in a rural school").</p>
+                        <p className="font-semibold text-foreground text-sm mb-1">Pro Tip</p>
+                        <p className="text-sm text-muted-foreground">Be specific about your students' age group and the context (e.g., "Class 5 students in a rural school").</p>
                       </div>
                     </div>
                   </div>
@@ -351,7 +351,7 @@ function TeacherTrainingContent() {
       </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+        <Card className="mt-8 w-full max-w-4xl bg-muted/20 border-border shadow-xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">Thinking of some helpful advice...</p>
@@ -359,7 +359,16 @@ function TeacherTrainingContent() {
         </Card>
       )}
 
-      {advice && <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} />}
+      {advice && (
+        <>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
+        </>
+      )}
 
       {/* Floating Assistant (Safe Mode) */}
       <VoiceAssistant

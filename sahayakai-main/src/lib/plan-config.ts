@@ -20,7 +20,8 @@ export type GatedFeature =
     | 'visual-aid'
     | 'avatar'
     | 'parent-message'
-    | 'voice-to-text';  // cloud fallback only (browser SpeechRecognition is free)
+    | 'voice-to-text'   // cloud fallback only (browser SpeechRecognition is free)
+    | 'exam-paper';
 
 export interface PlanLimits {
     /** Per-feature monthly limits. -1 = unlimited. */
@@ -53,6 +54,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'avatar': 1,
             'parent-message': 0,    // not available on free
             'voice-to-text': -1,    // browser-first, cloud fallback unlimited for now
+            'exam-paper': 3,
         },
         instantAnswerDailyLimit: 20,
         model: 'gemini-2.0-flash-lite',
@@ -74,6 +76,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'avatar': 2,
             'parent-message': -1,
             'voice-to-text': -1,
+            'exam-paper': 10,
         },
         instantAnswerDailyLimit: -1,
         model: 'gemini-2.0-flash',
@@ -95,6 +98,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'avatar': 5,
             'parent-message': -1,
             'voice-to-text': -1,
+            'exam-paper': -1,
         },
         instantAnswerDailyLimit: -1,
         model: 'gemini-2.0-flash',
@@ -116,6 +120,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'avatar': -1,
             'parent-message': -1,
             'voice-to-text': -1,
+            'exam-paper': -1,
         },
         instantAnswerDailyLimit: -1,
         model: 'gemini-2.0-flash',

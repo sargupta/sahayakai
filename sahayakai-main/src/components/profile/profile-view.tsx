@@ -128,9 +128,9 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
         return (
             <div className="w-full max-w-4xl mx-auto px-4 py-20 flex flex-col items-center gap-6">
                 <Skeleton className="h-20 w-20 rounded-full" />
-                <Skeleton className="h-8 w-48 rounded-lg" />
-                <Skeleton className="h-4 w-64 rounded-lg" />
-                <p className="text-slate-400 font-medium">Loading professional profile...</p>
+                <Skeleton className="h-8 w-48 rounded-xl" />
+                <Skeleton className="h-4 w-64 rounded-xl" />
+                <p className="text-muted-foreground font-medium">Loading professional profile...</p>
             </div>
         );
     }
@@ -138,12 +138,12 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
     if (!firebaseUser && !targetUid) {
         return (
             <div className="w-full max-w-md mx-auto px-4 py-20 text-center space-y-6">
-                <div className="bg-orange-50 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-                    <UserIcon className="h-10 w-10 text-orange-500" />
+                <div className="bg-primary/10 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
+                    <UserIcon className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
                     <h1 className="text-2xl font-bold font-headline">Teacher Sign-in Required</h1>
-                    <p className="text-slate-500">Please sign in with your professional account to view your profile and certifications.</p>
+                    <p className="text-muted-foreground">Please sign in with your professional account to view your profile and certifications.</p>
                 </div>
                 <Button onClick={() => document.getElementById('auth-button')?.click()} className="w-full">
                     Go to Header to Sign In
@@ -155,12 +155,12 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
     if (!profile && !loading) {
         return (
             <div className="w-full max-w-md mx-auto px-4 py-20 text-center space-y-6">
-                <div className="bg-slate-50 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-                    <UserIcon className="h-10 w-10 text-slate-300" />
+                <div className="bg-muted p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
+                    <UserIcon className="h-10 w-10 text-muted-foreground/40" />
                 </div>
                 <div className="space-y-2">
                     <h1 className="text-2xl font-bold font-headline">Profile Not Found</h1>
-                    <p className="text-slate-500">The teacher profile you are looking for does not exist or has been removed.</p>
+                    <p className="text-muted-foreground">The teacher profile you are looking for does not exist or has been removed.</p>
                 </div>
                 <Button onClick={() => window.history.back()} variant="outline" className="w-full">
                     Go Back
@@ -172,13 +172,13 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
             {/* Profile Header - Premium Glassmorphic Card */}
-            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-white/60 backdrop-blur-xl p-6 md:p-10 rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-gradient-to-b from-primary/5 to-transparent backdrop-blur-xl p-6 md:p-10 rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden group">
                 <div className="absolute -top-12 -right-12 opacity-[0.05] transition-transform duration-1000 group-hover:scale-125 group-hover:rotate-12 pointer-events-none">
-                    <GraduationCap className="h-64 w-64 text-slate-900" />
+                    <GraduationCap className="h-64 w-64 text-foreground" />
                 </div>
 
                 <div className="relative">
-                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 ring-8 ring-white/80 shadow-2xl transition-transform duration-500 group-hover:scale-105">
+                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 ring-8 ring-white/80 shadow-2xl transition-transform duration-500">
                         <AvatarImage
                             src={(isOwnProfile ? firebaseUser?.photoURL : profile?.photoURL) || ""}
                             referrerPolicy="no-referrer"
@@ -200,15 +200,15 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
                 <div className="text-center md:text-left space-y-4 flex-1">
                     <div className="space-y-2">
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 font-headline tracking-tighter leading-tight line-clamp-2">
+                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-foreground font-headline tracking-tighter leading-tight line-clamp-2">
                             {(isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || "Educator"}
                         </h1>
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-slate-500 font-medium">
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground font-medium">
                             <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-default">
                                 <Mail className="h-4 w-4" /> {(isOwnProfile ? firebaseUser?.email : profile?.email) || "Contact Hidden"}
                             </span>
                             {profile?.designation && (
-                                <span className="flex items-center gap-1.5 text-slate-400">
+                                <span className="flex items-center gap-1.5 text-muted-foreground/70">
                                     <Briefcase className="h-4 w-4" /> {profile.designation}
                                 </span>
                             )}
@@ -216,7 +216,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     </div>
 
                     {profile?.bio && (
-                        <p className="text-slate-600 max-w-xl italic text-base sm:text-lg leading-relaxed border-l-4 border-primary/20 pl-4 py-1">
+                        <p className="text-foreground/70 max-w-xl italic text-base sm:text-lg leading-relaxed border-l-4 border-primary/20 pl-4 py-1">
                             "{profile.bio}"
                         </p>
                     )}
@@ -231,7 +231,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             </Badge>
                         )}
                         {profile?.schoolName && (
-                            <Badge variant="outline" className="text-slate-600 border-slate-300 bg-white/50 px-4 py-1.5 text-xs font-semibold rounded-full backdrop-blur-sm">
+                            <Badge variant="outline" className="text-foreground/70 border-border bg-white/50 px-4 py-1.5 text-xs font-semibold rounded-full backdrop-blur-sm">
                                 {profile.schoolName}
                             </Badge>
                         )}
@@ -242,7 +242,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <div className="flex flex-col gap-3 w-full sm:min-w-40 sm:w-auto">
                         <Button
                             variant="default"
-                            className="rounded-2xl shadow-lg shadow-primary/20 hover:shadow-xl transition-all gap-2 h-12 text-base font-bold"
+                            className="rounded-2xl shadow-lg shadow-primary/20 hover:shadow-elevated transition-all gap-2 h-12 text-base font-bold"
                             onClick={() => setIsEditModalOpen(true)}
                         >
                             <Settings className="h-5 w-5" />
@@ -259,7 +259,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             </Button>
                         ) : connStatus === 'none' ? (
                             <Button
-                                className="rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-100 flex items-center justify-center gap-2 h-12"
+                                className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center gap-2 h-12"
                                 onClick={async () => {
                                     if (!targetUid) return;
                                     setConnLoading(true);
@@ -274,7 +274,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         ) : connStatus === 'pending_sent' ? (
                             <Button
                                 variant="outline"
-                                className="rounded-full border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 h-12 flex items-center justify-center gap-2"
+                                className="rounded-full border-border text-muted-foreground hover:text-red-500 hover:border-red-200 h-12 flex items-center justify-center gap-2"
                                 onClick={async () => {
                                     if (!targetUid) return;
                                     setConnLoading(true);
@@ -305,7 +305,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    className="rounded-full border-slate-200 text-slate-500 hover:text-red-500 h-12"
+                                    className="rounded-full border-border text-muted-foreground hover:text-red-500 h-12"
                                     onClick={async () => {
                                         if (!connRequestId) return;
                                         setConnLoading(true);
@@ -321,7 +321,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         ) : (
                             <Button
                                 variant="secondary"
-                                className="rounded-full bg-slate-50 border border-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 h-12 flex items-center justify-center gap-2 group/conn"
+                                className="rounded-full bg-muted border border-border text-foreground/70 hover:bg-red-50 hover:text-red-500 h-12 flex items-center justify-center gap-2 group/conn"
                                 onClick={async () => {
                                     if (!targetUid) return;
                                     setConnLoading(true);
@@ -341,7 +341,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             <Button
                                 variant="outline"
                                 onClick={() => router.push(`/messages?with=${targetUid}`)}
-                                className="rounded-full border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
+                                className="rounded-full border-border hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
                             >
                                 <MessageCircle className="h-5 w-5" />
                                 Message
@@ -367,17 +367,17 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
             )}
 
             <div className="grid gap-10 md:grid-cols-12">
-                <Card className="md:col-span-8 bg-white/80 backdrop-blur-sm border-slate-200 shadow-xl rounded-[2rem] overflow-hidden">
-                    <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-8 border-b border-slate-100">
+                <Card className="md:col-span-8 bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-8 border-b border-border">
                         <div className="space-y-1">
-                            <CardTitle className="flex items-center gap-2 text-2xl font-black text-slate-800">
-                                <ShieldCheck className="h-7 w-7 text-orange-500" />
+                            <CardTitle className="flex items-center gap-2 text-2xl font-black text-foreground">
+                                <ShieldCheck className="h-7 w-7 text-primary" />
                                 Professional Certifications
                             </CardTitle>
-                            <CardDescription className="text-base text-slate-500">Government and institutional recognized records.</CardDescription>
+                            <CardDescription className="text-base text-muted-foreground">Government and institutional recognized records.</CardDescription>
                         </div>
                         {isOwnProfile && (
-                            <Button size="sm" className="gap-2 h-10 rounded-xl px-4 font-bold shadow-md hover:scale-105 transition-transform">
+                            <Button size="sm" className="gap-2 h-10 rounded-xl px-4 font-bold shadow-soft transition-transform">
                                 <Plus className="h-4 w-4" /> Add New
                             </Button>
                         )}
@@ -385,31 +385,31 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <CardContent className="p-4 sm:p-8 space-y-6">
                         {certs.length > 0 ? (
                             certs.map((cert) => (
-                                <div key={cert.id} className="group flex items-center justify-between p-3 sm:p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/80 transition-all hover:shadow-md hover:-translate-y-0.5">
+                                <div key={cert.id} className="group flex items-center justify-between p-3 sm:p-5 border border-border rounded-2xl hover:bg-muted/40 transition-all hover:shadow-soft hover:-translate-y-0.5">
                                     <div className="flex items-start gap-3 sm:gap-5">
-                                        <div className="mt-1 p-3 bg-white rounded-xl shadow-sm group-hover:bg-primary/5 transition-colors">
-                                            <BadgeCheck className={cert.status === 'verified' ? "h-6 w-6 text-green-600" : "h-6 w-6 text-slate-300"} />
+                                        <div className="mt-1 p-3 bg-background rounded-xl shadow-soft group-hover:bg-primary/5 transition-colors">
+                                            <BadgeCheck className={cert.status === 'verified' ? "h-6 w-6 text-green-600" : "h-6 w-6 text-muted-foreground/30"} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800 text-lg group-hover:text-primary transition-colors">{cert.certName}</h4>
-                                            <p className="text-slate-500 font-medium">{cert.issuingBody} • {new Date(cert.issueDate).getFullYear()}</p>
+                                            <h4 className="font-bold text-foreground text-lg group-hover:text-primary transition-colors">{cert.certName}</h4>
+                                            <p className="text-muted-foreground font-medium">{cert.issuingBody} • {new Date(cert.issueDate).getFullYear()}</p>
                                         </div>
                                     </div>
                                     <Badge variant="outline" className={cn(
-                                        "capitalize px-3 py-1 text-xs font-bold rounded-lg",
-                                        cert.status === 'verified' ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-500 border-slate-200"
+                                        "capitalize px-3 py-1 text-xs font-bold rounded-xl",
+                                        cert.status === 'verified' ? "bg-green-50 text-green-700 border-green-200" : "bg-muted text-muted-foreground border-border"
                                     )}>
                                         {cert.status}
                                     </Badge>
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-10 sm:py-20 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200">
-                                <Clock className="h-12 w-12 text-slate-300 mx-auto mb-4 opacity-50" />
-                                <p className="text-slate-600 text-lg font-bold">No verified certifications found</p>
-                                <p className="text-slate-400 mt-2 max-w-xs mx-auto">Verified educator credentials build trust in the community.</p>
+                            <div className="text-center py-10 sm:py-20 bg-muted/30 rounded-2xl border-2 border-dashed border-border">
+                                <Clock className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4 opacity-50" />
+                                <p className="text-foreground/70 text-lg font-bold">No verified certifications found</p>
+                                <p className="text-muted-foreground mt-2 max-w-xs mx-auto">Verified educator credentials build trust in the community.</p>
                                 {isOwnProfile && (
-                                    <Button variant="outline" className="mt-6 rounded-xl border-slate-300 hover:bg-white/80 transition-all">
+                                    <Button variant="outline" className="mt-6 rounded-xl border-border hover:bg-background transition-all">
                                         Start Verification
                                     </Button>
                                 )}
@@ -419,27 +419,27 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 </Card>
 
                 <div className="md:col-span-4 space-y-8">
-                    <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-xl rounded-[2rem] overflow-hidden">
-                        <CardHeader className="p-4 sm:p-8 pb-4 border-b border-slate-50">
-                            <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                    <Card className="bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
+                        <CardHeader className="p-4 sm:p-8 pb-4 border-b border-border">
+                            <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                                 <History className="h-6 w-6 text-blue-500" />
                                 Recent Activity
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-8">
                             <div className="space-y-6 relative">
-                                <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-100" />
+                                <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
                                 <div className="relative pl-8 space-y-1 group">
-                                    <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-blue-500 bg-white group-hover:bg-blue-500 transition-colors" />
-                                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Recently</span>
-                                    <p className="font-bold text-slate-700">Participated in Educator Hub</p>
+                                    <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-blue-500 bg-background group-hover:bg-blue-500 transition-colors" />
+                                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Recently</span>
+                                    <p className="font-bold text-foreground/80">Participated in Educator Hub</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {isOwnProfile && (
-                        <Card className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-none shadow-2xl rounded-[2rem] p-4 sm:p-8 space-y-6 relative overflow-hidden group">
+                        <Card className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-none shadow-2xl rounded-2xl p-4 sm:p-8 space-y-6 relative overflow-hidden group">
                             <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12">
                                 <GraduationCap className="h-40 w-40" />
                             </div>
@@ -449,7 +449,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                     Your teaching experience is invaluable. Join the TeacherConnect network to share your lesson plans.
                                 </p>
                             </div>
-                            <Button variant="secondary" className="relative w-full bg-white text-indigo-600 hover:bg-white/90 border-none font-bold h-12 rounded-xl text-base shadow-lg transition-all active:scale-95">
+                            <Button variant="secondary" className="relative w-full bg-white text-indigo-600 hover:bg-white/90 border-none font-bold h-12 rounded-xl text-base shadow-soft transition-all active:scale-95">
                                 Enable Activity Feed
                             </Button>
                         </Card>

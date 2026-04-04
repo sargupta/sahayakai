@@ -98,7 +98,7 @@ function InlineResourcePicker({
         <div className="w-[min(18rem,calc(100vw-2rem))] p-3 space-y-3">
             {step === "pick-type" ? (
                 <>
-                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Share a resource</p>
+                    <p className="text-xs font-bold text-foreground uppercase tracking-wide">Share a resource</p>
                     <div className="grid grid-cols-2 gap-2">
                         {SHAREABLE_TYPES.map((t) => {
                             const Icon = t.icon;
@@ -106,10 +106,10 @@ function InlineResourcePicker({
                                 <button
                                     key={t.type}
                                     onClick={() => selectType(t)}
-                                    className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50 hover:bg-orange-50 hover:border-orange-200 transition-all text-left"
+                                    className="flex items-center gap-2 p-2 rounded-xl border border-border bg-muted/40 hover:bg-primary/5 hover:border-primary/20 transition-all text-left"
                                 >
-                                    <Icon className="h-4 w-4 text-slate-500 shrink-0" />
-                                    <span className="text-xs font-medium text-slate-700">{t.label}</span>
+                                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                                    <span className="text-xs font-medium text-foreground">{t.label}</span>
                                 </button>
                             );
                         })}
@@ -118,10 +118,10 @@ function InlineResourcePicker({
             ) : (
                 <>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setStep("pick-type")} className="text-slate-400 hover:text-slate-600">
+                        <button onClick={() => setStep("pick-type")} className="text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="h-4 w-4" />
                         </button>
-                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        <p className="text-xs font-bold text-foreground uppercase tracking-wide">
                             {SHAREABLE_TYPES.find(t => t.type === draft?.type)?.label}
                         </p>
                     </div>
@@ -131,32 +131,32 @@ function InlineResourcePicker({
                             placeholder="Topic / Title *"
                             value={draft?.title ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, title: e.target.value } : d)}
-                            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <input
                             placeholder="Class (optional)"
                             value={draft?.gradeLevel ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, gradeLevel: e.target.value } : d)}
-                            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <input
                             placeholder="Subject (optional)"
                             value={draft?.subject ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, subject: e.target.value } : d)}
-                            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <textarea
                             placeholder="Add a message (optional)"
                             value={caption}
                             onChange={(e) => setCaption(e.target.value)}
                             rows={2}
-                            className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <Button
                             size="sm"
                             onClick={handleShare}
                             disabled={!draft?.title.trim()}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                            className="w-full bg-primary hover:bg-primary/90 text-white"
                         >
                             Share Resource
                         </Button>
@@ -240,18 +240,18 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     };
 
     return (
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full bg-card">
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 bg-white shrink-0 shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0 shadow-soft">
                 {onBack && (
-                    <button onClick={onBack} className="text-slate-400 hover:text-slate-700 transition-colors mr-1">
+                    <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors mr-1">
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                 )}
                 <div className="relative">
-                    <Avatar className="h-9 w-9 ring-2 ring-slate-100">
+                    <Avatar className="h-9 w-9 ring-2 ring-border">
                         <AvatarImage src={photo ?? undefined} referrerPolicy="no-referrer" />
-                        <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-400 to-amber-500 text-white">
+                        <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary to-primary/70 text-white">
                             {getInitials(title)}
                         </AvatarFallback>
                     </Avatar>
@@ -260,9 +260,9 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                     )}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{title}</p>
+                    <p className="text-sm font-bold text-foreground truncate">{title}</p>
                     {conversation.type === "group" && (
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-[10px] text-muted-foreground">
                             {conversation.participantIds.length} members
                         </p>
                     )}
@@ -270,7 +270,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-border">
                 {/* Load older messages */}
                 {hasMore && !loading && (
                     <div className="flex justify-center py-2">
@@ -279,7 +279,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             size="sm"
                             onClick={loadMore}
                             disabled={loadingMore}
-                            className="text-xs text-slate-400 hover:text-slate-600"
+                            className="text-xs text-muted-foreground hover:text-foreground"
                         >
                             {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                             {loadingMore ? 'Loading...' : 'Load older messages'}
@@ -288,15 +288,15 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                 )}
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
-                        <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
                     </div>
                 ) : displayMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                        <div className="p-4 bg-orange-50 rounded-full">
-                            <Send className="h-8 w-8 text-orange-300" />
+                        <div className="p-4 bg-primary/5 rounded-full">
+                            <Send className="h-8 w-8 text-primary/40" />
                         </div>
-                        <p className="text-sm font-bold text-slate-700">Start the conversation</p>
-                        <p className="text-xs text-slate-400">Send a message or share a teaching resource.</p>
+                        <p className="text-sm font-bold text-foreground">Start the conversation</p>
+                        <p className="text-xs text-muted-foreground">Send a message or share a teaching resource.</p>
                     </div>
                 ) : (
                     displayMessages.map((msg, idx) => {
@@ -319,7 +319,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
             </div>
 
             {/* Input bar */}
-            <div className="px-4 py-3 border-t border-slate-100 bg-white shrink-0">
+            <div className="px-4 py-3 border-t border-border bg-card shrink-0">
                 {user ? (
                     <div className="flex items-end gap-2">
                         {/* Resource share button */}
@@ -328,17 +328,17 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-10 w-10 rounded-xl text-slate-400 hover:text-orange-500 hover:bg-orange-50 shrink-0"
+                                    className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 shrink-0"
                                     title="Share a resource"
                                 >
                                     <Paperclip className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="p-0 rounded-2xl shadow-xl border-slate-200">
+                            <PopoverContent side="top" align="start" className="p-0 rounded-2xl shadow-xl border-border">
                                 <div className="flex items-center justify-between px-3 pt-3">
-                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Share</span>
+                                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Share</span>
                                     <button onClick={() => setResourceOpen(false)}>
-                                        <X className="h-3.5 w-3.5 text-slate-400" />
+                                        <X className="h-3.5 w-3.5 text-muted-foreground" />
                                     </button>
                                 </div>
                                 <InlineResourcePicker
@@ -355,7 +355,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             onChange={(e) => { setInput(e.target.value); setTyping(); }}
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
-                            className="flex-1 min-h-[40px] max-h-32 text-sm bg-slate-50 border-slate-200 rounded-xl resize-none focus-visible:ring-orange-400/30 placeholder:text-slate-400 py-2.5"
+                            className="flex-1 min-h-[40px] max-h-32 text-sm bg-muted/40 border-border rounded-xl resize-none focus-visible:ring-primary/30 placeholder:text-muted-foreground py-2.5"
                             rows={1}
                             maxLength={1000}
                         />
@@ -370,13 +370,13 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             size="icon"
                             onClick={() => handleSend(input)}
                             disabled={!input.trim()}
-                            className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-sm shrink-0"
+                            className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-soft shrink-0"
                         >
                             <Send className="h-4 w-4" />
                         </Button>
                     </div>
                 ) : (
-                    <p className="text-center text-xs text-slate-400 font-medium py-1">Sign in to send messages.</p>
+                    <p className="text-center text-xs text-muted-foreground font-medium py-1">Sign in to send messages.</p>
                 )}
             </div>
         </div>

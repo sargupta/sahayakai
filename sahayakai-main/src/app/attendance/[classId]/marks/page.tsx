@@ -201,7 +201,7 @@ export default function MarksEntryPage() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
         );
     }
@@ -221,20 +221,20 @@ export default function MarksEntryPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                    <h1 className="text-xl font-black text-foreground font-headline tracking-tight">
                         Enter Marks {cls ? `\u2014 ${cls.name}` : ""}
                     </h1>
-                    <p className="text-sm text-slate-400 mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         Fill in assessment details and student marks
                     </p>
                 </div>
             </div>
 
             {/* Assessment Metadata */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-border/50 p-4 space-y-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
-                    <ClipboardList className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm font-bold text-slate-700">Assessment Details</span>
+                    <ClipboardList className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-bold text-foreground">Assessment Details</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -328,31 +328,31 @@ export default function MarksEntryPage() {
             {/* Marks Grid */}
             {students.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                    <p className="text-sm font-bold text-slate-700">No students in this class</p>
-                    <p className="text-xs text-slate-400">Add students first from the class page.</p>
+                    <p className="text-sm font-bold text-foreground">No students in this class</p>
+                    <p className="text-xs text-muted-foreground">Add students first from the class page.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-border/50 shadow-soft overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-slate-500 w-12">Roll</th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-slate-500 min-w-[120px]">Name</th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-slate-500 w-24">
-                                        Marks <span className="font-normal text-slate-400">/{maxMarks}</span>
+                                <tr className="bg-muted/20 border-b border-border/50">
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-12">Roll</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[120px]">Name</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-24">
+                                        Marks <span className="font-normal text-muted-foreground">/{maxMarks}</span>
                                     </th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-slate-500 w-20">Grade</th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-slate-500 min-w-[140px]">Remarks</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-20">Grade</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[140px]">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {sortedStudents.map((s) => {
                                     const entry = marksMap[s.id] || { marks: "", grade: "", remarks: "" };
                                     return (
-                                        <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                                            <td className="px-3 py-2 text-slate-500 tabular-nums">{s.rollNumber}</td>
-                                            <td className="px-3 py-2 font-medium text-slate-800 truncate max-w-[160px]">{s.name}</td>
+                                        <tr key={s.id} className="border-b border-border/50 hover:bg-muted/20">
+                                            <td className="px-3 py-2 text-muted-foreground tabular-nums">{s.rollNumber}</td>
+                                            <td className="px-3 py-2 font-medium text-foreground truncate max-w-[160px]">{s.name}</td>
                                             <td className="px-3 py-2">
                                                 <Input
                                                     type="number"
@@ -395,7 +395,7 @@ export default function MarksEntryPage() {
                     <Button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
+                        className="bg-primary hover:bg-primary/90 text-white gap-2"
                     >
                         {saving ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

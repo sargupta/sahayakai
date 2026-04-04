@@ -67,6 +67,12 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
       },
+      boxShadow: {
+        soft: '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.03)',
+        elevated: '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
+        glow: '0 0 0 3px hsl(28 70% 59% / 0.12), 0 4px 12px -2px rgb(0 0 0 / 0.08)',
+        'inner-soft': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.04)',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -109,6 +115,9 @@ export default {
             'li': {
               marginTop: theme('spacing.2'),
               marginBottom: theme('spacing.2'),
+            },
+            'h1,h2,h3': {
+              fontFamily: theme('fontFamily.headline').join(','),
             },
           },
         },

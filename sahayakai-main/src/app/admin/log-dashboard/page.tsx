@@ -52,11 +52,11 @@ export default function AdminLogDashboard() {
         switch (severity.toUpperCase()) {
             case 'ERROR':
             case 'CRITICAL':
-                return <Badge variant="destructive" className="gap-1"><AlertCircle className="h-3 w-3" /> {severity}</Badge>;
+                return <Badge variant="destructive" className="gap-1 px-2.5 py-1"><AlertCircle className="h-3 w-3" /> {severity}</Badge>;
             case 'WARNING':
-                return <Badge className="bg-amber-500 text-white gap-1 hover:bg-amber-600 border-none"><AlertTriangle className="h-3 w-3" /> {severity}</Badge>;
+                return <Badge className="bg-amber-500 text-white gap-1 px-2.5 py-1 hover:bg-amber-600 border-none"><AlertTriangle className="h-3 w-3" /> {severity}</Badge>;
             default:
-                return <Badge variant="secondary" className="gap-1"><Info className="h-3 w-3" /> {severity}</Badge>;
+                return <Badge variant="secondary" className="gap-1 px-2.5 py-1"><Info className="h-3 w-3" /> {severity}</Badge>;
         }
     };
 
@@ -68,7 +68,7 @@ export default function AdminLogDashboard() {
         <div className="container mx-auto py-8 px-4 max-w-7xl animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-headline font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                         System Logs
                     </h1>
                     <p className="text-muted-foreground mt-1">
@@ -91,7 +91,7 @@ export default function AdminLogDashboard() {
 
             <div className="grid grid-cols-1 gap-6">
                 {/* Filters Card */}
-                <Card className="border-none shadow-sm bg-secondary/30 backdrop-blur-md">
+                <Card className="border-none shadow-soft bg-secondary/30 backdrop-blur-md">
                     <CardContent className="p-4 flex flex-wrap items-center gap-4">
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -101,10 +101,14 @@ export default function AdminLogDashboard() {
                             {['ALL', 'INFO', 'WARNING', 'ERROR'].map((lvl) => (
                                 <Button
                                     key={lvl}
-                                    variant={severityFilter === lvl ? 'default' : 'ghost'}
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setSeverityFilter(lvl)}
-                                    className="rounded-full px-4"
+                                    className={
+                                        severityFilter === lvl
+                                            ? 'rounded-full px-4 bg-foreground text-background border-foreground hover:bg-foreground/90'
+                                            : 'rounded-full px-4 bg-transparent border-border text-muted-foreground hover:bg-muted/40'
+                                    }
                                 >
                                     {lvl}
                                 </Button>
@@ -158,7 +162,7 @@ export default function AdminLogDashboard() {
                                                 <div className="mr-3 text-muted-foreground/50">
                                                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                                 </div>
-                                                <div className="w-48 flex-shrink-0 text-xs font-mono text-muted-foreground">
+                                                <div className="w-48 flex-shrink-0 text-xs font-mono text-muted-foreground tabular-nums">
                                                     {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')}
                                                 </div>
                                                 <div className="w-32 flex-shrink-0">

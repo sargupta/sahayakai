@@ -37,7 +37,7 @@ const allGradeLevels: Record<string, string[]> = {
 const gradeLevelMap: Record<string, string> = {
   "Class 1": "Class 1", "1st Grade": "Class 1", "पहली कक्षा": "Class 1", "प्रथम শ্রেণী": "Class 1", "ఒకటవ తరగతి": "Class 1", "इयत्ता पहिली": "Class 1", "முதலாம் வகுப்பு": "Class 1", "પ્રથમ ધોરણ": "Class 1", "ಒಂದನೇ ತರಗತಿ": "Class 1",
   "Class 2": "Class 2", "2nd Grade": "Class 2", "दूसरी कक्षा": "Class 2", "द्वितीय শ্রেণী": "Class 2", "రెండవ తరగతి": "Class 2", "इयत्ता दुसरी": "Class 2", "இரண்டாம் வகுப்பு": "Class 2", "બીજું ધોરણ": "Class 2", "ಎರಡನೇ ತರಗತಿ": "Class 2",
-  "Class 3": "Class 3", "3rd Grade": "Class 3", "तीसरी कक्षा": "Class 3", "তৃতীয় শ্রেণী": "Class 3", "మూడవ తరగತಿ": "Class 3", "इयत्ता तिसरी": "Class 3", "மூன்றாம் வகுப்பு": "Class 3", "ત્રીજું ધોરણ": "Class 3", "ಮೂರನೇ ತರಗತಿ": "Class 3",
+  "Class 3": "Class 3", "3rd Grade": "Class 3", "तीसरी कक्षा": "Class 3", "তৃতীয় শ্রেণী": "Class 3", "మూడవ తరగతి": "Class 3", "इयत्ता तिसरी": "Class 3", "மூன்றாம் வகுப்பு": "Class 3", "ત્રીજું ધોરણ": "Class 3", "ಮೂರನೇ ತರಗತಿ": "Class 3",
   "Class 4": "Class 4", "4th Grade": "Class 4", "चौथी कक्षा": "Class 4", "চতুর্থ শ্রেণী": "Class 4", "నాల్గవ తరగతి": "Class 4", "इयत्ता चौथी": "Class 4", "நான்காம் வகுப்பு": "Class 4", "ચોથું ધોરણ": "Class 4", "ನಾಲ್ಕನೇ ತರಗತಿ": "Class 4",
   "Class 5": "Class 5", "5th Grade": "Class 5", "पांचवीं कक्षा": "Class 5", "পঞ্চম শ্রেণী": "Class 5", "ఐదవ తరగతి": "Class 5", "इयत्ता पाचवी": "Class 5", "ஐந்தாம் வகுப்பு": "Class 5", "પાંચમું ધોરણ": "Class 5", "ಐದನೇ ತರಗತಿ": "Class 5",
   "Class 6": "Class 6", "6th Grade": "Class 6", "छठी कक्षा": "Class 6", "ষষ্ঠ শ্রেণী": "Class 6", "ఆరవ తరగతి": "Class 6", "इयत्ता सहावी": "Class 6", "ஆறாம் வகுப்பு": "Class 6", "છઠ્ઠું ધોરણ": "Class 6", "ಆರನೇ ತರಗತಿ": "Class 6",
@@ -77,7 +77,7 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
     const translatedValue = getTranslatedGrade(singleValue, language);
     return (
       <Select onValueChange={(val) => onValueChange([getEnglishGrade(val)])} value={translatedValue}>
-        <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
+        <SelectTrigger className="w-full bg-card border-border shadow-soft rounded-xl backdrop-blur-sm">
           <SelectValue placeholder={t.placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -107,7 +107,7 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-full bg-white/50 backdrop-blur-sm flex justify-between font-normal">
+        <Button variant="outline" className="w-full bg-card border-border shadow-soft rounded-xl backdrop-blur-sm flex justify-between font-normal">
           <span className="truncate">{displayValue}</span>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
@@ -124,7 +124,7 @@ export const GradeLevelSelector: FC<GradeLevelSelectorProps> = ({ onValueChange,
               checked={isSelected}
               onCheckedChange={(checked) => handleCheckedChange(grade, Boolean(checked))}
               onSelect={(e) => e.preventDefault()}
-              className={isSelected ? "bg-orange-50 font-medium text-orange-900" : ""}
+              className={isSelected ? "bg-primary/10 font-medium text-primary" : ""}
             >
               {grade}
             </DropdownMenuCheckboxItem>

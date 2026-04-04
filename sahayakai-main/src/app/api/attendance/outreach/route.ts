@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import type { ParentOutreach, OutreachReason, CallStatus } from '@/types/attendance';
 import type { Language } from '@/types';
+import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
     // Plan check
     const profile = await dbAdapter.getUser(userId);
     if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    if (profile.planType !== 'pro' && profile.planType !== 'institution') {
+    if (!hasAdvancedPlan(profile.planType)) {
         return NextResponse.json({ error: 'PREMIUM_REQUIRED' }, { status: 403 });
     }
 

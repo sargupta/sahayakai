@@ -67,12 +67,12 @@ export default function AttendancePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Attendance</h1>
-                    <p className="text-sm text-slate-400 mt-0.5">Manage classes and track daily attendance</p>
+                    <h1 className="text-2xl font-black text-foreground font-headline tracking-tight">Attendance</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Manage classes and track daily attendance</p>
                 </div>
                 <Button
                     onClick={() => setCreateOpen(true)}
-                    className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                 >
                     <Plus className="h-4 w-4" />
                     New Class
@@ -82,22 +82,22 @@ export default function AttendancePage() {
             {/* Class list */}
             {loading ? (
                 <div className="flex justify-center py-20">
-                    <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/40" />
                 </div>
             ) : classes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                    <div className="p-5 bg-orange-50 rounded-full">
-                        <ClipboardList className="h-10 w-10 text-orange-300" />
+                    <div className="rounded-2xl p-4 bg-primary/8">
+                        <ClipboardList className="h-10 w-10 text-primary/40" />
                     </div>
                     <div>
-                        <p className="text-base font-black text-slate-800">No classes yet</p>
-                        <p className="text-sm text-slate-400 mt-1 max-w-xs">
+                        <p className="text-base font-black text-foreground">No classes yet</p>
+                        <p className="text-sm text-muted-foreground mt-1 max-w-xs">
                             Create your first class and add students — then take daily attendance in seconds.
                         </p>
                     </div>
                     <Button
                         onClick={() => setCreateOpen(true)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                     >
                         <Plus className="h-4 w-4" />
                         Create First Class
@@ -106,28 +106,28 @@ export default function AttendancePage() {
             ) : (
                 <div className="grid gap-3">
                     {classes.map((cls) => (
-                        <button
+                        <div
                             key={cls.id}
                             onClick={() => router.push(`/attendance/${cls.id}`)}
-                            className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition-all text-left group shadow-sm"
+                            className="w-full flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group shadow-soft cursor-pointer"
                         >
-                            <div className="p-3 bg-orange-100 rounded-xl shrink-0">
-                                <GraduationCap className="h-5 w-5 text-orange-600" />
+                            <div className="p-3 bg-primary/10 rounded-xl shrink-0">
+                                <GraduationCap className="h-5 w-5 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-base font-black text-slate-900 truncate">{cls.name}</p>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                <p className="text-base font-black text-foreground truncate">{cls.name}</p>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                     <span>{cls.gradeLevel}</span>
                                     <span>·</span>
                                     <span>{cls.subject}</span>
                                     {cls.section && <><span>·</span><span>Section {cls.section}</span></>}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">
-                                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                         <Users className="h-3 w-3" />
                                         <span>{cls.studentCount} students</span>
                                     </div>
-                                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                         <CalendarDays className="h-3 w-3" />
                                         <span>{cls.academicYear}</span>
                                     </div>
@@ -137,7 +137,7 @@ export default function AttendancePage() {
                                 <Button
                                     variant="ghost" size="icon"
                                     className={cn(
-                                        "h-8 w-8 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity",
+                                        "h-8 w-8 text-muted-foreground/40 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity",
                                     )}
                                     onClick={(e) => handleDelete(cls, e)}
                                     disabled={deleting === cls.id}
@@ -147,9 +147,9 @@ export default function AttendancePage() {
                                         : <Trash2 className="h-3.5 w-3.5" />
                                     }
                                 </Button>
-                                <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-orange-400 transition-colors" />
+                                <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
                             </div>
-                        </button>
+                        </div>
                     ))}
                 </div>
             )}

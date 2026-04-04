@@ -42,10 +42,10 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
 
     return (
         <Card
-            className="group overflow-hidden border-slate-100/60 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer bg-white rounded-xl active:scale-[0.98]"
+            className="group overflow-hidden border-border hover:border-primary/40 hover:shadow-elevated transition-all duration-500 cursor-pointer bg-white rounded-xl active:scale-[0.98]"
             onClick={() => onSelect?.(video)}
         >
-            <div className="relative aspect-video overflow-hidden bg-slate-50">
+            <div className="relative aspect-video overflow-hidden bg-muted">
                 {imgError ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-white gap-2">
                         <BookOpen className="w-8 h-8 text-primary/30" />
@@ -57,7 +57,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                     <img
                         src={imgSrc}
                         alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out"
                         onError={handleImgError}
                         loading="lazy"
                     />
@@ -65,7 +65,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
 
                 {/* Official Badge */}
                 {isOfficial && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-sm border border-primary/10">
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-soft border border-primary/10">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <span className="text-[10px] font-bold text-primary uppercase tracking-tight">Official source</span>
                     </div>
@@ -86,21 +86,21 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 )}
             </div>
 
-            <CardContent className="p-4 bg-gradient-to-b from-white to-slate-50/30">
+            <CardContent className="p-4 bg-gradient-to-b from-white to-muted/30">
                 <h3 className="font-headline font-semibold text-sm leading-tight line-clamp-2 mb-2 group-hover:text-primary transition-colors min-h-[2.5rem] tracking-tight">
                     {video.title}
                 </h3>
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
+                <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
                     <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                        <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
                             {video.channelTitle[0]?.toUpperCase()}
                         </div>
-                        <p className="text-[11px] font-medium text-slate-500 truncate max-w-[100px]">
+                        <p className="text-[11px] font-medium text-muted-foreground truncate max-w-[100px]">
                             {video.channelTitle}
                         </p>
                     </div>
                     {video.viewCount && (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
                             <Eye className="w-3 h-3 stroke-[2.5]" />
                             {video.viewCount}
                         </div>

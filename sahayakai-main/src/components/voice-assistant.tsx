@@ -43,43 +43,43 @@ const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color:
     "lesson-plan": {
         route: "/lesson-plan",
         icon: <BookOpen className="w-4 h-4" />,
-        color: "bg-blue-50 border-blue-200 text-blue-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Lesson Plan",
     },
     "quiz": {
         route: "/quiz-generator",
         icon: <ClipboardList className="w-4 h-4" />,
-        color: "bg-green-50 border-green-200 text-green-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Quiz",
     },
     "worksheet": {
         route: "/worksheet-wizard",
         icon: <FileText className="w-4 h-4" />,
-        color: "bg-purple-50 border-purple-200 text-purple-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Worksheet",
     },
     "visual-aid": {
         route: "/visual-aid-designer",
         icon: <Lightbulb className="w-4 h-4" />,
-        color: "bg-yellow-50 border-yellow-200 text-yellow-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Visual Aid",
     },
     "video-storyteller": {
         route: "/video-storyteller",
         icon: <Video className="w-4 h-4" />,
-        color: "bg-red-50 border-red-200 text-red-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Videos",
     },
     "teacher-training": {
         route: "/teacher-training",
         icon: <GraduationCap className="w-4 h-4" />,
-        color: "bg-orange-50 border-orange-200 text-orange-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Teacher Training",
     },
     "virtual-field-trip": {
         route: "/virtual-field-trip",
         icon: <Map className="w-4 h-4" />,
-        color: "bg-teal-50 border-teal-200 text-teal-700",
+        color: "bg-primary/5 border-primary/20 text-primary",
         label: "Virtual Field Trip",
     },
 };
@@ -174,7 +174,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
         } catch (error) {
             setMessages(prev => [...prev, {
                 role: "ai",
-                content: "Main abhi ek chhoti mushkil se guzar rahi hoon. Thodi der mein dobara try karein! 🙏",
+                content: "Main abhi ek chhoti mushkil se guzar rahi hoon. Thodi der mein dobara try karein!",
                 action: null,
             }]);
         } finally {
@@ -202,13 +202,13 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
             <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="relative h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 hover:scale-110 transition-all pointer-events-auto border-2 border-white flex items-center justify-center group"
+                    className="relative h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 hover:scale-110 transition-all pointer-events-auto border-2 border-background flex items-center justify-center group"
                     aria-label="Open VIDYA Mentor"
                 >
                     <Brain className="h-6 w-6 text-white" />
-                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-background animate-pulse" />
                     {/* Tooltip */}
-                    <div className="absolute right-16 bottom-1 bg-slate-800 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className="absolute right-16 bottom-1 bg-foreground text-background text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         Ask VIDYA
                     </div>
                 </button>
@@ -219,40 +219,40 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
     // ─── Open State ──────────────────────────────────────────────────────────
     return (
         <div className="fixed bottom-6 right-6 z-50 w-[360px] md:w-[400px] animate-in slide-in-from-bottom-10 fade-in duration-300 pointer-events-none">
-            <Card className="border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden bg-white/98 backdrop-blur-xl pointer-events-auto rounded-2xl flex flex-col">
+            <Card className="bg-card/95 backdrop-blur-sm border border-border shadow-elevated overflow-hidden pointer-events-auto rounded-2xl flex flex-col">
                 {/* Saffron Top Bar */}
                 <div className="h-1.5 w-full bg-primary" />
 
                 {/* Header */}
-                <div className="bg-white px-4 py-3 flex justify-between items-center border-b border-slate-100 shrink-0">
+                <div className="bg-card px-4 py-3 flex justify-between items-center border-b border-border shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
                         <div className="relative shrink-0">
                             <div className="p-1.5 rounded-xl bg-primary/10">
                                 <Brain className="h-4 w-4 text-primary" />
                             </div>
-                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-green-400 rounded-full border border-white" />
+                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-green-400 rounded-full border border-background" />
                         </div>
                         <div className="min-w-0">
-                            <p className="font-bold text-slate-800 tracking-tight text-sm leading-none">VIDYA</p>
-                            <p className="text-[10px] text-slate-400 leading-none mt-0.5">Your Learning Mentor · विद्या</p>
+                            <p className="font-bold text-foreground tracking-tight text-sm leading-none">VIDYA</p>
+                            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Your Learning Mentor · विद्या</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         {messages.length > 0 && (
                             <Button variant="ghost" size="icon" onClick={resetSession} title="Reset Session"
-                                className="h-8 w-8 text-slate-400 hover:text-destructive hover:bg-destructive/10 rounded-full">
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                         )}
                         <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}
-                            className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full h-8 w-8">
+                            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-full h-8 w-8">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
 
                 {/* Chat Area */}
-                <CardContent className="p-0 flex flex-col bg-slate-50/30" style={{ height: "430px" }}>
+                <CardContent className="p-0 flex flex-col bg-muted/30" style={{ height: "430px" }}>
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth" ref={scrollRef}>
                         {messages.length === 0 && (
@@ -261,20 +261,20 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                     <Brain className="h-10 w-10 text-primary/50" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-800 text-base">Namaste! Main VIDYA hoon 🙏</p>
-                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    <p className="font-bold text-foreground text-base">Namaste! Main VIDYA hoon</p>
+                                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                                         Your Senior Pedagogical Mentor. Ask me to create lesson plans, quizzes, worksheets, visual aids, and more — I'll take you right there!
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 w-full mt-2">
                                     {[
-                                        { text: "Lesson plan banana hai", icon: "📝" },
-                                        { text: "Quiz chahiye mujhe", icon: "📋" },
-                                        { text: "Visual aid banao", icon: "🖼️" },
-                                        { text: "Videos dikhao", icon: "🎬" },
+                                        { text: "Lesson plan banana hai", icon: <FileText className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Quiz chahiye mujhe", icon: <ClipboardList className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Visual aid banao", icon: <Lightbulb className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Videos dikhao", icon: <Video className="w-3.5 h-3.5 inline-block shrink-0" /> },
                                     ].map(s => (
                                         <button key={s.text} onClick={() => sendMessage(s.text)}
-                                            className="text-left text-xs p-2 rounded-xl border border-slate-200 bg-white hover:bg-primary/5 hover:border-primary/30 transition-all text-slate-600 font-medium">
+                                            className="text-left text-xs p-2 rounded-xl border border-border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all text-foreground font-medium flex items-center gap-1.5">
                                             {s.icon} {s.text}
                                         </button>
                                     ))}
@@ -288,13 +288,13 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                 msg.role === "user" ? "items-end" : "items-start"
                             )}>
                                 <div className={cn(
-                                    "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm",
+                                    "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm shadow-soft",
                                     msg.role === "user"
                                         ? "bg-primary text-white rounded-br-none"
-                                        : "bg-white border border-slate-100 text-slate-700 rounded-bl-none"
+                                        : "bg-card border border-border text-foreground rounded-bl-none"
                                 )}>
                                     {msg.role === "ai" ? (
-                                        <ReactMarkdown className="prose prose-sm max-w-none prose-p:leading-relaxed prose-p:my-0.5 prose-headings:text-primary prose-strong:text-slate-800">
+                                        <ReactMarkdown className="prose prose-sm max-w-none prose-p:leading-relaxed prose-p:my-0.5 prose-headings:text-primary prose-strong:text-foreground">
                                             {msg.content}
                                         </ReactMarkdown>
                                     ) : msg.content}
@@ -310,20 +310,20 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
 
                         {isLoading && (
                             <div className="flex justify-start animate-pulse">
-                                <div className="bg-white border border-slate-100 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
+                                <div className="bg-card border border-border px-4 py-3 rounded-2xl rounded-bl-none shadow-soft flex items-center gap-2">
                                     <div className="flex gap-1">
                                         <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
                                         <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.15s]" />
                                         <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.3s]" />
                                     </div>
-                                    <span className="text-xs text-slate-400 font-medium">VIDYA is thinking...</span>
+                                    <span className="text-xs text-muted-foreground font-medium">VIDYA is thinking...</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-3 bg-white border-t border-slate-100 shrink-0">
+                    <div className="p-3 bg-card border-t border-border shrink-0">
                         {/* Text Input */}
                         <div className="flex items-center gap-2 mb-2">
                             <input
@@ -333,7 +333,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                 onChange={e => setTextInput(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(textInput)}
                                 placeholder="Type or speak to VIDYA..."
-                                className="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 placeholder:text-slate-400"
+                                className="flex-1 text-sm bg-muted/50 border border-border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 placeholder:text-muted-foreground"
                             />
                             <Button
                                 size="icon"

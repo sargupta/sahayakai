@@ -229,10 +229,10 @@ export function ContactParentModal({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-slate-900 font-black">
+                    <DialogTitle className="text-foreground font-headline font-black">
                         Contact {student.name}&apos;s Parent
                     </DialogTitle>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                         {student.parentPhone} · {student.parentLanguage}
                     </p>
                 </DialogHeader>
@@ -243,7 +243,7 @@ export function ContactParentModal({
                     <SummaryView callResult={callResult} student={student} onClose={handleClose} />
                 ) : step === "reason" ? (
                     <div className="space-y-3 mt-2">
-                        <p className="text-xs text-slate-500 font-medium">Select reason for outreach:</p>
+                        <p className="text-xs text-muted-foreground font-medium">Select reason for outreach:</p>
                         <div className="grid grid-cols-1 gap-2">
                             {REASONS.map((r) => {
                                 const Icon = r.icon;
@@ -254,26 +254,26 @@ export function ContactParentModal({
                                         className={cn(
                                             "flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
                                             reason === r.value
-                                                ? "border-orange-400 bg-orange-50"
-                                                : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                                                ? "border-primary/20 bg-primary/8"
+                                                : "border-border bg-background hover:border-border hover:bg-muted/40"
                                         )}
                                     >
                                         <div className={cn(
                                             "p-2 rounded-lg shrink-0",
-                                            reason === r.value ? "bg-orange-100" : "bg-slate-100"
+                                            reason === r.value ? "bg-primary/15" : "bg-muted/40"
                                         )}>
-                                            <Icon className={cn("h-4 w-4", reason === r.value ? "text-orange-600" : "text-slate-500")} />
+                                            <Icon className={cn("h-4 w-4", reason === r.value ? "text-primary" : "text-muted-foreground")} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-800">{r.label}</p>
-                                            <p className="text-xs text-slate-400">{r.description}</p>
+                                            <p className="text-sm font-semibold text-foreground">{r.label}</p>
+                                            <p className="text-xs text-muted-foreground">{r.description}</p>
                                         </div>
                                     </button>
                                 );
                             })}
                         </div>
                         <Button
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2"
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-2"
                             disabled={!reason}
                             onClick={() => setStep("note")}
                         >
@@ -297,7 +297,7 @@ export function ContactParentModal({
                         <div className="flex gap-2">
                             <Button variant="outline" className="flex-1" onClick={() => setStep("reason")}>Back</Button>
                             <Button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={generateMessage}
                                 disabled={generating}
                             >
@@ -311,13 +311,13 @@ export function ContactParentModal({
                 ) : (
                     /* Review step */
                     <div className="space-y-4 mt-2">
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap max-h-56 overflow-y-auto">
+                        <div className="p-4 bg-muted/40 rounded-xl border border-border text-sm text-foreground leading-relaxed whitespace-pre-wrap max-h-56 overflow-y-auto">
                             {generatedMessage}
                         </div>
 
                         <Button
                             variant="ghost" size="sm"
-                            className="text-xs text-slate-500 w-full"
+                            className="text-xs text-muted-foreground w-full"
                             onClick={generateMessage}
                             disabled={generating}
                         >
@@ -377,12 +377,12 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
                 </div>
                 <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full animate-pulse" />
             </div>
-            <p className="font-bold text-slate-800">
+            <p className="font-bold text-foreground">
                 {!status || status === 'initiated' ? 'Calling...' :
                  status === 'ringing' ? 'Ringing...' :
                  'Conversation in progress'}
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
                 AI agent is talking with {student.name}&apos;s parent
             </p>
             {turns > 1 && (
@@ -391,7 +391,7 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
                     {turns} exchanges
                 </Badge>
             )}
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Summary will appear when the call ends
             </div>
@@ -413,8 +413,8 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                 <div className="p-4 bg-emerald-50 rounded-full">
                     <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                 </div>
-                <p className="font-bold text-slate-800">Message copied!</p>
-                <p className="text-xs text-slate-400">Outreach logged for {student.name}. Paste in WhatsApp to send.</p>
+                <p className="font-bold text-foreground">Message copied!</p>
+                <p className="text-xs text-muted-foreground">Outreach logged for {student.name}. Paste in WhatsApp to send.</p>
                 <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
             </div>
         );
@@ -426,11 +426,11 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                 <div className="p-4 bg-amber-50 rounded-full">
                     <Phone className="h-8 w-8 text-amber-500" />
                 </div>
-                <p className="font-bold text-slate-800">
+                <p className="font-bold text-foreground">
                     {callResult?.callStatus === 'busy' ? 'Line was busy' :
                      callResult?.callStatus === 'no_answer' ? 'No answer' : 'Call could not connect'}
                 </p>
-                <p className="text-xs text-slate-400">You can try again later or use WhatsApp instead.</p>
+                <p className="text-xs text-muted-foreground">You can try again later or use WhatsApp instead.</p>
                 <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
             </div>
         );
@@ -454,9 +454,9 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
             {summary ? (
                 <div className="space-y-3">
                     {/* Parent response */}
-                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <p className="text-xs font-semibold text-slate-500 mb-1">Parent Response</p>
-                        <p className="text-sm text-slate-700">{summary.parentResponse}</p>
+                    <div className="p-3 bg-muted/40 rounded-lg border border-border">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">Parent Response</p>
+                        <p className="text-sm text-foreground">{summary.parentResponse}</p>
                     </div>
 
                     {/* Concerns */}
@@ -488,14 +488,14 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     )}
 
                     {/* Action items for teacher */}
-                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
-                        <p className="text-xs font-semibold text-orange-600 mb-1 flex items-center gap-1">
+                    <div className="p-3 bg-primary/8 rounded-lg border border-primary/20">
+                        <p className="text-xs font-semibold text-primary mb-1 flex items-center gap-1">
                             <ClipboardList className="h-3 w-3" /> Your Action Items
                         </p>
                         <ul className="space-y-1">
                             {summary.actionItemsForTeacher.map((a, i) => (
-                                <li key={i} className="text-xs text-orange-800 flex gap-2">
-                                    <ArrowRight className="h-3 w-3 shrink-0 mt-0.5 text-orange-500" /> {a}
+                                <li key={i} className="text-xs text-primary flex gap-2">
+                                    <ArrowRight className="h-3 w-3 shrink-0 mt-0.5 text-primary" /> {a}
                                 </li>
                             ))}
                         </ul>
@@ -524,7 +524,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     )}
                 </div>
             ) : (
-                <div className="flex items-center justify-center gap-2 text-xs text-slate-400 py-4">
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-4">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Generating summary...
                 </div>
@@ -533,7 +533,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
             {/* Transcript (collapsible) */}
             {transcript.length > 1 && (
                 <details className="group">
-                    <summary className="text-xs font-semibold text-slate-500 cursor-pointer hover:text-slate-700 flex items-center gap-1">
+                    <summary className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
                         <MessageSquare className="h-3 w-3" />
                         View conversation transcript ({transcript.length} messages)
                     </summary>
@@ -541,11 +541,11 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                         {transcript.map((turn, i) => (
                             <div key={i} className={cn(
                                 "flex gap-2 text-xs",
-                                turn.role === 'agent' ? "text-slate-600" : "text-slate-800"
+                                turn.role === 'agent' ? "text-muted-foreground" : "text-foreground"
                             )}>
                                 {turn.role === 'agent'
-                                    ? <Bot className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" />
-                                    : <UserCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-orange-400" />
+                                    ? <Bot className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
+                                    : <UserCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
                                 }
                                 <p className="leading-relaxed">{turn.text}</p>
                             </div>

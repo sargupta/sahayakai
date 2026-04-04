@@ -65,19 +65,19 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
             case 'FOLLOW': return <UserPlus className="h-5 w-5 text-blue-500" />;
             case 'BADGE_EARNED': return <Trophy className="h-5 w-5 text-amber-500" />;
             case 'NEW_POST': return <Bell className="h-5 w-5 text-green-500" />;
-            case 'CONNECT_REQUEST': return <UserPlus className="h-5 w-5 text-orange-500" />;
+            case 'CONNECT_REQUEST': return <UserPlus className="h-5 w-5 text-primary" />;
             case 'CONNECT_ACCEPTED': return <UserCheck className="h-5 w-5 text-emerald-500" />;
-            default: return <Info className="h-5 w-5 text-gray-500" />;
+            default: return <Info className="h-5 w-5 text-muted-foreground" />;
         }
     };
 
     if (notifications.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                <Bell className="h-12 w-12 text-gray-300" />
+                <Bell className="h-12 w-12 text-muted-foreground/60" />
                 <div>
-                    <h3 className="text-xl font-semibold text-gray-900">No notifications yet</h3>
-                    <p className="text-gray-500">When you gain followers or earn badges, they'll appear here.</p>
+                    <h3 className="text-xl font-semibold text-foreground">No notifications yet</h3>
+                    <p className="text-muted-foreground">When you gain followers or earn badges, they'll appear here.</p>
                 </div>
             </div>
         );
@@ -86,8 +86,8 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Recent Activity</h2>
-                <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent Activity</h2>
+                <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="text-primary hover:text-primary hover:bg-primary/10">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Mark all as read
                 </Button>
@@ -102,7 +102,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                     const showActions = isConnectRequest && !!requestId && !aState;
 
                     return (
-                        <Card key={notification.id} className={`border-l-4 ${notification.isRead ? 'border-l-transparent' : 'border-l-orange-500'} transition-all hover:shadow-md`}>
+                        <Card key={notification.id} className={`border-l-4 ${notification.isRead ? 'border-l-transparent' : 'border-l-primary'} transition-all hover:shadow-elevated shadow-soft rounded-xl`}>
                             <CardContent className="p-4">
                                 <div className="flex items-start gap-4">
                                     <div className="mt-1">
@@ -110,14 +110,14 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">
-                                            <h3 className={`font-semibold text-gray-900 ${notification.isRead ? 'opacity-70' : ''}`}>
+                                            <h3 className={`font-semibold text-foreground ${notification.isRead ? 'opacity-70' : ''}`}>
                                                 {notification.title}
                                             </h3>
-                                            <span className="text-xs text-gray-400 whitespace-nowrap">
+                                            <span className="text-xs text-muted-foreground/60 whitespace-nowrap">
                                                 {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                                             </span>
                                         </div>
-                                        <p className={`text-sm text-gray-600 mt-1 ${notification.isRead ? 'opacity-70' : ''}`}>
+                                        <p className={`text-sm text-muted-foreground mt-1 ${notification.isRead ? 'opacity-70' : ''}`}>
                                             {notification.message}
                                         </p>
 
@@ -128,7 +128,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                         <AvatarImage src={notification.senderPhotoURL} />
                                                         <AvatarFallback>{notification.senderName?.[0] || 'T'}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="text-xs font-medium text-gray-700">{notification.senderName}</span>
+                                                    <span className="text-xs font-medium text-muted-foreground">{notification.senderName}</span>
                                                 </div>
                                             )}
 
@@ -146,7 +146,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-8 text-xs rounded-full px-4 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200"
+                                                            className="h-8 text-xs rounded-full px-4 border-border text-muted-foreground hover:text-red-500 hover:border-red-200"
                                                             onClick={() => handleDecline(notification)}
                                                         >
                                                             Decline
@@ -156,7 +156,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
 
                                                 {/* Resolved state feedback */}
                                                 {aState === 'loading' && (
-                                                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/60" />
                                                 )}
                                                 {aState === 'accepted' && (
                                                     <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
@@ -164,7 +164,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                     </span>
                                                 )}
                                                 {aState === 'declined' && (
-                                                    <span className="text-xs text-slate-400">Request declined</span>
+                                                    <span className="text-xs text-muted-foreground/60">Request declined</span>
                                                 )}
 
                                                 {!notification.isRead && !showActions && (
@@ -173,7 +173,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                     </Button>
                                                 )}
                                                 {notification.link && (
-                                                    <Button size="sm" variant="outline" asChild className="h-8 text-xs border-orange-200 text-orange-700 hover:bg-orange-50">
+                                                    <Button size="sm" variant="outline" asChild className="h-8 text-xs border-primary/20 text-primary hover:bg-primary/10">
                                                         <Link href={notification.link}>
                                                             View <ExternalLink className="ml-1 h-3 w-3" />
                                                         </Link>

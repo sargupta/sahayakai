@@ -34,11 +34,13 @@ function MetricCard({ title, value, threshold, unit, icon: Icon, color, descript
     const isWarning = value >= threshold * 0.8;
 
     return (
-        <Card className="bg-white/40 backdrop-blur-xl border-white/60 shadow-2xl transition-all duration-300 hover:shadow-primary/10">
+        <Card className="bg-card border border-border shadow-elevated transition-all duration-300 hover:shadow-primary/10">
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <div className={cn("p-2 rounded-xl", color)}>
-                        <Icon className="h-5 w-5 text-white" />
+                        <div className="bg-muted rounded-full p-2">
+                            <Icon className="h-5 w-5 text-white" />
+                        </div>
                     </div>
                     {isOverThreshold ? (
                         <Badge variant="destructive" className="animate-pulse">CRITICAL</Badge>
@@ -49,24 +51,24 @@ function MetricCard({ title, value, threshold, unit, icon: Icon, color, descript
                     )}
                 </div>
                 <CardTitle className="text-xl font-black mt-4 font-headline tracking-tight">{title}</CardTitle>
-                <CardDescription className="text-slate-500 font-medium">{description}</CardDescription>
+                <CardDescription className="text-muted-foreground font-medium">{description}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     <div className="flex items-end justify-between">
                         <div className="space-y-1">
-                            <span className="text-3xl font-black text-slate-900 tracking-tighter">
+                            <span className="text-3xl font-black text-foreground tracking-tighter">
                                 {value.toLocaleString()}
-                                <span className="text-sm text-slate-400 ml-1 font-bold">{unit}</span>
+                                <span className="text-sm text-muted-foreground ml-1 font-bold">{unit}</span>
                             </span>
                         </div>
-                        <span className="text-sm font-bold text-slate-400">
+                        <span className="text-sm font-bold text-muted-foreground">
                             Limit: {threshold.toLocaleString()}
                         </span>
                     </div>
                     <div className="space-y-2">
-                        <Progress value={percentage} className="h-2 bg-slate-100" />
-                        <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <Progress value={percentage} className="h-2 bg-muted [&>div]:rounded-full" />
+                        <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                             <span>0%</span>
                             <span>{percentage.toFixed(1)}% Usage</span>
                             <span>100%</span>
@@ -111,8 +113,8 @@ export default function AdminCostDashboard() {
     if (loading) {
         return (
             <div className="w-full max-w-6xl mx-auto px-4 py-20 animate-pulse text-center">
-                <ShieldCheck className="w-20 h-20 text-slate-200 mx-auto mb-6" />
-                <h2 className="text-2xl font-black text-slate-300 font-headline">Syncing real-time costs...</h2>
+                <ShieldCheck className="w-20 h-20 text-muted-foreground mx-auto mb-6" />
+                <h2 className="text-2xl font-black text-muted-foreground font-headline">Syncing real-time costs...</h2>
             </div>
         );
     }
@@ -124,10 +126,10 @@ export default function AdminCostDashboard() {
                     <Coins className="h-4 w-4" />
                     REAL-TIME MONITORING
                 </div>
-                <h1 className="text-5xl md:text-6xl font-black text-slate-900 font-headline tracking-tighter leading-none">
+                <h1 className="text-5xl md:text-6xl font-black text-foreground font-headline tracking-tight leading-none">
                     Mission Control <span className="text-primary">& Costs</span>
                 </h1>
-                <p className="text-lg text-slate-500 font-medium leading-relaxed">
+                <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                     Live operational transparency for SahayakAI. Monitoring API quotas, infrastructure spend, and resource health.
                 </p>
             </div>
@@ -211,8 +213,8 @@ export default function AdminCostDashboard() {
                         <AlertTriangle className="h-10 w-10 text-orange-600" />
                     </div>
                     <div className="space-y-2 text-center md:text-left">
-                        <h3 className="text-2xl font-black text-slate-900 font-headline">Billing Safeguards</h3>
-                        <p className="text-slate-600 font-medium">
+                        <h3 className="text-2xl font-black text-foreground font-headline">Billing Safeguards</h3>
+                        <p className="text-muted-foreground font-medium">
                             Alerts are integrated with Google Cloud Billing. If thresholds are breached, the system will prioritize traffic for verified educators and temporarily restrict high-cost autonomous agents.
                         </p>
                     </div>

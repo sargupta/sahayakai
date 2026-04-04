@@ -73,13 +73,13 @@ export default function ClassDetailPage() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/60" />
             </div>
         );
     }
 
     if (!cls) {
-        return <div className="text-center py-20 text-slate-400">Class not found.</div>;
+        return <div className="text-center py-20 text-muted-foreground">Class not found.</div>;
     }
 
     // Students with >= 2 consecutive absences — for alert list
@@ -93,8 +93,8 @@ export default function ClassDetailPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-black text-slate-900 truncate">{cls.name}</h1>
-                    <p className="text-xs text-slate-400">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} students</p>
+                    <h1 className="text-xl font-black font-headline tracking-tight text-foreground truncate">{cls.name}</h1>
+                    <p className="text-xs text-muted-foreground">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} students</p>
                 </div>
             </div>
 
@@ -128,7 +128,7 @@ export default function ClassDetailPage() {
 
             {/* Tabs */}
             <Tabs defaultValue="today">
-                <TabsList className="w-full grid grid-cols-3 h-10 bg-slate-100 rounded-xl">
+                <TabsList className="w-full grid grid-cols-3 h-10 bg-muted/50 rounded-xl">
                     <TabsTrigger value="today" className="gap-1.5 text-xs font-semibold rounded-lg">
                         <ClipboardList className="h-3.5 w-3.5" />
                         Today
@@ -145,7 +145,7 @@ export default function ClassDetailPage() {
 
                 <TabsContent value="today" className="mt-4">
                     <div className="mb-3 flex items-center justify-between">
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                             {format(new Date(), 'EEEE, d MMMM yyyy')}
                         </p>
                     </div>
@@ -166,16 +166,16 @@ export default function ClassDetailPage() {
                     {/* Contact parent buttons for each student */}
                     {students.length > 0 && (
                         <div className="mt-6 space-y-2">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Parent Outreach</p>
-                            <div className="divide-y divide-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide px-1">Parent Outreach</p>
+                            <div className="divide-y divide-border/30 rounded-xl border border-border/50 overflow-hidden">
                                 {students.map((s) => {
                                     const summary = summaries.find((sm) => sm.studentId === s.id);
                                     return (
                                         <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-white">
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-slate-800 truncate">{s.name}</p>
+                                                <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
                                                 {summary && (
-                                                    <p className="text-xs text-slate-400 mt-0.5">
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
                                                         {summary.attendanceRate}% attendance this month
                                                         {summary.consecutiveAbsences >= 2 && (
                                                             <span className="text-red-500 font-semibold ml-2">· {summary.consecutiveAbsences} absent in a row</span>

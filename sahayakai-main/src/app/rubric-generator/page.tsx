@@ -235,9 +235,9 @@ function RubricGeneratorContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
@@ -286,7 +286,7 @@ function RubricGeneratorContent() {
                         <Textarea
                           placeholder={t.formPlaceholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[120px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </div>
                     </FormControl>
@@ -297,13 +297,13 @@ function RubricGeneratorContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLevel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLevel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -321,7 +321,7 @@ function RubricGeneratorContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}
@@ -338,7 +338,7 @@ function RubricGeneratorContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.language}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.language}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -351,7 +351,7 @@ function RubricGeneratorContent() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
+              <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -367,15 +367,26 @@ function RubricGeneratorContent() {
       </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+        <Card className="mt-8 w-full bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
           <CardContent className="p-12 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-lg font-medium text-slate-600">{t.loadingText}</p>
+            <p className="text-lg font-medium text-muted-foreground">{t.loadingText}</p>
           </CardContent>
         </Card>
       )}
 
-      {rubric && <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />}
+      {rubric && (
+        <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+            <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

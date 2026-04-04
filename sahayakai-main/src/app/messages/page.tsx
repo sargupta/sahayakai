@@ -18,13 +18,13 @@ import { db } from "@/lib/firebase";
 
 function NoConversationSelected() {
     return (
-        <div className="flex flex-col items-center justify-center h-full text-center space-y-4 bg-slate-50/30">
-            <div className="p-6 bg-white rounded-full shadow-sm border border-slate-100">
-                <MessageCircle className="h-12 w-12 text-orange-300" />
+        <div className="flex flex-col items-center justify-center h-full text-center space-y-4 bg-muted/20">
+            <div className="p-6 bg-primary/10 rounded-full shadow-soft border border-border/50">
+                <MessageCircle className="h-12 w-12 text-primary" />
             </div>
             <div className="space-y-1 max-w-xs">
-                <h3 className="text-base font-bold text-slate-700">Select a conversation</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-base font-bold font-headline text-foreground">Select a conversation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                     Choose a conversation from the left, or go to the Community page to start one with a fellow teacher.
                 </p>
             </div>
@@ -109,7 +109,7 @@ function MessagesPageContent() {
     if (authLoading || autoOpenLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -117,8 +117,8 @@ function MessagesPageContent() {
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <MessageCircle className="h-12 w-12 text-slate-300" />
-                <p className="text-sm font-bold text-slate-600">Sign in to access your messages.</p>
+                <MessageCircle className="h-12 w-12 text-muted-foreground" />
+                <p className="text-sm font-bold text-foreground">Sign in to access your messages.</p>
             </div>
         );
     }
@@ -126,7 +126,7 @@ function MessagesPageContent() {
     return (
         <div className="w-full space-y-0">
         <PushPermissionBanner />
-        <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+        <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-white rounded-2xl overflow-hidden border border-border/50 shadow-soft">
             {/* ── Conversation List (Inbox) ─────────────────────────── */}
             <div className={cn(
                 "w-full lg:w-80 xl:w-96 shrink-0 lg:block",
@@ -167,7 +167,7 @@ export default function MessagesPage() {
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)]">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         }>
             <MessagesPageContent />

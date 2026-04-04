@@ -498,7 +498,7 @@ export const ExamplePrompts: FC<ExamplePromptsProps> = ({ onPromptClick, selecte
             key={index}
             variant="outline"
             size="sm"
-            className="text-sm h-auto py-2 px-3 bg-white hover:bg-blue-50 hover:text-blue-900 hover:border-blue-300 border-gray-200 transition-colors whitespace-normal text-left block w-full sm:w-auto"
+            className="text-sm h-auto py-2 px-3 bg-card hover:bg-primary/5 hover:text-primary hover:border-primary/30 border-border hover:shadow-sm transition-all duration-200 whitespace-normal text-left block w-full sm:w-auto"
             onClick={() => onPromptClick(prompt)}
           >
             {prompt}

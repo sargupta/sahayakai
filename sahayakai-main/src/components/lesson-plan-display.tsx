@@ -411,7 +411,7 @@ ${editablePlan.assessment}
   }
 
   return (
-    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
       <CardHeader className="space-y-4">
         <div className="flex flex-row items-start justify-between">
           <div className="space-y-2 flex-1">

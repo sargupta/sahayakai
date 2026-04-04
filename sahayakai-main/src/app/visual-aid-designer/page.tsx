@@ -373,9 +373,9 @@ function VisualAidContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
@@ -383,7 +383,7 @@ function VisualAidContent() {
               <Images className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
@@ -402,7 +402,7 @@ function VisualAidContent() {
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[120px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </FormControl>
                     </div>
@@ -413,13 +413,13 @@ function VisualAidContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -438,7 +438,7 @@ function VisualAidContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           value={field.value}
@@ -456,7 +456,7 @@ function VisualAidContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -486,7 +486,7 @@ function VisualAidContent() {
 
       {
         isLoading && (
-          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+          <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
               <p className="text-muted-foreground">{t.generatingText}</p>
@@ -497,12 +497,19 @@ function VisualAidContent() {
 
       {
         visualAid && (
-          <VisualAidDisplay
+          <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><VisualAidDisplay
             visualAid={visualAid}
             title={form.getValues('prompt')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
-          />
+          /></div>
+          </>
         )
       }
     </div>

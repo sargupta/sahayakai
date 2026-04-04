@@ -150,8 +150,8 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title, 
     }
 
     return (
-        <Card id="worksheet-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/20 pb-4">
+        <Card id="worksheet-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                 <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
                     <FileText className="h-7 w-7 text-primary" />
                     {title || "Worksheet"}
@@ -179,7 +179,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title, 
                     {worksheet.worksheetContent}
                 </ReactMarkdown>
             </CardContent>
-            <div className="p-4 border-t border-slate-100 flex justify-end">
+            <div className="p-4 border-t border-border flex justify-end">
               <FeedbackDialog
                 page="worksheet"
                 feature="worksheet-result"

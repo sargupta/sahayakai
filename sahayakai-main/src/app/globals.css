@@ -24,15 +24,9 @@
   }
 
   :root {
-    /* Saffron Primary - The Core Identity */
-    --primary: 27 96% 61%;
-    /* #FF9933 */
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary - Deep Warmth */
     /* ========================================
        SAFFRON DESIGN SYSTEM - SahayakAI
-       For Rural Indian Teachers
+       For Indian Teachers
        ======================================== */
 
     /* Primary - Saffron Theme (Indian Flag Orange) */
@@ -52,8 +46,8 @@
     --accent-foreground: 0 0% 100%;
 
     /* Background - Warm, Welcoming */
-    --background: 0 0% 100%;
-    /* Pure White */
+    --background: 40 20% 99.5%;
+    /* Warm Off-White */
     --foreground: 222 47% 11%;
     /* Dark Gray #1F2937 */
 
@@ -71,10 +65,11 @@
     --muted-foreground: 215 16% 47%;
     /* #6B7280 */
 
-    /* Borders - Saffron accent */
-    --border: 214 32% 91%;
-    /* #E5E7EB - Light */
-    --input: 214 32% 91%;
+    /* Borders - Warm, soft */
+    --border: 220 16% 93%;
+    /* Warm light gray */
+    --input: 220 16% 90%;
+    /* Slightly darker for input affordance */
     --ring: 28 70% 59%;
     /* Saffron focus ring */
 
@@ -171,10 +166,51 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Reusable inner section for grouping form fields */
+  .card-section {
+    @apply bg-muted/20 rounded-xl p-4 md:p-5;
+  }
+  /* Elevated card variant */
+  .card-elevated {
+    @apply shadow-md border-border/60;
+  }
+  /* Subtle horizontal divider */
+  .section-divider {
+    @apply h-px bg-border/60 my-4;
+  }
+  /* Accent top bar for cards */
+  .card-accent-bar {
+    @apply h-1 w-full bg-gradient-to-r from-primary to-primary/40 rounded-t-xl;
+  }
+  /* Result display accent */
+  .result-accent {
+    @apply border-l-[3px] border-primary/30 pl-4;
+  }
+  /* Page layout container */
+  .page-container {
+    @apply w-full max-w-4xl mx-auto px-4 py-6 md:py-10;
+  }
+  /* Tool icon wrapper */
+  .tool-icon-wrap {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 text-primary shrink-0;
+  }
+  /* Section title label */
+  .section-title {
+    @apply font-headline text-sm font-semibold text-muted-foreground uppercase tracking-wider;
   }
 }
 
@@ -267,5 +303,16 @@
     table {
       border-collapse: collapse !important;
     }
+  }
+
+  /* Input/output divider between form and AI result */
+  .result-divider {
+    @apply my-8 flex items-center gap-3;
+  }
+  .result-divider hr {
+    @apply flex-1 border-border/40;
+  }
+  .result-divider span {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-widest px-2;
   }
 }

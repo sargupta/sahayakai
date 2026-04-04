@@ -56,7 +56,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
 
   if (!user) {
     return (
-      <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 text-center text-slate-500 text-sm">
+      <Card className="bg-card border border-border rounded-xl shadow-soft p-4 text-center text-muted-foreground text-sm">
         Sign in to share
       </Card>
     );
@@ -105,7 +105,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
   if (!expanded) {
     return (
       <Card
-        className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+        className="bg-card border border-border rounded-xl shadow-soft p-4 cursor-pointer hover:shadow-elevated transition-shadow"
         onClick={() => {
           setExpanded(true);
           setTimeout(() => textareaRef.current?.focus(), 50);
@@ -114,9 +114,9 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.photoURL ?? undefined} />
-            <AvatarFallback className="text-xs bg-orange-100 text-orange-700">{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
-          <span className="text-slate-400 text-sm">What did you try today?</span>
+          <span className="text-muted-foreground text-sm">What did you try today?</span>
         </div>
       </Card>
     );
@@ -126,37 +126,37 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
   const selectedGroupName = groups?.find((g) => g.id === (groupId ?? selectedGroupId))?.name;
 
   return (
-    <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-      {/* Orange accent top border */}
-      <div className="h-0.5 bg-gradient-to-r from-orange-100 to-orange-50" />
+    <Card className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+      {/* Accent top border */}
+      <div className="h-0.5 bg-gradient-to-r from-primary/30 to-primary/10" />
 
       <div className="p-4 space-y-3">
         {/* Header row: avatar + group selector */}
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9 shrink-0">
             <AvatarImage src={user.photoURL ?? undefined} />
-            <AvatarFallback className="text-xs bg-orange-100 text-orange-700">{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
 
           {groupId ? (
-            <span className="text-sm font-medium text-slate-700">{selectedGroupName ?? 'Group'}</span>
+            <span className="text-sm font-medium text-foreground">{selectedGroupName ?? 'Group'}</span>
           ) : (
             <div className="relative">
               <button
                 type="button"
-                className="flex items-center gap-1 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-1 text-sm font-medium text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-muted/50 transition-colors"
                 onClick={() => setGroupOpen((o) => !o)}
               >
                 {selectedGroupName ?? 'Select group'}
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
               {groupOpen && groups && groups.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]">
+                <div className="absolute top-full left-0 mt-1 z-20 bg-card border border-border rounded-lg shadow-elevated py-1 min-w-[180px]">
                   {groups.map((g) => (
                     <button
                       key={g.id}
                       type="button"
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
                       onClick={() => {
                         setSelectedGroupId(g.id);
                         setGroupOpen(false);
@@ -201,12 +201,12 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={activeTemplate.placeholder}
-          className="min-h-[80px] max-h-[200px] resize-y border-slate-200 rounded-xl text-sm focus-visible:ring-orange-300"
+          className="min-h-[80px] max-h-[200px] resize-y border-border rounded-xl text-sm focus-visible:ring-primary/30"
         />
 
         {/* Footer: add image + post */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600 gap-1.5">
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5">
             <ImagePlus className="h-4 w-4" />
             <span className="text-xs">Add Image</span>
           </Button>
@@ -215,7 +215,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-400 text-xs"
+              className="text-muted-foreground text-xs"
               onClick={() => {
                 setExpanded(false);
                 setContent('');
@@ -225,7 +225,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
             </Button>
             <Button
               size="sm"
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-4 gap-1.5"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-4 gap-1.5"
               disabled={submitting || !content.trim()}
               onClick={handleSubmit}
             >

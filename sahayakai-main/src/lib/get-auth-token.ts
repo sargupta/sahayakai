@@ -15,3 +15,19 @@ export async function getAuthToken(): Promise<string | null> {
         return null;
     }
 }
+
+/**
+ * Force-refresh the Firebase ID token to pick up new custom claims
+ * (e.g. after plan upgrade). Call this client-side after any plan change,
+ * then subsequent API calls will carry the updated `x-user-plan` header.
+ *
+ * Returns the fresh token, or null on failure.
+ */
+export async function forceTokenRefresh(): Promise<string | null> {
+    try {
+        return await auth.currentUser?.getIdToken(/* forceRefresh */ true) ?? null;
+    } catch (error) {
+        console.error('[Auth] Force token refresh failed:', error);
+        return null;
+    }
+}

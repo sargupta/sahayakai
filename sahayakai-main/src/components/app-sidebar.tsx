@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UsageDisplay } from "@/components/usage-display"
-import { BarChart, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, Globe2, GraduationCap, Images, Library, PencilRuler, Settings, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle, Gauge } from "lucide-react"
+import { BarChart, Bell, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileSignature, FileText, Globe2, GraduationCap, Images, Library, PencilRuler, Settings, ShieldCheck, Sparkles, Video, Wand2, FolderKanban, User, Zap, Terminal, MessageCircle, Gauge } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -114,6 +114,14 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/exam-paper')} tooltip="Exam Paper Generator">
+                <Link href="/exam-paper" onClick={() => handleNavClick('/exam-paper')}>
+                  <FileText />
+                  <span>Exam Paper</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/visual-aid-designer')} tooltip="Visual Aid Designer">
                 <Link href="/visual-aid-designer" onClick={() => handleNavClick('/visual-aid-designer')}>
                   <Images />
@@ -198,7 +206,7 @@ export function AppSidebar() {
                     <span>Messages</span>
                   </span>
                   {totalUnread > 0 && (
-                    <span className="ml-auto h-4 min-w-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center">
+                    <span className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                       {totalUnread > 9 ? "9+" : totalUnread}
                     </span>
                   )}
@@ -234,7 +242,7 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/notifications')} tooltip="Notifications">
                 <Link href="/notifications" onClick={() => handleNavClick('/notifications')}>
-                  <Sparkles className="text-orange-500" />
+                  <Bell className="text-primary" />
                   <span>Notifications</span>
                 </Link>
               </SidebarMenuButton>

@@ -178,14 +178,14 @@ export function TeacherDirectory() {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-slate-500 font-medium font-body">Populating teacher directory...</p>
+            <p className="text-muted-foreground font-medium font-body">Populating teacher directory...</p>
         </div>
     );
 
     if (teachers.length === 0) return (
-        <div className="text-center py-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
-            <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 font-medium">No other teachers registered yet.</p>
+        <div className="text-center py-20 bg-muted/50 rounded-xl border-2 border-dashed border-border">
+            <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">No other teachers registered yet.</p>
         </div>
     );
 
@@ -221,7 +221,7 @@ export function TeacherDirectory() {
                 return (
                     <Button
                         size="sm"
-                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-sm shadow-orange-100 active:scale-95 transition-all"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-primary hover:bg-primary/90 text-white shadow-sm active:scale-95 transition-all"
                         onClick={() => handleConnect(teacher.uid)}
                     >
                         <UserPlus className="h-3 w-3 mr-1" />
@@ -234,7 +234,7 @@ export function TeacherDirectory() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-full px-4 h-8 text-[11px] font-bold text-slate-500 border-slate-200 hover:border-red-200 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold text-muted-foreground border-border hover:border-red-200 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
                         onClick={() => handleWithdraw(teacher.uid)}
                         title="Withdraw request"
                     >
@@ -256,7 +256,7 @@ export function TeacherDirectory() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="rounded-full px-3 h-8 text-[11px] font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                            className="rounded-full px-3 h-8 text-[11px] font-bold text-muted-foreground/70 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
                             onClick={() => handleDecline(teacher.uid)}
                         >
                             Decline
@@ -269,7 +269,7 @@ export function TeacherDirectory() {
                     <Button
                         variant="secondary"
                         size="sm"
-                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-500 border border-slate-100 active:scale-95 transition-all group/conn"
+                        className="rounded-full px-4 h-8 text-[11px] font-bold bg-muted text-muted-foreground hover:bg-red-50 hover:text-red-500 border border-border active:scale-95 transition-all group/conn"
                         onClick={() => handleDisconnect(teacher.uid)}
                         title="Disconnect"
                     >
@@ -289,10 +289,10 @@ export function TeacherDirectory() {
         <div className="space-y-4">
             {/* Search bar */}
             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
                 <Input
                     placeholder="Search by name, school, subject…"
-                    className="pl-11 pr-12 h-12 bg-white border-slate-200 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus-visible:ring-primary/30 shadow-sm"
+                    className="pl-11 pr-12 h-12 bg-card border-border rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -302,7 +302,7 @@ export function TeacherDirectory() {
                         "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
                         isListening
                             ? "bg-red-100 text-red-500 animate-pulse"
-                            : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                            : "text-muted-foreground/60 hover:text-primary hover:bg-primary/8"
                     )}
                     title={isListening ? "Stop listening" : "Search by voice"}
                 >
@@ -311,21 +311,21 @@ export function TeacherDirectory() {
             </div>
 
             {filteredTeachers.length === 0 && searchQuery.trim() ? (
-                <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
-                    <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium text-sm">No teachers found for &quot;{searchQuery}&quot;</p>
+                <div className="text-center py-12 bg-muted/50 rounded-xl border-2 border-dashed border-border">
+                    <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground font-medium text-sm">No teachers found for &quot;{searchQuery}&quot;</p>
                 </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredTeachers.map((teacher) => (
-                <Card key={teacher.uid} className="flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-slate-100 overflow-hidden rounded-[1.25rem] bg-white">
+                <Card key={teacher.uid} className="flex flex-col group transition-all duration-300 hover:shadow-elevated border-border overflow-hidden rounded-[1.25rem] bg-card">
                     <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-3">
                             <div
                                 className="cursor-pointer transition-transform duration-300 hover:scale-105"
                                 onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
-                                <Avatar className="h-14 w-14 ring-2 ring-slate-50 shadow-sm group-hover:ring-orange-100 transition-all duration-500">
+                                <Avatar className="h-14 w-14 ring-2 ring-muted shadow-sm group-hover:ring-primary/20 transition-all duration-500">
                                     <AvatarImage src={teacher.photoURL} className="object-cover" referrerPolicy="no-referrer" />
                                     <AvatarFallback className={cn("text-white text-lg font-bold bg-gradient-to-br", getAvatarGradient(teacher.displayName || teacher.uid))}>
                                         {teacher.initial || teacher.displayName?.[0] || "T"}
@@ -336,12 +336,12 @@ export function TeacherDirectory() {
                         </div>
                         <div className="mt-3 space-y-0.5">
                             <CardTitle
-                                className="text-base font-black text-slate-900 font-headline tracking-tight group-hover:text-orange-600 transition-colors truncate cursor-pointer"
+                                className="text-base font-black text-foreground font-headline tracking-tight group-hover:text-primary transition-colors truncate cursor-pointer"
                                 onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
                                 {teacher.displayName}
                             </CardTitle>
-                            <div className="flex items-center gap-1.5 text-slate-400 font-medium text-[11px]">
+                            <div className="flex items-center gap-1.5 text-muted-foreground font-medium text-[11px]">
                                 <GraduationCap className="h-3 w-3" />
                                 <span className="truncate">{teacher.schoolName || "Active Educator"}</span>
                             </div>
@@ -349,36 +349,36 @@ export function TeacherDirectory() {
                     </CardHeader>
 
                     <CardContent className="p-4 pt-1 flex-grow flex flex-col justify-between space-y-4">
-                        <p className="text-slate-500 text-[12px] leading-relaxed font-medium italic line-clamp-2 pl-3 border-l-2 border-orange-100">
+                        <p className="text-muted-foreground text-[12px] leading-relaxed font-medium italic line-clamp-2 pl-3 border-l-2 border-primary/15">
                             {teacher.bio ? `"${teacher.bio}"` : '"Dedicated educator driving student success."'}
                         </p>
 
                         <div className="flex flex-wrap gap-1.5">
                             {teacher.subjects?.slice(0, 2).map((subject: string) => (
-                                <Badge key={subject} variant="outline" className="bg-white border-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    <div className="h-1 w-1 rounded-full bg-orange-300" />
+                                <Badge key={subject} variant="outline" className="bg-card border-border text-muted-foreground text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    <div className="h-1 w-1 rounded-full bg-primary/40" />
                                     {subject}
                                 </Badge>
                             ))}
                         </div>
                     </CardContent>
 
-                    <CardFooter className="px-4 py-3 border-t border-slate-50 bg-slate-50/30 flex justify-between items-center mt-auto">
-                        <div className="flex items-center gap-4 text-slate-500">
+                    <CardFooter className="px-4 py-3 border-t border-border bg-muted/20 flex justify-between items-center mt-auto">
+                        <div className="flex items-center gap-4 text-muted-foreground">
                             <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 leading-none">{teacher.followersCount || 0}</span>
-                                <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mt-0.5">Followers</span>
+                                <span className="text-sm font-black text-foreground leading-none">{teacher.followersCount || 0}</span>
+                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">Followers</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 leading-none">{teacher.impactScore || 0}</span>
-                                <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mt-0.5">Impact</span>
+                                <span className="text-sm font-black text-foreground leading-none">{teacher.impactScore || 0}</span>
+                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">Impact</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 text-[10px] text-orange-600 font-bold hover:text-orange-700 hover:bg-orange-50 rounded-lg px-2 transition-all"
+                                className="h-7 text-[10px] text-primary font-bold hover:text-primary/80 hover:bg-primary/8 rounded-lg px-2 transition-all"
                                 onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
                                 Profile
@@ -387,7 +387,7 @@ export function TeacherDirectory() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                    className="h-7 w-7 p-0 text-muted-foreground/70 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                     title={`Message ${teacher.displayName}`}
                                     onClick={() => router.push(`/messages?with=${teacher.uid}`)}
                                 >

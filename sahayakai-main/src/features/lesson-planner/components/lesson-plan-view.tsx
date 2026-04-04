@@ -319,9 +319,9 @@ export function LessonPlanView({
                 </div>
             )}
 
-            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
                 {/* Clean Top Bar */}
-                <div className="h-1.5 w-full bg-primary" />
+                <div className="card-accent-bar" />
 
                 <LessonPlanHeader
                     title={t.title}
@@ -382,9 +382,16 @@ export function LessonPlanView({
             </div>
 
             {lessonPlan && (
-                <div className="mt-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
-                </div>
+                <>
+                    <div className="my-8 flex items-center gap-3">
+                        <hr className="flex-1 border-border/40" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+                        <hr className="flex-1 border-border/40" />
+                    </div>
+                    <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
+                    </div>
+                </>
             )}
         </div>
     );

@@ -43,12 +43,18 @@ import {
 // ── Types for generated paper ────────────────────────────────────────────
 
 interface GeneratedQuestion {
-  questionNumber: number;
+  // Flow returns `number`, not `questionNumber`
+  number?: number;
+  questionNumber?: number;
   text: string;
   options?: string[];
   marks: number;
+  // Flow embeds answer per-question as `answerKey` (string), not `answer`
+  answerKey?: string;
   answer?: string;
   markingScheme?: string;
+  internalChoice?: string;
+  source?: string;
 }
 
 interface GeneratedSection {
@@ -64,12 +70,12 @@ interface GeneratedPaper {
   board: string;
   gradeLevel: string;
   subject: string;
-  duration: number;
+  duration: string | number; // Flow returns string e.g. "3 Hours"
   maxMarks: number;
   generalInstructions: string[];
   sections: GeneratedSection[];
-  answerKey?: GeneratedQuestion[];
-  blueprintSummary?: string;
+  answerKey?: GeneratedQuestion[]; // Not in flow output — derived from sections
+  blueprintSummary?: { chapterWise: { chapter: string; marks: number }[]; difficultyWise: { level: string; percentage: number }[] } | string;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -278,7 +284,7 @@ export default function ExamPaperPage() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl font-headline tracking-tight flex items-center gap-2">
           <FileText className="w-6 h-6 text-primary" />
           Board Exam Paper Generator
         </h1>
@@ -289,65 +295,75 @@ export default function ExamPaperPage() {
 
       {/* Form */}
       <Card>
+        <div className="card-accent-bar" />
         <CardContent className="pt-6 space-y-5">
           {/* Row: Board + Grade */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="board">Board</Label>
-              <Select value={board} onValueChange={setBoard}>
-                <SelectTrigger id="board">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EDUCATION_BOARDS.map((b) => (
-                    <SelectItem key={b} value={b}>
-                      {b}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="grade">Grade Level</Label>
-              <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                <SelectTrigger id="grade">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRADE_OPTIONS.map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Subject */}
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            {availableSubjects.length > 0 ? (
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger id="subject">
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSubjects.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">
-                <Info className="w-4 h-4 shrink-0" />
-                No blueprint available for {board} {gradeLevel} yet. The AI will
-                generate a standard pattern.
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="board">Board</Label>
+                <Select value={board} onValueChange={setBoard}>
+                  <SelectTrigger id="board">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EDUCATION_BOARDS.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <Label htmlFor="grade">Grade Level</Label>
+                <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                  <SelectTrigger id="grade">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_OPTIONS.map((g) => (
+                      <SelectItem key={g} value={g}>
+                        {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              {availableSubjects.length > 0 ? (
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubjects.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    id="subject"
+                    placeholder="e.g. Mathematics, Science, English"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                  />
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    No blueprint for {board} {gradeLevel} — AI will generate a standard pattern.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Blueprint preview */}
@@ -374,7 +390,7 @@ export default function ExamPaperPage() {
           )}
 
           {/* Chapters */}
-          <div className="space-y-2">
+          <div className="card-section space-y-2">
             <Label>
               Chapters{" "}
               <span className="text-muted-foreground font-normal">
@@ -490,7 +506,7 @@ export default function ExamPaperPage() {
           <Button
             onClick={handleGenerate}
             disabled={generating || !subject}
-            className="w-full"
+            className="w-full py-5 text-base font-headline bg-primary hover:bg-primary/90"
             size="lg"
           >
             {generating ? (
@@ -533,16 +549,22 @@ export default function ExamPaperPage() {
       {/* Generated Paper Preview */}
       {paper && !generating && (
         <div className="space-y-4">
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 space-y-4">
           {/* Paper Header */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-center">
+              <CardTitle className="font-headline text-lg text-center">
                 {paper.title || `${paper.board} ${paper.gradeLevel} ${paper.subject}`}
               </CardTitle>
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
-                  {paper.duration} min
+                  {typeof paper.duration === 'number' ? `${paper.duration} min` : paper.duration}
                 </span>
                 <span className="flex items-center gap-1">
                   <Award className="w-3.5 h-3.5" />
@@ -552,7 +574,7 @@ export default function ExamPaperPage() {
             </CardHeader>
             {paper.generalInstructions && paper.generalInstructions.length > 0 && (
               <CardContent className="pt-0">
-                <div className="text-sm space-y-1 border-t pt-3">
+                <div className="text-sm space-y-1 border-t border-border pt-3">
                   <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                     General Instructions
                   </p>
@@ -602,11 +624,11 @@ export default function ExamPaperPage() {
                 {section.questions?.map((q, qi) => (
                   <div
                     key={qi}
-                    className="text-sm border-b last:border-0 pb-3 last:pb-0"
+                    className="text-sm border-b border-border last:border-0 pb-3 last:pb-0"
                   >
                     <div className="flex justify-between items-start gap-2">
                       <p>
-                        <span className="font-medium">Q{q.questionNumber}.</span>{" "}
+                        <span className="font-medium">Q{q.number ?? q.questionNumber}.</span>{" "}
                         {q.text}
                       </p>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -628,81 +650,100 @@ export default function ExamPaperPage() {
             </Card>
           ))}
 
-          {/* Answer Key (Collapsible) */}
-          {includeAnswerKey && paper.answerKey && paper.answerKey.length > 0 && (
-            <Card>
-              <button
-                type="button"
-                className="w-full flex items-center justify-between p-4 text-left"
-                onClick={() => setAnswerKeyOpen(!answerKeyOpen)}
-              >
-                <span className="font-semibold flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Answer Key
-                </span>
-                {answerKeyOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
+          {/* Answer Key (Collapsible) — derived from per-question answerKey fields */}
+          {includeAnswerKey && (() => {
+            const allQs = paper.sections?.flatMap(s => s.questions) ?? [];
+            const withAnswers = allQs.filter(q => q.answerKey || q.answer);
+            if (!withAnswers.length) return null;
+            return (
+              <Card>
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between p-4 text-left"
+                  onClick={() => setAnswerKeyOpen(!answerKeyOpen)}
+                >
+                  <span className="font-headline font-semibold flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Answer Key
+                  </span>
+                  {answerKeyOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {answerKeyOpen && (
+                  <CardContent className="pt-0 space-y-2">
+                    {withAnswers.map((q, i) => (
+                      <div key={i} className="text-sm flex gap-2">
+                        <span className="font-medium shrink-0">Q{q.number ?? q.questionNumber ?? i + 1}:</span>
+                        <span className="text-muted-foreground">{q.answerKey ?? q.answer}</span>
+                      </div>
+                    ))}
+                  </CardContent>
                 )}
-              </button>
-              {answerKeyOpen && (
-                <CardContent className="pt-0 space-y-2">
-                  {paper.answerKey.map((q, i) => (
-                    <div key={i} className="text-sm flex gap-2">
-                      <span className="font-medium shrink-0">
-                        Q{q.questionNumber}:
-                      </span>
-                      <span className="text-muted-foreground">{q.answer}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              )}
-            </Card>
-          )}
+              </Card>
+            );
+          })()}
 
-          {/* Marking Scheme (Collapsible) */}
-          {includeMarkingScheme &&
-            paper.answerKey &&
-            paper.answerKey.some((q) => q.markingScheme) && (
+          {/* Marking Scheme (Collapsible) — derived from per-question markingScheme fields */}
+          {includeMarkingScheme && (() => {
+            const allQs = paper.sections?.flatMap(s => s.questions) ?? [];
+            const withScheme = allQs.filter(q => q.markingScheme);
+            if (!withScheme.length) return null;
+            return (
               <Card>
                 <button
                   type="button"
                   className="w-full flex items-center justify-between p-4 text-left"
                   onClick={() => setMarkingSchemeOpen(!markingSchemeOpen)}
                 >
-                  <span className="font-semibold flex items-center gap-2">
+                  <span className="font-headline font-semibold flex items-center gap-2">
                     <Award className="w-4 h-4" />
                     Marking Scheme
                   </span>
-                  {markingSchemeOpen ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
+                  {markingSchemeOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {markingSchemeOpen && (
                   <CardContent className="pt-0 space-y-3">
-                    {paper.answerKey
-                      .filter((q) => q.markingScheme)
-                      .map((q, i) => (
-                        <div key={i} className="text-sm border-b last:border-0 pb-2 last:pb-0">
-                          <span className="font-medium">Q{q.questionNumber}:</span>
-                          <p className="text-muted-foreground ml-4 whitespace-pre-line">
-                            {q.markingScheme}
-                          </p>
-                        </div>
-                      ))}
+                    {withScheme.map((q, i) => (
+                      <div key={i} className="text-sm border-b border-border last:border-0 pb-2 last:pb-0">
+                        <span className="font-medium">Q{q.number ?? q.questionNumber ?? i + 1}:</span>
+                        <p className="text-muted-foreground ml-4 whitespace-pre-line">{q.markingScheme}</p>
+                      </div>
+                    ))}
                   </CardContent>
                 )}
               </Card>
-            )}
+            );
+          })()}
 
           {/* Blueprint Summary */}
           {paper.blueprintSummary && (
-            <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border">
+            <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border border-border">
               <p className="font-medium mb-1">Blueprint Summary</p>
-              <p>{paper.blueprintSummary}</p>
+              {typeof paper.blueprintSummary === 'string' ? (
+                <p>{paper.blueprintSummary}</p>
+              ) : (
+                <div className="space-y-2">
+                  {paper.blueprintSummary.chapterWise?.length > 0 && (
+                    <div>
+                      <p className="font-medium text-foreground/70 mb-0.5">Chapter-wise</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {paper.blueprintSummary.chapterWise.map((c, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{c.chapter}: {c.marks}m</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {paper.blueprintSummary.difficultyWise?.length > 0 && (
+                    <div>
+                      <p className="font-medium text-foreground/70 mb-0.5">Difficulty</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {paper.blueprintSummary.difficultyWise.map((d, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{d.level}: {d.percentage}%</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -728,6 +769,7 @@ export default function ExamPaperPage() {
               PDF (Coming Soon)
             </Button>
           </div>
+        </div>
         </div>
       )}
     </div>

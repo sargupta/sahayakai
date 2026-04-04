@@ -60,10 +60,10 @@ function ConversationListItem({
         <button
             onClick={onClick}
             className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 transition-all text-left",
+                "w-full flex items-center gap-3 px-4 py-3 transition-all transition-colors text-left",
                 isActive
-                    ? "bg-orange-50 border-r-2 border-orange-500"
-                    : "hover:bg-slate-50 border-r-2 border-transparent"
+                    ? "bg-primary/5 border-l-2 border-primary border-r-2 border-r-transparent"
+                    : "hover:bg-muted/50 border-l-2 border-l-transparent border-r-2 border-r-transparent"
             )}
         >
             {/* Avatar */}

@@ -134,15 +134,15 @@ export default function VideoStorytellerPage() {
             variant="outline"
             size="sm"
             onClick={() => setExpandedCategory(null)}
-            className="rounded-lg gap-1.5 h-8 text-xs"
+            className="rounded-xl gap-1.5 h-8 text-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </Button>
-          <div className="h-4 w-px bg-slate-200" />
+          <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4 text-primary" />
-            <h2 className="text-lg font-headline font-bold text-slate-900">{expandedCategory.title}</h2>
+            <h2 className="text-lg font-headline tracking-tight font-bold text-foreground">{expandedCategory.title}</h2>
           </div>
         </div>
 
@@ -166,10 +166,10 @@ export default function VideoStorytellerPage() {
             <Video className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-slate-900 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-headline tracking-tight font-bold text-foreground leading-tight">
               Video Storyteller
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Curated educational videos for Indian classrooms
             </p>
           </div>
@@ -179,11 +179,11 @@ export default function VideoStorytellerPage() {
           size="sm"
           onClick={() => fetchRecommendations()}
           disabled={loading}
-          className="rounded-lg gap-1.5 h-8 text-xs shrink-0 mt-1"
+          className="rounded-xl gap-1.5 h-8 text-xs shrink-0 mt-1"
         >
           {loading
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : <RefreshCw className="w-3.5 h-3.5" />
+            : <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
           }
           Refresh
         </Button>
@@ -194,9 +194,9 @@ export default function VideoStorytellerPage() {
 
       {/* AI insight banner */}
       {recommendations && (
-        <div className="flex items-start gap-2.5 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+        <div className="flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3">
           <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-          <p className="text-sm text-slate-700 leading-relaxed italic">
+          <p className="text-sm text-foreground leading-relaxed italic">
             {recommendations.personalizedMessage}
           </p>
         </div>
@@ -204,21 +204,27 @@ export default function VideoStorytellerPage() {
 
       {/* Loading state — initial load */}
       {loading && !recommendations && (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-muted/40 rounded-2xl border border-dashed border-border">
           <div className="relative">
             <Loader2 className="w-10 h-10 text-primary/30 animate-spin" />
             <Sparkles className="w-4 h-4 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-slate-700">Curating your videos…</p>
-            <p className="text-xs text-slate-400 mt-1">Finding Bharat-first content for your classroom</p>
+            <p className="text-sm font-semibold text-foreground">Curating your videos…</p>
+            <p className="text-xs text-muted-foreground mt-1">Finding Bharat-first content for your classroom</p>
           </div>
         </div>
       )}
 
       {/* Video carousels */}
       {recommendations && (
-        <div className="divide-y divide-slate-100">
+        <div>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
+        <div className="divide-y divide-border">
           {CATEGORIES.map(cat => (
             <VideoCarousel
               key={cat.key}
@@ -234,23 +240,24 @@ export default function VideoStorytellerPage() {
             />
           ))}
         </div>
+        </div>
       )}
 
       {/* Empty state — not loading, no data, user logged in */}
       {!loading && !recommendations && user && (
-        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-            <Video className="w-6 h-6 text-slate-300" />
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-muted/40 rounded-2xl border border-dashed border-border">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+            <Video className="w-6 h-6 text-muted-foreground/40" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-slate-700">Ready to explore?</p>
-            <p className="text-xs text-slate-400 mt-1">Use the filters above to find videos for your classroom.</p>
+            <p className="text-sm font-semibold text-foreground">Ready to explore?</p>
+            <p className="text-xs text-muted-foreground mt-1">Use the filters above to find videos for your classroom.</p>
           </div>
           <Button
             size="sm"
             variant="outline"
             onClick={() => fetchRecommendations()}
-            className="rounded-lg gap-1.5 h-8 text-xs mt-1"
+            className="rounded-xl gap-1.5 h-8 text-xs mt-1"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Load Recommendations
