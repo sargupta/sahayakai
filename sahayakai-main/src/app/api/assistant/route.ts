@@ -157,14 +157,17 @@ Active form fields (what the teacher is currently working on): ${JSON.stringify(
 
         return await runResiliently(async (config) => {
             const chatContext = chatHistory
-                .map((msg: any) => {
+                .flatMap((msg: any) => {
+                    const lines: string[] = [];
+                    // Format 1: Genkit-style { role, parts }
                     if (msg.role && msg.parts) {
-                        return `${msg.role}: ${msg.parts.map((p: any) => p.text).join('')}`;
+                        const text = msg.parts.map((p: any) => p.text).join('');
+                        if (text.trim()) lines.push(`${msg.role}: ${text}`);
                     }
-                    if (msg.user || msg.ai) {
-                        return `user: ${msg.user || ''}\nai: ${msg.ai || ''}`;
-                    }
-                    return '';
+                    // Format 2: VoiceAssistant { user, ai }
+                    if (msg.user?.trim()) lines.push(`user: ${msg.user}`);
+                    if (msg.ai?.trim()) lines.push(`ai: ${msg.ai}`);
+                    return lines;
                 })
                 .filter(Boolean)
                 .join('\n');

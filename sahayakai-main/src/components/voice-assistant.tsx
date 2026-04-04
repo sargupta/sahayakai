@@ -40,25 +40,26 @@ interface VoiceAssistantProps {
 // ─── Flow Config ─────────────────────────────────────────────────────────────
 
 const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color: string; label: string }> = {
+    // Keys MUST match flow keys in soul.ts SAHAYAK_SOUL_PROMPT
     "lesson-plan": {
         route: "/lesson-plan",
         icon: <BookOpen className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
         label: "Lesson Plan",
     },
-    "quiz": {
+    "quiz-generator": {
         route: "/quiz-generator",
         icon: <ClipboardList className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
         label: "Quiz",
     },
-    "worksheet": {
+    "worksheet-wizard": {
         route: "/worksheet-wizard",
         icon: <FileText className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
         label: "Worksheet",
     },
-    "visual-aid": {
+    "visual-aid-designer": {
         route: "/visual-aid-designer",
         icon: <Lightbulb className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
@@ -81,6 +82,24 @@ const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color:
         icon: <Map className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
         label: "Virtual Field Trip",
+    },
+    "rubric-generator": {
+        route: "/rubric-generator",
+        icon: <ClipboardList className="w-4 h-4" />,
+        color: "bg-primary/5 border-primary/20 text-primary",
+        label: "Rubric",
+    },
+    "instant-answer": {
+        route: "/instant-answer",
+        icon: <Lightbulb className="w-4 h-4" />,
+        color: "bg-primary/5 border-primary/20 text-primary",
+        label: "Instant Answer",
+    },
+    "exam-paper": {
+        route: "/exam-paper",
+        icon: <FileText className="w-4 h-4" />,
+        color: "bg-primary/5 border-primary/20 text-primary",
+        label: "Exam Paper",
     },
 };
 
@@ -139,7 +158,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
         }
     }, [messages, isOpen]);
 
-    const sendMessage = async (text: string) => {
+    const sendMessage = async (text: string, detectedLang?: string) => {
         if (!text.trim()) return;
 
         const userMsg: Message = { role: "user", content: text };
@@ -149,16 +168,21 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
         if (!isOpen) setIsOpen(true);
 
         try {
+            // Build chat history — separate user and AI messages for the backend
+            const chatHistory = messages.flatMap(m => {
+                if (m.role === "user") return [{ user: m.content, ai: "" }];
+                if (m.role === "ai") return [{ user: "", ai: m.content }];
+                return [];
+            }).filter(t => t.user.trim() || t.ai.trim());
+
             const response = await fetch("/api/assistant", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: text,
-                    context,
-                    history: messages.map(m => ({
-                        user: m.role === "user" ? m.content : "",
-                        ai: m.role === "ai" ? m.content : "",
-                    })).filter(t => t.user || t.ai),
+                    chatHistory,
+                    currentScreenContext: { path: context },
+                    detectedLanguage: detectedLang || null,
                 }),
             });
 
@@ -331,7 +355,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                 type="text"
                                 value={textInput}
                                 onChange={e => setTextInput(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(textInput)}
+                                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(textInput); } }}
                                 placeholder="Type or speak to VIDYA..."
                                 className="flex-1 text-sm bg-muted/50 border border-border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 placeholder:text-muted-foreground"
                             />
@@ -347,7 +371,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                         {/* Mic */}
                         <div className="flex justify-center">
                             <MicrophoneInput
-                                onTranscriptChange={sendMessage}
+                                onTranscriptChange={(text, lang) => sendMessage(text, lang)}
                                 label="Or tap to speak..."
                                 iconSize="sm"
                                 className="scale-90"
