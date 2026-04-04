@@ -43,6 +43,11 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
     if (!userDoc.exists) throw new Error('User profile not found');
     const profile = userDoc.data()!;
 
+    // Short-circuit if groups already initialized (1 read instead of 16+)
+    if (profile.groupsInitialized === true) {
+        return profile.groupIds ?? [];
+    }
+
     const subjects: string[] = profile.subjects ?? [];
     const gradeLevels: string[] = profile.gradeLevels ?? [];
     const schoolName: string = profile.schoolName ?? '';
@@ -94,7 +99,7 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
         }
     }
 
-    // School group
+    // School group — create if needed but do NOT auto-join (privacy: opt-in only)
     if (schoolName) {
         const schoolGroupId = `school_${normalizeKey(schoolName)}`;
         if (!existingSet.has(schoolGroupId)) {
@@ -114,15 +119,7 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                     createdBy: 'system',
                 });
             }
-
-            try {
-                await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
-                await groupRef.update({ memberCount: FieldValue.increment(1) });
-                newGroupIds.push(schoolGroupId);
-            } catch {
-                // Already a member — skip (create fails if doc exists)
-                newGroupIds.push(schoolGroupId);
-            }
+            // School groups are opt-in — teacher joins via community page prompt
         }
     }
 
@@ -218,12 +215,12 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
         }
     }
 
-    // Persist groupIds on user doc
+    // Persist groupIds + mark initialized on user doc
+    const updateData: Record<string, any> = { groupsInitialized: true };
     if (newGroupIds.length > 0) {
-        await db.collection('users').doc(uid).update({
-            groupIds: FieldValue.arrayUnion(...newGroupIds),
-        });
+        updateData.groupIds = FieldValue.arrayUnion(...newGroupIds);
     }
+    await db.collection('users').doc(uid).update(updateData);
 
     const allGroupIds = [...existingGroupIds, ...newGroupIds];
     logger.info(`ensureUserGroups: uid=${uid}, existing=${existingGroupIds.length}, new=${newGroupIds.length}`);
@@ -546,6 +543,7 @@ export async function discoverGroupsAction(): Promise<Group[]> {
     const subjects: string[] = profile.subjects ?? [];
     const grades: string[] = profile.gradeLevels ?? [];
     const state: string = profile.state ?? '';
+    const schoolName: string = profile.schoolName ?? '';
 
     // Fetch top groups by member count
     const snap = await db
@@ -555,6 +553,19 @@ export async function discoverGroupsAction(): Promise<Group[]> {
         .get();
 
     const candidates: (Group & { score: number })[] = [];
+    const fetchedIds = new Set(snap.docs.map(d => d.id));
+
+    // Ensure the user's school group is included even if not in top 50
+    if (schoolName) {
+        const schoolGroupId = `school_${normalizeKey(schoolName)}`;
+        if (!myGroupSet.has(schoolGroupId) && !fetchedIds.has(schoolGroupId)) {
+            const schoolDoc = await db.collection('groups').doc(schoolGroupId).get();
+            if (schoolDoc.exists) {
+                const group = { id: schoolDoc.id, ...schoolDoc.data() } as Group;
+                candidates.push({ ...group, score: 10 }); // High score for own school
+            }
+        }
+    }
 
     for (const doc of snap.docs) {
         if (myGroupSet.has(doc.id)) continue;
@@ -562,6 +573,8 @@ export async function discoverGroupsAction(): Promise<Group[]> {
         let score = 0;
 
         const rules = group.autoJoinRules ?? {};
+        // School match (highest priority — opt-in prompt)
+        if (rules.school && schoolName && normalizeKey(rules.school) === normalizeKey(schoolName)) score += 10;
         // Subject match
         if (rules.subjects?.some(s => subjects.includes(s))) score += 3;
         // Grade match

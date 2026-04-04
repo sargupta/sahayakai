@@ -78,22 +78,44 @@ export async function POST(request: Request) {
             );
         }
 
+        const { teachingGradeLevels: _tgl, ...restData } = validationResult.data as any;
+
+        // Check if profile already exists — only set social defaults for new users
+        const existingProfile = await dbAdapter.getUser(requestingUserId);
+        const isNewUser = !existingProfile;
+
         const profile: UserProfile = {
-            ...validationResult.data,
-            badges: [],
-            followersCount: 0,
-            followingCount: 0,
-            // Cast specialized types that Zod parsed as strings
-            teachingGradeLevels: validationResult.data.teachingGradeLevels as any,
-            subjects: validationResult.data.subjects as any,
+            ...restData,
+            // Normalize field: accept both old and new field names
+            gradeLevels: (restData.gradeLevels ?? _tgl ?? []) as any,
+            subjects: restData.subjects as any,
             preferredLanguage: validationResult.data.preferredLanguage as any,
-            verifiedStatus: 'none',
-            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() },
+            // Only set social/badge defaults for new profiles — never overwrite existing values
+            ...(isNewUser ? {
+                badges: [],
+                followersCount: 0,
+                followingCount: 0,
+                verifiedStatus: 'none' as const,
+                createdAt: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() },
+            } : {}),
             lastLogin: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() }
         };
 
-        // Using createUser/updateUser from adapter
-        // Currently adapter has createUser which calls set(merge:true), so it works for upsert.
+        // If existing user changed group-affecting fields, reset groupsInitialized so groups re-sync
+        if (!isNewUser && existingProfile) {
+            const schoolChanged = profile.schoolName !== existingProfile.schoolName;
+            const newSubjects = [...(profile.subjects ?? [])].sort();
+            const oldSubjects = [...(existingProfile.subjects ?? [])].sort();
+            const subjectsChanged = JSON.stringify(newSubjects) !== JSON.stringify(oldSubjects);
+            const newGrades = [...(profile.gradeLevels ?? [])].sort();
+            const oldGrades = [...(existingProfile.gradeLevels ?? [])].sort();
+            const gradesChanged = JSON.stringify(newGrades) !== JSON.stringify(oldGrades);
+            if (schoolChanged || subjectsChanged || gradesChanged) {
+                (profile as any).groupsInitialized = false;
+            }
+        }
+
+        // createUser uses set(merge:true), safe for upsert
         await dbAdapter.createUser(profile);
 
         return NextResponse.json({ success: true, uid: profile.uid });

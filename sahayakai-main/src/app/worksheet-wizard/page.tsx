@@ -23,6 +23,7 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { SubjectSelector } from "@/components/subject-selector";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
@@ -572,6 +573,7 @@ function WorksheetWizardContent() {
             title={form.getValues("prompt") || t.resultTitle}
             selectedLanguage={selectedLanguage}
           /></div>
+          <ShareToCommunityCTA contentType="worksheet" className="mt-3" />
           </>
         )
       }

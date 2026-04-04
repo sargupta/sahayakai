@@ -19,6 +19,7 @@ import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { SubjectSelector } from "@/components/subject-selector";
 import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -367,6 +368,7 @@ function TeacherTrainingContent() {
           <hr className="flex-1 border-border/40" />
         </div>
         <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
+        <ShareToCommunityCTA contentType="teacher-training" className="mt-3" />
         </>
       )}
 

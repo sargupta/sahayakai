@@ -21,6 +21,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { ImageUploader } from "@/components/image-uploader";
 import { SubjectSelector } from "@/components/subject-selector";
 import { QuizDisplay } from "@/components/quiz-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Input } from "@/components/ui/input";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
@@ -994,6 +995,7 @@ function QuizGeneratorContent() {
           <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
             <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />
           </div>
+          <ShareToCommunityCTA contentType="quiz" className="mt-3" />
         </>
       )}
     </div>

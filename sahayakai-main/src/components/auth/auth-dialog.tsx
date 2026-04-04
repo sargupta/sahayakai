@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Sparkles, ShieldCheck, Zap } from "lucide-react";
+import { LogIn, Sparkles, ShieldCheck, Zap } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export function AuthDialog() {
@@ -29,7 +29,28 @@ export function AuthDialog() {
         });
 
         try {
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Profile check — redirect new users to onboarding
+            // Mirrors the same logic in AuthButton
+            try {
+                const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists === false) {
+                        toast({
+                            title: "Almost there!",
+                            description: "Complete your professional profile to get started.",
+                        });
+                        closeAuthModal();
+                        window.location.href = '/onboarding';
+                        return;
+                    }
+                }
+            } catch {
+                // API error — don't block login
+            }
         } catch (error: any) {
             toast({
                 title: "Sign-in Failed",
@@ -52,10 +73,10 @@ export function AuthDialog() {
                             <Logo />
                         </div>
                         <DialogTitle className="text-2xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
-                            Unlock Your AI Assistant
+                            Your AI Teaching Assistant
                         </DialogTitle>
                         <DialogDescription className="text-base text-muted-foreground max-w-[300px]">
-                            Join thousands of educators using SahayakAI to save time and transform their classrooms.
+                            Built for teachers across Bharat. Sign in to save your work and access all tools.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -83,7 +104,7 @@ export function AuthDialog() {
                                 onClick={handleSignIn}
                                 className="w-full h-12 text-lg font-bold gap-3 shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]"
                             >
-                                <Mail className="h-5 w-5" />
+                                <LogIn className="h-5 w-5" />
                                 Sign in with Google
                             </Button>
                             <p className="text-center text-xs text-muted-foreground mt-4">

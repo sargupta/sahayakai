@@ -65,6 +65,52 @@ export const EDUCATION_BOARDS = [
 ] as const;
 export type EducationBoard = typeof EDUCATION_BOARDS[number];
 
+/** Native-script labels for the language picker (tap-to-select UI) */
+export const LANGUAGE_NATIVE_LABELS: Record<Language, string> = {
+    'English': 'English',
+    'Hindi': 'हिंदी',
+    'Kannada': 'ಕನ್ನಡ',
+    'Tamil': 'தமிழ்',
+    'Telugu': 'తెలుగు',
+    'Marathi': 'मराठी',
+    'Bengali': 'বাংলা',
+    'Gujarati': 'ગુજરાતી',
+    'Punjabi': 'ਪੰਜਾਬੀ',
+    'Malayalam': 'മലയാളം',
+    'Odia': 'ଓଡ଼ିଆ',
+};
+
+/** Maps state name → the default state board for cascading board selector */
+export const STATE_BOARD_MAP: Record<string, string> = {
+    'Andhra Pradesh': 'Andhra Pradesh State Board',
+    'Assam': 'Assam State Board (SEBA)',
+    'Bihar': 'Bihar State Board (BSEB)',
+    'Chhattisgarh': 'Chhattisgarh State Board (CGBSE)',
+    'Goa': 'Goa Board of Secondary Education',
+    'Gujarat': 'Gujarat State Board (GSEB)',
+    'Haryana': 'Haryana State Board (HBSE)',
+    'Himachal Pradesh': 'Himachal Pradesh State Board (HPBOSE)',
+    'Jharkhand': 'Jharkhand Academic Council (JAC)',
+    'Karnataka': 'Karnataka State Board (KSEEB)',
+    'Kerala': 'Kerala State Board (SCERT)',
+    'Madhya Pradesh': 'Madhya Pradesh State Board (MPBSE)',
+    'Maharashtra': 'Maharashtra State Board (MSBSHSE)',
+    'Manipur': 'Manipur State Board (COHSEM)',
+    'Meghalaya': 'Meghalaya State Board (MBOSE)',
+    'Nagaland': 'Nagaland State Board (NBSE)',
+    'Odisha': 'Odisha State Board (BSE Odisha)',
+    'Punjab': 'Punjab State Board (PSEB)',
+    'Rajasthan': 'Rajasthan State Board (RBSE)',
+    'Tamil Nadu': 'Tamil Nadu State Board (SSLC)',
+    'Telangana': 'Telangana State Board (TSBIE)',
+    'Tripura': 'Tripura State Board (TBSE)',
+    'Uttar Pradesh': 'UP Board (UPMSP)',
+    'Uttarakhand': 'Uttarakhand State Board (UBSE)',
+    'West Bengal': 'West Bengal State Board (WBBSE)',
+    'Delhi': 'Delhi Board (DBSE)',
+    'Puducherry': 'Puducherry Board',
+};
+
 export const LANGUAGE_CODE_MAP: Record<string, Language> = {
     'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada', 'ta': 'Tamil',
     'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali',
@@ -120,7 +166,9 @@ export interface UserProfile {
     administrativeRole?: AdministrativeRole;
     qualifications?: Qualification[];
 
-    teachingGradeLevels: GradeLevel[];
+    gradeLevels: GradeLevel[];
+    /** @deprecated Use gradeLevels — kept for backwards compatibility with AI flows */
+    teachingGradeLevels?: GradeLevel[];
     subjects: Subject[];
     preferredLanguage: Language;
 
@@ -135,10 +183,16 @@ export interface UserProfile {
 
     // UX flags
     hasHeardGreeting?: boolean;
+    communityIntroState?: 'none' | 'ready' | 'visited';
+    groupsInitialized?: boolean;
+    groupIds?: string[];
 
     // Gamification
     impactScore: number;
     contentSharedCount: number;
+
+    // Onboarding generation counter (client-side tracks, periodically syncs)
+    aiGenerationCount?: number;
 }
 
 export interface BaseContent<T = any> {

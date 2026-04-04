@@ -39,6 +39,7 @@ import {
   type ExamBlueprint,
   type SectionBlueprint,
 } from "@/ai/data/board-blueprints";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 
 // ── Types for generated paper ────────────────────────────────────────────
 
@@ -769,6 +770,7 @@ export default function ExamPaperPage() {
               PDF (Coming Soon)
             </Button>
           </div>
+          <ShareToCommunityCTA contentType="exam-paper" className="mt-3" />
         </div>
         </div>
       )}

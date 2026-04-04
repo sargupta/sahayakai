@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft, UserSearch } from 'lucide-react';
+import { Users, Plus, ArrowLeft, UserSearch, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db as clientDb } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Community components
 import GroupList from '@/components/community/group-list';
@@ -33,6 +34,7 @@ import {
   sendConnectionRequestAction,
 } from '@/app/actions/connections';
 import { getRecommendedTeachersAction } from '@/app/actions/community';
+import { updateProfileAction } from '@/app/actions/profile';
 
 // Types
 import type { Group, FeedItem } from '@/types/community';
@@ -62,6 +64,7 @@ export default function CommunityPage() {
   const [showExploreGroups, setShowExploreGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
 
   // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -78,6 +81,18 @@ export default function CommunityPage() {
       } catch {
         // Non-fatal — continue loading
       }
+
+      // Check if this is first community visit — show inline hints if so
+      try {
+        const userSnap = await getDoc(doc(clientDb, 'users', firebaseUser.uid));
+        const introState = userSnap.data()?.communityIntroState;
+        if (introState === 'ready' || introState === 'none') {
+          setShowFirstVisitHint(true);
+        }
+      } catch {}
+
+      // Mark community as visited (fire-and-forget — prevents future nudges)
+      updateProfileAction(firebaseUser.uid, { communityIntroState: 'visited' }).catch(() => {});
 
       // Step 2: Load all data in parallel — now that membership is settled
       Promise.allSettled([
@@ -227,12 +242,17 @@ export default function CommunityPage() {
         onBack={() => setActiveGroup(null)}
         isMember={isMember}
         onJoinGroup={async (groupId) => {
-          await joinGroupAction(groupId);
-          const refreshed = await getMyGroupsAction();
-          setMyGroups(refreshed);
-          setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
-          const updated = refreshed.find((g) => g.id === groupId);
-          if (updated) setActiveGroup(updated);
+          try {
+            await joinGroupAction(groupId);
+            const refreshed = await getMyGroupsAction();
+            setMyGroups(refreshed);
+            setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
+            const updated = refreshed.find((g) => g.id === groupId);
+            if (updated) setActiveGroup(updated);
+          } catch (err) {
+            console.error("Failed to join group:", err);
+            toast({ title: "Could not join group", description: "Please try again.", variant: "destructive" });
+          }
         }}
       />
     );
@@ -339,6 +359,19 @@ export default function CommunityPage() {
           </Button>
         </div>
       </div>
+
+      {/* First-visit inline hint */}
+      {showFirstVisitHint && (
+        <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/15 animate-in fade-in duration-500">
+          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div className="flex-1 text-sm text-foreground">
+            <span className="font-medium">Welcome!</span> These groups match your subjects and classes. Post questions, share resources, and connect with fellow teachers.
+          </div>
+          <button onClick={() => setShowFirstVisitHint(false)} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Group chips — with Explore entry point for mobile */}
       <div className="mt-4">

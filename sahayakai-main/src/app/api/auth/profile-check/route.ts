@@ -47,6 +47,6 @@ export async function GET(request: Request) {
         });
     } catch (error) {
         logger.error("Profile check error", error, 'AUTH', { uid });
-        return NextResponse.json({ exists: false });
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 }

@@ -23,6 +23,7 @@ import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 
 
 const translations: Record<string, Record<string, string>> = {
@@ -515,6 +516,7 @@ function InstantAnswerContent() {
               </div>
             )}
           </CardContent>
+          <ShareToCommunityCTA contentType="instant-answer" className="mt-3" />
         </div>
         </>
       )}
