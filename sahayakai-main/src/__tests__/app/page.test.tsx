@@ -96,6 +96,15 @@ jest.mock('@/context/auth-context', () => ({
     })
 }));
 
+jest.mock('@/context/language-context', () => ({
+    useLanguage: jest.fn().mockReturnValue({
+        language: 'English',
+        setLanguage: jest.fn(),
+        isLoaded: true,
+        t: (key: string) => key,
+    })
+}));
+
 // Mock Icons
 // Utilizes src/__mocks__/lucide-react.ts via moduleNameMapper in jest.config.ts
 
