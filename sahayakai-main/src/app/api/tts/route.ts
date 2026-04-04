@@ -4,6 +4,7 @@ import { initializeFirebase } from '@/lib/firebase-admin';
 import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import { UsageTracker } from '@/lib/usage-tracker';
+import { sarvamTTS, toSarvamLangCode } from '@/lib/sarvam';
 
 // Cache the GCP access token for its full lifetime (1 hour).
 // Re-fetching on every request added 100–300 ms of latency per TTS call.
@@ -30,6 +31,7 @@ async function getGoogleAccessToken(): Promise<string> {
 function detectLangCode(text: string): string {
     if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'; // Devanagari (Hindi, Marathi, etc.)
     if (/[\u0980-\u09FF]/.test(text)) return 'bn-IN'; // Bengali
+    if (/[\u0B00-\u0B7F]/.test(text)) return 'or-IN'; // Odia (before Tamil — Odia range is \u0B00-\u0B7F)
     if (/[\u0B80-\u0BFF]/.test(text)) return 'ta-IN'; // Tamil
     if (/[\u0C00-\u0C7F]/.test(text)) return 'te-IN'; // Telugu
     if (/[\u0C80-\u0CFF]/.test(text)) return 'kn-IN'; // Kannada
@@ -77,6 +79,40 @@ function stripMarkdown(text: string): string {
 
 const VALID_LANG_CODE = /^[a-z]{2}-[A-Z]{2}$/;
 
+/**
+ * Synthesise speech with Google Cloud TTS (used as fallback when Sarvam fails).
+ */
+async function googleTTS(cleanText: string, langCode: string, voiceName: string): Promise<string> {
+    const token = await getGoogleAccessToken();
+
+    const response = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            input: { text: cleanText },
+            voice: { languageCode: langCode, name: voiceName },
+            audioConfig: {
+                audioEncoding: 'MP3',
+                speakingRate: 0.92,
+                pitch: 0,
+                effectsProfileId: ['headphone-class-device'],
+            },
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Google TTS ${response.status}: ${errorText.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+    if (!data.audioContent) throw new Error('Google TTS returned empty audio');
+    return data.audioContent;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const uid = req.headers.get('x-user-id');
@@ -95,55 +131,48 @@ export async function POST(req: NextRequest) {
         const cleanText = stripMarkdown(text);
 
         // Use caller-provided language code when valid; otherwise detect from script.
-        // This lets callers override for Romanised/Hinglish text where detection fails.
         const langCode = (targetLang && VALID_LANG_CODE.test(targetLang))
             ? targetLang
             : detectLangCode(cleanText);
 
-        const voiceName = getVoiceName(langCode);
+        // --- Try Sarvam first, fall back to Google ---
+        const sarvamLang = toSarvamLangCode(langCode);
+        const provider = sarvamLang ? 'sarvam' : 'google';
+        const voiceLabel = sarvamLang ? `sarvam:priya:${sarvamLang}` : getVoiceName(langCode);
 
-        const cacheKey = generateCacheKey(cleanText, voiceName);
+        const cacheKey = generateCacheKey(cleanText, voiceLabel, provider);
         const cached = getCachedAudio(cacheKey);
         if (cached) {
-            console.log(`[TTS] Cache Hit for: ${voiceName}`);
-            UsageTracker.trackTTS(uid, cleanText.length, true);
+            console.log(`[TTS] Cache Hit (${provider}): ${voiceLabel}`);
+            UsageTracker.trackTTS(uid, cleanText.length, true, provider);
             return NextResponse.json({ audioContent: cached });
         }
 
-        console.log(`[TTS] Inference required for: ${voiceName}`);
-        UsageTracker.trackTTS(uid, cleanText.length, false);
-        const token = await getGoogleAccessToken();
+        let audioContent: string;
 
-        const response = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                input: { text: cleanText },
-                voice: { languageCode: langCode, name: voiceName },
-                audioConfig: {
-                    audioEncoding: 'MP3',
-                    speakingRate: 0.92,  // Slightly slower than default 1.0 — clearer for non-native listeners
-                    pitch: 0,
-                    effectsProfileId: ['headphone-class-device'], // Better audio profile
-                },
-            }),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("[TTS] GCP Error:", errorText);
-            return NextResponse.json({ error: 'TTS Synthesis Failed' }, { status: response.status });
+        if (sarvamLang) {
+            // Sarvam is available for this language — try it first
+            try {
+                console.log(`[TTS] Sarvam inference: ${sarvamLang}`);
+                const result = await sarvamTTS(cleanText, sarvamLang);
+                audioContent = result.audioContent;
+                UsageTracker.trackTTS(uid, cleanText.length, false, 'sarvam');
+            } catch (sarvamErr: any) {
+                // Sarvam failed — fall back to Google
+                console.warn(`[TTS] Sarvam failed (${sarvamErr.message}), falling back to Google`);
+                const googleVoice = getVoiceName(langCode);
+                audioContent = await googleTTS(cleanText, langCode, googleVoice);
+                UsageTracker.trackTTS(uid, cleanText.length, false, 'google');
+            }
+        } else {
+            // Language not supported by Sarvam — use Google directly
+            console.log(`[TTS] Google inference (no Sarvam for ${langCode}): ${getVoiceName(langCode)}`);
+            audioContent = await googleTTS(cleanText, langCode, getVoiceName(langCode));
+            UsageTracker.trackTTS(uid, cleanText.length, false, 'google');
         }
 
-        const data = await response.json();
-        if (data.audioContent) {
-            setCachedAudio(cacheKey, data.audioContent);
-        }
-
-        return NextResponse.json({ audioContent: data.audioContent });
+        setCachedAudio(cacheKey, audioContent);
+        return NextResponse.json({ audioContent });
 
     } catch (error: any) {
         if (error.message?.includes('Rate limit exceeded')) {

@@ -9,8 +9,8 @@ const TTS_CACHE = new Map<string, CacheEntry>();
 const MAX_CACHE_AGE_MS = 1000 * 60 * 60 * 24; // 24 hours
 const MAX_CACHE_ITEMS = 500;
 
-export function generateCacheKey(text: string, voiceName: string): string {
-    return crypto.createHash('md5').update(`${text}_${voiceName}`).digest('hex');
+export function generateCacheKey(text: string, voiceName: string, provider: string = 'google'): string {
+    return crypto.createHash('md5').update(`${text}_${voiceName}_${provider}`).digest('hex');
 }
 
 export function getCachedAudio(key: string): string | null {
