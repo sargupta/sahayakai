@@ -13,9 +13,14 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { SampleOutputSection } from "@/components/landing/sample-output-section";
+import { useCommunityIntro } from "@/hooks/use-community-intro";
+import { CommunityNudgeBanner } from "@/components/community/community-nudge-banner";
+import { DemoInteraction } from "@/components/landing/demo-interaction";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -29,6 +34,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function Home() {
   const { requireAuth, openAuthModal } = useAuth();
+  const { language: userLanguage } = useLanguage();
+  const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro();
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
@@ -80,7 +87,7 @@ export default function Home() {
       const res = await fetch("/api/ai/intent", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ prompt: values.topic })
+        body: JSON.stringify({ prompt: values.topic, language: userLanguage })
       });
 
       if (!res.ok) {
@@ -96,8 +103,11 @@ export default function Home() {
       const { result } = response;
 
       if (result?.action === 'NAVIGATE' && result.url) {
+        trackGeneration();
+        setIsThinking(false);
         router.push(result.url);
       } else if (result?.action === 'ANSWER') {
+        trackGeneration();
         setAnswer(result.content);
         setIsThinking(false);
       } else {
@@ -120,7 +130,7 @@ export default function Home() {
     }
   };
 
-  const handleTranscript = (transcript: string) => {
+  const handleTranscript = (transcript: string, _language?: string) => {
     form.setValue("topic", transcript);
     form.handleSubmit(onSubmit)();
   };
@@ -187,10 +197,10 @@ export default function Home() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <AutoCompleteInput
-                      placeholder="Or type here (e.g. 'Photosynthesis')"
+                      placeholder="Type a topic, e.g. 'Photosynthesis for Class 8'"
                       {...form.register("topic")}
                       value={form.watch("topic")}
-                      selectedLanguage="en"
+                      selectedLanguage={userLanguage || "English"}
                       onSuggestionClick={(value) => {
                         form.setValue("topic", value);
                         form.handleSubmit(onSubmit)();
@@ -217,8 +227,8 @@ export default function Home() {
           <p className="text-center text-xs text-muted-foreground px-4">
             try: "Quiz about photosynthesis" or "Lesson plan for solar system"
           </p>
-          <p className="text-[10px] text-muted-foreground">
-            Sahayak can make mistakes. Please review generated content.
+          <p className="text-xs text-muted-foreground">
+            Works in हिंदी, ಕನ್ನಡ, தமிழ் + 8 more languages
           </p>
 
           {/* Thinking Indicator */}
@@ -248,6 +258,9 @@ export default function Home() {
                 <div className="prose prose-sm max-w-none text-foreground">
                   <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
                   <div className="whitespace-pre-wrap">{answer}</div>
+                  <p className="text-[10px] text-muted-foreground mt-3 not-prose">
+                    Sahayak can make mistakes. Please review generated content.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -255,8 +268,18 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Quick Actions Grid - UPDATED GRID COLS */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
+      {/* Sample Output */}
+      <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-150 flex justify-center">
+        <SampleOutputSection />
+      </div>
+
+      {/* Demo Interaction */}
+      <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
+        <DemoInteraction />
+      </div>
+
+      {/* Quick Actions Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
         <QuickActionCard
           title="Lesson Plan"
           icon={BookOpen}
@@ -272,11 +295,39 @@ export default function Home() {
           description="Instant quizzes & worksheets."
         />
         <QuickActionCard
+          title="Exam Paper"
+          icon={FileText}
+          href="/exam-paper"
+          color=""
+          description="Board-aligned papers."
+        />
+        <QuickActionCard
+          title="Worksheet Wizard"
+          icon={ClipboardList}
+          href="/worksheet-wizard"
+          color=""
+          description="Practice worksheets."
+        />
+        <QuickActionCard
+          title="Visual Aid"
+          icon={Image}
+          href="/visual-aid-designer"
+          color=""
+          description="Diagrams & illustrations."
+        />
+        <QuickActionCard
           title="Content Creator"
           icon={PenTool}
           href="/content-creator"
           color=""
           description="Stories & visual aids."
+        />
+        <QuickActionCard
+          title="Instant Answer"
+          icon={Lightbulb}
+          href="/instant-answer"
+          color=""
+          description="Quick answers to questions."
         />
         <QuickActionCard
           title="Teacher Training"
@@ -286,6 +337,13 @@ export default function Home() {
           description="Professional development."
         />
       </div>
+
+      {/* Community Nudge Banner — appears after 3rd AI generation */}
+      {showNudge && (
+        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <CommunityNudgeBanner onDismiss={dismissNudge} onExplore={markVisited} />
+        </div>
+      )}
     </div>
   );
 }

@@ -387,7 +387,7 @@ function VirtualFieldTripContent() {
                       />
                     </FormControl>
                     <MicrophoneInput
-                      onTranscriptChange={(text) => form.setValue("topic", text)}
+                      onTranscriptChange={(text, lang) => { form.setValue("topic", text); if (lang) form.setValue("language", lang); }}
                       label={t.speakLabel}
                       iconSize="sm"
                     />
