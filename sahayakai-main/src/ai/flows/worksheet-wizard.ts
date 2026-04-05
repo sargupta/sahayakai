@@ -1,6 +1,3 @@
-
-'use server';
-
 /**
  * @fileOverview Creates worksheets from an image of a textbook page and a user prompt.
  *
@@ -30,14 +27,31 @@ const WorksheetWizardInputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
   subject: z.string().optional().describe('The academic subject.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 
 export type WorksheetWizardInput = z.infer<typeof WorksheetWizardInputSchema>;
 
+const WorksheetActivitySchema = z.object({
+  type: z.enum(['question', 'puzzle', 'creative_task']).describe('The type of activity.'),
+  content: z.string().describe('The main content of the activity (e.g., the question or task). Use LaTeX for math.'),
+  explanation: z.string().describe('A Bharat-First pedagogical explanation for this activity.'),
+  chalkboardNote: z.string().optional().describe('Advice for drawing or writing this on a blackboard.'),
+});
+
 const WorksheetWizardOutputSchema = z.object({
-  worksheetContent: z.string().describe('The generated worksheet content in Markdown format.'),
-  gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
-  subject: z.string().nullable().optional().describe('The academic subject.'),
+  title: z.string().describe('The title of the worksheet.'),
+  gradeLevel: z.string().describe('The target grade level (Class X).'),
+  subject: z.string().describe('The academic subject.'),
+  learningObjectives: z.array(z.string()).describe('List of learning objectives.'),
+  studentInstructions: z.string().describe('General instructions for the student.'),
+  activities: z.array(WorksheetActivitySchema).describe('The sequence of activities for the student.'),
+  answerKey: z.array(z.object({
+    activityIndex: z.number().describe('The 0-based index of the activity.'),
+    answer: z.string().describe('The correct answer and brief explanation.'),
+  })).describe('Answers for the activities.'),
+  // Legacy field maintained for transition/compatibility if needed by PDF logic
+  worksheetContent: z.string().optional().describe('A Markdown representation of the worksheet (automatically generated if missing).'),
 });
 export type WorksheetWizardOutput = z.infer<typeof WorksheetWizardOutputSchema>;
 
@@ -66,6 +80,16 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
     localizedInput.gradeLevel = extractedGrade;
   }
 
+  // Fetch teacher context for AI personalisation
+  if (uid && uid !== 'anonymous_user') {
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
+  }
+
   // Normalize input
   if (localizedInput.language) {
     localizedInput.language = LANGUAGE_CODE_MAP[localizedInput.language.toLowerCase() as keyof typeof LANGUAGE_CODE_MAP] || localizedInput.language;
@@ -74,60 +98,41 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
   return worksheetWizardFlow(localizedInput);
 }
 
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
-You are an expert educator who creates engaging and effective worksheets.
- 
+You are an expert educator who creates engaging and effective worksheets for rural Indian classrooms.
+
   **Instructions:**
-  1.  **Analyze the Image:** carefully use the textbook image as the basis for all content.
-  2.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\`.
-  3.  **High-Fidelity Math:** 
-      - Use LaTeX for ALL mathematical formulas, equations, and symbols. 
+  1.  **Analyze the Image:** Carefully use the textbook image as the basis for ALL content.
+  2.  **Bharat-First Contextualization**: YOU MUST use Indian rural contexts. Use examples from Agriculture, local geography (rivers, villages), local markets, and zero-cost resources. Avoid westernisms like "elevators", "subways", or "dollars".
+  3.  **Chalk & Blackboard Awareness**: Design activities that a teacher can easily write on a blackboard. Avoid overly complex diagrams that can't be sketched by hand.
+  4.  **Pedagogical Balance:** Ensure the worksheet is challenging but achievable for the specified \`gradeLevel\` (Class terminology).
+  5.  **High-Fidelity Math:** 
+      - Use LaTeX for ALL mathematical formulas. 
       - CRITICAL: Wrap ALL LaTeX in dollar signs: $ formula $ for inline or $$ formula $$ for blocks.
-      - EXAMPLE: Use $$ \\int x^2 dx $$ instead of simple text.
-  4.  **Math Problems vs Questions:**
-      - If the user asks for "math problems", generate CALCULATIONS and COMPUTATIONS (e.g., Solve for x, Integrate f(x)).
-      - Do NOT generate history or theory questions unless explicitly asked.
-  5.  **Strict Markdown Template:** You MUST structure the worksheet exactly like this:
-     # [Worksheet Title]
-     **Grade**: [Level] | **Subject**: [Subject]
-     
-     ## I. Learning Objectives
-     - [Clear objective 1]
-     - [Clear objective 2]
-     
-     ## II. Student Instructions
-     [Clear, step-by-step instructions for the student]
-     
-     ---
-     
-     ## III. Activities
-     [The main worksheet content: questions, puzzles, or creative tasks based on the image]
-     
-     ---
-     
-     ## IV. Teacher's Answer Key (FOR TEACHER USE ONLY)
-     [Clear answers and explanations for all activities above]
-
-  6.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Math, Science) and \`gradeLevel\` based on the content.
+  6.  **Structured JSON Output**: You MUST return a structured JSON object matching the \`WorksheetWizardOutputSchema\`.
+  7.  **Activities**: Generate a mix of questions, puzzles, and creative tasks (e.g., "Draw a paddy field and label the parts").
+  8.  **Explanations**: For every activity, provide a "Bharat-First" pedagogical explanation.
+  9.  **Answer Key**: Provide clear answers for all activities.
+  10. **Metadata:** Identify the most appropriate \`subject\` and \`gradeLevel\`.
 
 **Context:**
 - **Textbook Image:** {{media url=imageDataUri}}
 - **Request:** {{{prompt}}}
 - **Grade**: {{{gradeLevel}}}
-- **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
 
 **Constraints:**
-- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
-- **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
-- **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
+- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}).
+- **No Repetition Loop**: Monitor your output for repetitive phrases.
+- **Scope Integrity**: Stay strictly within the scope of the educational task.
 `,
 });
 
@@ -176,7 +181,7 @@ const worksheetWizardFlow = ai.defineFlow(
           ...input,
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
-      });
+      }, 'worksheet.generate');
 
       if (!output) {
         throw new FlowExecutionError(
@@ -188,10 +193,31 @@ const worksheetWizardFlow = ai.defineFlow(
         );
       }
 
-      // Validate schema explicitly
+      // Validate and Sanitize
+      let sanitizedOutput: any;
+      let worksheetContent = '';
       try {
-        WorksheetWizardOutputSchema.parse(output);
+        const { validateWorksheetOutput, sanitizeWorksheetOutput } = await import('./worksheet-validation');
+        sanitizedOutput = sanitizeWorksheetOutput(output);
+        const validation = validateWorksheetOutput(sanitizedOutput);
+
+        if (!validation.valid) {
+          throw new SchemaValidationError(
+            `Worksheet validation failed:\n - ${validation.errors.join('\n - ')}`,
+            { validationErrors: validation.errors, rawOutput: sanitizedOutput }
+          );
+        }
+
+        // Generate worksheetContent (Markdown) for legacy support/PDF
+        if (!sanitizedOutput.worksheetContent) {
+          sanitizedOutput.worksheetContent = `# ${sanitizedOutput.title}\n\n**Class**: ${sanitizedOutput.gradeLevel} | **Subject**: ${sanitizedOutput.subject}\n\n## I. Learning Objectives\n${sanitizedOutput.learningObjectives.map((o: string) => `- ${o}`).join('\n')}\n\n## II. Student Instructions\n${sanitizedOutput.studentInstructions}\n\n---\n\n## III. Activities\n${sanitizedOutput.activities.map((a: any, i: number) => `### Activity ${i + 1}\n${a.content}\n\n*${a.explanation}*`).join('\n\n')}\n\n---\n\n## IV. Answer Key\n${sanitizedOutput.answerKey.map((ak: any) => `**Activity ${ak.activityIndex + 1}**: ${ak.answer}`).join('\n')}`;
+        }
+
+        worksheetContent = sanitizedOutput.worksheetContent;
+        output.worksheetContent = worksheetContent;
+        WorksheetWizardOutputSchema.parse(sanitizedOutput);
       } catch (validationError: any) {
+        if (validationError instanceof SchemaValidationError) throw validationError;
         throw new SchemaValidationError(
           `Schema validation failed: ${validationError.message}`,
           {
@@ -212,7 +238,7 @@ const worksheetWizardFlow = ai.defineFlow(
           const filePath = `users/${input.userId}/worksheets/${fileName}`;
           const file = storage.bucket().file(filePath);
 
-          await file.save(output.worksheetContent, {
+          await file.save(worksheetContent, {
             contentType: 'text/markdown',
           });
 
@@ -268,7 +294,7 @@ const worksheetWizardFlow = ai.defineFlow(
         }
       });
 
-      return output;
+      return output as WorksheetWizardOutput & { worksheetContent: string };
 
     } catch (flowError: any) {
       const duration = Date.now() - startTime;

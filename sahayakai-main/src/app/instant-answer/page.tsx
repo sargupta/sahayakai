@@ -1,15 +1,16 @@
 
 "use client";
 
-import { instantAnswer } from "@/ai/flows/instant-answer";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Wand2, Youtube, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { MicrophoneInput } from "@/components/microphone-input";
@@ -20,6 +21,9 @@ import { SubjectSelector } from "@/components/subject-selector";
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 
 
 const translations: Record<string, Record<string, string>> = {
@@ -29,7 +33,7 @@ const translations: Record<string, Record<string, string>> = {
     questionLabel: "Your Question",
     speakLabel: "Speak your question...",
     placeholder: "e.g., 'Explain photosynthesis to a 10-year-old...'",
-    gradeLabel: "Grade Level",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Get Instant Answer",
     loadingText: "Getting Answer...",
@@ -211,38 +215,124 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type Answer = z.infer<typeof formSchema> & { answer: string; videoSuggestionUrl?: string };
 
-export default function InstantAnswerPage() {
+function InstantAnswerContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
       language: "en",
-      gradeLevel: "6th Grade",
+      gradeLevel: "Class 6",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedQuestion = form.watch("question");
+  const watchedGrade    = form.watch("gradeLevel");
+  const watchedSubject  = form.watch("subject");
+  const watchedLang     = form.watch("language");
+  const savedSnapshot   = useVidyaFormSync("instant-answer", {
+    question: watchedQuestion,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   /* Translations Helper */
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
+  const searchParams = useSearchParams();
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const questionParam = searchParams.get("question") || searchParams.get("topic") || searchParams.get("prompt");
+    if (questionParam || !savedSnapshot) return;
+    if (savedSnapshot.question)   form.setValue("question",   savedSnapshot.question);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
+
+  useEffect(() => {
+    const id = searchParams.get("id");
+    const questionParam = searchParams.get("question") || searchParams.get("topic") || searchParams.get("prompt");
+
+    if (id) {
+      // ── Library: load saved instant-answer by id ──────────────────────
+      const fetchSaved = async () => {
+        setIsLoading(true);
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`/api/content/get?id=${id}`, { headers });
+          if (res.ok) {
+            const content = await res.json();
+            if (content.topic) form.setValue("question", content.topic);
+            if (content.language) form.setValue("language", content.language);
+            if (content.gradeLevel) form.setValue("gradeLevel", content.gradeLevel);
+            if (content.subject) form.setValue("subject", content.subject);
+            if (content.data?.answer) {
+              setAnswer({
+                question: content.topic,
+                answer: content.data.answer,
+                videoSuggestionUrl: content.data.videoSuggestionUrl,
+              } as Answer);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load saved instant answer:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchSaved();
+    } else if (questionParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
+      form.setValue("question", questionParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ───────────────────────────────────────────────────────────────────
+      setTimeout(() => {
+        form.handleSubmit(onSubmit)();
+      }, 300);
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (values: FormValues) => {
     if (!requireAuth()) return;
     setIsLoading(true);
     setAnswer(null);
     try {
-      const result = await instantAnswer({
-        question: values.question,
-        language: values.language,
-        gradeLevel: values.gradeLevel,
-        subject: values.subject,
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const token = await auth.currentUser?.getIdToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/ai/instant-answer', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          question: values.question,
+          language: values.language || selectedLanguage,
+          gradeLevel: values.gradeLevel,
+          subject: values.subject,
+        }),
       });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to get answer');
+      const result = await res.json();
       setAnswer({ ...values, ...result } as Answer);
+      clearFormSnapshot("instant-answer");
     } catch (error: any) {
       console.error("Failed to get answer:", error);
       if (error.message?.includes("unauthorized") || error.message?.includes("sign in")) {
@@ -272,15 +362,15 @@ export default function InstantAnswerPage() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Wand2 className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
@@ -296,18 +386,10 @@ export default function InstantAnswerPage() {
                     <FormLabel className="font-headline">{t.questionLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => {
-                            field.onChange(transcript);
-                          }}
-                          iconSize="lg"
-                          label={t.speakLabel}
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </div>
                     </FormControl>
@@ -318,13 +400,13 @@ export default function InstantAnswerPage() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="instant-answer" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -342,7 +424,7 @@ export default function InstantAnswerPage() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}
@@ -359,7 +441,7 @@ export default function InstantAnswerPage() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -372,7 +454,7 @@ export default function InstantAnswerPage() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
+              <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -388,7 +470,7 @@ export default function InstantAnswerPage() {
       </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+        <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">{t.searchingText}</p>
@@ -397,7 +479,13 @@ export default function InstantAnswerPage() {
       )}
 
       {answer && (
-        <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+        <>
+        <div className="my-8 flex items-center gap-3">
+          <hr className="flex-1 border-border/40" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <hr className="flex-1 border-border/40" />
+        </div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -411,14 +499,14 @@ export default function InstantAnswerPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="prose prose-lg max-w-none text-foreground">
+            <div className="prose prose-lg prose-headings:font-headline max-w-none text-foreground">
               <ReactMarkdown>{answer.answer}</ReactMarkdown>
             </div>
 
             {answer.videoSuggestionUrl && (
               <div className="border-t border-primary/20 pt-4">
                 <h3 className="font-headline text-lg mb-2">{t.videoTitle}</h3>
-                <Link href={answer.videoSuggestionUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
+                <Link href={answer.videoSuggestionUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors">
                   <Youtube className="h-10 w-10 text-red-600" />
                   <div className="flex-1">
                     <p className="font-semibold">{t.videoButton}</p>
@@ -428,8 +516,18 @@ export default function InstantAnswerPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+          <ShareToCommunityCTA contentType="instant-answer" className="mt-3" />
+        </div>
+        </>
       )}
     </div>
+  );
+}
+
+export default function InstantAnswerPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <InstantAnswerContent />
+    </Suspense>
   );
 }

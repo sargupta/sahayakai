@@ -1,6 +1,6 @@
 /**
  * Teacher Analytics Dashboard Component
- * 
+ *
  * Displays teacher's personal health score and engagement metrics
  * with circular progress indicators (hollow circles with thick borders)
  */
@@ -88,7 +88,7 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
 
             {/* Value display (centered) */}
             <div className="absolute flex flex-col items-center justify-center" style={{ width: diameter, height: diameter }}>
-                <span className={`font-bold ${fontSize} ${text}`}>
+                <span className={`font-bold font-headline ${fontSize} ${text}`}>
                     {Math.round(value)}
                 </span>
                 <span className="text-xs text-muted-foreground">/ {max}</span>
@@ -113,7 +113,6 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                     setHealthScore(data);
                 }
             } catch (error) {
-                console.error('Failed to fetch health score:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -124,7 +123,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
 
     if (isLoading) {
         return (
-            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />
@@ -145,7 +144,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Analytics Dashboard</CardTitle>
+                    <CardTitle className="font-headline">Analytics Dashboard</CardTitle>
                     <CardDescription>Start using the app to generate your impact metrics.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -153,8 +152,8 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         Your dashboard will populate automatically as you create content and engage with the community.
                     </p>
                     <div className="flex gap-2">
-                        <div className="p-4 bg-slate-50 rounded-lg border text-center w-full">
-                            <h3 className="font-semibold text-lg">0</h3>
+                        <div className="p-4 bg-muted rounded-xl border border-border text-center w-full">
+                            <h3 className="font-headline font-semibold text-lg">0</h3>
                             <p className="text-xs text-muted-foreground uppercase">Impact Score</p>
                         </div>
                     </div>
@@ -178,20 +177,20 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     return (
         <div className="space-y-6">
             {/* Overall Health Score */}
-            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle>Your Teaching Impact Score</CardTitle>
+                            <CardTitle className="font-headline">Your Teaching Impact Score</CardTitle>
                             <CardDescription>
                                 Based on activity, engagement, success rate, and growth
                             </CardDescription>
                         </div>
                         <Badge variant={getRiskBadgeVariant(healthScore.risk_level)} className="capitalize">
-                            {healthScore.risk_level === 'healthy' ? '🟢 Excellent' : ''}
-                            {healthScore.risk_level === 'at-risk' ? '🟡 Good' : ''}
-                            {healthScore.risk_level === 'critical' ? '🔴 Needs Attention' : ''}
+                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500" /> Excellent</> : ''}
+                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500" /> Good</> : ''}
+                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Needs Attention</> : ''}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -208,15 +207,15 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl text-center">
-                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                            <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-blue-600 font-headline">{healthScore.consecutive_days_used}</p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Day Streak</p>
                             </div>
-                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                            <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-green-600 font-headline">{healthScore.estimated_students_impacted}</p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Students Impacted</p>
                             </div>
-                            <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg shadow-sm">
+                            <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-purple-600 font-headline">
                                     {healthScore.days_since_last_use === 0 ? 'Today' : `${healthScore.days_since_last_use}d ago`}
                                 </p>
@@ -228,9 +227,9 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
             </div>
 
             {/* Component Scores */}
-            <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden p-6">
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden p-6">
                 <CardHeader className="px-0 pt-0">
-                    <CardTitle>Score Breakdown</CardTitle>
+                    <CardTitle className="font-headline">Score Breakdown</CardTitle>
                     <CardDescription>
                         Your score is calculated from four key areas
                     </CardDescription>

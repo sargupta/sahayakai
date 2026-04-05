@@ -56,8 +56,8 @@ export function LessonPlanSidebar({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 h-fit border-l-4 border-l-primary">
-      <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">
+    <div className="bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
+      <h3 className="font-headline text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         {labels?.configuration || "Lesson Plan Settings"}
       </h3>
 
@@ -70,7 +70,7 @@ export function LessonPlanSidebar({
           name="imageDataUri"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-headline text-xs font-semibold text-slate-600">
+              <FormLabel className="font-headline text-xs font-medium text-muted-foreground">
                 {labels?.contextImage || "Add Context Image (Optional)"}
               </FormLabel>
               <FormControl>
@@ -88,76 +88,76 @@ export function LessonPlanSidebar({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name="gradeLevels"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.grade || "Grade"}
-              </FormLabel>
-              <FormControl>
-                <GradeLevelSelector
-                  value={field.value || []}
-                  onValueChange={field.onChange}
-                  language={selectedLanguage}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="grid grid-cols-2 gap-3 border-t border-border/30 pt-4 mt-2">
+          <FormField
+            control={control}
+            name="gradeLevels"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.grade || "Class"}
+                </FormLabel>
+                <FormControl>
+                  <GradeLevelSelector
+                    value={field.value || []}
+                    onValueChange={field.onChange}
+                    language={selectedLanguage}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={control}
-          name="subject"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.subject || "Subject"}
-              </FormLabel>
-              <FormControl>
-                <SubjectSelector
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  language={selectedLanguage}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          <FormField
+            control={control}
+            name="subject"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.subject || "Subject"}
+                </FormLabel>
+                <FormControl>
+                  <SubjectSelector
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    language={selectedLanguage}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      <div className="mt-4">
-        <FormField
-          control={control}
-          name="language"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-headline">
-                {labels?.language || "Language"}
-              </FormLabel>
-              <FormControl>
-                <LanguageSelector
-                  onValueChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+        <div className="mt-4">
+          <FormField
+            control={control}
+            name="language"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-headline">
+                  {labels?.language || "Language"}
+                </FormLabel>
+                <FormControl>
+                  <LanguageSelector
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      <div className="col-span-2 h-px bg-slate-200 my-4"></div>
+      <div className="col-span-2 h-px bg-border my-4"></div>
 
       <Button
         type="button"
         variant="outline"
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="w-full justify-between border-slate-200 text-slate-600 hover:text-primary hover:border-primary/50"
+        className="w-full justify-between border-border text-muted-foreground hover:text-primary hover:border-primary/50"
       >
         <span className="flex items-center gap-2 text-sm">
           <Settings2 className="h-4 w-4" />
@@ -180,7 +180,7 @@ export function LessonPlanSidebar({
 
           <div className="space-y-1">
             <FormLabel className="font-headline">
-              {labels?.difficulty || "Difficulty Level"} <span className="text-slate-400 font-normal text-xs">{labels?.standard || "(Standard)"}</span>
+              {labels?.difficulty || "Difficulty Level"} <span className="text-muted-foreground font-normal text-xs">{labels?.standard || "(Standard)"}</span>
             </FormLabel>
             <DifficultySelector
               value={difficultyLevel}
@@ -189,11 +189,11 @@ export function LessonPlanSidebar({
           </div>
 
           {/* NCERT Chapter Selector */}
-          {currentGrade && (
-            <div className="space-y-1 pt-2 border-t border-slate-100">
-              <FormLabel className="text-xs font-semibold text-slate-600">
-                {labels?.ncert || "Link NCERT Chapter (Optional)"}
-              </FormLabel>
+          <div className="space-y-1 pt-2 border-t border-border">
+            <FormLabel className="text-xs font-medium text-muted-foreground">
+              {labels?.ncert || "Link NCERT Chapter (Optional)"}
+            </FormLabel>
+            {currentGrade ? (
               <NCERTChapterSelector
                 selectedGrade={currentGrade}
                 onChapterSelect={(chapter) => {
@@ -203,8 +203,10 @@ export function LessonPlanSidebar({
                   }
                 }}
               />
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-muted-foreground py-2">Select a class above to link an NCERT chapter.</p>
+            )}
+          </div>
         </div>
       )}
 

@@ -7,13 +7,22 @@ const PROJECT_ID = 'sahayakai-b4248';
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`;
 const GOOGLE_CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 
+// Cache Google public certs — they rotate every ~6 h, so 5 h is safe.
+// Without this every API request did a live network call to Google = +50–200 ms.
+let _certsCache: { certs: Record<string, string>; expiresAt: number } | null = null;
+
+async function getGoogleCerts(): Promise<Record<string, string>> {
+    if (_certsCache && Date.now() < _certsCache.expiresAt) return _certsCache.certs;
+    const res = await fetch(GOOGLE_CERTS_URL);
+    const certs = await res.json();
+    _certsCache = { certs, expiresAt: Date.now() + 5 * 60 * 60 * 1000 };
+    return certs;
+}
+
 async function verifyIdToken(token: string) {
     try {
-        // 1. Fetch Google's public keys
-        console.log('[MIDDLEWARE] fetching google certs...');
-        const res = await fetch(GOOGLE_CERTS_URL);
-        console.log('[MIDDLEWARE] certs fetched mask status:', res.status);
-        const certs = await res.json();
+        // 1. Get Google's public keys (cached for 5 h)
+        const certs = await getGoogleCerts();
 
         // 2. Decode header to find 'kid' (key id)
         const header = JSON.parse(Buffer.from(token.split('.')[0], 'base64').toString());
@@ -38,57 +47,87 @@ async function verifyIdToken(token: string) {
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    console.log(`[MIDDLEWARE] incoming request: ${pathname}`);
 
-    // Skip verification for static files and specific public APIs
+    // Skip static assets entirely
     if (
         pathname.startsWith('/_next') ||
-        pathname.startsWith('/api/health') ||
-        pathname.startsWith('/api-docs') ||
-        pathname.startsWith('/api/teacher-activity') ||
-        pathname.startsWith('/api/metrics') ||
-        pathname.startsWith('/api/assistant') ||
         pathname === '/favicon.ico'
     ) {
         return NextResponse.next();
     }
 
-    // Only apply logic to API routes
-    if (pathname.startsWith('/api/')) {
-        const authHeader = request.headers.get('Authorization');
+    // Public API routes — skip auth
+    const isPublicApi =
+        pathname.startsWith('/api/health') ||
+        pathname.startsWith('/api/ai/quiz/health') ||
+        pathname.startsWith('/api-docs') ||
+        pathname.startsWith('/api/teacher-activity') ||
+        pathname.startsWith('/api/metrics') ||
+        pathname.startsWith('/api/analytics') ||
+        pathname.startsWith('/api/assistant') ||
+        pathname.startsWith('/api/auth/') ||
+        pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
+        pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
+        pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
+        pathname.startsWith('/api/billing/callback');  // Razorpay redirect — verified via signature  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const token = authHeader.split(' ')[1];
-        const decoded = await verifyIdToken(token);
-
-        if (!decoded || !decoded.sub) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
-
-        // Inject the verified user ID into headers for the API route
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', decoded.sub);
-
-        return NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        });
+    if (isPublicApi) {
+        return NextResponse.next();
     }
 
-    // Standard non-API security headers logic
-    const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
     const requestHeaders = new Headers(request.headers);
+
+    // --- Resolve the Firebase ID token ---
+    // Priority: Authorization header (API calls) → auth-token cookie (server actions / page requests)
+    const authHeader = request.headers.get('Authorization');
+    const cookieToken = request.cookies.get('auth-token')?.value;
+    const rawToken = authHeader?.startsWith('Bearer ')
+        ? authHeader.split(' ')[1]
+        : cookieToken ?? null;
+
+    const isApiOrAdmin = pathname.startsWith('/api/') || pathname.startsWith('/admin/');
+
+    if (rawToken) {
+        if (process.env.NODE_ENV === 'development' && rawToken === 'dev-token') {
+            // Dev bypass — inject mock UID when using the dev token placeholder
+            requestHeaders.set('x-user-id', 'dev-user-123');
+            requestHeaders.set('x-user-plan', 'pro');
+        } else {
+            const decoded = await verifyIdToken(rawToken);
+            if (decoded?.sub) {
+                requestHeaders.set('x-user-id', decoded.sub);
+                // Plan from Firebase custom claims — set via Admin SDK when plan changes
+                // Falls back to 'free' if claim not yet set (new users, pre-migration users)
+                const plan = (decoded as Record<string, unknown>).planType;
+                // Normalize legacy values: 'institution' → 'premium'; 'pro'/'gold'/'premium' pass through
+                const VALID_PLANS = ['free', 'pro', 'gold', 'premium'];
+                const LEGACY: Record<string, string> = { institution: 'premium' };
+                const raw = typeof plan === 'string' ? plan : '';
+                const resolved = LEGACY[raw] ?? (VALID_PLANS.includes(raw) ? raw : 'free');
+                requestHeaders.set('x-user-plan', resolved);
+            } else if (isApiOrAdmin) {
+                // Invalid token on protected routes → reject
+                return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+            }
+        }
+    } else {
+        if (isApiOrAdmin) {
+            // No token at all on protected API/admin routes
+            if (process.env.NODE_ENV === 'development') {
+                requestHeaders.set('x-user-id', 'dev-user-123');
+                requestHeaders.set('x-user-plan', 'pro');
+            } else {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        }
+        // Page routes without a token: pass through, x-user-id simply not set
+    }
+
+    // Security headers for all non-static responses
+    const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
     requestHeaders.set('x-nonce', nonce);
 
-    const response = NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
 
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -102,9 +141,9 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Config to match only API paths for security headers and auth
+// Run on all routes except static files (handled by the early return above)
 export const config = {
     matcher: [
-        '/api/:path*',
+        '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };

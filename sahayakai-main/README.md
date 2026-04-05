@@ -30,11 +30,11 @@ SahayakAI is a web-based application designed to assist teachers in India with l
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/sargupta/sahayakai-feature.git
+    git clone https://github.com/sargupta/sahayakai.git
     ```
 2.  Navigate to the project directory:
     ```bash
-    cd sahayakai-feature
+    cd sahayakai-main
     ```
 3.  Install the dependencies:
     ```bash
@@ -54,3 +54,43 @@ SahayakAI is a web-based application designed to assist teachers in India with l
     ```bash
     npm run dev
     ```
+
+    The application will be available at `http://localhost:3000`.
+
+## Deployment
+
+Deployment to production is handled automatically by a GitHub Actions workflow. Pushing changes to the `main` branch will trigger the deployment process.
+
+---
+
+## Impact Score Dashboard
+
+SahayakAI includes a **Teacher Impact Score Dashboard** — a multi-dimensional analytics engine that measures how deeply a teacher is integrating AI into their classroom practice.
+
+### The Model: Five Orthogonal Dimensions
+
+The Impact Score $H(t)$ is computed using a **sigmoid-activated weighted sum** of five independent behavioral signals:
+
+$$H(t) = 100 \times \sigma\bigl(w_A \cdot A + w_E \cdot E + w_S \cdot S + w_G \cdot G + w_C \cdot C - \beta\bigr)$$
+
+| Dimension | Method | What It Measures |
+|--|--|--|
+| **A** — Activity | Exponential temporal decay | Recency and frequency of platform sessions |
+| **E** — Engagement | Volume-weighted Shannon Entropy (k=13) | Breadth of feature usage across 13 platform tools |
+| **S** — Success | Bayesian Beta-Binomial + regen penalty | AI generation competency and prompt quality |
+| **G** — Growth | MACD-style EMA divergence + streak | Week-on-week momentum and habit formation |
+| **C** — Community | Log share depth + export reach + reciprocity | Contribution to the SahayakAI teacher ecosystem |
+
+### Risk Classification
+
+Churn probability $P(\text{churn}) = 1 - H/100$ drives the dashboard's risk labels:
+
+- 🟢 **Healthy** (score ≥ 70) — Actively engaged and growing
+- 🟡 **At-Risk** (score 40–69) — Declining activity, needs re-engagement
+- 🔴 **Critical** (score < 40) — High churn probability, requires intervention
+
+### Full Technical Documentation
+
+For the complete mathematical derivation, rationale for each equation, forensic audit findings, and hyperparameter reference, see:
+
+📄 **[`docs/IMPACT_SCORE.md`](./docs/IMPACT_SCORE.md)**

@@ -1,6 +1,6 @@
 
 "use client";
-import { planVirtualFieldTrip, VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
+import type { VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -21,6 +21,8 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
 import { SubjectSelector } from "@/components/subject-selector";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 
@@ -31,7 +33,7 @@ const translations: Record<string, Record<string, string>> = {
     topicLabel: "Trip Topic",
     speakLabel: "Speak your trip idea...",
     placeholder: "e.g., 'A tour of the major centers of the Harappan Civilization...'",
-    gradeLabel: "Grade Level",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Generate",
     generating: "Generating Itinerary...",
@@ -197,20 +199,45 @@ function VirtualFieldTripContent() {
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: "8th Grade",
+      gradeLevel: "Class 8",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedTopic   = form.watch("topic");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("virtual-field-trip", {
+    topic: watchedTopic,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
   const searchParams = useSearchParams();
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    const id = searchParams.get("id");
+    if (topicParam || id || !savedSnapshot) return;
+    if (savedSnapshot.topic)      form.setValue("topic",      savedSnapshot.topic);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -258,10 +285,19 @@ function VirtualFieldTripContent() {
       };
       fetchSavedContent();
     } else if (topicParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("topic", topicParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [searchParams, form, toast]);
 
@@ -283,7 +319,7 @@ function VirtualFieldTripContent() {
         headers: headers,
         body: JSON.stringify({
           topic: values.topic,
-          language: values.language,
+          language: values.language || selectedLanguage,
           gradeLevel: values.gradeLevel,
           subject: values.subject,
         })
@@ -300,6 +336,7 @@ function VirtualFieldTripContent() {
 
       const result = await res.json();
       setTrip(result);
+      clearFormSnapshot("virtual-field-trip");
     } catch (error) {
       console.error("Failed to plan trip:", error);
       toast({
@@ -320,15 +357,15 @@ function VirtualFieldTripContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <Globe2 className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
@@ -342,23 +379,18 @@ function VirtualFieldTripContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-headline">{t.topicLabel}</FormLabel>
-                    <div className="flex flex-col gap-4">
-                      <MicrophoneInput
-                        onTranscriptChange={(transcript) => {
-                          field.onChange(transcript);
-                        }}
-                        iconSize="lg"
-                        label={t.speakLabel}
-                        className="bg-white/50 backdrop-blur-sm"
+                    <FormControl>
+                      <Textarea
+                        placeholder={t.placeholder}
+                        {...field}
+                        className="bg-muted/20 min-h-[120px]"
                       />
-                      <FormControl>
-                        <Textarea
-                          placeholder={t.placeholder}
-                          {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
-                        />
-                      </FormControl>
-                    </div>
+                    </FormControl>
+                    <MicrophoneInput
+                      onTranscriptChange={(text, lang) => { form.setValue("topic", text); if (lang) form.setValue("language", lang); }}
+                      label={t.speakLabel}
+                      iconSize="sm"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -368,13 +400,13 @@ function VirtualFieldTripContent() {
                 <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -393,7 +425,7 @@ function VirtualFieldTripContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           value={field.value}
@@ -411,7 +443,7 @@ function VirtualFieldTripContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -424,7 +456,7 @@ function VirtualFieldTripContent() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -441,7 +473,7 @@ function VirtualFieldTripContent() {
 
       {
         isLoading && (
-          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+          <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
               <p className="text-muted-foreground">{t.planningText}</p>
@@ -452,12 +484,19 @@ function VirtualFieldTripContent() {
 
       {
         trip && (
-          <VirtualFieldTripDisplay
+          <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><VirtualFieldTripDisplay
             trip={trip}
             topic={form.getValues('topic')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
-          />
+          /></div>
+          </>
         )
       }
     </div>

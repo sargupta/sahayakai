@@ -1,45 +1,56 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/glassmorphic/glass_components.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class VirtualFieldTripScreen extends StatefulWidget {
+import '../../../../core/theme/glassmorphic/glass_components.dart';
+import '../../../../core/providers/language_provider.dart';
+import '../../../../components/tts_play_button.dart';
+import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../../data/field_trip_repository.dart';
+
+class VirtualFieldTripScreen extends ConsumerStatefulWidget {
   const VirtualFieldTripScreen({super.key});
 
   @override
-  State<VirtualFieldTripScreen> createState() => _VirtualFieldTripScreenState();
+  ConsumerState<VirtualFieldTripScreen> createState() =>
+      _VirtualFieldTripScreenState();
 }
 
-class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
-  String _selectedDestination = "Taj Mahal, India";
-  bool _isLoading = false;
-  String? _currentImage;
+class _VirtualFieldTripScreenState
+    extends ConsumerState<VirtualFieldTripScreen> {
+  final _topicController = TextEditingController();
+  String _selectedGrade = 'Class 8';
+  bool _isGenerating = false;
+  FieldTripOutput? _result;
 
-  final Map<String, String> _destinations = {
-    "Taj Mahal, India": "https://images.unsplash.com/photo-1564507592333-c60657eea523?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    "Great Wall of China": "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    "Pyramids of Giza, Egypt": "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    "Eiffel Tower, Paris": "https://images.unsplash.com/photo-1511739001486-91d17730e182?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    "Machu Picchu, Peru": "https://images.unsplash.com/photo-1526392060635-9d6019884377?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-  };
+  final List<String> _grades = [
+    'Class 5', 'Class 6', 'Class 7', 'Class 8',
+    'Class 9', 'Class 10', 'Class 11', 'Class 12',
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    _currentImage = _destinations[_selectedDestination];
-  }
+  Future<void> _generate() async {
+    if (_topicController.text.trim().isEmpty) return;
+    setState(() => _isGenerating = true);
 
-  void _changeDestination(String? newValue) async {
-    if (newValue == null) return;
-    setState(() {
-      _selectedDestination = newValue;
-      _isLoading = true;
-    });
+    try {
+      final language = ref.read(languageProvider);
+      final repo = ref.read(fieldTripRepositoryProvider);
 
-    await Future.delayed(const Duration(seconds: 1));
+      final result = await repo.generate(
+        topic: _topicController.text.trim(),
+        gradeLevel: _selectedGrade,
+        language: language,
+      );
 
-    setState(() {
-      _currentImage = _destinations[newValue];
-      _isLoading = false;
-    });
+      setState(() { _isGenerating = false; _result = result; });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+        setState(() => _isGenerating = false);
+      }
+    }
   }
 
   @override
@@ -47,148 +58,202 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
     return GlassScaffold(
       title: 'Virtual Field Trip',
       showBackButton: true,
-      actions: [GlassMenuButton(onPressed: () {})],
-      body: Column(
+      floatingActionButton: _result == null
+          ? GlassFloatingButton(
+              label: 'Plan Trip',
+              icon: Icons.travel_explore_rounded,
+              onPressed: _isGenerating ? null : _generate,
+              isLoading: _isGenerating,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: _result != null ? _buildStops() : _buildForm(),
+    );
+  }
+
+  Widget _buildForm() {
+    return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.all(GlassSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Destination Selector
-          Padding(
-            padding: const EdgeInsets.all(GlassSpacing.xl),
+          Text('Exploring the World...', style: GlassTypography.decorativeLabel()),
+          const SizedBox(height: GlassSpacing.xs),
+          Text('Plan Your Journey', style: GlassTypography.headline1()),
+          const SizedBox(height: GlassSpacing.xxl),
+
+          GlassIconCard(
+            icon: Icons.map_rounded,
+            iconColor: GlassColors.primary,
+            title: 'Trip Details',
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Decorative Header
-                Text(
-                  'Exploring the World...',
-                  style: GlassTypography.decorativeLabel(),
-                ),
-                const SizedBox(height: GlassSpacing.xs),
-                Text(
-                  'Choose Destination',
-                  style: GlassTypography.headline2(),
+                GlassTextField(
+                  controller: _topicController,
+                  labelText: 'TOPIC',
+                  hintText: 'e.g. The Great Barrier Reef, Ancient Rome',
+                  suffixIcon: VoiceInputWidget(
+                    onResult: (val) => setState(() => _topicController.text = val),
+                  ),
                 ),
                 const SizedBox(height: GlassSpacing.lg),
-
-                // Destination Dropdown
                 GlassDropdown<String>(
-                  labelText: 'Select Destination',
-                  value: _selectedDestination,
-                  items: _destinations.keys
-                      .map((dest) => DropdownMenuItem(
-                            value: dest,
-                            child: Text(dest),
-                          ))
+                  labelText: 'GRADE',
+                  value: _selectedGrade,
+                  items: _grades
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                       .toList(),
-                  onChanged: _isLoading ? null : _changeDestination,
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedGrade = v);
+                  },
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // Image Viewer
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(GlassRadius.lg),
-                child: Stack(
-                  children: [
-                    if (_currentImage != null)
-                      Positioned.fill(
-                        child: InteractiveViewer(
-                          minScale: 1.0,
-                          maxScale: 4.0,
-                          child: Image.network(
-                            _currentImage!,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const Center(
-                                child: GlassLoadingIndicator(
-                                  message: 'Loading...',
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+  Widget _buildStops() {
+    return Column(
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.all(GlassSpacing.xl),
+          child: Row(
+            children: [
+              GlassIconButton(
+                icon: Icons.arrow_back_rounded,
+                onPressed: () => setState(() => _result = null),
+              ),
+              const SizedBox(width: GlassSpacing.md),
+              Expanded(
+                child: Text(_result!.title, style: GlassTypography.headline2()),
+              ),
+              TTSPlayButton(
+                text: '${_result!.title}. ${_result!.stops.map((s) => '${s.name}. ${s.description}. ${s.educationalFact}').join('. ')}',
+              ),
+            ],
+          ),
+        ),
 
-                    if (_isLoading)
-                      Container(
-                        color: Colors.black54,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const CircularProgressIndicator(
-                                color: Colors.white,
+        // Stops list
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+            itemCount: _result!.stops.length,
+            itemBuilder: (context, index) {
+              final stop = _result!.stops[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: GlassSpacing.lg),
+                child: GlassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Stop header
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: GlassColors.primary.withOpacity(0.1),
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                color: GlassColors.primary,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: GlassSpacing.lg),
-                              Text(
-                                'Traveling...',
-                                style: GlassTypography.labelLarge(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    // Overlay Controls
-                    Positioned(
-                      bottom: GlassSpacing.lg,
-                      right: GlassSpacing.lg,
-                      child: GlassIconButton(
-                        icon: Icons.vrpano_rounded,
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('VR Mode coming soon!'),
                             ),
-                          );
-                        },
-                        backgroundColor: Colors.white,
+                          ),
+                          const SizedBox(width: GlassSpacing.md),
+                          Expanded(
+                            child: Text(stop.name,
+                                style: GlassTypography.labelLarge()),
+                          ),
+                          TTSPlayButton(
+                            text: '${stop.name}. ${stop.description}. ${stop.educationalFact}',
+                            size: 32,
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: GlassSpacing.md),
 
-                    Positioned(
-                      bottom: GlassSpacing.lg,
-                      left: GlassSpacing.lg,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: GlassSpacing.lg,
-                          vertical: GlassSpacing.sm,
-                        ),
+                      Text(stop.description, style: GlassTypography.bodyMedium()),
+                      const SizedBox(height: GlassSpacing.md),
+
+                      // Educational fact
+                      Container(
+                        padding: const EdgeInsets.all(GlassSpacing.md),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(GlassRadius.pill),
+                          color: GlassColors.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(GlassRadius.sm),
                         ),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.info_outline_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+                            Icon(Icons.lightbulb_rounded,
+                                size: 18, color: GlassColors.primary),
                             const SizedBox(width: GlassSpacing.sm),
-                            Text(
-                              'Pinch to Zoom • Drag to Pan',
-                              style: GlassTypography.labelSmall(
-                                color: Colors.white,
-                              ),
+                            Expanded(
+                              child: Text(stop.educationalFact,
+                                  style: GlassTypography.bodySmall()),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: GlassSpacing.md),
+
+                      // Reflection prompt
+                      Text('Reflect:', style: GlassTypography.labelMedium()),
+                      const SizedBox(height: GlassSpacing.xs),
+                      Text(stop.reflectionPrompt,
+                          style: GlassTypography.bodySmall(
+                              color: GlassColors.textSecondary)),
+
+                      // Cultural analogy
+                      if (stop.culturalAnalogy != null) ...[
+                        const SizedBox(height: GlassSpacing.md),
+                        Text('Bharat Connection:',
+                            style: GlassTypography.labelMedium()),
+                        const SizedBox(height: GlassSpacing.xs),
+                        Text(stop.culturalAnalogy!,
+                            style: GlassTypography.bodySmall(
+                                color: GlassColors.textSecondary)),
+                      ],
+
+                      // Google Earth link
+                      if (stop.googleEarthUrl != null) ...[
+                        const SizedBox(height: GlassSpacing.md),
+                        GlassSecondaryButton(
+                          label: 'Open in Google Earth',
+                          icon: Icons.public_rounded,
+                          onPressed: () async {
+                            final uri = Uri.parse(stop.googleEarthUrl!);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
-          const SizedBox(height: GlassSpacing.xxl),
-        ],
-      ),
+        ),
+
+        // Regenerate
+        Padding(
+          padding: const EdgeInsets.all(GlassSpacing.xl),
+          child: GlassPrimaryButton(
+            label: 'Plan Another Trip',
+            icon: Icons.refresh_rounded,
+            onPressed: () => setState(() => _result = null),
+          ),
+        ),
+      ],
     );
   }
 }

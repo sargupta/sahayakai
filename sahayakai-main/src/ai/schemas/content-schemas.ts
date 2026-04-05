@@ -10,9 +10,7 @@ export const GradeLevelSchema = z.string();
 export const SubjectSchema = z.string();
 // Previously: z.enum(['Mathematics', ...]) - Relaxed for flexible AI subjects
 
-export const LanguageSchema = z.enum([
-    'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi', 'Bengali'
-]);
+export const LanguageSchema = z.string();
 
 // --- Core User Schema ---
 
@@ -26,10 +24,10 @@ export const UserProfileSchema = z.object({
     schoolName: z.string().optional(),
     teachingGradeLevels: z.array(GradeLevelSchema).default([]),
     subjects: z.array(SubjectSchema).default([]),
-    preferredLanguage: LanguageSchema.default('English'),
+    preferredLanguage: LanguageSchema.default('en'),
 
     // Metadata
-    planType: z.enum(['free', 'pro', 'institution']).default('free'),
+    planType: z.enum(['free', 'pro', 'gold', 'premium']).default('free'),
     createdAt: z.string().or(z.date()).optional(), // Helper for date handling
     lastLogin: z.string().or(z.date()).optional(),
 
@@ -42,7 +40,7 @@ export const UserProfileSchema = z.object({
 
 export const ContentTypeSchema = z.enum([
     'lesson-plan', 'quiz', 'worksheet', 'visual-aid',
-    'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training'
+    'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper'
 ]);
 
 export const BaseContentSchema = z.object({
@@ -179,22 +177,47 @@ export const MicroLessonDataSchema = z.object({
     slides: z.array(z.any())
 });
 
+// 10. Exam Paper
+export const ExamPaperDataSchema = z.object({
+    title: z.string(),
+    board: z.string(),
+    subject: z.string(),
+    gradeLevel: z.string(),
+    duration: z.string(),
+    maxMarks: z.number(),
+    generalInstructions: z.array(z.string()),
+    sections: z.array(z.object({
+        name: z.string(),
+        label: z.string(),
+        totalMarks: z.number(),
+        questions: z.array(z.object({
+            number: z.number(),
+            text: z.string(),
+            marks: z.number(),
+            options: z.array(z.string()).optional(),
+            internalChoice: z.string().optional(),
+            answerKey: z.string().optional(),
+            markingScheme: z.string().optional(),
+            source: z.string().default('AI Generated'),
+        })),
+    })),
+    blueprintSummary: z.object({
+        chapterWise: z.array(z.object({ chapter: z.string(), marks: z.number() })),
+        difficultyWise: z.array(z.object({ level: z.string(), percentage: z.number() })),
+    }),
+    pyqSources: z.array(z.object({
+        id: z.string(),
+        year: z.number().nullable(),
+        chapter: z.string(),
+    })).optional().describe("PYQ source attributions: which prior-year questions were used or adapted."),
+});
+
 
 
 // --- Combined Schemas for API Validation ---
 
 export const SaveContentSchema = BaseContentSchema.extend({
-    data: z.union([
-        LessonPlanDataSchema,
-        QuizDataSchema,
-        WorksheetDataSchema,
-        VisualAidDataSchema,
-        MicroLessonDataSchema,
-        RubricDataSchema,
-        VirtualFieldTripDataSchema,
-        InstantAnswerDataSchema,
-        TeacherTrainingDataSchema
-    ])
+    data: z.any().describe("The payload data. Kept as z.any() to flexibly accommodate varied and evolving AI definitions like QuizVariantsOutput, TeacherTrainingOutput, etc.")
 });
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;

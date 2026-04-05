@@ -1,13 +1,14 @@
 
 'use client';
 
-import SwaggerUI from 'swagger-ui-react';
-import 'swagger-ui-react/swagger-ui.css';
-
 type Props = {
     spec: Record<string, any>;
 };
 
 export default function SwaggerClient({ spec }: Props) {
-    return <SwaggerUI spec={spec} />;
+    return (
+        <pre className="text-xs overflow-auto max-h-[80vh] p-4 bg-muted rounded-lg whitespace-pre-wrap">
+            {JSON.stringify(spec, null, 2)}
+        </pre>
+    );
 }

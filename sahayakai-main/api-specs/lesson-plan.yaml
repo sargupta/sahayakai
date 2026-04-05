@@ -86,7 +86,7 @@ paths:
                   summary: Generated 5E lesson plan
                   value:
                     title: "Understanding Photosynthesis"
-                    gradeLevel: "5th Grade"
+                    gradeLevel: "Class 5"
                     duration: "45 minutes"
                     subject: "Science"
                     objectives:
@@ -282,7 +282,7 @@ components:
           type: string
           nullable: true
           description: Target grade level
-          example: "5th Grade"
+          example: "Class 5"
         
         duration:
           type: string

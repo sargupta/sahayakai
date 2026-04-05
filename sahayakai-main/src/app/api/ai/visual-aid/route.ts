@@ -1,6 +1,11 @@
 
+// Allow up to 120s for image generation (Gemini preview model can be slow)
+export const maxDuration = 120;
+
 import { NextResponse } from 'next/server';
 import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
+import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -38,7 +43,8 @@ import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let promptText = 'Unknown Prompt';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +52,10 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        promptText = body.prompt || 'Unknown Prompt';
+
+        // NOTE: checkImageRateLimit is called INSIDE generateVisualAid after
+        // the image is confirmed, so failed/timed-out generations don't consume quota.
 
         // Call the AI Flow
         const output = await generateVisualAid({
@@ -56,24 +66,39 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        console.error('Visual Aid API Error:', error);
+        logger.error(`Visual Aid API Failed for prompt: "${promptText}"`, error, 'VISUAL_AID', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
 
+        if (errorMessage.includes('Daily image limit reached')) {
+            return NextResponse.json({ error: errorMessage }, { status: 429 });
+        }
+
         if (errorMessage.includes('Safety Violation')) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
+        if (errorMessage === 'IMAGE_GENERATION_TIMEOUT') {
+            return NextResponse.json(
+                { error: 'Image generation timed out. Try a simpler diagram description or retry.' },
+                { status: 504 }
+            );
+        }
+
+        if (errorMessage === 'IMAGE_GENERATION_EMPTY') {
+            return NextResponse.json(
+                { error: 'The AI could not generate an image for this prompt. Try rephrasing with fewer labels.' },
+                { status: 422 }
+            );
+        }
+
         return NextResponse.json(
-            {
-                error: errorMessage,
-                errorCode: errorCode,
-                details: errorMessage,
-                context: context
-            },
+            { error: 'Image generation failed. Please try again.' },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('visual-aid')(_handler);

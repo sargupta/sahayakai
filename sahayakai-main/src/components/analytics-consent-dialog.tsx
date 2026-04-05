@@ -17,6 +17,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { GraduationCap } from 'lucide-react';
 import { saveAnalyticsConsent } from '@/lib/analytics-consent';
 import { setAnalyticsEnabled } from '@/lib/analytics-events';
 
@@ -41,7 +42,6 @@ export function AnalyticsConsentDialog({
             setAnalyticsEnabled(true);
             onConsentGiven(true);
         } catch (error) {
-            console.error('Failed to save consent:', error);
         } finally {
             setIsLoading(false);
         }
@@ -54,7 +54,6 @@ export function AnalyticsConsentDialog({
             setAnalyticsEnabled(false);
             onConsentGiven(false);
         } catch (error) {
-            console.error('Failed to save consent:', error);
         } finally {
             setIsLoading(false);
         }
@@ -64,7 +63,7 @@ export function AnalyticsConsentDialog({
         <Dialog open={open} onOpenChange={() => { }}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Help Us Improve SahayakAI 🎓</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2 font-headline">Help Us Improve SahayakAI <GraduationCap className="h-5 w-5" /></DialogTitle>
                     <DialogDescription className="space-y-3 pt-2">
                         <p>
                             We'd like to track how you use SahayakAI to:

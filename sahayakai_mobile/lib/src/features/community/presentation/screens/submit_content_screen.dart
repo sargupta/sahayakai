@@ -48,6 +48,7 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,8 +88,8 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Category"),
                       DropdownButtonFormField<String>(
-                        initialValue: _selectedCategory,
-                        items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                        value: _selectedCategory,
+                        items: _categories.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v!),
                         decoration: _inputDecoration(""),
                       ),
@@ -102,8 +103,8 @@ class _SubmitContentScreenState extends State<SubmitContentScreen> {
                     children: [
                       _buildLabel("Language"),
                       DropdownButtonFormField<String>(
-                        initialValue: _selectedLanguage,
-                        items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                        value: _selectedLanguage,
+                        items: _languages.map((l) => DropdownMenuItem<String>(value: l, child: Text(l))).toList(),
                         onChanged: (v) => setState(() => _selectedLanguage = v!),
                         decoration: _inputDecoration(""),
                       ),

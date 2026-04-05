@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
         return NextResponse.json(serialized);
 
     } catch (error) {
-        console.error('Get Content API Error:', error);
+        logger.error(`Get Content API Error`, error, 'CONTENT', { userId: request.headers.get('x-user-id'), contentId: new URL(request.url).searchParams.get('id') });
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

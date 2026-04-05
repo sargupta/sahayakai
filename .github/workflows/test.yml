@@ -1,0 +1,99 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    defaults:
+      run:
+        working-directory: sahayakai-main
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: sahayakai-main/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit & integration tests
+        run: npm test -- --ci --coverage --json --outputFile=test-results.json 2>&1 | tee test-output.txt
+
+      - name: Test results & coverage summary
+        if: always() && matrix.node-version == 20
+        run: |
+          # Extract test summary from JSON
+          node -e "
+          const r = require('./test-results.json');
+          const passed = r.numPassedTests;
+          const failed = r.numFailedTests;
+          const total = r.numTotalTests;
+          const suites = r.numTotalTestSuites;
+          const time = (r.testResults.reduce((a,t) => a + (t.endTime - t.startTime), 0) / 1000).toFixed(1);
+          const icon = failed > 0 ? '❌' : '✅';
+
+          let md = '## ' + icon + ' Test Results\n\n';
+          md += '| Metric | Value |\n|--------|-------|\n';
+          md += '| Suites | ' + suites + ' |\n';
+          md += '| Tests passed | ' + passed + ' / ' + total + ' |\n';
+          md += '| Tests failed | ' + failed + ' |\n';
+          md += '| Duration | ' + time + 's |\n\n';
+
+          // Coverage from coverage-summary.json
+          try {
+            const cov = require('./coverage/coverage-summary.json').total;
+            md += '## 📊 Coverage\n\n';
+            md += '| Category | Covered | Total | % |\n|----------|---------|-------|---|\n';
+            for (const [k, v] of Object.entries(cov)) {
+              md += '| ' + k.charAt(0).toUpperCase() + k.slice(1) + ' | ' + v.covered + ' | ' + v.total + ' | **' + v.pct + '%** |\n';
+            }
+          } catch(e) { md += '_Coverage data not available_\n'; }
+
+          require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          "
+
+      - name: Build
+        run: npm run build
+        env:
+          # Stub env vars so next build doesn't fail on missing secrets
+          GOOGLE_GENAI_API_KEY: stub
+          GOOGLE_CLOUD_PROJECT: stub
+          NEXT_PUBLIC_FIREBASE_API_KEY: stub
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: stub
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: stub
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: stub
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: stub
+          NEXT_PUBLIC_FIREBASE_APP_ID: stub
+
+      - name: Upload coverage
+        if: matrix.node-version == 20 && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: sahayakai-main/coverage/
+          retention-days: 7

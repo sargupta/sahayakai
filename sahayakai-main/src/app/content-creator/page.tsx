@@ -12,7 +12,7 @@ export default function ContentCreatorPage() {
       description: "Create simple line drawings and diagrams for your lessons.",
       icon: Images,
       href: "/visual-aid-designer",
-      color: "text-pink-600 bg-pink-50",
+      color: "text-primary bg-primary/10",
       active: true,
       buttonText: "Create Visuals"
     },
@@ -21,25 +21,25 @@ export default function ContentCreatorPage() {
       description: "Plan exciting virtual tours using Google Earth.",
       icon: Globe2,
       href: "/virtual-field-trip",
-      color: "text-emerald-600 bg-emerald-50",
+      color: "text-primary bg-primary/10",
       active: true,
       buttonText: "Plan Trip"
     },
     {
       title: "Video Storyteller",
-      description: "Create engaging video stories from prompts.",
+      description: "Discover curated educational videos for your lessons.",
       icon: Video,
       href: "/video-storyteller",
-      color: "text-violet-600 bg-violet-50",
-      active: false,
-      buttonText: "Coming Soon"
+      color: "text-primary bg-primary/10",
+      active: true,
+      buttonText: "Browse Videos"
     }
   ];
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="text-center space-y-4 mb-12">
-        <h1 className="font-headline text-4xl font-bold">Content Creator Studio</h1>
+      <div className="text-center space-y-4 mb-10">
+        <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">Content Creator Studio</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Tools to help you create engaging multimedia content for your classroom.
         </p>
@@ -55,9 +55,10 @@ export default function ContentCreatorPage() {
               !tool.active && "cursor-not-allowed opacity-80"
             )}
           >
-            <Card className="h-full border-slate-200 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <Card className="h-full border-border hover:border-primary/40 transition-all duration-200 hover:shadow-elevated overflow-hidden">
+              <div className="card-accent-bar" />
               <CardHeader>
-                <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-110", tool.color)}>
+                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", tool.color)}>
                   <tool.icon className="w-6 h-6" />
                 </div>
                 <CardTitle className="font-headline text-xl">{tool.title}</CardTitle>
@@ -71,7 +72,7 @@ export default function ContentCreatorPage() {
                   tool.active ? "text-primary group-hover:text-primary/80" : "text-muted-foreground"
                 )}>
                   {tool.buttonText}
-                  {tool.active && <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+                  {tool.active && <ArrowRight className="w-4 h-4" />}
                 </div>
               </CardContent>
             </Card>

@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreatePostDialog({ onPostCreated }: { onPostCreated?: () => void }) {
+export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: () => void; trigger?: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -43,7 +43,7 @@ export function CreatePostDialog({ onPostCreated }: { onPostCreated?: () => void
 
         setIsLoading(true);
         try {
-            await createPostAction(user.uid, data.content, 'public'); // TODO: Pass Image URL when action supports it
+            await createPostAction(user.uid, data.content, 'public', data.imageUrl || undefined);
 
             toast({
                 title: "Post created!",
@@ -66,10 +66,12 @@ export function CreatePostDialog({ onPostCreated }: { onPostCreated?: () => void
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create Post
-                </Button>
+                {trigger ?? (
+                    <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create Post
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>

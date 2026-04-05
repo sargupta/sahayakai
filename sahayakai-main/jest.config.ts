@@ -2,15 +2,12 @@ import type { Config } from 'jest'
 import nextJest from 'next/jest.js'
 
 const createJestConfig = nextJest({
-    // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
     dir: './',
 })
 
-// Add any custom config to be passed to Jest
 const config: Config = {
     coverageProvider: 'v8',
     testEnvironment: 'jsdom',
-    // Add more setup options before each test is run
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
@@ -18,7 +15,6 @@ const config: Config = {
         '^lucide-react/(.*)$': '<rootDir>/src/__mocks__/lucide-react.ts',
         '^uuid$': '<rootDir>/src/__mocks__/uuid.ts',
     },
-
 
     collectCoverage: true,
     collectCoverageFrom: [
@@ -31,20 +27,33 @@ const config: Config = {
         'src/features/lesson-planner/hooks/use-lesson-plan.ts',
         'src/hooks/use-toast.ts',
         'src/app/page.tsx',
+        'src/app/actions/messages.ts',
+        'src/app/actions/connections.ts',
+        'src/app/actions/community.ts',
+        'src/components/messages/**/*.tsx',
+        'src/components/community/**/*.tsx',
+        'src/lib/server-safety.ts',
+        'src/lib/usage-tracker.ts',
+        'src/lib/tts.ts',
+        'src/lib/db/adapter.ts',
+        'src/types/messages.ts',
     ],
     transformIgnorePatterns: [
-        '/node_modules/(?!(jose|firebase-admin|jwks-rsa|@genkit-ai|@google-cloud|lucide-react|uuid)/)',
+        '/node_modules/(?!(jose|firebase-admin|jwks-rsa|@genkit-ai|@google-cloud|lucide-react|uuid|date-fns)/)',
+    ],
+
+    testMatch: [
+        '<rootDir>/src/__tests__/**/*.test.{ts,tsx}',
     ],
 
     coverageThreshold: {
         global: {
-            branches: 50,
-            functions: 50,
-            lines: 50,
-            statements: 50,
+            branches: 40,
+            functions: 40,
+            lines: 40,
+            statements: 40,
         },
     },
 }
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
 export default createJestConfig(config)

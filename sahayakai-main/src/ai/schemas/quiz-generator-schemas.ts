@@ -6,7 +6,7 @@ const QuestionSchema = z.object({
   questionType: z.enum(['multiple_choice', 'fill_in_the_blanks', 'short_answer', 'true_false']).describe('The type of the question.'),
   options: z.array(z.string()).optional().describe('For multiple-choice questions, the list of possible answers.'),
   correctAnswer: z.string().describe('The correct answer.'),
-  explanation: z.string().describe('A clear explanation of why the answer is correct and why other options are incorrect.'),
+  explanation: z.string().describe('A clear, empathetic explanation of why the answer is correct, ideally using a Bharat-First analogy (e.g., farming, local market).'),
   difficultyLevel: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of this specific question.'),
 });
 
@@ -23,13 +23,14 @@ export const QuizGeneratorInputSchema = z.object({
   userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
   subject: z.string().optional().describe('The academic subject of the quiz.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 
 export const QuizGeneratorOutputSchema = z.object({
   title: z.string().describe('A suitable title for the quiz.'),
   questions: z.array(QuestionSchema).describe('The list of generated quiz questions.'),
-  teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz and interpret results.'),
+  teacherInstructions: z.string().optional().describe('Advice for the teacher on how to conduct this quiz in a "Chalk & Blackboard" environment (e.g., "Write these on the board", "Discuss the mango tree example").'),
   gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
 });
@@ -39,8 +40,10 @@ export const QuizVariantsOutputSchema = z.object({
   easy: QuizGeneratorOutputSchema.nullable().describe("The easy version of the quiz."),
   medium: QuizGeneratorOutputSchema.nullable().describe("The medium version of the quiz."),
   hard: QuizGeneratorOutputSchema.nullable().describe("The hard version of the quiz."),
+  id: z.string().nullable().optional().describe('The database ID of the quiz.'),
   gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
   topic: z.string().nullable().optional().describe('The main topic.'),
+  isSaved: z.boolean().default(false).describe('Whether the quiz is already saved in the library.'),
 });
 export type QuizVariantsOutput = z.infer<typeof QuizVariantsOutputSchema>;

@@ -43,7 +43,7 @@ jobs:
             --allow-unauthenticated \
             --memory 2Gi \
             --cpu 2 \
-            --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com,NODE_ENV=production,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
+            --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sahayakai-b4248.firebaseapp.com,NODE_ENV=production,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }},TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }},TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}" \
             --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest"
 
       - name: Show Output

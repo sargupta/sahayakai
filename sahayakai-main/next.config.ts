@@ -5,11 +5,30 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  fallbacks: {
+    document: '/offline.html',
+  },
 });
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
+  // Cache-Control headers — prevents stale deployment errors.
+  // HTML pages: no-store so browsers always fetch fresh HTML with the current build ID.
+  // Static chunks: immutable (content-addressed filenames change with every build).
+  async headers() {
+    return [
+      {
+        // All HTML pages — never cache, always get fresh build ID from server
+        source: '/((?!_next/static|_next/image|favicon\\.ico).*)',
+        headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
+      },
+      {
+        // Static JS/CSS chunks are content-addressed — safe to cache forever
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -26,7 +45,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
+  serverExternalPackages: ["@genkit-ai/googleai", "@genkit-ai/firebase", "@genkit-ai/google-cloud", "genkit", "@opentelemetry/sdk-node", "@opentelemetry/api", "@opentelemetry/sdk-trace-base", "@opentelemetry/sdk-metrics", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
   experimental: {
     serverActions: {
       bodySizeLimit: '25mb',

@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { z } from 'zod';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -54,7 +55,8 @@ import { logger } from '@/lib/utils';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let topicText = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        topicText = body.topic || 'Unknown Topic';
 
         // Call the AI Flow
         // We inject the userId so the flow handles persistence automatically.
@@ -73,11 +76,9 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Lesson Plan API Error:', error);
-
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        logger.error("Lesson Plan API Failed", error, {
+        logger.error(`Lesson Plan API Failed for topic: "${topicText}"`, error, 'LESSON_PLAN', {
             path: "/api/ai/lesson-plan",
             userId: request.headers.get('x-user-id'),
             errorMessage
@@ -87,18 +88,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
-        const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
-        const userFriendlyError = isAuthError
-            ? `Server Configuration Error: ${errorMessage}. Please ensure 'gcloud auth application-default login' has been run on the server.`
-            : errorMessage;
-
         return NextResponse.json(
-            {
-                error: userFriendlyError,
-                details: errorMessage,
-                code: (error as any).code || 'INTERNAL_ERROR'
-            },
+            { error: 'AI generation failed. Please try again.' },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('lesson-plan')(_handler);

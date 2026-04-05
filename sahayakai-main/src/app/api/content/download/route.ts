@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { getStorageInstance } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,9 +86,9 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
-        console.error('Download API Error:', error);
+        logger.error('Download API Failed', error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

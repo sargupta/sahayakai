@@ -9,10 +9,11 @@ import { format } from 'date-fns';
 import { Timestamp } from 'firebase-admin/firestore';
 import { aggregateUserMetrics } from './aggregator';
 import { revalidatePath } from 'next/cache';
+import { trackTeacherContent } from '@/lib/teacher-activity-tracker';
 
 export async function getUserContent(userId: string): Promise<BaseContent[]> {
     try {
-        const content = await dbAdapter.listContent(userId);
+        const { items: content } = await dbAdapter.listContent(userId, { limit: 100 });
 
         // Serialize Timestamps for client components as Next.js cannot serialize Class instances
         return content.map(item => ({
@@ -44,7 +45,7 @@ export async function searchContentAction(userId: string, query: string): Promis
         const profile = await dbAdapter.getUser(userId);
 
         // 2. Initial filter by user ID (Security boundary)
-        const allContent = await dbAdapter.listContent(userId);
+        const { items: allContent } = await dbAdapter.listContent(userId, { limit: 200 });
 
         // 3. Perform Smart Search & Ranking
         const searchTerms = query.toLowerCase().split(/\s+/);
@@ -150,8 +151,13 @@ export async function saveToLibrary(userId: string, type: ContentType, title: st
         revalidatePath("/my-library");
         revalidatePath("/impact-dashboard");
 
-        // Background aggregation
+        // Background aggregation of totals for the dashboard
         aggregateUserMetrics(userId).catch(e => logger.error("Aggregator error during save", e));
+
+        // Track this content creation event for the Impact Dashboard
+        // This fires a 'content_created' event to /api/teacher-activity which updates
+        // sessions_last_7_days, content_created_last_7_days in teacher_analytics/{userId}
+        trackTeacherContent(type, { success: true });
 
         logger.info(`Content successfully saved to library`, 'STORAGE', { userId, contentId, type, path: filePath });
         return { success: true, id: contentId };
@@ -201,23 +207,31 @@ export async function recordPdfDownload(userId: string, title: string, base64Dat
                 });
             });
 
-            // Track in DB as a PDF record
+            // Track in DB as a PDF record — roll back the GCS file if this write fails
+            // to prevent orphaned PDFs that can never be retrieved or deleted.
             const contentId = `pdf_${uuidv4().substring(0, 8)}`;
-            await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
-                const { Timestamp } = await import('firebase-admin/firestore');
-                await dbAdapter.saveContent(userId, {
-                    id: contentId,
-                    type: 'pdf' as any,
-                    title: title + " (PDF Export)",
-                    topic: title,
-                    storagePath: filePath,
-                    data: { format: 'pdf', timestamp: now.toISOString() },
-                    isPublic: false,
-                    isDraft: false,
-                    createdAt: Timestamp.fromDate(now),
-                    updatedAt: Timestamp.fromDate(now),
-                } as any);
-            });
+            try {
+                await Sentry.startSpan({ name: 'Firestore Write', op: 'db.firestore.write' }, async () => {
+                    const { Timestamp } = await import('firebase-admin/firestore');
+                    await dbAdapter.saveContent(userId, {
+                        id: contentId,
+                        type: 'pdf' as any,
+                        title: title + " (PDF Export)",
+                        topic: title,
+                        storagePath: filePath,
+                        data: { format: 'pdf', timestamp: now.toISOString() },
+                        isPublic: false,
+                        isDraft: false,
+                        createdAt: Timestamp.fromDate(now),
+                        updatedAt: Timestamp.fromDate(now),
+                    } as any);
+                });
+            } catch (dbError: any) {
+                // Rollback: delete the orphaned GCS file
+                bucket.file(filePath).delete()
+                    .catch((cleanupErr: any) => logger.error('GCS PDF rollback failed', cleanupErr, 'STORAGE', { userId, filePath }));
+                throw dbError;
+            }
 
             pdfTimer.stop({ size: buffer.length });
             return { success: true, path: filePath };
@@ -235,7 +249,7 @@ export async function testStorageConnection(userId: string = 'user-123'): Promis
         const testPath = `users/${userId}/test_connection.json`;
         const testFile = bucket.file(testPath);
 
-        console.log(`[STORAGE_TEST] Attempting write to bucket: ${bucket.name}`);
+        logger.info(`Attempting write to bucket: ${bucket.name}`, 'STORAGE_TEST', { userId, path: testPath });
 
         await testFile.save(JSON.stringify({
             status: "connected",
@@ -246,10 +260,10 @@ export async function testStorageConnection(userId: string = 'user-123'): Promis
             contentType: 'application/json'
         });
 
-        console.log(`[STORAGE_TEST] SUCCESS: File written to ${testPath}`);
+        logger.info(`SUCCESS: File written to ${testPath}`, 'STORAGE_TEST', { bucket: bucket.name });
         return { success: true, message: `Successfully wrote to ${testPath} in bucket ${bucket.name}` };
     } catch (error: any) {
-        console.error("[STORAGE_TEST] FAILURE:", error);
+        logger.error(`FAILURE: Failed to write to storage`, error, 'STORAGE_TEST', { userId });
         return { success: false, message: error.message };
     }
 }

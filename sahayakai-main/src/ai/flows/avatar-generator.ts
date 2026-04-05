@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Generates simple, decent, and stable avatars for teachers.
  *
@@ -62,7 +60,7 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
           temperature: 0.8,
         },
       });
-    });
+    }, 'avatar.generate');
 
     if (!media) {
       throw new Error('Image generation failed to produce an avatar.');

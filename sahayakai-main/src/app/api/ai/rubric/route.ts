@@ -1,6 +1,8 @@
 
 import { NextResponse } from 'next/server';
 import { generateRubric } from '@/ai/flows/rubric-generator';
+import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -38,7 +40,8 @@ import { generateRubric } from '@/ai/flows/rubric-generator';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let assignmentText = 'Unknown Assignment';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        assignmentText = body.assignmentDescription || 'Unknown Assignment';
 
         const output = await generateRubric({
             ...body,
@@ -55,12 +59,13 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Rubric API Error:', error);
+        logger.error(`Rubric API Failed for assignment: "${assignmentText}"`, error, 'RUBRIC', { userId: request.headers.get('x-user-id') });
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('rubric')(_handler);

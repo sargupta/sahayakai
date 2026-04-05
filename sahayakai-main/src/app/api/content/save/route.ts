@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { SaveContentSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -90,38 +91,97 @@ export async function POST(request: Request) {
             const filePath = `users/${userId}/${folder}/${fileName}`;
             const file = storage.bucket().file(filePath);
 
-            // Prep content
-            // If it's a worksheet (text/markdown), save as string. Else JSON stringify.
-            // Note: validContent.data is 'any'.
-            let contentToSave: any = validContent.data;
-            if (ext === 'json' && typeof contentToSave !== 'string') {
-                contentToSave = JSON.stringify(contentToSave);
+            // Track which GCS path was written so we can clean it up if the
+            // subsequent Firestore write fails (prevents orphaned GCS files).
+            let uploadedGcsPath: string | null = null;
+
+            try {
+                // For visual-aid: extract the base64 image and save as PNG separately
+                // then strip imageDataUri from the Firestore document to avoid 1MB limit.
+                if (type === 'visual-aid' && validContent.data?.imageDataUri) {
+                    if (validContent.storagePath) {
+                        // Image was already uploaded by the generation flow — skip the redundant
+                        // GCS write (halves peak memory usage). Just strip the heavy data URI.
+                        validContent.data = {
+                            ...(validContent.data as object),
+                            imageDataUri: undefined,
+                        };
+                    } else {
+                    const imageDataUri = validContent.data.imageDataUri as string;
+                    const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
+                    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+                    const imgPath = `users/${userId}/visual-aids/${timestamp}_${safeTitle}.png`;
+                    const imgFile = storage.bucket().file(imgPath);
+                    const imgToken = uuidv4();
+                    await imgFile.save(imageBuffer, {
+                        resumable: false,
+                        metadata: {
+                            contentType: 'image/png',
+                            metadata: { firebaseStorageDownloadTokens: imgToken },
+                        },
+                    });
+                    uploadedGcsPath = imgPath; // ← record for rollback
+
+                    const imgStorageRef = `https://firebasestorage.googleapis.com/v0/b/${storage.bucket().name}/o/${encodeURIComponent(imgPath)}?alt=media&token=${imgToken}`;
+
+                    // Replace the heavy base64 with just the Storage URL
+                    validContent.data = {
+                        ...(validContent.data as object),
+                        imageDataUri: undefined,  // Strip from Firestore
+                        storageRef: imgStorageRef, // Keep light reference
+                    };
+
+                    validContent.storagePath = imgPath;
+                    }
+                } else {
+                    // Prep content for other types
+                    let contentToSave: any = validContent.data;
+                    if (ext === 'json' && typeof contentToSave !== 'string') {
+                        contentToSave = JSON.stringify(contentToSave);
+                    }
+
+                    const downloadToken = uuidv4();
+                    await file.save(contentToSave as any, {
+                        resumable: false,
+                        metadata: {
+                            contentType: ext === 'json' ? 'application/json' : 'text/plain',
+                            metadata: {
+                                firebaseStorageDownloadTokens: downloadToken,
+                            }
+                        },
+                    });
+                    uploadedGcsPath = filePath; // ← record for rollback
+
+                    // Update content with storage path
+                    validContent.storagePath = filePath;
+                }
+
+                // 4. Save to DB via Adapter — if this throws, roll back the GCS file
+                await dbAdapter.saveContent(userId, validContent as any);
+            } catch (storageOrDbError) {
+                // Rollback: if GCS was written but Firestore failed, delete the orphaned file
+                if (uploadedGcsPath) {
+                    storage.bucket().file(uploadedGcsPath).delete()
+                        .catch((cleanupErr) => logger.error('GCS rollback failed', cleanupErr, 'STORAGE', { userId, path: uploadedGcsPath }));
+                }
+                throw storageOrDbError; // re-throw to outer catch → 500 response
             }
 
-            const downloadToken = uuidv4();
-            await file.save(contentToSave as any, {
-                resumable: false,
-                metadata: {
-                    contentType: ext === 'json' ? 'application/json' : 'text/plain',
-                    metadata: {
-                        firebaseStorageDownloadTokens: downloadToken,
-                    }
-                },
-            });
-
-            // Update content with storage path
-            validContent.storagePath = filePath;
+            return NextResponse.json({ success: true, id: validContent.id });
         }
 
-        // 4. Save to DB via Adapter
+        // No data field — metadata-only save
         await dbAdapter.saveContent(userId, validContent as any);
 
         return NextResponse.json({ success: true, id: validContent.id });
 
     } catch (error) {
-        console.error('Save Content API Error:', error);
+        // Error already logged by logger below
+        const failedType = (request as any).body?.type || 'unknown';
+        logger.error(`Save Content API Failed for type: ${failedType}`, error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

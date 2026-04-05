@@ -2,72 +2,183 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // --- Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // --- Core Educational Data (Strict Ownership) ---
+    // Check if caller is an admin of the given org
+    function isOrgAdmin(orgId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)).data.role == 'admin';
+    }
 
-    // Users Collection: strictly private to the user
+    // =============================================
+    // EXISTING COLLECTIONS
+    // =============================================
+
+    // --- Feedback (signed-in users only) ---
+    match /feedbacks/{document} {
+      allow create: if isSignedIn();
+    }
+
+    // --- Users ---
+    // Each user can only read/write their own document
     match /users/{userId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
-
-      // User's Content (Lesson Plans, Quizzes, etc.)
-      // Read: Owner OR Public
-      // Write: Owner ONLY
-      match /content/{contentId} {
-        allow read: if (isSignedIn() && isOwner(userId)) || (resource.data.isPublic == true);
-        allow write: if isSignedIn() && isOwner(userId);
-      }
-
-      // User's Analytics (aggregated daily stats)
-      // Read: Owner ONLY
-      // Write: System (via Server SDK) or Owner (if client-side tracking enabled?) 
-      // ideally analytics shouldn't be writable by client to prevent tampering, 
-      // but for now we'll allow owner write for simplicity if Client SDK is used.
-      match /analytics/{docId} {
-        allow read, write: if isSignedIn() && isOwner(userId);
-      }
+      allow read, update: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
-    // --- Legacy / Social Features (Retained for Backward Compatibility) ---
-    // If these are not used, they should be removed in a future cleanup.
+    // --- Content ---
+    // User-generated content (lesson plans, quizzes, etc.) stored in top-level collection
+    match /content/{documentId} {
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
 
-    // Profiles
-    match /profiles/{userId} {
+    // --- Community Library ---
+    // Public read; writes only via trusted backend (Server SDK / Admin SDK)
+    match /community/{communityContentId} {
       allow read: if true;
-      allow write: if isSignedIn() && isOwner(userId);
+      allow write: if false;
     }
 
-    // Posts
-    match /posts/{postId} {
-      allow read: if resource.data.visibility == 'public' || isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-      
-      match /likes/{userId} {
-        allow read: if true;
-        allow write: if isSignedIn() && isOwner(userId);
-      }
-      
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+    // --- Direct Messages & Group Conversations ---
+
+    match /conversations/{convId} {
+      allow read, update: if isSignedIn()
+        && request.auth.uid in resource.data.participantIds;
+
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participantIds;
+
+      match /messages/{msgId} {
+        allow read: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+
+        allow create: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text.size() <= 1000;
+
+        allow update: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+
+        allow delete: if false;
       }
     }
 
-    // Connections
-    match /connections/{connectionId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+    // --- Community Chat (broadcast — all signed-in users) ---
+    match /community_chat/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && (request.resource.data.text.size() <= 500 || request.resource.data.audioUrl is string);
+      allow update, delete: if false;
     }
+
+    // --- Connection Requests ---
+    match /connection_requests/{reqId} {
+      allow create: if isSignedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.fromUid != request.resource.data.toUid;
+
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUid
+            || request.auth.uid == resource.data.toUid);
+
+      allow delete: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUid
+            || request.auth.uid == resource.data.toUid);
+
+      allow update: if false;
+    }
+
+    // --- Connections (accepted, symmetric) ---
+    match /connections/{connId} {
+      allow read: if isSignedIn();
+      allow create: if false;
+      allow delete: if isSignedIn()
+        && request.auth.uid in resource.data.uids;
+      allow update: if false;
+    }
+
+    // =============================================
+    // BILLING & ORGANIZATION COLLECTIONS
+    // =============================================
+
+    // --- Credit Ledger ---
+    // Stores balance, plan, cycle dates per user.
+    // Read: owner only. Write: Admin SDK only (server-side billing logic).
+    match /credit_ledger/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // --- Organizations ---
+    // School/chain info, Razorpay IDs, seat counts.
+    // Read: org admins only (via get() on members subcollection).
+    // Write: Admin SDK only.
+    match /organizations/{orgId} {
+      allow read: if isOrgAdmin(orgId);
+      allow write: if false;
+
+      // --- Organization Members ---
+      // Read: org admins can list all members; teachers can read their own doc.
+      // Write: Admin SDK only (invite/remove handled server-side).
+      match /members/{memberId} {
+        allow read: if isOwner(memberId) || isOrgAdmin(orgId);
+        allow write: if false;
+      }
+    }
+
+    // --- Webhook Events ---
+    // Razorpay idempotency tracking. Completely backend-only.
+    match /webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // --- Config: Plans ---
+    // Feature limits per plan. Readable by any authenticated user.
+    // Written only via Admin SDK or Firebase console.
+    match /config/plans {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // --- Usage Counters ---
+    // Per-user monthly/daily usage counters for subscription gating.
+    // Read: owner only. Write: Admin SDK only (incremented server-side).
+    match /usageCounters/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // --- Subscriptions ---
+    // Razorpay subscription tracking. Read: owner only. Write: Admin SDK only.
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // --- System Config ---
+    // Feature flags, rollout config. Readable by authenticated users.
+    match /system_config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // =============================================
+    // DEFAULT DENY
+    // =============================================
+    // Any collection not matched above is denied by default.
+    // This explicit rule documents the intent — Firestore denies
+    // unmatched paths anyway, but this makes audits clearer.
   }
 }

@@ -3,13 +3,15 @@ import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { ContentTypeSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // Schema for Query Params
 const ListContentQuerySchema = z.object({
     type: ContentTypeSchema.optional(),
-    limit: z.coerce.number().min(1).max(50).default(20),
+    limit: z.coerce.number().min(1).max(20).default(20), // 20 per page; use cursor for more
     gradeLevels: z.string().optional(), // Comma separated
-    subjects: z.string().optional()     // Comma separated
+    subjects: z.string().optional(),    // Comma separated
+    cursor: z.string().optional(),      // Opaque cursor: ID of last doc from previous page
 });
 
 /**
@@ -87,7 +89,8 @@ export async function GET(request: Request) {
             type: searchParams.get('type') || undefined,
             limit: searchParams.get('limit') || undefined,
             gradeLevels: searchParams.get('gradeLevels') || undefined,
-            subjects: searchParams.get('subjects') || undefined
+            subjects: searchParams.get('subjects') || undefined,
+            cursor: searchParams.get('cursor') || undefined,
         };
 
         const validationResult = ListContentQuerySchema.safeParse(params);
@@ -99,13 +102,14 @@ export async function GET(request: Request) {
             );
         }
 
-        const { type, limit, gradeLevels, subjects } = validationResult.data;
+        const { type, limit, gradeLevels, subjects, cursor } = validationResult.data;
 
-        const items = await dbAdapter.listContent(userId, {
+        const { items, nextCursor } = await dbAdapter.listContent(userId, {
             type: type,
             limit: limit,
             gradeLevels: gradeLevels ? gradeLevels.split(',') : undefined,
-            subjects: subjects ? subjects.split(',') : undefined
+            subjects: subjects ? subjects.split(',') : undefined,
+            cursorId: cursor,
         });
 
         // Serialize timestamps (Firestore objects) to strings
@@ -113,11 +117,12 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             items: serializedItems,
-            count: items.length
+            count: items.length,
+            nextCursor: nextCursor ?? null,
         });
 
     } catch (error) {
-        console.error('List Content API Error:', error);
+        logger.error('List Content API Failed', error, 'CONTENT', { userId: request.headers.get('x-user-id') });
         return NextResponse.json(
             { error: 'Internal Server Error' },
             { status: 500 }
