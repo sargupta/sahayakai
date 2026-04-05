@@ -27,10 +27,10 @@ class GlassContainer extends StatelessWidget {
     if (disableAnimations) {
       return Container(
         decoration: BoxDecoration(
-          color: tint.withOpacity(opacity * 2.0), // Higher opacity fallback
+          color: tint.withValues(alpha: opacity * 2.0), // Higher opacity fallback
           borderRadius: radius,
           border: Border.all(
-            color: Colors.white.withOpacity(borderOpacity),
+            color: Colors.white.withValues(alpha: borderOpacity),
             width: 1,
           ),
         ),
@@ -44,10 +44,10 @@ class GlassContainer extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
           decoration: BoxDecoration(
-            color: tint.withOpacity(opacity),
+            color: tint.withValues(alpha: opacity),
             borderRadius: radius,
             border: Border.all(
-              color: Colors.white.withOpacity(borderOpacity),
+              color: Colors.white.withValues(alpha: borderOpacity),
               width: 1,
             ),
           ),

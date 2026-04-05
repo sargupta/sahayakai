@@ -73,7 +73,7 @@ class _VoiceInputWidgetState extends State<VoiceInputWidget> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: (_isRecording ? Colors.redAccent : Colors.green).withOpacity(0.4),
+              color: (_isRecording ? Colors.redAccent : Colors.green).withValues(alpha: 0.4),
               blurRadius: 10,
               spreadRadius: 2,
             )

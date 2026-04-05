@@ -164,7 +164,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                               activeTrackColor: Colors.green,
                               inactiveTrackColor: Colors.green.shade100,
                               thumbColor: Colors.green,
-                              overlayColor: Colors.green.withOpacity(0.2),
+                              overlayColor: Colors.green.withValues(alpha: 0.2),
                               trackHeight: 8,
                               thumbShape: const RoundSliderThumbShape(
                                   enabledThumbRadius: 12),
@@ -193,7 +193,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                                   const Color(0xFF16A34A), // Green-600
                               foregroundColor: Colors.white,
                               elevation: 4,
-                              shadowColor: Colors.green.withOpacity(0.4),
+                              shadowColor: Colors.green.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16)),
                             ),
@@ -239,9 +239,9 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [

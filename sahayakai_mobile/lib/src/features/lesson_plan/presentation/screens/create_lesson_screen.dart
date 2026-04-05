@@ -153,7 +153,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
                       backgroundColor: theme.primary,
                       foregroundColor: Colors.white,
                       elevation: 4,
-                      shadowColor: theme.primary.withOpacity(0.4),
+                      shadowColor: theme.primary.withValues(alpha: 0.4),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                     ),
@@ -201,9 +201,9 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.accent.withOpacity(0.1),
+        color: theme.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.primary.withOpacity(0.2)),
+        border: Border.all(color: theme.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -254,7 +254,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: theme.primary.withOpacity(0.3),
+                      color: theme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ]

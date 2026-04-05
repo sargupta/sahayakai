@@ -109,7 +109,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             Container(
               width: 60,
               height: 2,
-              color: GlassColors.textTertiary.withOpacity(0.3),
+              color: GlassColors.textTertiary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: GlassSpacing.xxl),
 

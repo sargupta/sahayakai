@@ -12,6 +12,12 @@ class LanguageNotifier extends StateNotifier<String> {
   }
 }
 
+// Display names for the language selector UI (native script)
+const languageDisplayNames = [
+  'English', 'हिंदी', 'தமிழ்', 'తెలుగు', 'ಕನ್ನಡ',
+  'मराठी', 'বাংলা', 'ગુજરાતી', 'മലയാളം', 'ਪੰਜਾਬੀ',
+];
+
 // Supported languages list
 final supportedLanguages = [
   'English',

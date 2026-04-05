@@ -100,7 +100,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             Container(
               width: 60,
               height: 2,
-              color: GlassColors.textTertiary.withOpacity(0.3),
+              color: GlassColors.textTertiary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: GlassSpacing.xxl),
 
@@ -132,13 +132,13 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
           end: Alignment.bottomRight,
           colors: [
             activeModule.color,
-            activeModule.color.withOpacity(0.8),
+            activeModule.color.withValues(alpha: 0.8),
           ],
         ),
         borderRadius: BorderRadius.circular(GlassRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: activeModule.color.withOpacity(0.3),
+            color: activeModule.color.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -155,7 +155,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                   vertical: GlassSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(GlassRadius.pill),
                 ),
                 child: Text(
@@ -167,7 +167,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -187,7 +187,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
           Text(
             'Instructor: ${activeModule.instructor}',
             style: GlassTypography.bodyMedium(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: GlassSpacing.xl),
@@ -195,7 +195,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             borderRadius: BorderRadius.circular(GlassRadius.xs),
             child: LinearProgressIndicator(
               value: activeModule.progress,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation(Colors.white),
               minHeight: 6,
             ),
@@ -204,7 +204,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
           Text(
             '${(activeModule.progress * 100).toInt()}% Completed',
             style: GlassTypography.labelSmall(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -222,7 +222,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: module.color.withOpacity(0.1),
+                color: module.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(GlassRadius.md),
               ),
               child: Icon(module.icon, color: module.color, size: 24),
@@ -268,7 +268,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                             borderRadius: BorderRadius.circular(2),
                             child: LinearProgressIndicator(
                               value: module.progress,
-                              backgroundColor: module.color.withOpacity(0.1),
+                              backgroundColor: module.color.withValues(alpha: 0.1),
                               valueColor: AlwaysStoppedAnimation(module.color),
                               minHeight: 4,
                             ),
@@ -319,7 +319,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: GlassColors.textTertiary.withOpacity(0.3),
+                  color: GlassColors.textTertiary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -331,7 +331,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: module.color.withOpacity(0.1),
+                  color: module.color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(module.icon, size: 48, color: module.color),
