@@ -24,4 +24,10 @@ class DatabaseService {
     }
     return Future.value(Isar.getInstance());
   }
+
+  /// Clears all locally cached data (used on logout / account deletion).
+  Future<void> clearLocalData() async {
+    final isar = await db;
+    await isar.writeTxn(() => isar.clear());
+  }
 }

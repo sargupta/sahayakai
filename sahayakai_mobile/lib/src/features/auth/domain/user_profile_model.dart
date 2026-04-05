@@ -12,6 +12,13 @@ class UserProfileModel {
   final String preferredLanguage;
   final String planType;
 
+  // Community / social fields
+  final int? followersCount;
+  final int? followingCount;
+  final int? contentSharedCount;
+  final double? impactScore;
+  final List<String>? badges;
+
   const UserProfileModel({
     required this.uid,
     required this.displayName,
@@ -23,6 +30,11 @@ class UserProfileModel {
     this.subjects = const [],
     this.preferredLanguage = 'English',
     this.planType = 'free',
+    this.followersCount,
+    this.followingCount,
+    this.contentSharedCount,
+    this.impactScore,
+    this.badges,
   });
 
   Map<String, dynamic> toJson() => {
@@ -49,5 +61,12 @@ class UserProfileModel {
         subjects: List<String>.from(json['subjects'] ?? []),
         preferredLanguage: json['preferredLanguage'] as String? ?? 'English',
         planType: json['planType'] as String? ?? 'free',
+        followersCount: json['followersCount'] as int?,
+        followingCount: json['followingCount'] as int?,
+        contentSharedCount: json['contentSharedCount'] as int?,
+        impactScore: (json['impactScore'] as num?)?.toDouble(),
+        badges: json['badges'] != null
+            ? List<String>.from(json['badges'])
+            : null,
       );
 }

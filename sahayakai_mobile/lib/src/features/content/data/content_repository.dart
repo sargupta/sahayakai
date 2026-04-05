@@ -101,6 +101,18 @@ class ContentRepository {
     }
   }
 
+  /// Publish an already-saved content item to the community library.
+  Future<void> publishToLibrary(String contentId) async {
+    final response = await _apiClient.client.post(
+      '/content/publish',
+      data: {'id': contentId},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to publish content: ${response.statusCode}');
+    }
+  }
+
   /// Get a signed download URL for a content item (valid 15 minutes).
   Future<String> getDownloadUrl(String contentId) async {
     final response = await _apiClient.client.get(

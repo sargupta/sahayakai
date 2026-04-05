@@ -16,10 +16,7 @@ class GlassColors {
   static const Color cardBackground = Color(0xFFFFFFFD); // Near white
   static const Color cardBorder = Color(0xFFE8E8E8); // Light grey border
 
-  // Convenience aliases used across auth/feature screens
-  static const Color background = backgroundEnd; // Cream base
-  static const Color surface = cardBackground; // Card/input surface
-  static const Color border = cardBorder; // Default border
+  // (Duplicate aliases removed — see lines 11–13 above.)
 
   // Primary Accent - Saffron Orange
   static const Color primary = Color(0xFFFF9933); // Indian Saffron

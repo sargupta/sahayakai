@@ -20,13 +20,14 @@ void main() {
     });
 
     test('all BCP-47 codes are unique', () {
-      final codes = supportedLanguages.map((l) => l.bcp47Code).toSet();
+      final codes = supportedLanguages.map((l) => getBcp47Code(l)).whereType<String>().toSet();
       expect(codes.length, supportedLanguages.length);
     });
 
-    test('all short codes are unique', () {
-      final codes = supportedLanguages.map((l) => l.shortCode).toSet();
-      expect(codes.length, supportedLanguages.length);
+    test('all languages have a BCP-47 code', () {
+      for (final lang in supportedLanguages) {
+        expect(getBcp47Code(lang), isNotNull, reason: '$lang should have a BCP-47 code');
+      }
     });
   });
 

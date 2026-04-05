@@ -103,8 +103,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               initialParams: state.extra as Map<String, dynamic>?)),
       GoRoute(
           path: '/instant-answer',
-          builder: (_, state) => InstantAnswerScreen(
-              initialParams: state.extra as Map<String, dynamic>?)),
+          builder: (_, __) => const InstantAnswerScreen()),
       GoRoute(
           path: '/video-storyteller',
           builder: (_, state) => VideoStorytellerScreen(
