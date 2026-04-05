@@ -15,10 +15,6 @@ class QuizRepository {
       data: config.toJson(),
     );
 
-    if (response.statusCode == 200) {
-      return Quiz.fromJson(response.data);
-    } else {
-      throw Exception('Failed to generate quiz: ${response.statusCode}');
-    }
+    return Quiz.fromJson(response.data);
   }
 }

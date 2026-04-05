@@ -99,9 +99,6 @@ class RubricRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return RubricOutput.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Rubric generation failed: ${response.statusCode}');
+    return RubricOutput.fromJson(response.data as Map<String, dynamic>);
   }
 }

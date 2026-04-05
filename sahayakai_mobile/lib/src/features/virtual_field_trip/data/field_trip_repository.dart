@@ -79,9 +79,6 @@ class FieldTripRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return FieldTripOutput.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Virtual field trip failed: ${response.statusCode}');
+    return FieldTripOutput.fromJson(response.data as Map<String, dynamic>);
   }
 }

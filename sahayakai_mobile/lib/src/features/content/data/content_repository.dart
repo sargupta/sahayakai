@@ -42,10 +42,7 @@ class ContentRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return response.data['id'] as String? ?? id;
-    }
-    throw Exception('Failed to save content: ${response.statusCode}');
+    return response.data['id'] as String? ?? id;
   }
 
   /// List the user's saved content with optional filters and pagination.
@@ -69,11 +66,8 @@ class ContentRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return ContentListResponse.fromJson(
-          response.data as Map<String, dynamic>);
-    }
-    throw Exception('Failed to list content: ${response.statusCode}');
+    return ContentListResponse.fromJson(
+        response.data as Map<String, dynamic>);
   }
 
   /// Get a single content item by ID.
@@ -83,34 +77,23 @@ class ContentRepository {
       queryParameters: {'id': contentId},
     );
 
-    if (response.statusCode == 200) {
-      return ContentItem.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Failed to get content: ${response.statusCode}');
+    return ContentItem.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Soft-delete a content item.
   Future<void> deleteContent(String contentId) async {
-    final response = await _apiClient.client.delete(
+    await _apiClient.client.delete(
       '/content/delete',
       queryParameters: {'id': contentId},
     );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete content: ${response.statusCode}');
-    }
   }
 
   /// Publish an already-saved content item to the community library.
   Future<void> publishToLibrary(String contentId) async {
-    final response = await _apiClient.client.post(
+    await _apiClient.client.post(
       '/content/publish',
       data: {'id': contentId},
     );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to publish content: ${response.statusCode}');
-    }
   }
 
   /// Get a signed download URL for a content item (valid 15 minutes).
@@ -120,9 +103,6 @@ class ContentRepository {
       queryParameters: {'id': contentId},
     );
 
-    if (response.statusCode == 200) {
-      return response.data['downloadUrl'] as String;
-    }
-    throw Exception('Failed to get download URL: ${response.statusCode}');
+    return response.data['downloadUrl'] as String;
   }
 }

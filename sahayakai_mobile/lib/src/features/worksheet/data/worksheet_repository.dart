@@ -111,9 +111,6 @@ class WorksheetRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return WorksheetOutput.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Worksheet generation failed: ${response.statusCode}');
+    return WorksheetOutput.fromJson(response.data as Map<String, dynamic>);
   }
 }
