@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { z } from 'zod';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -78,7 +78,7 @@ async function _handler(request: Request) {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        logger.error(`Lesson Plan API Failed for topic: "${topicText}"`, error, {
+        logger.error(`Lesson Plan API Failed for topic: "${topicText}"`, error, 'LESSON_PLAN', {
             path: "/api/ai/lesson-plan",
             userId: request.headers.get('x-user-id'),
             errorMessage

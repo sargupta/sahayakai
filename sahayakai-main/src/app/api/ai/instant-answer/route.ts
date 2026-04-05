@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { instantAnswer } from '@/ai/flows/instant-answer';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -62,7 +62,7 @@ async function _handler(request: Request) {
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
 
-        logger.error(`Instant Answer API Failed for question: "${questionText}"`, error, {
+        logger.error(`Instant Answer API Failed for question: "${questionText}"`, error, 'INSTANT_ANSWER', {
             path: "/api/ai/instant-answer",
             userId: request.headers.get('x-user-id'),
             errorMessage,
