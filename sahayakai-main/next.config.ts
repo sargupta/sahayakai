@@ -5,6 +5,9 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  fallbacks: {
+    document: '/offline.html',
+  },
 });
 
 const nextConfig: NextConfig = {
@@ -42,7 +45,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["@genkit-ai/googleai", "genkit", "@opentelemetry/sdk-node", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
+  serverExternalPackages: ["@genkit-ai/googleai", "@genkit-ai/firebase", "@genkit-ai/google-cloud", "genkit", "@opentelemetry/sdk-node", "@opentelemetry/api", "@opentelemetry/sdk-trace-base", "@opentelemetry/sdk-metrics", "firebase-admin", "@google-cloud/secret-manager", "@google-cloud/logging"],
   experimental: {
     serverActions: {
       bodySizeLimit: '25mb',

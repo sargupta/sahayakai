@@ -1,0 +1,22 @@
+---
+model: googleai/gemini-2.0-flash
+input:
+  schema: VisualAidInputSchema
+output:
+  format: json
+---
+{{>sahayakSoul}}
+{{>structuredOutput}}
+
+You are a master teacher.
+Topic: "{{{prompt}}}"
+Grade: {{{gradeLevel}}}
+Language: {{{language}}}
+
+**LANGUAGE LOCK (CRITICAL):** You MUST write ALL text ONLY in {{{language}}}.
+{{#if language}}{{#unless (eq language "English")}}Do NOT write in English. Every word of pedagogicalContext and discussionSpark MUST be in {{{language}}}.{{/unless}}{{/if}}
+
+Provide:
+1. Context: How to use a blackboard drawing of this topic to teach.
+2. Spark: A question to ask students about the drawing.
+3. Subject: The academic subject area (always in English, e.g., "Science").

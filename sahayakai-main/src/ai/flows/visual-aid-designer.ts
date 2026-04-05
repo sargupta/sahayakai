@@ -151,7 +151,7 @@ const visualAidFlow = ai.defineFlow(
               temperature: 0.4,
             },
           });
-        }),
+        }, 'visualAid.imageGenerate'),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('IMAGE_GENERATION_TIMEOUT')), IMAGE_TIMEOUT_MS)
         ),
@@ -193,7 +193,7 @@ const visualAidFlow = ai.defineFlow(
             3. Subject: The academic subject area (always in English, e.g., "Science").
           `,
         });
-      });
+      }, 'visualAid.textGenerate');
 
       if (userId && (textResult as any).usage) {
         UsageTracker.trackGemini(userId, (textResult as any).usage.totalTokens || 0, 'gemini-2.5-flash');

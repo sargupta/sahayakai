@@ -181,7 +181,7 @@ const worksheetWizardFlow = ai.defineFlow(
           ...input,
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
-      });
+      }, 'worksheet.generate');
 
       if (!output) {
         throw new FlowExecutionError(

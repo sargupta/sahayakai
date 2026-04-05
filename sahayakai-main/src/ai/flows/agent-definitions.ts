@@ -94,7 +94,7 @@ export const agentRouterFlow = ai.defineFlow(
     // 1. Determine the user's intent
     const { output: intentOutput } = await runResiliently(async (resilienceConfig) => {
       return await intentPrompt({ prompt: input.prompt }, resilienceConfig);
-    });
+    }, 'intent.classify');
 
     const intent = intentOutput?.intent || 'unknown';
     const topic = intentOutput?.topic;

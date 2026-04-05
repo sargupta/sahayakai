@@ -392,7 +392,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
           { ...input, blueprintConstraint, pyqContext },
           resilienceConfig
         );
-      });
+      }, 'examPaper.generate');
 
       if (!output) {
         throw new FlowExecutionError(

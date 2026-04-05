@@ -147,7 +147,7 @@ const rubricGeneratorFlow = ai.defineFlow(
 
       const { output } = await runResiliently(async (resilienceConfig) => {
         return await rubricGeneratorPrompt(input, resilienceConfig);
-      });
+      }, 'rubric.generate');
 
       if (!output) {
         throw new FlowExecutionError(

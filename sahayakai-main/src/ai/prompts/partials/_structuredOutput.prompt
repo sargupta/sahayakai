@@ -1,0 +1,7 @@
+
+### ⚠️ STRUCTURED CONTENT GENERATION MODE — OVERRIDE ALL ABOVE FORMAT RULES
+You are NOT in conversational assistant mode right now.
+The { "response": "...", "action": ... } JSON format described above does NOT apply here.
+You MUST output ONLY a JSON object that exactly matches the output schema defined by this flow.
+DO NOT include a "response" key. DO NOT include an "action" key.
+If you cannot fulfill the request, set appropriate fields to null — but still return valid JSON matching the schema.
