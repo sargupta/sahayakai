@@ -82,7 +82,7 @@ const agentReplyPrompt = ai.definePrompt({
 });
 
 export async function generateAgentReply(input: AgentReplyInput): Promise<AgentReplyOutput> {
-    const result = await runResiliently((cfg) => agentReplyPrompt(input, cfg));
+    const result = await runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply');
     return result.output!;
 }
 
@@ -149,6 +149,6 @@ const callSummaryPrompt = ai.definePrompt({
 });
 
 export async function generateCallSummary(input: CallSummaryInput): Promise<CallSummaryOutput> {
-    const result = await runResiliently((cfg) => callSummaryPrompt(input, cfg));
+    const result = await runResiliently((cfg) => callSummaryPrompt(input, cfg), 'parentCall.summary');
     return result.output!;
 }

@@ -158,7 +158,7 @@ const instantAnswerFlow = ai.defineFlow(
       try {
         const result = await runResiliently(async (resilienceConfig) => {
           return await instantAnswerPrompt(normalizedInput, resilienceConfig);
-        });
+        }, 'instantAnswer.generate');
         output = result.output;
 
         // Track usage if available

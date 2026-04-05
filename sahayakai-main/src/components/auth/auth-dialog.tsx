@@ -17,10 +17,12 @@ import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Sparkles, ShieldCheck, Zap } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { useRouter } from "next/navigation";
 
 export function AuthDialog() {
     const { isAuthModalOpen, closeAuthModal } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleSignIn = async () => {
         const provider = new GoogleAuthProvider();
@@ -44,7 +46,7 @@ export function AuthDialog() {
                             description: "Complete your professional profile to get started.",
                         });
                         closeAuthModal();
-                        window.location.href = '/onboarding';
+                        router.push('/onboarding');
                         return;
                     }
                 }

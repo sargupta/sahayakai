@@ -112,7 +112,7 @@ export const quizGeneratorFlow = ai.defineFlow(
           ...input,
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
-      });
+      }, 'quiz.generate');
       const output = result.output;
 
       if (input.userId && (result as any).usage) {

@@ -123,7 +123,7 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
           ...resilienceConfig.config
         }
       });
-    });
+    }, 'lessonPlan.materialsAudit');
 
     const missingMaterials = auditResult.output
       ? auditResult.output
@@ -367,7 +367,7 @@ const lessonPlanFlow = ai.defineFlow(
               output: result.output,
               usage: (result as any).usage
             };
-          });
+          }, 'lessonPlan.generate');
         });
 
         if (normalizedInput.userId && usage) {

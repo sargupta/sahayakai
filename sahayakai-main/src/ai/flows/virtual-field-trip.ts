@@ -133,7 +133,7 @@ const virtualFieldTripFlow = ai.defineFlow(
 
       const { output } = await runResiliently(async (resilienceConfig) => {
         return await virtualFieldTripPrompt(input, resilienceConfig);
-      });
+      }, 'virtualFieldTrip.generate');
 
       if (!output) {
         throw new FlowExecutionError(

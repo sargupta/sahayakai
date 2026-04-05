@@ -16,7 +16,8 @@ export const LanguageSchema = z.string();
 
 export const UserProfileSchema = z.object({
     uid: z.string(),
-    email: z.string().email(),
+    email: z.string().email().or(z.literal('')).default(''),
+    phoneNumber: z.string().optional(),
     displayName: z.string(),
     photoURL: z.string().optional(),
 
@@ -207,8 +208,8 @@ export const ExamPaperDataSchema = z.object({
     }),
     pyqSources: z.array(z.object({
         id: z.string(),
-        year: z.number().nullable(),
-        chapter: z.string(),
+        year: z.number().nullable().optional(),
+        chapter: z.string().optional(),
     })).optional().describe("PYQ source attributions: which prior-year questions were used or adapted."),
 });
 

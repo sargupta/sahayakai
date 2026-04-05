@@ -115,7 +115,7 @@ const teacherTrainingFlow = ai.defineFlow(
 
       const { output } = await runResiliently(async (resilienceConfig) => {
         return await teacherTrainingPrompt(input, resilienceConfig);
-      });
+      }, 'teacherTraining.generate');
 
       if (!output) {
         throw new FlowExecutionError(

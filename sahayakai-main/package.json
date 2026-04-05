@@ -24,9 +24,9 @@
     "teacher:lookup": "node scripts/lookup-teacher.js"
   },
   "dependencies": {
-    "@genkit-ai/firebase": "^1.15.5",
-    "@genkit-ai/googleai": "^1.15.5",
-    "@genkit-ai/next": "^1.15.5",
+    "@genkit-ai/firebase": "^1.28.0",
+    "@genkit-ai/googleai": "^1.28.0",
+    "@genkit-ai/next": "^1.28.0",
     "@google-cloud/logging": "^11.2.1",
     "@google-cloud/pubsub": "^5.2.2",
     "@google-cloud/secret-manager": "^6.1.0",
@@ -65,7 +65,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
-    "genkit": "^1.15.5",
+    "genkit": "^1.28.0",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "jspdf": "^2.5.1",
@@ -98,6 +98,7 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
+    "@surma/rollup-plugin-off-main-thread": "^2.2.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -113,7 +114,7 @@
     "autoprefixer": "^10.4.24",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",
-    "genkit-cli": "^1.15.5",
+    "genkit-cli": "^1.28.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "js-yaml": "^4.1.1",
