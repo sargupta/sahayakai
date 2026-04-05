@@ -160,7 +160,7 @@ class _VirtualFieldTripScreenState extends State<VirtualFieldTripScreen> {
                           vertical: GlassSpacing.sm,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
+                          color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(GlassRadius.pill),
                         ),
                         child: Row(

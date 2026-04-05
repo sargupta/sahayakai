@@ -1,9 +1,10 @@
-
 import { getDb } from "@/lib/firebase-admin";
+import { logger } from "@/lib/logger";
+import { calculateHealthScore, TeacherAnalytics } from "@/lib/analytics/impact-score";
 
 export async function aggregateUserMetrics(uid: string) {
     const db = await getDb();
-    console.log(`[Aggregator] Refreshing metrics for user: ${uid}`);
+    logger.info(`Refreshing metrics for user`, 'AGGREGATOR', { userId: uid });
 
     // 1. Fetch User Data
     const userDoc = await db.collection('users').doc(uid).get();
@@ -11,11 +12,11 @@ export async function aggregateUserMetrics(uid: string) {
     const userData = userDoc.data() || {};
 
     // 2. Fetch Content (Private)
-    const privateSnapshot = await db.collection('users').doc(uid).collection('content').get();
+    const privateSnapshot = await db.collection('users').doc(uid).collection('content').limit(500).get();
     const privateResources = privateSnapshot.docs.map(doc => doc.data());
 
     // 3. Fetch Content (Public)
-    const publicSnapshot = await db.collection('library_resources').where('authorId', '==', uid).get();
+    const publicSnapshot = await db.collection('library_resources').where('authorId', '==', uid).limit(500).get();
     const publicResources = publicSnapshot.docs.map(doc => doc.data());
 
     // Deduplicate
@@ -26,34 +27,47 @@ export async function aggregateUserMetrics(uid: string) {
     });
 
     const resourceCount = allResources.length;
-    const quizCount = allResources.filter(r => r.type === 'quiz').length;
     const sharedCount = publicResources.length;
 
-    // 4. Fetch Posts (Engagement)
-    const postSnapshot = await db.collection('posts').where('authorId', '==', uid).get();
-    const postCount = postSnapshot.size;
+    // 4. Fetch Activity Logs for Last 7 days to fix content_created_last_7_days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentContentCount = allResources.filter(r => {
+        const created = r.createdAt?.toDate?.() || new Date(r.createdAt);
+        return created >= sevenDaysAgo;
+    }).length;
 
-    // Truthful Scoring Logic
-    // Logic: 10 pts/resource, 5 pts/quiz, 20 pts/share, 5 pts/post
-    const calculatedScore = Math.min((resourceCount * 10) + (quizCount * 5) + (sharedCount * 20) + (postCount * 5), 100);
-    const activityScore = Math.min(resourceCount * 5, 40);
-    const engagementScore = Math.min((sharedCount * 15) + (postCount * 5), 60);
+    // 5. Fetch Existing Analytics for stateful metrics (sessions, etc.)
+    const analyticsDoc = await db.collection('teacher_analytics').doc(uid).get();
+    const existingAnalytics = analyticsDoc.data() || {};
 
-    // Update Analytics
+    // Prepare TeacherAnalytics Input
+    const analyticsInput: any = {
+        ...existingAnalytics,
+        user_id: uid,
+        content_created_total: resourceCount,
+        content_created_last_7_days: recentContentCount,
+        shared_to_community_count: sharedCount,
+        // Keep other fields like sessions_last_7_days from existing analytics
+    };
+
+    // Calculate standardized score
+    const healthResult = calculateHealthScore(analyticsInput);
+    const finalScore = healthResult.score;
+
+    // Persist Harmonized Data
     await db.collection('teacher_analytics').doc(uid).set({
-        userId: uid,
-        score: calculatedScore,
-        level: calculatedScore > 50 ? 'expert' : 'novice',
-        resources_created: resourceCount,
-        shared_resources: sharedCount,
-        last_active: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        ...analyticsInput,
+        score: finalScore,
+        lastUpdated: new Date().toISOString(),
     }, { merge: true });
 
-    // Update User Profile cache
+    // Update User Profile cache (North Star metric)
     await db.collection('users').doc(uid).update({
-        impactScore: calculatedScore
+        impactScore: finalScore
     });
 
-    return { score: calculatedScore, count: resourceCount };
+    logger.info(`Metrics updated: score ${finalScore}, count ${resourceCount}`, 'AGGREGATOR', { userId: uid });
+
+    return { score: finalScore, count: resourceCount };
 }

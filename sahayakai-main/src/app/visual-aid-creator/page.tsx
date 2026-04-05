@@ -7,7 +7,7 @@ import { Images } from "lucide-react";
 export default function VisualAidDesignerPage() {
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-xl overflow-hidden">
         {/* Clean Top Bar */}
         <div className="h-1.5 w-full bg-primary" />
 
@@ -15,7 +15,7 @@ export default function VisualAidDesignerPage() {
           <div className="flex justify-center items-center mb-4">
             <Images className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">Visual Aid Designer</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">Visual Aid Designer</CardTitle>
           <CardDescription>
             This feature is coming soon. Generate beautiful visual aids from a simple description!
           </CardDescription>

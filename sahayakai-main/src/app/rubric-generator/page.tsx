@@ -1,6 +1,6 @@
 "use client";
 
-import { generateRubric, RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
+import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dialog";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { useAuth } from "@/context/auth-context";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 const formSchema = z.object({
   assignmentDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -50,7 +52,7 @@ const translations: Record<string, Record<string, string>> = {
     dialogEfficiencyText: "They can make the grading process faster and more straightforward for teachers.",
     formLabel: "Assignment Description",
     formPlaceholder: "e.g., A project to build a model of the solar system for 6th graders.",
-    gradeLevel: "Grade Level",
+    gradeLevel: "Class",
     language: "Language",
     buttonGenerate: "Generate Rubric",
     buttonGenerating: "Generating Rubric...",
@@ -92,16 +94,41 @@ function RubricGeneratorContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const hasLoaded = useRef(false);
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       assignmentDescription: "",
       language: "en",
-      gradeLevel: "7th Grade",
+      gradeLevel: "Class 7",
       subject: "General",
     },
   });
+
+  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
+  const watchedDesc    = form.watch("assignmentDescription");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("rubric-generator", {
+    assignmentDescription: watchedDesc,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
+  });
+
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const descParam = searchParams.get("assignmentDescription");
+    const id = searchParams.get("id");
+    if (descParam || id || !savedSnapshot) return;
+    if (savedSnapshot.assignmentDescription) form.setValue("assignmentDescription", savedSnapshot.assignmentDescription);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // runs once on mount only
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
@@ -145,11 +172,20 @@ function RubricGeneratorContent() {
       };
       fetchSavedContent();
     } else if (descParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("assignmentDescription", descParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       hasLoaded.current = true;
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [user, searchParams, form, toast]);
 
@@ -165,7 +201,7 @@ function RubricGeneratorContent() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ ...values, language: selectedLanguage })
+        body: JSON.stringify({ ...values, language: values.language || selectedLanguage })
       });
 
       if (!res.ok) {
@@ -179,6 +215,7 @@ function RubricGeneratorContent() {
 
       const result = await res.json();
       setRubric(result);
+      clearFormSnapshot("rubric-generator");
     } catch (error) {
       console.error("Failed to generate rubric:", error);
       toast({
@@ -198,15 +235,15 @@ function RubricGeneratorContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <ClipboardCheck className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription className="flex items-center justify-center gap-2">
             <span>{t.pageDescription}</span>
             <Dialog>
@@ -246,16 +283,10 @@ function RubricGeneratorContent() {
                     <FormLabel className="font-headline">{t.formLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => field.onChange(transcript)}
-                          iconSize="lg"
-                          label="Describe the assignment..."
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.formPlaceholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[120px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </div>
                     </FormControl>
@@ -266,13 +297,13 @@ function RubricGeneratorContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLevel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLevel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -290,7 +321,7 @@ function RubricGeneratorContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}
@@ -307,7 +338,7 @@ function RubricGeneratorContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.language}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.language}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -320,7 +351,7 @@ function RubricGeneratorContent() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
+              <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -336,15 +367,26 @@ function RubricGeneratorContent() {
       </div>
 
       {isLoading && (
-        <Card className="mt-8 w-full bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+        <Card className="mt-8 w-full bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
           <CardContent className="p-12 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-lg font-medium text-slate-600">{t.loadingText}</p>
+            <p className="text-lg font-medium text-muted-foreground">{t.loadingText}</p>
           </CardContent>
         </Card>
       )}
 
-      {rubric && <RubricDisplay rubric={rubric} />}
+      {rubric && (
+        <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+            <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -17,45 +17,43 @@ export const ai = genkit({
  * AI Resilience Strategy: "The Presentation Guard"
  */
 
+let keyPoolPromise: Promise<void> | null = null;
 let keyPool: string[] = [];
 
 async function ensureKeyPool() {
   if (keyPool.length > 0) return;
+  if (keyPoolPromise) return keyPoolPromise;
 
-  try {
-    const secretKeys = await getSecret('GOOGLE_GENAI_API_KEY');
-    keyPool = secretKeys
-      .split(',')
-      .map(k => k.trim())
-      .filter(Boolean);
-    console.log(`[AI Resilience] ✅ Loaded ${keyPool.length} keys from Secret Manager. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+  keyPoolPromise = (async () => {
+    try {
+      const secretKeys = await getSecret('GOOGLE_GENAI_API_KEY');
+      keyPool = secretKeys
+        .split(',')
+        .map(k => k.trim())
+        .filter(Boolean);
+      console.log(`[AI Resilience] ✅ Loaded ${keyPool.length} keys from Secret Manager. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
 
-    // NEW: Alert if pool is suspiciously small
-    if (keyPool.length < 2) {
-      console.warn(`[AI Resilience] ⚠️ WARNING: Only ${keyPool.length} key(s) in pool. Consider adding more for resilience.`);
+      if (keyPool.length < 2) {
+        console.warn(`[AI Resilience] ⚠️ WARNING: Only ${keyPool.length} key(s) in pool. Consider adding more for resilience.`);
+      }
+    } catch (error) {
+      console.error('[AI Resilience] ❌ Fallback Triggered: Local/Process API key will be used.', {
+        error: error instanceof Error ? error.message : 'Unknown'
+      });
+
+      const isPlaceholder = (val: string) => val.startsWith('secrets/');
+      keyPool = (process.env.GOOGLE_GENAI_API_KEY || '')
+        .split(',')
+        .map(k => k.trim())
+        .filter(k => k && !isPlaceholder(k));
+
+      if (keyPool.length > 0) {
+        console.log(`[AI Resilience] ✅ Fallback active. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+      }
     }
-  } catch (error) {
-    // NEW: Log the FULL error for Secret Manager access failures
-    console.error('[AI Resilience] ❌ CRITICAL: Failed to load keys from Secret Manager', {
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        code: (error as any).code
-      } : error
-    });
-    console.warn('[AI Resilience] Falling back to process.env');
+  })();
 
-    const isPlaceholder = (val: string) => val.startsWith('secrets/');
-    keyPool = (process.env.GOOGLE_GENAI_API_KEY || '')
-      .split(',')
-      .map(k => k.trim())
-      .filter(k => k && !isPlaceholder(k));
-
-    if (keyPool.length > 0) {
-      console.log(`[AI Resilience] Fallback loaded ${keyPool.length} keys. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
-    }
-  }
+  return keyPoolPromise;
 }
 
 /**

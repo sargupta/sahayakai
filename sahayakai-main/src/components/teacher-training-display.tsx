@@ -7,15 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, BookOpen, Lightbulb, Save, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type TeacherTrainingDisplayProps = {
   advice: TeacherTrainingOutput;
   title?: string;
+  selectedLanguage?: string;
 };
 
-export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice, title }) => {
+export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice, title, selectedLanguage }) => {
   const { toast } = useToast();
 
   const handleSave = async () => {
@@ -37,7 +37,7 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice
         gradeLevel: advice.gradeLevel || 'Class 5',
         subject: advice.subject || 'General',
         topic: saveTitle,
-        language: 'English', // TODO: Pass language prop
+        language: selectedLanguage || 'en',
         isPublic: false,
         isDraft: false,
         data: advice
@@ -59,7 +59,6 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice
         description: "Saved to your personal library.",
       });
     } catch (error) {
-      console.error("Save Error:", error);
       toast({
         title: "Save Failed",
         variant: "destructive",
@@ -71,6 +70,11 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice
   const handleDownloadPDF = async () => {
     const element = document.getElementById('teacher-training-card');
     if (!element) return;
+
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas'),
+    ]);
 
     const actionButtons = element.querySelector('.no-print');
     if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
@@ -91,7 +95,6 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice
 
       toast({ title: "PDF Downloaded", description: "Your file is ready." });
     } catch (error) {
-      console.error("PDF Error:", error);
       toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
     } finally {
       if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -140,6 +143,13 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({ advice
           {advice.conclusion}
         </p>
       </CardContent>
+      <div className="p-4 border-t border-slate-100 flex justify-end">
+        <FeedbackDialog
+          page="teacher-training"
+          feature="teacher-training-result"
+          context={{ title: title || "Teacher Training Advice" }}
+        />
+      </div>
     </Card >
   );
 };

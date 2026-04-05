@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { allNCERTChapters } from '@/data/ncert';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
     try {
@@ -17,7 +18,7 @@ export async function GET() {
         await batch.commit();
         return NextResponse.json({ success: true, count, message: "Migration completed successfully" });
     } catch (error: any) {
-        console.error("Migration failed:", error);
+        logger.error('Migration failed', error, 'MIGRATION');
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

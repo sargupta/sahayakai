@@ -172,7 +172,6 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ onImageUpload, className
           setUploadProgress(progress);
         },
         (error) => {
-          console.error("Upload failed", error);
           setError(t.errorUpload);
           setIsUploading(false);
           // Don't clear preview immediately, let user see error
@@ -185,7 +184,6 @@ export const ImageUploader: FC<ImageUploaderProps> = ({ onImageUpload, className
       );
 
     } catch (err: any) {
-      console.error("Upload error", err);
       setError(t.errorUpload);
       setIsUploading(false);
     }

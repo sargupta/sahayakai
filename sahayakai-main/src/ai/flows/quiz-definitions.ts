@@ -1,12 +1,14 @@
 import { ai } from '@/ai/genkit';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { UsageTracker } from '@/lib/usage-tracker';
 import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
 export const quizGeneratorPrompt = ai.definePrompt({
   name: 'quizGeneratorPrompt',
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator who excels at creating assessments that are both challenging and informative. Generate a quiz based on the provided inputs.
 
@@ -30,19 +32,22 @@ When analyzing the topic input, users may correct themselves during voice input.
 
 **Instructions:**
 1.  **Analyze Context:** If an image is provided, use it as the primary source. If no image, base the quiz on the topic.
-2.  **Generate Questions:** Create exactly {{{numQuestions}}} questions.
-3.  **Distractor Quality:** For multiple-choice questions, ensure distractors (incorrect options) are plausible and common misconceptions, making the quiz a true learning tool.
-4.  **Explanations:** For EVERY question, provide a detailed "explanation" that clarifies why the answer is correct and why other options are not. This is for the teacher to use during review.
-5.  **Difficulty Levels:**
+2.  **Bharat-First Contextualization**: You MUST use Indian rural contexts for all questions and explanations. Use examples from Agriculture, local geography (rivers like Ganga, Kaveri), local markets (mandis), and zero-cost resources. Avoid westernisms like "elevators", "subways", "snowing" (unless in Himalayas), or "dollars".
+3.  **Chalk & Blackboard Awareness**: Design questions that are easy for a teacher to write on a physical blackboard. Keep "questionText" concise but meaningful.
+4.  **Generate Questions:** Create exactly {{{numQuestions}}} questions.
+5.  **Distractor Quality:** For multiple-choice questions, ensure distractors (incorrect options) are plausible and common misconceptions, making the quiz a true learning tool.
+6.  **Explanations**: For EVERY question, provide a detailed "explanation" that clarifies why the answer is correct. Use a simple, Bharat-context analogy (e.g., "Just like how a farmer selects seeds...") to help the teacher explain.
+7.  **Difficulty Levels:**
     {{#if targetDifficulty}}
     **CRITICAL**: You MUST generate ALL questions at the **{{{targetDifficulty}}}** difficulty level. Do not mix levels.
     {{else}}
     Assign an individual "difficultyLevel" (easy, medium, hard) to each question based on the cognitive depth required.
     {{/if}}
-6.  **Teacher Instructions:** Provide a brief "teacherInstructions" section at the end on how to best use this quiz in a classroom setting.
-7.  **Cognitive Level:** Tailor questions to assess these specific Bloom's levels if provided: {{#each bloomsTaxonomyLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
-8.  **Context:** Maintain the specified \`gradeLevel\` and \`language\`.
-9.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
+8.  **Teacher Instructions**: Provide a brief "teacherInstructions" section at the end on how to conduct this quiz in a resource-constrained classroom (e.g., "Write the MCQs on the left side of the board").
+9.  **Cognitive Level**: Tailor questions to assess these specific Bloom's levels if provided: {{#each bloomsTaxonomyLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+10. **Context**: Maintain the specified \`gradeLevel\` (use "Class" terminology) and \`language\`.
+11. **Metadata**: Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
+12. **Descriptive Title**: You MUST generate a descriptive, engaging title for the quiz based on the topic or chapter provided (e.g., "Photosynthesis & Plant Life Quiz" instead of "Chapter Two Quiz"). Do NOT use generic titles like "Chapter [Number] Quiz" or just "Quiz".
 
 **Inputs:**
 {{#if imageDataUri}}
@@ -102,12 +107,17 @@ export const quizGeneratorFlow = ai.defineFlow(
         }
       });
 
-      const { output } = await runResiliently(async (resilienceConfig) => {
+      const result = await runResiliently(async (resilienceConfig) => {
         return await quizGeneratorPrompt({
           ...input,
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
       });
+      const output = result.output;
+
+      if (input.userId && (result as any).usage) {
+        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, 'gemini-2.0-flash');
+      }
 
       if (!output) {
         throw new FlowExecutionError(

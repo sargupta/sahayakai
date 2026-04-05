@@ -8,15 +8,14 @@ import { Button } from './ui/button';
 import { Copy, Save, MessageSquareQuote, Youtube, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 type InstantAnswerDisplayProps = {
     answer: InstantAnswerOutput & { videoSuggestionUrl?: string | null };
     title?: string;
+    selectedLanguage?: string;
 };
 
-export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, title }) => {
+export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, title, selectedLanguage }) => {
     const { toast } = useToast();
 
     const handleCopy = () => {
@@ -30,6 +29,11 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, ti
     const handleDownload = async () => {
         const element = document.getElementById('instant-answer-card');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+          import('jspdf'),
+          import('html2canvas'),
+        ]);
 
         // Hide buttons for cleaner PDF
         const actionButtons = element.querySelector('.no-print');
@@ -49,7 +53,6 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, ti
 
             toast({ title: "PDF Downloaded", description: "Your file is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -75,7 +78,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, ti
                 gradeLevel: answer.gradeLevel || 'Class 5',
                 subject: answer.subject || 'General',
                 topic: saveTitle,
-                language: 'English', // TODO: Pass language prop
+                language: selectedLanguage || 'en',
                 isPublic: false,
                 isDraft: false,
                 data: answer
@@ -97,7 +100,6 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, ti
                 description: "Saved to your personal library.",
             });
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 variant: "destructive",

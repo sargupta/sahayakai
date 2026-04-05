@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
     signInWithPopup,
     GoogleAuthProvider,
-    onAuthStateChanged,
-    User,
     signOut
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -31,26 +29,8 @@ import { LogOut, User as UserIcon, ShieldCheck, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AuthButton() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useAuth();
     const { toast } = useToast();
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-
-        // Safety timeout: If Firebase takes too long, just show the sign-in button
-        const safetyTimer = setTimeout(() => {
-            setLoading(false);
-        }, 2000);
-
-        return () => {
-            unsubscribe();
-            clearTimeout(safetyTimer);
-        };
-    }, []);
 
     const handleSignIn = async () => {
         const provider = new GoogleAuthProvider();
@@ -63,29 +43,32 @@ export function AuthButton() {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
-            // Check if profile exists
-            const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
-            const data = await response.json();
-
-            if (!data.exists) {
-                toast({
-                    title: "Almost there!",
-                    description: "Complete your professional profile to join the community.",
-                });
-                window.location.href = '/onboarding';
-            } else {
+            // Check if profile exists — be resilient to API errors
+            // IMPORTANT: Only redirect to onboarding on a DEFINITIVE false.
+            // A failed API call should NOT send a returning teacher to onboarding.
+            try {
+                const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists === false) {
+                        toast({
+                            title: "Almost there!",
+                            description: "Complete your professional profile to join the community.",
+                        });
+                        window.location.href = '/onboarding';
+                        return;
+                    }
+                }
+                // If response is not ok OR exists is true/undefined, treat as returning user
                 toast({
                     title: "Welcome back!",
-                    description: "Redirecting you to the library.",
+                    description: "You're all set!",
                 });
+            } catch (profileCheckError) {
+                // API error — don't block login with onboarding redirect
+                toast({ title: "Welcome back!", description: "Logging you in..." });
             }
         } catch (error: any) {
-            console.error("Auth Error Details:", {
-                code: error.code,
-                message: error.message,
-                domain: typeof window !== 'undefined' ? window.location.hostname : 'ssr',
-                authDomain: auth.config.authDomain
-            });
             toast({
                 title: "Sign-in Failed",
                 description: `Firebase Error: ${error.code} (${error.message})`,
@@ -128,7 +111,11 @@ export function AuthButton() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-primary/10">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
+                        <AvatarImage
+                            src={user.photoURL || ""}
+                            alt={user.displayName || "User"}
+                            referrerPolicy="no-referrer"
+                        />
                         <AvatarFallback>{user.displayName?.[0] || "T"}</AvatarFallback>
                     </Avatar>
                 </Button>

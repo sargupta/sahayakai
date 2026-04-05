@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AnalyticsEvent } from '@/lib/analytics-events';
 import { getDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,10 +36,8 @@ export async function POST(req: NextRequest) {
         for (const event of body.events) {
             const severity = getEventSeverity(event);
 
-            // 1. Structured Logging (stdout)
-            const logEntry = {
-                severity,
-                message: `Teacher activity: ${event.event_type}`,
+            // 1. Structured Logging (via standard logger)
+            const logContext = {
                 event_type: event.event_type,
                 data: event,
                 labels: {
@@ -48,7 +47,14 @@ export async function POST(req: NextRequest) {
                 },
                 timestamp: new Date(event.timestamp).toISOString(),
             };
-            console.log(JSON.stringify(logEntry));
+
+            if (severity === 'ERROR') {
+                logger.error(`Teacher activity: ${event.event_type}`, new Error('Analytics Error'), 'ANALYTICS', logContext);
+            } else if (severity === 'WARNING') {
+                logger.warn(`Teacher activity: ${event.event_type}`, 'ANALYTICS', logContext);
+            } else {
+                logger.info(`Teacher activity: ${event.event_type}`, 'ANALYTICS', logContext);
+            }
 
             // 2. Firestore Aggregation (Daily Stats)
             // Schema: users/{userId}/analytics/{YYYY-MM-DD}
@@ -85,26 +91,37 @@ export async function POST(req: NextRequest) {
                 const healthRef = db.collection('teacher_analytics').doc(event.user_id);
                 const healthUpdates: Record<string, any> = {
                     last_active: FieldValue.serverTimestamp(),
-                    days_since_last_use: 0, // Reset on activity
-                    total_attempts: FieldValue.increment(1),
+                    days_since_last_use: 0,
+                    // user_id is the primary identifier for the scoring model
+                    user_id: event.user_id
                 };
 
-                // Aggregation Logic (Simplified for real-time)
+                // Aggregation Logic (Aligned with Model v2)
                 if (event.event_type === 'session_start') {
                     healthUpdates.sessions_last_7_days = FieldValue.increment(1);
-                    healthUpdates.consecutive_days_used = FieldValue.increment(1); // Naive increment, proper logic needs cloud function
+                    // Proper streak logic usually handles this, but naive increment for now
+                    healthUpdates.consecutive_days_used = FieldValue.increment(1);
                 }
-                if (event.event_type === 'content_created') {
-                    healthUpdates.content_created_last_7_days = FieldValue.increment(1);
-                    healthUpdates.content_created_total = FieldValue.increment(1);
-                    if (event.success) {
-                        healthUpdates.successful_generations = FieldValue.increment(1);
+
+                if (event.event_type === 'content_created' || event.event_type === 'initiate_generation') {
+                    // Only increment attempts on generation efforts
+                    healthUpdates.total_attempts = FieldValue.increment(1);
+
+                    if (event.event_type === 'content_created') {
+                        healthUpdates.content_created_last_7_days = FieldValue.increment(1);
+                        healthUpdates.content_created_total = FieldValue.increment(1);
+                        if (event.success) {
+                            healthUpdates.successful_generations = FieldValue.increment(1);
+                        }
                     }
                 }
+
                 if (event.event_type === 'feature_use') {
-                    // We can't easily append to a list in Firestore without reading first or using arrayUnion
-                    // enabling arrayUnion for features
                     healthUpdates.features_used_last_30_days = FieldValue.arrayUnion(event.feature);
+                }
+
+                if (event.event_type === 'content_shared') {
+                    healthUpdates.shared_to_community_count = FieldValue.increment(1);
                 }
 
                 batch.set(healthRef, healthUpdates, { merge: true });
@@ -119,11 +136,7 @@ export async function POST(req: NextRequest) {
             received: body.events.length
         });
     } catch (error) {
-        console.error(JSON.stringify({
-            severity: 'ERROR',
-            message: 'Failed to process teacher activity events',
-            error: error instanceof Error ? error.message : String(error),
-        }));
+        logger.error('Failed to process teacher activity events', error, 'ANALYTICS');
 
         return NextResponse.json(
             { error: 'Internal server error' },

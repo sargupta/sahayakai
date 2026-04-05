@@ -13,20 +13,25 @@ export interface Certification {
 
 export const certificationService = {
     async getCertificationsByUser(userId: string): Promise<Certification[]> {
-        const result = await query(
-            'SELECT * FROM certifications WHERE user_id = $1 ORDER BY issue_date DESC',
-            [userId]
-        );
-        return result.rows.map(row => ({
-            id: row.id,
-            userId: row.user_id,
-            certName: row.cert_name,
-            issuingBody: row.issuing_body,
-            issueDate: row.issue_date,
-            expiryDate: row.expiry_date,
-            verificationUrl: row.verification_url,
-            status: row.status
-        }));
+        try {
+            const result = await query(
+                'SELECT * FROM certifications WHERE user_id = $1 ORDER BY issue_date DESC',
+                [userId]
+            );
+            return result.rows.map(row => ({
+                id: row.id,
+                userId: row.user_id,
+                certName: row.cert_name,
+                issuingBody: row.issuing_body,
+                issueDate: row.issue_date,
+                expiryDate: row.expiry_date,
+                verificationUrl: row.verification_url,
+                status: row.status
+            }));
+        } catch (error) {
+            console.warn('Failed to fetch certifications (likely missing DB config):', error);
+            return [];
+        }
     },
 
     async addCertification(cert: Omit<Certification, 'id' | 'status'>): Promise<string> {

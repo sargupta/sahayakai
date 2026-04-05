@@ -1,5 +1,16 @@
 import { PubSub } from '@google-cloud/pubsub';
 import 'server-only';
+import { logger } from '@/lib/logger';
+
+export const TOPICS = {
+    STORAGE_CLEANUP: 'sahayakai-storage-cleanup',
+} as const;
+
+export interface StorageCleanupMessage {
+    storagePath: string;
+    userId: string;
+    contentId: string;
+}
 
 let pubsub: PubSub | null = null;
 
@@ -21,10 +32,15 @@ export async function publishEvent(topicName: string, data: object) {
 
     try {
         const messageId = await ps.topic(topicName).publishMessage({ data: dataBuffer });
-        console.log(`Message ${messageId} published to ${topicName}.`);
+        logger.info(`Message ${messageId} published to ${topicName}`, 'PUBSUB', data as Record<string, unknown>);
         return messageId;
     } catch (error) {
-        console.error(`Error publishing to ${topicName}:`, error);
-        // Don't throw to avoid blocking the main flow unless critical
+        logger.error(`Failed to publish to ${topicName}`, error, 'PUBSUB', data as Record<string, unknown>);
+        // Don't throw — publishing is always a side-effect, never block the main flow
     }
+}
+
+/** Typed helper for the GCS storage cleanup topic. */
+export async function publishStorageCleanup(msg: StorageCleanupMessage): Promise<void> {
+    await publishEvent(TOPICS.STORAGE_CLEANUP, msg);
 }

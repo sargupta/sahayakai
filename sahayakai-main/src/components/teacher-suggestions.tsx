@@ -37,7 +37,6 @@ export function TeacherSuggestions() {
             setSuggestions(recs);
             setFollowingIds(following);
         } catch (error) {
-            console.error("Failed to load suggestions:", error);
         } finally {
             setLoading(false);
         }
@@ -57,7 +56,6 @@ export function TeacherSuggestions() {
         try {
             await followTeacherAction(userId, targetId);
         } catch (error) {
-            console.error("Follow action failed:", error);
             // Revert on error
             loadSuggestions(userId);
         }

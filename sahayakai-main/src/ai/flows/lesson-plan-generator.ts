@@ -1,6 +1,3 @@
-
-'use server';
-
 /**
  * @fileOverview Generates lesson plans based on user-provided topics using voice or text input.
  *
@@ -11,15 +8,16 @@
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleSearch } from '../tools/google-search';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { validateTopicSafety } from '@/lib/safety';
+import { logger } from '@/lib/logger';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
 
 import { GRADE_LEVELS, LANGUAGES, LANGUAGE_CODE_MAP } from '@/types/index';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -29,6 +27,7 @@ const LessonPlanInputSchema = z.object({
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
   userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
+  teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
   ncertChapter: z.object({
     title: z.string(),
@@ -92,7 +91,7 @@ export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
  * Audits materials list against activities to ensure consistency.
  * Returns merged materials list that includes items mentioned in activities.
  */
-async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
+async function auditMaterials(output: LessonPlanOutput, language?: string): Promise<string[]> {
   try {
     const activitiesText = output.activities
       .map(a => `${a.name}: ${a.description}`)
@@ -112,9 +111,9 @@ async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
   
   Task:
   1. Identify items/objects mentioned in activities that are NOT in the materials list.
-  2. Return ONLY a JSON array of missing items.
+  2. Return ONLY a JSON array of missing items written in ${language || 'English'}.
      Example: ["basket", "measuring tape"]
-     
+
   If no missing items, return: []
   
   Output ONLY the JSON array, no explanation.`,
@@ -138,7 +137,7 @@ async function auditMaterials(output: LessonPlanOutput): Promise<string[]> {
     return output.materials;
   } catch (error) {
     // If audit fails, return original materials
-    console.warn('Materials audit failed:', error);
+    logger.warn('Materials audit failed', 'AI', { error: String(error) });
     return output.materials;
   }
 }
@@ -173,19 +172,28 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
         localizedInput.language = profile.preferredLanguage;
       }
     }
+
+    // Fetch teacher context for AI personalisation
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
   }
 
   return lessonPlanFlow(localizedInput);
 }
 
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { generateLessonPlanCacheKey, getCachedLessonPlan, setCachedLessonPlan } from '@/lib/lesson-plan-cache';
 
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
-  tools: [googleSearch],
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+{{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
 
@@ -212,7 +220,7 @@ You MUST organize the activities into the 5E Instructional Model:
 - **subject**: (e.g., "Science")
 
 **Constraints:**
-- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **Language Lock**: You MUST ONLY respond in {{{language}}}. Every single field — title, objectives, activity names, descriptions, teacherTips, understandingCheck, assessment, homework, keyVocabulary — MUST be written in {{{language}}}. Do NOT fall back to English or any other language under any circumstances. If {{{language}}} is not English, writing in English is a critical failure.
 - **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
 - **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
 - **teacherTips**: For every activity, provide 1-2 sentences of "Behind the Lesson" advice (e.g., "If students struggle with X, try demonstrating Y").
@@ -284,14 +292,87 @@ const lessonPlanFlow = ai.defineFlow(
           }
         });
 
+        // 0. Cache Lookup (skip if image provided — unique per user)
+        const cacheKey = !normalizedInput.imageDataUri
+          ? generateLessonPlanCacheKey(normalizedInput)
+          : null;
+
+        if (cacheKey) {
+          const cached = await getCachedLessonPlan(cacheKey);
+          if (cached) {
+            const duration = Date.now() - startTime;
+            StructuredLogger.info('Serving lesson plan from cache', {
+              service: 'lesson-plan-flow',
+              operation: 'cacheHit',
+              requestId,
+              duration,
+              metadata: { cacheKey }
+            });
+
+            // Still persist to this user's personal library
+            const userId = input.userId;
+            if (userId) {
+              try {
+                const storage = await getStorageInstance();
+                const now = new Date();
+                const timestamp = format(now, 'yyyyMMdd_HHmmss');
+                const contentId = crypto.randomUUID();
+                const safeTitle = (cached.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
+                const fileName = `${timestamp}_${safeTitle}.json`;
+                const filePath = `users/${userId}/lesson-plans/${fileName}`;
+                const file = storage.bucket().file(filePath);
+                const downloadToken = crypto.randomUUID();
+                await file.save(JSON.stringify(cached), {
+                  resumable: false,
+                  metadata: { contentType: 'application/json', metadata: { firebaseStorageDownloadTokens: downloadToken } },
+                });
+                const { dbAdapter } = await import('@/lib/db/adapter');
+                const { Timestamp } = await import('firebase-admin/firestore');
+                await dbAdapter.saveContent(userId, {
+                  id: contentId,
+                  type: 'lesson-plan',
+                  title: cached.title || `Lesson Plan: ${input.topic}`,
+                  gradeLevel: input.gradeLevels?.[0] as any || 'Class 5',
+                  subject: cached.subject as any || 'Science',
+                  topic: input.topic,
+                  language: input.language as any || 'English',
+                  storagePath: filePath,
+                  isPublic: false,
+                  isDraft: false,
+                  createdAt: Timestamp.fromDate(now),
+                  updatedAt: Timestamp.fromDate(now),
+                  data: cached,
+                });
+              } catch (persistErr) {
+                StructuredLogger.warn('Cache hit: persistence failed (non-blocking)', {
+                  service: 'lesson-plan-flow',
+                  operation: 'persistCachedContent',
+                  requestId,
+                  metadata: { error: String(persistErr) }
+                });
+              }
+            }
+
+            return cached;
+          }
+        }
+
         // 1. AI Generation Phase
         const genTimer = logger.startTimer(`AI Lesson Plan Generation`, 'AI', { topic: normalizedInput.topic }); // Legacy logger
 
-        const { output } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
+        const { output, usage } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
           return await runResiliently(async (resilienceConfig) => {
-            return await lessonPlanPrompt(normalizedInput, resilienceConfig);
+            const result = await lessonPlanPrompt(normalizedInput, resilienceConfig);
+            return {
+              output: result.output,
+              usage: (result as any).usage
+            };
           });
         });
+
+        if (normalizedInput.userId && usage) {
+          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+        }
         genTimer.stop();
 
         if (!output) {
@@ -333,7 +414,7 @@ const lessonPlanFlow = ai.defineFlow(
 
         // BUG FIX #2: Audit materials consistency
         try {
-          const auditedMaterials = await auditMaterials(output);
+          const auditedMaterials = await auditMaterials(output, normalizedInput.language);
           if (auditedMaterials.length > output.materials.length) {
             StructuredLogger.info('Materials audit detected missing items', {
               service: 'lesson-plan-flow',
@@ -356,6 +437,11 @@ const lessonPlanFlow = ai.defineFlow(
           });
         }
 
+
+        // Cache the result for future identical requests
+        if (cacheKey) {
+          setCachedLessonPlan(cacheKey, output, normalizedInput);
+        }
 
         const userId = input.userId;
         if (userId) {

@@ -14,13 +14,11 @@ export async function GET() {
             environment: {
                 healthy: !!(
                     process.env.GOOGLE_GENAI_API_KEY &&
-                    process.env.FIREBASE_SERVICE_ACCOUNT_KEY &&
-                    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+                    process.env.FIREBASE_SERVICE_ACCOUNT_KEY
                 ),
                 missingVars: [
                     !process.env.GOOGLE_GENAI_API_KEY && 'GOOGLE_GENAI_API_KEY',
                     !process.env.FIREBASE_SERVICE_ACCOUNT_KEY && 'FIREBASE_SERVICE_ACCOUNT_KEY',
-                    !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && 'NEXT_PUBLIC_FIREBASE_PROJECT_ID'
                 ].filter(Boolean)
             }
         }

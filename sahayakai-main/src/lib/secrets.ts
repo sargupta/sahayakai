@@ -9,11 +9,22 @@ const secretCache: Record<string, string> = {};
  * Caches the result in memory to avoid redundant API calls.
  */
 export async function getSecret(secretName: string): Promise<string> {
-    // Return from cache if available
+    // 1. Return from cache if available
     if (secretCache[secretName]) {
         return secretCache[secretName];
     }
 
+    // 2. CHECK LOCAL ENV FIRST - Avoids crashing in v25+ on missing ADC
+    const envValue = process.env[secretName]?.trim();
+    const isPlaceholder = (val: string | undefined) => !val || val.startsWith('secrets/');
+
+    if (!isPlaceholder(envValue)) {
+        console.log(`[Secrets] Using local environment value for ${secretName}`);
+        secretCache[secretName] = envValue!;
+        return envValue!;
+    }
+
+    // 3. Attempt Secret Manager only if no local key exists
     try {
         if (!secretManager) {
             secretManager = new SecretManagerServiceClient();
@@ -34,15 +45,7 @@ export async function getSecret(secretName: string): Promise<string> {
         secretCache[secretName] = payload;
         return payload;
     } catch (error: any) {
-        console.error(`[Secrets] Failed to fetch ${secretName}:`, error.message);
-
-        // Fallback to environment variable if available and NOT a placeholder
-        const envValue = process.env[secretName]?.trim();
-        if (envValue && !envValue.startsWith('secrets/')) {
-            console.warn(`[Secrets] Falling back to process.env.${secretName}`);
-            secretCache[secretName] = envValue;
-            return envValue;
-        }
+        console.error(`[Secrets] Failed to fetch ${secretName} from Cloud:`, error.message);
 
         const helpMsg = `Secret ${secretName} not found in Secret Manager and no valid local fallback exists. 
 If running locally, please run 'gcloud auth application-default login' or provide the key in .env.local (WITHOUT the 'secrets/' prefix).`;

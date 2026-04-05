@@ -11,7 +11,6 @@ jest.mock('next/navigation', () => ({
 
 // Mock `lucide-react` globally for this test file
 jest.mock("lucide-react", () => ({
-    // ...jest.requireActual("lucide-react"), // Don't require actual, it causes issues
     Loader2: (props: any) => <div {...props} data-testid="loader2" />,
     Mic: (props: any) => <div {...props} data-testid="mic" />,
     Search: (props: any) => <div {...props} data-testid="search" />,
@@ -22,6 +21,36 @@ jest.mock("lucide-react", () => ({
     GraduationCap: (props: any) => <div {...props} data-testid="graduation-cap" />,
     ArrowRight: (props: any) => <div {...props} data-testid="arrow-right" />,
     X: (props: any) => <div {...props} data-testid="x" />,
+    Lightbulb: (props: any) => <div {...props} data-testid="lightbulb" />,
+    FileText: (props: any) => <div {...props} data-testid="file-text" />,
+    ClipboardList: (props: any) => <div {...props} data-testid="clipboard-list" />,
+    Image: (props: any) => <div {...props} data-testid="image" />,
+    CheckCircle2: (props: any) => <div {...props} data-testid="check-circle" />,
+    Clock: (props: any) => <div {...props} data-testid="clock" />,
+    Users: (props: any) => <div {...props} data-testid="users" />,
+}));
+
+// Mock new landing page components
+jest.mock("@/components/landing/sample-output-section", () => ({
+    SampleOutputSection: () => <div data-testid="sample-output">SampleOutput</div>,
+}));
+
+jest.mock("@/components/landing/demo-interaction", () => ({
+    DemoInteraction: () => <div data-testid="demo-interaction">DemoInteraction</div>,
+}));
+
+jest.mock("@/hooks/use-community-intro", () => ({
+    useCommunityIntro: () => ({
+        showNudge: false,
+        introState: 'visited',
+        dismissNudge: jest.fn(),
+        markVisited: jest.fn(),
+        trackGeneration: jest.fn(),
+    }),
+}));
+
+jest.mock("@/components/community/community-nudge-banner", () => ({
+    CommunityNudgeBanner: () => <div data-testid="nudge-banner">NudgeBanner</div>,
 }));
 
 // Mock Firebase to prevent initialization errors
@@ -109,7 +138,7 @@ describe('Home Page', () => {
         // Use getAllByText for "Teacher" since it appears in greeting and cards
         const teacherElements = screen.getAllByText(/Teacher/i);
         expect(teacherElements.length).toBeGreaterThan(0);
-        expect(screen.getByText(/Sahayak, your personal AI companion/i)).toBeInTheDocument();
+        expect(screen.getByText(/SahayakAI, your personal AI companion/i)).toBeInTheDocument();
     });
 
     it('renders quick action cards', () => {

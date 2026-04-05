@@ -121,11 +121,11 @@ export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange,
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (value && isFocused) {
       const languageSuggestions = allSuggestions[selectedLanguage] || allSuggestions.en;
-      const filtered = languageSuggestions.filter(s => 
+      const filtered = languageSuggestions.filter(s =>
         s.toLowerCase().includes(value.toLowerCase())
       );
       setSuggestions(filtered);
@@ -163,12 +163,12 @@ export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange,
         {...props}
       />
       {suggestions.length > 0 && isFocused && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-soft">
           <ul className="py-1">
             {suggestions.map((suggestion, index) => (
               <li
                 key={index}
-                className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 text-sm cursor-pointer hover:bg-muted/50 text-foreground"
                 onMouseDown={(e) => {
                     e.preventDefault();
                     handleSuggestionClick(suggestion)

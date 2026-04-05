@@ -26,7 +26,7 @@ class ResourceDetailScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.description, size: 64, color: AppColors.primary.withOpacity(0.8)),
+                  Icon(Icons.description, size: 64, color: AppColors.primary.withValues(alpha: 0.8)),
                   const SizedBox(height: 16),
                   Text(
                     resource['title'] ?? "Untitled Resource",

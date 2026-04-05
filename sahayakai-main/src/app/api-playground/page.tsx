@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Wrench, CheckCircle, Search, Rocket, Hourglass, FileText, Download, XCircle, BookOpen } from 'lucide-react';
 
 export default function APIPlayground() {
     const [selectedSpec, setSelectedSpec] = useState('analytics');
@@ -86,19 +87,19 @@ export default function APIPlayground() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white p-8">
+        <div className="min-h-screen bg-background p-8">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-t-4 border-orange-500">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        🔧 SahayakAI API Playground
+                <div className="bg-card rounded-xl shadow-soft border border-border p-6 mb-6 border-t-4 border-t-primary">
+                    <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground mb-2 flex items-center gap-2">
+                        <Wrench className="h-7 w-7" /> SahayakAI API Playground
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Interactive API testing for all 22 SahayakAI endpoints
                     </p>
                     <div className="mt-4 flex gap-2">
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                            ✅ 14 Specs Available
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center gap-1">
+                            <CheckCircle className="h-4 w-4" /> 14 Specs Available
                         </span>
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                             22 Endpoints
@@ -109,7 +110,7 @@ export default function APIPlayground() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left: Spec Selector */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg shadow-lg p-6">
+                        <div className="bg-card rounded-xl shadow-soft border border-border p-6">
                             <h2 className="text-xl font-bold mb-4">Select API</h2>
                             <div className="space-y-2">
                                 {Object.entries(specs).map(([key, spec]) => (
@@ -117,8 +118,8 @@ export default function APIPlayground() {
                                         key={key}
                                         onClick={() => setSelectedSpec(key)}
                                         className={`w-full text-left px-4 py-3 rounded-lg transition ${selectedSpec === key
-                                                ? 'bg-orange-500 text-white font-medium'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-primary text-primary-foreground font-medium border border-primary'
+                                                : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                             }`}
                                     >
                                         {spec.name}
@@ -128,7 +129,7 @@ export default function APIPlayground() {
                         </div>
 
                         {/* Quick Actions */}
-                        <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+                        <div className="bg-card rounded-xl shadow-soft border border-border p-6 mt-6">
                             <h2 className="text-xl font-bold mb-4">Quick Tests</h2>
                             <div className="space-y-3">
                                 <button
@@ -136,7 +137,7 @@ export default function APIPlayground() {
                                     disabled={loading}
                                     className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
                                 >
-                                    🔍 Check System Health
+                                    <Search className="h-4 w-4 inline-block mr-1" /> Check System Health
                                 </button>
                             </div>
                         </div>
@@ -144,7 +145,7 @@ export default function APIPlayground() {
 
                     {/* Right: Test Interface */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow-lg p-6">
+                        <div className="bg-card rounded-xl shadow-soft border border-border p-6">
                             <h2 className="text-xl font-bold mb-4">
                                 {specs[selectedSpec as keyof typeof specs].name}
                             </h2>
@@ -161,9 +162,9 @@ export default function APIPlayground() {
                                             value={userId}
                                             onChange={(e) => setUserId(e.target.value)}
                                             placeholder="nYqFxBohXrSaL3EBF1f3M2x0pLf2"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-muted-foreground mt-1">
                                             Get UID from Firebase Console (users collection) or use script: npm run teacher:lookup email@example.com
                                         </p>
                                     </div>
@@ -171,9 +172,9 @@ export default function APIPlayground() {
                                     <button
                                         onClick={testTeacherHealth}
                                         disabled={loading}
-                                        className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition disabled:opacity-50"
+                                        className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50"
                                     >
-                                        {loading ? '⏳ Testing...' : '🚀 GET /api/analytics/teacher-health/{userId}'}
+                                        {loading ? <><Hourglass className="h-4 w-4 inline-block mr-1" /> Testing...</> : <><Rocket className="h-4 w-4 inline-block mr-1" /> GET /api/analytics/teacher-health/{'{userId}'}</>}
                                     </button>
 
                                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -207,16 +208,16 @@ export default function APIPlayground() {
                                             value={userId}
                                             onChange={(e) => setUserId(e.target.value)}
                                             placeholder="nYqFxBohXrSaL3EBF1f3M2x0pLf2"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                                         />
                                     </div>
 
                                     <button
                                         onClick={testProfileCheck}
                                         disabled={loading}
-                                        className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition disabled:opacity-50"
+                                        className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50"
                                     >
-                                        {loading ? '⏳ Testing...' : '🚀 GET /api/auth/profile-check'}
+                                        {loading ? <><Hourglass className="h-4 w-4 inline-block mr-1" /> Testing...</> : <><Rocket className="h-4 w-4 inline-block mr-1" /> GET /api/auth/profile-check</>}
                                     </button>
                                 </div>
                             )}
@@ -227,9 +228,9 @@ export default function APIPlayground() {
                                     <button
                                         onClick={testSystemHealth}
                                         disabled={loading}
-                                        className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition disabled:opacity-50"
+                                        className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50"
                                     >
-                                        {loading ? '⏳ Testing...' : '🚀 GET /api/health'}
+                                        {loading ? <><Hourglass className="h-4 w-4 inline-block mr-1" /> Testing...</> : <><Rocket className="h-4 w-4 inline-block mr-1" /> GET /api/health</>}
                                     </button>
                                 </div>
                             )}
@@ -237,8 +238,8 @@ export default function APIPlayground() {
                             {/* Default (View Spec) */}
                             {!['analytics', 'auth-user', 'system'].includes(selectedSpec) && (
                                 <div className="p-6 bg-yellow-50 rounded-lg border border-yellow-200">
-                                    <p className="text-yellow-900 font-medium mb-2">
-                                        📄 OpenAPI Spec Available
+                                    <p className="text-yellow-900 font-medium mb-2 flex items-center gap-1">
+                                        <FileText className="h-4 w-4" /> OpenAPI Spec Available
                                     </p>
                                     <p className="text-sm text-yellow-800 mb-4">
                                         This API has a complete OpenAPI specification. Interactive testing for this endpoint coming soon!
@@ -249,7 +250,7 @@ export default function APIPlayground() {
                                         rel="noopener noreferrer"
                                         className="inline-block px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
                                     >
-                                        📥 Download Spec
+                                        <Download className="h-4 w-4 inline-block mr-1" /> Download Spec
                                     </a>
                                 </div>
                             )}
@@ -257,7 +258,7 @@ export default function APIPlayground() {
                             {/* Response Display */}
                             {error && (
                                 <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
-                                    <p className="text-red-900 font-medium">❌ Error</p>
+                                    <p className="text-red-900 font-medium flex items-center gap-1"><XCircle className="h-4 w-4" /> Error</p>
                                     <p className="text-sm text-red-800 mt-1">{error}</p>
                                 </div>
                             )}
@@ -283,21 +284,21 @@ export default function APIPlayground() {
                         </div>
 
                         {/* Documentation Link */}
-                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg p-6 mt-6 text-white">
-                            <h3 className="text-lg font-bold mb-2">📚 Full API Documentation</h3>
-                            <p className="text-orange-50 mb-4">
+                        <div className="bg-primary rounded-xl shadow-soft p-6 mt-6 text-primary-foreground">
+                            <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><BookOpen className="h-5 w-5" /> Full API Documentation</h3>
+                            <p className="text-primary-foreground/80 mb-4">
                                 View complete OpenAPI 3.0 specifications for all 22 endpoints
                             </p>
                             <div className="flex gap-3">
                                 <a
                                     href="/docs/TEACHER_LOOKUP.md"
-                                    className="px-4 py-2 bg-white text-orange-600 rounded-lg font-medium hover:bg-orange-50 transition"
+                                    className="px-4 py-2 bg-background text-primary rounded-lg font-medium hover:bg-background/90 transition"
                                 >
                                     Teacher Lookup Guide
                                 </a>
                                 <a
                                     href="/docs/MONITORING.md"
-                                    className="px-4 py-2 bg-white text-orange-600 rounded-lg font-medium hover:bg-orange-50 transition"
+                                    className="px-4 py-2 bg-background text-primary rounded-lg font-medium hover:bg-background/90 transition"
                                 >
                                     Monitoring Guide
                                 </a>

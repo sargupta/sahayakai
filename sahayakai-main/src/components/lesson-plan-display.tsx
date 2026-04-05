@@ -8,13 +8,12 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen } from 'lucide-react';
+import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen, Lock } from 'lucide-react';
 import { submitFeedback } from '@/app/actions/feedback';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
@@ -23,9 +22,13 @@ import { Edit, X, Save as SaveIcon } from 'lucide-react'; // Removing ThumbsUp/D
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
 // Simple markdown to HTML converter for basic formatting
+// Escapes HTML entities first to prevent XSS from AI-generated content
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const renderMarkdown = (text: string | null | undefined) => {
   if (!text) return '';
-  return text
+  return escapeHtml(text)
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>') // bold+italic
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // bold
     .replace(/\*(.+?)\*/g, '<em>$1</em>') // italic
@@ -203,6 +206,7 @@ const displayTranslations: Record<string, any> = {
 
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en' }) => {
   const { toast } = useToast();
+  const { canExport } = useSubscription();
   const t = displayTranslations[selectedLanguage] || displayTranslations.en;
   const [editablePlan, setEditablePlan] = useState(lessonPlan);
   const [isEditing, setIsEditing] = useState(false);
@@ -242,6 +246,11 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
   const handleDownload = async () => {
     const element = document.getElementById('lesson-plan-pdf');
     if (!element) return;
+
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas'),
+    ]);
 
     const actionButtons = element.querySelector('.no-print');
     if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
@@ -309,7 +318,7 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
         gradeLevel: lessonPlan.gradeLevel || 'Class 5',
         subject: lessonPlan.subject || 'General',
         topic: lessonPlan.title || 'Lesson', // Fallback for topic
-        language: 'English', // Defaulting for now, ideally input should provide this
+        language: selectedLanguage || 'en',
         isPublic: false,
         isDraft: false,
         data: lessonPlan
@@ -402,7 +411,7 @@ ${editablePlan.assessment}
   }
 
   return (
-    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
+    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
       <CardHeader className="space-y-4">
         <div className="flex flex-row items-start justify-between">
           <div className="space-y-2 flex-1">
@@ -453,16 +462,16 @@ ${editablePlan.assessment}
                   <Edit className="mr-2 h-4 w-4" />
                   {t.buttons.edit}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleCopy}>
-                  <Copy className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={canExport ? handleCopy : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to copy and export lesson plans.' })}>
+                  {canExport ? <Copy className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
                   {t.buttons.copy}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleSave}>
                   <Save className="mr-2 h-4 w-4" />
                   {t.buttons.save}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={canExport ? handleDownload : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to download PDF.' })}>
+                  {canExport ? <Download className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
                   {t.buttons.pdf}
                 </Button>
               </>

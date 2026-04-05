@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Provides instant answers to user questions using a knowledge base augmented by Google Search.
  *
@@ -14,6 +12,7 @@ import { googleSearch } from '@/ai/tools/google-search';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { LANGUAGE_CODE_MAP } from '@/types/index';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 
 import { validateTopicSafety } from '@/lib/safety';
@@ -90,14 +89,14 @@ export async function instantAnswer(input: InstantAnswerInput): Promise<InstantA
   return instantAnswerFlow(localizedInput);
 }
 
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
   input: { schema: InstantAnswerInputSchema },
   output: { schema: InstantAnswerOutputSchema },
   tools: [googleSearch],
-  prompt: `${SAHAYAK_SOUL_PROMPT}
+  prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 
 You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
 
@@ -111,9 +110,10 @@ You are an expert educator and knowledge base. Your goal is to answer questions 
 7.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
 
 **Constraints:**
-- **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **Language Lock**: You MUST ONLY respond in {{{language}}}. The entire answer MUST be written in {{{language}}}. Do NOT fall back to English or any other language. If {{{language}}} is not English, writing in English is a critical failure.
 - **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
 - **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
+- **Schema Compliance (CRITICAL)**: You MUST always return your response in the \`answer\` field. Even when declining a request (e.g., off-topic, inappropriate), put your polite refusal in the \`answer\` field. NEVER use field names like \`response\`, \`message\`, or \`text\` — only \`answer\`.
 
 **User's Question:**
 - **Question:** {{{question}}}
@@ -153,9 +153,42 @@ const instantAnswerFlow = ai.defineFlow(
         }
       });
 
-      const { output } = await runResiliently(async (resilienceConfig) => {
-        return await instantAnswerPrompt(normalizedInput, resilienceConfig);
-      });
+      let output: InstantAnswerOutput | null = null;
+
+      try {
+        const result = await runResiliently(async (resilienceConfig) => {
+          return await instantAnswerPrompt(normalizedInput, resilienceConfig);
+        });
+        output = result.output;
+
+        // Track usage if available
+        if (normalizedInput.userId) {
+          const usage = (result as any).usage;
+          if (usage) {
+            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+          }
+          // Since this prompt has googleSearch tool, we count it as a grounding call
+          UsageTracker.trackGrounding(normalizedInput.userId, normalizedInput.question);
+        }
+      } catch (genkitError: any) {
+        // Genkit throws INVALID_ARGUMENT when the model returns a wrong field name
+        // (e.g. "response" instead of "answer"). Recover by surfacing a graceful message.
+        if (genkitError?.status === 'INVALID_ARGUMENT' || genkitError?.message?.includes('Schema validation failed')) {
+          StructuredLogger.warn?.('Schema mismatch from model — recovering gracefully', {
+            service: 'instant-answer-flow',
+            operation: 'generateAnswer',
+            requestId,
+            metadata: { rawError: genkitError?.message },
+          });
+          return {
+            answer: "I'm sorry, I can only help with educational questions. Please ask me something related to your teaching.",
+            videoSuggestionUrl: null,
+            gradeLevel: normalizedInput.gradeLevel ?? null,
+            subject: normalizedInput.subject ?? null,
+          };
+        }
+        throw genkitError;
+      }
 
       if (!output) {
         throw new FlowExecutionError(
@@ -167,8 +200,7 @@ const instantAnswerFlow = ai.defineFlow(
         );
       }
 
-      // Validate schema explicitly (Genkit might do this, but we double check or catch Genkit's error)
-      // Note: Genkit validation happens before this if strict mode, but here we handle the result.
+      // Validate schema explicitly as a final safety net
       try {
         InstantAnswerOutputSchema.parse(output);
       } catch (validationError: any) {

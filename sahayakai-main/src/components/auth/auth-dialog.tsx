@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Sparkles, ShieldCheck, Zap } from "lucide-react";
+import { LogIn, Sparkles, ShieldCheck, Zap } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export function AuthDialog() {
@@ -29,14 +29,29 @@ export function AuthDialog() {
         });
 
         try {
-            await signInWithPopup(auth, provider);
-            toast({
-                title: "Welcome to SahayakAI!",
-                description: "You can now access all AI features.",
-            });
-            closeAuthModal();
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Profile check — redirect new users to onboarding
+            // Mirrors the same logic in AuthButton
+            try {
+                const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists === false) {
+                        toast({
+                            title: "Almost there!",
+                            description: "Complete your professional profile to get started.",
+                        });
+                        closeAuthModal();
+                        window.location.href = '/onboarding';
+                        return;
+                    }
+                }
+            } catch {
+                // API error — don't block login
+            }
         } catch (error: any) {
-            console.error("Auth Error:", error);
             toast({
                 title: "Sign-in Failed",
                 description: error.message,
@@ -47,7 +62,7 @@ export function AuthDialog() {
 
     return (
         <Dialog open={isAuthModalOpen} onOpenChange={closeAuthModal}>
-            <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-md">
+            <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-background/95 backdrop-blur-md">
                 <div className="relative overflow-hidden pt-8 pb-6 px-6">
                     {/* Decorative Background Elements */}
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
@@ -58,17 +73,17 @@ export function AuthDialog() {
                             <Logo />
                         </div>
                         <DialogTitle className="text-2xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
-                            Unlock Your AI Assistant
+                            Your AI Teaching Assistant
                         </DialogTitle>
                         <DialogDescription className="text-base text-muted-foreground max-w-[300px]">
-                            Join thousands of educators using SahayakAI to save time and transform their classrooms.
+                            Built for teachers across Bharat. Sign in to save your work and access all tools.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="relative z-10 mt-8 space-y-4">
                         <div className="grid gap-3">
                             <FeatureItem
-                                icon={<Zap className="h-5 w-5 text-orange-500" />}
+                                icon={<Zap className="h-5 w-5 text-primary" />}
                                 title="Fast AI Generation"
                                 description="Lessons, quizzes, and worksheets in seconds."
                             />
@@ -89,7 +104,7 @@ export function AuthDialog() {
                                 onClick={handleSignIn}
                                 className="w-full h-12 text-lg font-bold gap-3 shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]"
                             >
-                                <Mail className="h-5 w-5" />
+                                <LogIn className="h-5 w-5" />
                                 Sign in with Google
                             </Button>
                             <p className="text-center text-xs text-muted-foreground mt-4">
@@ -105,7 +120,7 @@ export function AuthDialog() {
 
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
     return (
-        <div className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+        <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
             <div className="flex-shrink-0 mt-0.5">
                 {icon}
             </div>

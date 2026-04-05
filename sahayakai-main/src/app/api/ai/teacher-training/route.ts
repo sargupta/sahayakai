@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTeacherTrainingAdvice } from '@/ai/flows/teacher-training';
+import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -34,7 +36,8 @@ import { getTeacherTrainingAdvice } from '@/ai/flows/teacher-training';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let questionText = 'Unknown Question';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -42,6 +45,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        questionText = body.question || 'Unknown Question';
 
         const output = await getTeacherTrainingAdvice({
             ...body,
@@ -51,7 +55,7 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Teacher Training API Error:', error);
+        logger.error(`Teacher Training API Failed for question: "${questionText}"`, error, 'TEACHER_TRAINING', { userId: request.headers.get('x-user-id') });
 
         const errorMessage = error instanceof Error ? error.message : String(error);
         const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
@@ -63,10 +67,11 @@ export async function POST(request: Request) {
         return NextResponse.json(
             {
                 error: userFriendlyError,
-                details: errorMessage,
                 code: (error as any).code || 'INTERNAL_ERROR'
             },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('teacher-training')(_handler);

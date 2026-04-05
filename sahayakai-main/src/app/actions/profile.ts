@@ -4,6 +4,9 @@ import { dbAdapter } from "@/lib/db/adapter";
 import { certificationService } from "@/lib/services/certification-service";
 import { getAuthInstance } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
+import { validateAdmin } from "@/lib/auth-utils";
+import { headers } from "next/headers";
 
 export async function getProfileData(userId: string) {
     try {
@@ -14,7 +17,7 @@ export async function getProfileData(userId: string) {
 
         return dbAdapter.serialize({ profile, certifications });
     } catch (error) {
-        console.error("Failed to fetch profile data:", error);
+        logger.error("Failed to fetch profile data", error, 'PROFILE', { userId });
         return { profile: null, certifications: [] };
     }
 }
@@ -44,4 +47,16 @@ export async function updateProfileAction(userId: string, data: any) {
     await dbAdapter.updateUser(userId, data);
 
     revalidatePath("/my-profile");
+}
+
+export async function getDailyCostsAction(days: number = 7) {
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+
+    if (!userId) throw new Error("Unauthorized");
+    await validateAdmin(userId);
+
+    const { costService } = await import("@/lib/services/cost-service");
+    const data = await costService.getDailyCosts(days);
+    return data;
 }

@@ -21,6 +21,14 @@ subprojects {
 
 subprojects {
     pluginManager.withPlugin("com.android.library") {
+        configure<com.android.build.gradle.LibraryExtension> {
+            compileSdk = 36
+        }
+    }
+}
+
+subprojects {
+    pluginManager.withPlugin("com.android.library") {
         val android = extensions.findByName("android")
         if (android != null) {
             try {

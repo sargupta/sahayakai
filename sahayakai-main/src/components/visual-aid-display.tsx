@@ -8,8 +8,7 @@ import { Button } from './ui/button';
 import { Save, Download, Images } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type VisualAidDisplayProps = {
     visualAid: VisualAidOutput;
@@ -23,6 +22,12 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
 
     const handleSave = async () => {
         try {
+            // If the generation flow already persisted this visual aid, nothing to do.
+            if (visualAid.storagePath) {
+                toast({ title: "Already in Library", description: "This visual aid was saved automatically when generated." });
+                return;
+            }
+
             const { auth } = await import('@/lib/firebase');
             let user = auth.currentUser;
             if (!user) {
@@ -61,7 +66,6 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
                 description: "Saved to your personal library.",
             });
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 variant: "destructive",
@@ -73,6 +77,11 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
     const handleDownloadPDF = async () => {
         const element = document.getElementById('visual-aid-card');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+            import('jspdf'),
+            import('html2canvas'),
+        ]);
 
         const actionButtons = element.querySelector('.no-print');
         if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
@@ -93,7 +102,6 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
 
             toast({ title: "PDF Downloaded", description: "Your file is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             if (actionButtons) (actionButtons as HTMLElement).style.display = '';
@@ -122,13 +130,20 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
             </CardHeader>
             <CardContent className="flex flex-col items-center p-6 space-y-6">
                 <div className="w-full relative aspect-square max-w-[512px] border border-black/10 rounded-lg overflow-hidden bg-black/5">
-                    <Image
-                        src={visualAid.imageDataUri}
-                        alt={title || "Generated visual aid"}
-                        fill
-                        className="object-contain"
-                        unoptimized // Allow data URIs
-                    />
+                    {visualAid.imageDataUri ? (
+                        <Image
+                            src={visualAid.imageDataUri}
+                            alt={title || "Generated visual aid"}
+                            fill
+                            className="object-contain"
+                            unoptimized
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
+                            <Images className="h-10 w-10" />
+                            <p className="text-sm text-center px-4">Image not stored. Edit the prompt and click Generate to recreate.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="w-full space-y-4 text-left">
@@ -142,6 +157,13 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
                     </div>
                 </div>
             </CardContent>
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <FeedbackDialog
+                page="visual-aid"
+                feature="visual-aid-result"
+                context={{ title }}
+              />
+            </div>
         </Card>
     );
 };

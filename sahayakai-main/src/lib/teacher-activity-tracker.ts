@@ -192,16 +192,34 @@ class TeacherActivityTracker {
     /**
      * Log structured event to Cloud Logging
      */
-    private logEvent(eventType: string, data: Record<string, any>) {
-        // Send to metrics endpoint
+    private async logEvent(eventType: string, data: Record<string, any>) {
+        // Send to teacher-activity endpoint in the expected EventBatch format
+        const event = {
+            event_type: eventType,
+            timestamp: Date.now(),
+            user_id: data.user_id,
+            session_id: data.session_id,
+            success: data.success,
+            feature: data.feature,
+            content_type: data.content_type,
+            severity: data.severity,
+            ...data,
+        };
+
+        // When offline, buffer in IndexedDB telemetry store.
+        // The existing syncTelemetryEvents() in use-lesson-plan.ts drains this store
+        // and POSTs to /api/teacher-activity when the teacher comes back online.
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            import('@/lib/indexed-db')
+                .then(({ logEvent: idbLog }) => idbLog(event))
+                .catch(console.warn);
+            return;
+        }
+
         fetch('/api/teacher-activity', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event_type: eventType,
-                timestamp: Date.now(),
-                data,
-            }),
+            body: JSON.stringify({ events: [event] }),
             keepalive: true,
         }).catch(err => {
             console.error('[Teacher Activity] Failed to log event:', err);
@@ -412,5 +430,7 @@ export const trackTeacherContent = (contentType: string, metadata?: any) =>
 export const trackTeacherChallenge = (challengeType: string, details?: any) =>
     getTeacherActivityTracker().trackChallenge(challengeType, details);
 
-export const endTeacherSession = () =>
-    getTeacherActivityTracker().endSession();
+export const endTeacherSession = () => {
+    tracker?.endSession();
+    tracker = null; // destroy singleton so next login gets a clean instance
+};

@@ -72,7 +72,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: GlassColors.primary.withOpacity(0.1),
+                color: GlassColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -148,7 +148,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: GlassColors.primary.withOpacity(0.1),
+                color: GlassColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -180,7 +180,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 border: isUser ? null : Border.all(color: GlassColors.cardBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -239,7 +239,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: GlassColors.primary.withOpacity(0.1),
+                color: GlassColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -312,7 +312,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: GlassColors.primary.withOpacity(0.3),
+                    color: GlassColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

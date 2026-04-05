@@ -1,7 +1,6 @@
 
 "use client";
 
-import { generateQuiz } from "@/ai/flows/quiz-generator";
 import type { QuizVariantsOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +21,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { ImageUploader } from "@/components/image-uploader";
 import { SubjectSelector } from "@/components/subject-selector";
 import { QuizDisplay } from "@/components/quiz-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Input } from "@/components/ui/input";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
@@ -33,9 +33,15 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 
 const questionTypesData = [
   { id: 'multiple_choice', icon: BarChart2 },
+  { id: 'true_false', icon: CheckSquare },
   { id: 'fill_in_the_blanks', icon: Pencil },
   { id: 'short_answer', icon: MessageSquare },
 ] as const;
@@ -53,7 +59,7 @@ const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
   imageDataUri: z.string().optional(),
   numQuestions: z.coerce.number().min(1).max(20).default(5),
-  questionTypes: z.array(z.enum(["multiple_choice", "fill_in_the_blanks", "short_answer"])).min(1, {
+  questionTypes: z.array(z.enum(["multiple_choice", "fill_in_the_blanks", "short_answer", "true_false"])).min(1, {
     message: "You have to select at least one question type.",
   }),
   bloomsTaxonomyLevels: z.array(z.string()).optional(),
@@ -74,7 +80,7 @@ const translations: Record<string, Record<string, any>> = {
     numQuestionsLabel: "Number of Questions",
     questionTypesLabel: "Question Types",
     bloomsLabel: "Bloom's Taxonomy Levels",
-    gradeLevelLabel: "Grade Level",
+    gradeLevelLabel: "Class",
     subjectLabel: "Subject",
     languageLabel: "Language",
     submitButton: "Generate Quiz",
@@ -481,22 +487,50 @@ function QuizGeneratorContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [quiz, setQuiz] = useState<QuizVariantsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { limitState, checkResponse, clearLimit } = useLimitGuard();
   const { toast } = useToast();
   const searchParams = useSearchParams();
-
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
       language: "en",
-      gradeLevel: undefined, // Changed from "5th Grade" to avoid confusion
+      gradeLevel: undefined,
       numQuestions: 5,
       questionTypes: ["multiple_choice", "short_answer"],
       bloomsTaxonomyLevels: ['Remember', 'Understand'],
       subject: "General",
     },
   });
+
+  // ── VIDYA Form Sync: live awareness + persisted snapshot ─────────────────
+  const watchedTopic = form.watch("topic");
+  const watchedGrade = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang = form.watch("language");
+  const watchedNum = form.watch("numQuestions");
+  const savedSnapshot = useVidyaFormSync("quiz-generator", {
+    topic: watchedTopic,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
+    numQuestions: watchedNum,
+  });
+
+  // Restore snapshot on mount if no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const topicParam = searchParams.get("topic");
+    const id = searchParams.get("id");
+    if (topicParam || id || !savedSnapshot) return;
+    if (savedSnapshot.topic) form.setValue("topic", savedSnapshot.topic);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject) form.setValue("subject", savedSnapshot.subject);
+    if (savedSnapshot.language) form.setValue("language", savedSnapshot.language);
+    if (savedSnapshot.numQuestions) form.setValue("numQuestions", Number(savedSnapshot.numQuestions));
+  }, []); // empty array: runs once on mount only
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -520,12 +554,21 @@ function QuizGeneratorContent() {
               if (Array.isArray(loadedData.questions)) {
                 setQuiz({
                   easy: null,
-                  medium: loadedData, // Treat old quizzes as medium by default
-                  hard: null
+                  medium: loadedData,
+                  hard: null,
+                  id: id,
+                  isSaved: true,
+                  gradeLevel: content.gradeLevel,
+                  subject: content.subject,
+                  topic: content.topic || content.title
                 });
               } else {
                 // New style (easy, medium, hard)
-                setQuiz(loadedData);
+                setQuiz({
+                  ...loadedData,
+                  id: id,
+                  isSaved: true
+                });
               }
 
               // Set form values to match saved content (prioritize medium, then any available)
@@ -556,11 +599,18 @@ function QuizGeneratorContent() {
       };
       fetchSavedContent();
     } else if (topicParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
       form.setValue("topic", topicParam);
-      // We need to wait a tick for the form value to be registered before submitting
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ────────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
-      }, 0);
+      }, 300);
     }
   }, [searchParams, form, toast]);
 
@@ -584,7 +634,11 @@ function QuizGeneratorContent() {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ ...values, language: selectedLanguage })
+        body: JSON.stringify({
+          ...values,
+          language: values.language || selectedLanguage,
+          useRuralContext: true
+        })
       });
 
       if (!res.ok) {
@@ -593,11 +647,17 @@ function QuizGeneratorContent() {
           throw new Error("Please sign in to generate quizzes");
         }
         const errorData = await res.json();
+        if (checkResponse(res.status, errorData)) {
+          setIsLoading(false);
+          return;
+        }
         throw new Error(errorData.error || "Failed to generate quiz");
       }
 
+      clearLimit();
       const result = await res.json();
       setQuiz(result);
+      clearFormSnapshot("quiz-generator");
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
@@ -615,8 +675,11 @@ function QuizGeneratorContent() {
     form.trigger("topic");
   };
 
-  const handleTranscript = (transcript: string) => {
+  const handleTranscript = (transcript: string, language?: string) => {
     form.setValue("topic", transcript);
+    if (language) {
+      form.setValue("language", language);
+    }
     form.trigger("topic");
     // Auto-submit after voice transcript to improve UX
     setTimeout(() => {
@@ -624,29 +687,16 @@ function QuizGeneratorContent() {
     }, 100);
   };
 
-  // Integration test support: auto-submit if topic changes to a "complete" prompt
-  // and we're in a test environment. This satisfies the existing test suite's 
-  // expectation of auto-submission on topic completion.
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'test') {
-      const topic = form.watch("topic");
-      if (topic && topic.length > 20 && !isLoading && !quiz) {
-        const timer = setTimeout(() => {
-          form.handleSubmit(onSubmit)();
-        }, 100);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [form.watch("topic"), isLoading, quiz, form]);
+
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <CardHeader className="text-center pt-0">
             <div className="flex justify-center items-center mb-4">
               <div className="p-3 rounded-full bg-primary/10 text-primary">
@@ -654,9 +704,18 @@ function QuizGeneratorContent() {
               </div>
             </div>
 
-            <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+            <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
             <CardDescription>{t.pageDescription}</CardDescription>
+            <UsageRemainingBadge feature="quiz" />
           </CardHeader>
+
+          {(limitState.limitReached || limitState.upgradeRequired) && (
+            <UpgradePrompt
+              feature="quiz"
+              used={limitState.used ?? 0}
+              limit={limitState.limit ?? 0}
+            />
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -671,16 +730,10 @@ function QuizGeneratorContent() {
                       <FormItem>
                         <FormControl>
                           <div className="flex flex-col gap-4">
-                            <MicrophoneInput
-                              onTranscriptChange={handleTranscript}
-                              iconSize="lg"
-                              label={t.topicLabel + " (Speak)"}
-                              className="bg-white/50 backdrop-blur-sm"
-                            />
                             <Textarea
                               placeholder={t.topicPlaceholder}
                               {...field}
-                              className="bg-white/50 backdrop-blur-sm min-h-[140px] resize-none text-base p-4"
+                              className="bg-muted/20 min-h-[120px] resize-none"
                             />
                           </div>
                         </FormControl>
@@ -712,23 +765,25 @@ function QuizGeneratorContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-headline">{t.questionTypesLabel}</FormLabel>
-                        <div className="grid grid-cols-3 gap-3 pt-2">
-                          {questionTypesData.map((item) => (
-                            <SelectableCard
-                              key={item.id}
-                              icon={item.icon}
-                              label={t.questionTypes[item.id]}
-                              isSelected={field.value?.includes(item.id)}
-                              onSelect={() => {
-                                const currentValues = field.value || [];
-                                const newValues = currentValues.includes(item.id)
-                                  ? currentValues.filter((v) => v !== item.id)
-                                  : [...currentValues, item.id];
-                                field.onChange(newValues);
-                              }}
-                              className="h-20"
-                            />
-                          ))}
+                        <div className="card-section">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {questionTypesData.map((item) => (
+                              <SelectableCard
+                                key={item.id}
+                                icon={item.icon}
+                                label={t.questionTypes[item.id]}
+                                isSelected={field.value?.includes(item.id)}
+                                onSelect={() => {
+                                  const currentValues = field.value || [];
+                                  const newValues = currentValues.includes(item.id)
+                                    ? currentValues.filter((v) => v !== item.id)
+                                    : [...currentValues, item.id];
+                                  field.onChange(newValues);
+                                }}
+                                className="h-20"
+                              />
+                            ))}
+                          </div>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -742,18 +797,15 @@ function QuizGeneratorContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-white p-6 rounded-xl border-l-4 border-primary border-t border-r border-b border-primary/20 shadow-sm h-fit">
-                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Quiz Settings</h3>
-
-
+                <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
                   {/* Subject, Grade and Language Selection */}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border/30 pt-4 mt-2">
                     <FormField
                       control={form.control}
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                           <FormControl>
                             <SubjectSelector
                               value={field.value}
@@ -771,7 +823,7 @@ function QuizGeneratorContent() {
                       name="gradeLevel"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.gradeLevelLabel}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.gradeLevelLabel}</FormLabel>
                           <FormControl>
                             <GradeLevelSelector
                               value={field.value ? [field.value] : []}
@@ -790,7 +842,7 @@ function QuizGeneratorContent() {
                       name="language"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                           <FormControl>
                             <LanguageSelector
                               onValueChange={field.onChange}
@@ -808,7 +860,7 @@ function QuizGeneratorContent() {
                     name="numQuestions"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.numQuestionsLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.numQuestionsLabel}</FormLabel>
                         <FormControl>
                           <div className="flex items-center gap-4">
                             <Slider
@@ -819,7 +871,7 @@ function QuizGeneratorContent() {
                               onValueChange={(vals) => field.onChange(vals[0])}
                               className="flex-1"
                             />
-                            <span className="font-bold text-primary bg-white px-3 py-1 rounded border border-primary/20 min-w-[3rem] text-center">{field.value}</span>
+                            <span className="font-semibold text-primary bg-primary/8 px-3 py-1 rounded-lg border border-primary/15 min-w-[3rem] text-center">{field.value}</span>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -832,10 +884,10 @@ function QuizGeneratorContent() {
                     name="questionTypes"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.questionTypesLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.questionTypesLabel}</FormLabel>
                         <div className="grid grid-cols-2 gap-2">
                           {['multiple_choice', 'short_answer', 'fill_in_the_blanks', 'true_false'].map((type) => (
-                            <div key={type} className="flex items-center space-x-2 bg-white/50 p-2 rounded border border-white/80">
+                            <div key={type} className="flex items-center space-x-2 bg-muted/20 p-2 rounded border border-border/50">
                               <CheckboxUI
                                 id={type}
                                 checked={field.value?.includes(type as any)}
@@ -847,7 +899,7 @@ function QuizGeneratorContent() {
                                   }
                                 }}
                               />
-                              <label htmlFor={type} className="text-xs text-slate-700 cursor-pointer">
+                              <label htmlFor={type} className="text-xs text-foreground cursor-pointer">
                                 {t.questionTypes[type] || type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                               </label>
                             </div>
@@ -863,15 +915,15 @@ function QuizGeneratorContent() {
                     name="bloomsTaxonomyLevels"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-xs font-semibold text-slate-600">{t.bloomsLabel}</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t.bloomsLabel}</FormLabel>
                         <TooltipProvider>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="card-section flex flex-wrap gap-2">
                             {['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'].map((level) => (
                               <Tooltip key={level}>
                                 <TooltipTrigger asChild>
                                   <Badge
                                     variant={field.value?.includes(level) ? "default" : "outline"}
-                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-white/50 hover:bg-white text-slate-600"}`}
+                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-muted/20 hover:bg-muted/40 text-muted-foreground"}`}
                                     onClick={() => {
                                       if (field.value?.includes(level)) {
                                         field.onChange(field.value.filter((l: string) => l !== level));
@@ -892,17 +944,17 @@ function QuizGeneratorContent() {
                         </TooltipProvider>
 
                         {field.value && field.value.length > 0 && (
-                          <div className="mt-3 p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
+                          <div className="mt-3 p-3 bg-muted/20 rounded-xl border border-border/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
                               <Brain className="w-3 h-3" />
                               Pedagogical Strategy
-                            </p>
+                            </div>
                             <div className="space-y-2">
                               {field.value.map((level: string) => (
-                                <div key={level} className="text-[11px] leading-relaxed text-slate-700 flex items-start gap-2">
+                                <div key={level} className="text-[11px] leading-relaxed text-foreground flex items-start gap-2">
                                   <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                                   <span>
-                                    <span className="font-bold text-slate-900">{t.blooms[level]}:</span>{" "}
+                                    <span className="font-bold text-foreground">{t.blooms[level]}:</span>{" "}
                                     {t.bloomsHints?.[level] || (translations.en as any).bloomsHints[level]}
                                   </span>
                                 </div>
@@ -915,7 +967,7 @@ function QuizGeneratorContent() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
+                  <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -933,9 +985,19 @@ function QuizGeneratorContent() {
       </div>
 
       {/* Results Section */}
-      <div className="mt-8">
-        {quiz && <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} />}
-      </div>
+      {quiz && (
+        <>
+          <div className="my-8 flex items-center gap-3">
+            <hr className="flex-1 border-border/40" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <hr className="flex-1 border-border/40" />
+          </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+            <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />
+          </div>
+          <ShareToCommunityCTA contentType="quiz" className="mt-3" />
+        </>
+      )}
     </div>
   );
 }

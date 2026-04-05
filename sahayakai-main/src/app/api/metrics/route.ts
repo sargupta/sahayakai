@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
             // Log to Cloud Logging with proper structure
             switch (severity) {
                 case 'WARNING':
-                    logger.warn('Performance metric', 'METRICS', {
+                    logger.warn(`Performance Warning on ${metric.page || 'unknown'}: ${metric.type} metric elevated`, 'METRICS', {
                         metric: metric.type,
                         data: metric,
                         labels: {
@@ -48,10 +48,14 @@ export async function POST(req: NextRequest) {
                     });
                     break;
 
-                case 'ERROR':
+                case 'ERROR': {
+                    const durationStr = metric.duration ? ` took ${metric.duration}ms` : (metric.totalDuration ? ` took ${metric.totalDuration}ms` : '');
+                    const detailsStr = metric.rating ? ` (Rating: ${metric.rating})` : '';
+                    const message = `Poor Performance on /${metric.page || 'unknown'}: ${metric.type}${durationStr}${detailsStr}`;
+
                     logger.error(
-                        'Performance metric - Poor',
-                        new Error(`Poor performance: ${metric.type}`),
+                        message,
+                        new Error(message),
                         'METRICS',
                         {
                             metric: metric.type,
@@ -64,9 +68,10 @@ export async function POST(req: NextRequest) {
                         }
                     );
                     break;
+                }
 
                 default:
-                    logger.info('Performance metric', 'METRICS', {
+                    logger.info(`Performance OK on ${metric.page || 'unknown'}: ${metric.type}`, 'METRICS', {
                         metric: metric.type,
                         data: metric,
                         labels: {
@@ -83,7 +88,7 @@ export async function POST(req: NextRequest) {
             received: body.metrics.length
         });
     } catch (error) {
-        console.error('Failed to process metrics:', error);
+        logger.error('Failed to process metrics', error, 'METRICS');
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }
@@ -115,6 +120,21 @@ function getSeverity(metric: any): 'INFO' | 'WARNING' | 'ERROR' {
             if (metric.statusCode >= 500) return 'ERROR';
             if (metric.statusCode >= 400) return 'WARNING';
             if (metric.duration > 1000) return 'WARNING'; // >1s API call
+            return 'INFO';
+
+        case 'cost_metric':
+            // Thresholds based on USER_REQUEST
+            if (metric.metric === 'gemini_spend_daily' && metric.value > 50) return 'ERROR';
+            if (metric.metric === 'tts_char_count_daily' && metric.value > 5000000) return 'ERROR';
+            if (metric.metric === 'image_gen_calls_daily' && metric.value > 500) return 'ERROR';
+            if (metric.metric === 'grounding_calls_daily' && metric.value > 1000) return 'ERROR';
+
+            // Warnings at 80% of threshold
+            if (metric.metric === 'gemini_spend_daily' && metric.value > 40) return 'WARNING';
+            if (metric.metric === 'tts_char_count_daily' && metric.value > 4000000) return 'WARNING';
+            if (metric.metric === 'image_gen_calls_daily' && metric.value > 400) return 'WARNING';
+            if (metric.metric === 'grounding_calls_daily' && metric.value > 800) return 'WARNING';
+
             return 'INFO';
 
         default:

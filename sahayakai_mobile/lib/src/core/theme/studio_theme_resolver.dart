@@ -62,13 +62,13 @@ class StudioThemeMap {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           elevation: 4,
-          shadowColor: studioColors.primary.withOpacity(0.4),
+          shadowColor: studioColors.primary.withValues(alpha: 0.4),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: studio == StudioType.director
-            ? Colors.white.withOpacity(0.1)
+            ? Colors.white.withValues(alpha: 0.1)
             : Colors.white,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -78,7 +78,7 @@ class StudioThemeMap {
           borderSide: BorderSide(color: studioColors.primary, width: 2),
         ),
         hintStyle:
-            TextStyle(color: studioColors.onStudioSurface.withOpacity(0.5)),
+            TextStyle(color: studioColors.onStudioSurface.withValues(alpha: 0.5)),
       ),
     );
   }

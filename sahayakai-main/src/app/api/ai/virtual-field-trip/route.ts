@@ -1,6 +1,8 @@
 
 import { NextResponse } from 'next/server';
 import { planVirtualFieldTrip } from '@/ai/flows/virtual-field-trip';
+import { logger } from '@/lib/logger';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -38,7 +40,8 @@ import { planVirtualFieldTrip } from '@/ai/flows/virtual-field-trip';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let topicName = 'Unknown Topic';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        topicName = body.topic || 'Unknown Topic';
 
         const output = await planVirtualFieldTrip({
             ...body,
@@ -55,12 +59,13 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        console.error('Virtual Field Trip API Error:', error);
+        logger.error(`Virtual Field Trip API Failed for topic: "${topicName}"`, error, 'VIRTUAL_FIELD_TRIP', { userId: request.headers.get('x-user-id') });
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: errorMessage },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('virtual-field-trip')(_handler);

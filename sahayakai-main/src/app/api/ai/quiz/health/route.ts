@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
+import { logger } from '@/lib/logger';
 
 /**
  * Health check endpoint for quiz generation diagnostics.
@@ -17,7 +18,7 @@ export async function GET() {
             gradeLevel: "Class 1",
             language: "English",
             numQuestions: 3,
-            questionTypes: ["multiple-choice"],
+            questionTypes: ["multiple_choice"],
             userId: undefined // Skip storage operations
         });
 
@@ -32,7 +33,7 @@ export async function GET() {
                 mediumGenerated: !!testQuiz.medium,
                 hardGenerated: !!testQuiz.hard,
                 allVariantsGenerated: !!(testQuiz.easy && testQuiz.medium && testQuiz.hard),
-                sampleQuestion: testQuiz.easy?.questions?.[0]?.question || testQuiz.medium?.questions?.[0]?.question || testQuiz.hard?.questions?.[0]?.question
+                sampleQuestion: testQuiz.easy?.questions?.[0]?.questionText || testQuiz.medium?.questions?.[0]?.questionText || testQuiz.hard?.questions?.[0]?.questionText
             }
         });
     } catch (error) {
@@ -69,7 +70,7 @@ export async function GET() {
             timestamp: new Date().toISOString()
         };
 
-        console.error('[Quiz Health Check] FAILED:', errorDetails);
+        logger.error('[Quiz Health Check] FAILED', error, 'HEALTH_CHECK', errorDetails);
 
         return NextResponse.json(errorDetails, { status: 500 });
     }

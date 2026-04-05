@@ -1,10 +1,12 @@
 
 "use client";
-import { generateWorksheet } from "@/ai/flows/worksheet-wizard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PencilRuler, Download, Save } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
@@ -21,7 +23,10 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { WorksheetDisplay } from "@/components/worksheet-display";
+import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { SubjectSelector } from "@/components/subject-selector";
+import { useJarvisStore } from "@/store/jarvisStore";
+import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 
 
 
@@ -32,8 +37,8 @@ const translations: Record<string, Record<string, string>> = {
     imageLabel: "Textbook Page Image",
     instructionsLabel: "Worksheet Instructions",
     speakLabel: "Describe the worksheet...",
-    placeholder: "e.g., Create 5 fill-in-the-blank questions for Grade 2...",
-    gradeLabel: "Grade Level",
+    placeholder: "e.g., Create 5 fill-in-the-blank questions for Class 2...",
+    gradeLabel: "Class",
     languageLabel: "Language",
     submitButton: "Generate Worksheet",
     generating: "Generating...",
@@ -50,7 +55,7 @@ const translations: Record<string, Record<string, string>> = {
     instructionsLabel: "वर्कशीट निर्देश",
     speakLabel: "वर्कशीट का वर्णन करें...",
     placeholder: "जैसे, कक्षा 2 के लिए 5 रिक्त स्थान भरने वाले प्रश्न बनाएं...",
-    gradeLabel: "कक्षा स्तर",
+    gradeLabel: "कक्षा",
     languageLabel: "भाषा",
     submitButton: "वर्कशीट बनाएं",
     generating: "उत्पन्न कर रहा है...",
@@ -218,26 +223,50 @@ type FormValues = z.infer<typeof formSchema>;
 
 function WorksheetWizardContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const [worksheet, setWorksheet] = useState<string | null>(null);
+  const [worksheet, setWorksheet] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { limitState, checkResponse, clearLimit } = useLimitGuard();
   const { toast } = useToast();
+  const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
       language: "en",
-      gradeLevel: "4th Grade",
+      gradeLevel: "Class 4",
       subject: "General",
     },
+  });
+
+  // ── VIDYA Form Sync: live awareness + persisted snapshot ─────────────────
+  const watchedPrompt  = form.watch("prompt");
+  const watchedGrade   = form.watch("gradeLevel");
+  const watchedSubject = form.watch("subject");
+  const watchedLang    = form.watch("language");
+  const savedSnapshot  = useVidyaFormSync("worksheet-wizard", {
+    prompt: watchedPrompt,
+    gradeLevel: watchedGrade,
+    subject: watchedSubject,
+    language: watchedLang,
   });
 
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
   const searchParams = useSearchParams();
 
-  // Auto-fill prompt from URL. Note: Works best if an image is already uploaded or optional.
-  // Ideally, the router would handle image parsing too, but for now we auto-fill the text prompt.
+  // Restore snapshot on mount — only when no URL params are present
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt");
+    const id = searchParams.get("id");
+    if (promptParam || id || !savedSnapshot) return;
+    if (savedSnapshot.prompt) form.setValue("prompt", savedSnapshot.prompt);
+    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
+    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
+    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
+  }, []); // empty array: runs once on mount only
+
   useEffect(() => {
     const id = searchParams.get("id");
     const promptParam = searchParams.get("prompt");
@@ -263,7 +292,6 @@ function WorksheetWizardContent() {
           if (res.ok) {
             const content = await res.json();
             if (content.data) {
-              // For worksheets, the data is usually the string or object with worksheetContent
               setWorksheet(content.data.worksheetContent || content.data);
               form.reset({
                 prompt: content.topic || content.title,
@@ -287,7 +315,18 @@ function WorksheetWizardContent() {
       };
       fetchSavedContent();
     } else if (promptParam) {
+      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      const subjectParam = searchParams.get("subject");
+      const gradeLevelParam = searchParams.get("gradeLevel");
+      const languageParam = searchParams.get("language");
+
       form.setValue("prompt", promptParam);
+      if (subjectParam) form.setValue("subject", subjectParam);
+      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
+      if (languageParam) form.setValue("language", languageParam);
+      // ── FIX: auto-generate when VIDYA navigates here with a pre-filled prompt
+      setTimeout(() => form.handleSubmit(onSubmit)(), 300);
+      // ────────────────────────────────────────────────────────────────────
     }
   }, [searchParams, form, toast]);
 
@@ -308,7 +347,7 @@ function WorksheetWizardContent() {
       const res = await fetch("/api/ai/worksheet", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify(values)
+        body: JSON.stringify({ ...values, language: values.language || selectedLanguage })
       });
 
       if (!res.ok) {
@@ -317,11 +356,17 @@ function WorksheetWizardContent() {
           throw new Error("Please sign in to generate worksheets");
         }
         const errorData = await res.json();
+        if (checkResponse(res.status, errorData)) {
+          setIsLoading(false);
+          return;
+        }
         throw new Error(errorData.error || "Failed to generate worksheet");
       }
 
+      clearLimit();
       const result = await res.json();
       setWorksheet(result.worksheetContent);
+      clearFormSnapshot("worksheet-wizard");
     } catch (error) {
       console.error("Failed to generate worksheet:", error);
       toast({
@@ -361,23 +406,32 @@ function WorksheetWizardContent() {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="card-accent-bar" />
 
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
             <PencilRuler className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-3xl">{t.pageTitle}</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t.pageTitle}</CardTitle>
           <CardDescription>
             {t.pageDescription}
           </CardDescription>
+          <UsageRemainingBadge feature="worksheet" />
         </CardHeader>
+
+        {(limitState.limitReached || limitState.upgradeRequired) && (
+          <UpgradePrompt
+            feature="worksheet"
+            used={limitState.used ?? 0}
+            limit={limitState.limit ?? 0}
+          />
+        )}
+
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
               <FormField
                 control={form.control}
                 name="imageDataUri"
@@ -406,18 +460,10 @@ function WorksheetWizardContent() {
                     <FormLabel className="font-headline">{t.instructionsLabel}</FormLabel>
                     <FormControl>
                       <div className="flex flex-col gap-4">
-                        <MicrophoneInput
-                          onTranscriptChange={(transcript) => {
-                            field.onChange(transcript);
-                          }}
-                          iconSize="lg"
-                          label={t.speakLabel}
-                          className="bg-white/50 backdrop-blur-sm"
-                        />
                         <Textarea
                           placeholder={t.placeholder}
                           {...field}
-                          className="bg-white/50 backdrop-blur-sm min-h-[100px]"
+                          className="bg-muted/20 min-h-[120px]"
                         />
                       </div>
                     </FormControl>
@@ -428,13 +474,13 @@ function WorksheetWizardContent() {
 
               <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="worksheet" />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
                   control={form.control}
                   name="gradeLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.gradeLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
                       <FormControl>
                         <GradeLevelSelector
                           value={field.value ? [field.value] : []}
@@ -453,7 +499,7 @@ function WorksheetWizardContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.subjectLabel || "Subject"}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.subjectLabel || "Subject"}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           value={field.value}
@@ -471,7 +517,7 @@ function WorksheetWizardContent() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-slate-600">{t.languageLabel}</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
                       <FormControl>
                         <LanguageSelector
                           onValueChange={field.onChange}
@@ -484,7 +530,7 @@ function WorksheetWizardContent() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+              <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -501,7 +547,7 @@ function WorksheetWizardContent() {
 
       {
         isLoading && (
-          <Card className="mt-8 w-full max-w-2xl bg-white border border-slate-200 shadow-sm rounded-2xl animate-fade-in-up">
+          <Card className="mt-8 w-full max-w-2xl bg-card border border-border shadow-soft rounded-2xl animate-fade-in-up">
             <CardContent className="p-6 flex flex-col items-center justify-center">
               <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
               <p className="text-muted-foreground">{t.wizardMagic}</p>
@@ -512,14 +558,23 @@ function WorksheetWizardContent() {
 
       {
         worksheet && (
-          <WorksheetDisplay
+          <>
+            <div className="my-8 flex items-center gap-3">
+              <hr className="flex-1 border-border/40" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+              <hr className="flex-1 border-border/40" />
+            </div>
+          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><WorksheetDisplay
             worksheet={{
               worksheetContent: worksheet,
               gradeLevel: form.getValues("gradeLevel"),
               subject: form.getValues("subject") || "General"
             }}
             title={form.getValues("prompt") || t.resultTitle}
-          />
+            selectedLanguage={selectedLanguage}
+          /></div>
+          <ShareToCommunityCTA contentType="worksheet" className="mt-3" />
+          </>
         )
       }
     </div>

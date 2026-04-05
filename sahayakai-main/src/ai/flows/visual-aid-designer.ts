@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview A visual aid designer agent that creates simple black-and-white line drawings.
  *
@@ -13,7 +11,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-
+import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
 
 const VisualAidInputSchema = z.object({
@@ -57,6 +55,7 @@ const VisualAidOutputSchema = z.object({
   pedagogicalContext: z.string().describe('How a teacher should use this specific drawing to explain the topic.'),
   discussionSpark: z.string().describe('A focus question to ask students while showing this visual aid.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
+  storagePath: z.string().optional().describe('GCS path if already persisted by generation flow.'),
 });
 export type VisualAidOutput = z.infer<typeof VisualAidOutputSchema>;
 
@@ -79,8 +78,9 @@ export async function generateVisualAid(input: VisualAidInput): Promise<VisualAi
   let localizedInput = { ...input };
 
   if (uid !== 'anonymous_user') {
-    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    const { checkServerRateLimit, checkImageRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
+    await checkImageRateLimit(uid);
 
     // Fetch user's profile for context (language, grade)
     if (!input.language || !input.gradeLevel) {
@@ -125,33 +125,45 @@ const visualAidFlow = ai.defineFlow(
       });
 
       // Step 1: Generate the Image using the Prod Model
-      const { media } = await runResiliently(async (overrideConfig) => {
-        return await ai.generate({
-          model: 'googleai/gemini-3-pro-image-preview',
-          ...overrideConfig,
-          prompt: `
-            Create a blackboard chalk-style educational illustration.
-            Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
-            
-            Style: 
-            - High-fidelity white chalk lines on a dark black background.
-            - Professional, textbook-quality diagram.
-            
-            Labels:
-            - Accurately label the key parts of the diagram. 
-            - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
-            - Use simple block letters.
-          `,
-          config: {
-            ...overrideConfig.config,
-            responseModalities: ['IMAGE'],
-            temperature: 0.4,
-          },
-        });
-      });
+      // 90s hard timeout — the preview model can stall on complex prompts
+      const IMAGE_TIMEOUT_MS = 90_000;
+      const { media } = await Promise.race([
+        runResiliently(async (overrideConfig) => {
+          return await ai.generate({
+            model: 'googleai/gemini-3-pro-image-preview',
+            ...overrideConfig,
+            prompt: `
+              Create a blackboard chalk-style educational illustration.
+              Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
 
-      if (!media) {
-        throw new FlowExecutionError('Image generation failed to produce an image.', { step: 'image-generation' });
+              Style:
+              - High-fidelity white chalk lines on a dark black background.
+              - Professional, textbook-quality diagram.
+
+              Labels:
+              - Accurately label the key parts of the diagram.
+              - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
+              - Use simple block letters.
+            `,
+            config: {
+              ...overrideConfig.config,
+              responseModalities: ['IMAGE'],
+              temperature: 0.4,
+            },
+          });
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('IMAGE_GENERATION_TIMEOUT')), IMAGE_TIMEOUT_MS)
+        ),
+      ]);
+
+      if (!media?.url) {
+        throw new Error('IMAGE_GENERATION_EMPTY');
+      }
+
+      // Usage tracking — rate limit already checked pre-generation in generateVisualAid().
+      if (userId) {
+        UsageTracker.trackImageGen(userId);
       }
 
       // Step 2: Generate the Metadata (Text)
@@ -172,13 +184,20 @@ const visualAidFlow = ai.defineFlow(
             Grade: ${gradeLevel || 'any'}
             Language: ${language || 'English'}
 
+            **LANGUAGE LOCK (CRITICAL):** You MUST write ALL text ONLY in ${language || 'English'}.
+            ${language && language !== 'English' ? `Do NOT write in English. Every word of pedagogicalContext and discussionSpark MUST be in ${language}.` : ''}
+
             Provide:
             1. Context: How to use a blackboard drawing of this topic to teach.
             2. Spark: A question to ask students about the drawing.
-            3. Subject: The academic subject area.
+            3. Subject: The academic subject area (always in English, e.g., "Science").
           `,
         });
       });
+
+      if (userId && (textResult as any).usage) {
+        UsageTracker.trackGemini(userId, (textResult as any).usage.totalTokens || 0, 'gemini-2.5-flash');
+      }
 
       if (!textResult.output) {
         throw new FlowExecutionError('Metadata generation failed.', { step: 'metadata-generation' });
@@ -225,6 +244,9 @@ const visualAidFlow = ai.defineFlow(
             updatedAt: Timestamp.fromDate(new Date()),
             data: { ...finalOutput, imageDataUri: undefined, storageRef: filePath },
           });
+
+          // Mark output as already persisted so "Save to Library" skips re-upload
+          finalOutput.storagePath = filePath;
         } catch (e) {
           StructuredLogger.error('Persistence failed', {
             service: 'visual-aid-designer',

@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Creates quizzes based on a topic, context from an image, and user-specified parameters.
  *
@@ -11,6 +9,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { quizGeneratorFlow } from './quiz-definitions';
+import { logger } from '@/lib/logger';
 
 export type { QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-generator-schemas';
 
@@ -27,10 +26,20 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
         localizedInput.language = profile.preferredLanguage;
       }
     }
+
+    // Fetch teacher context for AI personalisation
+    try {
+      const { getTeacherContextLine } = await import('@/lib/teacher-context');
+      localizedInput.teacherContext = await getTeacherContextLine(uid);
+    } catch {
+      // Non-blocking — proceed without teacher context
+    }
   }
 
-  // Define the difficulties to generate
   const difficulties = ['easy', 'medium', 'hard'] as const;
+  const contentId = uuidv4();
+  const now = new Date();
+  const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
 
   // Run 3 generations in parallel with detailed error tracking
   const results = await Promise.allSettled(
@@ -63,7 +72,8 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
           timestamp: new Date().toISOString()
         };
 
-        console.error(`❌ [Quiz Generator] ${difficulty} variant failed:`, errorDetails);
+        const errorMsg = `Quiz Generation Failed (${difficulty} variant) for topic: "${input.topic || 'Unknown'}"`;
+        logger.error(errorMsg, new Error('Generation Error'), 'QUIZ', errorDetails);
         return null;
       }
     })
@@ -81,9 +91,11 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
     easy,
     medium,
     hard,
-    gradeLevel: inferredGrade,
-    subject: inferredSubject,
-    topic: input.topic
+    id: contentId,
+    gradeLevel: inferredGrade || localizedInput.gradeLevel || 'Class 5',
+    subject: inferredSubject || localizedInput.subject || 'General',
+    topic: input.topic,
+    isSaved: !!input.userId // If userId is present, it will be auto-saved below
   };
 
   // If all failed, throw error
@@ -95,9 +107,6 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
     const storage = await getStorageInstance();
     // const db = await getDb(); // Removed unused
 
-    const now = new Date();
-    const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-    const contentId = uuidv4();
     const fileName = `${timestamp}-${contentId}.json`;
     const filePath = `users/${input.userId}/quizzes/${fileName}`;
     const file = storage.bucket().file(filePath);

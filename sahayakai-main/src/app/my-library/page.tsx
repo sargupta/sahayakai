@@ -10,7 +10,6 @@ import {
 import { LanguageSelector } from '@/components/language-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
-import { generateAvatar } from '@/ai/flows/avatar-generator';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { getProfileData } from '@/app/actions/profile';
@@ -45,9 +44,17 @@ export default function MyLibraryPage() {
         setProfile(res.profile);
       });
 
-      generateAvatar({ name: user.displayName || 'Teacher', userId: user.uid })
-        .then(res => setAvatar(res.imageDataUri))
-        .catch(console.error);
+      auth.currentUser?.getIdToken().then(token => {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return fetch('/api/ai/avatar', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name: user.displayName || 'Teacher' }),
+        });
+      }).then(res => res?.json()).then((res: { imageDataUri?: string }) => {
+        if (res?.imageDataUri) setAvatar(res.imageDataUri);
+      }).catch(console.error);
     }
   }, [user, loading]);
 
@@ -74,13 +81,13 @@ export default function MyLibraryPage() {
         language={language}
       />
 
-      <div className="w-full bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
         {/* Clean Top Bar */}
-        <div className="h-1.5 w-full bg-primary" />
+        <div className="h-0.5 w-full bg-primary/60" />
         <CardContent className="p-0">
-          <div className="p-6 border-b border-white/40">
+          <div className="p-6 border-b border-border/40">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h1 className="font-headline text-3xl">{t.pageTitle}</h1>
+              <h1 className="font-headline tracking-tight text-2xl sm:text-3xl text-foreground">{t.pageTitle}</h1>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
                 <Button variant="outline" className="hidden md:flex">
@@ -95,7 +102,7 @@ export default function MyLibraryPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-slate-50/30">
+          <div className="p-6 bg-muted/30">
             <ContentGallery
               userId={userId}
               onCountChange={setResourceCount}

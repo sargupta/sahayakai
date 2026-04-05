@@ -11,15 +11,22 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useToast } from '@/hooks/use-toast';
 
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type WorksheetDisplayProps = {
-    worksheet: { worksheetContent: string; gradeLevel?: string | null; subject?: string | null };
+    worksheet: {
+        worksheetContent: string;
+        title?: string;
+        gradeLevel?: string | null;
+        subject?: string | null;
+        activities?: any[];
+        learningObjectives?: string[];
+    };
     title?: string;
+    selectedLanguage?: string;
 };
 
-export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }) => {
+export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title, selectedLanguage }) => {
     const { toast } = useToast();
 
     const handleCopy = () => {
@@ -33,6 +40,11 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
     const handleDownload = async () => {
         const element = document.getElementById('worksheet-pdf');
         if (!element) return;
+
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+          import('jspdf'),
+          import('html2canvas'),
+        ]);
 
         // Hide buttons for cleaner PDF
         const actionButtons = element.querySelector('.no-print');
@@ -61,12 +73,11 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 heightLeft -= pageHeight;
             }
 
-            const cleanTitle = (title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
+            const cleanTitle = (title || worksheet.title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
             pdf.save(`Sahayak_Worksheet_${cleanTitle}.pdf`);
 
             toast({ title: "PDF Downloaded", description: "Your worksheet is ready." });
         } catch (error) {
-            console.error("PDF Error:", error);
             toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
         } finally {
             // Restore buttons
@@ -85,7 +96,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 user = userCred.user;
             }
 
-            const saveTitle = title || "Worksheet";
+            const saveTitle = title || worksheet.title || "Worksheet";
 
             // Construct payload matching WorksheetDataSchema
             const payload = {
@@ -95,18 +106,12 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                 gradeLevel: worksheet.gradeLevel || 'Class 5',
                 subject: worksheet.subject || 'General',
                 topic: saveTitle,
-                language: 'English', // TODO: Pass language prop
+                language: selectedLanguage || 'en',
                 isPublic: false,
                 isDraft: false,
                 data: {
+                    ...worksheet,
                     layout: 'portrait',
-                    sections: [{
-                        title: 'Generated Content',
-                        instructions: worksheet.worksheetContent,
-                        items: []
-                    }],
-                    // Preserving raw content for display re-hydration if needed
-                    ...worksheet
                 }
             };
 
@@ -132,7 +137,6 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
             });
 
         } catch (error) {
-            console.error("Save Error:", error);
             toast({
                 title: "Save Failed",
                 description: error instanceof Error ? error.message : "Could not save to library.",
@@ -146,8 +150,8 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
     }
 
     return (
-        <Card id="worksheet-pdf" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/20 pb-4">
+        <Card id="worksheet-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                 <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
                     <FileText className="h-7 w-7 text-primary" />
                     {title || "Worksheet"}
@@ -175,6 +179,13 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title }
                     {worksheet.worksheetContent}
                 </ReactMarkdown>
             </CardContent>
+            <div className="p-4 border-t border-border flex justify-end">
+              <FeedbackDialog
+                page="worksheet"
+                feature="worksheet-result"
+                context={{ title: title || worksheet.title || "Worksheet" }}
+              />
+            </div>
         </Card>
     );
 };

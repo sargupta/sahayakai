@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { instantAnswer } from '@/ai/flows/instant-answer';
 import { logger } from '@/lib/utils';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
  * @swagger
@@ -38,7 +39,8 @@ import { logger } from '@/lib/utils';
  *       500:
  *         description: AI Generation failed
  */
-export async function POST(request: Request) {
+async function _handler(request: Request) {
+    let questionText = 'Unknown Question';
     try {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        questionText = body.question || 'Unknown Question';
 
         const output = await instantAnswer({
             ...body,
@@ -55,13 +58,11 @@ export async function POST(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        console.error('Instant Answer API Error:', error);
-
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
 
-        logger.error("Instant Answer API Failed", error, {
+        logger.error(`Instant Answer API Failed for question: "${questionText}"`, error, {
             path: "/api/ai/instant-answer",
             userId: request.headers.get('x-user-id'),
             errorMessage,
@@ -73,10 +74,11 @@ export async function POST(request: Request) {
             {
                 error: errorMessage,
                 errorCode: errorCode,
-                details: errorMessage,
                 context: context
             },
             { status: 500 }
         );
     }
 }
+
+export const POST = withPlanCheck('instant-answer')(_handler);

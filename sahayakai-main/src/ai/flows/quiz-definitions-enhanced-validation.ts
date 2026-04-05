@@ -32,6 +32,18 @@ export function validateQuizOutput(rawOutput: any): { valid: boolean; errors: st
 
             if (!q.explanation) {
                 errors.push(`Question ${idx + 1}: Missing "explanation"`);
+            } else {
+                // Check for minimum explanation depth
+                if (q.explanation.length < 20) {
+                    errors.push(`Question ${idx + 1}: Explanation is too brief (must be at least 20 chars)`);
+                }
+
+                // Deterministic check for Westernisms
+                const westernisms = ['dollar', 'elevator', 'subway', 'snowing', 'snowflake', 'skateboard', 'pancake', 'hamburger'];
+                const foundWesternisms = westernisms.filter(w => q.explanation.toLowerCase().includes(w) || q.questionText.toLowerCase().includes(w));
+                if (foundWesternisms.length > 0) {
+                    errors.push(`Question ${idx + 1}: Contains non-Bharat westernisms: ${foundWesternisms.join(', ')}`);
+                }
             }
 
             if (!q.difficultyLevel || !['easy', 'medium', 'hard'].includes(q.difficultyLevel)) {

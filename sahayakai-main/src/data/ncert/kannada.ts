@@ -1,109 +1,107 @@
-import { NCERTChapter } from './index';
+import type { NCERTChapter } from './index';
+
+// Siri Kannada — KTBS (Karnataka Textbook Society) curriculum (Grades 1–10)
+// textbookEdition: 'State-SCERT' for all grades (published by KTBS, not NCERT)
 
 export const kannadaChapters: NCERTChapter[] = [
-    // Grade 5 - Siri Kannada
-    {
-        id: 'kan-5-1',
-        title: 'ಒಟ್ಟಿಗೆ ಬಾಳುವ ಆನಂದ',
-        titleHindi: 'ಸಂತೋಷದಿಂದ ಒಟ್ಟಿಗೆ ಬದುಕುವುದು',
-        subject: 'Kannada',
-        grade: 5,
-        number: 1,
-        learningOutcomes: ['Living Together Happily', 'Value of community'],
-        keywords: ['Togetherness', 'Joy'],
-        estimatedPeriods: 4
-    },
-    {
-        id: 'kan-5-2',
-        title: 'ನದಿಯ ಅಳಲು',
-        titleHindi: 'ನದಿ ಯ ದುಃಖ',
-        subject: 'Kannada',
-        grade: 5,
-        number: 2,
-        learningOutcomes: ['River\'s Lament', 'Water pollution awareness'],
-        keywords: ['River', 'Environment'],
-        estimatedPeriods: 5
-    },
-    // Grade 6 - Siri Kannada
-    {
-        id: 'kan-6-1',
-        title: 'ದೊಡ್ಡವರ ದಾರಿ',
-        titleHindi: 'ಮಹಾನ್ ವ್ಯಕ್ತಿಗಳ ಹಾದಿ',
-        subject: 'Kannada',
-        grade: 6,
-        number: 1,
-        learningOutcomes: ['The Way of Elders', 'Learning from biographies'],
-        keywords: ['Elders', 'Wisdom'],
-        estimatedPeriods: 4
-    },
-    {
-        id: 'kan-6-2',
-        title: 'ಬೇಸಿಗೆ (ಪದ್ಯ)',
-        titleHindi: 'ಬೇಸಿಗೆ ಕಾಲ',
-        subject: 'Kannada',
-        grade: 6,
-        number: 2,
-        learningOutcomes: ['Summer poem', 'Describing seasons'],
-        keywords: ['Summer', 'Poetry'],
-        estimatedPeriods: 3
-    },
-    // Grade 7 - Siri Kannada
-    {
-        id: 'kan-7-1',
-        title: 'ಪುಟ್ಟಜ್ಜಿ ಪುಟ್ಟಜ್ಜಿ ಕತೆ ಹೇಳು',
-        titleHindi: 'ಅಜ್ಜಿಯಿಂದ ಕಥೆಗಳು',
-        subject: 'Kannada',
-        grade: 7,
-        number: 1,
-        learningOutcomes: ['Storytelling traditions', 'Folklore'],
-        keywords: ['Story', 'Grandmother'],
-        estimatedPeriods: 4
-    },
-    // Grade 8 - Siri Kannada
-    {
-        id: 'kan-8-1',
-        title: 'ಮಗ್ಗದ ಸಾಹೇಬ',
-        titleHindi: 'ಸಮಯ ಪ್ರಜ್ಞೆ',
-        subject: 'Kannada',
-        grade: 8,
-        number: 1,
-        learningOutcomes: ['Weaver Saheb', 'Dignity of labor'],
-        keywords: ['Weaving', 'Labor'],
-        estimatedPeriods: 5
-    },
-    // Grade 9 - Siri Kannada
-    {
-        id: 'kan-9-1',
-        title: 'ರಾಮರಾಜ್ಯ',
-        titleHindi: 'ರಾಮರಾಜ್ಯ',
-        subject: 'Kannada',
-        grade: 9,
-        number: 1,
-        learningOutcomes: ['Ideal administration', 'Indian heritage'],
-        keywords: ['Ramarajya', 'Governance'],
-        estimatedPeriods: 6
-    },
-    // Grade 10 - Siri Kannada
-    {
-        id: 'kan-10-1',
-        title: 'ಶಬರಿ',
-        titleHindi: 'ಶಬರಿ ಯ ಭಕ್ತಿ',
-        subject: 'Kannada',
-        grade: 10,
-        number: 1,
-        learningOutcomes: ['Devotion of Shabari', 'Epic literature'],
-        keywords: ['Ramayana', 'Shabari', 'Devotion'],
-        estimatedPeriods: 6
-    },
-    {
-        id: 'kan-10-2',
-        title: 'ಸಂಕಲ್ಪಗೀತೆ (ಪದ್ಯ)',
-        titleHindi: 'ಸಂಕಲ್ಪ ಗೀತೆ',
-        subject: 'Kannada',
-        grade: 10,
-        number: 2,
-        learningOutcomes: ['Song of resolve', 'Motivation'],
-        keywords: ['Resolve', 'Motivation'],
-        estimatedPeriods: 4
-    }
+    // Grade 1 — Siri Kannada 1
+    { id: 'kan-1-1', title: 'ನಮ್ಮ ಶಾಲೆ', titleOriginal: 'ನಮ್ಮ ಶಾಲೆ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 1, learningOutcomes: ['School introduction', 'Basic greetings in Kannada'], keywords: ['School', 'Friends', 'Learning'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-2', title: 'ಅಮ್ಮ', titleOriginal: 'ಅಮ್ಮ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 2, learningOutcomes: ['Family affection', 'Simple poem recitation'], keywords: ['Mother', 'Family', 'Poem'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-3', title: 'ಹಣ್ಣುಗಳು', titleOriginal: 'ಹಣ್ಣುಗಳು', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 3, learningOutcomes: ['Names of fruits', 'Vocabulary building'], keywords: ['Fruits', 'Names', 'Colours'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-4', title: 'ಪ್ರಾಣಿಗಳು', titleOriginal: 'ಪ್ರಾಣಿಗಳು', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 4, learningOutcomes: ['Names of animals', 'Animal sounds'], keywords: ['Animals', 'Farm', 'Wild'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-5', title: 'ಮಳೆ', titleOriginal: 'ಮಳೆ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 5, learningOutcomes: ['Rain poem', 'Seasons awareness'], keywords: ['Rain', 'Nature', 'Poem'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-6', title: 'ನಮ್ಮ ದೇಶ', titleOriginal: 'ನಮ್ಮ ದೇಶ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 6, learningOutcomes: ['Love for country', 'National symbols'], keywords: ['India', 'Flag', 'Country'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-7', title: 'ಹೂವಿನ ತೋಟ', titleOriginal: 'ಹೂವಿನ ತೋಟ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 7, learningOutcomes: ['Garden and flowers', 'Nature appreciation'], keywords: ['Flowers', 'Garden', 'Colours'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-1-8', title: 'ಮನೆ', titleOriginal: 'ಮನೆ', textbookName: 'Siri Kannada 1', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 1, number: 8, learningOutcomes: ['Parts of a house', 'Family roles'], keywords: ['Home', 'Family', 'Safety'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 2 — Siri Kannada 2
+    { id: 'kan-2-1', title: 'ಒಳ್ಳೆಯ ಮಕ್ಕಳು', titleOriginal: 'ಒಳ್ಳೆಯ ಮಕ್ಕಳು', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 1, learningOutcomes: ['Good behaviour', 'Values in daily life'], keywords: ['Behaviour', 'Good habits', 'School'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-2', title: 'ಚಂದ್ರ ಮಾಮ', titleOriginal: 'ಚಂದ್ರ ಮಾಮ', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 2, learningOutcomes: ['Moon poem', 'Night sky observation'], keywords: ['Moon', 'Night', 'Poem'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-3', title: 'ಹಕ್ಕಿಗಳ ಮೇಳ', titleOriginal: 'ಹಕ್ಕಿಗಳ ಮೇಳ', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 3, learningOutcomes: ['Bird diversity', 'Love for birds'], keywords: ['Birds', 'Nature', 'Songs'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-4', title: 'ರೈತ', titleOriginal: 'ರೈತ', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 4, learningOutcomes: ['Farmer importance', 'Agriculture basics'], keywords: ['Farmer', 'Crops', 'Village'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-5', title: 'ಬೆಳಕು', titleOriginal: 'ಬೆಳಕು', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 5, learningOutcomes: ['Light and dark', 'Electricity awareness'], keywords: ['Light', 'Sun', 'Electricity'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-6', title: 'ಮಿತ್ರತೆ', titleOriginal: 'ಮಿತ್ರತೆ', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 6, learningOutcomes: ['True friendship', 'Helping others'], keywords: ['Friendship', 'Help', 'Trust'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-7', title: 'ನಮ್ಮ ಊರು', titleOriginal: 'ನಮ್ಮ ಊರು', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 7, learningOutcomes: ['Local community', 'Village description'], keywords: ['Village', 'Community', 'Places'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-2-8', title: 'ನೀರಿನ ಮಹತ್ವ', titleOriginal: 'ನೀರಿನ ಮಹತ್ವ', textbookName: 'Siri Kannada 2', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 2, number: 8, learningOutcomes: ['Importance of water', 'Water conservation'], keywords: ['Water', 'Conservation', 'Life'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 3 — Siri Kannada 3
+    { id: 'kan-3-1', title: 'ಕಲ್ಲಿನ ಮೇಲೆ ನೀರು', titleOriginal: 'ಕಲ್ಲಿನ ಮೇಲೆ ನೀರು', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 1, learningOutcomes: ['Persistence pays', 'Moral story'], keywords: ['Patience', 'Effort', 'Story'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-2', title: 'ಅಜ್ಜನ ಜ್ಞಾನ', titleOriginal: 'ಅಜ್ಜನ ಜ್ಞಾನ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 2, learningOutcomes: ["Grandparent's wisdom", 'Intergenerational learning'], keywords: ['Grandfather', 'Wisdom', 'Family'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-3', title: 'ನಾಡ ಹಬ್ಬಗಳು', titleOriginal: 'ನಾಡ ಹಬ್ಬಗಳು', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 3, learningOutcomes: ['Karnataka festivals', 'Cultural celebration'], keywords: ['Dasara', 'Festival', 'Karnataka'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-4', title: 'ಪ್ರಕೃತಿ ಮಾತೆ', titleOriginal: 'ಪ್ರಕೃತಿ ಮಾತೆ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 4, learningOutcomes: ['Nature as mother', 'Environmental care'], keywords: ['Nature', 'Environment', 'Trees'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-5', title: 'ಕೆಲಸದ ಮಹತ್ವ', titleOriginal: 'ಕೆಲಸದ ಮಹತ್ವ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 5, learningOutcomes: ['Value of work', 'Dignity of labour'], keywords: ['Work', 'Effort', 'Value'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-6', title: 'ತಾರೆಗಳ ರಹಸ್ಯ', titleOriginal: 'ತಾರೆಗಳ ರಹಸ್ಯ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 6, learningOutcomes: ['Stars and sky', 'Scientific curiosity'], keywords: ['Stars', 'Sky', 'Science'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-7', title: 'ಕೊಳಲ ದನಿ', titleOriginal: 'ಕೊಳಲ ದನಿ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 7, learningOutcomes: ['Flute music', 'Karnataka folk music'], keywords: ['Flute', 'Music', 'Folk'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-8', title: 'ನಮ್ಮ ಆರೋಗ್ಯ', titleOriginal: 'ನಮ್ಮ ಆರೋಗ್ಯ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 8, learningOutcomes: ['Health habits', 'Cleanliness'], keywords: ['Health', 'Hygiene', 'Body'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-3-9', title: 'ದೇಶ ಭಕ್ತಿ', titleOriginal: 'ದೇಶ ಭಕ್ತಿ', textbookName: 'Siri Kannada 3', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 3, number: 9, learningOutcomes: ['Patriotism', 'Freedom fighters of Karnataka'], keywords: ['Patriotism', 'Freedom', 'India'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 4 — Siri Kannada 4
+    { id: 'kan-4-1', title: 'ಸಾಧನೆಯ ಹಾದಿ', titleOriginal: 'ಸಾಧನೆಯ ಹಾದಿ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 1, learningOutcomes: ['Path of achievement', 'Inspirational story'], keywords: ['Achievement', 'Effort', 'Success'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-2', title: 'ವಿಜ್ಞಾನ ಮತ್ತು ತಂತ್ರಜ್ಞಾನ', titleOriginal: 'ವಿಜ್ಞಾನ ಮತ್ತು ತಂತ್ರಜ್ಞಾನ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 2, learningOutcomes: ['Science and technology basics', 'Curiosity'], keywords: ['Science', 'Technology', 'Invention'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-3', title: 'ಪ್ರಾಣಿ ದಯೆ', titleOriginal: 'ಪ್ರಾಣಿ ದಯೆ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 3, learningOutcomes: ['Compassion for animals', 'Animal rights'], keywords: ['Animals', 'Kindness', 'Care'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-4', title: 'ಅರಳು ಮರಳು', titleOriginal: 'ಅರಳು ಮರಳು', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 4, learningOutcomes: ['Humorous story', 'Wit and wisdom'], keywords: ['Humour', 'Wit', 'Story'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-5', title: 'ನಮ್ಮ ಕರ್ನಾಟಕ', titleOriginal: 'ನಮ್ಮ ಕರ್ನಾಟಕ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 5, learningOutcomes: ['Geography of Karnataka', 'State pride'], keywords: ['Karnataka', 'Geography', 'Culture'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-6', title: 'ಕಾಡಿನ ಕಥೆ', titleOriginal: 'ಕಾಡಿನ ಕಥೆ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 6, learningOutcomes: ['Forest ecosystem', 'Wildlife conservation'], keywords: ['Forest', 'Wildlife', 'Conservation'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-7', title: 'ಕಲ್ಯಾಣ ರಾಜ್ಯ', titleOriginal: 'ಕಲ್ಯಾಣ ರಾಜ್ಯ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 7, learningOutcomes: ['Ideal society', 'Basavanna philosophy'], keywords: ['Basavanna', 'Equality', 'Society'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-4-8', title: 'ಸ್ವಚ್ಛತೆ', titleOriginal: 'ಸ್ವಚ್ಛತೆ', textbookName: 'Siri Kannada 4', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 4, number: 8, learningOutcomes: ['Cleanliness is next to godliness', 'Swachha Bharat'], keywords: ['Cleanliness', 'Health', 'Environment'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 5 — Siri Kannada 5
+    { id: 'kan-5-1', title: 'ಒಟ್ಟಿಗೆ ಬಾಳುವ ಆನಂದ', titleOriginal: 'ಒಟ್ಟಿಗೆ ಬಾಳುವ ಆನಂದ', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 1, learningOutcomes: ['Living Together Happily', 'Value of community'], keywords: ['Togetherness', 'Joy', 'Community'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-2', title: 'ನದಿಯ ಅಳಲು', titleOriginal: 'ನದಿಯ ಅಳಲು', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 2, learningOutcomes: ["River's Lament", 'Water pollution awareness'], keywords: ['River', 'Environment', 'Pollution'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-3', title: 'ಮಹಾನ್ ವ್ಯಕ್ತಿಗಳು', titleOriginal: 'ಮಹಾನ್ ವ್ಯಕ್ತಿಗಳು', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 3, learningOutcomes: ['Great personalities of Karnataka', 'Inspiration'], keywords: ['Basavanna', 'Akkamahadevi', 'Inspiration'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-4', title: 'ವಚನ ಸಾಹಿತ್ಯ', titleOriginal: 'ವಚನ ಸಾಹಿತ್ಯ', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 4, learningOutcomes: ['Vachana literature introduction', 'Spiritual verses'], keywords: ['Vachana', 'Basavanna', 'Literature'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-5', title: 'ಗ್ರಾಮೀಣ ಜೀವನ', titleOriginal: 'ಗ್ರಾಮೀಣ ಜೀವನ', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 5, learningOutcomes: ['Village life in Karnataka', 'Rural traditions'], keywords: ['Village', 'Farmers', 'Tradition'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-6', title: 'ವಿಶ್ವ ಪ್ರೇಮ', titleOriginal: 'ವಿಶ್ವ ಪ್ರೇಮ', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 6, learningOutcomes: ['Universal love and brotherhood', 'Kuvempu philosophy'], keywords: ['Kuvempu', 'Humanity', 'Love'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-7', title: 'ಚಾರಿತ್ರಿಕ ಸ್ಥಳಗಳು', titleOriginal: 'ಚಾರಿತ್ರಿಕ ಸ್ಥಳಗಳು', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 7, learningOutcomes: ['Historical sites of Karnataka', 'Heritage awareness'], keywords: ['Hampi', 'Heritage', 'History'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-5-8', title: 'ಆರೋಗ್ಯವೇ ಭಾಗ್ಯ', titleOriginal: 'ಆರೋಗ್ಯವೇ ಭಾಗ್ಯ', textbookName: 'Siri Kannada 5', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 5, number: 8, learningOutcomes: ['Health is wealth', 'Healthy habits'], keywords: ['Health', 'Exercise', 'Food'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 6 — Siri Kannada 6
+    { id: 'kan-6-1', title: 'ದೊಡ್ಡವರ ದಾರಿ', titleOriginal: 'ದೊಡ್ಡವರ ದಾರಿ', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 1, learningOutcomes: ['The Way of Elders', 'Learning from biographies'], keywords: ['Elders', 'Wisdom', 'Biography'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-2', title: 'ಬೇಸಿಗೆ (ಪದ್ಯ)', titleOriginal: 'ಬೇಸಿಗೆ ಕಾಲ', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 2, learningOutcomes: ['Summer poem', 'Describing seasons'], keywords: ['Summer', 'Poetry', 'Season'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-3', title: 'ಕನ್ನಡ ನಾಡಿನ ಹೆಮ್ಮೆ', titleOriginal: 'ಕನ್ನಡ ನಾಡಿನ ಹೆಮ್ಮೆ', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 3, learningOutcomes: ['Pride of Karnataka', 'Kannada culture and heritage'], keywords: ['Karnataka', 'Culture', 'Pride'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-4', title: 'ಬಸವಣ್ಣನ ವಚನಗಳು', titleOriginal: 'ಬಸವಣ್ಣನ ವಚನಗಳು', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 4, learningOutcomes: ["Basavanna's Vachanas", 'Veerashaiva philosophy'], keywords: ['Basavanna', 'Vachana', 'Equality'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-5', title: 'ನಮ್ಮ ರಾಷ್ಟ್ರ ಕವಿ ಕುವೆಂಪು', titleOriginal: 'ನಮ್ಮ ರಾಷ್ಟ್ರ ಕವಿ ಕುವೆಂಪು', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 5, learningOutcomes: ['Kuvempu — poet laureate', 'Malnad childhood memories'], keywords: ['Kuvempu', 'Poet', 'Malnad'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-6', title: 'ಜನ ಸೇವೆ ಜನಾರ್ದನ ಸೇವೆ', titleOriginal: 'ಜನ ಸೇವೆ ಜನಾರ್ದನ ಸೇವೆ', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 6, learningOutcomes: ['Service to people is service to God', 'Social reformers of Karnataka'], keywords: ['Service', 'Social reform', 'Karnataka'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-7', title: 'ಕಾಡು ಮೇಡು (ಪದ್ಯ)', titleOriginal: 'ಕಾಡು ಮೇಡು', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 7, learningOutcomes: ['Forests and fields poem', 'Nature appreciation'], keywords: ['Forest', 'Nature', 'Poem'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-6-8', title: 'ಸ್ವಾತಂತ್ರ್ಯ ಹೋರಾಟ', titleOriginal: 'ಸ್ವಾತಂತ್ರ್ಯ ಹೋರಾಟ', textbookName: 'Siri Kannada 6', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 6, number: 8, learningOutcomes: ['Freedom struggle', 'Karnataka freedom fighters'], keywords: ['Freedom', 'Independence', 'Karnataka'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 7 — Siri Kannada 7
+    { id: 'kan-7-1', title: 'ಪುಟ್ಟಜ್ಜಿ ಪುಟ್ಟಜ್ಜಿ ಕತೆ ಹೇಳು', titleOriginal: 'ಅಜ್ಜಿಯಿಂದ ಕಥೆಗಳು', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 1, learningOutcomes: ['Storytelling traditions', 'Folklore'], keywords: ['Story', 'Grandmother', 'Folklore'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-2', title: 'ಕವಿ ರನ್ನ', titleOriginal: 'ಕವಿ ರನ್ನ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 2, learningOutcomes: ['Kannada poet Ranna', 'Classical Kannada literature'], keywords: ['Ranna', 'Classical', 'Poem'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-3', title: 'ಮಲೆನಾಡಿನ ಸೌಂದರ್ಯ', titleOriginal: 'ಮಲೆನಾಡಿನ ಸೌಂದರ್ಯ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 3, learningOutcomes: ['Beauty of Malnad', 'Western Ghats ecology'], keywords: ['Malnad', 'Western Ghats', 'Nature'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-4', title: 'ವಿಜ್ಞಾನಿ ವಿಶ್ವೇಶ್ವರಯ್ಯ', titleOriginal: 'ವಿಜ್ಞಾನಿ ವಿಶ್ವೇಶ್ವರಯ್ಯ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 4, learningOutcomes: ['Sir M. Visvesvaraya biography', 'Engineers Day inspiration'], keywords: ['Visvesvaraya', 'Engineer', 'Karnataka'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-5', title: 'ಗ್ರಾಮ ಪಂಚಾಯಿತಿ', titleOriginal: 'ಗ್ರಾಮ ಪಂಚಾಯಿತಿ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 5, learningOutcomes: ['Local governance', 'Democracy at grass roots'], keywords: ['Panchayat', 'Governance', 'Democracy'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-6', title: 'ಸಂಸ್ಕೃತಿ ಮತ್ತು ಪರಂಪರೆ', titleOriginal: 'ಸಂಸ್ಕೃತಿ ಮತ್ತು ಪರಂಪರೆ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 6, learningOutcomes: ['Karnataka culture and traditions', 'Intangible heritage'], keywords: ['Culture', 'Tradition', 'Heritage'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-7', title: 'ಮೋಡದ ಸಾಲು (ಪದ್ಯ)', titleOriginal: 'ಮೋಡದ ಸಾಲು', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 7, learningOutcomes: ['Cloud poem', 'Imagery in poetry'], keywords: ['Clouds', 'Poetry', 'Rain'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-7-8', title: 'ಶ್ರಮದ ಮಹಿಮೆ', titleOriginal: 'ಶ್ರಮದ ಮಹಿಮೆ', textbookName: 'Siri Kannada 7', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 7, number: 8, learningOutcomes: ['Glory of hard work', 'Work ethic'], keywords: ['Labour', 'Hard work', 'Success'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 8 — Siri Kannada 8
+    { id: 'kan-8-1', title: 'ಮಗ್ಗದ ಸಾಹೇಬ', titleOriginal: 'ಸಮಯ ಪ್ರಜ್ಞೆ', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 1, learningOutcomes: ['Weaver Saheb', 'Dignity of labor'], keywords: ['Weaving', 'Labor', 'Dignity'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-2', title: 'ಕುವೆಂಪು ಅವರ ಪದ್ಯಗಳು', titleOriginal: 'ಕುವೆಂಪು ಅವರ ಪದ್ಯಗಳು', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 2, learningOutcomes: ["Kuvempu's poetry", 'Universal humanism'], keywords: ['Kuvempu', 'Poetry', 'Humanism'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-3', title: 'ಸಾಮಾಜಿಕ ಸ್ವಾಸ್ಥ್ಯ', titleOriginal: 'ಸಾಮಾಜಿಕ ಸ್ವಾಸ್ಥ್ಯ', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 3, learningOutcomes: ['Social health', 'Community well-being'], keywords: ['Society', 'Health', 'Community'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-4', title: 'ವಿಶ್ವ ಕನ್ನಡ ಸಮ್ಮೇಳನ', titleOriginal: 'ವಿಶ್ವ ಕನ್ನಡ ಸಮ್ಮೇಳನ', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 4, learningOutcomes: ['World Kannada conference', 'Spread of Kannada globally'], keywords: ['Kannada', 'World', 'Conference'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-5', title: 'ದ.ರಾ. ಬೇಂದ್ರೆ ಕವನಗಳು', titleOriginal: 'ದ.ರಾ. ಬೇಂದ್ರೆ ಕವನಗಳು', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 5, learningOutcomes: ["D.R. Bendre's poems", 'North Karnataka literary tradition'], keywords: ['Bendre', 'Poetry', 'North Karnataka'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-6', title: 'ಐತಿಹಾಸಿಕ ಕಾದಂಬರಿ', titleOriginal: 'ಐತಿಹಾಸಿಕ ಕಾದಂಬರಿ', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 6, learningOutcomes: ['Historical novel excerpt', 'Karnataka history'], keywords: ['History', 'Novel', 'Karnataka'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-8-7', title: 'ಪರಿಸರ ಸಂರಕ್ಷಣೆ', titleOriginal: 'ಪರಿಸರ ಸಂರಕ್ಷಣೆ', textbookName: 'Siri Kannada 8', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 8, number: 7, learningOutcomes: ['Environment conservation', 'Chipko movement in Karnataka context'], keywords: ['Environment', 'Conservation', 'Trees'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 9 — Siri Kannada 9
+    { id: 'kan-9-1', title: 'ರಾಮರಾಜ್ಯ', titleOriginal: 'ರಾಮರಾಜ್ಯ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 1, learningOutcomes: ['Ideal administration', 'Indian heritage'], keywords: ['Ramarajya', 'Governance', 'Ethics'], estimatedPeriods: 6, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-2', title: 'ಒಂದು ತಾರೆ ಹೊರಟಿತು', titleOriginal: 'ಒಂದು ತಾರೆ ಹೊರಟಿತು', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 2, learningOutcomes: ['Poem on loss of a star', 'Elegy form'], keywords: ['Star', 'Elegy', 'Poem'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-3', title: 'ಬೆಳ್ಳಿ ಮೋಡ', titleOriginal: 'ಬೆಳ್ಳಿ ಮೋಡ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 3, learningOutcomes: ['Silver cloud', 'Hope and optimism in poetry'], keywords: ['Cloud', 'Hope', 'Poetry'], estimatedPeriods: 3, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-4', title: 'ವ್ಯಕ್ತಿ ಮತ್ತು ಸಮಾಜ', titleOriginal: 'ವ್ಯಕ್ತಿ ಮತ್ತು ಸಮಾಜ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 4, learningOutcomes: ['Individual and society', 'Social responsibility'], keywords: ['Society', 'Individual', 'Responsibility'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-5', title: 'ಮಾನವ ಹಕ್ಕುಗಳು', titleOriginal: 'ಮಾನವ ಹಕ್ಕುಗಳು', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 5, learningOutcomes: ['Human rights awareness', 'Constitution and rights'], keywords: ['Rights', 'Constitution', 'Human'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-6', title: 'ಕರ್ನಾಟಕ ಏಕೀಕರಣ', titleOriginal: 'ಕರ್ನಾಟಕ ಏಕೀಕರಣ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 6, learningOutcomes: ['Karnataka unification movement', 'Aluru Venkata Rao contribution'], keywords: ['Unification', 'Karnataka', 'Movement'], estimatedPeriods: 6, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-7', title: 'ವಿಜ್ಞಾನ ಮತ್ತು ಸಮಾಜ', titleOriginal: 'ವಿಜ್ಞಾನ ಮತ್ತು ಸಮಾಜ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 7, learningOutcomes: ['Science and society', 'Impact of science on daily life'], keywords: ['Science', 'Society', 'Progress'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-8', title: 'ಅಕ್ಕ ಮಹಾದೇವಿ ವಚನಗಳು', titleOriginal: 'ಅಕ್ಕ ಮಹಾದೇವಿ ವಚನಗಳು', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 8, learningOutcomes: ["Akka Mahadevi's Vachanas", 'Women saints of Karnataka'], keywords: ['Akka Mahadevi', 'Vachana', 'Spirituality'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-9-9', title: 'ಕಥಾ ಸಾಹಿತ್ಯ', titleOriginal: 'ಕಥಾ ಸಾಹಿತ್ಯ', textbookName: 'Siri Kannada 9', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 9, number: 9, learningOutcomes: ['Short story genre', 'Kannada short story tradition'], keywords: ['Story', 'Genre', 'Literature'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+
+    // Grade 10 — Siri Kannada 10
+    { id: 'kan-10-1', title: 'ಶಬರಿ', titleOriginal: 'ಶಬರಿ ಯ ಭಕ್ತಿ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 1, learningOutcomes: ['Devotion of Shabari', 'Epic literature'], keywords: ['Ramayana', 'Shabari', 'Devotion'], estimatedPeriods: 6, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-2', title: 'ಸಂಕಲ್ಪಗೀತೆ (ಪದ್ಯ)', titleOriginal: 'ಸಂಕಲ್ಪ ಗೀತೆ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 2, learningOutcomes: ['Song of resolve', 'Motivation'], keywords: ['Resolve', 'Motivation', 'Goal'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-3', title: 'ಮಡಿವಾಳ ಮಾಚಿದೇವ', titleOriginal: 'ಮಡಿವಾಳ ಮಾಚಿದೇವ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 3, learningOutcomes: ['Social equality through Sharanas', 'Vachana movement'], keywords: ['Sharana', 'Equality', 'Vachana'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-4', title: 'ಕರ್ನಾಟಕ ರತ್ನ', titleOriginal: 'ಕರ್ನಾಟಕ ರತ್ನ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 4, learningOutcomes: ['Gems of Karnataka', 'Outstanding personalities'], keywords: ['Karnataka', 'Achievement', 'Pride'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-5', title: 'ನೀ ಮಾಯೆಯೊಳಗೋ ನಿನ್ನೊಳು ಮಾಯೆಯೋ', titleOriginal: 'ನೀ ಮಾಯೆಯೊಳಗೋ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 5, learningOutcomes: ['Purandaradasa composition', 'Haridasa tradition'], keywords: ['Purandaradasa', 'Devotion', 'Haridasa'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-6', title: 'ಭಾರತ ಭಾಗ್ಯ ವಿಧಾತ', titleOriginal: 'ಭಾರತ ಭಾಗ್ಯ ವಿಧಾತ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 6, learningOutcomes: ['Jana Gana Mana background', 'Rabindranath Tagore translated'], keywords: ['National Anthem', 'Tagore', 'Patriotism'], estimatedPeriods: 4, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-7', title: 'ಕನ್ನಡ ಸಾಹಿತ್ಯ ಪರಂಪರೆ', titleOriginal: 'ಕನ್ನಡ ಸಾಹಿತ್ಯ ಪರಂಪರೆ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 7, learningOutcomes: ['Kannada literary tradition', 'Classical to modern literature'], keywords: ['Literature', 'Classical', 'Kannada'], estimatedPeriods: 6, isActive: true, dataVersion: '2025-kannada-ktbs' },
+    { id: 'kan-10-8', title: 'ಗ್ರಾಹಕ ಸಂರಕ್ಷಣೆ', titleOriginal: 'ಗ್ರಾಹಕ ಸಂರಕ್ಷಣೆ', textbookName: 'Siri Kannada 10', textbookEdition: 'State-SCERT', subject: 'Kannada', grade: 10, number: 8, learningOutcomes: ['Consumer rights awareness', 'Practical life skills'], keywords: ['Consumer', 'Rights', 'Protection'], estimatedPeriods: 5, isActive: true, dataVersion: '2025-kannada-ktbs' },
 ];

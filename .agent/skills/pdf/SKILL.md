@@ -1,10 +1,46 @@
 ---
 name: pdf
-description: Comprehensive PDF manipulation toolkit for extracting text and tables, creating new PDFs, merging/splitting documents, and handling forms. When Claude needs to fill in a PDF form or programmatically process, generate, or analyze PDF documents at scale.
+description: Comprehensive PDF manipulation toolkit with a MANDATORY LaTeX-first workflow for document generation. Use for (1) Generating structured PDFs via LaTeX, (2) Extracting text and tables, (3) Merging/splitting documents, and (4) Handling forms.
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
 # PDF Processing Guide
+
+## Mandatory: LaTeX-First Workflow
+
+> [!IMPORTANT]
+> **ALL new PDF generation MUST follow a LaTeX-first workflow.** Directly creating structured documents using libraries like `reportlab` or `fpdf` is discouraged for new content. This ensures maximum structural integrity, professional typography, and consistent styling for both scientific articles and premium educational materials.
+
+### The Standard Workflow
+1.  **Draft LaTeX Source:** Generate a valid `.tex` file with the desired content and layout.
+2.  **Compile to PDF:** Use a LaTeX engine (e.g., `tectonic` or `pdflatex`) to synthesize the final document.
+
+#### Example: Python LaTeX Orchestration
+```python
+import subprocess
+
+def create_pdf_from_latex(tex_content, output_name="document.tex"):
+    # 1. Write the LaTeX source
+    with open(output_name, "w") as f:
+        f.write(tex_content)
+    
+    # 2. Compile using tectonic (recommended)
+    try:
+        subprocess.run(["tectonic", output_name], check=True)
+        print(f"Successfully generated {output_name.replace('.tex', '.pdf')}")
+    except subprocess.CalledProcessError as e:
+        print(f"Compilation failed: {e}")
+
+# Example LaTeX template
+tex_template = r"""
+\documentclass{article}
+\begin{document}
+Hello, SahayakAI!
+\end{document}
+"""
+
+create_pdf_from_latex(tex_template)
+```
 
 ## Overview
 
@@ -281,7 +317,7 @@ with open("encrypted.pdf", "wb") as output:
 | Split PDFs | pypdf | One page per file |
 | Extract text | pdfplumber | `page.extract_text()` |
 | Extract tables | pdfplumber | `page.extract_tables()` |
-| Create PDFs | reportlab | Canvas or Platypus |
+| Create PDFs | LaTeX (tectonic) | `.tex` source -> `.pdf` |
 | Command line merge | qpdf | `qpdf --empty --pages ...` |
 | OCR scanned PDFs | pytesseract | Convert to image first |
 | Fill PDF forms | pdf-lib or pypdf (see forms.md) | See forms.md |

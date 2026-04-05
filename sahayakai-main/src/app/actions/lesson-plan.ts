@@ -3,6 +3,7 @@
 
 import type { LessonPlanOutput } from '@/ai/flows/lesson-plan-generator';
 import { validateTopicSafety } from '@/lib/safety';
+import { logger } from '@/lib/logger';
 
 // Dynamic imports are used for server-only modules to prevents client-bundle errors
 // when this Action is imported by Client Components.
@@ -44,7 +45,7 @@ function containsPII(text: string): boolean {
  */
 function generateCacheId(topic: string, grade: string, language: string): string | null {
     if (containsPII(topic)) {
-        console.warn(`[Privacy] PII detected in topic: "${topic}". Skipping cache generation.`);
+        logger.warn(`PII detected in topic. Skipping cache generation.`, 'CACHE', { topic: "REDACTED" });
         return null; // Do not generate a cache ID for PII content
     }
 
@@ -79,14 +80,19 @@ export async function getCachedLessonPlan(
         const doc = await docRef.get();
 
         if (doc.exists) {
-            console.log(`Cache HIT for: ${cacheId}`);
-            return doc.data() as LessonPlanOutput;
+            const data = doc.data()!;
+            if (data._metadata?.expiresAt && data._metadata.expiresAt < Date.now()) {
+                docRef.delete().catch(console.warn); // expire stale cache
+                return null;
+            }
+            logger.info(`Cache HIT for lesson plan`, 'CACHE', { cacheId });
+            return data as LessonPlanOutput;
         }
 
-        console.log(`Cache MISS for: ${cacheId}`);
+        logger.info(`Cache MISS for lesson plan`, 'CACHE', { cacheId });
         return null;
     } catch (error) {
-        console.error('Error fetching from cache:', error);
+        logger.error('Error fetching from cache', error, 'CACHE', { topic, grade, language });
         return null; // Fail gracefully, fall back to AI
     }
 }
@@ -105,7 +111,7 @@ export async function saveLessonPlanToCache(
 
         // If PII detected, do NOT save.
         if (!cacheId) {
-            console.log(`[Privacy] Skipping cache save for sensitive topic.`);
+            logger.info(`Skipping cache save for sensitive topic.`, 'CACHE');
             return;
         }
 
@@ -118,12 +124,13 @@ export async function saveLessonPlanToCache(
                 originalTopic: topic,
                 originalGrade: grade,
                 originalLanguage: language,
-                usageCount: 1
+                usageCount: 1,
+                expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
             }
         });
-        console.log(`Saved to cache: ${cacheId}`);
+        logger.info(`Saved lesson plan to cache`, 'CACHE', { cacheId });
     } catch (error) {
-        console.error('Error saving to cache:', error);
+        logger.error('Error saving lesson plan to cache', error, 'CACHE', { topic, grade, language });
         // Don't throw, just log. Caching failure shouldn't break the app.
     }
 }

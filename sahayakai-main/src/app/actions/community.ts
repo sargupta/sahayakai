@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
 import { aggregateUserMetrics } from "./aggregator";
+import { logger } from "@/lib/logger";
 
 export async function getProfilesAction(uids: string[]) {
     return await dbAdapter.getUsers(uids);
@@ -36,14 +37,14 @@ export async function createPostAction(userId: string, content: string, visibili
             timestamp: postData.createdAt
         });
     } catch (e) {
-        console.error("Non-critical: Failed to publish post event:", e);
+        logger.error("Non-critical: Failed to publish post event", e, 'COMMUNITY', { postId: docRef.id, authorId: userId });
     }
 
     revalidatePath("/community");
     revalidatePath("/impact-dashboard");
 
     // Background aggregation
-    aggregateUserMetrics(userId).catch(e => console.error("Aggregator error:", e));
+    aggregateUserMetrics(userId).catch(e => logger.error("Aggregator error for user metrics", e, 'COMMUNITY', { userId }));
 
     return docRef.id;
 }
@@ -128,7 +129,7 @@ export async function followTeacherAction(followerId: string, followingId: strin
                 link: `/community` // Could link to follower's profile if available
             });
         } catch (e) {
-            console.error("Failed to send follow notification:", e);
+            logger.error("Failed to send follow notification", e, 'COMMUNITY', { followerId, followingId });
         }
     }
     revalidatePath("/community");
@@ -346,4 +347,326 @@ export async function getAllTeachersAction(currentUserId?: string) {
     })).filter(t => t.displayName); // Ensure only teachers with names are shown
 
     return dbAdapter.serialize(sanitized);
+}
+
+// ── Engagement actions ────────────────────────────────────────────────────────
+// These three actions close the engagement loop:
+//   likeResourceAction       → like/unlike toggle on a library_resource
+//   saveResourceToLibraryAction → copy a community resource into the teacher's
+//                                 personal library + increment community stats
+//   publishContentToLibraryAction → promote a personal content item to the
+//                                   public library_resources collection
+//                                   (the bridge between personal library and
+//                                   the community feed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Toggle a like on a community library resource.
+ * Creates a like subcollection document for idempotency, increments/decrements
+ * stats.likes atomically, and notifies the author.
+ *
+ * Returns { isLiked: boolean, newCount: number }.
+ */
+export async function likeResourceAction(
+    resourceId: string,
+    userId: string,
+): Promise<{ isLiked: boolean; newCount: number }> {
+    const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
+
+    const resRef  = db.collection('library_resources').doc(resourceId);
+    const likeRef = resRef.collection('likes').doc(userId);
+
+    const [resDoc, likeDoc] = await Promise.all([resRef.get(), likeRef.get()]);
+
+    if (!resDoc.exists) throw new Error('Resource not found');
+    const resData = resDoc.data()!;
+
+    let isLiked: boolean;
+
+    if (likeDoc.exists) {
+        // Already liked — unlike
+        await Promise.all([
+            likeRef.delete(),
+            resRef.update({ 'stats.likes': FieldValue.increment(-1) }),
+        ]);
+        isLiked = false;
+    } else {
+        // New like
+        await Promise.all([
+            likeRef.set({ createdAt: new Date().toISOString() }),
+            resRef.update({ 'stats.likes': FieldValue.increment(1) }),
+        ]);
+        isLiked = true;
+
+        // Notify the original author (non-blocking)
+        if (resData.authorId && resData.authorId !== userId) {
+            try {
+                const likerDoc = await db.collection('users').doc(userId).get();
+                const liker = likerDoc.data();
+                await createNotification({
+                    recipientId: resData.authorId,
+                    type: 'LIKE',
+                    title: 'Someone liked your resource',
+                    message: `${liker?.displayName || 'A teacher'} liked "${resData.title}"`,
+                    senderId: userId,
+                    senderName: liker?.displayName,
+                    senderPhotoURL: liker?.photoURL,
+                    link: '/community',
+                });
+            } catch (e) {
+                logger.error('Failed to send like notification', e, 'COMMUNITY', { resourceId, userId });
+            }
+        }
+
+        // Update author's impact score (likes are a strong signal)
+        if (resData.authorId) {
+            aggregateUserMetrics(resData.authorId).catch(() => {});
+        }
+    }
+
+    // Return the new count for optimistic UI confirmation
+    const updated = await resRef.get();
+    const newCount = updated.data()?.stats?.likes ?? (resData.stats?.likes ?? 0) + (isLiked ? 1 : -1);
+
+    revalidatePath('/community');
+    return { isLiked, newCount };
+}
+
+/**
+ * Save a community resource into the current teacher's personal library.
+ * - Copies metadata into users/{saverId}/content
+ * - Increments stats.saves on the library_resource
+ * - Sends RESOURCE_SAVED notification to the original author
+ * Idempotent: repeated saves are a no-op for stats/notifications.
+ */
+export async function saveResourceToLibraryAction(
+    resource: {
+        id: string;
+        title: string;
+        type: string;
+        authorId: string;
+        language: string;
+        gradeLevel?: string;
+        subject?: string;
+    },
+    saverId: string,
+): Promise<{ alreadySaved: boolean }> {
+    const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
+
+    const resRef  = db.collection('library_resources').doc(resource.id);
+    const saveRef = resRef.collection('saves').doc(saverId);
+
+    const saveDoc = await saveRef.get();
+
+    if (saveDoc.exists) {
+        // Already saved — silently succeed
+        return { alreadySaved: true };
+    }
+
+    // 1. Mark the save in the subcollection (idempotency guard)
+    await saveRef.set({ createdAt: new Date().toISOString() });
+
+    // 2. Increment community stats
+    await resRef.update({ 'stats.saves': FieldValue.increment(1) });
+
+    // 3. Copy into saver's personal library (subcollection)
+    const contentId = `saved_${resource.id}_${saverId.slice(0, 8)}`;
+    const now = new Date().toISOString();
+    const nowTimestamp = { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0, toDate: () => new Date() };
+
+    await dbAdapter.saveContent(saverId, {
+        id:         contentId,
+        type:       resource.type as any,
+        title:      resource.title,
+        topic:      resource.title,
+        language:   resource.language as any,
+        gradeLevel: (resource.gradeLevel ?? '') as any,
+        subject:    (resource.subject ?? 'General') as any,
+        isPublic:   false,
+        isDraft:    false,
+        createdAt:  nowTimestamp,
+        updatedAt:  nowTimestamp,
+        // sourceResourceId lets us track where it came from without re-uploading any data
+        data: { sourceResourceId: resource.id, savedFrom: 'community' } as any,
+    });
+
+    // 4. Notify original author (non-blocking)
+    if (resource.authorId && resource.authorId !== saverId) {
+        try {
+            const saverDoc = await db.collection('users').doc(saverId).get();
+            const saver = saverDoc.data();
+            await createNotification({
+                recipientId: resource.authorId,
+                type: 'RESOURCE_SAVED',
+                title: 'Resource saved',
+                message: `${saver?.displayName || 'A teacher'} saved your "${resource.title}" to their library`,
+                senderId: saverId,
+                senderName: saver?.displayName,
+                senderPhotoURL: saver?.photoURL,
+                link: '/community',
+            });
+        } catch (e) {
+            logger.error('Failed to send resource-saved notification', e, 'COMMUNITY', { resourceId: resource.id, saverId });
+        }
+    }
+
+    // 5. Update author impact score (saves signal long-term utility)
+    if (resource.authorId) {
+        aggregateUserMetrics(resource.authorId).catch(() => {});
+    }
+
+    // Publish analytics event
+    try {
+        await publishEvent('teacher-connect-events', {
+            type: 'RESOURCE_SAVED',
+            resourceId: resource.id,
+            saverId,
+            timestamp: now,
+        });
+    } catch {}
+
+    revalidatePath('/community');
+    return { alreadySaved: false };
+}
+
+/**
+ * Promote a teacher's personal content item to the public community library.
+ * This is the bridge between the personal library (users/{uid}/content) and
+ * the community feed (library_resources).
+ *
+ * Creates a document in library_resources and marks the source content as
+ * isPublic: true. Idempotent — calling twice updates the existing record.
+ */
+export async function publishContentToLibraryAction(
+    contentId: string,
+    userId: string,
+): Promise<{ resourceId: string }> {
+    const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
+
+    // 1. Read the source content from personal library
+    const content = await dbAdapter.getContent(userId, contentId);
+    if (!content) throw new Error('Content not found in personal library');
+
+    // 2. Fetch author name for the community card
+    const authorDoc = await db.collection('users').doc(userId).get();
+    const authorData = authorDoc.data();
+
+    // 3. Write (or overwrite) into library_resources
+    // The document ID is deterministic so republishing is idempotent
+    const resourceId = `pub_${userId.slice(0, 8)}_${contentId.slice(0, 12)}`;
+    const resourceRef = db.collection('library_resources').doc(resourceId);
+
+    await resourceRef.set({
+        id:         resourceId,
+        type:       content.type,
+        title:      content.title,
+        topic:      content.topic,
+        language:   content.language,
+        gradeLevel: content.gradeLevel,
+        subject:    content.subject,
+        authorId:   userId,
+        authorName: authorData?.displayName || 'Teacher',
+        authorPhotoURL: authorData?.photoURL ?? null,
+        isPublic:   true,
+        stats: {
+            likes:     0,
+            saves:     0,
+            downloads: 0,
+            uses:      0,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        // sourceContentId allows linking back to the full content in Cloud Storage
+        sourceContentId: contentId,
+        storagePath:     content.storagePath ?? null,
+    }, { merge: true });
+
+    // 4. Mark the source content as public so the UI can reflect it
+    await dbAdapter.saveContent(userId, {
+        ...content,
+        isPublic: true,
+        updatedAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0, toDate: () => new Date() },
+    });
+
+    // 5. Publish event for feed fan-out (subscribers can push to followers' feeds)
+    try {
+        await publishEvent('teacher-connect-events', {
+            type: 'RESOURCE_PUBLISHED',
+            resourceId,
+            authorId: userId,
+            contentType: content.type,
+            language: content.language,
+            timestamp: new Date().toISOString(),
+        });
+    } catch {}
+
+    // 6. Update author's content-shared count
+    aggregateUserMetrics(userId).catch(() => {});
+
+    revalidatePath('/community');
+    return { resourceId };
+}
+
+/**
+ * Share the user's most recently generated content of a given type to the community.
+ * Finds the latest content doc by type, then delegates to publishContentToLibraryAction.
+ */
+export async function shareLatestContentAction(contentType: string): Promise<{ resourceId: string }> {
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const userId = h.get("x-user-id");
+    if (!userId) throw new Error("Unauthorized");
+
+    // Find the user's most recent content of this type
+    const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
+    if (!items.length) throw new Error('No content found to share. Generate something first!');
+
+    const latestContent = items[0];
+    if (latestContent.isPublic) throw new Error('This content is already shared.');
+
+    return publishContentToLibraryAction(latestContent.id, userId);
+}
+
+export async function sendChatMessageAction(text: string, audioUrl?: string) {
+    // 1. Authenticate via middleware-injected header — never trust client-supplied identity
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const authorId = h.get("x-user-id");
+    if (!authorId) throw new Error("Unauthorized");
+
+    // 2. Validate input
+    const trimmed = text?.trim();
+    if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
+    if (trimmed && trimmed.length > 500) throw new Error("Message too long");
+
+    // 3. Rate limit
+    const { checkServerRateLimit } = await import("@/lib/server-safety");
+    await checkServerRateLimit(authorId);
+
+    // 4. Fetch author profile from server — never trust client-supplied name/photo
+    const db = await getDb();
+    const { FieldValue } = await import("firebase-admin/firestore");
+
+    const userDoc = await db.collection("users").doc(authorId).get();
+    const userData = userDoc.data();
+    const authorName = userData?.displayName || "Teacher";
+    const authorPhotoURL = userData?.photoURL ?? null;
+
+    const payload: Record<string, any> = {
+        text: trimmed || '',
+        authorId,
+        authorName,
+        authorPhotoURL,
+        createdAt: FieldValue.serverTimestamp(),
+    };
+    if (audioUrl) payload.audioUrl = audioUrl;
+
+    await db.collection("community_chat").add(payload);
+
+    // Fire-and-forget: trigger AI reactive reply (non-blocking)
+    const { triggerAIReactiveReply } = await import("@/lib/ai-reactive-trigger");
+    triggerAIReactiveReply("community_chat", trimmed || '', authorName);
 }
