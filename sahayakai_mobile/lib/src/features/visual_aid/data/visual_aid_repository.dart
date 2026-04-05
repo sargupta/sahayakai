@@ -60,9 +60,6 @@ class VisualAidRepository {
       ),
     );
 
-    if (response.statusCode == 200) {
-      return VisualAidOutput.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Visual aid generation failed: ${response.statusCode}');
+    return VisualAidOutput.fromJson(response.data as Map<String, dynamic>);
   }
 }

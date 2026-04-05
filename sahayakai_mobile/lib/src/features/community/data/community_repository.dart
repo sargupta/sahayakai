@@ -45,13 +45,10 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['posts'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch feed posts: ${response.statusCode}');
+    final list = response.data['posts'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// POST /community/posts -- create a new community post. Returns the post ID.
@@ -72,10 +69,7 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return response.data['id'] as String? ?? '';
-    }
-    throw Exception('Failed to create post: ${response.statusCode}');
+    return response.data['id'] as String? ?? '';
   }
 
   /// POST /community/posts/{id}/like -- toggle the like state on a post.
@@ -84,13 +78,10 @@ class CommunityRepository {
       '/community/posts/$postId/like',
     );
 
-    if (response.statusCode == 200) {
-      return (
-        isLiked: response.data['isLiked'] as bool? ?? false,
-        newCount: response.data['newCount'] as int? ?? 0,
-      );
-    }
-    throw Exception('Failed to toggle like: ${response.statusCode}');
+    return (
+      isLiked: response.data['isLiked'] as bool? ?? false,
+      newCount: response.data['newCount'] as int? ?? 0,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -103,13 +94,10 @@ class CommunityRepository {
       '/community/posts/$postId/comments',
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['comments'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch comments: ${response.statusCode}');
+    final list = response.data['comments'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// POST /community/posts/{id}/comments -- add a comment to a post.
@@ -119,11 +107,8 @@ class CommunityRepository {
       data: {'content': content},
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return CommunityComment.fromJson(
-          response.data as Map<String, dynamic>);
-    }
-    throw Exception('Failed to add comment: ${response.statusCode}');
+    return CommunityComment.fromJson(
+        response.data as Map<String, dynamic>);
   }
 
   // ---------------------------------------------------------------------------
@@ -134,13 +119,10 @@ class CommunityRepository {
   Future<List<CommunityGroup>> getGroups() async {
     final response = await _apiClient.client.get('/community/groups');
 
-    if (response.statusCode == 200) {
-      final list = response.data['groups'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityGroup.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch groups: ${response.statusCode}');
+    final list = response.data['groups'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityGroup.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// GET /community/groups/{id}/posts -- fetch posts within a group.
@@ -149,13 +131,10 @@ class CommunityRepository {
       '/community/groups/$groupId/posts',
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['posts'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch group posts: ${response.statusCode}');
+    final list = response.data['posts'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// GET /community/groups/{id}/chat -- fetch chat messages for a group.
@@ -167,13 +146,10 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['messages'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch group chat: ${response.statusCode}');
+    final list = response.data['messages'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// POST /community/groups/{id}/chat -- send a chat message to a group.
@@ -190,10 +166,7 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return ChatMessage.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Failed to send chat message: ${response.statusCode}');
+    return ChatMessage.fromJson(response.data as Map<String, dynamic>);
   }
 
   // ---------------------------------------------------------------------------
@@ -215,14 +188,10 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['resources'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityResource.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception(
-        'Failed to fetch library resources: ${response.statusCode}');
+    final list = response.data['resources'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityResource.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// POST /community/library/{id}/like -- toggle the like state on a resource.
@@ -233,25 +202,17 @@ class CommunityRepository {
       '/community/library/$resourceId/like',
     );
 
-    if (response.statusCode == 200) {
-      return (
-        isLiked: response.data['isLiked'] as bool? ?? false,
-        newCount: response.data['newCount'] as int? ?? 0,
-      );
-    }
-    throw Exception(
-        'Failed to toggle resource like: ${response.statusCode}');
+    return (
+      isLiked: response.data['isLiked'] as bool? ?? false,
+      newCount: response.data['newCount'] as int? ?? 0,
+    );
   }
 
   /// POST /community/library/{id}/save -- save a resource to personal collection.
   Future<void> saveResource(String resourceId) async {
-    final response = await _apiClient.client.post(
+    await _apiClient.client.post(
       '/community/library/$resourceId/save',
     );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to save resource: ${response.statusCode}');
-    }
   }
 
   // ---------------------------------------------------------------------------
@@ -264,78 +225,52 @@ class CommunityRepository {
       '/community/teachers/recommended',
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['teachers'] as List<dynamic>? ?? [];
-      return list.map((e) => e as Map<String, dynamic>).toList();
-    }
-    throw Exception(
-        'Failed to fetch recommended teachers: ${response.statusCode}');
+    final list = response.data['teachers'] as List<dynamic>? ?? [];
+    return list.map((e) => e as Map<String, dynamic>).toList();
   }
 
   /// POST /connections/request -- send a connection request.
   Future<void> sendConnectionRequest(String toUid) async {
-    final response = await _apiClient.client.post(
+    await _apiClient.client.post(
       '/connections/request',
       data: {'toUid': toUid},
     );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(
-          'Failed to send connection request: ${response.statusCode}');
-    }
   }
 
   /// POST /connections/accept -- accept a pending connection request.
   Future<void> acceptConnection(String requestId) async {
-    final response = await _apiClient.client.post(
+    await _apiClient.client.post(
       '/connections/accept',
       data: {'requestId': requestId},
     );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to accept connection: ${response.statusCode}');
-    }
   }
 
   /// POST /connections/decline -- decline a pending connection request.
   Future<void> declineConnection(String requestId) async {
-    final response = await _apiClient.client.post(
+    await _apiClient.client.post(
       '/connections/decline',
       data: {'requestId': requestId},
     );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to decline connection: ${response.statusCode}');
-    }
   }
 
   /// GET /connections -- fetch established connections.
   Future<List<TeacherConnection>> getConnections() async {
     final response = await _apiClient.client.get('/connections');
 
-    if (response.statusCode == 200) {
-      final list = response.data['connections'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => TeacherConnection.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('Failed to fetch connections: ${response.statusCode}');
+    final list = response.data['connections'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => TeacherConnection.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// GET /connections/requests -- fetch pending connection requests.
   Future<List<ConnectionRequest>> getPendingRequests() async {
     final response = await _apiClient.client.get('/connections/requests');
 
-    if (response.statusCode == 200) {
-      final list = response.data['requests'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => ConnectionRequest.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception(
-        'Failed to fetch pending requests: ${response.statusCode}');
+    final list = response.data['requests'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => ConnectionRequest.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Alias for [getPendingRequests] — used by connections screen.
@@ -347,14 +282,10 @@ class CommunityRepository {
       '/community/teachers/recommended',
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['teachers'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => TeacherConnection.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception(
-        'Failed to fetch discover teachers: ${response.statusCode}');
+    final list = response.data['teachers'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => TeacherConnection.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// GET /community/library -- search library resources with additional filters.
@@ -372,13 +303,9 @@ class CommunityRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      final list = response.data['resources'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => CommunityResource.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception(
-        'Failed to search library: ${response.statusCode}');
+    final list = response.data['resources'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CommunityResource.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

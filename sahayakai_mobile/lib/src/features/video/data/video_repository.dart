@@ -56,9 +56,6 @@ class VideoRepository {
       },
     );
 
-    if (response.statusCode == 200) {
-      return VideoOutput.fromJson(response.data as Map<String, dynamic>);
-    }
-    throw Exception('Video recommendations failed: ${response.statusCode}');
+    return VideoOutput.fromJson(response.data as Map<String, dynamic>);
   }
 }
