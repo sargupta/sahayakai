@@ -1,5 +1,5 @@
 name: sahayakai_mobile
-description: "SahayakAI: A personal AI companion for rural educators in Bharat."
+description: "SahayakAI: AI companion for India's 10M educators."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,38 +9,52 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # Architecture & State Management
   flutter_riverpod: ^2.4.9
   riverpod_annotation: ^2.3.3
-  
+
   # Navigation
   go_router: ^13.0.0
-  
+
   # Networking
   dio: ^5.4.0
   connectivity_plus: ^5.0.2
-  
+
   # Local Storage (Offline First)
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   path_provider: ^2.1.2
-  
+
   # Auth
   firebase_core: ^2.24.2
   firebase_auth: ^4.16.0
-  
+  google_sign_in: ^6.2.1
+
+  # Firebase Services
+  firebase_messaging: ^14.7.0
+  firebase_crashlytics: ^3.5.0
+
+  # Secure Storage
+  flutter_secure_storage: ^9.0.0
+
   # UI Components & Utilities
   flutter_animate: ^4.5.0
   google_fonts: ^6.1.0
-  flutter_markdown_plus: ^1.0.0  # Dependency fix
+  flutter_markdown_plus: ^1.0.0
   intl: ^0.19.0
   glassmorphism: ^3.0.0
-  
+
   # Audio/Voice
   flutter_sound: ^9.2.13
   uuid: ^4.2.1
   permission_handler: ^11.1.0
+
+  # Image Picker
+  image_picker: ^1.0.7
+
+  # URL Launcher
+  url_launcher: ^6.2.5
 
   # Sharing & PDF
   share_plus: ^10.0.0
@@ -52,9 +66,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  mocktail: ^1.0.3
   build_runner: ^2.4.7
   riverpod_generator: ^2.3.9
   isar_generator: ^3.1.0+1
+  # Play Store prep — run these after adding icons/splash assets:
+  #   flutter pub run flutter_launcher_icons
+  #   flutter pub run flutter_native_splash:create
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.9
 
 flutter:
   uses-material-design: true
@@ -62,3 +82,27 @@ flutter:
     - assets/images/
     - assets/tokens/
     - assets/icons/
+
+# ─────────────────── Launcher Icons ───────────────────
+# Place a 1024×1024 icon at assets/images/app_icon.png before running:
+#   flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "#FF6B00"   # Saffron orange — brand primary
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
+  min_sdk_android: 23
+  web:
+    generate: false
+
+# ─────────────────── Native Splash ───────────────────
+# Run: flutter pub run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FF6B00"             # Saffron orange background
+  image: assets/images/splash_logo.png
+  android_12:
+    color: "#FF6B00"
+    image: assets/images/splash_logo.png
+    icon_background_color: "#FF6B00"
+  fullscreen: true
