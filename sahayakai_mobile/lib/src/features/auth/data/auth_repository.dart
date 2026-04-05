@@ -67,7 +67,11 @@ class AuthRepository {
   // --------------- Google Sign-In ---------------
 
   Future<UserCredential?> signInWithGoogle() async {
-    final googleUser = await GoogleSignIn().signIn();
+    final googleSignIn = GoogleSignIn(
+      serverClientId:
+          '640589855975-5hskrqgg7k87p6m2ogb9lj19tel78d14.apps.googleusercontent.com',
+    );
+    final googleUser = await googleSignIn.signIn();
     if (googleUser == null) return null; // User cancelled
 
     final googleAuth = await googleUser.authentication;
