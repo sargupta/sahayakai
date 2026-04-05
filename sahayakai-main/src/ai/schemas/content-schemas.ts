@@ -16,7 +16,8 @@ export const LanguageSchema = z.string();
 
 export const UserProfileSchema = z.object({
     uid: z.string(),
-    email: z.string().email(),
+    email: z.string().email().or(z.literal('')).default(''),
+    phoneNumber: z.string().optional(),
     displayName: z.string(),
     photoURL: z.string().optional(),
 

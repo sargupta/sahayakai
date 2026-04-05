@@ -1,0 +1,299 @@
+[
+  {
+    "testCaseId": "lp-001-photosynthesis-class7-hi",
+    "input": {
+      "topic": "Photosynthesis",
+      "gradeLevels": ["Class 7"],
+      "language": "Hindi",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Science"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will explain the process of photosynthesis",
+        "Students will identify the role of chlorophyll in food preparation"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-002-fractions-class5-en",
+    "input": {
+      "topic": "Fractions",
+      "gradeLevels": ["Class 5"],
+      "language": "English",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Mathematics",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will identify and represent fractions using real objects",
+        "Students will compare like fractions"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-003-indian-independence-class10-en",
+    "input": {
+      "topic": "Nationalism in India - Non-Cooperation and Civil Disobedience Movements",
+      "gradeLevels": ["Class 10"],
+      "language": "English",
+      "resourceLevel": "medium",
+      "useRuralContext": false,
+      "subject": "Social Science",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will analyse the causes and effects of the Non-Cooperation Movement",
+        "Students will evaluate the significance of the Salt March"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-004-water-cycle-class5-kn",
+    "input": {
+      "topic": "Water Cycle",
+      "gradeLevels": ["Class 5"],
+      "language": "Kannada",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Science"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will describe the stages of the water cycle",
+        "Students will relate the water cycle to monsoon and farming"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-005-quadratic-equations-class10-en",
+    "input": {
+      "topic": "Quadratic Equations",
+      "gradeLevels": ["Class 10"],
+      "language": "English",
+      "resourceLevel": "high",
+      "useRuralContext": false,
+      "subject": "Mathematics",
+      "difficultyLevel": "advanced"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will solve quadratic equations using factorisation and the quadratic formula",
+        "Students will determine the nature of roots using the discriminant"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-006-human-body-class5-hi",
+    "input": {
+      "topic": "The Human Body - Digestive System",
+      "gradeLevels": ["Class 5"],
+      "language": "Hindi",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Science",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will name the organs of the digestive system",
+        "Students will explain the journey of food from mouth to stomach"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-007-our-environment-class3-ta",
+    "input": {
+      "topic": "Our Environment - Plants Around Us",
+      "gradeLevels": ["Class 3"],
+      "language": "Tamil",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "EVS"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will identify different types of plants in their surroundings",
+        "Students will classify plants as herbs, shrubs, and trees"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-008-acids-bases-class7-en",
+    "input": {
+      "topic": "Acids, Bases and Salts",
+      "gradeLevels": ["Class 7"],
+      "language": "English",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Science",
+      "ncertChapter": {
+        "title": "Acids, Bases and Salts",
+        "number": 5,
+        "subject": "Science",
+        "learningOutcomes": [
+          "Students will classify substances as acidic, basic, or neutral using indicators",
+          "Students will describe the neutralisation reaction"
+        ]
+      }
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will classify substances as acidic, basic, or neutral using indicators",
+        "Students will describe the neutralisation reaction"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-009-motion-class9-hi",
+    "input": {
+      "topic": "Motion - Distance, Displacement, Speed and Velocity",
+      "gradeLevels": ["Class 9"],
+      "language": "Hindi",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Science",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will differentiate between distance and displacement",
+        "Students will calculate speed and velocity using real-life examples"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-010-mughal-empire-class7-en",
+    "input": {
+      "topic": "The Mughal Empire",
+      "gradeLevels": ["Class 7"],
+      "language": "English",
+      "resourceLevel": "low",
+      "useRuralContext": false,
+      "subject": "Social Science"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will describe the administration system under Akbar",
+        "Students will discuss the cultural contributions of the Mughal Empire"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-011-electricity-class10-kn",
+    "input": {
+      "topic": "Electricity - Ohm's Law and Resistance",
+      "gradeLevels": ["Class 10"],
+      "language": "Kannada",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Science",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will state and apply Ohm's law",
+        "Students will calculate resistance in series and parallel circuits"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-012-data-handling-class5-en",
+    "input": {
+      "topic": "Data Handling - Pictographs and Bar Graphs",
+      "gradeLevels": ["Class 5"],
+      "language": "English",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Mathematics",
+      "difficultyLevel": "remedial"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will read and interpret pictographs",
+        "Students will draw simple bar graphs using given data"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-013-cell-structure-class9-en",
+    "input": {
+      "topic": "The Fundamental Unit of Life - Cell",
+      "gradeLevels": ["Class 9"],
+      "language": "English",
+      "resourceLevel": "high",
+      "useRuralContext": false,
+      "subject": "Science",
+      "difficultyLevel": "advanced",
+      "ncertChapter": {
+        "title": "The Fundamental Unit of Life",
+        "number": 5,
+        "subject": "Science",
+        "learningOutcomes": [
+          "Students will describe the structure of a cell",
+          "Students will differentiate between plant and animal cells"
+        ]
+      }
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will describe the structure of a cell",
+        "Students will differentiate between plant and animal cells"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-014-tenses-class7-hi",
+    "input": {
+      "topic": "Simple Past and Present Tense",
+      "gradeLevels": ["Class 7"],
+      "language": "Hindi",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "English"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will identify simple past and present tense in sentences",
+        "Students will convert sentences from one tense to another"
+      ]
+    }
+  },
+  {
+    "testCaseId": "lp-015-resources-class8-ta",
+    "input": {
+      "topic": "Resources and Development - Land, Soil, Water",
+      "gradeLevels": ["Class 8"],
+      "language": "Tamil",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Social Science",
+      "difficultyLevel": "standard"
+    },
+    "reference": {
+      "expectedPhases": ["Engage", "Explore", "Explain", "Elaborate", "Evaluate"],
+      "learningOutcomes": [
+        "Students will classify resources as natural and human-made",
+        "Students will explain the importance of soil and water conservation"
+      ]
+    }
+  }
+]

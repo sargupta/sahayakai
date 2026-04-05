@@ -144,7 +144,8 @@ export function getCareerStage(yearsOfExperience: number): TeacherCareerStage {
 
 export interface UserProfile {
     uid: string;
-    email: string;
+    email?: string;
+    phoneNumber?: string;
     displayName: string;
     photoURL?: string;
 

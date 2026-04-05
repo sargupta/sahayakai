@@ -1,0 +1,192 @@
+[
+  {
+    "testCaseId": "ep-001-cbse-math-class10",
+    "input": {
+      "board": "CBSE",
+      "subject": "Mathematics",
+      "gradeLevel": "Class 10",
+      "maxMarks": 80,
+      "chapters": ["Real Numbers", "Polynomials", "Quadratic Equations"],
+      "language": "English",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Real Numbers", "Polynomials", "Quadratic Equations"]
+    }
+  },
+  {
+    "testCaseId": "ep-002-cbse-science-class10",
+    "input": {
+      "board": "CBSE",
+      "subject": "Science",
+      "gradeLevel": "Class 10",
+      "maxMarks": 80,
+      "chapters": ["Chemical Reactions and Equations", "Acids, Bases and Salts", "Life Processes"],
+      "language": "English",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Chemical Reactions and Equations", "Acids, Bases and Salts", "Life Processes"]
+    }
+  },
+  {
+    "testCaseId": "ep-003-cbse-math-class9",
+    "input": {
+      "board": "CBSE",
+      "subject": "Mathematics",
+      "gradeLevel": "Class 9",
+      "maxMarks": 80,
+      "chapters": ["Number Systems", "Polynomials", "Coordinate Geometry", "Linear Equations in Two Variables"],
+      "language": "English",
+      "difficulty": "moderate",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Number Systems", "Polynomials", "Coordinate Geometry", "Linear Equations in Two Variables"]
+    }
+  },
+  {
+    "testCaseId": "ep-004-cbse-science-class9-hi",
+    "input": {
+      "board": "CBSE",
+      "subject": "Science",
+      "gradeLevel": "Class 9",
+      "maxMarks": 80,
+      "chapters": ["Motion", "Force and Laws of Motion", "Gravitation"],
+      "language": "Hindi",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": false
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Motion", "Force and Laws of Motion", "Gravitation"]
+    }
+  },
+  {
+    "testCaseId": "ep-005-cbse-math-class10-half-yearly",
+    "input": {
+      "board": "CBSE",
+      "subject": "Mathematics",
+      "gradeLevel": "Class 10",
+      "maxMarks": 40,
+      "chapters": ["Real Numbers", "Polynomials"],
+      "language": "English",
+      "difficulty": "easy",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 40,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Real Numbers", "Polynomials"]
+    }
+  },
+  {
+    "testCaseId": "ep-006-cbse-science-class10-hard",
+    "input": {
+      "board": "CBSE",
+      "subject": "Science",
+      "gradeLevel": "Class 10",
+      "maxMarks": 80,
+      "chapters": ["Electricity", "Magnetic Effects of Electric Current", "Light - Reflection and Refraction"],
+      "language": "English",
+      "difficulty": "hard",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Electricity", "Magnetic Effects of Electric Current", "Light - Reflection and Refraction"]
+    }
+  },
+  {
+    "testCaseId": "ep-007-cbse-math-class9-half-yearly",
+    "input": {
+      "board": "CBSE",
+      "subject": "Mathematics",
+      "gradeLevel": "Class 9",
+      "maxMarks": 40,
+      "chapters": ["Number Systems", "Polynomials", "Coordinate Geometry"],
+      "language": "English",
+      "difficulty": "easy",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": false
+    },
+    "reference": {
+      "expectedTotalMarks": 40,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Number Systems", "Polynomials", "Coordinate Geometry"]
+    }
+  },
+  {
+    "testCaseId": "ep-008-cbse-science-class9-no-answerkey",
+    "input": {
+      "board": "CBSE",
+      "subject": "Science",
+      "gradeLevel": "Class 9",
+      "maxMarks": 80,
+      "chapters": ["The Fundamental Unit of Life", "Tissues", "Improvement in Food Resources"],
+      "language": "English",
+      "difficulty": "moderate",
+      "includeAnswerKey": false,
+      "includeMarkingScheme": false
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["The Fundamental Unit of Life", "Tissues", "Improvement in Food Resources"]
+    }
+  },
+  {
+    "testCaseId": "ep-009-cbse-math-class10-hi",
+    "input": {
+      "board": "CBSE",
+      "subject": "Mathematics",
+      "gradeLevel": "Class 10",
+      "maxMarks": 80,
+      "chapters": ["Arithmetic Progressions", "Triangles", "Introduction to Trigonometry", "Statistics"],
+      "language": "Hindi",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 80,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Arithmetic Progressions", "Triangles", "Introduction to Trigonometry", "Statistics"]
+    }
+  },
+  {
+    "testCaseId": "ep-010-cbse-science-class10-biology",
+    "input": {
+      "board": "CBSE",
+      "subject": "Science",
+      "gradeLevel": "Class 10",
+      "maxMarks": 40,
+      "chapters": ["Life Processes", "How Do Organisms Reproduce", "Heredity and Evolution"],
+      "language": "English",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    },
+    "reference": {
+      "expectedTotalMarks": 40,
+      "expectedSectionCount": 4,
+      "expectedChaptersCovered": ["Life Processes", "How Do Organisms Reproduce", "Heredity and Evolution"]
+    }
+  }
+]

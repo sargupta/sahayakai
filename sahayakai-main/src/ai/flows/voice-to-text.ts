@@ -62,7 +62,7 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
     }
 
     return { text: transcription.text, language: transcription.language };
-  });
+  }, 'voiceToText.sarvam');
 }
 
 export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextOutput> {
@@ -76,5 +76,5 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
     }
 
     return { text: transcription.text, language: transcription.language };
-  });
+  }, 'voiceToText.gemini');
 }

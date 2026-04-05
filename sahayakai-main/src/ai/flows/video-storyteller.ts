@@ -611,7 +611,7 @@ const videoStorytellerFlow = ai.defineFlow(
 
             const { output } = await runResiliently(async (resilienceConfig) => {
                 return await videoStorytellerPrompt(input, resilienceConfig);
-            });
+            }, 'videoStoryteller.generate');
 
             if (!output) {
                 throw new FlowExecutionError('AI model returned null output for Video Storyteller');

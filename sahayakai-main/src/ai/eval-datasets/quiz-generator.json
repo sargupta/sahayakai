@@ -1,0 +1,250 @@
+[
+  {
+    "testCaseId": "quiz-001-photosynthesis-class7-en",
+    "input": {
+      "topic": "Photosynthesis",
+      "numQuestions": 5,
+      "gradeLevel": "Class 7",
+      "language": "English",
+      "questionTypes": ["multiple_choice"],
+      "subject": "Science"
+    },
+    "reference": {
+      "expectedQuestionCount": 5,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["chlorophyll", "sunlight", "carbon dioxide", "oxygen"]
+    }
+  },
+  {
+    "testCaseId": "quiz-002-fractions-class5-hi",
+    "input": {
+      "topic": "Fractions and Decimals",
+      "numQuestions": 8,
+      "gradeLevel": "Class 5",
+      "language": "Hindi",
+      "questionTypes": ["multiple_choice", "fill_in_the_blanks"],
+      "subject": "Mathematics"
+    },
+    "reference": {
+      "expectedQuestionCount": 8,
+      "expectedSubject": "Mathematics",
+      "mustContainConcepts": ["numerator", "denominator", "equivalent fractions"]
+    }
+  },
+  {
+    "testCaseId": "quiz-003-indian-independence-class10-en",
+    "input": {
+      "topic": "Nationalism in India",
+      "numQuestions": 10,
+      "gradeLevel": "Class 10",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "true_false", "short_answer"],
+      "subject": "Social Science"
+    },
+    "reference": {
+      "expectedQuestionCount": 10,
+      "expectedSubject": "Social Science",
+      "mustContainConcepts": ["Non-Cooperation Movement", "Civil Disobedience Movement", "Salt March", "Mahatma Gandhi"]
+    }
+  },
+  {
+    "testCaseId": "quiz-004-acids-bases-class7-kn",
+    "input": {
+      "topic": "Acids, Bases and Salts",
+      "numQuestions": 6,
+      "gradeLevel": "Class 7",
+      "language": "Kannada",
+      "questionTypes": ["multiple_choice", "true_false"],
+      "subject": "Science"
+    },
+    "reference": {
+      "expectedQuestionCount": 6,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["litmus paper", "indicator", "neutralisation"]
+    }
+  },
+  {
+    "testCaseId": "quiz-005-linear-equations-class9-en",
+    "input": {
+      "topic": "Linear Equations in Two Variables",
+      "numQuestions": 7,
+      "gradeLevel": "Class 9",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "short_answer"],
+      "subject": "Mathematics",
+      "targetDifficulty": "hard"
+    },
+    "reference": {
+      "expectedQuestionCount": 7,
+      "expectedSubject": "Mathematics",
+      "mustContainConcepts": ["pair of linear equations", "graphical method", "solution of equation"]
+    }
+  },
+  {
+    "testCaseId": "quiz-006-water-cycle-class5-en",
+    "input": {
+      "topic": "Water Cycle and Water Conservation",
+      "numQuestions": 5,
+      "gradeLevel": "Class 5",
+      "language": "English",
+      "questionTypes": ["true_false", "fill_in_the_blanks"],
+      "subject": "Science",
+      "targetDifficulty": "easy"
+    },
+    "reference": {
+      "expectedQuestionCount": 5,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["evaporation", "condensation", "precipitation", "groundwater"]
+    }
+  },
+  {
+    "testCaseId": "quiz-007-tenses-class7-en",
+    "input": {
+      "topic": "Simple Past and Present Tense",
+      "numQuestions": 8,
+      "gradeLevel": "Class 7",
+      "language": "English",
+      "questionTypes": ["fill_in_the_blanks", "multiple_choice"],
+      "subject": "English"
+    },
+    "reference": {
+      "expectedQuestionCount": 8,
+      "expectedSubject": "English",
+      "mustContainConcepts": ["past tense", "present tense", "verb forms", "regular verbs"]
+    }
+  },
+  {
+    "testCaseId": "quiz-008-periodic-table-class10-hi",
+    "input": {
+      "topic": "Periodic Classification of Elements",
+      "numQuestions": 10,
+      "gradeLevel": "Class 10",
+      "language": "Hindi",
+      "questionTypes": ["multiple_choice", "short_answer"],
+      "subject": "Science",
+      "targetDifficulty": "medium"
+    },
+    "reference": {
+      "expectedQuestionCount": 10,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["Mendeleev", "modern periodic table", "atomic number", "groups", "periods"]
+    }
+  },
+  {
+    "testCaseId": "quiz-009-triangles-class9-kn",
+    "input": {
+      "topic": "Triangles and Their Properties",
+      "numQuestions": 6,
+      "gradeLevel": "Class 9",
+      "language": "Kannada",
+      "questionTypes": ["multiple_choice", "true_false"],
+      "subject": "Mathematics",
+      "targetDifficulty": "medium"
+    },
+    "reference": {
+      "expectedQuestionCount": 6,
+      "expectedSubject": "Mathematics",
+      "mustContainConcepts": ["congruence", "Pythagoras theorem", "angle sum property"]
+    }
+  },
+  {
+    "testCaseId": "quiz-010-mughal-empire-class7-hi",
+    "input": {
+      "topic": "The Mughal Empire",
+      "numQuestions": 7,
+      "gradeLevel": "Class 7",
+      "language": "Hindi",
+      "questionTypes": ["multiple_choice", "short_answer", "true_false"],
+      "subject": "Social Science"
+    },
+    "reference": {
+      "expectedQuestionCount": 7,
+      "expectedSubject": "Social Science",
+      "mustContainConcepts": ["Akbar", "Mansabdari system", "administration", "Mughal architecture"]
+    }
+  },
+  {
+    "testCaseId": "quiz-011-motion-class9-en",
+    "input": {
+      "topic": "Motion and Laws of Motion",
+      "numQuestions": 8,
+      "gradeLevel": "Class 9",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "short_answer"],
+      "subject": "Science",
+      "targetDifficulty": "hard"
+    },
+    "reference": {
+      "expectedQuestionCount": 8,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["Newton's laws", "velocity", "acceleration", "force", "inertia"]
+    }
+  },
+  {
+    "testCaseId": "quiz-012-area-perimeter-class5-en",
+    "input": {
+      "topic": "Area and Perimeter",
+      "numQuestions": 5,
+      "gradeLevel": "Class 5",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "fill_in_the_blanks"],
+      "subject": "Mathematics",
+      "targetDifficulty": "easy"
+    },
+    "reference": {
+      "expectedQuestionCount": 5,
+      "expectedSubject": "Mathematics",
+      "mustContainConcepts": ["area of rectangle", "perimeter of square", "units"]
+    }
+  },
+  {
+    "testCaseId": "quiz-013-democracy-class10-en",
+    "input": {
+      "topic": "Democracy and Diversity",
+      "numQuestions": 6,
+      "gradeLevel": "Class 10",
+      "language": "English",
+      "questionTypes": ["short_answer", "true_false"],
+      "subject": "Social Science"
+    },
+    "reference": {
+      "expectedQuestionCount": 6,
+      "expectedSubject": "Social Science",
+      "mustContainConcepts": ["social differences", "caste system", "communalism", "secularism"]
+    }
+  },
+  {
+    "testCaseId": "quiz-014-reproduction-class10-hi",
+    "input": {
+      "topic": "How Do Organisms Reproduce",
+      "numQuestions": 10,
+      "gradeLevel": "Class 10",
+      "language": "Hindi",
+      "questionTypes": ["multiple_choice", "short_answer", "true_false"],
+      "subject": "Science",
+      "targetDifficulty": "medium"
+    },
+    "reference": {
+      "expectedQuestionCount": 10,
+      "expectedSubject": "Science",
+      "mustContainConcepts": ["asexual reproduction", "sexual reproduction", "budding", "pollination"]
+    }
+  },
+  {
+    "testCaseId": "quiz-015-comprehension-class5-kn",
+    "input": {
+      "topic": "Reading Comprehension - My Family",
+      "numQuestions": 5,
+      "gradeLevel": "Class 5",
+      "language": "Kannada",
+      "questionTypes": ["short_answer", "true_false"],
+      "subject": "English",
+      "targetDifficulty": "easy"
+    },
+    "reference": {
+      "expectedQuestionCount": 5,
+      "expectedSubject": "English",
+      "mustContainConcepts": ["family members", "relationships", "daily routine"]
+    }
+  }
+]

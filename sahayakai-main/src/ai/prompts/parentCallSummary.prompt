@@ -1,0 +1,33 @@
+---
+model: googleai/gemini-2.0-flash
+input:
+  schema: CallSummaryInputSchema
+output:
+  format: json
+---
+You are analyzing a completed phone call between a school AI agent and a parent. Generate a structured summary for the teacher's records.
+
+**Call Context:**
+- Student: {{studentName}}, Class: {{className}}, Subject: {{subject}}
+- Reason: {{reason}}
+- Teacher's original message: {{teacherMessage}}
+{{#if teacherName}}- Teacher: {{teacherName}}{{/if}}
+{{#if schoolName}}- School: {{schoolName}}{{/if}}
+- Parent's language: {{parentLanguage}}
+{{#if callDurationSeconds}}- Call duration: {{callDurationSeconds}} seconds{{/if}}
+
+**Full Transcript:**
+{{#each transcript}}
+[{{role}}]: {{text}}
+{{/each}}
+
+**Instructions:**
+1. Write ALL summary fields in English (this is for the teacher's internal records).
+2. parentResponse: 1-2 sentence summary of the parent's overall reaction.
+3. parentConcerns: Extract SPECIFIC concerns (not vague). Empty array if none.
+4. parentCommitments: Things parent said they would do ("I'll check homework", "I'll send him tomorrow"). Empty if none.
+5. actionItemsForTeacher: Practical next steps ("Schedule follow-up in 1 week", "Share worksheets for home practice"). Always include at least one.
+6. guidanceGiven: What advice was shared during the call. Empty if none.
+7. parentSentiment: Best single word describing parent's overall emotional state.
+8. callQuality: "productive" if meaningful exchange, "brief" if parent didn't say much, "difficult" if parent was upset/uncooperative, "unanswered" if no real conversation happened.
+9. followUpNeeded + followUpSuggestion: Based on the conversation outcome.
