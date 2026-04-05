@@ -1,23 +1,71 @@
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'src/features/home/presentation/home_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'firebase_options.dart';
 import 'src/core/theme/providers/theme_provider.dart';
 import 'src/core/theme/app_theme.dart';
+import 'src/core/error/connectivity_banner.dart';
+import 'src/features/auth/router/app_router.dart';
 
-// Feature Screen Imports
-import 'src/features/lesson_plan/presentation/screens/create_lesson_screen.dart';
-import 'src/features/quiz/presentation/screens/quiz_config_screen.dart';
-import 'src/features/worksheet/presentation/screens/worksheet_wizard_screen.dart';
-import 'src/features/rubric/presentation/screens/rubric_generator_screen.dart';
-import 'src/features/visual_aid/presentation/screens/visual_aid_creator_screen.dart';
-import 'src/features/instant_answer/presentation/screens/instant_answer_screen.dart';
-import 'src/features/video/presentation/screens/video_storyteller_screen.dart';
-import 'src/features/virtual_field_trip/presentation/screens/virtual_field_trip_screen.dart';
-import 'src/features/content_creator/presentation/screens/content_creator_screen.dart';
-import 'src/features/training/presentation/screens/teacher_training_screen.dart';
-
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ── Global error handlers ──────────────────────────────────────────────────
+
+  // Flutter framework errors (widget build, layout, rendering).
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kReleaseMode) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    }
+  };
+
+  // Dart async errors that escape the zone (e.g. unawaited futures).
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    if (kDebugMode) {
+      debugPrint('[Unhandled Error] $error\n$stack');
+    } else {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
+    return true; // Handled — prevents default crash dialog.
+  };
+
+  // ── Firebase ───────────────────────────────────────────────────────────────
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // ── Crashlytics ─────────────────────────────────────────────────────────
+  // Disable collection in debug to keep console clean.
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(kReleaseMode);
+
+  // ── FCM Push Notifications ──────────────────────────────────────────────
+  try {
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
+    final token = await messaging.getToken();
+    debugPrint('[FCM] Token: $token');
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('[FCM] Foreground message: ${message.notification?.title}');
+    });
+
+    // Handle background message tap
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('[FCM] Message opened app: ${message.data}');
+    });
+  } catch (e) {
+    debugPrint('[FCM] Init error: $e');
+  }
+
   runApp(const ProviderScope(child: SahayakApp()));
 }
 
@@ -26,8 +74,8 @@ class SahayakApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the Async Theme Provider
     final sahayakThemeAsync = ref.watch(sahayakThemeProvider);
+    final router = ref.watch(routerProvider);
 
     return sahayakThemeAsync.when(
       loading: () => const MaterialApp(
@@ -41,28 +89,16 @@ class SahayakApp extends ConsumerWidget {
         ),
       ),
       data: (sahayakTheme) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'SahayakAI',
           debugShowCheckedModeBanner: false,
-          // Integrate the loaded extension into Material 3
           theme: AppTheme.lightTheme.copyWith(
-            extensions: [
-              sahayakTheme, // The JSON-loaded tokens
-            ],
+            extensions: [sahayakTheme],
           ),
-          home: const HomeScreen(),
-          routes: {
-            '/create-lesson': (context) => const CreateLessonScreen(),
-            '/quiz-config': (context) => const QuizConfigScreen(),
-            '/worksheet-wizard': (context) => const WorksheetWizardScreen(),
-            '/rubric-generator': (context) => const RubricGeneratorScreen(),
-            '/visual-aid-creator': (context) => const VisualAidCreatorScreen(),
-            '/instant-answer': (context) => const InstantAnswerScreen(),
-            '/video-storyteller': (context) => const VideoStorytellerScreen(),
-            '/virtual-field-trip': (context) => const VirtualFieldTripScreen(),
-            '/content-creator': (context) => const ContentCreatorScreen(),
-            '/teacher-training': (context) => const TeacherTrainingScreen(),
-          },
+          routerConfig: router,
+          builder: (context, child) => ConnectivityBanner(
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );
