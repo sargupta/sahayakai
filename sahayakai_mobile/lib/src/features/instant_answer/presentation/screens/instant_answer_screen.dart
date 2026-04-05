@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/glassmorphic/glass_components.dart';
-import '../../../chat/data/chat_repository.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../providers/instant_answer_provider.dart';
+import '../../domain/instant_answer_models.dart';
 
 class InstantAnswerScreen extends ConsumerStatefulWidget {
   const InstantAnswerScreen({super.key});
@@ -16,22 +19,27 @@ class InstantAnswerScreen extends ConsumerStatefulWidget {
 
 class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   final _questionController = TextEditingController();
-  String _selectedGrade = "Class 6";
-  String _selectedLanguage = "English";
-  bool _isLoading = false;
-  String? _answer;
+  String _selectedGrade = 'Class 6';
+  String _selectedLanguage = 'English';
 
   final List<String> _grades = [
-    "Class 1", "Class 2", "Class 3", "Class 4", "Class 5",
-    "Class 6", "Class 7", "Class 8", "Class 9", "Class 10"
+    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
+    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   ];
   final List<String> _languages = [
-    "English", "Hindi", "Tamil", "Telugu", "Kannada",
-    "Malayalam", "Marathi", "Bengali"
+    'English', 'Hindi', 'Tamil', 'Telugu', 'Kannada',
+    'Malayalam', 'Marathi', 'Bengali',
   ];
 
+  @override
+  void dispose() {
+    _questionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _getAnswer() async {
-    if (_questionController.text.trim().isEmpty) {
+    final question = _questionController.text.trim();
+    if (question.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a question'),
@@ -41,47 +49,55 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _answer = null;
-    });
+    await ref.read(instantAnswerControllerProvider).getAnswer(
+          InstantAnswerInput(
+            question: question,
+            language: _selectedLanguage,
+            gradeLevel: _selectedGrade,
+          ),
+        );
 
-    try {
-      final response = await ref.read(chatRepositoryProvider).sendQuestion(
-          _questionController.text,
-          _selectedLanguage,
-          _selectedGrade);
+    final error = ref.read(instantAnswerErrorProvider);
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+    }
+  }
 
-      if (mounted) {
-        setState(() {
-          _answer = response['answer'] ?? "No answer received.";
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _answer = "Error: Failed to get answer. Please try again.";
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+  void _reset() {
+    ref.read(instantAnswerControllerProvider).reset();
+  }
+
+  void _copyAnswer(String answer) {
+    Clipboard.setData(ClipboardData(text: answer));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied to clipboard')),
+    );
+  }
+
+  Future<void> _openVideoUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(instantAnswerLoadingProvider);
+    final result = ref.watch(instantAnswerResultProvider);
+
     return GlassScaffold(
       title: 'Instant Answer',
       showBackButton: true,
       actions: [GlassMenuButton(onPressed: () {})],
-      floatingActionButton: _answer == null
+      floatingActionButton: result == null
           ? GlassFloatingButton(
               label: 'Get Answer',
               icon: Icons.auto_awesome,
-              onPressed: _isLoading ? null : _getAnswer,
-              isLoading: _isLoading,
+              onPressed: isLoading ? null : _getAnswer,
+              isLoading: isLoading,
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -179,7 +195,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             const SizedBox(height: GlassSpacing.xl),
 
             // Answer Section
-            if (_answer != null) ...[
+            if (result != null) ...[
               GlassIconCard(
                 icon: Icons.check_circle_rounded,
                 iconColor: GlassColors.success,
@@ -188,7 +204,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     MarkdownBody(
-                      data: _answer!,
+                      data: result.answer,
                       styleSheet: MarkdownStyleSheet(
                         p: GlassTypography.bodyLarge(),
                         h1: GlassTypography.headline1(),
@@ -196,6 +212,57 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                         h3: GlassTypography.headline3(),
                       ),
                     ),
+
+                    // Video suggestion
+                    if (result.videoSuggestionUrl != null) ...[
+                      const SizedBox(height: GlassSpacing.xl),
+                      GestureDetector(
+                        onTap: () => _openVideoUrl(result.videoSuggestionUrl!),
+                        child: Container(
+                          padding: const EdgeInsets.all(GlassSpacing.md),
+                          decoration: BoxDecoration(
+                            color: GlassColors.inputBackground,
+                            borderRadius:
+                                BorderRadius.circular(GlassRadius.sm),
+                            border: Border.all(color: GlassColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.play_circle_outline_rounded,
+                                color: Colors.red,
+                                size: 28,
+                              ),
+                              const SizedBox(width: GlassSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Watch Related Video',
+                                      style: GlassTypography.labelLarge(),
+                                    ),
+                                    Text(
+                                      'Tap to open on YouTube',
+                                      style: GlassTypography.bodySmall(
+                                        color: GlassColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.open_in_new_rounded,
+                                size: 16,
+                                color: GlassColors.textTertiary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: GlassSpacing.xl),
                     Row(
                       children: [
@@ -203,7 +270,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                           child: GlassSecondaryButton(
                             label: 'Ask Another',
                             icon: Icons.refresh_rounded,
-                            onPressed: () => setState(() => _answer = null),
+                            onPressed: _reset,
                           ),
                         ),
                         const SizedBox(width: GlassSpacing.lg),
@@ -211,9 +278,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
                           child: GlassPrimaryButton(
                             label: 'Copy',
                             icon: Icons.copy_rounded,
-                            onPressed: () {
-                              // Copy to clipboard
-                            },
+                            onPressed: () => _copyAnswer(result.answer),
                           ),
                         ),
                       ],
@@ -224,7 +289,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             ],
 
             // Preview Card (only show when no answer)
-            if (_answer == null) ...[
+            if (result == null && !isLoading) ...[
               const GlassPreviewCard(
                 label: 'Quick Answer Theme',
               ),
