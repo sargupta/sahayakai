@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/glassmorphic/glass_components.dart';
 import '../../../auth/presentation/providers/user_profile_provider.dart';
 
 // ─────────────────── Pricing data ───────────────────
@@ -29,17 +31,42 @@ class _PricingTier {
     required this.features,
     this.isCurrentPlan = false,
   });
+
+  /// Build a [_PricingTier] from a JSON map returned by the billing API.
+  factory _PricingTier.fromJson(Map<String, dynamic> json) {
+    return _PricingTier(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      tagline: json['tagline'] as String? ?? '',
+      price: json['price'] as String,
+      period: json['period'] as String,
+      badge: json['badge'] as String?,
+      accentColor: Color(
+        int.parse(
+          (json['accentColor'] as String? ?? 'FF9E9E9E')
+              .replaceFirst('#', ''),
+          radix: 16,
+        ),
+      ),
+      features: (json['features'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+    );
+  }
 }
 
-const _tiers = [
-  _PricingTier(
-    id: 'free',
-    name: 'Free',
-    tagline: 'Start your AI teaching journey',
-    price: '₹0',
-    period: 'forever',
-    accentColor: Color(0xFF4CAF50),
-    features: [
+// ─────────────────── Default / offline plans ───────────────────
+
+const _defaultPlans = <Map<String, dynamic>>[
+  {
+    'id': 'free',
+    'name': 'Free',
+    'tagline': 'Start your AI teaching journey',
+    'price': '₹0',
+    'period': 'forever',
+    'accentColor': 'FF4CAF50',
+    'features': [
       '5 lesson plans per month',
       '3 quizzes per month',
       '2 worksheets per month',
@@ -47,16 +74,16 @@ const _tiers = [
       'VIDYA chat (10 messages/day)',
       'Basic voice input',
     ],
-  ),
-  _PricingTier(
-    id: 'teacher_pro',
-    name: 'Teacher Pro',
-    tagline: 'Unlimited AI tools for educators',
-    price: '₹299',
-    period: '/month',
-    badge: 'Most Popular',
-    accentColor: Color(0xFFFF9800),
-    features: [
+  },
+  {
+    'id': 'teacher_pro',
+    'name': 'Teacher Pro',
+    'tagline': 'Unlimited AI tools for educators',
+    'price': '₹299',
+    'period': '/month',
+    'badge': 'Most Popular',
+    'accentColor': 'FFFF9800',
+    'features': [
       'Unlimited lesson plans',
       'Unlimited quizzes & worksheets',
       'Exam paper generator',
@@ -68,16 +95,16 @@ const _tiers = [
       'Priority support',
       'Sarvam AI voice (11 languages)',
     ],
-  ),
-  _PricingTier(
-    id: 'institution',
-    name: 'Institution',
-    tagline: 'For schools and education teams',
-    price: '₹999',
-    period: '/month',
-    badge: 'Best Value',
-    accentColor: Color(0xFF9C27B0),
-    features: [
+  },
+  {
+    'id': 'institution',
+    'name': 'Institution',
+    'tagline': 'For schools and education teams',
+    'price': '₹999',
+    'period': '/month',
+    'badge': 'Best Value',
+    'accentColor': 'FF9C27B0',
+    'features': [
       'Everything in Teacher Pro',
       'Up to 50 teacher accounts',
       'Admin dashboard',
@@ -89,8 +116,22 @@ const _tiers = [
       'API access',
       'Annual billing discount (2 months free)',
     ],
-  ),
+  },
 ];
+
+// ─────────────────── Plans provider ───────────────────
+
+final plansProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  try {
+    final client = ref.read(apiClientProvider).client;
+    final response = await client.get('/billing/plans');
+    return (response.data as List).cast<Map<String, dynamic>>();
+  } catch (_) {
+    // Fallback to hardcoded plans when offline or API unavailable
+    return _defaultPlans;
+  }
+});
 
 // ─────────────────── Screen ───────────────────
 
@@ -100,6 +141,7 @@ class PricingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentPlan = ref.watch(userPlanTypeProvider);
+    final plansAsync = ref.watch(plansProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D1A),
@@ -108,26 +150,56 @@ class PricingScreen extends ConsumerWidget {
           children: [
             _buildHeader(context),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 16),
-                children: [
-                  _buildSubheader(),
-                  const SizedBox(height: 24),
-                  ..._tiers.map(
-                    (tier) => _PricingCard(
-                      tier: tier,
-                      isCurrentPlan: currentPlan == tier.id,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFootnote(),
-                  const SizedBox(height: 40),
-                ],
+              child: plansAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFFF9800)),
+                ),
+                error: (_, __) => _buildPlansList(
+                  ref,
+                  _defaultPlans
+                      .map((j) => _PricingTier.fromJson(j))
+                      .toList(),
+                  currentPlan,
+                ),
+                data: (plans) => _buildPlansList(
+                  ref,
+                  plans.map((j) => _PricingTier.fromJson(j)).toList(),
+                  currentPlan,
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPlansList(
+      WidgetRef ref, List<_PricingTier> tiers, String? currentPlan) {
+    return RefreshIndicator(
+      color: const Color(0xFFFF9800),
+      backgroundColor: const Color(0xFF1A1A2E),
+      onRefresh: () async {
+        // ignore: unused_result
+        ref.invalidate(plansProvider);
+        // Wait for the refresh to complete
+        await ref.read(plansProvider.future);
+      },
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        children: [
+          _buildSubheader(),
+          const SizedBox(height: 24),
+          ...tiers.map(
+            (tier) => _PricingCard(
+              tier: tier,
+              isCurrentPlan: currentPlan == tier.id,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildFootnote(),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -171,9 +243,9 @@ class PricingScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Row(
         children: [
@@ -219,13 +291,13 @@ class _PricingCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isCurrentPlan
-              ? tier.accentColor.withValues(alpha: 0.12)
-              : Colors.white.withValues(alpha: 0.05),
+              ? tier.accentColor.withOpacity(0.12)
+              : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isCurrentPlan
                 ? tier.accentColor
-                : Colors.white.withValues(alpha: 0.1),
+                : Colors.white.withOpacity(0.1),
             width: isCurrentPlan ? 1.5 : 1,
           ),
         ),
@@ -238,8 +310,8 @@ class _PricingCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    tier.accentColor.withValues(alpha: 0.3),
-                    tier.accentColor.withValues(alpha: 0.05),
+                    tier.accentColor.withOpacity(0.3),
+                    tier.accentColor.withOpacity(0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -354,7 +426,7 @@ class _PricingCard extends StatelessWidget {
                               feature,
                               style: GoogleFonts.outfit(
                                   fontSize: 13,
-                                  color: const Color(0xCCFFFFFF),
+                                  color: Colors.white70,
                                   height: 1.3),
                             ),
                           ),
@@ -381,7 +453,7 @@ class _PricingCard extends StatelessWidget {
       return OutlinedButton(
         onPressed: null,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: tier.accentColor.withValues(alpha: 0.4)),
+          side: BorderSide(color: tier.accentColor.withOpacity(0.4)),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -400,7 +472,7 @@ class _PricingCard extends StatelessWidget {
       return OutlinedButton(
         onPressed: () => context.pop(),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+          side: BorderSide(color: Colors.white.withOpacity(0.2)),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14),

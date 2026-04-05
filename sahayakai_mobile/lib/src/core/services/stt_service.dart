@@ -47,10 +47,12 @@ class STTService {
       throw Exception('Could not retrieve auth token.');
     }
 
+    // Determine filename/extension based on actual file for correct MIME type.
+    final ext = filePath.endsWith('.aac') ? 'aac' : 'ogg';
     final formData = FormData.fromMap({
       'audio': await MultipartFile.fromFile(
         filePath,
-        filename: 'recording.ogg', // Must match a Sarvam-supported format
+        filename: 'recording.$ext',
       ),
     });
 

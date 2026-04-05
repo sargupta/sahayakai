@@ -36,11 +36,8 @@ class _ConnectivityBannerState extends State<ConnectivityBanner> {
         .onConnectivityChanged
         .listen(_onConnectivityChanged);
 
-    // Check immediately on mount.
     Connectivity().checkConnectivity().then((result) {
-      if (mounted) {
-        _onConnectivityChanged(result);
-      }
+      if (mounted) _onConnectivityChanged(result);
     });
   }
 
@@ -50,7 +47,7 @@ class _ConnectivityBannerState extends State<ConnectivityBanner> {
     if (!mounted) return;
 
     if (!nowOffline && _isOffline) {
-      // Just came back online — show "reconnected" briefly.
+      // Just came back online — flash "reconnected" for 2 s.
       setState(() {
         _isOffline = false;
         _justReconnected = true;
@@ -59,7 +56,8 @@ class _ConnectivityBannerState extends State<ConnectivityBanner> {
       _reconnectTimer = Timer(const Duration(seconds: 2), () {
         if (mounted) setState(() => _justReconnected = false);
       });
-    } else {
+    } else if (nowOffline != _isOffline) {
+      // Only rebuild when the offline state actually flips.
       setState(() => _isOffline = nowOffline);
     }
   }

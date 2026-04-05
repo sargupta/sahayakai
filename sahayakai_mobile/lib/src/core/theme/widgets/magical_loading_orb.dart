@@ -7,7 +7,9 @@ class MagicalLoadingOrb extends StatelessWidget {
 
   const MagicalLoadingOrb({
     super.key,
-    required this.gradient,
+    this.gradient = const LinearGradient(
+      colors: [Color(0xFFFFB366), Color(0xFFFF9933), Color(0xFFE68A00)],
+    ),
     this.size = 80,
   });
 

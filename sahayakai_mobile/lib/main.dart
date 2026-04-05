@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 import 'src/core/theme/providers/theme_provider.dart';
@@ -18,10 +20,9 @@ void main() async {
 
   // Flutter framework errors (widget build, layout, rendering).
   FlutterError.onError = (FlutterErrorDetails details) {
-    // Print in debug; in release you'd send to Crashlytics / Sentry.
     FlutterError.presentError(details);
     if (kReleaseMode) {
-      // TODO: FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
     }
   };
 
@@ -30,7 +31,7 @@ void main() async {
     if (kDebugMode) {
       debugPrint('[Unhandled Error] $error\n$stack');
     } else {
-      // TODO: FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     }
     return true; // Handled — prevents default crash dialog.
   };
@@ -39,6 +40,31 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ── Crashlytics ─────────────────────────────────────────────────────────
+  // Disable collection in debug to keep console clean.
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(kReleaseMode);
+
+  // ── FCM Push Notifications ──────────────────────────────────────────────
+  try {
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
+    final token = await messaging.getToken();
+    debugPrint('[FCM] Token: $token');
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('[FCM] Foreground message: ${message.notification?.title}');
+    });
+
+    // Handle background message tap
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('[FCM] Message opened app: ${message.data}');
+    });
+  } catch (e) {
+    debugPrint('[FCM] Init error: $e');
+  }
 
   runApp(const ProviderScope(child: SahayakApp()));
 }

@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import '../../../../core/theme/glassmorphic/glass_components.dart';
-import '../../../tools/data/tool_repository.dart';
+import '../../data/rubric_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../../../../components/tts_play_button.dart';
+import '../../../../components/share_to_community_button.dart';
 
 class RubricGeneratorScreen extends ConsumerStatefulWidget {
-  const RubricGeneratorScreen({super.key});
+  final Map<String, dynamic>? initialParams;
+
+  const RubricGeneratorScreen({super.key, this.initialParams});
 
   @override
   ConsumerState<RubricGeneratorScreen> createState() =>
@@ -45,6 +49,22 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   ];
   final Set<String> _selectedCriteria = {'Clarity', 'Content', 'Grammar'};
 
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from VIDYA action cards or cross-feature navigation
+    final params = widget.initialParams;
+    if (params != null) {
+      if (params['assignmentDescription'] != null) {
+        _assignmentController.text = params['assignmentDescription'] as String;
+      }
+      if (params['gradeLevel'] != null) {
+        final grade = params['gradeLevel'] as String;
+        if (_grades.contains(grade)) _selectedGrade = grade;
+      }
+    }
+  }
+
   Future<void> _generateRubric() async {
     if (_assignmentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,23 +80,32 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
 
     try {
       final language = ref.read(languageProvider);
-      final toolRepo = ref.read(toolRepositoryProvider);
+      final repo = ref.read(rubricRepositoryProvider);
 
-      final prompt =
-          "Create a grading rubric for an assignment about: '${_assignmentController.text}'. "
-          "Use a $_gradeScale scale. "
-          "Include these criteria: ${_selectedCriteria.join(', ')}. "
-          "Format as a Markdown table.";
-
-      final result = await toolRepo.generateToolContent(
-        toolName: "Rubric Maker",
-        prompt: prompt,
+      final result = await repo.generate(
+        assignmentDescription:
+            '${_assignmentController.text}. '
+            'Use a $_gradeScale scale. '
+            'Criteria: ${_selectedCriteria.join(', ')}.',
+        gradeLevel: _selectedGrade,
         language: language,
       );
 
+      // Format structured rubric as markdown for display.
+      final md = StringBuffer('# ${result.title}\n\n${result.description}\n\n');
+      for (final c in result.criteria) {
+        md.writeln('## ${c.name}');
+        md.writeln(c.description);
+        md.writeln('');
+        for (final l in c.levels) {
+          md.writeln('- **${l.name}** (${l.points} pts): ${l.description}');
+        }
+        md.writeln('');
+      }
+
       setState(() {
         _isGenerating = false;
-        _generatedRubric = result;
+        _generatedRubric = md.toString();
       });
     } catch (e) {
       if (mounted) {
@@ -108,6 +137,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
 
   Widget _buildInputForm() {
     return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(
         left: GlassSpacing.xl,
         right: GlassSpacing.xl,
@@ -304,6 +334,8 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
                 onPressed: () => setState(() => _generatedRubric = null),
               ),
               const Spacer(),
+              TTSPlayButton(text: _generatedRubric!),
+              const SizedBox(width: GlassSpacing.sm),
               GlassIconButton(
                 icon: Icons.copy_rounded,
                 onPressed: () {
@@ -346,6 +378,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
         // Generated Content
         Expanded(
           child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
             child: GlassCard(
               padding: const EdgeInsets.all(GlassSpacing.xl),
@@ -363,7 +396,18 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
             ),
           ),
         ),
-        const SizedBox(height: GlassSpacing.xl),
+        const SizedBox(height: GlassSpacing.md),
+
+        // Share to Community
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: ShareToCommunityButton(
+            type: 'rubric',
+            title: 'Evaluation Rubric',
+            data: {'content': _generatedRubric},
+          ),
+        ),
+        const SizedBox(height: GlassSpacing.md),
 
         // Regenerate Button
         Padding(

@@ -29,31 +29,6 @@ class TTSPlayButton extends ConsumerStatefulWidget {
   ConsumerState<TTSPlayButton> createState() => _TTSPlayButtonState();
 }
 
-String? getBcp47Code(String languageName) {
-  const map = {
-    'English': 'en-IN',
-    'Hindi': 'hi-IN',
-    'हिंदी': 'hi-IN',
-    'Tamil': 'ta-IN',
-    'தமிழ்': 'ta-IN',
-    'Telugu': 'te-IN',
-    'తెలుగు': 'te-IN',
-    'Kannada': 'kn-IN',
-    'ಕನ್ನಡ': 'kn-IN',
-    'Marathi': 'mr-IN',
-    'मराठी': 'mr-IN',
-    'Bengali': 'bn-IN',
-    'বাংলা': 'bn-IN',
-    'Gujarati': 'gu-IN',
-    'ગુજરાતી': 'gu-IN',
-    'Malayalam': 'ml-IN',
-    'മലയാളം': 'ml-IN',
-    'Punjabi': 'pa-IN',
-    'ਪੰਜਾਬੀ': 'pa-IN',
-  };
-  return map[languageName];
-}
-
 class _TTSPlayButtonState extends ConsumerState<TTSPlayButton> {
   bool _isPlaying = false;
   bool _isLoading = false;

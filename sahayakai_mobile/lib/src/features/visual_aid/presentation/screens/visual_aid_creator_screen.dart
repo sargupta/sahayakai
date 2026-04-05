@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:share_plus/share_plus.dart';
+
+import 'dart:convert';
 
 import '../../../../core/theme/glassmorphic/glass_components.dart';
-import '../../../tools/data/tool_repository.dart';
+import '../../data/visual_aid_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../../../../components/share_to_community_button.dart';
 
 class VisualAidCreatorScreen extends ConsumerStatefulWidget {
-  const VisualAidCreatorScreen({super.key});
+  final Map<String, dynamic>? initialParams;
+
+  const VisualAidCreatorScreen({super.key, this.initialParams});
 
   @override
   ConsumerState<VisualAidCreatorScreen> createState() =>
@@ -19,7 +25,7 @@ class VisualAidCreatorScreen extends ConsumerStatefulWidget {
 class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen> {
   final _promptController = TextEditingController();
   bool _isGenerating = false;
-  String? _generatedDescription;
+  VisualAidOutput? _result;
 
   String _selectedStyle = 'Realistic';
   final List<String> _styles = [
@@ -39,6 +45,25 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
     'Class 9', 'Class 10', 'Class 11', 'Class 12'
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from VIDYA action cards or cross-feature navigation
+    final params = widget.initialParams;
+    if (params != null) {
+      if (params['prompt'] != null) {
+        _promptController.text = params['prompt'] as String;
+      }
+      if (params['topic'] != null) {
+        _promptController.text = params['topic'] as String;
+      }
+      if (params['gradeLevel'] != null) {
+        final grade = params['gradeLevel'] as String;
+        if (_grades.contains(grade)) _selectedGrade = grade;
+      }
+    }
+  }
+
   Future<void> _generateVisualAid() async {
     if (_promptController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,20 +79,17 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
 
     try {
       final language = ref.read(languageProvider);
-      final toolRepo = ref.read(toolRepositoryProvider);
+      final repo = ref.read(visualAidRepositoryProvider);
 
-      final fullPrompt =
-          "Create a detailed image description/prompt for a $_selectedStyle image about: ${_promptController.text}";
-
-      final result = await toolRepo.generateToolContent(
-        toolName: "Visual Aid Designer",
-        prompt: fullPrompt,
+      final result = await repo.generate(
+        prompt: '${_promptController.text} (Style: $_selectedStyle)',
+        gradeLevel: _selectedGrade,
         language: language,
       );
 
       setState(() {
         _isGenerating = false;
-        _generatedDescription = result;
+        _result = result;
       });
     } catch (e) {
       if (mounted) {
@@ -84,7 +106,7 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
       title: 'Visual Artist',
       showBackButton: true,
       actions: [GlassMenuButton(onPressed: () {})],
-      floatingActionButton: _generatedDescription == null
+      floatingActionButton: _result == null
           ? GlassFloatingButton(
               label: 'Generate Design',
               icon: Icons.palette_rounded,
@@ -93,12 +115,13 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: _generatedDescription != null ? _buildResultView() : _buildInputForm(),
+      body: _result != null ? _buildResultView() : _buildInputForm(),
     );
   }
 
   Widget _buildInputForm() {
     return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(
         left: GlassSpacing.xl,
         right: GlassSpacing.xl,
@@ -304,13 +327,15 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
             children: [
               GlassIconButton(
                 icon: Icons.arrow_back_rounded,
-                onPressed: () => setState(() => _generatedDescription = null),
+                onPressed: () => setState(() => _result = null),
               ),
               const Spacer(),
               GlassIconButton(
                 icon: Icons.copy_rounded,
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: _generatedDescription!));
+                  Clipboard.setData(ClipboardData(
+                    text: '${_result!.pedagogicalContext}\n\n${_result!.discussionSpark}',
+                  ));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Copied to clipboard')),
                   );
@@ -319,43 +344,53 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
               const SizedBox(width: GlassSpacing.sm),
               GlassIconButton(
                 icon: Icons.share_rounded,
-                onPressed: () {},
+                onPressed: () {
+                  Share.share(
+                    'Visual Aid:\n${_result!.pedagogicalContext}\n\n'
+                    'Discussion: ${_result!.discussionSpark}',
+                  );
+                },
               ),
             ],
           ),
         ),
         const SizedBox(height: GlassSpacing.lg),
 
-        // Image Placeholder
+        // AI-Generated Image
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: GlassCard(
               padding: EdgeInsets.zero,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: GlassColors.inputBackground,
-                  borderRadius: BorderRadius.circular(GlassRadius.lg),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.image_rounded,
-                        size: 48,
-                        color: GlassColors.textTertiary,
+              child: (_result!.imageDataUri != null && _result!.imageDataUri!.contains(','))
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(GlassRadius.lg),
+                      child: InteractiveViewer(
+                        minScale: 1.0,
+                        maxScale: 4.0,
+                        child: Image.memory(
+                          base64Decode(_result!.imageDataUri!.split(',').last),
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      const SizedBox(height: GlassSpacing.sm),
-                      Text(
-                        'AI Image Preview',
-                        style: GlassTypography.bodySmall(),
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: GlassColors.inputBackground,
+                        borderRadius: BorderRadius.circular(GlassRadius.lg),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.image_rounded, size: 48, color: GlassColors.textTertiary),
+                            const SizedBox(height: GlassSpacing.sm),
+                            Text('Image could not be generated', style: GlassTypography.bodySmall()),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),
@@ -364,6 +399,7 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
         // Generated Content
         Expanded(
           child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,12 +419,14 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
                         style: GlassTypography.sectionHeader(),
                       ),
                       const SizedBox(height: GlassSpacing.md),
-                      MarkdownBody(
-                        data: _generatedDescription!,
-                        styleSheet: MarkdownStyleSheet(
-                          p: GlassTypography.bodyMedium(),
-                        ),
-                      ),
+                      Text(_result!.pedagogicalContext,
+                          style: GlassTypography.bodyMedium()),
+                      const SizedBox(height: GlassSpacing.lg),
+                      Text('DISCUSSION SPARK',
+                          style: GlassTypography.sectionHeader()),
+                      const SizedBox(height: GlassSpacing.sm),
+                      Text(_result!.discussionSpark,
+                          style: GlassTypography.bodyMedium()),
                     ],
                   ),
                 ),
@@ -396,7 +434,21 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
             ),
           ),
         ),
-        const SizedBox(height: GlassSpacing.lg),
+        const SizedBox(height: GlassSpacing.md),
+
+        // Share to Community
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: ShareToCommunityButton(
+            type: 'visual-aid',
+            title: 'Visual Aid',
+            data: {
+              'pedagogicalContext': _result!.pedagogicalContext,
+              'discussionSpark': _result!.discussionSpark,
+            },
+          ),
+        ),
+        const SizedBox(height: GlassSpacing.md),
 
         // Action Button
         Padding(
@@ -407,7 +459,7 @@ class _VisualAidCreatorScreenState extends ConsumerState<VisualAidCreatorScreen>
           child: GlassSecondaryButton(
             label: 'Create Another',
             icon: Icons.refresh_rounded,
-            onPressed: () => setState(() => _generatedDescription = null),
+            onPressed: () => setState(() => _result = null),
           ),
         ),
       ],

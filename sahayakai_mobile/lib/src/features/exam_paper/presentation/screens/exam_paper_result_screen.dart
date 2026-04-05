@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../../components/tts_play_button.dart';
+import '../../../../components/share_to_community_button.dart';
 import '../../../../core/theme/glassmorphic/glass_components.dart';
 import '../../domain/exam_paper_models.dart';
 import '../providers/exam_paper_provider.dart';
@@ -187,6 +188,20 @@ class _ExamPaperResultScreenState
           ),
           if (paper != null) ...[
             TTSPlayButton(text: _buildFullText(paper)),
+            ShareToCommunityButton(
+              type: 'exam-paper',
+              title: paper.title,
+              data: {
+                'title': paper.title,
+                'board': paper.board,
+                'gradeLevel': paper.gradeLevel,
+                'subject': paper.subject,
+                'duration': paper.duration,
+                'maxMarks': paper.maxMarks,
+              },
+              gradeLevel: paper.gradeLevel,
+              subject: paper.subject,
+            ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white70),
               color: const Color(0xFF2D1B5E),
@@ -341,9 +356,9 @@ class _ExamPaperResultScreenState
       padding: const EdgeInsets.only(bottom: GlassSpacing.md),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +367,7 @@ class _ExamPaperResultScreenState
             Container(
               padding: const EdgeInsets.all(GlassSpacing.md),
               decoration: BoxDecoration(
-                color: const Color(0xFF6A0DAD).withValues(alpha: 0.3),
+                color: const Color(0xFF6A0DAD).withOpacity(0.3),
                 borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16)),
               ),
@@ -384,7 +399,7 @@ class _ExamPaperResultScreenState
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6A0DAD).withValues(alpha: 0.5),
+                      color: const Color(0xFF6A0DAD).withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -422,7 +437,7 @@ class _ExamPaperResultScreenState
                 height: 24,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6A0DAD).withValues(alpha: 0.4),
+                  color: const Color(0xFF6A0DAD).withOpacity(0.4),
                   shape: BoxShape.circle,
                 ),
                 child: Text(
@@ -445,7 +460,7 @@ class _ExamPaperResultScreenState
                           child: Text(
                             question.text,
                             style: GoogleFonts.outfit(
-                                fontSize: 14, color: const Color(0xDEFFFFFF)),
+                                fontSize: 14, color: Colors.white70),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -482,10 +497,10 @@ class _ExamPaperResultScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.15),
+                          color: Colors.green.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3)),
+                              color: Colors.green.withOpacity(0.3)),
                         ),
                         child: Text(
                           'Answer: ${question.answer}',
@@ -502,7 +517,7 @@ class _ExamPaperResultScreenState
           if (number <
               (question.solution != null ? 999 : 999)) // separator
             Divider(
-                color: Colors.white.withValues(alpha: 0.07), height: 16),
+                color: Colors.white.withOpacity(0.07), height: 16),
         ],
       ),
     );
@@ -541,9 +556,9 @@ class _ExamPaperResultScreenState
     return Container(
       padding: const EdgeInsets.all(GlassSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -587,9 +602,9 @@ class _ExamPaperResultScreenState
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Column(
         children: [
@@ -658,7 +673,7 @@ class _ExamPaperResultScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFF6A0DAD).withValues(alpha: 0.3),
+              color: const Color(0xFF6A0DAD).withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

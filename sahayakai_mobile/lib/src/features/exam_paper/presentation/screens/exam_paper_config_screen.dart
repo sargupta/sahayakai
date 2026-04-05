@@ -110,6 +110,7 @@ class _ExamPaperConfigScreenState
             _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.all(GlassSpacing.xl),
                 child: Form(
                   key: _formKey,
@@ -280,7 +281,7 @@ class _ExamPaperConfigScreenState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF6A0DAD).withValues(alpha: 0.3),
+              color: const Color(0xFF6A0DAD).withOpacity(0.3),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -324,10 +325,10 @@ class _ExamPaperConfigScreenState
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? accent : Colors.white.withValues(alpha: 0.08),
+            color: isSelected ? accent : Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? accent : Colors.white.withValues(alpha: 0.15),
+              color: isSelected ? accent : Colors.white.withOpacity(0.15),
             ),
           ),
           child: Text(
@@ -347,6 +348,7 @@ class _ExamPaperConfigScreenState
       return Wrap(spacing: 8, runSpacing: 8, children: chips);
     }
     return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       scrollDirection: Axis.horizontal,
       child: Row(children: chips.map((c) => Padding(
         padding: const EdgeInsets.only(right: 8),
@@ -364,9 +366,9 @@ class _ExamPaperConfigScreenState
       padding: const EdgeInsets.symmetric(
           horizontal: GlassSpacing.md, vertical: GlassSpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,9 +392,9 @@ class _ExamPaperConfigScreenState
     return Container(
       padding: const EdgeInsets.all(GlassSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.15),
+        color: Colors.redAccent.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
       ),
       child: Row(
         children: [

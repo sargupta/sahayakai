@@ -1,0 +1,12 @@
+# Copy this file to key.properties and fill in your keystore details.
+# NEVER commit key.properties to git.
+#
+# To generate a keystore:
+#   keytool -genkey -v -keystore sahayakai-release.jks \
+#           -keyalg RSA -keysize 2048 -validity 10000 \
+#           -alias sahayakai
+#
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=sahayakai
+storeFile=../sahayakai-release.jks
