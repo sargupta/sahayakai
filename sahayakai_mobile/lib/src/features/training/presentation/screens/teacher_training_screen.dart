@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/glassmorphic/glass_components.dart';
+import '../../../../core/providers/language_provider.dart';
+import '../../data/training_repository.dart';
+import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../../../../components/tts_play_button.dart';
+import '../../../../components/share_to_community_button.dart';
 
 class TrainingModule {
   final String title;
@@ -32,6 +37,37 @@ class TeacherTrainingScreen extends ConsumerStatefulWidget {
 }
 
 class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
+  final _questionController = TextEditingController();
+  bool _isGenerating = false;
+  TrainingOutput? _aiResult;
+
+  Future<void> _askAI() async {
+    if (_questionController.text.trim().isEmpty) return;
+    setState(() => _isGenerating = true);
+
+    try {
+      final language = ref.read(languageProvider);
+      final repo = ref.read(trainingRepositoryProvider);
+
+      final result = await repo.generate(
+        question: _questionController.text.trim(),
+        language: language,
+      );
+
+      setState(() {
+        _isGenerating = false;
+        _aiResult = result;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+        setState(() => _isGenerating = false);
+      }
+    }
+  }
+
   final List<TrainingModule> _modules = [
     TrainingModule(
       title: "AI in the Classroom",
@@ -80,8 +116,15 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     return GlassScaffold(
       title: 'Teacher Academy',
       showBackButton: true,
-      actions: [GlassMenuButton(onPressed: () {})],
+      actions: [
+        if (_aiResult != null)
+          TTSPlayButton(
+            text: '${_aiResult!.introduction}. ${_aiResult!.advice.map((a) => '${a.strategy}. ${a.explanation}').join('. ')}. ${_aiResult!.conclusion}',
+          ),
+        GlassMenuButton(onPressed: () {}),
+      ],
       body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(GlassSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,6 +146,74 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
               color: GlassColors.textTertiary.withOpacity(0.3),
             ),
             const SizedBox(height: GlassSpacing.xxl),
+
+            // AI Training Advisor
+            GlassIconCard(
+              icon: Icons.psychology_rounded,
+              iconColor: GlassColors.primary,
+              title: 'Ask AI Training Advisor',
+              child: Column(
+                children: [
+                  GlassTextField(
+                    controller: _questionController,
+                    labelText: 'YOUR QUESTION',
+                    hintText: 'e.g. How do I manage a class of 40 students?',
+                    maxLines: 2,
+                    suffixIcon: VoiceInputWidget(
+                      onResult: (val) => setState(() => _questionController.text = val),
+                    ),
+                  ),
+                  const SizedBox(height: GlassSpacing.lg),
+                  GlassPrimaryButton(
+                    label: 'Get Advice',
+                    icon: Icons.auto_awesome,
+                    isLoading: _isGenerating,
+                    onPressed: _isGenerating ? null : _askAI,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: GlassSpacing.xl),
+
+            // AI Result
+            if (_aiResult != null) ...[
+              GlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_aiResult!.introduction, style: GlassTypography.bodyLarge()),
+                    const SizedBox(height: GlassSpacing.lg),
+                    for (final advice in _aiResult!.advice) ...[
+                      Text(advice.strategy, style: GlassTypography.labelLarge()),
+                      const SizedBox(height: GlassSpacing.xs),
+                      Text('Pedagogy: ${advice.pedagogy}',
+                          style: GlassTypography.bodySmall(color: GlassColors.primary)),
+                      const SizedBox(height: GlassSpacing.xs),
+                      Text(advice.explanation, style: GlassTypography.bodyMedium()),
+                      const SizedBox(height: GlassSpacing.lg),
+                    ],
+                    Text(_aiResult!.conclusion, style: GlassTypography.bodyLarge()),
+                  ],
+                ),
+              ),
+              const SizedBox(height: GlassSpacing.md),
+              ShareToCommunityButton(
+                type: 'teacher-training',
+                title: 'Teaching Advice: ${_questionController.text}',
+                data: {
+                  'introduction': _aiResult!.introduction,
+                  'advice': _aiResult!.advice
+                      .map((a) => {
+                            'strategy': a.strategy,
+                            'pedagogy': a.pedagogy,
+                            'explanation': a.explanation,
+                          })
+                      .toList(),
+                  'conclusion': _aiResult!.conclusion,
+                },
+              ),
+              const SizedBox(height: GlassSpacing.xxl),
+            ],
 
             // Hero Card - Continue Learning
             _buildHeroCard(),

@@ -1,4 +1,4 @@
-package com.example.sahayakai_mobile
+package app.sahayakai.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

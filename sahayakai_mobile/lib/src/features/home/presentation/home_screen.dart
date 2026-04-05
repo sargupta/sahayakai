@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:sahayakai_mobile/src/core/theme/glassmorphic/glass_components.dart';
 import 'package:sahayakai_mobile/src/features/lesson_plan/presentation/screens/create_lesson_screen.dart';
@@ -7,20 +10,34 @@ import 'package:sahayakai_mobile/src/features/quiz/presentation/screens/quiz_con
 import 'package:sahayakai_mobile/src/features/chat/presentation/screens/chat_screen.dart';
 import 'package:sahayakai_mobile/src/features/home/presentation/screens/my_library_screen.dart';
 import 'package:sahayakai_mobile/src/features/community/presentation/screens/community_feed_screen.dart';
+import 'package:sahayakai_mobile/src/features/content/data/content_repository.dart';
+import 'package:sahayakai_mobile/src/features/content/domain/content_models.dart';
+import 'package:sahayakai_mobile/src/features/content/presentation/providers/content_provider.dart';
 import 'widgets/app_drawer.dart';
 
+import 'package:sahayakai_mobile/src/core/error/connectivity_banner.dart';
+import 'package:sahayakai_mobile/src/core/services/metrics_service.dart';
 import 'package:sahayakai_mobile/src/features/home/presentation/screens/tools_grid_screen.dart';
 import 'package:sahayakai_mobile/src/features/home/presentation/screens/profile_screen.dart';
+import 'package:sahayakai_mobile/src/features/vidya/presentation/widgets/vidya_fab.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
+  bool _hasUnreadNotifications = true; // TODO: wire to real notification count
+  bool _showCommunityNudge = true;
+
+  @override
+  void initState() {
+    super.initState();
+    MetricsService.trackScreenView('home');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       drawer: const AppDrawer(),
       appBar: _buildCustomAppBar(context),
+      floatingActionButton: const VidyaFab(),
       body: Stack(
         children: [
           // Background Image
@@ -57,9 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           // Content
           SafeArea(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: pages,
+            child: ConnectivityBanner(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: pages,
+              ),
             ),
           ),
         ],
@@ -126,26 +146,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: GlassTypography.headline2(),
                 ),
                 const Spacer(),
+                // Messages icon
+                GlassIconButton(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  onPressed: () => context.push('/messages'),
+                ),
+                const SizedBox(width: 4),
+                // Notifications with unread badge
                 Stack(
-                  alignment: Alignment.topRight,
+                  clipBehavior: Clip.none,
                   children: [
                     GlassIconButton(
                       icon: Icons.notifications_outlined,
-                      onPressed: () {},
+                      onPressed: () => context.push('/notifications'),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: GlassColors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                    if (_hasUnreadNotifications)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -166,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // 1. Hero Card
           GlassHeroCard(
-            title: 'Namaste,\nTeacher!',
+            title: 'Namaste,\n${FirebaseAuth.instance.currentUser?.displayName ?? 'Teacher'}!',
             subtitle: 'Ready to inspire your students today?',
             illustration: ClipRRect(
               borderRadius: const BorderRadius.only(
@@ -288,28 +319,22 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: GlassSpacing.xxl),
 
-          // 3. Recent Activity Header
+          // Community Nudge Banner
+          if (_showCommunityNudge) _buildCommunityNudgeBanner(),
+          if (_showCommunityNudge)
+            const SizedBox(height: GlassSpacing.xxl),
+
+          // Edu News Card
+          _buildEduNewsCard(),
+          const SizedBox(height: GlassSpacing.xxl),
+
+          // 3. Recent Activity — Real Data from Content Library
           Text(
             'Recent Activity',
             style: GlassTypography.headline2(),
           ),
           const SizedBox(height: GlassSpacing.lg),
-          
-          _buildRecentActivityItem(
-            'Photosynthesis Lesson Plan',
-            'Today, 10:30 AM',
-            Icons.book_rounded,
-            const Color(0xFFFEF2F2),
-            const Color(0xFFDC2626),
-          ),
-          const SizedBox(height: GlassSpacing.md),
-          _buildRecentActivityItem(
-            'Class 7 Science Quiz',
-            'Yesterday',
-            Icons.quiz_rounded,
-            const Color(0xFFF3E8FF),
-            const Color(0xFF7C3AED),
-          ),
+          _buildRecentActivitySection(),
           const SizedBox(height: GlassSpacing.xxl),
 
           // 4. Teaching Insight
@@ -319,6 +344,86 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildRecentActivitySection() {
+    final contentAsync =
+        ref.watch(contentListProvider(const ContentFilter(limit: 5)));
+
+    return contentAsync.when(
+      data: (response) {
+        if (response.items.isEmpty) {
+          return GlassCard(
+            padding: const EdgeInsets.all(GlassSpacing.xl),
+            child: Column(
+              children: [
+                Icon(Icons.history_rounded,
+                    size: 40, color: GlassColors.textTertiary),
+                const SizedBox(height: GlassSpacing.md),
+                Text('No activity yet',
+                    style: GlassTypography.bodyMedium(
+                        color: GlassColors.textSecondary)),
+                Text('Generate content to see it here',
+                    style: GlassTypography.bodySmall()),
+              ],
+            ),
+          );
+        }
+        return Column(
+          children: response.items.map((item) {
+            final meta = _metaForType(item.type);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: GlassSpacing.md),
+              child: _buildRecentActivityItem(
+                item.title,
+                item.typeLabel,
+                meta.$1,
+                meta.$2.withOpacity(0.1),
+                meta.$2,
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: GlassSpacing.xl),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: GlassColors.primary),
+          ),
+        ),
+      ),
+      error: (_, __) => GlassCard(
+        child: Text('Could not load recent activity',
+            style: GlassTypography.bodySmall()),
+      ),
+    );
+  }
+
+  (IconData, Color) _metaForType(String type) {
+    switch (type) {
+      case 'lesson-plan':
+        return (Icons.book_rounded, const Color(0xFFDC2626));
+      case 'quiz':
+        return (Icons.extension_rounded, const Color(0xFF2563EB));
+      case 'worksheet':
+        return (Icons.assignment_rounded, const Color(0xFF16A34A));
+      case 'visual-aid':
+        return (Icons.image_rounded, const Color(0xFF9333EA));
+      case 'rubric':
+        return (Icons.grading_rounded, const Color(0xFFF59E0B));
+      case 'exam-paper':
+        return (Icons.description_rounded, const Color(0xFF0D9488));
+      case 'virtual-field-trip':
+        return (Icons.travel_explore_rounded, const Color(0xFF6366F1));
+      case 'teacher-training':
+        return (Icons.school_rounded, const Color(0xFFEC4899));
+      default:
+        return (Icons.article_rounded, GlassColors.primary);
+    }
   }
 
   Widget _buildRecentActivityItem(
@@ -362,6 +467,115 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 12,
               color: GlassColors.textTertiary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommunityNudgeBanner() {
+    return GlassCard(
+      onTap: () => context.push('/community/compose'),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(GlassRadius.lg),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(GlassSpacing.lg),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(GlassRadius.md),
+              ),
+              child: const Icon(
+                Icons.people_rounded,
+                color: Color(0xFF2563EB),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: GlassSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Share your expertise!',
+                    style: GlassTypography.labelLarge(
+                      color: const Color(0xFF1E40AF),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Post in the Community',
+                    style: GlassTypography.bodySmall(
+                      color: const Color(0xFF3B82F6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => setState(() => _showCommunityNudge = false),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: GlassColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEduNewsCard() {
+    return GlassCard(
+      onTap: () => context.push('/news'),
+      padding: const EdgeInsets.all(GlassSpacing.lg),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(GlassRadius.md),
+            ),
+            child: const Icon(
+              Icons.newspaper_rounded,
+              color: Color(0xFFF59E0B),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: GlassSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Edu News', style: GlassTypography.labelLarge()),
+                const SizedBox(height: 2),
+                Text(
+                  'Latest updates in education',
+                  style: GlassTypography.bodySmall(
+                    color: GlassColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: GlassColors.textTertiary,
           ),
         ],
       ),
