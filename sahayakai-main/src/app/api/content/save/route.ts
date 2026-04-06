@@ -168,11 +168,29 @@ export async function POST(request: Request) {
                 throw storageOrDbError; // re-throw to outer catch → 500 response
             }
 
+            // Mark onboarding checklist item (fire-and-forget, non-blocking)
+            import('@/lib/firebase-admin').then(({ getDb }) =>
+                getDb().then(db =>
+                    db.collection('users').doc(userId).update({
+                        'onboardingChecklistItems.save-to-library': true,
+                    }).catch(() => {})
+                )
+            ).catch(() => {});
+
             return NextResponse.json({ success: true, id: validContent.id });
         }
 
         // No data field — metadata-only save
         await dbAdapter.saveContent(userId, validContent as any);
+
+        // Mark onboarding checklist item (fire-and-forget)
+        import('@/lib/firebase-admin').then(({ getDb }) =>
+            getDb().then(db =>
+                db.collection('users').doc(userId).update({
+                    'onboardingChecklistItems.save-to-library': true,
+                }).catch(() => {})
+            )
+        ).catch(() => {});
 
         return NextResponse.json({ success: true, id: validContent.id });
 

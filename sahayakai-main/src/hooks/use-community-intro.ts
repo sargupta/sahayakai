@@ -3,8 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { getProfileData, updateProfileAction } from '@/app/actions/profile';
+import type { UserProfile } from '@/types';
 
 type CommunityIntroState = 'none' | 'ready' | 'visited';
+
+interface UseCommunityIntroOptions {
+    /** Pre-fetched profile to avoid a duplicate Firestore read */
+    profile?: Partial<UserProfile> | null;
+}
 
 interface UseCommunityIntroReturn {
     /** Whether to show the community nudge banner */
@@ -23,8 +29,10 @@ interface UseCommunityIntroReturn {
  * Hook for progressive community introduction.
  * Reads communityIntroState ONCE at session start (piggybacks on auth context).
  * Tracks AI generation count client-side, triggers nudge after 3rd generation.
+ *
+ * Pass `options.profile` from useOnboardingProgress to avoid a duplicate fetch.
  */
-export function useCommunityIntro(): UseCommunityIntroReturn {
+export function useCommunityIntro(options?: UseCommunityIntroOptions): UseCommunityIntroReturn {
     const { user } = useAuth();
     const [introState, setIntroState] = useState<CommunityIntroState>('visited'); // default: no nudge
     const [dismissed, setDismissed] = useState(false);
@@ -36,13 +44,24 @@ export function useCommunityIntro(): UseCommunityIntroReturn {
         introStateRef.current = introState;
     }, [introState]);
 
-    // Load communityIntroState once when user is available
+    // If a pre-fetched profile is provided, use it directly instead of fetching
     useEffect(() => {
         if (!user || loaded) return;
+        if (options?.profile === undefined) return; // profile not yet available from parent
+        if (options.profile === null) { setLoaded(true); return; }
+
+        const state = (options.profile.communityIntroState ?? 'visited') as CommunityIntroState;
+        setIntroState(state);
+        introStateRef.current = state;
+        setLoaded(true);
+    }, [user, loaded, options?.profile]);
+
+    // Fallback: load from Firestore if no pre-fetched profile
+    useEffect(() => {
+        if (!user || loaded || options?.profile !== undefined) return;
 
         getProfileData(user.uid).then(({ profile }) => {
             if (!profile) return;
-            // Existing users without the field → treat as 'visited' (no nudge)
             const state = (profile.communityIntroState ?? 'visited') as CommunityIntroState;
             setIntroState(state);
             introStateRef.current = state;
@@ -50,7 +69,7 @@ export function useCommunityIntro(): UseCommunityIntroReturn {
         }).catch(() => {
             setLoaded(true);
         });
-    }, [user, loaded]);
+    }, [user, loaded, options?.profile]);
 
     const dismissNudge = useCallback(() => {
         setDismissed(true);
