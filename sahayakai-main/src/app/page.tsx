@@ -13,7 +13,7 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image, RefreshCw } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
@@ -21,6 +21,11 @@ import { SampleOutputSection } from "@/components/landing/sample-output-section"
 import { useCommunityIntro } from "@/hooks/use-community-intro";
 import { CommunityNudgeBanner } from "@/components/community/community-nudge-banner";
 import { DemoInteraction } from "@/components/landing/demo-interaction";
+import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
+import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
+import { ProfileCompletionCard } from "@/components/onboarding/profile-completion-card";
+import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight";
+import type { ContextualSuggestion } from "@/lib/contextual-suggestions";
 
 const formSchema = z.object({
   topic: z.string().min(3, { message: "Topic must be at least 3 characters." }),
@@ -32,14 +37,40 @@ type FormValues = z.infer<typeof formSchema>;
 
 
 
+const SuggestionCard = ({ suggestion }: { suggestion: ContextualSuggestion }) => (
+  <Link href={suggestion.toolHref} className="group">
+    <Card className="h-full border border-border border-l-[3px] border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary transition-colors duration-150 overflow-hidden">
+      <CardContent className="p-4 flex flex-col gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70">{suggestion.toolLabel}</span>
+        <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
+        <p className="text-xs text-muted-foreground">{suggestion.subject} &middot; {suggestion.gradeLevel}</p>
+        <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          Start <ArrowRight className="h-3 w-3" />
+        </div>
+      </CardContent>
+    </Card>
+  </Link>
+);
+
 export default function Home() {
   const { requireAuth, openAuthModal } = useAuth();
-  const { language: userLanguage } = useLanguage();
-  const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro();
+  const { language: userLanguage, t } = useLanguage();
+  const {
+    isNewUser, generationCount, checklistItems, suggestions, phase, advancePhase,
+    profile, profileSummary, spotlightsSeen, markSpotlightSeen,
+    showProfileCompletion, checklistDismissed, isFirstWeek,
+    refreshSuggestions, dismissProfileCard, dismissChecklist,
+  } = useOnboardingProgress();
+  const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro({ profile });
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [showAllToolsOnPage, setShowAllToolsOnPage] = useState(false);
   const router = useRouter();
+
+  const showNewUserHome = isNewUser && generationCount < 5;
+  const teacherName = profileSummary?.displayName?.split(' ')[0] || "Teacher";
+  const primarySubject = profileSummary?.subjects?.[0];
 
   const { toast } = useToast();
   useEffect(() => {
@@ -166,28 +197,42 @@ export default function Home() {
           <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
         <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
-          {greeting}, <span className="text-primary">Teacher.</span>
+          {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
-        <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
-          I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
-        </p>
+        {showNewUserHome && suggestions.length > 0 ? (
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+            {t("Ideas for your classes")}
+          </p>
+        ) : (
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+            I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
+          </p>
+        )}
       </div>
 
       {/* Main Voice-First Input Section */}
       <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 flex flex-col items-center gap-8">
 
         {/* BIG MIC BUTTON */}
-        <div className="flex flex-col items-center gap-4">
-          <MicrophoneInput
-            onTranscriptChange={handleTranscript}
-            iconSize="xl"
-            label="Speak your topic"
-            className=""
-          />
-          <p className="text-muted-foreground text-sm md:text-sm">
-            Tap the microphone and tell Sahayak what you want to teach today
-          </p>
-        </div>
+        <FeatureSpotlight
+          id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
+          message="Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!"
+          seenSpotlights={spotlightsSeen}
+          onDismiss={markSpotlightSeen}
+          position="bottom"
+        >
+          <div className="flex flex-col items-center gap-4">
+            <MicrophoneInput
+              onTranscriptChange={handleTranscript}
+              iconSize="xl"
+              label="Speak your topic"
+              className=""
+            />
+            <p className="text-muted-foreground text-sm md:text-sm">
+              Tap the microphone and tell Sahayak what you want to teach today
+            </p>
+          </div>
+        </FeatureSpotlight>
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
@@ -268,81 +313,135 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Sample Output */}
-      <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-150 flex justify-center">
-        <SampleOutputSection />
-      </div>
+      {/* Sample Output -- hidden for new users who see personalized suggestions */}
+      {!showNewUserHome && (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-150 flex justify-center">
+          <SampleOutputSection />
+        </div>
+      )}
 
-      {/* Demo Interaction */}
-      <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
-        <DemoInteraction />
-      </div>
+      {/* Demo Interaction -- hidden for new users */}
+      {!showNewUserHome && (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
+          <DemoInteraction />
+        </div>
+      )}
 
-      {/* Quick Actions Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
-        <QuickActionCard
-          title="Lesson Plan"
-          icon={BookOpen}
-          href="/lesson-plan"
-          color=""
-          description="NCERT-aligned plans."
-        />
-        <QuickActionCard
-          title="Quiz Generator"
-          icon={BrainCircuit}
-          href="/quiz-generator"
-          color=""
-          description="Instant quizzes & worksheets."
-        />
-        <QuickActionCard
-          title="Exam Paper"
-          icon={FileText}
-          href="/exam-paper"
-          color=""
-          description="Board-aligned papers."
-        />
-        <QuickActionCard
-          title="Worksheet Wizard"
-          icon={ClipboardList}
-          href="/worksheet-wizard"
-          color=""
-          description="Practice worksheets."
-        />
-        <QuickActionCard
-          title="Visual Aid"
-          icon={Image}
-          href="/visual-aid-designer"
-          color=""
-          description="Diagrams & illustrations."
-        />
-        <QuickActionCard
-          title="Content Creator"
-          icon={PenTool}
-          href="/content-creator"
-          color=""
-          description="Stories & visual aids."
-        />
-        <QuickActionCard
-          title="Instant Answer"
-          icon={Lightbulb}
-          href="/instant-answer"
-          color=""
-          description="Quick answers to questions."
-        />
-        <QuickActionCard
-          title="Teacher Training"
-          icon={GraduationCap}
-          href="/teacher-training"
-          color=""
-          description="Professional development."
-        />
-      </div>
+      {/* Quick Actions Grid — personalized for new users, full grid for experienced */}
+      {showNewUserHome && suggestions.length > 0 ? (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+            {suggestions.map(s => (
+              <SuggestionCard key={s.id} suggestion={s} />
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={refreshSuggestions}
+              className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" /> Show different ideas
+            </button>
+            {!showAllToolsOnPage && (
+              <button
+                onClick={() => setShowAllToolsOnPage(true)}
+                className="text-sm text-primary font-medium hover:underline"
+              >
+                {t("See all tools")} &rarr;
+              </button>
+            )}
+          </div>
+          {showAllToolsOnPage && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in duration-300">
+              <QuickActionCard title="Lesson Plan" icon={BookOpen} href="/lesson-plan" color="" description="NCERT-aligned plans." />
+              <QuickActionCard title="Quiz Generator" icon={BrainCircuit} href="/quiz-generator" color="" description="Instant quizzes & worksheets." />
+              <QuickActionCard title="Exam Paper" icon={FileText} href="/exam-paper" color="" description="Board-aligned papers." />
+              <QuickActionCard title="Worksheet Wizard" icon={ClipboardList} href="/worksheet-wizard" color="" description="Practice worksheets." />
+              <QuickActionCard title="Visual Aid" icon={Image} href="/visual-aid-designer" color="" description="Diagrams & illustrations." />
+              <QuickActionCard title="Content Creator" icon={PenTool} href="/content-creator" color="" description="Stories & visual aids." />
+              <QuickActionCard title="Instant Answer" icon={Lightbulb} href="/instant-answer" color="" description="Quick answers to questions." />
+              <QuickActionCard title="Teacher Training" icon={GraduationCap} href="/teacher-training" color="" description="Professional development." />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
+          <QuickActionCard
+            title="Lesson Plan"
+            icon={BookOpen}
+            href="/lesson-plan"
+            color=""
+            description="NCERT-aligned plans."
+          />
+          <QuickActionCard
+            title="Quiz Generator"
+            icon={BrainCircuit}
+            href="/quiz-generator"
+            color=""
+            description="Instant quizzes & worksheets."
+          />
+          <QuickActionCard
+            title="Exam Paper"
+            icon={FileText}
+            href="/exam-paper"
+            color=""
+            description="Board-aligned papers."
+          />
+          <QuickActionCard
+            title="Worksheet Wizard"
+            icon={ClipboardList}
+            href="/worksheet-wizard"
+            color=""
+            description="Practice worksheets."
+          />
+          <QuickActionCard
+            title="Visual Aid"
+            icon={Image}
+            href="/visual-aid-designer"
+            color=""
+            description="Diagrams & illustrations."
+          />
+          <QuickActionCard
+            title="Content Creator"
+            icon={PenTool}
+            href="/content-creator"
+            color=""
+            description="Stories & visual aids."
+          />
+          <QuickActionCard
+            title="Instant Answer"
+            icon={Lightbulb}
+            href="/instant-answer"
+            color=""
+            description="Quick answers to questions."
+          />
+          <QuickActionCard
+            title="Teacher Training"
+            icon={GraduationCap}
+            href="/teacher-training"
+            color=""
+            description="Professional development."
+          />
+        </div>
+      )}
+
+      {/* Profile Completion Card — shown after 5+ generations, max 3 times */}
+      {showProfileCompletion && (
+        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <ProfileCompletionCard onComplete={() => advancePhase('done')} onDismiss={dismissProfileCard} />
+        </div>
+      )}
 
       {/* Community Nudge Banner — appears after 3rd AI generation */}
       {showNudge && (
         <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
           <CommunityNudgeBanner onDismiss={dismissNudge} onExplore={markVisited} />
         </div>
+      )}
+
+      {/* Onboarding Checklist — floating bottom-right for new users, dismissible, auto-hides after 7 days */}
+      {showNewUserHome && !checklistDismissed && isFirstWeek && (
+        <OnboardingChecklist items={checklistItems} onDismiss={dismissChecklist} />
       )}
     </div>
   );

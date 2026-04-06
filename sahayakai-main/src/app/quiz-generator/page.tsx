@@ -658,6 +658,13 @@ function QuizGeneratorContent() {
       const result = await res.json();
       setQuiz(result);
       clearFormSnapshot("quiz-generator");
+
+      // Mark onboarding checklist item
+      if (auth.currentUser) {
+        import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+          markChecklistItemAction(auth.currentUser!.uid, 'first-quiz')
+        ).catch(() => {});
+      }
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({

@@ -28,6 +28,7 @@ jest.mock("lucide-react", () => ({
     CheckCircle2: (props: any) => <div {...props} data-testid="check-circle" />,
     Clock: (props: any) => <div {...props} data-testid="clock" />,
     Users: (props: any) => <div {...props} data-testid="users" />,
+    RefreshCw: (props: any) => <div {...props} data-testid="refresh-cw" />,
 }));
 
 // Mock new landing page components
@@ -51,6 +52,43 @@ jest.mock("@/hooks/use-community-intro", () => ({
 
 jest.mock("@/components/community/community-nudge-banner", () => ({
     CommunityNudgeBanner: () => <div data-testid="nudge-banner">NudgeBanner</div>,
+}));
+
+jest.mock("@/hooks/use-onboarding-progress", () => ({
+    useOnboardingProgress: () => ({
+        phase: 'done',
+        profile: null,
+        profileSummary: { displayName: 'Teacher' },
+        suggestions: [],
+        showNewUserHome: false,
+        showProfileCompletion: false,
+        checklistDismissed: true,
+        isFirstWeek: false,
+        refreshSuggestions: jest.fn(),
+        dismissProfileCard: jest.fn(),
+        dismissChecklist: jest.fn(),
+        markChecklistItem: jest.fn(),
+        incrementGenerationCount: jest.fn(),
+        markSpotlightSeen: jest.fn(),
+    }),
+}));
+
+jest.mock("@/components/onboarding/onboarding-checklist", () => ({
+    OnboardingChecklist: () => <div data-testid="onboarding-checklist">Checklist</div>,
+}));
+
+jest.mock("@/components/onboarding/profile-completion-card", () => ({
+    ProfileCompletionCard: () => <div data-testid="profile-completion">ProfileCompletion</div>,
+}));
+
+jest.mock("@/components/onboarding/feature-spotlight", () => ({
+    FeatureSpotlight: ({ children }: any) => <>{children}</>,
+    SPOTLIGHT_IDS: {
+        HOME_VOICE_INPUT: 'home-voice-input',
+        SIDEBAR_LESSON_PLAN: 'sidebar-lesson-plan',
+        SAVE_TO_LIBRARY: 'save-to-library',
+        SHARE_TO_COMMUNITY: 'share-to-community',
+    },
 }));
 
 // Mock Firebase to prevent initialization errors

@@ -10,18 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SUBJECTS, GRADE_LEVELS, LANGUAGES, DEPARTMENTS, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP } from "@/types";
+import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP } from "@/types";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
-import { Loader2, GraduationCap, MapPin, BookOpen, Layers, UserCircle, Shield, ChevronDown } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { getOnboardingExample, type OnboardingExample } from "@/data/onboarding-examples";
+import { getOnboardingExampleTopic } from "@/lib/contextual-suggestions";
+import { saveToLibrary } from "@/app/actions/content";
+import { MicrophoneInput } from "@/components/microphone-input";
 
-import type { Language } from "@/types";
+import type { Language, ContentType } from "@/types";
 
-// Board options for the cascading selector
 const BOARD_CATEGORIES = [
     { value: 'CBSE', label: 'CBSE' },
     { value: 'ICSE / ISC', label: 'ICSE / ISC' },
@@ -36,12 +37,24 @@ export default function OnboardingPage() {
     const [submitting, setSubmitting] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
 
-    // Step 0 = language picker, Steps 1-3 = form
+    // Step 0 = language picker, Step 1 = single-screen setup, Step 2 = hybrid aha moment
     const [step, setStep] = useState(0);
     const [showEarlyChildhood, setShowEarlyChildhood] = useState(false);
     const stepContainerRef = useRef<HTMLDivElement>(null);
 
-    // Focus management — focus first focusable element after step transition
+    // Aha moment state
+    const [previewExample, setPreviewExample] = useState<OnboardingExample | null>(null);
+    const [generating, setGenerating] = useState(false);
+    const [generatedContent, setGeneratedContent] = useState<any>(null);
+    const [generationError, setGenerationError] = useState(false);
+    const [selectedTopic, setSelectedTopic] = useState<string>("");
+    const [showAllActivities, setShowAllActivities] = useState(false);
+
+    // B1: Accordion state for Step 1 mobile scroll
+    const [activeSection, setActiveSection] = useState(0);
+    const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    // Focus management
     useEffect(() => {
         if (step === 0) return;
         const container = stepContainerRef.current;
@@ -53,24 +66,45 @@ export default function OnboardingPage() {
         return () => clearTimeout(timer);
     }, [step]);
 
-    // Form State
+    // Form state — all fields on ONE screen
     const [formData, setFormData] = useState({
-        // Step 1 — What You Teach
         schoolName: "",
         educationBoard: "",
-        boardCategory: "",   // CBSE | ICSE / ISC | state_board
+        boardCategory: "",
         state: "",
-        // Step 2 — Subjects & Classes
         subjects: [] as string[],
         gradeLevels: [] as string[],
-        // Step 3 — About You (skippable)
-        department: "",
-        designation: "",
-        district: "",
-        bio: "",
-        // Pre-step
         preferredLanguage: "English" as Language,
     });
+
+    // B1: Auto-advance accordion when a section is complete
+    useEffect(() => {
+        if (step !== 1) return;
+        if (activeSection === 0 && formData.schoolName.trim() && formData.state) {
+            const timer = setTimeout(() => setActiveSection(1), 400);
+            return () => clearTimeout(timer);
+        }
+    }, [step, activeSection, formData.schoolName, formData.state]);
+
+    useEffect(() => {
+        if (step !== 1) return;
+        if (activeSection === 1 && formData.educationBoard) {
+            const timer = setTimeout(() => setActiveSection(2), 400);
+            return () => clearTimeout(timer);
+        }
+    }, [step, activeSection, formData.educationBoard]);
+
+    // Scroll active section into view on mobile
+    useEffect(() => {
+        if (step !== 1) return;
+        const el = sectionRefs.current[activeSection];
+        if (el) {
+            const timer = setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [step, activeSection]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -82,7 +116,6 @@ export default function OnboardingPage() {
                         router.push("/");
                         return;
                     }
-                    // Resume from where they left off (progressive save)
                     if (profile) {
                         setFormData(prev => ({
                             ...prev,
@@ -92,12 +125,7 @@ export default function OnboardingPage() {
                             subjects: profile.subjects || [],
                             gradeLevels: profile.gradeLevels || [],
                             preferredLanguage: (profile.preferredLanguage as Language) || "English",
-                            department: profile.department || "",
-                            designation: profile.designation || "",
-                            district: profile.district || "",
-                            bio: profile.bio || "",
                         }));
-                        // Determine board category from existing board
                         if (profile.educationBoard === 'CBSE') {
                             setFormData(prev => ({ ...prev, boardCategory: 'CBSE' }));
                         } else if (profile.educationBoard === 'ICSE / ISC') {
@@ -105,12 +133,10 @@ export default function OnboardingPage() {
                         } else if (profile.educationBoard) {
                             setFormData(prev => ({ ...prev, boardCategory: 'state_board' }));
                         }
-                        // If they already picked language, skip to step 1
                         if (profile.preferredLanguage) {
                             setStep(1);
                         }
                     }
-                    // Auto-detect language from browser
                     if (!profile?.preferredLanguage) {
                         const browserLang = navigator.language?.split('-')[0];
                         const { LANGUAGE_CODE_MAP } = await import('@/types');
@@ -168,52 +194,25 @@ export default function OnboardingPage() {
         }));
     };
 
-    // Progressive save — save after each step completion
     const saveStep = async (stepData: Record<string, any>) => {
         if (!userId) return;
         try {
             await updateProfileAction(userId, stepData);
         } catch {
-            // Non-fatal — data will be saved on final submit
+            // Non-fatal
         }
     };
 
     const handleLanguageSelect = async (lang: Language) => {
         setFormData(prev => ({ ...prev, preferredLanguage: lang }));
-        await setLanguage(lang, false); // Update UI language immediately
+        await setLanguage(lang, false);
         await saveStep({ preferredLanguage: lang });
         setStep(1);
     };
 
-    const handleStep1Next = async () => {
-        await saveStep({
-            schoolName: formData.schoolName,
-            schoolNormalized: formData.schoolName.toUpperCase().trim(),
-            educationBoard: formData.educationBoard,
-            state: formData.state,
-        });
-        setStep(2);
-    };
-
-    const handleStep2Next = async () => {
-        await saveStep({
-            subjects: formData.subjects,
-            gradeLevels: formData.gradeLevels,
-        });
-        setStep(3);
-    };
-
-    const handleSubmit = async (skipStep3: boolean = false) => {
+    // Step 1 "Show me what SahayakAI can do" — saves profile + shows aha moment
+    const handleStep1Submit = async () => {
         if (!userId) return;
-        if (!formData.schoolName || formData.subjects.length === 0 || formData.gradeLevels.length === 0) {
-            toast({
-                title: "Information Required",
-                description: "Please fill in your school, subjects, and grades to continue.",
-                variant: "destructive"
-            });
-            return;
-        }
-
         setSubmitting(true);
         try {
             const profileData: Record<string, any> = {
@@ -231,25 +230,27 @@ export default function OnboardingPage() {
                 followingCount: 0,
                 verifiedStatus: 'none',
                 badges: ["New Member"],
+                onboardingPhase: 'first-generation',
+                profileCompletionLevel: 'basic',
             };
-
-            if (!skipStep3) {
-                if (formData.department) profileData.department = formData.department;
-                if (formData.designation) profileData.designation = formData.designation;
-                if (formData.district) profileData.district = formData.district;
-                if (formData.bio) profileData.bio = formData.bio;
-            }
 
             await updateProfileAction(userId, profileData);
             await setLanguage(formData.preferredLanguage as Language, false);
 
-            toast({
-                title: "Welcome to SahayakAI!",
-                description: "Your profile has been set up successfully.",
-            });
+            // Load pre-generated example for their subject/grade
+            const example = getOnboardingExample(formData.subjects, formData.gradeLevels, formData.preferredLanguage === 'Hindi' ? 'Hindi' : 'English');
+            setPreviewExample(example);
 
-            router.push("/");
-        } catch (error: any) {
+            // Get topic suggestion for real generation
+            const topic = getOnboardingExampleTopic({
+                subjects: formData.subjects,
+                gradeLevels: formData.gradeLevels,
+                educationBoard: formData.educationBoard,
+            });
+            if (topic) setSelectedTopic(topic.topic);
+
+            setStep(2);
+        } catch {
             toast({
                 title: "Setup Failed",
                 description: "Could not save your profile. Please try again.",
@@ -260,6 +261,60 @@ export default function OnboardingPage() {
         }
     };
 
+    // Real AI generation in Step 2
+    const handleGenerate = async () => {
+        if (!selectedTopic.trim() || !userId) return;
+        setGenerating(true);
+        setGenerationError(false);
+        try {
+            const token = await auth.currentUser?.getIdToken();
+            const res = await fetch("/api/ai/lesson-plan", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    topic: selectedTopic,
+                    gradeLevel: formData.gradeLevels[0] || "Class 6",
+                    subject: formData.subjects[0] || "Science",
+                    language: formData.preferredLanguage,
+                }),
+            });
+            if (!res.ok) throw new Error("Generation failed");
+            const data = await res.json();
+            setGeneratedContent(data);
+        } catch {
+            setGenerationError(true);
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    // Finish onboarding — save generated content to library if present, then go home
+    const handleFinish = async () => {
+        if (!userId) { router.push("/"); return; }
+
+        const updates: Record<string, any> = { onboardingPhase: 'exploring' };
+
+        // B5: Save generated content to library
+        if (generatedContent) {
+            try {
+                const title = generatedContent.result?.title || generatedContent.title || `Lesson Plan: ${selectedTopic}`;
+                const result = await saveToLibrary(userId, 'lesson-plan' as ContentType, title, generatedContent);
+                if (result.success && result.id) {
+                    updates.firstGenerationContentId = result.id;
+                    updates.firstGenerationTool = 'lesson-plan';
+                }
+            } catch {
+                // Non-fatal: content is lost but don't block onboarding
+            }
+        }
+
+        await saveStep(updates);
+        router.push("/");
+    };
+
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -267,7 +322,7 @@ export default function OnboardingPage() {
         </div>
     );
 
-    // Step 0 — Language Picker (full screen, native scripts)
+    // Step 0 — Language Picker (unchanged)
     if (step === 0) {
         return (
             <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
@@ -310,84 +365,273 @@ export default function OnboardingPage() {
         );
     }
 
-    // Steps 1-3 — Profile Form
-    const totalSteps = 3;
+    // Step 2 — Hybrid Aha Moment
+    if (step === 2) {
+        return (
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
+                <div className="w-full max-w-2xl space-y-6">
+                    {/* Pre-generated example */}
+                    <Card className="rounded-2xl border border-border shadow-soft">
+                        <CardHeader className="text-center space-y-2 pb-3">
+                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
+                                <Sparkles className="h-8 w-8 text-primary" />
+                            </div>
+                            <CardTitle className="text-xl sm:text-2xl font-extrabold font-headline tracking-tight">
+                                {t("Here is what SahayakAI creates for you")}
+                            </CardTitle>
+                            <CardDescription>
+                                {previewExample?.title}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 px-4 sm:px-6">
+                            {previewExample && (
+                                <>
+                                    {/* Objectives */}
+                                    <div className="flex items-start gap-2">
+                                        <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Learning Objectives</p>
+                                            <ul className="text-sm space-y-1 mt-1">
+                                                {previewExample.objectives.map((obj, i) => (
+                                                    <li key={i} className="flex items-start gap-2">
+                                                        <Check className="h-3 w-3 text-primary mt-1 shrink-0" />
+                                                        <span>{obj}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Duration */}
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Clock className="h-4 w-4" />
+                                        <span>{previewExample.duration}</span>
+                                    </div>
+
+                                    {/* Activities preview */}
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activities</p>
+                                        {(showAllActivities ? previewExample.activities : previewExample.activities.slice(0, 3)).map((act, i) => (
+                                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 animate-in fade-in duration-300">
+                                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{act.phase}</span>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium">{act.title}</p>
+                                                    <p className="text-xs text-muted-foreground line-clamp-2">{act.description}</p>
+                                                </div>
+                                                <span className="text-xs text-muted-foreground shrink-0">{act.duration}</span>
+                                            </div>
+                                        ))}
+                                        {previewExample.activities.length > 3 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAllActivities(!showAllActivities)}
+                                                className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline w-full py-1"
+                                            >
+                                                {showAllActivities ? (
+                                                    <><ChevronUp className="h-3 w-3" /> Show fewer</>
+                                                ) : (
+                                                    <><ChevronDown className="h-3 w-3" /> Show all {previewExample.activities.length} activities</>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Real generation CTA */}
+                    <Card className="rounded-2xl border border-primary/20 bg-primary/5 shadow-soft">
+                        <CardContent className="p-4 sm:p-6 space-y-4">
+                            <h3 className="font-headline font-bold text-base">{t("Now create one for your topic")}</h3>
+
+                            <div className="flex gap-2 items-center">
+                                <Input
+                                    value={selectedTopic}
+                                    onChange={(e) => setSelectedTopic(e.target.value)}
+                                    placeholder="Enter a topic..."
+                                    className="h-10 text-sm shadow-soft flex-1"
+                                />
+                                <MicrophoneInput
+                                    onTranscriptChange={(transcript) => setSelectedTopic(transcript)}
+                                    iconSize="sm"
+                                    className="h-10 w-10 shrink-0 rounded-xl"
+                                />
+                                <Button
+                                    onClick={handleGenerate}
+                                    disabled={generating || !selectedTopic.trim()}
+                                    className="rounded-xl gap-1 shrink-0"
+                                >
+                                    {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                    {t("Create this")}
+                                </Button>
+                            </div>
+
+                            {/* Generated content preview */}
+                            {generatedContent && (
+                                <div className="p-3 rounded-xl bg-background border border-border">
+                                    <p className="text-sm font-semibold text-primary mb-1">
+                                        {generatedContent.result?.title || generatedContent.title || "Your Lesson Plan"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Created successfully! You can view and edit this from your library.
+                                    </p>
+                                </div>
+                            )}
+
+                            {generationError && (
+                                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+                                    <p className="text-sm text-destructive">
+                                        Could not generate. Don&apos;t worry, you can create content anytime from the home page.
+                                    </p>
+                                    <Button variant="outline" size="sm" onClick={handleGenerate} className="mt-2 rounded-xl">
+                                        Try again
+                                    </Button>
+                                </div>
+                            )}
+
+                            {generating && (
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                    <div>
+                                        <p className="text-sm font-medium">Creating your lesson plan...</p>
+                                        <p className="text-xs text-muted-foreground">This usually takes 20-30 seconds</p>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Navigation */}
+                    <div className="flex justify-between items-center">
+                        <Button variant="ghost" onClick={() => setStep(1)} className="rounded-xl">
+                            {t("Back")}
+                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="ghost" onClick={handleFinish} className="text-sm text-muted-foreground">
+                                {t("I will explore on my own")}
+                            </Button>
+                            <Button onClick={handleFinish} className="rounded-xl gap-1 shadow-lg shadow-primary/20">
+                                <ArrowRight className="h-4 w-4" />
+                                {generatedContent ? t("Save and Start") : t("Get Started")}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Step 1 — Single-screen setup (School + State + Board + Subjects + Grades)
+    const isStep1Valid =
+        formData.schoolName.trim() &&
+        formData.state &&
+        formData.educationBoard &&
+        formData.subjects.length > 0 &&
+        formData.gradeLevels.length > 0;
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
             <Card className="w-full max-w-lg sm:max-w-2xl rounded-2xl border border-border shadow-soft">
-                <CardHeader className="text-center space-y-2 pb-4 sm:pb-8">
+                <CardHeader className="text-center space-y-2 pb-4 sm:pb-6">
                     <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
                         <GraduationCap className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline tracking-tight">
-                        {t("Finish your Profile")}
+                        {t("Tell us about your teaching")}
                     </CardTitle>
-                    <CardDescription className="text-lg">
+                    <CardDescription className="text-base">
                         {formData.preferredLanguage !== 'English' && (
                             <span className="text-xs text-muted-foreground mr-2">({LANGUAGE_NATIVE_LABELS[formData.preferredLanguage]})</span>
                         )}
                         Help us personalize your experience
                     </CardDescription>
-
-                    {/* Step Indicator */}
-                    <div className="flex items-center justify-center gap-2 mb-6" role="progressbar" aria-label={`Step ${step} of ${totalSteps}`} aria-valuenow={step} aria-valuemin={1} aria-valuemax={totalSteps}>
-                        {[1, 2, 3].map(s => (
-                            <div key={s} className={cn("h-2 rounded-full transition-all", s === step ? "w-8 bg-primary" : s < step ? "w-2 bg-primary/60" : "w-2 bg-border")} />
-                        ))}
-                    </div>
                 </CardHeader>
 
-                <CardContent ref={stepContainerRef} className="space-y-6 px-4 sm:px-8 min-h-[350px]">
-                    {/* Step 1 — What You Teach */}
-                    {step === 1 && (
-                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                            <div className="flex items-center gap-2 text-primary font-bold">
-                                <MapPin className="h-5 w-5" />
-                                <span>1. {t("What You Teach")}</span>
+                <CardContent ref={stepContainerRef} className="space-y-2 px-4 sm:px-8">
+                    {/* Section 0: School & State */}
+                    <div ref={el => { sectionRefs.current[0] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 0 ? -1 : 0)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("School / Institution Name")} & {t("State")}</span>
                             </div>
-
-                            {/* School Name */}
-                            <div className="space-y-2">
-                                <Label htmlFor="school">{t("School / Institution Name")}*</Label>
-                                <Input
-                                    id="school"
-                                    placeholder="e.g. Kendriya Vidyalaya, Delhi"
-                                    value={formData.schoolName}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
-                                    className="h-12 text-base shadow-soft"
-                                />
+                            <div className="flex items-center gap-2">
+                                {formData.schoolName.trim() && formData.state && activeSection !== 0 && (
+                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {formData.state}</span>
+                                )}
+                                {formData.schoolName.trim() && formData.state ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 0 && "rotate-180")} />
+                                )}
                             </div>
-
-                            {/* State */}
-                            <div className="space-y-2">
-                                <Label>{t("State")}*</Label>
-                                <Select
-                                    value={formData.state}
-                                    onValueChange={handleStateChange}
-                                >
-                                    <SelectTrigger className="h-12 shadow-soft">
-                                        <SelectValue placeholder="Select your state" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-[300px]">
-                                        {INDIAN_STATES.map(s => (
-                                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                        </button>
+                        {activeSection === 0 && (
+                            <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
+                                    <Input
+                                        id="school"
+                                        placeholder="e.g. Kendriya Vidyalaya, Delhi"
+                                        value={formData.schoolName}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
+                                        className="h-11 text-sm shadow-soft"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t("State")}*</Label>
+                                    <Select value={formData.state} onValueChange={handleStateChange}>
+                                        <SelectTrigger className="h-11 shadow-soft">
+                                            <SelectValue placeholder="Select your state" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[300px]">
+                                            {INDIAN_STATES.map(s => (
+                                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
+                        )}
+                    </div>
 
-                            {/* Board — Cascading: CBSE / ICSE / State Board */}
-                            <div className="space-y-2">
-                                <Label>{t("Education Board")}*</Label>
-                                <div className="grid grid-cols-3 gap-2">
+                    {/* Section 1: Education Board */}
+                    <div ref={el => { sectionRefs.current[1] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 1 ? -1 : 1)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <GraduationCap className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("Education Board")}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {formData.educationBoard && activeSection !== 1 && (
+                                    <span className="text-xs text-muted-foreground">{formData.educationBoard}</span>
+                                )}
+                                {formData.educationBoard ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 1 && "rotate-180")} />
+                                )}
+                            </div>
+                        </button>
+                        {activeSection === 1 && (
+                            <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="grid grid-cols-3 gap-1.5">
                                     {BOARD_CATEGORIES.map(cat => (
                                         <button
                                             key={cat.value}
                                             type="button"
                                             onClick={() => handleBoardCategoryChange(cat.value)}
                                             className={cn(
-                                                "px-3 py-3 text-sm font-semibold rounded-xl border transition-all",
+                                                "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                 formData.boardCategory === cat.value
                                                     ? "bg-primary text-white border-primary shadow-lg"
                                                     : "bg-card text-muted-foreground border-border hover:border-primary/50"
@@ -399,34 +643,45 @@ export default function OnboardingPage() {
                                     ))}
                                 </div>
                                 {formData.boardCategory === 'state_board' && formData.state && formData.educationBoard && (
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                        Selected: {formData.educationBoard}
-                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-2">Selected: {formData.educationBoard}</p>
                                 )}
                                 {formData.boardCategory === 'state_board' && !formData.state && (
-                                    <p className="text-sm text-orange-600 mt-2">
-                                        Please select your state above first
-                                    </p>
+                                    <p className="text-xs text-orange-600 mt-2">Please select your state first</p>
                                 )}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-                    {/* Step 2 — Subjects & Classes */}
-                    {step === 2 && (
-                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                            <div className="flex items-center gap-2 text-primary font-bold">
-                                <BookOpen className="h-5 w-5" />
-                                <span>2. {t("Your Subjects & Classes")}</span>
+                    {/* Section 2: Subjects */}
+                    <div ref={el => { sectionRefs.current[2] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 2 ? -1 : 2)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <BookOpen className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("Subjects")}</span>
                             </div>
-
-                            {/* Subjects */}
-                            <div className="space-y-2">
-                                <Label>{t("Subjects")}*</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3" role="group" aria-label="Select your subjects">
+                            <div className="flex items-center gap-2">
+                                {formData.subjects.length > 0 && activeSection !== 2 && (
+                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                        {formData.subjects.slice(0, 2).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
+                                    </span>
+                                )}
+                                {formData.subjects.length > 0 ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 2 && "rotate-180")} />
+                                )}
+                            </div>
+                        </button>
+                        {activeSection === 2 && (
+                            <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Select your subjects">
                                     {SUBJECTS.map((subject) => (
                                         <div key={subject} className={cn(
-                                            "flex items-center space-x-2 p-3 border rounded-xl transition-all cursor-pointer group hover:border-primary/50",
+                                            "flex items-center space-x-2 p-2.5 border rounded-xl transition-all cursor-pointer group hover:border-primary/50",
                                             formData.subjects.includes(subject) ? "bg-primary/5 border-primary shadow-soft" : "bg-card"
                                         )} onClick={() => handleSubjectChange(subject)}>
                                             <Checkbox
@@ -440,11 +695,36 @@ export default function OnboardingPage() {
                                     ))}
                                 </div>
                             </div>
+                        )}
+                    </div>
 
-                            {/* Grade Levels */}
-                            <div className="space-y-2">
-                                <Label>{t("Classes")}*</Label>
-                                <div className="grid grid-cols-3 md:grid-cols-4 gap-2.5" role="group" aria-label="Select your classes">
+                    {/* Section 3: Grade Levels */}
+                    <div ref={el => { sectionRefs.current[3] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 3 ? -1 : 3)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("Classes")}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {formData.gradeLevels.length > 0 && activeSection !== 3 && (
+                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                        {formData.gradeLevels.slice(0, 3).join(', ')}{formData.gradeLevels.length > 3 ? ` +${formData.gradeLevels.length - 3}` : ''}
+                                    </span>
+                                )}
+                                {formData.gradeLevels.length > 0 ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 3 && "rotate-180")} />
+                                )}
+                            </div>
+                        </button>
+                        {activeSection === 3 && (
+                            <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="grid grid-cols-4 md:grid-cols-6 gap-2" role="group" aria-label="Select your classes">
                                     {GRADE_LEVELS.slice(3).map((grade) => (
                                         <button
                                             key={grade}
@@ -452,7 +732,7 @@ export default function OnboardingPage() {
                                             onClick={() => handleGradeChange(grade)}
                                             aria-pressed={formData.gradeLevels.includes(grade)}
                                             className={cn(
-                                                "px-3 py-3 text-sm font-semibold rounded-xl border transition-all",
+                                                "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                 formData.gradeLevels.includes(grade)
                                                     ? "bg-primary text-white border-primary shadow-lg"
                                                     : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:shadow-soft"
@@ -462,17 +742,16 @@ export default function OnboardingPage() {
                                         </button>
                                     ))}
                                 </div>
-                                {/* Early Childhood toggle */}
                                 <button
                                     type="button"
                                     onClick={() => setShowEarlyChildhood(!showEarlyChildhood)}
-                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
+                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     <ChevronDown className={cn("h-3 w-3 transition-transform", showEarlyChildhood && "rotate-180")} />
                                     Early Childhood (Nursery, LKG, UKG)
                                 </button>
                                 {showEarlyChildhood && (
-                                    <div className="grid grid-cols-3 gap-2.5 mt-2 animate-in fade-in duration-300">
+                                    <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-300">
                                         {GRADE_LEVELS.slice(0, 3).map((grade) => (
                                             <button
                                                 key={grade}
@@ -480,7 +759,7 @@ export default function OnboardingPage() {
                                                 onClick={() => handleGradeChange(grade)}
                                                 aria-pressed={formData.gradeLevels.includes(grade)}
                                                 className={cn(
-                                                    "px-3 py-3 text-sm font-semibold rounded-xl border transition-all",
+                                                    "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                     formData.gradeLevels.includes(grade)
                                                         ? "bg-primary text-white border-primary shadow-lg"
                                                         : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:shadow-soft"
@@ -492,131 +771,27 @@ export default function OnboardingPage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Step 3 — About You (skippable) */}
-                    {step === 3 && (
-                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                            <div className="flex items-center gap-2 text-primary font-bold">
-                                <UserCircle className="h-5 w-5" />
-                                <span>3. {t("About You")}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground -mt-2">
-                                Optional — you can complete this later from your profile.
-                            </p>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Department</Label>
-                                    <Select
-                                        value={formData.department}
-                                        onValueChange={(v) => setFormData(prev => ({ ...prev, department: v }))}
-                                    >
-                                        <SelectTrigger className="h-12 shadow-soft">
-                                            <SelectValue placeholder="Select Dept" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {DEPARTMENTS.map(d => (
-                                                <SelectItem key={d} value={d}>{d}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Designation</Label>
-                                    <Input
-                                        placeholder="e.g. Senior Teacher"
-                                        value={formData.designation}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
-                                        className="h-12 shadow-soft"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>District / Region</Label>
-                                <Input
-                                    placeholder="e.g. North Delhi"
-                                    value={formData.district}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, district: e.target.value }))}
-                                    className="h-12 shadow-soft"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Short Bio</Label>
-                                <Textarea
-                                    placeholder="Tell us about your teaching philosophy..."
-                                    value={formData.bio}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                                    className="h-24 shadow-soft"
-                                />
-                            </div>
-
-                            <Link
-                                href="/privacy-for-teachers"
-                                target="_blank"
-                                className="flex items-center gap-2 text-sm text-primary hover:underline"
-                            >
-                                <Shield className="h-4 w-4" />
-                                Your data is private and never shared with inspectors
-                            </Link>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </CardContent>
 
-                <CardFooter className="flex justify-between px-4 sm:px-8 py-4 sm:py-8 border-t bg-muted/20 rounded-b-3xl">
+                <CardFooter className="flex justify-between px-4 sm:px-8 py-4 sm:py-6 border-t bg-muted/20 rounded-b-3xl">
                     <Button
                         variant="ghost"
-                        onClick={() => setStep(prev => prev - 1)}
-                        disabled={step <= 1 || submitting}
+                        onClick={() => setStep(0)}
                         className="rounded-xl px-6"
                     >
                         {t("Back")}
                     </Button>
 
-                    <div className="flex gap-2">
-                        {step === 3 && (
-                            <Button
-                                variant="outline"
-                                onClick={() => handleSubmit(true)}
-                                disabled={submitting}
-                                className="rounded-xl"
-                            >
-                                {t("Skip for now")}
-                            </Button>
-                        )}
-
-                        {step === 1 && (
-                            <Button
-                                onClick={handleStep1Next}
-                                disabled={!formData.schoolName.trim() || !formData.educationBoard || !formData.state}
-                                className="w-36 rounded-xl shadow-lg shadow-primary/20"
-                            >
-                                {t("Next Step")}
-                            </Button>
-                        )}
-
-                        {step === 2 && (
-                            <Button
-                                onClick={handleStep2Next}
-                                disabled={formData.subjects.length === 0 || formData.gradeLevels.length === 0}
-                                className="w-36 rounded-xl shadow-lg shadow-primary/20"
-                            >
-                                {t("Next Step")}
-                            </Button>
-                        )}
-
-                        {step === 3 && (
-                            <Button
-                                onClick={() => handleSubmit(false)}
-                                disabled={submitting}
-                                className="w-48 gap-2 rounded-xl shadow-lg shadow-primary/20"
-                            >
-                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                                {t("Get Started")}
-                            </Button>
-                        )}
-                    </div>
+                    <Button
+                        onClick={handleStep1Submit}
+                        disabled={!isStep1Valid || submitting}
+                        className="gap-2 rounded-xl shadow-lg shadow-primary/20 px-6"
+                    >
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {t("Show me what SahayakAI can do")}
+                    </Button>
                 </CardFooter>
             </Card>
         </div>

@@ -416,6 +416,13 @@ export function useLessonPlan() {
             setLessonPlan(result);
             clearFormSnapshot("lesson-plan");
 
+            // Mark onboarding checklist item
+            if (auth.currentUser) {
+                import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+                    markChecklistItemAction(auth.currentUser!.uid, 'first-lesson-plan')
+                ).catch(() => {});
+            }
+
             // Track successful generation (performance monitoring)
             endAIGeneration({
                 feature: 'lesson-plan',
