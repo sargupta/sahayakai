@@ -12,6 +12,7 @@ import {
   Trophy,
   FileUp,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 import type { GroupPost, PostType, PostAttachment } from "@/types/community";
 import type { ConnectionStatus } from "@/types";
 
@@ -64,14 +66,35 @@ const POST_TYPE_CONFIG: Record<
 const READ_MORE_THRESHOLD = 280;
 
 function AttachmentCard({ attachment }: { attachment: PostAttachment }) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2">
-      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="truncate text-sm text-foreground/80">
+  const isLink = attachment.type === 'link' && attachment.url;
+  const content = (
+    <div className={cn(
+      "flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2",
+      isLink && "cursor-pointer hover:bg-muted/80 hover:border-primary/30 transition-colors",
+    )}>
+      {isLink ? (
+        <ExternalLink className="h-4 w-4 shrink-0 text-primary/70" />
+      ) : (
+        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className={cn(
+        "truncate text-sm",
+        isLink ? "text-primary/80" : "text-foreground/80",
+      )}>
         {attachment.title || attachment.type}
       </span>
     </div>
   );
+
+  if (isLink) {
+    return (
+      <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="no-underline">
+        {content}
+      </a>
+    );
+  }
+
+  return content;
 }
 
 export default function FeedPost({
@@ -84,15 +107,22 @@ export default function FeedPost({
 }: FeedPostProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const { language } = useLanguage();
 
   const typeConfig = POST_TYPE_CONFIG[post.postType] ?? POST_TYPE_CONFIG.share;
   const TypeIcon = typeConfig.icon;
 
-  const needsTruncation = post.content.length > READ_MORE_THRESHOLD;
+  // Show translated content if available for user's language
+  const localizedContent =
+    language !== "English" && post.translations?.[language]
+      ? post.translations[language]
+      : post.content;
+
+  const needsTruncation = localizedContent.length > READ_MORE_THRESHOLD;
   const displayContent =
     needsTruncation && !expanded
-      ? post.content.slice(0, READ_MORE_THRESHOLD) + "..."
-      : post.content;
+      ? localizedContent.slice(0, READ_MORE_THRESHOLD) + "..."
+      : localizedContent;
 
   const initials = post.authorName
     .split(" ")
