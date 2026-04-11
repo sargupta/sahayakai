@@ -8,6 +8,52 @@ const withPWA = require('next-pwa')({
   fallbacks: {
     document: '/offline.html',
   },
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/sahayakai\.com\/api\/(config|user|health)/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'api-config-cache',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'google-fonts-stylesheets',
+        expiration: {
+          maxEntries: 4,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.gstatic\.com/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts-webfonts',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+      },
+    },
+    {
+      urlPattern: /\/icons\/.+\.png$/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'app-icons',
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 60 * 60 * 24 * 30,
+        },
+      },
+    },
+  ],
 });
 
 const nextConfig: NextConfig = {

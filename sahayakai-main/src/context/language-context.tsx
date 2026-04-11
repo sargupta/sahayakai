@@ -272,7 +272,13 @@ const dictionary: Record<string, Record<Language, string>> = {
 };
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    const [language, setLanguageState] = useState<Language>('English');
+    const [language, setLanguageState] = useState<Language>(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('sahayakai-lang');
+            if (cached && LANGUAGES.includes(cached as Language)) return cached as Language;
+        }
+        return 'English';
+    });
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
@@ -281,6 +287,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
                 const { profile } = await getProfileData(user.uid);
                 if (profile?.preferredLanguage) {
                     setLanguageState(profile.preferredLanguage as Language);
+                    localStorage.setItem('sahayakai-lang', profile.preferredLanguage);
                 }
             }
             setIsLoaded(true);
@@ -290,6 +297,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const setLanguage = async (lang: Language, persist: boolean = true) => {
         setLanguageState(lang);
+        localStorage.setItem('sahayakai-lang', lang);
         if (!persist) return;
 
         const user = auth.currentUser;
