@@ -12,6 +12,36 @@ export function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
+  // Inject Apple PWA meta tags — Next.js 15 strips them from <head> and metadata API
+  useEffect(() => {
+    const head = document.head;
+    const created: HTMLElement[] = [];
+    function addMeta(name: string, content: string) {
+      if (!head.querySelector(`meta[name="${name}"]`)) {
+        const el = document.createElement('meta');
+        el.setAttribute('name', name);
+        el.setAttribute('content', content);
+        head.appendChild(el);
+        created.push(el);
+      }
+    }
+    function addLink(rel: string, href: string) {
+      if (!head.querySelector(`link[rel="${rel}"]`)) {
+        const el = document.createElement('link');
+        el.setAttribute('rel', rel);
+        el.setAttribute('href', href);
+        head.appendChild(el);
+        created.push(el);
+      }
+    }
+    addMeta('apple-mobile-web-app-capable', 'yes');
+    addMeta('apple-mobile-web-app-status-bar-style', 'default');
+    addMeta('apple-mobile-web-app-title', 'SahayakAI');
+    addMeta('mobile-web-app-capable', 'yes');
+    addLink('apple-touch-icon', '/icons/apple-touch-icon.png');
+    return () => { created.forEach(el => el.remove()); };
+  }, []);
+
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);

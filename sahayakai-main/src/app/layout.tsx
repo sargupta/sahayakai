@@ -15,7 +15,6 @@ import { AuthDialog } from '@/components/auth/auth-dialog';
 import { GlobalHooks } from '@/components/global-hooks';
 import { StructuredData } from '@/components/structured-data';
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
-import Script from 'next/script';
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -164,20 +163,6 @@ export default function RootLayout({
           </AuthProvider>
           <Toaster />
           <PWAInstallPrompt />
-          {/* Apple PWA meta tags — Next.js 15 strips apple-* meta/link from <head> and
-              the metadata API doesn't render them. next/script is the reliable path. */}
-          <Script id="apple-pwa-meta" strategy="afterInteractive">{`
-            (function(){
-              var h=document.head;
-              function m(n,c){if(!h.querySelector('meta[name="'+n+'"]')){var e=document.createElement('meta');e.name=n;e.content=c;h.appendChild(e)}}
-              function l(r,href){if(!h.querySelector('link[rel="'+r+'"]')){var e=document.createElement('link');e.rel=r;e.href=href;h.appendChild(e)}}
-              m('apple-mobile-web-app-capable','yes');
-              m('apple-mobile-web-app-status-bar-style','default');
-              m('apple-mobile-web-app-title','SahayakAI');
-              m('mobile-web-app-capable','yes');
-              l('apple-touch-icon','/icons/apple-touch-icon.png');
-            })();
-          `}</Script>
           {/* <GlobalVoiceInterface /> */}
         </LanguageProvider>
       </body>
