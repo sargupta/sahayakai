@@ -10,7 +10,7 @@ const withPWA = require('next-pwa')({
   },
   runtimeCaching: [
     {
-      urlPattern: /^https:\/\/sahayakai\.com\/api\/(config|user|health)/,
+      urlPattern: /\/api\/(config|user|health)/,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'api-config-cache',
