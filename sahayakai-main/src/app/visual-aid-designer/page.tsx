@@ -24,6 +24,7 @@ import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
+import { useNetworkAware } from "@/hooks/use-network-aware";
 
 const translations: Record<string, Record<string, string>> = {
   en: {
@@ -209,6 +210,7 @@ function VisualAidContent() {
   const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
   const form = useForm<FormValues>({
@@ -470,7 +472,7 @@ function VisualAidContent() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
+              <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -480,6 +482,9 @@ function VisualAidContent() {
                   t.submitButton
                 )}
               </Button>
+              {aiUnavailableReason && (
+                <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+              )}
             </form>
           </Form>
         </CardContent>
