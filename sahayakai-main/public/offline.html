@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SahayakAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #fff7ed 0%, #fafaf9 35%);
+      color: #1c1917;
+      min-height: 100vh;
+      padding: 2rem 1.25rem;
+    }
+    .container { max-width: 420px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 1.75rem; }
+    .logo { width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 14px; }
+    .header h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .header p { font-size: 0.85rem; color: #78716c; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fef2f2; border: 1px solid #fecaca; border-radius: 100px;
+      padding: 0.3rem 0.75rem; font-size: 0.72rem; color: #991b1b;
+      margin-top: 0.75rem;
+    }
+    .status-dot {
+      width: 6px; height: 6px; background: #ef4444; border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #a8a29e; margin-bottom: 0.5rem;
+    }
+    .actions { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .action-card {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
+      padding: 0.8rem 1rem; text-decoration: none; color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .action-card:hover { border-color: #fdba74; box-shadow: 0 2px 8px rgba(249,115,22,0.08); }
+    .action-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .action-icon.orange { background: #fff7ed; }
+    .action-icon.blue { background: #eff6ff; }
+    .action-icon.green { background: #f0fdf4; }
+    .action-icon.purple { background: #faf5ff; }
+    .action-text h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.1rem; }
+    .action-text p { font-size: 0.72rem; color: #78716c; }
+
+    .tip-card {
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;
+      padding: 0.85rem 1rem; margin-bottom: 1.5rem;
+      font-size: 0.8rem; line-height: 1.5; color: #92400e;
+    }
+    .tip-card strong { display: block; margin-bottom: 0.2rem; font-size: 0.82rem; }
+
+    .retry-section { text-align: center; }
+    .retry-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.65rem 1.75rem; background: #f97316; color: #fff;
+      border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .retry-btn:hover { background: #ea580c; }
+    .retry-btn:active { background: #c2410c; }
+    .retry-hint { font-size: 0.68rem; color: #a8a29e; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="/icons/icon-96x96.png" alt="SahayakAI" class="logo" />
+      <h1 id="title">Your work is still here</h1>
+      <p id="subtitle">Internet is away, but you can keep going</p>
+      <span class="status-pill">
+        <span class="status-dot"></span>
+        <span id="status-text">No connection</span>
+      </span>
+    </div>
+
+    <p class="section-label" id="section-label">Continue your work</p>
+    <div class="actions">
+      <a href="/lesson-plan" class="action-card">
+        <div class="action-icon orange">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="action-text">
+          <h3 id="card-lesson">Review Saved Lesson Plans</h3>
+          <p id="card-lesson-desc">Open plans you already created</p>
+        </div>
+      </a>
+
+      <a href="/quiz-generator" class="action-card">
+        <div class="action-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="action-text">
+          <h3 id="card-quiz">Review Saved Quizzes</h3>
+          <p id="card-quiz-desc">Check questions you saved earlier</p>
+        </div>
+      </a>
+
+      <a href="/attendance" class="action-card">
+        <div class="action-icon green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+        </div>
+        <div class="action-text">
+          <h3 id="card-attendance">Check Attendance</h3>
+          <p id="card-attendance-desc">View student attendance history</p>
+        </div>
+      </a>
+
+      <a href="/my-library" class="action-card">
+        <div class="action-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="action-text">
+          <h3 id="card-library">My Library</h3>
+          <p id="card-library-desc">Browse your saved resources</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="tip-card">
+      <strong id="tip-title">New content needs internet</strong>
+      <span id="tip-body">Creating new lesson plans, quizzes, and AI features require an internet connection. Everything you already saved is available offline.</span>
+    </div>
+
+    <div class="retry-section">
+      <button class="retry-btn" onclick="window.location.reload()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span id="retry-label">Reconnect</span>
+      </button>
+      <p class="retry-hint" id="retry-hint">Will reload automatically when connection returns</p>
+    </div>
+  </div>
+
+  <script>
+    // Auto-reload when connection comes back
+    window.addEventListener('online', function() { window.location.reload(); });
+
+    // Localization: localStorage > navigator.language > English
+    var strings = {
+      English: {
+        title: 'Your work is still here',
+        subtitle: 'Internet is away, but you can keep going',
+        status: 'No connection',
+        section: 'Continue your work',
+        lesson: 'Review Saved Lesson Plans', lessonDesc: 'Open plans you already created',
+        quiz: 'Review Saved Quizzes', quizDesc: 'Check questions you saved earlier',
+        attendance: 'Check Attendance', attendanceDesc: 'View student attendance history',
+        library: 'My Library', libraryDesc: 'Browse your saved resources',
+        tipTitle: 'New content needs internet',
+        tipBody: 'Creating new lesson plans, quizzes, and AI features require an internet connection. Everything you already saved is available offline.',
+        retry: 'Reconnect', retryHint: 'Will reload automatically when connection returns'
+      },
+      Hindi: {
+        title: 'आपका काम सुरक्षित है',
+        subtitle: 'इंटरनेट नहीं है, लेकिन आप काम जारी रख सकते हैं',
+        status: 'कोई कनेक्शन नहीं',
+        section: 'अपना काम जारी रखें',
+        lesson: 'सेव की गई पाठ योजनाएं देखें', lessonDesc: 'पहले बनाई गई योजनाएं खोलें',
+        quiz: 'सेव की गई क्विज़ देखें', quizDesc: 'पहले बनाए गए प्रश्न देखें',
+        attendance: 'उपस्थिति देखें', attendanceDesc: 'छात्रों की उपस्थिति का रिकॉर्ड',
+        library: 'मेरी लाइब्रेरी', libraryDesc: 'सेव किए गए संसाधन देखें',
+        tipTitle: 'नई सामग्री के लिए इंटरनेट चाहिए',
+        tipBody: 'नई पाठ योजना, क्विज़ और AI फीचर्स के लिए इंटरनेट ज़रूरी है। जो पहले से सेव है वो ऑफलाइन उपलब्ध है।',
+        retry: 'फिर से कनेक्ट करें', retryHint: 'कनेक्शन आने पर अपने आप रीलोड होगा'
+      },
+      Kannada: {
+        title: 'ನಿಮ್ಮ ಕೆಲಸ ಸುರಕ್ಷಿತವಾಗಿದೆ',
+        subtitle: 'ಇಂಟರ್ನೆಟ್ ಇಲ್ಲ, ಆದರೆ ನೀವು ಮುಂದುವರಿಸಬಹುದು',
+        status: 'ಸಂಪರ್ಕವಿಲ್ಲ',
+        section: 'ನಿಮ್ಮ ಕೆಲಸ ಮುಂದುವರಿಸಿ',
+        lesson: 'ಉಳಿಸಿದ ಪಾಠ ಯೋಜನೆಗಳನ್ನು ನೋಡಿ', lessonDesc: 'ಮೊದಲೇ ರಚಿಸಿದ ಯೋಜನೆಗಳನ್ನು ತೆರೆಯಿರಿ',
+        quiz: 'ಉಳಿಸಿದ ಕ್ವಿಜ್ ನೋಡಿ', quizDesc: 'ಮೊದಲೇ ರಚಿಸಿದ ಪ್ರಶ್ನೆಗಳನ್ನು ನೋಡಿ',
+        attendance: 'ಹಾಜರಾತಿ ನೋಡಿ', attendanceDesc: 'ವಿದ್ಯಾರ್ಥಿಗಳ ಹಾಜರಾತಿ ಇತಿಹಾಸ',
+        library: 'ನನ್ನ ಲೈಬ್ರರಿ', libraryDesc: 'ಉಳಿಸಿದ ಸಂಪನ್ಮೂಲಗಳನ್ನು ನೋಡಿ',
+        tipTitle: 'ಹೊಸ ವಿಷಯಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಬೇಕು',
+        tipBody: 'ಹೊಸ ಪಾಠ ಯೋಜನೆ, ಕ್ವಿಜ್ ಮತ್ತು AI ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಇಂಟರ್ನೆಟ್ ಅಗತ್ಯ. ಈಗಾಗಲೇ ಉಳಿಸಿದ್ದು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಲಭ್ಯ.',
+        retry: 'ಮರುಸಂಪರ್ಕಿಸಿ', retryHint: 'ಸಂಪರ್ಕ ಬಂದಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ರೀಲೋಡ್ ಆಗುತ್ತದೆ'
+      },
+      Tamil: {
+        title: 'உங்கள் பணி பாதுகாப்பாக உள்ளது',
+        subtitle: 'இணையம் இல்லை, ஆனால் தொடரலாம்',
+        status: 'இணைப்பு இல்லை',
+        section: 'உங்கள் பணியைத் தொடருங்கள்',
+        lesson: 'சேமித்த பாடத் திட்டங்களைப் பாருங்கள்', lessonDesc: 'முன்பு உருவாக்கியவற்றைத் திறக்கவும்',
+        quiz: 'சேமித்த வினாடி வினாக்களைப் பாருங்கள்', quizDesc: 'முன்பு உருவாக்கிய கேள்விகளைப் பாருங்கள்',
+        attendance: 'வருகைப்பதிவைப் பாருங்கள்', attendanceDesc: 'மாணவர் வருகைப்பதிவு வரலாறு',
+        library: 'என் நூலகம்', libraryDesc: 'சேமித்த வளங்களைப் பாருங்கள்',
+        tipTitle: 'புதிய உள்ளடக்கத்திற்கு இணையம் தேவை',
+        tipBody: 'புதிய பாடத் திட்டம், வினாடி வினா மற்றும் AI அம்சங்களுக்கு இணையம் தேவை. ஏற்கனவே சேமித்தவை ஆஃப்லைனில் கிடைக்கும்.',
+        retry: 'மீண்டும் இணைக்கவும்', retryHint: 'இணைப்பு வரும்போது தானாக ரீலோட் ஆகும்'
+      },
+      Telugu: {
+        title: 'మీ పని భద్రంగా ఉంది',
+        subtitle: 'ఇంటర్నెట్ లేదు, కానీ కొనసాగించవచ్చు',
+        status: 'కనెక్షన్ లేదు',
+        section: 'మీ పనిని కొనసాగించండి',
+        lesson: 'సేవ్ చేసిన పాఠ ప్రణాళికలు చూడండి', lessonDesc: 'ముందే తయారు చేసినవి తెరవండి',
+        quiz: 'సేవ్ చేసిన క్విజ్‌లు చూడండి', quizDesc: 'ముందే తయారు చేసిన ప్రశ్నలు చూడండి',
+        attendance: 'హాజరు చూడండి', attendanceDesc: 'విద్యార్థుల హాజరు చరిత్ర',
+        library: 'నా లైబ్రరీ', libraryDesc: 'సేవ్ చేసిన వనరులు చూడండి',
+        tipTitle: 'కొత్త కంటెంట్‌కు ఇంటర్నెట్ కావాలి',
+        tipBody: 'కొత్త పాఠ ప్రణాళిక, క్విజ్ మరియు AI ఫీచర్లకు ఇంటర్నెట్ అవసరం. ఇప్పటికే సేవ్ చేసినవి ఆఫ్‌లైన్‌లో అందుబాటులో ఉంటాయి.',
+        retry: 'మళ్ళీ కనెక్ట్ చేయండి', retryHint: 'కనెక్షన్ వచ్చినప్పుడు ఆటోమేటిగ్గా రీలోడ్ అవుతుంది'
+      },
+      Marathi: {
+        title: 'तुमचे काम सुरक्षित आहे',
+        subtitle: 'इंटरनेट नाही, पण तुम्ही सुरू ठेवू शकता',
+        status: 'कनेक्शन नाही',
+        section: 'तुमचे काम सुरू ठेवा',
+        lesson: 'सेव केलेल्या पाठ योजना पहा', lessonDesc: 'आधी तयार केलेल्या योजना उघडा',
+        quiz: 'सेव केलेल्या क्विझ पहा', quizDesc: 'आधी तयार केलेले प्रश्न पहा',
+        attendance: 'उपस्थिती पहा', attendanceDesc: 'विद्यार्थ्यांची उपस्थिती इतिहास',
+        library: 'माझी लायब्ररी', libraryDesc: 'सेव केलेली संसाधने पहा',
+        tipTitle: 'नवीन सामग्रीसाठी इंटरनेट लागेल',
+        tipBody: 'नवीन पाठ योजना, क्विझ आणि AI वैशिष्ट्यांसाठी इंटरनेट आवश्यक आहे. आधी सेव केलेले ऑफलाइन उपलब्ध आहे.',
+        retry: 'पुन्हा कनेक्ट करा', retryHint: 'कनेक्शन आल्यावर आपोआप रीलोड होईल'
+      },
+      Bengali: {
+        title: 'আপনার কাজ সুরক্ষিত আছে',
+        subtitle: 'ইন্টারনেট নেই, তবে আপনি চালিয়ে যেতে পারেন',
+        status: 'সংযোগ নেই',
+        section: 'আপনার কাজ চালিয়ে যান',
+        lesson: 'সেভ করা পাঠ পরিকল্পনা দেখুন', lessonDesc: 'আগে তৈরি করা পরিকল্পনা খুলুন',
+        quiz: 'সেভ করা কুইজ দেখুন', quizDesc: 'আগে তৈরি করা প্রশ্ন দেখুন',
+        attendance: 'উপস্থিতি দেখুন', attendanceDesc: 'ছাত্রদের উপস্থিতির ইতিহাস',
+        library: 'আমার লাইব্রেরি', libraryDesc: 'সেভ করা রিসোর্স দেখুন',
+        tipTitle: 'নতুন কন্টেন্টের জন্য ইন্টারনেট দরকার',
+        tipBody: 'নতুন পাঠ পরিকল্পনা, কুইজ এবং AI ফিচারের জন্য ইন্টারনেট দরকার। আগে সেভ করা সব অফলাইনে পাওয়া যাবে।',
+        retry: 'আবার সংযোগ করুন', retryHint: 'সংযোগ এলে স্বয়ংক্রিয়ভাবে রিলোড হবে'
+      },
+      Gujarati: {
+        title: 'તમારું કામ સુરક્ષિત છે',
+        subtitle: 'ઇન્ટરનેટ નથી, પણ તમે ચાલુ રાખી શકો છો',
+        status: 'કનેક્શન નથી',
+        section: 'તમારું કામ ચાલુ રાખો',
+        lesson: 'સેવ કરેલી પાઠ યોજનાઓ જુઓ', lessonDesc: 'પહેલાં બનાવેલી યોજનાઓ ખોલો',
+        quiz: 'સેવ કરેલી ક્વિઝ જુઓ', quizDesc: 'પહેલાં બનાવેલા પ્રશ્નો જુઓ',
+        attendance: 'હાજરી જુઓ', attendanceDesc: 'વિદ્યાર્થીઓની હાજરીનો ઇતિહાસ',
+        library: 'મારી લાઈબ્રેરી', libraryDesc: 'સેવ કરેલા સંસાધનો જુઓ',
+        tipTitle: 'નવી સામગ્રી માટે ઇન્ટરનેટ જોઈએ',
+        tipBody: 'નવી પાઠ યોજના, ક્વિઝ અને AI ફીચર્સ માટે ઇન્ટરનેટ જરૂરી છે. પહેલાંથી સેવ કરેલું ઓફલાઈન ઉપલબ્ધ છે.',
+        retry: 'ફરીથી કનેક્ટ કરો', retryHint: 'કનેક્શન આવે ત્યારે આપોઆપ રીલોડ થશે'
+      },
+      Punjabi: {
+        title: 'ਤੁਹਾਡਾ ਕੰਮ ਸੁਰੱਖਿਅਤ ਹੈ',
+        subtitle: 'ਇੰਟਰਨੈੱਟ ਨਹੀਂ ਹੈ, ਪਰ ਤੁਸੀਂ ਜਾਰੀ ਰੱਖ ਸਕਦੇ ਹੋ',
+        status: 'ਕੁਨੈਕਸ਼ਨ ਨਹੀਂ',
+        section: 'ਆਪਣਾ ਕੰਮ ਜਾਰੀ ਰੱਖੋ',
+        lesson: 'ਸੇਵ ਕੀਤੀਆਂ ਪਾਠ ਯੋਜਨਾਵਾਂ ਦੇਖੋ', lessonDesc: 'ਪਹਿਲਾਂ ਬਣਾਈਆਂ ਯੋਜਨਾਵਾਂ ਖੋਲੋ',
+        quiz: 'ਸੇਵ ਕੀਤੇ ਕੁਇਜ਼ ਦੇਖੋ', quizDesc: 'ਪਹਿਲਾਂ ਬਣਾਏ ਸਵਾਲ ਦੇਖੋ',
+        attendance: 'ਹਾਜ਼ਰੀ ਦੇਖੋ', attendanceDesc: 'ਵਿਦਿਆਰਥੀਆਂ ਦੀ ਹਾਜ਼ਰੀ ਦਾ ਰਿਕਾਰਡ',
+        library: 'ਮੇਰੀ ਲਾਇਬ੍ਰੇਰੀ', libraryDesc: 'ਸੇਵ ਕੀਤੇ ਸਰੋਤ ਦੇਖੋ',
+        tipTitle: 'ਨਵੀਂ ਸਮੱਗਰੀ ਲਈ ਇੰਟਰਨੈੱਟ ਚਾਹੀਦਾ',
+        tipBody: 'ਨਵੀਂ ਪਾਠ ਯੋਜਨਾ, ਕੁਇਜ਼ ਅਤੇ AI ਫੀਚਰਾਂ ਲਈ ਇੰਟਰਨੈੱਟ ਜ਼ਰੂਰੀ ਹੈ। ਪਹਿਲਾਂ ਸੇਵ ਕੀਤਾ ਸਭ ਆਫਲਾਈਨ ਉਪਲਬਧ ਹੈ।',
+        retry: 'ਦੁਬਾਰਾ ਕੁਨੈਕਟ ਕਰੋ', retryHint: 'ਕੁਨੈਕਸ਼ਨ ਆਉਣ ਤੇ ਆਪਣੇ ਆਪ ਰੀਲੋਡ ਹੋਵੇਗਾ'
+      },
+      Malayalam: {
+        title: 'നിങ്ങളുടെ ജോലി സുരക്ഷിതമാണ്',
+        subtitle: 'ഇന്റർനെറ്റ് ഇല്ല, പക്ഷേ തുടരാം',
+        status: 'കണക്ഷൻ ഇല്ല',
+        section: 'നിങ്ങളുടെ ജോലി തുടരുക',
+        lesson: 'സേവ് ചെയ്ത പാഠ പ്ലാനുകൾ കാണുക', lessonDesc: 'മുമ്പ് തയ്യാറാക്കിയവ തുറക്കുക',
+        quiz: 'സേവ് ചെയ്ത ക്വിസുകൾ കാണുക', quizDesc: 'മുമ്പ് തയ്യാറാക്കിയ ചോദ്യങ്ങൾ കാണുക',
+        attendance: 'ഹാജർ കാണുക', attendanceDesc: 'വിദ്യാർത്ഥികളുടെ ഹാജർ ചരിത്രം',
+        library: 'എന്റെ ലൈബ്രറി', libraryDesc: 'സേവ് ചെയ്ത വിഭവങ്ങൾ കാണുക',
+        tipTitle: 'പുതിയ ഉള്ളടക്കത്തിന് ഇന്റർനെറ്റ് വേണം',
+        tipBody: 'പുതിയ പാഠ പ്ലാൻ, ക്വിസ്, AI ഫീച്ചറുകൾക്ക് ഇന്റർനെറ്റ് ആവശ്യമാണ്. മുമ്പ് സേവ് ചെയ്തവ ഓഫ്‌ലൈനിൽ ലഭ്യമാണ്.',
+        retry: 'വീണ്ടും കണക്ട് ചെയ്യുക', retryHint: 'കണക്ഷൻ വരുമ്പോൾ സ്വയം റീലോഡ് ആകും'
+      },
+      Odia: {
+        title: 'ଆପଣଙ୍କ କାମ ସୁରକ୍ଷିତ ଅଛି',
+        subtitle: 'ଇଣ୍ଟରନେଟ୍ ନାହିଁ, କିନ୍ତୁ ଆପଣ ଜାରି ରଖିପାରିବେ',
+        status: 'କନେକ୍ସନ୍ ନାହିଁ',
+        section: 'ଆପଣଙ୍କ କାମ ଜାରି ରଖନ୍ତୁ',
+        lesson: 'ସେଭ୍ କରିଥିବା ପାଠ ଯୋଜନା ଦେଖନ୍ତୁ', lessonDesc: 'ଆଗରୁ ତିଆରି କରିଥିବା ଯୋଜନା ଖୋଲନ୍ତୁ',
+        quiz: 'ସେଭ୍ କରିଥିବା କ୍ୱିଜ୍ ଦେଖନ୍ତୁ', quizDesc: 'ଆଗରୁ ତିଆରି କରିଥିବା ପ୍ରଶ୍ନ ଦେଖନ୍ତୁ',
+        attendance: 'ଉପସ୍ଥିତି ଦେଖନ୍ତୁ', attendanceDesc: 'ଛାତ୍ରମାନଙ୍କ ଉପସ୍ଥିତି ଇତିହାସ',
+        library: 'ମୋର ଲାଇବ୍ରେରୀ', libraryDesc: 'ସେଭ୍ କରିଥିବା ସମ୍ବଳ ଦେଖନ୍ତୁ',
+        tipTitle: 'ନୂଆ ସାମଗ୍ରୀ ପାଇଁ ଇଣ୍ଟରନେଟ୍ ଦରକାର',
+        tipBody: 'ନୂଆ ପାଠ ଯୋଜନା, କ୍ୱିଜ୍ ଏବଂ AI ବୈଶିଷ୍ଟ୍ୟ ପାଇଁ ଇଣ୍ଟରନେଟ୍ ଆବଶ୍ୟକ। ଆଗରୁ ସେଭ୍ କରିଥିବା ସବୁ ଅଫଲାଇନ୍‌ରେ ଉପಲବ୍ଧ।',
+        retry: 'ପୁଣି କନେକ୍ଟ କରନ୍ତୁ', retryHint: 'କନେକ୍ସନ୍ ଆସିଲେ ନିଜେ ରିଲୋଡ୍ ହେବ'
+      }
+    };
+
+    // BCP-47 browser lang code -> our Language key
+    var browserLangMap = {
+      en: 'English', hi: 'Hindi', kn: 'Kannada', ta: 'Tamil',
+      te: 'Telugu', mr: 'Marathi', bn: 'Bengali', gu: 'Gujarati',
+      pa: 'Punjabi', ml: 'Malayalam', or: 'Odia', od: 'Odia'
+    };
+
+    function detectLanguage() {
+      // 1. localStorage (set by app's LanguageProvider)
+      try {
+        var cached = localStorage.getItem('sahayakai-lang');
+        if (cached && strings[cached]) return cached;
+      } catch(e) {}
+      // 2. Browser language
+      var nav = (navigator.language || '').split('-')[0];
+      if (browserLangMap[nav] && strings[browserLangMap[nav]]) return browserLangMap[nav];
+      // 3. Fallback
+      return 'English';
+    }
+
+    function applyLanguage(lang) {
+      var s = strings[lang];
+      if (!s) return;
+      document.getElementById('title').textContent = s.title;
+      document.getElementById('subtitle').textContent = s.subtitle;
+      document.getElementById('status-text').textContent = s.status;
+      document.getElementById('section-label').textContent = s.section;
+      document.getElementById('card-lesson').textContent = s.lesson;
+      document.getElementById('card-lesson-desc').textContent = s.lessonDesc;
+      document.getElementById('card-quiz').textContent = s.quiz;
+      document.getElementById('card-quiz-desc').textContent = s.quizDesc;
+      document.getElementById('card-attendance').textContent = s.attendance;
+      document.getElementById('card-attendance-desc').textContent = s.attendanceDesc;
+      document.getElementById('card-library').textContent = s.library;
+      document.getElementById('card-library-desc').textContent = s.libraryDesc;
+      document.getElementById('tip-title').textContent = s.tipTitle;
+      document.getElementById('tip-body').textContent = s.tipBody;
+      document.getElementById('retry-label').textContent = s.retry;
+      document.getElementById('retry-hint').textContent = s.retryHint;
+    }
+
+    applyLanguage(detectLanguage());
+  </script>
+</body>
+</html>
