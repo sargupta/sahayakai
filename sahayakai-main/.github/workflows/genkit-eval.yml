@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Lesson Plan Generator evaluation
         continue-on-error: true
-        run: npx genkit eval:flow lessonPlanGeneratorFlow --input src/ai/eval-datasets/lesson-plan-generator.json --output eval-results/lesson-plan.json
+        run: npx genkit eval:flow lessonPlanFlow --input src/ai/eval-datasets/lesson-plan-generator.json --output eval-results/lesson-plan.json
 
       - name: Run Exam Paper Generator evaluation
         continue-on-error: true

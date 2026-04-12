@@ -88,7 +88,7 @@ class StudioScaffold extends ConsumerWidget {
                             Alignment(lightConfig.globalLightSource.dx, -1.0),
                         end: Alignment.bottomCenter,
                         colors: [
-                          lightConfig.ambientLightColor.withOpacity(0.15),
+                          lightConfig.ambientLightColor.withValues(alpha: 0.15),
                           Colors.transparent,
                         ],
                       ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import '../../../core/network/api_client.dart';
@@ -28,21 +29,15 @@ class LessonPlanRepository {
         data: input.toJson(),
       );
 
-      if (response.statusCode == 200) {
-        final output = LessonPlanOutput.fromJson(response.data);
-        
+      final output = LessonPlanOutput.fromJson(response.data);
+
         // 2. Save to Local DB (Fire & Forget)
         _saveToLocal(output);
-        
+
         return output;
-      } else {
-        throw Exception('Server Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      // 3. Fallback to Local History purely for demo/continuity
-      // In a real app, 'Generation' usually requires AI. 
-      // So here we fetch the *last created plan* as a fallback to show "Offline Access" capability.
-      return _fetchLastLocalPlan(); 
+    } on DioException {
+      // 3. Network/server failure — fallback to local cache
+      return _fetchLastLocalPlan();
     }
   }
 

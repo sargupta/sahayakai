@@ -40,6 +40,7 @@ import {
   type SectionBlueprint,
 } from "@/ai/data/board-blueprints";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
+import { useNetworkAware } from "@/hooks/use-network-aware";
 
 // ── Types for generated paper ────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ export default function ExamPaperPage() {
   const [includeMarkingScheme, setIncludeMarkingScheme] = useState(true);
 
   // Generation state
+  const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paper, setPaper] = useState<GeneratedPaper | null>(null);
@@ -506,7 +508,7 @@ export default function ExamPaperPage() {
           {/* Generate button */}
           <Button
             onClick={handleGenerate}
-            disabled={generating || !subject}
+            disabled={generating || !subject || !canUseAI}
             className="w-full py-5 text-base font-headline bg-primary hover:bg-primary/90"
             size="lg"
           >
@@ -522,6 +524,9 @@ export default function ExamPaperPage() {
               </>
             )}
           </Button>
+          {aiUnavailableReason && (
+            <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+          )}
 
           {error && (
             <div className="flex items-start gap-2 text-sm text-destructive p-3 rounded-md bg-destructive/10">

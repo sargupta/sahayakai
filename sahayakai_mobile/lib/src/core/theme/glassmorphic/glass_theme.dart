@@ -7,10 +7,16 @@ class GlassColors {
   static const Color backgroundStart = Color(0xFFD4C4A8); // Warm tan
   static const Color backgroundMid = Color(0xFFE5D9C3); // Lighter tan
   static const Color backgroundEnd = Color(0xFFF5EFE6); // Cream
+  // Convenience aliases used by auth/feature screens
+  static const Color background = backgroundEnd;
+  static const Color surface = cardBackground;
+  static const Color border = cardBorder;
 
   // Glass Card Colors
   static const Color cardBackground = Color(0xFFFFFFFD); // Near white
   static const Color cardBorder = Color(0xFFE8E8E8); // Light grey border
+
+  // (Duplicate aliases removed — see lines 11–13 above.)
 
   // Primary Accent - Saffron Orange
   static const Color primary = Color(0xFFFF9933); // Indian Saffron
@@ -47,13 +53,13 @@ class GlassColors {
   // Shadows
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 20,
           offset: const Offset(0, 4),
           spreadRadius: 0,
         ),
         BoxShadow(
-          color: Colors.black.withOpacity(0.02),
+          color: Colors.black.withValues(alpha: 0.02),
           blurRadius: 6,
           offset: const Offset(0, 2),
           spreadRadius: 0,
@@ -62,7 +68,7 @@ class GlassColors {
 
   static List<BoxShadow> get buttonShadow => [
         BoxShadow(
-          color: primary.withOpacity(0.3),
+          color: primary.withValues(alpha: 0.3),
           blurRadius: 16,
           offset: const Offset(0, 6),
           spreadRadius: -2,

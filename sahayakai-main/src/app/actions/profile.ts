@@ -49,6 +49,24 @@ export async function updateProfileAction(userId: string, data: any) {
     revalidatePath("/my-profile");
 }
 
+/**
+ * Mark a single onboarding checklist item as completed.
+ * Uses Firestore update() with dot notation for atomic nested field writes.
+ */
+export async function markChecklistItemAction(userId: string, itemId: string) {
+    if (!userId || !itemId) return;
+    try {
+        const { getDb } = await import("@/lib/firebase-admin");
+        const db = await getDb();
+        await db.collection('users').doc(userId).update({
+            [`onboardingChecklistItems.${itemId}`]: true,
+        });
+    } catch (error) {
+        // Non-fatal: checklist tracking is UX-only
+        logger.warn(`Failed to mark checklist item ${itemId} for ${userId}`, String(error));
+    }
+}
+
 export async function getDailyCostsAction(days: number = 7) {
     const headersList = await headers();
     const userId = headersList.get('x-user-id');

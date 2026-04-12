@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
+import { useNetworkAware } from "@/hooks/use-network-aware";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
@@ -491,6 +492,7 @@ function QuizGeneratorContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const { clearFormSnapshot } = useJarvisStore();
+  const { canUseAI, aiUnavailableReason } = useNetworkAware();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -658,6 +660,13 @@ function QuizGeneratorContent() {
       const result = await res.json();
       setQuiz(result);
       clearFormSnapshot("quiz-generator");
+
+      // Mark onboarding checklist item
+      if (auth.currentUser) {
+        import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+          markChecklistItemAction(auth.currentUser!.uid, 'first-quiz')
+        ).catch(() => {});
+      }
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
@@ -967,7 +976,7 @@ function QuizGeneratorContent() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isLoading} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
+                  <Button type="submit" disabled={isLoading || !canUseAI} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -977,6 +986,9 @@ function QuizGeneratorContent() {
                       t.submitButton
                     )}
                   </Button>
+                  {aiUnavailableReason && (
+                    <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+                  )}
                 </div>
               </div>
             </form>

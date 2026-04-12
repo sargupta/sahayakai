@@ -9,7 +9,9 @@ import 'quiz_play_screen.dart';
 import '../../../../core/providers/language_provider.dart';
 
 class QuizConfigScreen extends ConsumerStatefulWidget {
-  const QuizConfigScreen({super.key});
+  final Map<String, dynamic>? initialParams;
+
+  const QuizConfigScreen({super.key, this.initialParams});
 
   @override
   ConsumerState<QuizConfigScreen> createState() => _QuizConfigScreenState();
@@ -44,6 +46,43 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   void initState() {
     super.initState();
     _selectedLanguage = ref.read(languageProvider);
+
+    // Pre-fill from VIDYA action cards or cross-feature navigation
+    final params = widget.initialParams;
+    if (params != null) {
+      if (params['topic'] != null) {
+        _topicController.text = params['topic'] as String;
+      }
+      if (params['gradeLevel'] != null) {
+        final grade = params['gradeLevel'] as String;
+        if (_grades.contains(grade)) {
+          _grade = grade;
+        } else {
+          // Backend sends "Class N" — map to "Grade N" if needed
+          final mapped = grade.replaceFirst('Class ', 'Grade ');
+          if (_grades.contains(mapped)) _grade = mapped;
+        }
+      }
+      if (params['difficulty'] != null) {
+        final diff = params['difficulty'] as String;
+        if (_difficultyMap.containsKey(diff)) _difficulty = diff;
+      }
+      if (params['questionCount'] != null) {
+        final count = params['questionCount'];
+        final n = count is int ? count : int.tryParse(count.toString());
+        if (n != null && n >= 3 && n <= 15) _numQuestions = n;
+      }
+      if (params['language'] != null) {
+        final lang = params['language'] as String;
+        // Accept both display names ("Hindi") and short codes ("hi")
+        if (languageDisplayNames.contains(lang)) {
+          _selectedLanguage = lang;
+        } else {
+          final display = getDisplayName(lang);
+          if (display != null) _selectedLanguage = display;
+        }
+      }
+    }
   }
 
   @override
@@ -74,6 +113,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               _buildHeader(),
               Expanded(
                 child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.all(24.0),
                   child: Form(
                     key: _formKey,
@@ -104,6 +144,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                                   style: GoogleFonts.inter(
                                       fontWeight: FontWeight.w600),
                                   decoration: InputDecoration(
+                                    labelText: 'Quiz Topic',
                                     hintText: "e.g., Solar System",
                                     border: InputBorder.none,
                                     icon: const Icon(Icons.psychology,
@@ -164,7 +205,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                               activeTrackColor: Colors.green,
                               inactiveTrackColor: Colors.green.shade100,
                               thumbColor: Colors.green,
-                              overlayColor: Colors.green.withOpacity(0.2),
+                              overlayColor: Colors.green.withValues(alpha: 0.2),
                               trackHeight: 8,
                               thumbShape: const RoundSliderThumbShape(
                                   enabledThumbRadius: 12),
@@ -193,7 +234,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                                   const Color(0xFF16A34A), // Green-600
                               foregroundColor: Colors.white,
                               elevation: 4,
-                              shadowColor: Colors.green.withOpacity(0.4),
+                              shadowColor: Colors.green.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16)),
                             ),
@@ -239,9 +280,9 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -260,7 +301,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                     const Icon(Icons.keyboard_arrow_down, color: Colors.green),
                 style: GoogleFonts.inter(
                     color: Colors.black87, fontWeight: FontWeight.w500),
-                items: supportedLanguages
+                items: languageDisplayNames
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() {

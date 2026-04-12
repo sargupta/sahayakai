@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security config for SahayakAI.
+  - Prod and staging use HTTPS only (cleartext blocked).
+  - Dev mode allows cleartext to 10.0.2.2 (Android emulator localhost).
+-->
+<network-security-config>
+    <!-- Production: HTTPS only -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">sahayakai.app</domain>
+    </domain-config>
+
+    <!-- Dev: allow HTTP to local backend (Android emulator = 10.0.2.2, iOS = 127.0.0.1) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

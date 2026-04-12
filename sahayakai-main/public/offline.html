@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SahayakAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #fff7ed 0%, #fafaf9 35%);
+      color: #1c1917;
+      min-height: 100vh;
+      padding: 1.75rem 1.25rem;
+    }
+    .container { max-width: 420px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .logo { width: 52px; height: 52px; margin: 0 auto 0.75rem; border-radius: 14px; }
+    .header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .header p { font-size: 0.82rem; color: #78716c; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 100px;
+      padding: 0.25rem 0.7rem; font-size: 0.7rem; color: #92400e;
+      margin-top: 0.6rem;
+    }
+    .status-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; }
+    .last-sync { font-size: 0.68rem; color: #a8a29e; margin-top: 0.4rem; display: none; }
+    .last-sync.visible { display: block; }
+
+    /* Section labels */
+    .section-label {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #a8a29e; margin-bottom: 0.45rem;
+    }
+
+    /* Quick activities */
+    .activities { margin-bottom: 1.5rem; }
+    .activity {
+      background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
+      padding: 0.75rem 0.85rem; margin-bottom: 0.4rem;
+    }
+    .activity h3 { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.15rem; }
+    .activity p { font-size: 0.72rem; color: #78716c; line-height: 1.4; }
+    .activity .time {
+      display: inline-block; font-size: 0.62rem; color: #a8a29e;
+      background: #fafaf9; padding: 0.1rem 0.4rem; border-radius: 4px;
+      margin-top: 0.25rem;
+    }
+
+    /* Saved pages */
+    .saved-pages { margin-bottom: 1.25rem; }
+    .saved-note { font-size: 0.68rem; color: #a8a29e; margin-bottom: 0.4rem; }
+    .page-links { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .page-link {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: #fff; border: 1px solid #e7e5e4; border-radius: 8px;
+      padding: 0.4rem 0.65rem; text-decoration: none; color: #44403c;
+      font-size: 0.75rem; font-weight: 500;
+      transition: border-color 0.15s;
+    }
+    .page-link:hover { border-color: #fdba74; }
+    .page-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* Retry */
+    .retry-section { text-align: center; margin-top: 1.25rem; }
+    .retry-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.6rem 1.5rem; background: #f97316; color: #fff;
+      border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .retry-btn:hover { background: #ea580c; }
+    .retry-btn:active { background: #c2410c; }
+    .retry-btn.checking { background: #a8a29e; pointer-events: none; }
+    .retry-hint { font-size: 0.65rem; color: #a8a29e; margin-top: 0.4rem; }
+
+    /* Online toast */
+    .online-toast {
+      display: none; position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+      background: #166534; color: #fff; padding: 0.5rem 1.25rem; border-radius: 10px;
+      font-size: 0.82rem; font-weight: 600; z-index: 100;
+      animation: slideDown 0.3s ease-out;
+    }
+    .online-toast.show { display: flex; align-items: center; gap: 0.4rem; }
+    @keyframes slideDown { from { transform: translateX(-50%) translateY(-20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div id="online-toast" class="online-toast">Connected — reloading...</div>
+
+  <div class="container">
+    <div class="header">
+      <img src="/icons/icon-96x96.png" alt="SahayakAI" class="logo" />
+      <h1 id="title">You're offline — that's okay</h1>
+      <p id="subtitle">Here are things you can do right now</p>
+      <span class="status-pill">
+        <span class="status-dot"></span>
+        <span id="status-text">Working offline</span>
+      </span>
+      <p class="last-sync" id="last-sync"></p>
+    </div>
+
+    <!-- Quick classroom activities — zero tech needed -->
+    <p class="section-label" id="activities-label">Try in your classroom right now</p>
+    <div class="activities">
+      <div class="activity">
+        <h3 id="act1-title">Think, Pair, Share</h3>
+        <p id="act1-desc">Ask a question from yesterday's lesson. Students think alone (1 min), discuss with a partner (2 min), then share with the class.</p>
+        <span class="time" id="act1-time">5 min</span>
+      </div>
+      <div class="activity">
+        <h3 id="act2-title">Quick Board Quiz</h3>
+        <p id="act2-desc">Write 5 questions on the board from the last topic. Students answer in notebooks. Swap and check with a partner.</p>
+        <span class="time" id="act2-time">8 min</span>
+      </div>
+      <div class="activity">
+        <h3 id="act3-title">Word Map</h3>
+        <p id="act3-desc">Write one topic word on the board. Students come up one by one and write related words around it, building a concept web together.</p>
+        <span class="time" id="act3-time">6 min</span>
+      </div>
+    </div>
+
+    <!-- Saved pages -->
+    <p class="section-label" id="saved-label">Your saved pages</p>
+    <p class="saved-note" id="saved-note">Pages you opened before are available offline</p>
+    <div class="page-links">
+      <a href="/lesson-plan" class="page-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span id="link-lesson">Lesson Plans</span>
+      </a>
+      <a href="/quiz-generator" class="page-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="link-quiz">Quizzes</span>
+      </a>
+      <a href="/attendance" class="page-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+        <span id="link-attendance">Attendance</span>
+      </a>
+      <a href="/my-library" class="page-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span id="link-library">Library</span>
+      </a>
+    </div>
+
+    <!-- Retry -->
+    <div class="retry-section">
+      <button class="retry-btn" id="retry-btn" onclick="handleRetry()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span id="retry-label">Try again</span>
+      </button>
+      <p class="retry-hint" id="retry-hint">Will reload automatically when connection returns</p>
+    </div>
+  </div>
+
+  <script>
+    // Auto-reload with visible toast when connection returns
+    window.addEventListener('online', function() {
+      document.getElementById('online-toast').className = 'online-toast show';
+      setTimeout(function() { window.location.reload(); }, 800);
+    });
+
+    // Retry button with feedback
+    function handleRetry() {
+      var btn = document.getElementById('retry-btn');
+      btn.classList.add('checking');
+      btn.querySelector('span').textContent = strings[currentLang]?.retryChecking || 'Checking...';
+      setTimeout(function() {
+        if (navigator.onLine) {
+          window.location.reload();
+        } else {
+          btn.classList.remove('checking');
+          btn.querySelector('span').textContent = strings[currentLang]?.retryStillOffline || 'Still offline';
+          setTimeout(function() {
+            btn.querySelector('span').textContent = strings[currentLang]?.retry || 'Try again';
+          }, 2000);
+        }
+      }, 1000);
+    }
+
+    // Last sync timestamp
+    function showLastSync() {
+      try {
+        var ts = localStorage.getItem('sahayakai-last-sync');
+        if (!ts) return;
+        var date = new Date(ts);
+        var now = new Date();
+        var diff = now - date;
+        var label = '';
+        if (diff < 60000) label = strings[currentLang]?.syncJustNow || 'Just now';
+        else if (diff < 3600000) label = Math.floor(diff/60000) + (strings[currentLang]?.syncMinAgo || ' min ago');
+        else if (diff < 86400000) label = Math.floor(diff/3600000) + (strings[currentLang]?.syncHrAgo || ' hr ago');
+        else label = date.toLocaleDateString();
+
+        var el = document.getElementById('last-sync');
+        el.textContent = (strings[currentLang]?.syncLabel || 'Last synced: ') + label;
+        el.classList.add('visible');
+      } catch(e) {}
+    }
+
+    // ===== Localization =====
+    var currentLang = 'English';
+
+    var strings = {
+      English: {
+        title: "You're offline — that's okay",
+        subtitle: 'Here are things you can do right now',
+        status: 'Working offline',
+        activitiesLabel: 'Try in your classroom right now',
+        act1Title: 'Think, Pair, Share', act1Desc: "Ask a question from yesterday's lesson. Students think alone (1 min), discuss with a partner (2 min), then share with the class.", act1Time: '5 min',
+        act2Title: 'Quick Board Quiz', act2Desc: 'Write 5 questions on the board from the last topic. Students answer in notebooks. Swap and check with a partner.', act2Time: '8 min',
+        act3Title: 'Word Map', act3Desc: 'Write one topic word on the board. Students come up one by one and write related words around it, building a concept web together.', act3Time: '6 min',
+        savedLabel: 'Your saved pages', savedNote: 'Pages you opened before are available offline',
+        linkLesson: 'Lesson Plans', linkQuiz: 'Quizzes', linkAttendance: 'Attendance', linkLibrary: 'Library',
+        retry: 'Try again', retryHint: 'Will reload automatically when connection returns',
+        retryChecking: 'Checking...', retryStillOffline: 'Still offline',
+        syncLabel: 'Last synced: ', syncJustNow: 'Just now', syncMinAgo: ' min ago', syncHrAgo: ' hr ago'
+      },
+      Hindi: {
+        title: 'आप ऑफलाइन हैं — कोई बात नहीं',
+        subtitle: 'अभी ये काम कर सकते हैं',
+        status: 'ऑफलाइन मोड',
+        activitiesLabel: 'अभी कक्षा में करें',
+        act1Title: 'सोचो, जोड़ी बनाओ, बताओ', act1Desc: 'कल के पाठ से एक सवाल पूछें। बच्चे अकेले सोचें (1 मि.), साथी से चर्चा करें (2 मि.), फिर कक्षा में बताएं।', act1Time: '5 मि.',
+        act2Title: 'बोर्ड पर त्वरित क्विज़', act2Desc: 'बोर्ड पर पिछले विषय के 5 सवाल लिखें। बच्चे कॉपी में जवाब लिखें। आपस में बदलकर जांचें।', act2Time: '8 मि.',
+        act3Title: 'शब्द मानचित्र', act3Desc: 'बोर्ड पर एक विषय का शब्द लिखें। बच्चे एक-एक करके उससे जुड़े शब्द लिखें, मिलकर एक अवधारणा जाल बनाएं।', act3Time: '6 मि.',
+        savedLabel: 'आपके सेव किए गए पेज', savedNote: 'पहले खोले गए पेज ऑफलाइन उपलब्ध हैं',
+        linkLesson: 'पाठ योजना', linkQuiz: 'क्विज़', linkAttendance: 'उपस्थिति', linkLibrary: 'लाइब्रेरी',
+        retry: 'फिर से देखें', retryHint: 'कनेक्शन आने पर अपने आप रीलोड होगा',
+        retryChecking: 'जांच रहे हैं...', retryStillOffline: 'अभी भी ऑफलाइन',
+        syncLabel: 'आखिरी सिंक: ', syncJustNow: 'अभी', syncMinAgo: ' मि. पहले', syncHrAgo: ' घंटे पहले'
+      },
+      Kannada: {
+        title: 'ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ — ಪರವಾಗಿಲ್ಲ',
+        subtitle: 'ಈಗ ಇವುಗಳನ್ನು ಮಾಡಬಹುದು',
+        status: 'ಆಫ್‌ಲೈನ್ ಮೋಡ್',
+        activitiesLabel: 'ಈಗ ತರಗತಿಯಲ್ಲಿ ಪ್ರಯತ್ನಿಸಿ',
+        act1Title: 'ಯೋಚಿಸಿ, ಜೋಡಿ ಮಾಡಿ, ಹಂಚಿಕೊಳ್ಳಿ', act1Desc: 'ನಿನ್ನೆಯ ಪಾಠದಿಂದ ಪ್ರಶ್ನೆ ಕೇಳಿ. ವಿದ್ಯಾರ್ಥಿಗಳು ಒಬ್ಬರೇ ಯೋಚಿಸಲಿ (1 ನಿ.), ಜೊತೆಗಾರನೊಂದಿಗೆ ಚರ್ಚಿಸಲಿ (2 ನಿ.), ನಂತರ ತರಗತಿಗೆ ಹೇಳಲಿ.', act1Time: '5 ನಿ.',
+        act2Title: 'ಬೋರ್ಡ್ ಕ್ವಿಜ್', act2Desc: 'ಬೋರ್ಡ್‌ನಲ್ಲಿ ಕೊನೆಯ ವಿಷಯದ 5 ಪ್ರಶ್ನೆಗಳನ್ನು ಬರೆಯಿರಿ. ವಿದ್ಯಾರ್ಥಿಗಳು ನೋಟ್‌ಬುಕ್‌ನಲ್ಲಿ ಉತ್ತರಿಸಲಿ. ಪರಸ್ಪರ ಬದಲಾಯಿಸಿ ಪರಿಶೀಲಿಸಲಿ.', act2Time: '8 ನಿ.',
+        act3Title: 'ಶಬ್ದ ನಕ್ಷೆ', act3Desc: 'ಬೋರ್ಡ್‌ನಲ್ಲಿ ಒಂದು ವಿಷಯದ ಶಬ್ದ ಬರೆಯಿರಿ. ವಿದ್ಯಾರ್ಥಿಗಳು ಒಬ್ಬೊಬ್ಬರಾಗಿ ಸಂಬಂಧಿತ ಶಬ್ದಗಳನ್ನು ಸೇರಿಸಲಿ.', act3Time: '6 ನಿ.',
+        savedLabel: 'ನಿಮ್ಮ ಉಳಿಸಿದ ಪುಟಗಳು', savedNote: 'ಮೊದಲು ತೆರೆದ ಪುಟಗಳು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಲಭ್ಯ',
+        linkLesson: 'ಪಾಠ ಯೋಜನೆ', linkQuiz: 'ಕ್ವಿಜ್', linkAttendance: 'ಹಾಜರಾತಿ', linkLibrary: 'ಲೈಬ್ರರಿ',
+        retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ', retryHint: 'ಸಂಪರ್ಕ ಬಂದಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ರೀಲೋಡ್ ಆಗುತ್ತದೆ',
+        retryChecking: 'ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...', retryStillOffline: 'ಇನ್ನೂ ಆಫ್‌ಲೈನ್',
+        syncLabel: 'ಕೊನೆಯ ಸಿಂಕ್: ', syncJustNow: 'ಈಗ ತಾನೇ', syncMinAgo: ' ನಿ. ಹಿಂದೆ', syncHrAgo: ' ಗಂ. ಹಿಂದೆ'
+      },
+      Tamil: {
+        title: 'இணைப்பில்லை — பரவாயில்லை',
+        subtitle: 'இப்போது இவற்றைச் செய்யலாம்',
+        status: 'ஆஃப்லைன் பயன்முறை',
+        activitiesLabel: 'இப்போது வகுப்பில் முயற்சிக்கவும்',
+        act1Title: 'யோசி, இணை, பகிர்', act1Desc: 'நேற்றைய பாடத்திலிருந்து ஒரு கேள்வி கேளுங்கள். மாணவர்கள் தனியாக யோசிக்கட்டும் (1 நி.), இணையுடன் விவாதிக்கட்டும் (2 நி.), வகுப்பில் பகிரட்டும்.', act1Time: '5 நி.',
+        act2Title: 'பலகை வினாடி வினா', act2Desc: 'கடைசி தலைப்பிலிருந்து 5 கேள்விகளை பலகையில் எழுதுங்கள். மாணவர்கள் நோட்டில் பதிலளிக்கட்டும். மாற்றி சரிபார்க்கட்டும்.', act2Time: '8 நி.',
+        act3Title: 'சொல் வரைபடம்', act3Desc: 'பலகையில் ஒரு தலைப்பு சொல்லை எழுதுங்கள். மாணவர்கள் ஒவ்வொருவராக தொடர்புடைய சொற்களை சுற்றி எழுதட்டும்.', act3Time: '6 நி.',
+        savedLabel: 'உங்கள் சேமித்த பக்கங்கள்', savedNote: 'முன்பு திறந்த பக்கங்கள் ஆஃப்லைனில் கிடைக்கும்',
+        linkLesson: 'பாடத் திட்டம்', linkQuiz: 'வினாடி வினா', linkAttendance: 'வருகை', linkLibrary: 'நூலகம்',
+        retry: 'மீண்டும் முயற்சி', retryHint: 'இணைப்பு வரும்போது தானாக ரீலோட் ஆகும்',
+        retryChecking: 'சரிபார்க்கிறது...', retryStillOffline: 'இன்னும் ஆஃப்லைன்',
+        syncLabel: 'கடைசி ஒத்திசைவு: ', syncJustNow: 'இப்போது', syncMinAgo: ' நி. முன்', syncHrAgo: ' மணி முன்'
+      },
+      Telugu: {
+        title: 'ఆఫ్‌లైన్‌లో ఉన్నారు — పర్వాలేదు',
+        subtitle: 'ఇప్పుడు ఇవి చేయవచ్చు',
+        status: 'ఆఫ్‌లైన్ మోడ్',
+        activitiesLabel: 'ఇప్పుడు తరగతిలో ప్రయత్నించండి',
+        act1Title: 'ఆలోచించు, జతచేరు, పంచుకో', act1Desc: 'నిన్నటి పాఠం నుండి ఒక ప్రశ్న అడగండి. విద్యార్థులు ఒంటరిగా ఆలోచించాలి (1 ని.), జత వారితో చర్చించాలి (2 ని.), తరగతికి చెప్పాలి.', act1Time: '5 ని.',
+        act2Title: 'బోర్డ్ క్విజ్', act2Desc: 'చివరి అంశం నుండి 5 ప్రశ్నలు బోర్డ్‌పై రాయండి. విద్యార్థులు నోట్‌బుక్‌లో సమాధానం రాయాలి. మారుస్తూ తనిఖీ చేయాలి.', act2Time: '8 ని.',
+        act3Title: 'పద మ్యాప్', act3Desc: 'బోర్డ్‌పై ఒక అంశపు పదం రాయండి. విద్యార్థులు ఒక్కొక్కరుగా సంబంధిత పదాలను చుట్టూ రాయాలి.', act3Time: '6 ని.',
+        savedLabel: 'మీ సేవ్ చేసిన పేజీలు', savedNote: 'ముందే తెరిచిన పేజీలు ఆఫ్‌లైన్‌లో అందుబాటులో ఉంటాయి',
+        linkLesson: 'పాఠ ప్రణాళిక', linkQuiz: 'క్విజ్', linkAttendance: 'హాజరు', linkLibrary: 'లైబ్రరీ',
+        retry: 'మళ్ళీ ప్రయత్నించండి', retryHint: 'కనెక్షన్ వచ్చినప్పుడు ఆటోమేటిగ్గా రీలోడ్ అవుతుంది',
+        retryChecking: 'తనిఖీ చేస్తోంది...', retryStillOffline: 'ఇంకా ఆఫ్‌లైన్',
+        syncLabel: 'చివరి సింక్: ', syncJustNow: 'ఇప్పుడే', syncMinAgo: ' ని. క్రితం', syncHrAgo: ' గం. క్రితం'
+      },
+      Marathi: {
+        title: 'ऑफलाइन आहात — काळजी नको',
+        subtitle: 'आत्ता हे करता येईल',
+        status: 'ऑफलाइन मोड',
+        activitiesLabel: 'आत्ता वर्गात करा',
+        act1Title: 'विचार करा, जोडी बनवा, सांगा', act1Desc: 'कालच्या धड्यातून एक प्रश्न विचारा. विद्यार्थी एकटे विचार करतील (1 मि.), जोडीदारासोबत चर्चा (2 मि.), मग वर्गाला सांगतील.', act1Time: '5 मि.',
+        act2Title: 'फलकावर क्विझ', act2Desc: 'फलकावर शेवटच्या विषयाचे 5 प्रश्न लिहा. विद्यार्थी वहीत उत्तरे लिहतील. एकमेकांच्या बदलून तपासतील.', act2Time: '8 मि.',
+        act3Title: 'शब्द नकाशा', act3Desc: 'फलकावर एक विषयाचा शब्द लिहा. विद्यार्थी एक-एक करून संबंधित शब्द त्याभोवती लिहतील.', act3Time: '6 मि.',
+        savedLabel: 'तुमची सेव्ह केलेली पाने', savedNote: 'आधी उघडलेली पाने ऑफलाइन उपलब्ध आहेत',
+        linkLesson: 'पाठ योजना', linkQuiz: 'क्विझ', linkAttendance: 'उपस्थिती', linkLibrary: 'लायब्ररी',
+        retry: 'पुन्हा पहा', retryHint: 'कनेक्शन आल्यावर आपोआप रीलोड होईल',
+        retryChecking: 'तपासत आहे...', retryStillOffline: 'अजूनही ऑफलाइन',
+        syncLabel: 'शेवटचे सिंक: ', syncJustNow: 'आत्ताच', syncMinAgo: ' मि. पूर्वी', syncHrAgo: ' तास पूर्वी'
+      },
+      Bengali: {
+        title: 'অফলাইনে আছেন — সমস্যা নেই',
+        subtitle: 'এখন এগুলো করতে পারেন',
+        status: 'অফলাইন মোড',
+        activitiesLabel: 'এখনই ক্লাসে চেষ্টা করুন',
+        act1Title: 'ভাবো, জোড়া করো, বলো', act1Desc: 'গতকালের পাঠ থেকে একটি প্রশ্ন করুন। ছাত্ররা একা ভাববে (১ মি.), জোড়ায় আলোচনা করবে (২ মি.), তারপর ক্লাসে বলবে।', act1Time: '৫ মি.',
+        act2Title: 'বোর্ড কুইজ', act2Desc: 'বোর্ডে শেষ টপিকের ৫টি প্রশ্ন লিখুন। ছাত্ররা খাতায় উত্তর লিখবে। বদল করে যাচাই করবে।', act2Time: '৮ মি.',
+        act3Title: 'শব্দ মানচিত্র', act3Desc: 'বোর্ডে একটি বিষয়ের শব্দ লিখুন। ছাত্ররা একে একে সম্পর্কিত শব্দ চারপাশে লিখবে।', act3Time: '৬ মি.',
+        savedLabel: 'আপনার সেভ করা পেজ', savedNote: 'আগে খোলা পেজগুলো অফলাইনে পাওয়া যাবে',
+        linkLesson: 'পাঠ পরিকল্পনা', linkQuiz: 'কুইজ', linkAttendance: 'উপস্থিতি', linkLibrary: 'লাইব্রেরি',
+        retry: 'আবার চেষ্টা', retryHint: 'সংযোগ এলে স্বয়ংক্রিয়ভাবে রিলোড হবে',
+        retryChecking: 'যাচাই করছি...', retryStillOffline: 'এখনও অফলাইন',
+        syncLabel: 'শেষ সিংক: ', syncJustNow: 'এইমাত্র', syncMinAgo: ' মি. আগে', syncHrAgo: ' ঘণ্টা আগে'
+      },
+      Gujarati: {
+        title: 'ઓફલાઈન છો — ચિંતા નહીં',
+        subtitle: 'અત્યારે આ કરી શકો છો',
+        status: 'ઓફલાઈન મોડ',
+        activitiesLabel: 'અત્યારે વર્ગમાં અજમાવો',
+        act1Title: 'વિચારો, જોડી બનાવો, શેર કરો', act1Desc: 'ગઈકાલના પાઠમાંથી એક પ્રશ્ન પૂછો. વિદ્યાર્થીઓ એકલા વિચારે (1 મિ.), જોડીમાં ચર્ચા કરે (2 મિ.), પછી વર્ગને કહે.', act1Time: '5 મિ.',
+        act2Title: 'બોર્ડ ક્વિઝ', act2Desc: 'બોર્ડ પર છેલ્લા વિષયના 5 પ્રશ્નો લખો. વિદ્યાર્થીઓ નોટબુકમાં જવાબ લખે. બદલીને તપાસે.', act2Time: '8 મિ.',
+        act3Title: 'શબ્દ નકશો', act3Desc: 'બોર્ડ પર એક વિષયનો શબ્દ લખો. વિદ્યાર્થીઓ એક-એક કરીને સંબંધિત શબ્દો ફરતે લખે.', act3Time: '6 મિ.',
+        savedLabel: 'તમારા સેવ કરેલા પેજ', savedNote: 'પહેલાં ખોલેલા પેજ ઓફલાઈન ઉપલબ્ધ છે',
+        linkLesson: 'પાઠ યોજના', linkQuiz: 'ક્વિઝ', linkAttendance: 'હાજરી', linkLibrary: 'લાઈબ્રેરી',
+        retry: 'ફરી જુઓ', retryHint: 'કનેક્શન આવે ત્યારે આપોઆપ રીલોડ થશે',
+        retryChecking: 'તપાસી રહ્યા છીએ...', retryStillOffline: 'હજુ ઓફલાઈન',
+        syncLabel: 'છેલ્લું સિંક: ', syncJustNow: 'હમણાં', syncMinAgo: ' મિ. પહેલાં', syncHrAgo: ' કલાક પહેલાં'
+      },
+      Punjabi: {
+        title: 'ਆਫਲਾਈਨ ਹੋ — ਕੋਈ ਗੱਲ ਨਹੀਂ',
+        subtitle: 'ਹੁਣ ਇਹ ਕਰ ਸਕਦੇ ਹੋ',
+        status: 'ਆਫਲਾਈਨ ਮੋਡ',
+        activitiesLabel: 'ਹੁਣੇ ਜਮਾਤ ਵਿੱਚ ਅਜ਼ਮਾਓ',
+        act1Title: 'ਸੋਚੋ, ਜੋੜੀ ਬਣਾਓ, ਦੱਸੋ', act1Desc: 'ਕੱਲ੍ਹ ਦੇ ਪਾਠ ਤੋਂ ਇੱਕ ਸਵਾਲ ਪੁੱਛੋ। ਵਿਦਿਆਰਥੀ ਇਕੱਲੇ ਸੋਚਣ (1 ਮਿ.), ਸਾਥੀ ਨਾਲ ਚਰਚਾ ਕਰਨ (2 ਮਿ.), ਫਿਰ ਜਮਾਤ ਨੂੰ ਦੱਸਣ।', act1Time: '5 ਮਿ.',
+        act2Title: 'ਬੋਰਡ ਕੁਇਜ਼', act2Desc: 'ਬੋਰਡ ਤੇ ਪਿਛਲੇ ਵਿਸ਼ੇ ਦੇ 5 ਸਵਾਲ ਲਿਖੋ। ਵਿਦਿਆਰਥੀ ਕਾਪੀ ਵਿੱਚ ਜਵਾਬ ਲਿਖਣ। ਬਦਲ ਕੇ ਚੈੱਕ ਕਰਨ।', act2Time: '8 ਮਿ.',
+        act3Title: 'ਸ਼ਬਦ ਨਕਸ਼ਾ', act3Desc: 'ਬੋਰਡ ਤੇ ਇੱਕ ਵਿਸ਼ੇ ਦਾ ਸ਼ਬਦ ਲਿਖੋ। ਵਿਦਿਆਰਥੀ ਇੱਕ-ਇੱਕ ਕਰਕੇ ਸੰਬੰਧਿਤ ਸ਼ਬਦ ਆਲੇ-ਦੁਆਲੇ ਲਿਖਣ।', act3Time: '6 ਮਿ.',
+        savedLabel: 'ਤੁਹਾਡੇ ਸੇਵ ਕੀਤੇ ਪੇਜ', savedNote: 'ਪਹਿਲਾਂ ਖੋਲ੍ਹੇ ਪੇਜ ਆਫਲਾਈਨ ਉਪਲਬਧ ਹਨ',
+        linkLesson: 'ਪਾਠ ਯੋਜਨਾ', linkQuiz: 'ਕੁਇਜ਼', linkAttendance: 'ਹਾਜ਼ਰੀ', linkLibrary: 'ਲਾਇਬ੍ਰੇਰੀ',
+        retry: 'ਦੁਬਾਰਾ ਦੇਖੋ', retryHint: 'ਕੁਨੈਕਸ਼ਨ ਆਉਣ ਤੇ ਆਪਣੇ ਆਪ ਰੀਲੋਡ ਹੋਵੇਗਾ',
+        retryChecking: 'ਚੈੱਕ ਕਰ ਰਹੇ ਹਾਂ...', retryStillOffline: 'ਅਜੇ ਆਫਲਾਈਨ',
+        syncLabel: 'ਆਖਰੀ ਸਿੰਕ: ', syncJustNow: 'ਹੁਣੇ', syncMinAgo: ' ਮਿ. ਪਹਿਲਾਂ', syncHrAgo: ' ਘੰਟੇ ਪਹਿਲਾਂ'
+      },
+      Malayalam: {
+        title: 'ഓഫ്‌ലൈനിലാണ് — കുഴപ്പമില്ല',
+        subtitle: 'ഇപ്പോൾ ഇവ ചെയ്യാം',
+        status: 'ഓഫ്‌ലൈൻ മോഡ്',
+        activitiesLabel: 'ഇപ്പോൾ ക്ലാസിൽ പരീക്ഷിക്കുക',
+        act1Title: 'ചിന്തിക്കൂ, ജോഡിയാകൂ, പങ്കിടൂ', act1Desc: 'ഇന്നലത്തെ പാഠത്തിൽ നിന്ന് ഒരു ചോദ്യം ചോദിക്കുക. വിദ്യാർത്ഥികൾ ഒറ്റയ്ക്ക് ചിന്തിക്കും (1 മി.), ജോഡിയുമായി ചർച്ച ചെയ്യും (2 മി.), ക്ലാസിന് പറയും.', act1Time: '5 മി.',
+        act2Title: 'ബോർഡ് ക്വിസ്', act2Desc: 'അവസാന വിഷയത്തിൽ നിന്ന് 5 ചോദ്യങ്ങൾ ബോർഡിൽ എഴുതുക. വിദ്യാർത്ഥികൾ നോട്ട്ബുക്കിൽ ഉത്തരം എഴുതും. മാറ്റി പരിശോധിക്കും.', act2Time: '8 മി.',
+        act3Title: 'വാക്ക് മാപ്പ്', act3Desc: 'ബോർഡിൽ ഒരു വിഷയ വാക്ക് എഴുതുക. വിദ്യാർത്ഥികൾ ഓരോരുത്തരായി ബന്ധപ്പെട്ട വാക്കുകൾ ചുറ്റും എഴുതും.', act3Time: '6 മി.',
+        savedLabel: 'നിങ്ങളുടെ സേവ് ചെയ്ത പേജുകൾ', savedNote: 'മുമ്പ് തുറന്ന പേജുകൾ ഓഫ്‌ലൈനിൽ ലഭ്യമാണ്',
+        linkLesson: 'പാഠ പ്ലാൻ', linkQuiz: 'ക്വിസ്', linkAttendance: 'ഹാജർ', linkLibrary: 'ലൈബ്രറി',
+        retry: 'വീണ്ടും ശ്രമിക്കുക', retryHint: 'കണക്ഷൻ വരുമ്പോൾ സ്വയം റീലോഡ് ആകും',
+        retryChecking: 'പരിശോധിക്കുന്നു...', retryStillOffline: 'ഇപ്പോഴും ഓഫ്‌ലൈൻ',
+        syncLabel: 'അവസാന സിങ്ക്: ', syncJustNow: 'ഇപ്പോൾ', syncMinAgo: ' മി. മുമ്പ്', syncHrAgo: ' മണി. മുമ്പ്'
+      },
+      Odia: {
+        title: 'ଆଫଲାଇନ୍‌ରେ ଅଛନ୍ତି — ଚିନ୍ତା ନାହିଁ',
+        subtitle: 'ଏବେ ଏଗୁଡ଼ିକ କରିପାରିବେ',
+        status: 'ଆଫଲାଇନ୍ ମୋଡ୍',
+        activitiesLabel: 'ଏବେ ଶ୍ରେଣୀରେ ଚେଷ୍ଟା କରନ୍ତୁ',
+        act1Title: 'ଭାବ, ଯୋଡ଼ି ହୁଅ, କୁହ', act1Desc: 'ଗତକାଲିର ପାଠରୁ ଏକ ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ। ଛାତ୍ରମାନେ ଏକାକୀ ଭାବନ୍ତୁ (1 ମି.), ସାଥୀ ସହ ଆଲୋଚନା (2 ମି.), ତାପରେ ଶ୍ରେଣୀକୁ କୁହନ୍ତୁ।', act1Time: '5 ମି.',
+        act2Title: 'ବୋର୍ଡ କ୍ୱିଜ୍', act2Desc: 'ଶେଷ ବିଷୟରୁ 5ଟି ପ୍ରଶ୍ନ ବୋର୍ଡରେ ଲେଖନ୍ତୁ। ଛାତ୍ରମାନେ ନୋଟବୁକରେ ଉତ୍ତର ଲେଖନ୍ତୁ। ବଦଳାଇ ଯାଞ୍ଚ କରନ୍ତୁ।', act2Time: '8 ମି.',
+        act3Title: 'ଶବ୍ଦ ମାନଚିତ୍ର', act3Desc: 'ବୋର୍ଡରେ ଏକ ବିଷୟର ଶବ୍ଦ ଲେଖନ୍ତୁ। ଛାତ୍ରମାନେ ଗୋଟିଏ ଗୋଟିଏ କରି ସମ୍ବନ୍ଧିତ ଶବ୍ଦ ଚାରିପଟେ ଲେଖନ୍ତୁ।', act3Time: '6 ମି.',
+        savedLabel: 'ଆପଣଙ୍କ ସେଭ୍ ପେଜ୍', savedNote: 'ଆଗରୁ ଖୋଲିଥିବା ପେଜ୍ ଆଫଲାଇନ୍‌ରେ ଉପಲବ୍ଧ',
+        linkLesson: 'ପାଠ ଯୋଜନା', linkQuiz: 'କ୍ୱିଜ୍', linkAttendance: 'ଉପସ୍ଥିତି', linkLibrary: 'ଲାଇବ୍ରେରୀ',
+        retry: 'ପୁଣି ଦେଖନ୍ତୁ', retryHint: 'କନେକ୍ସନ୍ ଆସିଲେ ନିଜେ ରିଲୋଡ୍ ହେବ',
+        retryChecking: 'ଯାଞ୍ଚ ହେଉଛି...', retryStillOffline: 'ଏବେ ବି ଆଫଲାଇନ୍',
+        syncLabel: 'ଶେଷ ସିଙ୍କ: ', syncJustNow: 'ଏବେ', syncMinAgo: ' ମି. ଆଗ', syncHrAgo: ' ଘଣ୍ଟା ଆଗ'
+      }
+    };
+
+    // BCP-47 -> Language key
+    var browserLangMap = {
+      en:'English', hi:'Hindi', kn:'Kannada', ta:'Tamil', te:'Telugu',
+      mr:'Marathi', bn:'Bengali', gu:'Gujarati', pa:'Punjabi', ml:'Malayalam', or:'Odia'
+    };
+
+    function detectLanguage() {
+      try {
+        var cached = localStorage.getItem('sahayakai-lang');
+        if (cached && strings[cached]) return cached;
+      } catch(e) {}
+      var nav = (navigator.language || '').split('-')[0];
+      if (browserLangMap[nav] && strings[browserLangMap[nav]]) return browserLangMap[nav];
+      return 'English';
+    }
+
+    function applyLanguage(lang) {
+      var s = strings[lang]; if (!s) return;
+      document.getElementById('title').textContent = s.title;
+      document.getElementById('subtitle').textContent = s.subtitle;
+      document.getElementById('status-text').textContent = s.status;
+      document.getElementById('activities-label').textContent = s.activitiesLabel;
+      document.getElementById('act1-title').textContent = s.act1Title;
+      document.getElementById('act1-desc').textContent = s.act1Desc;
+      document.getElementById('act1-time').textContent = s.act1Time;
+      document.getElementById('act2-title').textContent = s.act2Title;
+      document.getElementById('act2-desc').textContent = s.act2Desc;
+      document.getElementById('act2-time').textContent = s.act2Time;
+      document.getElementById('act3-title').textContent = s.act3Title;
+      document.getElementById('act3-desc').textContent = s.act3Desc;
+      document.getElementById('act3-time').textContent = s.act3Time;
+      document.getElementById('saved-label').textContent = s.savedLabel;
+      document.getElementById('saved-note').textContent = s.savedNote;
+      document.getElementById('link-lesson').textContent = s.linkLesson;
+      document.getElementById('link-quiz').textContent = s.linkQuiz;
+      document.getElementById('link-attendance').textContent = s.linkAttendance;
+      document.getElementById('link-library').textContent = s.linkLibrary;
+      document.getElementById('retry-label').textContent = s.retry;
+      document.getElementById('retry-hint').textContent = s.retryHint;
+    }
+
+    currentLang = detectLanguage();
+    applyLanguage(currentLang);
+    showLastSync();
+  </script>
+</body>
+</html>

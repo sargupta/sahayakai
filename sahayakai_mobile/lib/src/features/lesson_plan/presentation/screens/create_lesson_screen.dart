@@ -17,7 +17,9 @@ import '../providers/lesson_plan_provider.dart';
 import '../../../../core/providers/language_provider.dart';
 
 class CreateLessonScreen extends ConsumerStatefulWidget {
-  const CreateLessonScreen({super.key});
+  final Map<String, dynamic>? initialParams;
+
+  const CreateLessonScreen({super.key, this.initialParams});
 
   @override
   ConsumerState<CreateLessonScreen> createState() => _CreateLessonScreenState();
@@ -43,6 +45,34 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
   void initState() {
     super.initState();
     _selectedLanguage = ref.read(languageProvider);
+
+    // Pre-fill from VIDYA action cards or cross-feature navigation
+    final params = widget.initialParams;
+    if (params != null) {
+      if (params['topic'] != null) {
+        _topicController.text = params['topic'] as String;
+      }
+      if (params['gradeLevel'] != null) {
+        final grade = params['gradeLevel'] as String;
+        if (_grades.contains(grade)) {
+          _selectedGrade = grade;
+        } else {
+          // Backend sends "Class N" — map to "Grade N" if needed
+          final mapped = grade.replaceFirst('Class ', 'Grade ');
+          if (_grades.contains(mapped)) _selectedGrade = mapped;
+        }
+      }
+      if (params['language'] != null) {
+        final lang = params['language'] as String;
+        // Accept both display names ("Hindi") and short codes ("hi")
+        if (languageDisplayNames.contains(lang)) {
+          _selectedLanguage = lang;
+        } else {
+          final display = getDisplayName(lang);
+          if (display != null) _selectedLanguage = display;
+        }
+      }
+    }
   }
 
   @override
@@ -69,6 +99,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
         final theme = Theme.of(context).extension<SahayakTheme>()!;
 
         return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
             key: _formKey,
@@ -102,6 +133,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
                             controller: _topicController,
                             style: GoogleFonts.inter(fontSize: 16),
                             decoration: InputDecoration(
+                              labelText: 'Lesson Topic',
                               hintText:
                                   "e.g., Photosynthesis, The French Revolution...",
                               border: InputBorder.none,
@@ -153,7 +185,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
                       backgroundColor: theme.primary,
                       foregroundColor: Colors.white,
                       elevation: 4,
-                      shadowColor: theme.primary.withOpacity(0.4),
+                      shadowColor: theme.primary.withValues(alpha: 0.4),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                     ),
@@ -201,9 +233,9 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.accent.withOpacity(0.1),
+        color: theme.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.primary.withOpacity(0.2)),
+        border: Border.all(color: theme.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -221,7 +253,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
                 icon: Icon(Icons.keyboard_arrow_down, color: theme.primary),
                 style: GoogleFonts.inter(
                     color: Colors.black87, fontWeight: FontWeight.w500),
-                items: supportedLanguages
+                items: languageDisplayNames
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() {
@@ -254,7 +286,7 @@ class _CreateLessonScreenState extends ConsumerState<CreateLessonScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: theme.primary.withOpacity(0.3),
+                      color: theme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ]

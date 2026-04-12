@@ -31,7 +31,7 @@ class GlassPreviewCard extends StatelessWidget {
             vertical: GlassSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: GlassColors.primary.withOpacity(0.1),
+            color: GlassColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(GlassRadius.xs),
           ),
           child: Text(
@@ -71,7 +71,7 @@ class GlassPreviewCard extends StatelessWidget {
               Container(
                 height: 12,
                 decoration: BoxDecoration(
-                  color: GlassColors.textTertiary.withOpacity(0.3),
+                  color: GlassColors.textTertiary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(6),
                 ),
               ),
@@ -80,7 +80,7 @@ class GlassPreviewCard extends StatelessWidget {
                 height: 10,
                 width: 120,
                 decoration: BoxDecoration(
-                  color: GlassColors.textTertiary.withOpacity(0.2),
+                  color: GlassColors.textTertiary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(5),
                 ),
               ),
@@ -89,7 +89,7 @@ class GlassPreviewCard extends StatelessWidget {
                 height: 8,
                 width: 80,
                 decoration: BoxDecoration(
-                  color: GlassColors.textTertiary.withOpacity(0.15),
+                  color: GlassColors.textTertiary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -104,7 +104,7 @@ class GlassPreviewCard extends StatelessWidget {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: GlassColors.primary.withOpacity(0.2),
+              color: GlassColors.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(
@@ -122,7 +122,7 @@ class GlassPreviewCard extends StatelessWidget {
             width: 80,
             height: 100,
             decoration: BoxDecoration(
-              color: GlassColors.textTertiary.withOpacity(0.08),
+              color: GlassColors.textTertiary.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(40),
               ),
@@ -166,7 +166,7 @@ class GlassListItem extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: iconBackgroundColor ?? iconColor.withOpacity(0.1),
+              color: iconBackgroundColor ?? iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(GlassRadius.md),
             ),
             child: Icon(icon, color: iconColor, size: 24),
@@ -316,7 +316,7 @@ class GlassEmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: GlassColors.primary.withOpacity(0.1),
+                color: GlassColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -383,17 +383,17 @@ class GlassToolCard extends StatelessWidget {
             height: height,
             decoration: BoxDecoration(
               // Plain frosted glass - white semi-transparent
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               borderRadius: GlassRadius.cardRadius,
               // Subtle glass border
               border: Border.all(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 width: 1.5,
               ),
               // Soft shadow
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -409,7 +409,7 @@ class GlassToolCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: effectiveIconColor.withOpacity(0.12),
+                    color: effectiveIconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(GlassRadius.md),
                   ),
                   child: Icon(icon, color: effectiveIconColor, size: 24),
@@ -464,7 +464,7 @@ class GlassHeroCard extends StatelessWidget {
           borderRadius: GlassRadius.cardRadius,
           boxShadow: [
             BoxShadow(
-              color: GlassColors.primary.withOpacity(0.25),
+              color: GlassColors.primary.withValues(alpha: 0.25),
               blurRadius: 24,
               offset: const Offset(0, 12),
               spreadRadius: -4,
@@ -535,7 +535,7 @@ class GlassBottomNavBar extends StatelessWidget {
         color: GlassColors.cardBackground,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

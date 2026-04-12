@@ -48,6 +48,8 @@ export interface GroupPost {
   likesCount: number;
   commentsCount: number;
   createdAt: string;
+  /** Multilingual translations keyed by Language name (e.g. "Hindi", "Tamil") */
+  translations?: Record<string, string>;
 }
 
 // Group chat message (reuses shape from community chat)

@@ -272,13 +272,12 @@ const examPaperGeneratorFlow = ai.defineFlow(
           : null;
 
         if (!subjectNorm) {
-          StructuredLogger.warn('Subject not in PYQ store — skipping PYQ retrieval', {
+          StructuredLogger.info('Subject not in PYQ store — generating without PYQs', {
             service: 'exam-paper-generator-flow', operation: 'retrievePYQs', requestId,
-            metadata: { subject: input.subject },
+            metadata: { subject: input.subject, supportedSubjects: PYQ_SUPPORTED_SUBJECTS },
           });
-          // Jump past PYQ retrieval — retrievedPYQs stays []
-          throw new Error(`__NO_PYQ_SUBJECT__`);
-        }
+          // Skip PYQ retrieval — retrievedPYQs stays [], paper generates from AI only
+        } else {
 
         // ── 1. In-memory store (pyq-store.ts) ──────────────────────────────
         const {
@@ -371,16 +370,15 @@ const examPaperGeneratorFlow = ai.defineFlow(
           requestId,
           metadata: { pyqCount: retrievedPYQs.length, chapters: input.chapters },
         });
+        } // close else block for subjectNorm check
       } catch (pyqError: unknown) {
         const msg = pyqError instanceof Error ? pyqError.message : String(pyqError);
-        if (msg !== '__NO_PYQ_SUBJECT__') {
-          StructuredLogger.warn('PYQ retrieval failed — generating without PYQs', {
-            service: 'exam-paper-generator-flow',
-            operation: 'retrievePYQs',
-            requestId,
-            metadata: { error: msg },
-          });
-        }
+        StructuredLogger.warn('PYQ retrieval failed — generating without PYQs', {
+          service: 'exam-paper-generator-flow',
+          operation: 'retrievePYQs',
+          requestId,
+          metadata: { error: msg },
+        });
         // Graceful fallback: proceed without PYQs
       }
 

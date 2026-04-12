@@ -12,6 +12,7 @@ import { LessonPlanSidebar } from "@/components/lesson-plan/lesson-plan-sidebar"
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { useLessonPlan } from "../hooks/use-lesson-plan";
+import { useNetworkAware } from "@/hooks/use-network-aware";
 
 type LessonPlanViewProps = ReturnType<typeof useLessonPlan>;
 
@@ -305,6 +306,7 @@ export function LessonPlanView({
     loadingMessage,
     limitState,
 }: LessonPlanViewProps) {
+    const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const t = translations[selectedLanguage] || translations.en;
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12">
@@ -363,16 +365,21 @@ export function LessonPlanView({
                                             form.trigger("topic");
                                         }}
                                         generateButton={
-                                            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
-                                                {isLoading ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                                                        {t.generating}
-                                                    </>
-                                                ) : (
-                                                    t.generateButton
+                                            <>
+                                                <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
+                                                    {isLoading ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                                                            {t.generating}
+                                                        </>
+                                                    ) : (
+                                                        t.generateButton
+                                                    )}
+                                                </Button>
+                                                {aiUnavailableReason && (
+                                                    <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
                                                 )}
-                                            </Button>
+                                            </>
                                         }
                                     />
                                 </div>

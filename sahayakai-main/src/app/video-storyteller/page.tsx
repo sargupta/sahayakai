@@ -14,6 +14,7 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
 import { getUserProfileAction } from "@/app/actions/auth";
+import { useNetworkAware } from "@/hooks/use-network-aware";
 
 interface VideoRecommendations {
   categories: {
@@ -38,6 +39,7 @@ const CATEGORIES: { key: string; title: string; icon: LucideIcon }[] = [
 export default function VideoStorytellerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<{ key: string; title: string; icon: LucideIcon } | null>(null);
@@ -178,7 +180,7 @@ export default function VideoStorytellerPage() {
           variant="outline"
           size="sm"
           onClick={() => fetchRecommendations()}
-          disabled={loading}
+          disabled={loading || !canUseAI}
           className="rounded-xl gap-1.5 h-8 text-xs shrink-0 mt-1"
         >
           {loading

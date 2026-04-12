@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 
@@ -41,14 +42,9 @@ class ToolRepository {
         },
       );
 
-      if (response.statusCode == 200) {
-        // The API returns { answer: "..." } based on InstantAnswer implementation
-        return response.data['answer'] ?? "No response generated.";
-      } else {
-        throw Exception("Failed to generate content: ${response.statusCode}");
-      }
-    } catch (e) {
-      throw Exception("Error generating content: $e");
+      return response.data['answer'] as String? ?? 'No response generated.';
+    } on DioException catch (e) {
+      throw Exception('Error generating content: ${e.message}');
     }
   }
 }

@@ -155,18 +155,18 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
         }
     }
 
-    // Auto-join "Education Updates" group (system group for all users)
-    const eduGroupId = 'education_updates';
-    if (!existingSet.has(eduGroupId)) {
-        const eduRef = db.collection('groups').doc(eduGroupId);
-        const eduDoc = await eduRef.get();
+    // Auto-join "Daily Briefing" group (curated education news for all users)
+    const briefingGroupId = 'daily_briefing';
+    if (!existingSet.has(briefingGroupId)) {
+        const briefingRef = db.collection('groups').doc(briefingGroupId);
+        const briefingDoc = await briefingRef.get();
 
-        if (!eduDoc.exists) {
-            await eduRef.set({
-                name: 'Education Updates',
-                description: 'Official CBSE circulars, board notifications, and education policy updates — auto-posted daily by SahayakAI.',
+        if (!briefingDoc.exists) {
+            await briefingRef.set({
+                name: 'Daily Briefing',
+                description: 'Your morning education briefing — CBSE & ICSE circulars, AI in education news, and policy updates curated daily by SahayakAI.',
                 type: 'interest' as const,
-                coverColor: 'linear-gradient(135deg, #f97316, #dc2626)',
+                coverColor: 'linear-gradient(135deg, #f97316, #6366f1)',
                 memberCount: 0,
                 autoJoinRules: {},
                 lastActivityAt: FieldValue.serverTimestamp(),
@@ -177,11 +177,11 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
         }
 
         try {
-            await eduRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
-            await eduRef.update({ memberCount: FieldValue.increment(1) });
-            newGroupIds.push(eduGroupId);
+            await briefingRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
+            await briefingRef.update({ memberCount: FieldValue.increment(1) });
+            newGroupIds.push(briefingGroupId);
         } catch {
-            newGroupIds.push(eduGroupId);
+            newGroupIds.push(briefingGroupId);
         }
     }
 

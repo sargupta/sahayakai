@@ -7,7 +7,9 @@ class MagicalLoadingOrb extends StatelessWidget {
 
   const MagicalLoadingOrb({
     super.key,
-    required this.gradient,
+    this.gradient = const LinearGradient(
+      colors: [Color(0xFFFFB366), Color(0xFFFF9933), Color(0xFFE68A00)],
+    ),
     this.size = 80,
   });
 
@@ -46,11 +48,11 @@ class MagicalLoadingOrb extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border:
-                  Border.all(width: 4, color: Colors.white.withOpacity(0.5)),
+                  Border.all(width: 4, color: Colors.white.withValues(alpha: 0.5)),
               gradient: SweepGradient(
                 colors: [
                   Colors.transparent,
-                  Colors.white.withOpacity(0.8),
+                  Colors.white.withValues(alpha: 0.8),
                   Colors.transparent,
                 ],
               ),

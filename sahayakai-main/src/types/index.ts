@@ -194,6 +194,18 @@ export interface UserProfile {
 
     // Onboarding generation counter (client-side tracks, periodically syncs)
     aiGenerationCount?: number;
+
+    // Onboarding — progressive disclosure state machine
+    onboardingPhase?: 'setup' | 'first-generation' | 'exploring' | 'completing' | 'done';
+    onboardingCompletedAt?: Timestamp;
+    firstGenerationContentId?: string;
+    firstGenerationTool?: ContentType;
+    discoveredFeatures?: string[];
+    featureSpotlightsSeen?: string[];
+    onboardingChecklistItems?: Record<string, boolean>;
+    profileCompletionLevel?: 'basic' | 'complete';
+    profileCompletionDismissCount?: number;
+    checklistDismissedAt?: Timestamp;
 }
 
 export interface BaseContent<T = any> {

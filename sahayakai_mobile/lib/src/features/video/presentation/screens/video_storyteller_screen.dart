@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/glassmorphic/glass_components.dart';
-import '../../../tools/data/tool_repository.dart';
+import '../../data/video_repository.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../lesson_plan/presentation/widgets/voice_input_widget.dart';
+import '../../../../components/share_to_community_button.dart';
 
 class VideoStorytellerScreen extends ConsumerStatefulWidget {
-  const VideoStorytellerScreen({super.key});
+  final Map<String, dynamic>? initialParams;
+
+  const VideoStorytellerScreen({super.key, this.initialParams});
 
   @override
   ConsumerState<VideoStorytellerScreen> createState() =>
@@ -20,6 +24,7 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
   final _scriptController = TextEditingController();
   bool _isGenerating = false;
   String? _generatedScript;
+  VideoOutput? _videoResult;
 
   String _selectedBoard = 'CBSE';
   String _selectedGrade = 'Class 8';
@@ -34,6 +39,25 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
 
   String _selectedTone = 'Educational';
   final List<String> _tones = ['Educational', 'Fun & Engaging', 'Storytelling', 'Documentary'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from VIDYA action cards or cross-feature navigation
+    final params = widget.initialParams;
+    if (params != null) {
+      if (params['topic'] != null) {
+        _scriptController.text = params['topic'] as String;
+      }
+      if (params['script'] != null) {
+        _scriptController.text = params['script'] as String;
+      }
+      if (params['gradeLevel'] != null) {
+        final grade = params['gradeLevel'] as String;
+        if (_grades.contains(grade)) _selectedGrade = grade;
+      }
+    }
+  }
 
   Future<void> _generateVideoScript() async {
     if (_scriptController.text.trim().isEmpty) {
@@ -50,17 +74,33 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
 
     try {
       final language = ref.read(languageProvider);
-      final toolRepo = ref.read(toolRepositoryProvider);
+      final repo = ref.read(videoRepositoryProvider);
 
-      final result = await toolRepo.generateToolContent(
-        toolName: "Video Script Writer",
-        prompt: _scriptController.text,
+      final result = await repo.getRecommendations(
+        topic: _scriptController.text,
+        gradeLevel: _selectedGrade,
         language: language,
+        educationBoard: _selectedBoard,
       );
+
+      // Format video recommendations as markdown for display.
+      final md = StringBuffer();
+      if (result.personalizedMessage.isNotEmpty) {
+        md.writeln(result.personalizedMessage);
+        md.writeln('');
+      }
+      for (final entry in result.categories.entries) {
+        md.writeln('## ${entry.key}');
+        for (final query in entry.value) {
+          md.writeln('- $query');
+        }
+        md.writeln('');
+      }
 
       setState(() {
         _isGenerating = false;
-        _generatedScript = result;
+        _generatedScript = md.toString();
+        _videoResult = result;
       });
     } catch (e) {
       if (mounted) {
@@ -92,6 +132,7 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
 
   Widget _buildInputForm() {
     return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(
         left: GlassSpacing.xl,
         right: GlassSpacing.xl,
@@ -115,7 +156,7 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
           Container(
             width: 60,
             height: 2,
-            color: GlassColors.textTertiary.withOpacity(0.3),
+            color: GlassColors.textTertiary.withValues(alpha: 0.3),
           ),
           const SizedBox(height: GlassSpacing.xxl),
 
@@ -307,6 +348,7 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
         // Generated Content
         Expanded(
           child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
             child: GlassCard(
               padding: const EdgeInsets.all(GlassSpacing.xl),
@@ -329,21 +371,75 @@ class _VideoStorytellerScreenState extends ConsumerState<VideoStorytellerScreen>
                     ),
                   ),
                   const SizedBox(height: GlassSpacing.lg),
-                  MarkdownBody(
-                    data: _generatedScript!,
-                    styleSheet: MarkdownStyleSheet(
-                      h1: GlassTypography.headline1(),
-                      h2: GlassTypography.headline2(),
-                      h3: GlassTypography.headline3(),
-                      p: GlassTypography.bodyMedium(),
+                  // If we have video result, show tappable links
+                  if (_videoResult != null) ...[
+                    if (_videoResult!.personalizedMessage.isNotEmpty)
+                      Text(_videoResult!.personalizedMessage,
+                          style: GlassTypography.bodyMedium()),
+                    const SizedBox(height: GlassSpacing.lg),
+                    for (final entry in _videoResult!.categories.entries) ...[
+                      Text(entry.key.toUpperCase(),
+                          style: GlassTypography.sectionHeader()),
+                      const SizedBox(height: GlassSpacing.sm),
+                      for (final query in entry.value)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: GlassSpacing.sm),
+                          child: InkWell(
+                            onTap: () => launchUrl(
+                              Uri.parse(
+                                  'https://www.youtube.com/results?search_query=${Uri.encodeComponent(query)}'),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.play_circle_outline,
+                                    size: 20, color: Colors.red),
+                                const SizedBox(width: GlassSpacing.sm),
+                                Expanded(
+                                  child: Text(
+                                    query,
+                                    style: GlassTypography.bodyMedium()
+                                        .copyWith(
+                                      color: Colors.blue.shade700,
+                                      decoration:
+                                          TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: GlassSpacing.md),
+                    ],
+                  ] else
+                    MarkdownBody(
+                      data: _generatedScript!,
+                      styleSheet: MarkdownStyleSheet(
+                        h1: GlassTypography.headline1(),
+                        h2: GlassTypography.headline2(),
+                        h3: GlassTypography.headline3(),
+                        p: GlassTypography.bodyMedium(),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
           ),
         ),
-        const SizedBox(height: GlassSpacing.lg),
+        const SizedBox(height: GlassSpacing.md),
+
+        // Share to Community
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
+          child: ShareToCommunityButton(
+            type: 'video-script',
+            title: 'Video Script',
+            data: {'content': _generatedScript},
+          ),
+        ),
+        const SizedBox(height: GlassSpacing.md),
 
         // Action Buttons
         Padding(
