@@ -94,6 +94,8 @@ export interface ParentOutreach {
     answeredBy?: string;
     callDurationSeconds?: number;
     turnCount?: number;
+    /** Which voice pipeline mode was used: 'streaming' (Pipecat) or 'batch' (Twilio Gather/Say) */
+    voicePipelineMode?: 'streaming' | 'batch';
     createdAt: string;
     updatedAt: string;
 }

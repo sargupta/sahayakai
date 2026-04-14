@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
 import { isValidE164 } from '@/lib/twilio-validate';
+import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import type { Language } from '@/types';
 
 export async function POST(req: NextRequest) {
@@ -47,10 +48,13 @@ export async function POST(req: NextRequest) {
             }, { status: 422 });
         }
 
+        // Determine pipeline mode (streaming if orchestrator is healthy, else batch)
+        const pipelineMode = await getEffectiveMode();
+
         // Build the TwiML callback URL dynamically (handles all environments)
         const host = req.headers.get('host');
         const protocol = host?.includes('localhost') ? 'http' : 'https';
-        const twimlUrl = `${protocol}://${host}/api/attendance/twiml?outreachId=${outreachId}`;
+        const twimlUrl = `${protocol}://${host}/api/attendance/twiml?outreachId=${outreachId}&mode=${pipelineMode}`;
         const statusCallbackUrl = `${protocol}://${host}/api/attendance/twiml-status`;
 
         // Initiate Twilio call via REST API

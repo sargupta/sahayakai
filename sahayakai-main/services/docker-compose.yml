@@ -1,0 +1,25 @@
+# SahayakAI Voice Pipeline — CPU-only, API-based providers
+#
+# Uses Sarvam STT/TTS APIs + Google Gemini — no GPU needed.
+# Run: docker compose up -d
+#
+# For production: set env vars in .env or pass via Docker secrets.
+
+services:
+  voice-server:
+    build: ./voice-server
+    ports:
+      - "8000:8000"
+    environment:
+      - SARVAM_AI_API_KEY=${SARVAM_AI_API_KEY}
+      - GOOGLE_GENAI_API_KEY=${GOOGLE_GENAI_API_KEY}
+      - SAHAYAKAI_API_URL=${SAHAYAKAI_API_URL:-http://host.docker.internal:3000}
+      - SAHAYAKAI_INTERNAL_KEY=${SAHAYAKAI_INTERNAL_KEY}
+      - HOST=0.0.0.0
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); assert r.status_code == 200"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
