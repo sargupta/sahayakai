@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP, TWILIO_VOICE_MAP, CALL_MENU_PROMPTS } from '@/types/attendance';
 import { validateTwilioSignature, validateTwilioSignaturePost } from '@/lib/twilio-validate';
 import { generateAgentReply } from '@/ai/flows/parent-call-agent';
+import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
 
@@ -24,6 +25,9 @@ const SPEECH_LANGUAGE_MAP: Record<string, string> = {
 };
 
 // ── GET: Initial call pickup — deliver greeting + teacher message + first <Gather> ──
+// Supports two modes:
+// - batch (default): existing <Gather>/<Say> pipeline with Twilio STT/TTS
+// - streaming (future): <Connect><Stream> to Pipecat voice server
 
 export async function GET(req: NextRequest) {
     if (!validateTwilioSignature(req)) {
@@ -31,10 +35,34 @@ export async function GET(req: NextRequest) {
         return new NextResponse(hangupXml(), { status: 403, headers: XML_HEADERS });
     }
 
-    const outreachId = new URL(req.url).searchParams.get('outreachId');
+    const url = new URL(req.url);
+    const outreachId = url.searchParams.get('outreachId');
+    const mode = url.searchParams.get('mode') || 'batch';
+
     if (!outreachId) return new NextResponse(hangupXml(), { headers: XML_HEADERS });
 
     try {
+        // ── Streaming mode: hand off to Pipecat voice server ──
+        if (mode === 'streaming') {
+            const config = getVoicePipelineConfig();
+            if (!config.orchestratorWsUrl) {
+                console.warn('[twiml] Streaming requested but orchestrator not configured — falling back to batch');
+            } else {
+                // Voice server endpoint is /ws/call — orchestratorWsUrl is the base (e.g. wss://voice:8765)
+                const streamUrl = `${config.orchestratorWsUrl.replace(/\/+$/, '')}/ws/call?outreachId=${outreachId}`;
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="${escapeXml(streamUrl)}">
+      <Parameter name="outreachId" value="${escapeXml(outreachId)}" />
+    </Stream>
+  </Connect>
+</Response>`;
+                return twimlResponse(twiml);
+            }
+        }
+
+        // ── Batch mode: existing <Gather>/<Say> pipeline ──
         const db = await getDb();
         const doc = await db.collection('parent_outreach').doc(outreachId).get();
 
@@ -63,6 +91,7 @@ export async function GET(req: NextRequest) {
         await doc.ref.update({
             transcript,
             turnCount: 1,
+            voicePipelineMode: 'batch',
             updatedAt: new Date().toISOString(),
         });
 
@@ -70,6 +99,11 @@ export async function GET(req: NextRequest) {
         const esc = escapeXml;
 
         // Greeting → teacher message → invite parent to speak
+        // Enhanced: add hints for Hinglish recognition
+        const speechHints = langCode === 'hi-IN'
+            ? ' hints="school, teacher, homework, class, exam, test, marks, result, absent, present"'
+            : '';
+
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Pause length="1"/>
@@ -78,7 +112,7 @@ export async function GET(req: NextRequest) {
   <Say language="${langCode}" voice="${voice}">${esc(message)}</Say>
   <Pause length="1"/>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.inviteResponse)}</Say>
-  <Gather input="speech dtmf" action="${gatherUrl}" method="POST" language="${speechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="10" numDigits="1">
+  <Gather input="speech dtmf" action="${gatherUrl}" method="POST" language="${speechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="10" numDigits="1"${speechHints}>
     <Say language="${langCode}" voice="${voice}">${esc(prompts.waitingPrompt)}</Say>
   </Gather>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.noResponseGoodbye)}</Say>

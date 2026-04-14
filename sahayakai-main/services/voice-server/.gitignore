@@ -1,0 +1,19 @@
+# Environment
+.env
+*.env.local
+
+# SQLite database
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Internal docs
+IMPLEMENTATION_PLAN.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
