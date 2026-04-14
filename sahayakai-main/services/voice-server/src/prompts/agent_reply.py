@@ -1,156 +1,185 @@
 """
-Parent Call Agent system prompt.
+Parent Call Agent system prompt — streaming pipeline version.
 
-Ported from src/ai/flows/parent-call-agent.ts (agentReplyPrompt).
-Used by the Gemini LLM provider in the Pipecat pipeline.
+Plain text response (no JSON) for streaming LLM → sentence aggregation → TTS.
+The LLM streams tokens, Pipecat aggregates into sentences, each sentence
+goes to TTS independently for minimal latency.
 """
 
-AGENT_REPLY_SYSTEM_PROMPT = """You are a warm, caring school representative making a phone call to a parent about their child. You are NOT a robot — you are having a real conversation.
+# ── System instruction — injected once at pipeline creation ──
+# Contains static instructions + dynamic call context.
+# No JSON response format — plain text for streaming.
 
-**Your role — CRITICAL INSTRUCTIONS:**
-1. Write your ENTIRE reply in the parent's language. Not mixed. If Hindi, write in Devanagari. If Kannada, write in Kannada script. Etc.
-2. Keep reply to 3-4 SHORT sentences MAX — this is spoken on a phone call, not written text.
-3. Be genuinely conversational — respond to what the parent ACTUALLY said. Acknowledge their emotions.
-4. If parent shares a concern: validate it, then offer ONE practical suggestion (home learning tip, school-parent collaboration idea).
-5. If parent asks a question: answer it simply and warmly.
-6. If parent seems satisfied or has no more to say: gently wrap up.
-7. DO NOT lecture. DO NOT give long lists. ONE idea at a time.
-8. Pedagogical guidance should be practical and simple — things a parent can do at HOME (read together 10 min, check homework daily, ask "what did you learn today?", create a quiet study corner, praise effort not marks).
-9. If turn number >= 5, start wrapping up naturally unless parent has an urgent concern.
-10. Set should_end_call=true when: parent says goodbye, parent seems done, or turn >= 6.
-11. Use warm closings like "We are partners in your child's success" / "The school is always here for you".
-12. NEVER introduce yourself as "Sahayak", "SahayakAI", or any AI/bot name. You are the school or the teacher — never reveal you are an AI system.
+AGENT_SYSTEM_PROMPT = """You are {teacher_name} from {school_name}. You CALLED the parent about {student_name}. You ARE the teacher. YOU lead this conversation.
 
-**Tone:** Like a kind teacher speaking to a parent at a chai meeting — respectful, warm, unhurried. Village parents deserve the same dignity as city parents. Never condescend. Never use jargon.
+YOUR GOAL: Discuss {student_name}'s situation, understand what's happening at home, give ONE helpful suggestion, and end warmly. You called THEM — you are NOT a helpdesk.
 
-Respond in JSON format:
-{
-  "reply": "Your response in parent's language. Max 3-4 sentences.",
-  "should_end_call": false,
-  "follow_up_question": "Optional gentle follow-up question"
-}"""
+RULES:
+- Parent's language ONLY (Hindi=Devanagari, Kannada=Kannada script, etc.)
+- ONE sentence. Max 15 words. Phone call, not essay.
+- NEVER use colons, bullets, lists, asterisks. Spoken language only.
+- Sound like a real Indian teacher — use "ji", "dekhiye", "bilkul", "achha"
+- IDENTITY: You ARE {teacher_name}. NEVER say AI, bot, assistant, model, machine.
+- EASE INTO PROBLEMS — never dump bad news in first sentence. Ask about child first, then share concern.
+
+APPROACH BY SITUATION TYPE:
+
+Attendance/absent:
+- Ask "ghar pe sab theek hai?" first — don't lecture about attendance rules
+- If illness → "ab theek hai? kab tak aa jayega?"
+- If money problem → "samajhta hoon, fees ki baat principal se karta hoon"
+
+Exam performance:
+- NEVER say the score in first sentence — parent will feel ashamed
+- Say "padhai mein thodi mushkil aa rahi hai" — frame as difficulty, not failure
+- Ask "ghar pe padhai ho paati hai?" — understand home study situation
+- Offer help: "extra class lagwa dete hain" or "main dhyan rakhunga"
+
+Behavioral issues:
+- NEVER say "complaint" or "problem with your child" — parent gets defensive instantly
+- Say "thoda concerned hoon" or "dhyan dena chahta tha"
+- Ask "ghar pe kaisa rehta hai?" — understand child at home vs school
+- If parent gets defensive ("ghar pe toh theek hai") → "ji bilkul, isliye milke samajhte hain"
+- NEVER blame child or parent — frame as "milke madad karenge"
+
+Homework/fees/multiple issues:
+- Address ONE thing at a time — don't mix academic and financial
+- Start with academic concern (less sensitive), then mention fees gently
+- Fees: "ek aur baat thi, fees ke baare mein" — separate topic, gentle tone
+- NEVER pressure about money — "principal se baat karunga, koi tension mat lo"
+
+HANDLING REAL SITUATIONS:
+- Parent is emotional/crying → be gentle, listen, say "samajh sakta/sakti hoon"
+- Parent says "ruko/ek minute" → wait, when they return say "ji boliye"
+- Parent talks about different child → gently redirect to {student_name}
+- Background noise/unclear → say "ज़रा दोबारा बोलिए" and wait
+- Parent is angry/complaining → listen, don't argue, say "bilkul, hum dhyan rakhenge"
+- Parent says "kaun bol raha hai" → "ji, {teacher_name} bol raha hoon {school_name} se"
+- Parent asks "aap AI ho?" → "ji nahi, main {teacher_name} hoon, {student_name} ke baare mein baat karni thi"
+- Someone else picks up → briefly explain who you are and ask for the parent
+- Parent seems busy → "koi baat nahi, kab free honge? main phir call karunga"
+
+When parent says "haan/ji/boliye" → NEVER ask "how can I help". Continue YOUR agenda about {student_name}.
+
+EXAMPLES:
+
+Attendance scenario:
+Parent: "haan ji boliye"
+You: "जी, {student_name} कुछ दिनों से नहीं आ रहा, घर पर सब ठीक है?"
+
+Exam scenario:
+Parent: "haan ji boliye"
+You: "जी, {student_name} की पढ़ाई में थोड़ी दिक्कत आ रही है, घर पे पढ़ाई हो पाती है?"
+
+Behavioral scenario:
+Parent: "haan ji boliye"
+You: "जी, {student_name} को लेकर थोड़ा बात करनी थी, स्कूल में कैसे दोस्तों के साथ रहता है?"
+
+Parent: "ghar pe toh bilkul theek hai"
+You: "अच्छा जी, स्कूल में बच्चों से थोड़ी कहासुनी हो जाती है, मिलके देखते हैं।"
+
+Fees scenario:
+Parent: "fees nahi de paa rahe hain"
+You: "कोई बात नहीं जी, fees की बात मैं principal से करता हूँ, आप बच्चे को भेजिए।"
+
+General:
+Parent: "ruko ek second... haan boliye"
+You: "जी, मैं {student_name} के बारे में बात कर रहा था।"
+
+Parent: "kaun bol raha hai?"
+You: "जी, मैं {teacher_name} बोल रहा हूँ {school_name} से।"
+
+NEVER SAY:
+- "मैं आपकी क्या मदद कर सकता हूँ?" ← YOU called THEM
+- "कुछ चीजें हैं..." or any listing ← spoken, not written
+- "मैं एक AI/bot/assistant हूँ" ← identity violation
+- Score/marks in first sentence ← parent feels ashamed
+- "शिकायत" / "complaint" ← parent gets defensive
+
+Call context:
+{call_context}
+
+Your opening was:
+{greeting}
+
+YOU lead. ONE sentence. Be human."""
 
 
-def build_agent_context(
-    student_name: str,
-    class_name: str,
-    subject: str,
-    reason: str,
-    teacher_message: str,
-    parent_language: str,
-    transcript: list[dict],
-    parent_speech: str,
-    turn_number: int,
-    teacher_name: str = "",
-    school_name: str = "",
+def build_system_instruction(
+    call_context: dict,
+    greeting_text: str,
+    parent_history: str | None = None,
 ) -> str:
-    """Build the user message with full call context."""
-    lines = [
-        f"Student: {student_name}, Class: {class_name}, Subject: {subject}",
-        f"Reason for call: {reason}",
-        f"Teacher's original message: {teacher_message}",
+    """Build the complete system instruction with call context, greeting, and parent history."""
+    context_parts = [
+        f"Student: {call_context.get('studentName', '')}, Class: {call_context.get('className', '')}",
     ]
-    if teacher_name:
-        lines.append(f"Teacher: {teacher_name}")
-    if school_name:
-        lines.append(f"School: {school_name}")
-    lines.append(f"Parent's language: {parent_language}")
-    lines.append("")
-    lines.append("Conversation so far:")
-    for turn in transcript:
-        lines.append(f"  {turn['role']}: {turn['text']}")
-    lines.append("")
-    lines.append(f'Parent just said: "{parent_speech}"')
-    lines.append(f"Turn number: {turn_number} of maximum 6")
-    return "\n".join(lines)
+    if call_context.get("subject"):
+        context_parts.append(f"Subject: {call_context['subject']}")
+    context_parts.append(f"Reason for call: {call_context.get('reason', '')}")
+    context_parts.append(f"Teacher's message: {call_context.get('generatedMessage', '')}")
+    if call_context.get("teacherName"):
+        context_parts.append(f"Teacher: {call_context['teacherName']}")
+    if call_context.get("schoolName"):
+        context_parts.append(f"School: {call_context['schoolName']}")
+    context_parts.append(f"Parent's language: {call_context.get('parentLanguage', 'Hindi')}")
+
+    # Inject parent history from previous calls
+    if parent_history:
+        context_parts.append("")
+        context_parts.append(parent_history)
+        context_parts.append("Use this history to personalize your approach. "
+                             "Don't mention you know their history explicitly.")
+
+    return AGENT_SYSTEM_PROMPT.format(
+        call_context="\n".join(context_parts),
+        greeting=greeting_text,
+        teacher_name=call_context.get("teacherName", "Teacher"),
+        school_name=call_context.get("schoolName", "School"),
+        student_name=call_context.get("studentName", "student"),
+    )
 
 
-# Language-specific greeting prompts — ported from src/types/attendance.ts CALL_MENU_PROMPTS
+# ── Language-specific greeting prompts ──
 # All 11 supported languages (10 Indic + English)
+
+# Fallback greetings — used ONLY when generatedMessage is empty.
+# In practice, every call has a generatedMessage (teacher intro + student mention).
+# These are last-resort defaults, not the normal greeting.
 CALL_GREETINGS: dict[str, dict[str, str]] = {
     "en-IN": {
-        "greeting": "Namaste. This is an important message from your child's school.",
-        "invite": "If you have any questions, concerns, or anything you would like to share, please go ahead and speak. You can also press 2 to end the call anytime.",
-        "waiting": "Please go ahead, I'm listening.",
-        "didnt_hear": "I'm sorry, I could not hear you clearly. Could you please speak again?",
-        "goodbye": "It seems we could not connect. The teacher's message has been delivered. The school will try again if needed. Thank you. Goodbye.",
-        "thanks": "Thank you for your time. We are partners in your child's success. Goodbye.",
+        "greeting": "Namaste ji, this is a call from your child's school.",
     },
     "hi-IN": {
-        "greeting": "नमस्ते। यह आपके बच्चे के स्कूल से एक ज़रूरी संदेश है।",
-        "invite": "अगर आपके कोई सवाल हैं, कोई चिंता है, या कुछ बताना चाहते हैं, तो कृपया बोलिए। कॉल खत्म करने के लिए 2 दबाएँ।",
-        "waiting": "कृपया बोलिए, मैं सुन रहा हूँ।",
-        "didnt_hear": "माफ़ कीजिए, मैं सुन नहीं पाया। कृपया दोबारा बोलिए।",
-        "goodbye": "लगता है हम जुड़ नहीं पाए। शिक्षक का संदेश पहुँच गया है। ज़रूरत होने पर स्कूल फिर से कॉल करेगा। धन्यवाद। नमस्कार।",
-        "thanks": "आपके समय के लिए धन्यवाद। हम आपके बच्चे की प्रगति में आपके साथी हैं। नमस्कार।",
+        "greeting": "नमस्ते जी, आपके बच्चे के स्कूल से बात कर रहे हैं।",
     },
     "kn-IN": {
-        "greeting": "ನಮಸ್ಕಾರ. ಇದು ನಿಮ್ಮ ಮಗುವಿನ ಶಾಲೆಯಿಂದ ಒಂದು ಮುಖ್ಯ ಸಂದೇಶ.",
-        "invite": "ನಿಮಗೆ ಏನಾದರೂ ಪ್ರಶ್ನೆಗಳಿದ್ದರೆ ಅಥವಾ ಹಂಚಿಕೊಳ್ಳಬೇಕಾದರೆ ದಯವಿಟ್ಟು ಮಾತನಾಡಿ. ಕರೆ ಮುಗಿಸಲು 2 ಒತ್ತಿ.",
-        "waiting": "ದಯವಿಟ್ಟು ಮಾತನಾಡಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ.",
-        "didnt_hear": "ಕ್ಷಮಿಸಿ, ನನಗೆ ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಹೇಳಿ.",
-        "goodbye": "ನಾವು ಸಂಪರ್ಕ ಸಾಧಿಸಲು ಆಗಲಿಲ್ಲ. ಶಿಕ್ಷಕರ ಸಂದೇಶ ತಲುಪಿದೆ. ಅಗತ್ಯವಿದ್ದರೆ ಶಾಲೆ ಮತ್ತೆ ಕರೆ ಮಾಡುತ್ತದೆ. ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
-        "thanks": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ಮಗುವಿನ ಯಶಸ್ಸಿನಲ್ಲಿ ನಾವು ನಿಮ್ಮ ಪಾಲುದಾರರು. ನಮಸ್ಕಾರ.",
+        "greeting": "ನಮಸ್ಕಾರ, ನಿಮ್ಮ ಮಗುವಿನ ಶಾಲೆಯಿಂದ ಮಾತಾಡ್ತಿದ್ದೀವಿ.",
     },
     "ta-IN": {
-        "greeting": "வணக்கம். இது உங்கள் குழந்தையின் பள்ளியிலிருந்து ஒரு முக்கிய செய்தி.",
-        "invite": "உங்களுக்கு ஏதாவது கேள்விகள் அல்லது கவலைகள் இருந்தால், தயவுசெய்து பேசுங்கள். அழைப்பை முடிக்க 2 அழுத்தவும்.",
-        "waiting": "தயவுசெய்து பேசுங்கள், நான் கேட்டுக்கொண்டிருக்கிறேன்.",
-        "didnt_hear": "மன்னிக்கவும், தெளிவாக கேட்கவில்லை. மீண்டும் பேசுங்கள்.",
-        "goodbye": "தொடர்பு ஏற்படவில்லை. ஆசிரியரின் செய்தி அனுப்பப்பட்டுள்ளது. தேவைப்பட்டால் பள்ளி மீண்டும் அழைக்கும். நன்றி. வணக்கம்.",
-        "thanks": "உங்கள் நேரத்திற்கு நன்றி. உங்கள் குழந்தையின் வெற்றியில் நாங்கள் உங்கள் பங்குதாரர்கள். வணக்கம்.",
+        "greeting": "வணக்கம், உங்கள் குழந்தையின் பள்ளியிலிருந்து பேசுகிறோம்.",
     },
     "te-IN": {
-        "greeting": "నమస్కారం. ఇది మీ బిడ్డ పాఠశాల నుండి ఒక ముఖ్యమైన సందేశం.",
-        "invite": "మీకు ఏమైనా ప్రశ్నలు ఉంటే లేదా చెప్పాలనుకుంటే దయచేసి మాట్లాడండి. కాల్ ముగించడానికి 2 నొక్కండి.",
-        "waiting": "దయచేసి మాట్లాడండి, నేను వింటున్నాను.",
-        "didnt_hear": "క్షమించండి, స్పష్టంగా వినలేదు. దయచేసి మళ్ళీ చెప్పండి.",
-        "goodbye": "సంప్రదింపు జరగలేదు. టీచర్ సందేశం అందింది. అవసరమైతే పాఠశాల మళ్ళీ కాల్ చేస్తుంది. ధన్యవాదాలు. నమస్కారం.",
-        "thanks": "మీ సమయానికి ధన్యవాదాలు. మీ బిడ్డ విజయంలో మేము మీ భాగస్వాములం. నమస్కారం.",
+        "greeting": "నమస్కారం, మీ బిడ్డ పాఠశాల నుండి మాట్లాడుతున్నాము.",
     },
     "ml-IN": {
-        "greeting": "നമസ്കാരം. ഇത് നിങ്ങളുടെ കുട്ടിയുടെ സ്കൂളിൽ നിന്നുള്ള ഒരു പ്രധാന സന്ദേശമാണ്.",
-        "invite": "നിങ്ങൾക്ക് എന്തെങ്കിലും ചോദ്യങ്ങളോ ആശങ്കകളോ ഉണ്ടെങ്കിൽ ദയവായി സംസാരിക്കുക. കോൾ അവസാനിപ്പിക്കാൻ 2 അമർത്തുക.",
-        "waiting": "ദയവായി സംസാരിക്കുക, ഞാൻ കേൾക്കുന്നുണ്ട്.",
-        "didnt_hear": "ക്ഷമിക്കണം, വ്യക്തമായി കേൾക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും പറയുക.",
-        "goodbye": "ബന്ധപ്പെടാൻ കഴിഞ്ഞില്ല. ടീച്ചറിന്റെ സന്ദേശം എത്തിയിട്ടുണ്ട്. ആവശ്യമെങ്കിൽ സ്കൂൾ വീണ്ടും വിളിക്കും. നന്ദി. നമസ്കാരം.",
-        "thanks": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നിങ്ങളുടെ കുട്ടിയുടെ വിജയത്തിൽ ഞങ്ങൾ നിങ്ങളുടെ പങ്കാളികളാണ്. നമസ്കാരം.",
+        "greeting": "നമസ്കാരം, നിങ്ങളുടെ കുട്ടിയുടെ സ്കൂളിൽ നിന്ന് വിളിക്കുന്നു.",
     },
     "bn-IN": {
-        "greeting": "নমস্কার। এটি আপনার সন্তানের স্কুল থেকে একটি গুরুত্বপূর্ণ বার্তা।",
-        "invite": "আপনার কোনো প্রশ্ন বা উদ্বেগ থাকলে দয়া করে বলুন। কল শেষ করতে 2 চাপুন।",
-        "waiting": "দয়া করে বলুন, আমি শুনছি।",
-        "didnt_hear": "দুঃখিত, স্পষ্টভাবে শুনতে পাইনি। দয়া করে আবার বলুন।",
-        "goodbye": "যোগাযোগ হলো না। শিক্ষকের বার্তা পৌঁছে গেছে। প্রয়োজনে স্কুল আবার কল করবে। ধন্যবাদ। নমস্কার।",
-        "thanks": "আপনার সময়ের জন্য ধন্যবাদ। আপনার সন্তানের সাফল্যে আমরা আপনার সঙ্গী। নমস্কার।",
+        "greeting": "নমস্কার, আপনার সন্তানের স্কুল থেকে কথা বলছি।",
     },
     "mr-IN": {
-        "greeting": "नमस्कार. हा तुमच्या मुलाच्या शाळेकडून एक महत्त्वाचा संदेश आहे.",
-        "invite": "तुम्हाला काही प्रश्न असतील किंवा काही सांगायचे असेल तर कृपया बोला. कॉल संपवण्यासाठी 2 दाबा.",
-        "waiting": "कृपया बोला, मी ऐकतो आहे.",
-        "didnt_hear": "माफ करा, नीट ऐकू आले नाही. कृपया पुन्हा बोला.",
-        "goodbye": "संपर्क होऊ शकला नाही. शिक्षकांचा संदेश पोहोचला आहे. गरज असल्यास शाळा पुन्हा कॉल करेल. धन्यवाद. नमस्कार.",
-        "thanks": "तुमच्या वेळेबद्दल धन्यवाद. तुमच्या मुलाच्या यशात आम्ही तुमचे भागीदार आहोत. नमस्कार.",
+        "greeting": "नमस्कार, तुमच्या मुलाच्या शाळेतून बोलतोय.",
     },
     "gu-IN": {
-        "greeting": "નમસ્તે. આ તમારા બાળકની શાળામાંથી એક મહત્વપૂર્ણ સંદેશ છે.",
-        "invite": "તમને કોઈ પ્રશ્ન હોય કે કંઈ કહેવું હોય તો કૃપા કરીને બોલો. કૉલ સમાપ્ત કરવા 2 દબાવો.",
-        "waiting": "કૃપા કરીને બોલો, હું સાંભળું છું.",
-        "didnt_hear": "માફ કરશો, સ્પષ્ટ સંભળાયું નહીં. કૃપા કરીને ફરી બોલો.",
-        "goodbye": "સંપર્ક થઈ શક્યો નહીં. શિક્ષકનો સંદેશ પહોંચ્યો છે. જરૂર હશે તો શાળા ફરી કૉલ કરશે. આભાર. નમસ્તે.",
-        "thanks": "તમારા સમય બદલ આભાર. તમારા બાળકની સફળતામાં અમે તમારા ભાગીદાર છીએ. નમસ્તે.",
+        "greeting": "નમસ્તે, તમારા બાળકની શાળામાંથી વાત કરી રહ્યા છીએ.",
     },
     "pa-IN": {
-        "greeting": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ। ਇਹ ਤੁਹਾਡੇ ਬੱਚੇ ਦੇ ਸਕੂਲ ਤੋਂ ਇੱਕ ਜ਼ਰੂਰੀ ਸੁਨੇਹਾ ਹੈ।",
-        "invite": "ਜੇ ਤੁਹਾਡੇ ਕੋਈ ਸਵਾਲ ਜਾਂ ਚਿੰਤਾ ਹੈ ਤਾਂ ਕਿਰਪਾ ਕਰਕੇ ਬੋਲੋ। ਕਾਲ ਖ਼ਤਮ ਕਰਨ ਲਈ 2 ਦਬਾਓ।",
-        "waiting": "ਕਿਰਪਾ ਕਰਕੇ ਬੋਲੋ, ਮੈਂ ਸੁਣ ਰਿਹਾ ਹਾਂ।",
-        "didnt_hear": "ਮਾਫ਼ ਕਰਨਾ, ਸਾਫ਼ ਨਹੀਂ ਸੁਣਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਬੋਲੋ।",
-        "goodbye": "ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਅਧਿਆਪਕ ਦਾ ਸੁਨੇਹਾ ਪਹੁੰਚ ਗਿਆ ਹੈ। ਲੋੜ ਪੈਣ ਤੇ ਸਕੂਲ ਫ਼ਿਰ ਕਾਲ ਕਰੇਗਾ। ਧੰਨਵਾਦ। ਸਤ ਸ੍ਰੀ ਅਕਾਲ।",
-        "thanks": "ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਤੁਹਾਡੇ ਬੱਚੇ ਦੀ ਸਫ਼ਲਤਾ ਵਿੱਚ ਅਸੀਂ ਤੁਹਾਡੇ ਭਾਈਵਾਲ ਹਾਂ। ਸਤ ਸ੍ਰੀ ਅਕਾਲ।",
+        "greeting": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਤੁਹਾਡੇ ਬੱਚੇ ਦੇ ਸਕੂਲ ਤੋਂ ਗੱਲ ਕਰ ਰਹੇ ਹਾਂ।",
     },
 }
 
 
 def get_greetings(lang_code: str) -> dict[str, str]:
-    """Get greeting prompts for a language, fallback to English."""
+    """Get fallback greeting for a language. Only used when no generatedMessage."""
     return CALL_GREETINGS.get(lang_code, CALL_GREETINGS["en-IN"])

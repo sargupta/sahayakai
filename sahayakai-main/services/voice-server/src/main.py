@@ -20,9 +20,67 @@ from pipecat.pipeline.task import PipelineTaskParams
 from src.config import load_config
 from src.bot import create_bot
 from src.persistence import fetch_call_context
+from src.call_store import CallStore
+from src.call_analyzer import analyze_call
 
 app = FastAPI(title="SahayakAI Voice Server", version="0.1.0")
 config = load_config()
+call_store = CallStore()  # SQLite — initialized once, shared across calls
+
+# ── Test scenarios for local testing ──
+# Use outreachId=__test__001, __test__002, etc. in TwiML
+_TEST_SCENARIOS: dict[str, dict] = {
+    # Scenario 1: Low attendance
+    # Greeting: teacher introduces self, mentions child absent, asks gently
+    "__test__001": {
+        "studentName": "Aarav",
+        "className": "Class 5",
+        "subject": "Mathematics",
+        "reason": "Low attendance — absent for several days",
+        "generatedMessage": "नमस्ते जी, मैं शर्मा मैम बोल रही हूँ दिल्ली पब्लिक स्कूल से। आरव बेटा पिछले कुछ दिनों से स्कूल नहीं आ रहा, तो आपसे बात करनी थी।",
+        "parentLanguage": "Hindi",
+        "teacherName": "Ms. Sharma",
+        "schoolName": "Delhi Public School",
+    },
+    # Scenario 2: Poor exam performance (18/100 in Science)
+    # Greeting: does NOT mention score — eases in with "padhai mein thodi dikkat"
+    "__test__002": {
+        "studentName": "Priya",
+        "className": "Class 8",
+        "subject": "Science",
+        "reason": "Poor exam performance — scored 18/100 in Science mid-term",
+        "generatedMessage": "नमस्ते जी, मैं राजेश गुप्ता बोल रहा हूँ केंद्रीय विद्यालय से। प्रिया बेटी की पढ़ाई को लेकर आपसे बात करनी थी।",
+        "parentLanguage": "Hindi",
+        "teacherName": "Rajesh Gupta",
+        "schoolName": "Kendriya Vidyalaya",
+    },
+    # Scenario 3: Behavioral issues — fighting, not listening
+    # Greeting: does NOT say "fighting/behavior" — just "baat karni thi"
+    # Dumping complaints upfront makes parents defensive instantly
+    "__test__003": {
+        "studentName": "Rohit",
+        "className": "Class 7",
+        "subject": "",
+        "reason": "Behavioral issues — fighting with classmates, not listening to teachers",
+        "generatedMessage": "नमस्ते जी, मैं सुनीता देवी बोल रही हूँ गवर्नमेंट सीनियर सेकेंडरी स्कूल से। रोहित बेटे के बारे में आपसे बात करनी थी।",
+        "parentLanguage": "Hindi",
+        "teacherName": "Sunita Devi",
+        "schoolName": "Government Senior Secondary School",
+    },
+    # Scenario 4: Kannada language — homework + fees
+    # Greeting: does NOT mention fees or homework — just intro + "mataadbekittu"
+    # Fees are extremely sensitive — ease in during conversation
+    "__test__004": {
+        "studentName": "Kavya",
+        "className": "Class 4",
+        "subject": "English",
+        "reason": "Homework not submitted for 2 weeks, pending fee for this quarter",
+        "generatedMessage": "ನಮಸ್ಕಾರ, ನಾನು ಲಕ್ಷ್ಮೀ ಮೇಡಂ, ವಿದ್ಯಾ ಮಂದಿರ ಶಾಲೆಯಿಂದ ಮಾತಾಡ್ತಿದ್ದೀನಿ. ಕಾವ್ಯ ಬಗ್ಗೆ ನಿಮ್ಮ ಜೊತೆ ಮಾತಾಡಬೇಕಿತ್ತು.",
+        "parentLanguage": "Kannada",
+        "teacherName": "Lakshmi Ma'am",
+        "schoolName": "Vidya Mandir School",
+    },
+}
 
 
 @app.get("/health")
@@ -36,6 +94,7 @@ async def health():
             "llm": "gemini" if config.google_api_key else "not_configured",
             "tts": "sarvam" if config.sarvam_api_key else "not_configured",
         },
+        "call_store": call_store.get_stats(),
     }
 
 
@@ -56,6 +115,9 @@ async def handle_call(websocket: WebSocket):
     await websocket.accept()
     logger.info("WebSocket connected — waiting for Twilio handshake")
 
+    outreach_id = ""
+    call_context: dict = {}
+
     try:
         # Read Twilio's initial events to extract streamSid and outreachId
         stream_sid, outreach_id = await _wait_for_twilio_start(websocket)
@@ -73,11 +135,19 @@ async def handle_call(websocket: WebSocket):
         logger.info(f"Twilio stream: sid={stream_sid}, outreachId={outreach_id}")
 
         # Fetch call context from SahayakAI backend
-        call_context = await fetch_call_context(
-            api_url=config.sahayakai_api_url,
-            internal_key=config.sahayakai_internal_key,
-            outreach_id=outreach_id,
-        )
+        # __test__ prefix → hardcoded context for live testing
+        if outreach_id.startswith("__test__"):
+            call_context = _TEST_SCENARIOS.get(
+                outreach_id,
+                _TEST_SCENARIOS["__test__001"],  # default fallback
+            )
+            logger.info(f"Using test scenario: {outreach_id} — {call_context.get('reason', '?')}")
+        else:
+            call_context = await fetch_call_context(
+                api_url=config.sahayakai_api_url,
+                internal_key=config.sahayakai_internal_key,
+                outreach_id=outreach_id,
+            )
 
         if not call_context:
             logger.error(f"Could not fetch context for outreach {outreach_id}")
@@ -87,20 +157,55 @@ async def handle_call(websocket: WebSocket):
         call_context["id"] = outreach_id
 
         # Create and run the Pipecat pipeline
-        task = await create_bot(config, call_context, websocket, stream_sid)
+        task = await create_bot(config, call_context, websocket, stream_sid, call_store=call_store)
 
         logger.info(f"Bot pipeline started for outreach {outreach_id}")
-        run_params = PipelineTaskParams(loop=asyncio.get_event_loop())
+        run_params = PipelineTaskParams(loop=asyncio.get_running_loop())
         await task.run(run_params)
 
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
+        # Fallback: run post-call analysis if disconnect handler didn't fire
+        await _post_call_cleanup(outreach_id, call_context, config)
     except Exception as e:
         logger.error(f"Bot pipeline error: {e}")
+        await _post_call_cleanup(outreach_id, call_context, config)
         try:
             await websocket.close(code=1011, reason="Internal error")
         except Exception:
             pass
+
+
+async def _post_call_cleanup(outreach_id: str, call_context: dict, cfg):
+    """Fallback post-call analysis when disconnect handler doesn't fire."""
+    try:
+        call = call_store.get_call(outreach_id)
+        if not call or call.get("call_status") != "completed":
+            return  # Already handled or not a real call
+
+        transcript = call.get("transcript", [])
+        if not transcript or len(transcript) < 2:
+            return
+
+        # Check if insights already exist
+        if call_store.has_insights(outreach_id):
+            return  # Already analyzed
+
+        logger.info(f"Running fallback post-call analysis for {outreach_id}")
+        insights = await analyze_call(call_context, transcript, api_key=cfg.google_api_key)
+        if insights:
+            call_store.save_insights(outreach_id, insights)
+            parent_phone = call_context.get("parentPhone", "")
+            if parent_phone and insights.get("concerns"):
+                call_store.record_concerns(outreach_id, parent_phone, insights["concerns"])
+            if insights.get("followUps"):
+                call_store.create_follow_ups(outreach_id, parent_phone, insights["followUps"])
+            logger.info(
+                f"Fallback analysis complete: {outreach_id} — "
+                f"sentiment={insights.get('parentSentiment')}"
+            )
+    except Exception as e:
+        logger.error(f"Fallback post-call cleanup error: {e}")
 
 
 async def _wait_for_twilio_start(
