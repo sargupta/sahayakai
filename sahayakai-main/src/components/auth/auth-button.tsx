@@ -26,10 +26,12 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { LogOut, User as UserIcon, ShieldCheck, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 export function AuthButton() {
     const { user, loading } = useAuth();
+    const router = useRouter();
     const { toast } = useToast();
 
     const handleSignIn = async () => {
@@ -55,7 +57,7 @@ export function AuthButton() {
                             title: "Almost there!",
                             description: "Complete your professional profile to join the community.",
                         });
-                        window.location.href = '/onboarding';
+                        router.push('/onboarding');
                         return;
                     }
                 }
@@ -128,7 +130,7 @@ export function AuthButton() {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = '/my-profile'}>
+                <DropdownMenuItem onClick={() => router.push('/my-profile')}>
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile & Library</span>
                 </DropdownMenuItem>

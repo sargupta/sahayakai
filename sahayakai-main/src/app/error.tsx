@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/client-logger';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
@@ -14,7 +14,7 @@ export default function Error({
 }) {
     useEffect(() => {
         // Log the error to our logging service
-        logger.error('Global Error Boundary caught an error', error, {
+        logger.error('Global Error Boundary caught an error', error, 'ERROR_BOUNDARY', {
             digest: error.digest,
             component: 'RootErrorBoundary'
         });

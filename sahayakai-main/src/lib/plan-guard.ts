@@ -73,16 +73,21 @@ export function withPlanCheck(feature: GatedFeature) {
                 }
             }
 
-            // Check daily limit for instant-answer
-            if (feature === 'instant-answer' && config.instantAnswerDailyLimit !== -1) {
+            // Check daily limit for features with per-day caps
+            const dailyLimitMap: Partial<Record<GatedFeature, number>> = {
+                'instant-answer': config.instantAnswerDailyLimit,
+                'assistant': config.assistantDailyLimit,
+            };
+            const dailyCap = dailyLimitMap[feature];
+            if (dailyCap !== undefined && dailyCap !== -1) {
                 const dailyUsed = await getDailyUsage(userId, feature);
-                if (dailyUsed >= config.instantAnswerDailyLimit) {
+                if (dailyUsed >= dailyCap) {
                     return NextResponse.json(
                         {
                             error: 'DAILY_LIMIT_REACHED',
-                            message: `You've used all ${config.instantAnswerDailyLimit} instant answers for today. Try again tomorrow.`,
+                            message: `You've used all ${dailyCap} ${feature.replace(/-/g, ' ')} interactions for today. Try again tomorrow.`,
                             used: dailyUsed,
-                            limit: config.instantAnswerDailyLimit,
+                            limit: dailyCap,
                             feature,
                             currentPlan: plan,
                         },

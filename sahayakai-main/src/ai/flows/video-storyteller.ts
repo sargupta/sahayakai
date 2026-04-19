@@ -219,36 +219,57 @@ function rankVideosLocal(
         'pariksha pe charcha', 'ppc 2', 'ppc 20', // PM's annual student event
     ];
 
-    // ── Per-category keyword banks ─────────────────────────────────────────────
-    const CATEGORY_KWS: Record<string, string[]> = {
+    // ── Per-category keyword banks (with rarity weights) ────────────────────
+    // w=1: generic (appears in most edu videos), w=2: moderate, w=3: highly specific
+    type WeightedKW = { kw: string; w: number };
+    const CATEGORY_KWS: Record<string, WeightedKW[]> = {
         storytelling: [
-            'story', 'animated', 'animation', 'narrative', 'kahani', 'katha',
-            'explanation', 'concept', 'visual', 'explainer', 'chapter', 'lesson',
-            'interesting', 'magic', 'wonder', 'ncert chapter', 'class activity',
+            { kw: 'story', w: 1 }, { kw: 'animated', w: 2 }, { kw: 'animation', w: 2 },
+            { kw: 'narrative', w: 2 }, { kw: 'kahani', w: 3 }, { kw: 'katha', w: 3 },
+            { kw: 'explanation', w: 1 }, { kw: 'concept', w: 1 }, { kw: 'visual', w: 1 },
+            { kw: 'explainer', w: 2 }, { kw: 'chapter', w: 1 }, { kw: 'lesson', w: 1 },
+            { kw: 'interesting', w: 1 }, { kw: 'magic', w: 1 }, { kw: 'wonder', w: 1 },
+            { kw: 'ncert chapter', w: 3 }, { kw: 'class activity', w: 2 },
         ],
         pedagogy: [
-            'pedagogy', 'teaching method', 'classroom management', 'active learning',
-            'experiential', 'scaffolding', 'differentiated', 'assessment', 'feedback',
-            'inclusive education', 'cpd', 'joyful learning', 'constructivist',
-            'nep 2020', 'ncf', 'diksha', 'nishtha', 'nipun', 'fln', 'tarl',
-            'child centred', 'play based', 'inquiry based', 'remedial teaching',
-            'learning outcome', 'bloom', 'lesson plan', 'formative',
+            { kw: 'pedagogy', w: 3 }, { kw: 'teaching method', w: 2 },
+            { kw: 'classroom management', w: 2 }, { kw: 'active learning', w: 2 },
+            { kw: 'experiential', w: 3 }, { kw: 'scaffolding', w: 3 },
+            { kw: 'differentiated', w: 3 }, { kw: 'assessment', w: 1 },
+            { kw: 'feedback', w: 1 }, { kw: 'inclusive education', w: 2 },
+            { kw: 'cpd', w: 3 }, { kw: 'joyful learning', w: 3 },
+            { kw: 'constructivist', w: 3 }, { kw: 'nep 2020', w: 3 },
+            { kw: 'ncf', w: 3 }, { kw: 'diksha', w: 3 }, { kw: 'nishtha', w: 3 },
+            { kw: 'nipun', w: 3 }, { kw: 'fln', w: 3 }, { kw: 'tarl', w: 3 },
+            { kw: 'child centred', w: 2 }, { kw: 'play based', w: 2 },
+            { kw: 'inquiry based', w: 2 }, { kw: 'remedial teaching', w: 2 },
+            { kw: 'learning outcome', w: 2 }, { kw: 'bloom', w: 3 },
+            { kw: 'lesson plan', w: 2 }, { kw: 'formative', w: 2 },
         ],
         courses: [
-            'training', 'course', 'workshop', 'nishtha', 'diksha', 'certification',
-            'swayam', 'professional development', 'teacher education', 'b.ed', 'm.ed',
-            'upskilling', 'professional growth', 'seminar', 'webinar', 'module',
+            { kw: 'training', w: 1 }, { kw: 'course', w: 1 }, { kw: 'workshop', w: 2 },
+            { kw: 'nishtha', w: 3 }, { kw: 'diksha', w: 3 }, { kw: 'certification', w: 2 },
+            { kw: 'swayam', w: 3 }, { kw: 'professional development', w: 2 },
+            { kw: 'teacher education', w: 2 }, { kw: 'b.ed', w: 2 }, { kw: 'm.ed', w: 2 },
+            { kw: 'upskilling', w: 2 }, { kw: 'professional growth', w: 2 },
+            { kw: 'seminar', w: 1 }, { kw: 'webinar', w: 1 }, { kw: 'module', w: 1 },
         ],
         govtUpdates: [
-            'government', 'ministry', 'ncert', 'policy', 'rte', 'nep', 'ncf',
-            'announcement', 'notification', 'scheme', 'update', 'circular',
-            'pm shri', 'samagra shiksha', 'budget', 'state education',
-            'nipun bharat', 'national curriculum', 'education report',
+            { kw: 'government', w: 1 }, { kw: 'ministry', w: 2 }, { kw: 'ncert', w: 2 },
+            { kw: 'policy', w: 2 }, { kw: 'rte', w: 3 }, { kw: 'nep', w: 3 },
+            { kw: 'ncf', w: 3 }, { kw: 'announcement', w: 2 }, { kw: 'notification', w: 2 },
+            { kw: 'scheme', w: 2 }, { kw: 'update', w: 1 }, { kw: 'circular', w: 3 },
+            { kw: 'pm shri', w: 3 }, { kw: 'samagra shiksha', w: 3 },
+            { kw: 'budget', w: 2 }, { kw: 'state education', w: 2 },
+            { kw: 'nipun bharat', w: 3 }, { kw: 'national curriculum', w: 3 },
+            { kw: 'education report', w: 2 },
         ],
         topRecommended: [
-            subject.toLowerCase(), gradeLevel.toLowerCase(),
-            'teacher', 'classroom', 'ncert', 'india', 'school',
-            'hindi', 'bharat', 'educational', 'primary', 'shikshak',
+            { kw: subject.toLowerCase(), w: 3 }, { kw: gradeLevel.toLowerCase(), w: 3 },
+            { kw: 'teacher', w: 1 }, { kw: 'classroom', w: 1 }, { kw: 'ncert', w: 2 },
+            { kw: 'india', w: 1 }, { kw: 'school', w: 1 }, { kw: 'hindi', w: 1 },
+            { kw: 'bharat', w: 2 }, { kw: 'educational', w: 1 },
+            { kw: 'primary', w: 1 }, { kw: 'shikshak', w: 3 },
         ],
     };
 
@@ -299,10 +320,12 @@ function rankVideosLocal(
             const kws = CATEGORY_KWS[cat] || [];
             let score = authorityBase + langBoost + stateBoost + boardBoost + classroomBoost + indicBoost + examPenalty + topicBoost;
 
-            // Keyword match (pedagogy/govtUpdates weighted higher — more specific)
-            for (const kw of kws) {
+            // Keyword match — weighted by rarity (w:1 generic, w:3 highly specific)
+            // pedagogy/govtUpdates get higher base weight (more domain-specific categories)
+            for (const { kw, w } of kws) {
                 if (titleLow.includes(kw)) {
-                    score += (cat === 'pedagogy' || cat === 'govtUpdates') ? 5 : 2;
+                    const baseWeight = (cat === 'pedagogy' || cat === 'govtUpdates') ? 5 : 2;
+                    score += baseWeight * w;
                 }
             }
 
@@ -310,6 +333,18 @@ function rankVideosLocal(
             if (cat === 'govtUpdates' && GOVT_TIER1.has(cid)) score += 8;
             if (cat === 'pedagogy'    && (GOVT_TIER1.has(cid) || NGO_TIER2.has(cid))) score += 5;
             if (cat === 'courses'     && (GOVT_TIER1.has(cid) || NGO_TIER2.has(cid))) score += 4;
+
+            // Recency bonus (0-10): recent content gets a boost, old content decays.
+            // govtUpdates decay aggressively (90 days) — old circulars are stale.
+            // Other categories use 365 days — good pedagogy doesn't expire quickly.
+            if (video.publishedAt) {
+                const ageMs = Date.now() - new Date(video.publishedAt).getTime();
+                if (ageMs > 0) { // guard against future dates or parse errors
+                    const ageDays = ageMs / (1000 * 60 * 60 * 24);
+                    const decayDays = cat === 'govtUpdates' ? 90 : 365;
+                    score += Math.round(Math.exp(-ageDays / decayDays) * 10);
+                }
+            }
 
             scores[cat] = Math.max(0, score);
         }
@@ -436,7 +471,11 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         try {
             const { getCategorizedVideos } = await import('@/lib/youtube');
             const emergencyResults = await getCategorizedVideos({
-                topRecommended: [input.topic]
+                topRecommended: [input.topic],
+                pedagogy: [`${input.topic} teaching method`],
+                storytelling: [`${input.topic} explained animated`],
+                courses: [`${input.topic} teacher training`],
+                govtUpdates: [`${input.topic} NCERT government`],
             });
             flatSearch = Object.values(emergencyResults).flat();
         } catch (e) {
