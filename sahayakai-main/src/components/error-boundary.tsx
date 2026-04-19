@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/client-logger';
 
 interface Props {
     children: React.ReactNode;
@@ -26,7 +26,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     }
 
     componentDidCatch(error: Error, info: React.ErrorInfo) {
-        logger.error('ErrorBoundary caught render error', error, { componentStack: info.componentStack });
+        logger.error('ErrorBoundary caught render error', error, 'ERROR_BOUNDARY', { componentStack: info.componentStack });
     }
 
     render() {

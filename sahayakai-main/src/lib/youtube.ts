@@ -79,6 +79,7 @@ export async function searchYouTube(query: string, maxResults = 5): Promise<YouT
                     item.snippet.thumbnails?.medium?.url ||
                     item.snippet.thumbnails?.default?.url,
                 channelTitle: item.snippet.channelTitle,
+                channelId: item.snippet.channelId,
                 publishedAt: item.snippet.publishedAt,
             }));
 

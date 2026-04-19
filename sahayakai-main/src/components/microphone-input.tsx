@@ -3,7 +3,8 @@
 import { auth } from "@/lib/firebase";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { cn, logger } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { logger } from "@/lib/client-logger";
 import { tts } from "@/lib/tts";
 import { Mic, StopCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
@@ -111,7 +112,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       if (!isSpeakingRef.current && sustainedSpeechFramesRef.current >= MIN_SPEECH_FRAMES) {
         isSpeakingRef.current = true;
         speechStartTimeRef.current = Date.now();
-        logger.info("VAD: Speech started", { volume: maxVal });
+        logger.info("VAD: Speech started", 'VOICE', { volume: maxVal });
       }
 
       silenceStartTimeRef.current = null; // Reset silence timer
@@ -127,7 +128,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const maxAllowedSilence = isSpeakingRef.current ? SILENCE_DURATION_MS : INITIAL_SILENCE_TIMEOUT_MS;
 
       if (silenceDuration > maxAllowedSilence) {
-        logger.info("VAD: Auto-stopping due to silence", { duration: silenceDuration });
+        logger.info("VAD: Auto-stopping due to silence", 'VOICE', { duration: silenceDuration });
         handleStopRecording();
         return;
       }

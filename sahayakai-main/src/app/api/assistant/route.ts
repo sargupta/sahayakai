@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { ai } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { withPlanCheck } from '@/lib/plan-guard';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
 // Keyed on: normalised_message + "::" + screen_path
@@ -96,7 +97,7 @@ async function setFirestoreCache(hash: string, key: string, response: any, actio
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function POST(req: Request) {
+async function _handler(req: Request) {
     try {
         const {
             message,
@@ -215,3 +216,5 @@ Active form fields (what the teacher is currently working on): ${JSON.stringify(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+export const POST = withPlanCheck('assistant')(_handler);
