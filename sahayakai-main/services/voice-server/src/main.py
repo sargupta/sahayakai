@@ -119,8 +119,8 @@ async def handle_call(websocket: WebSocket):
     call_context: dict = {}
 
     try:
-        # Read Twilio's initial events to extract streamSid and outreachId
-        stream_sid, outreach_id = await _wait_for_twilio_start(websocket)
+        # Read Twilio's initial events to extract streamSid, callSid and outreachId
+        stream_sid, call_sid, outreach_id = await _wait_for_twilio_start(websocket)
 
         if not stream_sid:
             logger.error("Failed to get streamSid from Twilio")
@@ -132,7 +132,7 @@ async def handle_call(websocket: WebSocket):
             await websocket.close(code=1008, reason="Missing outreachId")
             return
 
-        logger.info(f"Twilio stream: sid={stream_sid}, outreachId={outreach_id}")
+        logger.info(f"Twilio stream: sid={stream_sid}, callSid={call_sid}, outreachId={outreach_id}")
 
         # Fetch call context from SahayakAI backend
         # __test__ prefix → hardcoded context for live testing
@@ -157,7 +157,7 @@ async def handle_call(websocket: WebSocket):
         call_context["id"] = outreach_id
 
         # Create and run the Pipecat pipeline
-        task = await create_bot(config, call_context, websocket, stream_sid, call_store=call_store)
+        task = await create_bot(config, call_context, websocket, stream_sid, call_sid=call_sid, call_store=call_store)
 
         logger.info(f"Bot pipeline started for outreach {outreach_id}")
         run_params = PipelineTaskParams(loop=asyncio.get_running_loop())
@@ -218,9 +218,10 @@ async def _wait_for_twilio_start(
     - streamSid: the media stream identifier
     - start.customParameters: custom params from <Parameter> TwiML elements
 
-    Returns (stream_sid, outreach_id) — either may be empty on failure.
+    Returns (stream_sid, call_sid, outreach_id) — any may be empty on failure.
     """
     stream_sid = ""
+    call_sid = ""
     outreach_id = ""
 
     for _ in range(max_messages):
@@ -238,20 +239,25 @@ async def _wait_for_twilio_start(
                     msg.get("streamSid", "")
                     or msg.get("start", {}).get("streamSid", "")
                 )
+                # Twilio includes callSid (CA...) alongside streamSid
+                call_sid = (
+                    msg.get("start", {}).get("callSid", "")
+                    or msg.get("callSid", "")
+                )
                 # Custom parameters from <Parameter name="outreachId" value="xxx"/>
                 custom = msg.get("start", {}).get("customParameters", {})
                 outreach_id = custom.get("outreachId", "")
                 logger.debug(
-                    f"Twilio start: streamSid={stream_sid}, "
+                    f"Twilio start: streamSid={stream_sid}, callSid={call_sid}, "
                     f"customParams={custom}"
                 )
-                return stream_sid, outreach_id
+                return stream_sid, call_sid, outreach_id
 
         except Exception as e:
             logger.error(f"Error reading Twilio init message: {e}")
-            return "", ""
+            return "", "", ""
 
-    return stream_sid, outreach_id
+    return stream_sid, call_sid, outreach_id
 
 
 def main():

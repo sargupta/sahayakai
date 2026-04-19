@@ -12,6 +12,8 @@ class Config:
     sahayakai_internal_key: str
     host: str
     port: int
+    twilio_account_sid: str
+    twilio_auth_token: str
 
 
 def load_config() -> Config:
@@ -28,4 +30,6 @@ def load_config() -> Config:
         sahayakai_internal_key=os.environ.get("SAHAYAKAI_INTERNAL_KEY", ""),
         host=os.environ.get("HOST", "0.0.0.0"),
         port=int(os.environ.get("PORT", "8000")),
+        twilio_account_sid=os.environ.get("TWILIO_ACCOUNT_SID", ""),
+        twilio_auth_token=os.environ.get("TWILIO_AUTH_TOKEN", ""),
     )
