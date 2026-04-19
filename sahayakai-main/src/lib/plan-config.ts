@@ -21,13 +21,16 @@ export type GatedFeature =
     | 'avatar'
     | 'parent-message'
     | 'voice-to-text'   // cloud fallback only (browser SpeechRecognition is free)
-    | 'exam-paper';
+    | 'exam-paper'
+    | 'assistant';       // VIDYA chat interface
 
 export interface PlanLimits {
     /** Per-feature monthly limits. -1 = unlimited. */
     limits: Record<GatedFeature, number>;
     /** Instant Answer has a separate daily limit (in addition to monthly). -1 = no daily cap. */
     instantAnswerDailyLimit: number;
+    /** VIDYA assistant daily limit. -1 = no daily cap. */
+    assistantDailyLimit: number;
     /** Which Gemini model to use for AI generation */
     model: 'gemini-2.0-flash-lite' | 'gemini-2.0-flash';
     /** Can export content as PDF/DOCX */
@@ -55,8 +58,10 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': 0,    // not available on free
             'voice-to-text': -1,    // browser-first, cloud fallback unlimited for now
             'exam-paper': 3,
+            'assistant': -1,        // unlimited monthly, controlled by daily limit
         },
         instantAnswerDailyLimit: 20,
+        assistantDailyLimit: 50,
         model: 'gemini-2.0-flash-lite',
         canExport: false,
         canViewDetailedAnalytics: false,
@@ -77,8 +82,10 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': 10,
+            'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
+        assistantDailyLimit: -1,
         model: 'gemini-2.0-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
@@ -99,8 +106,10 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': -1,
+            'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
+        assistantDailyLimit: -1,
         model: 'gemini-2.0-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
@@ -121,8 +130,10 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': -1,
+            'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
+        assistantDailyLimit: -1,
         model: 'gemini-2.0-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
