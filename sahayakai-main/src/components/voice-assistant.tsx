@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -175,9 +176,13 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                 return [];
             }).filter(t => t.user.trim() || t.ai.trim());
 
+            const token = await auth.currentUser?.getIdToken();
             const response = await fetch("/api/assistant", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
                     message: text,
                     chatHistory,

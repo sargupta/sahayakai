@@ -213,9 +213,8 @@ export function OmniOrb() {
             ?? 'en-IN';
 
         try {
-            const res = await fetch("/api/assistant", {
+            const res = await vidyaApiFetch("/api/assistant", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: transcript,
                     chatHistory,
@@ -228,6 +227,7 @@ export function OmniOrb() {
                 }),
             });
 
+            if (!res) throw new Error("Not authenticated — please sign in to use VIDYA");
             if (!res.ok) throw new Error("Assistant failed to process request");
 
             const { response, action } = await res.json();
