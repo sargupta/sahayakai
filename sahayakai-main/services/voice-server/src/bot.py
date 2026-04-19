@@ -71,7 +71,12 @@ TWILIO_LANG_MAP = {
 # Sarvam TTS voice mapping — male and female options
 # See: https://docs.sarvam.ai/api-reference-docs/text-to-speech
 SARVAM_VOICE_FEMALE = "priya"   # Female voice — for female teacher names
-SARVAM_VOICE_MALE = "arvind"    # Male voice — for male teacher names
+SARVAM_VOICE_MALE = "rahul"     # Male voice — for male teacher names
+                                # bulbul:v3 male voices (verified 2026-04):
+                                # aditya, ashutosh, rahul, rohan, amit, dev, ratan, varun,
+                                # manan, sumit, kabir, aayan, shubh, advait, anand, tarun,
+                                # sunny, mani, gokul, vijay, mohit
+                                # (arvind, abhilash NOT supported in bulbul:v3)
 
 # Female name indicators (Indian names) — used to pick voice gender
 _FEMALE_INDICATORS = {
@@ -100,6 +105,7 @@ async def create_bot(
     call_context: dict,
     websocket,
     stream_sid: str,
+    call_sid: str = "",
     call_store: CallStore | None = None,
 ) -> PipelineTask:
     """Create the streaming Pipecat pipeline for a parent call.
@@ -135,12 +141,17 @@ async def create_bot(
         greeting_text = greetings["greeting"]
 
     # ── Serializer: Twilio mu-law codec ──
+    # auto_hang_up=True requires call_sid + Twilio creds so the serializer can
+    # POST to the Twilio REST API to end the call when EndFrame fires.
     serializer = TwilioFrameSerializer(
         stream_sid=stream_sid,
+        call_sid=call_sid,
+        account_sid=config.twilio_account_sid,
+        auth_token=config.twilio_auth_token,
         params=TwilioFrameSerializer.InputParams(
             twilio_sample_rate=8000,
             sample_rate=16000,  # Pipeline internal rate
-            auto_hang_up=False,
+            auto_hang_up=bool(call_sid and config.twilio_account_sid and config.twilio_auth_token),
         ),
     )
 
