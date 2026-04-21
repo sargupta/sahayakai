@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Wand2, Youtube, Save } from "lucide-react";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -313,8 +313,11 @@ function InstantAnswerContent() {
     }
   }, [searchParams, form]);
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setAnswer(null);
     try {
@@ -347,6 +350,7 @@ function InstantAnswerContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 

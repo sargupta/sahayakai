@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useRef } from "react";
 
 import type { TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import { Button } from "@/components/ui/button";
@@ -168,8 +168,11 @@ function TeacherTrainingContent() {
   }, [searchParams, form]);
 
   const { requireAuth, openAuthModal } = useAuth();
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setAdvice(null);
     try {
@@ -213,6 +216,7 @@ function TeacherTrainingContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 

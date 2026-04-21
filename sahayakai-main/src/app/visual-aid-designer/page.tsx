@@ -319,8 +319,11 @@ function VisualAidContent() {
     }
   }, [searchParams, form, toast]);
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setVisualAid(null);
     try {
@@ -367,6 +370,7 @@ function VisualAidContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 

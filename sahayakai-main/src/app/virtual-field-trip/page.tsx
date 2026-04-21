@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Globe2, Send, MapPin, Save } from "lucide-react";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -303,7 +303,10 @@ function VirtualFieldTripContent() {
     }
   }, [searchParams, form, toast]);
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsLoading(true);
     setTrip(null);
     try {
@@ -348,6 +351,7 @@ function VirtualFieldTripContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 

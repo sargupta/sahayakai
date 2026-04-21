@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LogIn, Loader2, FileSignature, CheckSquare, BarChart2, MessageSquare, ListTodo, BrainCircuit, BotMessageSquare, Brain, Search, CircleHelp, DraftingCompass, Pencil, PencilRuler, Download, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -619,8 +619,11 @@ function QuizGeneratorContent() {
   const selectedLanguage = form.watch("language") || 'en';
   const t = translations[selectedLanguage] || translations.en;
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setQuiz(null);
     try {
@@ -651,6 +654,7 @@ function QuizGeneratorContent() {
         const errorData = await res.json();
         if (checkResponse(res.status, errorData)) {
           setIsLoading(false);
+          submittingRef.current = false;
           return;
         }
         throw new Error(errorData.error || "Failed to generate quiz");
@@ -676,6 +680,7 @@ function QuizGeneratorContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
