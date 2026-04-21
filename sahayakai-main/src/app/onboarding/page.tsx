@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP } from "@/types";
+import { tState, tSubject } from "@/lib/i18n-proper-nouns";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
@@ -559,7 +560,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.schoolName.trim() && formData.state && activeSection !== 0 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {formData.state}</span>
+                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
                                 )}
                                 {formData.schoolName.trim() && formData.state ? (
                                     <Check className="h-4 w-4 text-green-600" />
@@ -588,7 +589,7 @@ export default function OnboardingPage() {
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[300px]">
                                             {INDIAN_STATES.map(s => (
-                                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                                                <SelectItem key={s} value={s}>{tState(s, formData.preferredLanguage)}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -663,7 +664,7 @@ export default function OnboardingPage() {
                             <div className="flex items-center gap-2">
                                 {formData.subjects.length > 0 && activeSection !== 2 && (
                                     <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                                        {formData.subjects.slice(0, 2).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
+                                        {formData.subjects.slice(0, 2).map(s => tSubject(s, formData.preferredLanguage)).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
                                     </span>
                                 )}
                                 {formData.subjects.length > 0 ? (
@@ -687,7 +688,7 @@ export default function OnboardingPage() {
                                                 onCheckedChange={() => handleSubjectChange(subject)}
                                                 className="rounded-full"
                                             />
-                                            <Label htmlFor={`sub-${subject}`} className="text-sm cursor-pointer font-medium group-hover:text-primary transition-colors">{subject}</Label>
+                                            <Label htmlFor={`sub-${subject}`} className="text-sm cursor-pointer font-medium group-hover:text-primary transition-colors">{tSubject(subject, formData.preferredLanguage)}</Label>
                                         </div>
                                     ))}
                                 </div>
