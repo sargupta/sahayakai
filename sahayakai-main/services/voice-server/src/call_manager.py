@@ -236,5 +236,15 @@ class CallManager(FrameProcessor):
                 await self.push_frame(EndFrame())
                 return
 
+            # End call after CLOSE phase goodbye is spoken
+            # (PhaseInstructor transitions CLOSE → ENDED after its 1 turn)
+            if self._phase_instructor is not None:
+                from src.conversation_state import ConversationPhase
+                if self._phase_instructor.phase == ConversationPhase.ENDED:
+                    logger.info(f"CLOSE phase complete — ending call after turn {self._turn_number}")
+                    await self.push_frame(frame, direction)
+                    await self.push_frame(EndFrame())
+                    return
+
         # Pass ALL frames through — CallManager is transparent
         await self.push_frame(frame, direction)

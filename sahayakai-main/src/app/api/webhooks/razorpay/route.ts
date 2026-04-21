@@ -47,11 +47,20 @@ export async function POST(request: Request) {
             receivedAt: new Date(),
         });
     } catch (err: any) {
-        // Doc already exists — either processing or completed
+        // Doc already exists — check if previous attempt failed (retry allowed) or succeeded (skip)
         if (err.code === 6 /* ALREADY_EXISTS */) {
-            return NextResponse.json({ status: 'already_processed' });
+            const existing = await eventRef.get();
+            const existingStatus = existing.data()?.status;
+            // Allow retry for previously failed events (e.g. transient Firestore error)
+            if (existingStatus === 'failed') {
+                await eventRef.update({ status: 'processing', retriedAt: new Date() });
+            } else {
+                // 'processing' or 'completed' — safe to skip
+                return NextResponse.json({ status: 'already_processed' });
+            }
+        } else {
+            throw err;
         }
-        throw err;
     }
 
     try {
@@ -67,31 +76,43 @@ export async function POST(request: Request) {
                     break;
                 }
 
-                // Update subscription doc
-                await db.collection('subscriptions').doc(subscription.id).update({
-                    status: 'active',
-                    lastPaymentId: payment.id,
-                    currentStart: new Date(subscription.current_start * 1000),
-                    currentEnd: new Date(subscription.current_end * 1000),
-                    updatedAt: new Date(),
-                });
-
                 // Resolve plan from subscription notes or default to pro
                 const planType = subscription.notes?.planKey?.includes('premium') ? 'premium'
                     : subscription.notes?.planKey?.includes('gold') ? 'gold' : 'pro';
 
-                // Set user plan + Firebase custom claim
-                await db.collection('users').doc(userId).update({
-                    planType,
-                    subscriptionId: subscription.id,
-                    updatedAt: new Date(),
+                // Atomically update both subscription and user docs. Previously these were
+                // two separate writes — if the users update failed, the user paid but stayed
+                // on the free plan with no auto-recovery.
+                const subRef = db.collection('subscriptions').doc(subscription.id);
+                const userRef = db.collection('users').doc(userId);
+                await db.runTransaction(async (tx) => {
+                    tx.update(subRef, {
+                        status: 'active',
+                        lastPaymentId: payment.id,
+                        currentStart: new Date(subscription.current_start * 1000),
+                        currentEnd: new Date(subscription.current_end * 1000),
+                        updatedAt: new Date(),
+                    });
+                    tx.update(userRef, {
+                        planType,
+                        subscriptionId: subscription.id,
+                        updatedAt: new Date(),
+                    });
                 });
 
-                // Set custom claim so middleware can read plan from JWT
-                const { getAuth } = await import('firebase-admin/auth');
-                await getAuth().setCustomUserClaims(userId, { planType });
+                // Set custom claim so middleware can read plan from JWT.
+                // If this fails, throw so the event is marked 'failed' and can be retried
+                // manually — the user has the plan in Firestore already, but their JWT
+                // will still show old plan until claim is set + token refreshed.
+                try {
+                    const { getAuth } = await import('firebase-admin/auth');
+                    await getAuth().setCustomUserClaims(userId, { planType });
+                } catch (claimErr) {
+                    console.error(`[Webhook] Custom claim failed for ${userId}:`, claimErr);
+                    throw new Error(`CLAIM_SET_FAILED: ${userId}`);
+                }
 
-                console.log(`[Webhook] Provisioned Pro for user ${userId}, payment ${payment.id}`);
+                console.log(`[Webhook] Provisioned ${planType} for user ${userId}, payment ${payment.id}`);
                 break;
             }
 
@@ -102,19 +123,21 @@ export async function POST(request: Request) {
 
                 if (!userId) break;
 
-                // Downgrade to free
-                await db.collection('subscriptions').doc(subscription.id).update({
-                    status: subscription.status,
-                    updatedAt: new Date(),
+                // Atomic downgrade — both writes must succeed or both roll back
+                const subRef = db.collection('subscriptions').doc(subscription.id);
+                const userRef = db.collection('users').doc(userId);
+                await db.runTransaction(async (tx) => {
+                    tx.update(subRef, { status: subscription.status, updatedAt: new Date() });
+                    tx.update(userRef, { planType: 'free', updatedAt: new Date() });
                 });
 
-                await db.collection('users').doc(userId).update({
-                    planType: 'free',
-                    updatedAt: new Date(),
-                });
-
-                const { getAuth } = await import('firebase-admin/auth');
-                await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+                try {
+                    const { getAuth } = await import('firebase-admin/auth');
+                    await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+                } catch (claimErr) {
+                    console.error(`[Webhook] Downgrade claim failed for ${userId}:`, claimErr);
+                    throw new Error(`CLAIM_SET_FAILED: ${userId}`);
+                }
 
                 console.log(`[Webhook] Downgraded user ${userId} to free (${event.event})`);
                 break;

@@ -441,7 +441,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         description: "Please allow microphone access in your browser settings.",
         variant: "destructive",
       });
-      setStatus('idle');
+      // Use forceReset() to fully release audio hardware (AudioContext, MediaStream).
+      // Previously we only set status to idle, but the AudioContext stayed open
+      // and kept the mic claimed → subsequent clicks failed silently.
+      forceReset();
     }
   };
 

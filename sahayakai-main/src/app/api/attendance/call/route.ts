@@ -15,30 +15,34 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const body = await req.json();
-        const { outreachId, to, parentLanguage } = body as {
+        const body = await req.json().catch(() => null);
+        if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        const { outreachId, parentLanguage } = body as {
             outreachId: string;
-            to: string;
             parentLanguage: Language;
         };
 
-        if (!outreachId || !to || !parentLanguage) {
+        if (!outreachId || !parentLanguage) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        if (!isValidE164(to)) {
-            return NextResponse.json({ error: 'Invalid phone number format. Must be E.164 (e.g. +919876543210)' }, { status: 400 });
+        // Verify ownership of the outreach record AND get the server-stored parent phone.
+        // SECURITY: Never trust a phone number from the request body — a teacher could
+        // otherwise call any arbitrary number using our Twilio account.
+        const db = await getDb();
+        const outreachDoc = await db.collection('parent_outreach').doc(outreachId).get();
+        if (!outreachDoc.exists) return NextResponse.json({ error: 'Outreach record not found' }, { status: 404 });
+        const outreach = outreachDoc.data()!;
+        if (outreach.teacherUid !== userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+
+        const parentPhone: string | undefined = outreach.parentPhone;
+        if (!parentPhone || !isValidE164(parentPhone)) {
+            return NextResponse.json({ error: 'Outreach record has no valid parent phone' }, { status: 422 });
         }
 
         // In test mode, override the destination number so all teachers can test
         // without calling real parents. Remove this env var to go live.
-        const callTo = process.env.TWILIO_TEST_OVERRIDE_NUMBER || to;
-
-        // Verify ownership of the outreach record
-        const db = await getDb();
-        const outreachDoc = await db.collection('parent_outreach').doc(outreachId).get();
-        if (!outreachDoc.exists) return NextResponse.json({ error: 'Outreach record not found' }, { status: 404 });
-        if (outreachDoc.data()!.teacherUid !== userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        const callTo = process.env.TWILIO_TEST_OVERRIDE_NUMBER || parentPhone;
 
         // Check that the language is supported for Twilio calls
         const langCode = TWILIO_LANGUAGE_MAP[parentLanguage];
@@ -82,9 +86,10 @@ export async function POST(req: NextRequest) {
         );
 
         if (!twilioRes.ok) {
-            const err = await twilioRes.json();
+            const err = await twilioRes.json().catch(() => ({}));
             console.error('[attendance/call] Twilio error:', err);
-            return NextResponse.json({ error: 'Failed to initiate call', detail: err.message }, { status: 502 });
+            // Don't leak internal Twilio error details (can contain account SIDs, tokens)
+            return NextResponse.json({ error: 'Failed to initiate call' }, { status: 502 });
         }
 
         const twilioData = await twilioRes.json();
@@ -101,6 +106,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ callSid });
     } catch (error: any) {
         console.error('[attendance/call] Error:', error);
-        return NextResponse.json({ error: error.message ?? 'Internal error' }, { status: 500 });
+        // Don't leak internal error messages (may contain stack, secrets, service paths)
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 }

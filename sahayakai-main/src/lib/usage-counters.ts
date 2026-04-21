@@ -84,27 +84,112 @@ export async function getDailyUsage(userId: string, feature: GatedFeature): Prom
 
 /**
  * Increment usage for a feature (both monthly and daily counters).
- * Call AFTER successful AI generation (fire-and-forget).
+ * Call AFTER successful AI generation.
+ *
+ * DEPRECATED for gating: use reserveQuota() instead, which does atomic
+ * check-and-increment to prevent race conditions. Retained for admin/backfill tools.
  */
 export async function incrementUsage(userId: string, feature: GatedFeature): Promise<void> {
+    const { getDb } = await import('./firebase-admin');
+    const db = await getDb();
+
+    const ref = db.collection('usageCounters').doc(userId);
+    await ref.set(
+        {
+            [getMonthlyField(feature)]: FieldValue.increment(1),
+            [getDailyField(feature)]: FieldValue.increment(1),
+            lastUpdated: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+    );
+
+    invalidateCache(userId);
+}
+
+/**
+ * Atomically check-and-reserve quota for a feature.
+ *
+ * Runs inside a Firestore transaction so that concurrent requests from the
+ * same user cannot both pass the limit check and then both increment.
+ *
+ * Returns { ok: true } on success (quota decremented, caller should proceed).
+ * Returns { ok: false, reason, used, limit } if limit exceeded (caller should 429).
+ *
+ * If the handler downstream fails, call rollbackQuota() to return the unit.
+ */
+export async function reserveQuota(
+    userId: string,
+    feature: GatedFeature,
+    monthlyLimit: number,
+    dailyLimit?: number
+): Promise<
+    | { ok: true }
+    | { ok: false; reason: 'monthly' | 'daily'; used: number; limit: number }
+> {
+    const { getDb } = await import('./firebase-admin');
+    const db = await getDb();
+    const ref = db.collection('usageCounters').doc(userId);
+    const monthlyField = getMonthlyField(feature);
+    const dailyField = getDailyField(feature);
+
+    try {
+        const result = await db.runTransaction(async (tx) => {
+            const doc = await tx.get(ref);
+            const data = (doc.exists ? doc.data() : {}) as Record<string, number>;
+            const monthlyUsed = data[monthlyField] ?? 0;
+            const dailyUsed = data[dailyField] ?? 0;
+
+            if (monthlyLimit !== -1 && monthlyUsed >= monthlyLimit) {
+                return { ok: false as const, reason: 'monthly' as const, used: monthlyUsed, limit: monthlyLimit };
+            }
+            if (dailyLimit !== undefined && dailyLimit !== -1 && dailyUsed >= dailyLimit) {
+                return { ok: false as const, reason: 'daily' as const, used: dailyUsed, limit: dailyLimit };
+            }
+
+            tx.set(
+                ref,
+                {
+                    [monthlyField]: FieldValue.increment(1),
+                    [dailyField]: FieldValue.increment(1),
+                    lastUpdated: FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+            );
+            return { ok: true as const };
+        });
+        invalidateCache(userId);
+        return result;
+    } catch (error) {
+        // Fail CLOSED on Firestore outage: treat as quota exhausted to prevent abuse.
+        // This returns 429, which is retryable — better than silently giving free access.
+        console.error(`[UsageCounters] reserveQuota failed for ${userId}/${feature}:`, error);
+        return { ok: false, reason: 'monthly', used: -1, limit: monthlyLimit };
+    }
+}
+
+/**
+ * Roll back a quota reservation (decrement both monthly and daily counters).
+ * Call when the handler fails after a successful reserveQuota() to avoid
+ * charging users for requests that never produced value.
+ */
+export async function rollbackQuota(userId: string, feature: GatedFeature): Promise<void> {
     try {
         const { getDb } = await import('./firebase-admin');
         const db = await getDb();
-
         const ref = db.collection('usageCounters').doc(userId);
         await ref.set(
             {
-                [getMonthlyField(feature)]: FieldValue.increment(1),
-                [getDailyField(feature)]: FieldValue.increment(1),
+                [getMonthlyField(feature)]: FieldValue.increment(-1),
+                [getDailyField(feature)]: FieldValue.increment(-1),
                 lastUpdated: FieldValue.serverTimestamp(),
             },
             { merge: true }
         );
-
         invalidateCache(userId);
     } catch (error) {
-        // Fail open — better to give a free call than block a paying user
-        console.error(`[UsageCounters] Failed to increment ${feature} for ${userId}:`, error);
+        // If rollback fails, the user loses one quota unit for a failed call.
+        // Log WARN so we can detect if this is happening frequently.
+        console.warn(`[UsageCounters] rollbackQuota failed for ${userId}/${feature}:`, error);
     }
 }
 
