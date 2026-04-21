@@ -86,6 +86,55 @@ export function logAIError(
     }
 }
 
+/**
+ * Stream-safe error classification.
+ *
+ * Streaming routes can't change HTTP status mid-response (headers are already
+ * flushed on the first `send()`), so they need a way to emit a richer `error`
+ * SSE event with a code the client can branch on. Use this in every SSE AI
+ * route catch block.
+ */
+export interface ClassifiedAIError {
+    /** Stable machine-readable code for the client to branch on */
+    code:
+        | 'AI_SERVICE_BUSY'
+        | 'AI_SERVICE_UNAVAILABLE'
+        | 'SAFETY_VIOLATION'
+        | 'AI_GENERATION_FAILED';
+    /** Human-friendly message safe to show the user */
+    message: string;
+    /** Whether the failure is transient (client should retry) or permanent */
+    transient: boolean;
+}
+
+export function classifyAIError(err: unknown): ClassifiedAIError {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (isSafetyViolation(err)) {
+        return { code: 'SAFETY_VIOLATION', message: msg, transient: false };
+    }
+    if (isQuotaExhausted(err)) {
+        return {
+            code: 'AI_SERVICE_BUSY',
+            message:
+                'AI service is temporarily overloaded. Please try again in a minute.',
+            transient: true,
+        };
+    }
+    if (msg.includes('403') || msg.includes('denied access')) {
+        return {
+            code: 'AI_SERVICE_UNAVAILABLE',
+            message:
+                'AI service is temporarily unavailable. Our team has been notified.',
+            transient: false,
+        };
+    }
+    return {
+        code: 'AI_GENERATION_FAILED',
+        message: 'AI generation failed. Please try again.',
+        transient: true,
+    };
+}
+
 export function handleAIError(
     error: any,
     context: string,

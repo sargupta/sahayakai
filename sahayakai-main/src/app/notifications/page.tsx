@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { getNotificationsAction } from "@/app/actions/notifications";
 import { NotificationFeed } from "@/components/notifications-feed";
 import { Bell, Loader2 } from "lucide-react";
@@ -48,8 +48,19 @@ export default function NotificationsPage() {
                     <h1 className="text-2xl font-bold">Sign-in Required</h1>
                     <p className="text-muted-foreground">Please sign in to view your notifications.</p>
                 </div>
-                <Button onClick={() => document.getElementById('auth-button')?.click()} className="w-full">
-                    Go to Header to Sign In
+                <Button
+                    onClick={async () => {
+                        const provider = new GoogleAuthProvider();
+                        provider.setCustomParameters({ prompt: 'select_account' });
+                        try {
+                            await signInWithPopup(auth, provider);
+                        } catch (err) {
+                            console.error('Sign-in failed:', err);
+                        }
+                    }}
+                    className="w-full"
+                >
+                    Sign in with Google
                 </Button>
             </div>
         );
