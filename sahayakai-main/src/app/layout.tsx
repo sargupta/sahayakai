@@ -145,7 +145,7 @@ export default function RootLayout({
                     <AuthButton />
                   </div>
                 </header>
-                <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center p-3 sm:p-4 md:p-8">
+                <main className="flex min-h-[calc(100vh-3.5rem)] w-full max-w-full overflow-x-clip flex-col items-center p-3 pb-28 sm:p-4 sm:pb-28 md:p-8 md:pb-32">
                   <ErrorBoundary>
                     <AnalyticsProvider>
                       {children}

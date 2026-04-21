@@ -541,10 +541,7 @@ export default function OnboardingPage() {
                         {t("Tell us about your teaching")}
                     </CardTitle>
                     <CardDescription className="text-base">
-                        {formData.preferredLanguage !== 'English' && (
-                            <span className="text-xs text-muted-foreground mr-2">({LANGUAGE_NATIVE_LABELS[formData.preferredLanguage]})</span>
-                        )}
-                        Help us personalize your experience
+                        {t("Help us personalize your experience")}
                     </CardDescription>
                 </CardHeader>
 
@@ -577,7 +574,7 @@ export default function OnboardingPage() {
                                     <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
                                     <Input
                                         id="school"
-                                        placeholder="e.g. Kendriya Vidyalaya, Delhi"
+                                        placeholder={t("e.g. Kendriya Vidyalaya, Delhi")}
                                         value={formData.schoolName}
                                         onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
                                         className="h-11 text-sm shadow-soft"
@@ -587,7 +584,7 @@ export default function OnboardingPage() {
                                     <Label className="text-xs">{t("State")}*</Label>
                                     <Select value={formData.state} onValueChange={handleStateChange}>
                                         <SelectTrigger className="h-11 shadow-soft">
-                                            <SelectValue placeholder="Select your state" />
+                                            <SelectValue placeholder={t("Select your state")} />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[300px]">
                                             {INDIAN_STATES.map(s => (
