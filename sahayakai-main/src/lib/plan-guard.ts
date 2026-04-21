@@ -117,15 +117,27 @@ const FLAG_CACHE_TTL = 30_000; // 30s
 async function isSubscriptionEnabled(): Promise<boolean> {
     if (_flagCache && Date.now() < _flagCache.expiresAt) return _flagCache.enabled;
 
+    // Env-var override (authoritative) — use this to disable gating in dev/staging
+    // without risking a Firestore outage silently disabling gating in prod.
+    if (process.env.SUBSCRIPTION_GATING_ENABLED === 'false') {
+        _flagCache = { enabled: false, expiresAt: Date.now() + FLAG_CACHE_TTL };
+        return false;
+    }
+
     try {
         const { getDb } = await import('./firebase-admin');
         const db = await getDb();
         const doc = await db.collection('system_config').doc('feature_flags').get();
-        const enabled = doc.exists ? (doc.data()?.subscriptionEnabled === true) : false;
+        // Default to ENABLED when doc missing or field not set — we want gating ON
+        // in prod by default, so a missing config never costs us money.
+        const enabled = doc.exists ? (doc.data()?.subscriptionEnabled !== false) : true;
         _flagCache = { enabled, expiresAt: Date.now() + FLAG_CACHE_TTL };
         return enabled;
-    } catch {
-        // Fail open — if we can't read the flag, don't gate
-        return false;
+    } catch (err) {
+        // FAIL CLOSED: if Firestore is unreachable, assume gating is ON.
+        // Previously this failed OPEN (returned false = gating disabled), which
+        // meant any Firestore outage silently gave every user unlimited access.
+        console.error('[plan-guard] Failed to read feature_flags, failing closed (gating ON):', err);
+        return true;
     }
 }

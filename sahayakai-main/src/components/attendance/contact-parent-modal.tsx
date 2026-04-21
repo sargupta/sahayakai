@@ -190,12 +190,13 @@ export function ContactParentModal({
             const { outreachId: oid } = await saveOutreach('twilio_call');
             setOutreachId(oid);
 
+            // Phone number is resolved server-side from the outreach record;
+            // never trust a phone number from the client to prevent Twilio abuse.
             const res = await fetch('/api/attendance/call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     outreachId: oid,
-                    to: student.parentPhone,
                     parentLanguage: student.parentLanguage,
                 }),
             });
