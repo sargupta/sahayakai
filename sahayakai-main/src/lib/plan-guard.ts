@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { GatedFeature } from './plan-config';
 import { PLAN_CONFIG, getMinimumPlan, PLAN_DISPLAY_NAMES } from './plan-config';
 import { normalizePlan } from './plan-utils';
-import { getMonthlyUsage, getDailyUsage, incrementUsage } from './usage-counters';
+import { reserveQuota, rollbackQuota } from './usage-counters';
 
 /**
  * Higher-order function that wraps an API route handler with plan-based gating.
@@ -55,56 +55,47 @@ export function withPlanCheck(feature: GatedFeature) {
                 );
             }
 
-            // Check monthly limit (skip if unlimited)
-            if (limit !== -1) {
-                const used = await getMonthlyUsage(userId, feature);
-                if (used >= limit) {
-                    return NextResponse.json(
-                        {
-                            error: 'USAGE_LIMIT_REACHED',
-                            message: `You've used all ${limit} ${feature.replace('-', ' ')} generations this month. Resets next month.`,
-                            used,
-                            limit,
-                            feature,
-                            currentPlan: plan,
-                        },
-                        { status: 429 }
-                    );
-                }
-            }
-
-            // Check daily limit for features with per-day caps
+            // Atomically check-and-reserve quota BEFORE the handler runs.
+            // Previously this was two separate steps (read → handler → increment),
+            // which allowed concurrent requests to both pass the check and both
+            // execute, effectively bypassing the limit.
             const dailyLimitMap: Partial<Record<GatedFeature, number>> = {
                 'instant-answer': config.instantAnswerDailyLimit,
                 'assistant': config.assistantDailyLimit,
             };
             const dailyCap = dailyLimitMap[feature];
-            if (dailyCap !== undefined && dailyCap !== -1) {
-                const dailyUsed = await getDailyUsage(userId, feature);
-                if (dailyUsed >= dailyCap) {
-                    return NextResponse.json(
-                        {
-                            error: 'DAILY_LIMIT_REACHED',
-                            message: `You've used all ${dailyCap} ${feature.replace(/-/g, ' ')} interactions for today. Try again tomorrow.`,
-                            used: dailyUsed,
-                            limit: dailyCap,
-                            feature,
-                            currentPlan: plan,
-                        },
-                        { status: 429 }
-                    );
+
+            const reservation = await reserveQuota(userId, feature, limit, dailyCap);
+            if (!reservation.ok) {
+                const isDaily = reservation.reason === 'daily';
+                return NextResponse.json(
+                    {
+                        error: isDaily ? 'DAILY_LIMIT_REACHED' : 'USAGE_LIMIT_REACHED',
+                        message: isDaily
+                            ? `You've used all ${reservation.limit} ${feature.replace(/-/g, ' ')} interactions for today. Try again tomorrow.`
+                            : `You've used all ${reservation.limit} ${feature.replace('-', ' ')} generations this month. Resets next month.`,
+                        used: reservation.used,
+                        limit: reservation.limit,
+                        feature,
+                        currentPlan: plan,
+                    },
+                    { status: 429 }
+                );
+            }
+
+            // Execute the actual handler. Roll back the reservation on any failure
+            // (thrown error or non-2xx response) so users aren't charged for
+            // failed calls that never delivered value.
+            try {
+                const response = await handler(request);
+                if (!response.ok) {
+                    await rollbackQuota(userId, feature);
                 }
+                return response;
+            } catch (err) {
+                await rollbackQuota(userId, feature);
+                throw err;
             }
-
-            // Execute the actual handler
-            const response = await handler(request);
-
-            // Increment usage AFTER success (fire-and-forget)
-            if (response.ok) {
-                incrementUsage(userId, feature).catch(() => {});
-            }
-
-            return response;
         };
     };
 }
