@@ -9,7 +9,7 @@ import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PencilRuler, Download, Save } from "lucide-react";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -332,8 +332,11 @@ function WorksheetWizardContent() {
     }
   }, [searchParams, form, toast]);
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setWorksheet(null);
     try {
@@ -360,6 +363,7 @@ function WorksheetWizardContent() {
         const errorData = await res.json();
         if (checkResponse(res.status, errorData)) {
           setIsLoading(false);
+          submittingRef.current = false;
           return;
         }
         throw new Error(errorData.error || "Failed to generate worksheet");
@@ -378,6 +382,7 @@ function WorksheetWizardContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 

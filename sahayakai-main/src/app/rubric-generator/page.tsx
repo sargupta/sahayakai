@@ -191,8 +191,11 @@ function RubricGeneratorContent() {
     }
   }, [user, searchParams, form, toast]);
 
+  const submittingRef = useRef(false);
   const onSubmit = async (values: FormValues) => {
-    if (!requireAuth()) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setRubric(null);
     try {
@@ -227,6 +230,7 @@ function RubricGeneratorContent() {
       });
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
