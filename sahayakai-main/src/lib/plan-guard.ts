@@ -92,8 +92,28 @@ export function withPlanCheck(feature: GatedFeature) {
                     await rollbackQuota(userId, feature);
                 }
                 return response;
-            } catch (err) {
+            } catch (err: any) {
                 await rollbackQuota(userId, feature);
+
+                // Surface AI quota exhaustion as a user-friendly 503 with
+                // Retry-After so the client shows "try again in a minute"
+                // instead of a generic error toast.
+                if (err?.name === 'AIQuotaExhaustedError') {
+                    const retryAfter = typeof err.retryAfterSeconds === 'number' ? err.retryAfterSeconds : 60;
+                    return NextResponse.json(
+                        {
+                            error: 'AI_SERVICE_BUSY',
+                            message: err.message || 'AI service is temporarily overloaded. Please try again in a minute.',
+                            retryAfterSeconds: retryAfter,
+                            feature,
+                        },
+                        {
+                            status: 503,
+                            headers: { 'Retry-After': String(retryAfter) },
+                        }
+                    );
+                }
+
                 throw err;
             }
         };

@@ -1,0 +1,281 @@
+{
+  "displayName": "SahayakAI — Production Health",
+  "mosaicLayout": {
+    "columns": 12,
+    "tiles": [
+      {
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Request rate — API routes (req/min)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/request_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["metric.label.response_code_class"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_AREA",
+                "legendTemplate": "${metric.labels.response_code_class}"
+              }
+            ],
+            "yAxis": { "label": "req/min", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Error rate (%)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/request_count\" metric.label.response_code_class=\"5xx\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "legendTemplate": "5xx/min"
+              }
+            ],
+            "yAxis": { "label": "errors/min", "scale": "LINEAR" },
+            "thresholds": [
+              { "value": 1, "color": "YELLOW", "label": "warn" },
+              { "value": 5, "color": "RED",    "label": "page"  }
+            ]
+          }
+        }
+      },
+      {
+        "yPos": 3,
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Latency — p50 / p95 / p99",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/request_latencies\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_50"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "p50"
+              },
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/request_latencies\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_95"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "p95"
+              },
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/request_latencies\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_99"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "p99"
+              }
+            ],
+            "yAxis": { "label": "ms", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 3,
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Container CPU / memory utilization",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/container/cpu/utilizations\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MEAN"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "cpu%"
+              },
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/container/memory/utilizations\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MEAN"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "mem%"
+              }
+            ],
+            "yAxis": { "label": "%", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "yPos": 6,
+        "width": 4,
+        "height": 3,
+        "widget": {
+          "title": "Gemini 429 quota errors (last 1h)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" metric.type=\"logging.googleapis.com/user/gemini_429_quota\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM"
+                    }
+                  }
+                },
+                "plotType": "STACKED_BAR",
+                "legendTemplate": "429/min"
+              }
+            ],
+            "yAxis": { "label": "count", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "xPos": 4,
+        "yPos": 6,
+        "width": 4,
+        "height": 3,
+        "widget": {
+          "title": "Razorpay webhook failures (last 1h)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" metric.type=\"logging.googleapis.com/user/razorpay_webhook_failed\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM"
+                    }
+                  }
+                },
+                "plotType": "STACKED_BAR",
+                "legendTemplate": "failed/min"
+              }
+            ],
+            "yAxis": { "label": "count", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "xPos": 8,
+        "yPos": 6,
+        "width": 4,
+        "height": 3,
+        "widget": {
+          "title": "Cold starts (last 6h)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/container/startup_latencies\"",
+                    "aggregation": {
+                      "alignmentPeriod": "300s",
+                      "perSeriesAligner": "ALIGN_COUNT"
+                    }
+                  }
+                },
+                "plotType": "STACKED_BAR",
+                "legendTemplate": "cold starts"
+              }
+            ],
+            "yAxis": { "label": "count", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "yPos": 9,
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Instance count (scaling)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" metric.type=\"run.googleapis.com/container/instance_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MEAN",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["metric.label.state"]
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "${metric.labels.state}"
+              }
+            ],
+            "yAxis": { "label": "instances", "scale": "LINEAR" }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 9,
+        "width": 6,
+        "height": 3,
+        "widget": {
+          "title": "Bot scan attempts (404s on suspicious paths)",
+          "logsPanel": {
+            "filter": "resource.type=\"cloud_run_revision\" resource.labels.service_name=\"sahayakai-hotfix-resilience\" (httpRequest.requestUrl=~\"\\\\.env\" OR httpRequest.requestUrl=~\"wp-admin\" OR httpRequest.requestUrl=~\"\\\\.git\" OR httpRequest.requestUrl=~\"phpMyAdmin\")"
+          }
+        }
+      }
+    ]
+  }
+}
