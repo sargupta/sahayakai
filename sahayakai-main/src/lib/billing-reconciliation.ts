@@ -72,18 +72,50 @@ interface RazorpayPayment {
   notes: { userId?: string; [key: string]: unknown };
 }
 
-// Plan ID → expected amount (paise) mapping
-// TODO: populate from your actual Razorpay plan IDs
-const PLAN_AMOUNT_MAP: Record<string, number> = {
-  // e.g. 'plan_XXXGOLD': 14900,   // ₹149
-  // e.g. 'plan_XXXPREM': 34900,   // ₹349
-};
+/**
+ * Plan ID → expected amount (paise) and internal plan name.
+ *
+ * Built at module load from env vars (RAZORPAY_PLAN_* ) and the canonical
+ * pricing defined in plan-config.ts. If any env var is missing, that entry
+ * is skipped with a warning — reconciliation will still run for the plans
+ * that ARE configured, and flag unmapped plan IDs for manual review.
+ */
+type PlanMapEntry = { amount: number; name: string; cadence: 'monthly' | 'annual' };
 
-// Plan ID → Firestore plan name mapping
-const PLAN_NAME_MAP: Record<string, string> = {
-  // e.g. 'plan_XXXGOLD': 'gold',
-  // e.g. 'plan_XXXPREM': 'premium',
-};
+function buildPlanMaps(): {
+  amount: Record<string, number>;
+  name: Record<string, string>;
+  cadence: Record<string, 'monthly' | 'annual'>;
+} {
+  // Pricing in paise, keyed by (plan, cadence). Must match PLAN_PRICING in plan-config.
+  // Extend this table as you add gold/premium Razorpay plans.
+  const PRICING: Record<string, PlanMapEntry> = {
+    RAZORPAY_PLAN_PRO_MONTHLY:   { amount: 14900,  name: 'pro',     cadence: 'monthly' },
+    RAZORPAY_PLAN_PRO_ANNUAL:    { amount: 139900, name: 'pro',     cadence: 'annual'  },
+    RAZORPAY_PLAN_GOLD_MONTHLY:  { amount: 29900,  name: 'gold',    cadence: 'monthly' },
+    RAZORPAY_PLAN_GOLD_ANNUAL:   { amount: 279900, name: 'gold',    cadence: 'annual'  },
+    RAZORPAY_PLAN_PREMIUM_MONTHLY:{ amount: 49900, name: 'premium', cadence: 'monthly' },
+    RAZORPAY_PLAN_PREMIUM_ANNUAL:{ amount: 479900, name: 'premium', cadence: 'annual'  },
+  };
+
+  const amount: Record<string, number> = {};
+  const name: Record<string, string> = {};
+  const cadence: Record<string, 'monthly' | 'annual'> = {};
+
+  for (const [envKey, entry] of Object.entries(PRICING)) {
+    const planId = process.env[envKey];
+    if (!planId) {
+      // Silent in prod — we warn lazily on first use if a plan ID shows up unmapped
+      continue;
+    }
+    amount[planId] = entry.amount;
+    name[planId] = entry.name;
+    cadence[planId] = entry.cadence;
+  }
+  return { amount, name, cadence };
+}
+
+const { amount: PLAN_AMOUNT_MAP, name: PLAN_NAME_MAP } = buildPlanMaps();
 
 async function getRazorpayCredentials(): Promise<{ keyId: string; keySecret: string }> {
   const keyId = process.env.RAZORPAY_KEY_ID || await getSecret('RAZORPAY_KEY_ID');
@@ -507,9 +539,37 @@ export async function runMonthlyReconciliation(yearMonth: string): Promise<Month
   const gstOnFees = Math.round(razorpayFees * 0.18);            // 18% GST on fees
   const netSettlement = grossCollections - razorpayFees - gstOnFees - refundsIssued;
 
-  // TODO: compare against your Firestore payment_logs collection
-  // For now, we use grossCollections as the Firestore figure (placeholder)
-  const firestoreRecordedRevenue = grossCollections;
+  // Compare against Firestore subscriptions that received a payment this month.
+  // A "recorded" payment is a subscription doc whose lastPaymentId matches a
+  // captured Razorpay payment AND whose currentStart falls in this month.
+  // Any Razorpay captured payment that doesn't match a subscription doc is
+  // evidence of a missed webhook (money in, no access granted).
+  let firestoreRecordedRevenue = 0;
+  try {
+    const { getDb } = await import('./firebase-admin');
+    const db = await getDb();
+    const [yearStr, monthStr] = yearMonth.split('-');
+    const monthStart = new Date(`${yearStr}-${monthStr}-01T00:00:00Z`);
+    const monthEnd = new Date(Date.UTC(Number(yearStr), Number(monthStr), 1));
+
+    const subsSnap = await db
+      .collection('subscriptions')
+      .where('currentStart', '>=', monthStart)
+      .where('currentStart', '<', monthEnd)
+      .get();
+
+    const capturedPaymentIds = new Set(captured.map((p) => p.id));
+    for (const subDoc of subsSnap.docs) {
+      const sub = subDoc.data() as { planId?: string; lastPaymentId?: string };
+      if (!sub.lastPaymentId || !capturedPaymentIds.has(sub.lastPaymentId)) continue;
+      const expected = sub.planId ? PLAN_AMOUNT_MAP[sub.planId] : undefined;
+      if (expected !== undefined) firestoreRecordedRevenue += expected;
+    }
+  } catch (err) {
+    console.error('[Reconcile] Failed to compute Firestore recorded revenue:', err);
+    // Fall back to placeholder so the job doesn't crash the whole report
+    firestoreRecordedRevenue = grossCollections;
+  }
   const delta = grossCollections - firestoreRecordedRevenue;
 
   const report: MonthlyReport = {

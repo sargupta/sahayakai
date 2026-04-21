@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -79,49 +79,80 @@ export function ContactParentModal({
         }, 300);
     };
 
-    // Poll for call summary after call is initiated
-    const pollForSummary = useCallback(async (oid: string) => {
+    // Poll for call summary after call is initiated.
+    // Tracks pending setTimeout + abort signal so we can stop polling cleanly
+    // when the modal closes or the component unmounts — otherwise polling
+    // continues in the background and tries to setState on an unmounted tree.
+    const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pollAbortRef = useRef<AbortController | null>(null);
+
+    const stopPolling = useCallback(() => {
+        if (pollTimerRef.current) {
+            clearTimeout(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
+        if (pollAbortRef.current) {
+            pollAbortRef.current.abort();
+            pollAbortRef.current = null;
+        }
+    }, []);
+
+    const pollForSummary = useCallback((oid: string) => {
+        // Cancel any prior polling session
+        stopPolling();
+        pollAbortRef.current = new AbortController();
+        const signal = pollAbortRef.current.signal;
+
         const maxPolls = 60; // 5 minutes at 5s intervals
         let polls = 0;
 
+        const schedule = (ms: number, fn: () => void) => {
+            if (signal.aborted) return;
+            pollTimerRef.current = setTimeout(fn, ms);
+        };
+
         const poll = async () => {
+            if (signal.aborted) return;
             if (polls >= maxPolls) return;
             polls++;
 
             try {
-                const res = await fetch(`/api/attendance/call-summary?outreachId=${oid}`);
+                const res = await fetch(`/api/attendance/call-summary?outreachId=${oid}`, { signal });
+                if (signal.aborted) return;
                 if (!res.ok) return;
 
                 const data: CallResult = await res.json();
+                if (signal.aborted) return;
                 setCallResult(data);
 
                 const terminal = ['completed', 'failed', 'no_answer', 'busy'];
                 if (data.callStatus && terminal.includes(data.callStatus)) {
-                    // If summary is ready, show it
                     if (data.callSummary) {
                         setStep("summary");
                         return;
                     }
-                    // Summary not yet generated — wait a bit more
                     if (polls < maxPolls) {
-                        setTimeout(poll, 3000);
+                        schedule(3000, poll);
                         return;
                     }
-                    // Timed out waiting for summary — show what we have
                     setStep("summary");
                     return;
                 }
-
-                // Still in progress — keep polling
-                setTimeout(poll, 5000);
-            } catch {
-                if (polls < maxPolls) setTimeout(poll, 5000);
+                schedule(5000, poll);
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
+                if (polls < maxPolls) schedule(5000, poll);
             }
         };
 
-        // Start polling after a short delay
-        setTimeout(poll, 3000);
-    }, []);
+        schedule(3000, poll);
+    }, [stopPolling]);
+
+    // Stop polling if the modal closes or the component unmounts
+    useEffect(() => {
+        if (!open) stopPolling();
+        return () => stopPolling();
+    }, [open, stopPolling]);
 
     const generateMessage = async () => {
         if (!reason) return;
@@ -190,12 +221,13 @@ export function ContactParentModal({
             const { outreachId: oid } = await saveOutreach('twilio_call');
             setOutreachId(oid);
 
+            // Phone number is resolved server-side from the outreach record;
+            // never trust a phone number from the client to prevent Twilio abuse.
             const res = await fetch('/api/attendance/call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     outreachId: oid,
-                    to: student.parentPhone,
                     parentLanguage: student.parentLanguage,
                 }),
             });

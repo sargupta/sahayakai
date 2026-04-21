@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
@@ -239,8 +239,18 @@ export function useLessonPlan() {
         }
     }, [searchParams, form, toast]);
 
+    // Guard against double-submit (rapid clicks before isLoading state commits).
+    // setIsLoading is async, so two clicks within React's batch window both pass the
+    // `if (isLoading)` check and both fire the API call — wasting quota + money.
+    const submittingRef = useRef(false);
+
     const onSubmit = async (values: FormValues) => {
-        if (!requireAuth()) return;
+        if (submittingRef.current) return;
+        submittingRef.current = true;
+        if (!requireAuth()) {
+            submittingRef.current = false;
+            return;
+        }
         setIsLoading(true);
         setLessonPlan(null);
 
@@ -254,6 +264,7 @@ export function useLessonPlan() {
                 variant: "destructive",
             });
             setIsLoading(false);
+            submittingRef.current = false;
             return;
         }
 
@@ -265,6 +276,7 @@ export function useLessonPlan() {
                 variant: "destructive",
             });
             setIsLoading(false);
+            submittingRef.current = false;
             return;
         }
 
@@ -494,6 +506,7 @@ export function useLessonPlan() {
             });
         } finally {
             setIsLoading(false); // Ensure loader always turns off
+            submittingRef.current = false; // Release double-submit guard
         }
     };
 
