@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTeacherTrainingAdvice } from '@/ai/flows/teacher-training';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -55,7 +56,7 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        logger.error(`Teacher Training API Failed for question: "${questionText}"`, error, 'TEACHER_TRAINING', { userId: request.headers.get('x-user-id') });
+        logAIError(error, 'TEACHER_TRAINING', { message: `Teacher Training API Failed for question: "${questionText}"`, userId: request.headers.get('x-user-id') });
 
         const errorMessage = error instanceof Error ? error.message : String(error);
         const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');

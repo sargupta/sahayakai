@@ -502,17 +502,19 @@ const lessonPlanFlow = ai.defineFlow(
 
             });
           } catch (persistenceError: any) {
-            StructuredLogger.error(
-              'Failed to persist lesson plan',
+            // Non-blocking: the user received the generated content successfully.
+            // Only persistence to Firestore/GCS failed. Log as WARN so it's
+            // visible without triggering the severity>=ERROR email alert.
+            StructuredLogger.warn(
+              'Failed to persist lesson plan (non-blocking — user received content)',
               {
                 service: 'lesson-plan-flow',
                 operation: 'persistContent',
                 userId,
-                requestId
-              },
-              new PersistenceError('Persistence failed', 'saveContent')
+                requestId,
+                metadata: { error: persistenceError?.message },
+              }
             );
-            // Non-blocking error
           }
         }
 

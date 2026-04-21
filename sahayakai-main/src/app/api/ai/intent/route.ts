@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { instantAnswer } from '@/ai/flows/instant-answer';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 
 /**
  * @swagger
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        logger.error(`Intent Router API Failed for prompt: "${promptText}"`, error, 'INTENT', { userId: request.headers.get('x-user-id') });
+        logAIError(error, 'INTENT', { message: `Intent Router API Failed for prompt: "${promptText}"`, userId: request.headers.get('x-user-id') });
         return NextResponse.json(
             { error: 'Internal Server Error' },
             { status: 500 }

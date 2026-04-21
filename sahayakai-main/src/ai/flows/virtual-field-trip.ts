@@ -214,15 +214,16 @@ const virtualFieldTripFlow = ai.defineFlow(
           });
 
         } catch (persistenceError: any) {
-          StructuredLogger.error(
-            'Failed to persist virtual field trip',
+          // Non-blocking: user received the trip plan. Log WARN.
+          StructuredLogger.warn(
+            'Failed to persist virtual field trip (non-blocking — user received content)',
             {
               service: 'virtual-field-trip-flow',
               operation: 'persistContent',
               userId: input.userId,
-              requestId
-            },
-            new PersistenceError('Persistence failed', 'saveContent')
+              requestId,
+              metadata: { error: persistenceError?.message },
+            }
           );
         }
       }

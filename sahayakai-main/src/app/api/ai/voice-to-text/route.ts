@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { voiceToTextFormData } from '@/ai/flows/voice-to-text';
 import { sarvamSTT } from '@/lib/sarvam';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 async function _handler(request: NextRequest) {
@@ -42,7 +43,7 @@ async function _handler(request: NextRequest) {
         const output = await voiceToTextFormData(fallbackForm);
         return NextResponse.json(output);
     } catch (error) {
-        logger.error('Voice-to-text API failed', error, 'VOICE_TO_TEXT');
+        logAIError(error, 'VOICE_TO_TEXT', { message: 'Voice-to-text API failed' });
         const message = error instanceof Error ? error.message : String(error);
         return NextResponse.json({ error: message }, { status: 500 });
     }

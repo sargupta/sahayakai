@@ -146,13 +146,20 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Determine log severity based on event type
+ * Determine log severity based on event type.
+ *
+ * NOTE: challenge_detected events are OBSERVED USER PATTERNS (slow generation,
+ * language barriers, onboarding stalls) — worth tracking for analytics, but
+ * NOT actionable failures. The old mapping put high-severity challenges at
+ * ERROR level which fired the severity>=ERROR email alert for every stuck
+ * user (~30 emails/day). These are telemetry, not exceptions.
  */
 function getEventSeverity(event: AnalyticsEvent): 'INFO' | 'WARNING' | 'ERROR' {
     switch (event.event_type) {
         case 'challenge_detected':
-            if (event.severity === 'high') return 'ERROR';
-            if (event.severity === 'medium') return 'WARNING';
+            // Cap at WARNING — even "high" challenges are user-observable
+            // patterns, not system errors.
+            if (event.severity === 'high') return 'WARNING';
             return 'INFO';
 
         case 'content_created':

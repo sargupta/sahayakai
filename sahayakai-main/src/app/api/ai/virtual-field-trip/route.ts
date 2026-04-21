@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { planVirtualFieldTrip } from '@/ai/flows/virtual-field-trip';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -59,7 +60,7 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        logger.error(`Virtual Field Trip API Failed for topic: "${topicName}"`, error, 'VIRTUAL_FIELD_TRIP', { userId: request.headers.get('x-user-id') });
+        logAIError(error, 'VIRTUAL_FIELD_TRIP', { message: `Virtual Field Trip API Failed for topic: "${topicName}"`, userId: request.headers.get('x-user-id') });
 
         return NextResponse.json(
             { error: 'Internal Server Error' },
