@@ -215,15 +215,16 @@ const rubricGeneratorFlow = ai.defineFlow(
           });
 
         } catch (persistenceError: any) {
-          StructuredLogger.error(
-            'Failed to persist rubric',
+          // Non-blocking: user received the rubric. Log WARN.
+          StructuredLogger.warn(
+            'Failed to persist rubric (non-blocking — user received content)',
             {
               service: 'rubric-generator-flow',
               operation: 'persistContent',
               userId: input.userId,
-              requestId
-            },
-            new PersistenceError('Persistence failed', 'saveContent')
+              requestId,
+              metadata: { error: persistenceError?.message },
+            }
           );
         }
       }

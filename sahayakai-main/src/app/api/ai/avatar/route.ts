@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateAvatar } from '@/ai/flows/avatar-generator';
 import { checkImageRateLimit } from '@/lib/server-safety';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 async function _handler(request: NextRequest) {
@@ -15,7 +16,7 @@ async function _handler(request: NextRequest) {
         const output = await generateAvatar({ ...body, userId });
         return NextResponse.json(output);
     } catch (error) {
-        logger.error('Avatar generation API failed', error, 'AVATAR');
+        logAIError(error, 'AVATAR', { message: 'Avatar generation API failed' });
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('Daily image limit reached')) {
             return NextResponse.json({ error: message }, { status: 429 });

@@ -188,15 +188,16 @@ const teacherTrainingFlow = ai.defineFlow(
           });
 
         } catch (persistenceError: any) {
-          StructuredLogger.error(
-            'Failed to persist teacher training advice',
+          // Non-blocking: user received the advice. Log WARN.
+          StructuredLogger.warn(
+            'Failed to persist teacher training advice (non-blocking — user received content)',
             {
               service: 'teacher-training-flow',
               operation: 'persistContent',
               userId: input.userId,
-              requestId
-            },
-            new PersistenceError('Persistence failed', 'saveContent')
+              requestId,
+              metadata: { error: persistenceError?.message },
+            }
           );
         }
       }

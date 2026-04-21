@@ -51,18 +51,25 @@ export async function POST(req: NextRequest) {
                 case 'ERROR': {
                     const durationStr = metric.duration ? ` took ${metric.duration}ms` : (metric.totalDuration ? ` took ${metric.totalDuration}ms` : '');
                     const detailsStr = metric.rating ? ` (Rating: ${metric.rating})` : '';
-                    const message = `Poor Performance on /${metric.page || 'unknown'}: ${metric.type}${durationStr}${detailsStr}`;
+                    // Strip leading slashes on metric.page to avoid "//pagename" — the
+                    // template adds its own leading slash, and metric.page often comes
+                    // from next/navigation usePathname() which also prepends one.
+                    const page = (metric.page || 'unknown').replace(/^\/+/, '') || 'unknown';
+                    const message = `Poor Performance on /${page}: ${metric.type}${durationStr}${detailsStr}`;
 
-                    logger.error(
+                    // Web Vitals marked "poor" are user-facing performance signals,
+                    // not exceptions. They're worth tracking but NOT worth paging on:
+                    // logger.warn keeps them visible in the dashboard without firing
+                    // the severity>=ERROR email alert for every slow page load.
+                    logger.warn(
                         message,
-                        new Error(message),
                         'METRICS',
                         {
                             metric: metric.type,
                             data: metric,
                             labels: {
                                 metric_type: metric.type,
-                                page: metric.page,
+                                page,
                                 user_id: metric.userId,
                             },
                         }
