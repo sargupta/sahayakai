@@ -90,8 +90,50 @@ async function ensureKeyPool() {
 }
 
 /**
- * Executes an AI operation resiliently across the key pool.
- * Automatically fails over to the next key on 429 (Rate Limit) or 401 (Auth) errors.
+ * Typed error thrown when the model is quota-exhausted after all retries.
+ * Callers (API routes) should catch this and return HTTP 503 with a
+ * Retry-After header so the client shows a friendly message instead of
+ * a generic 500.
+ */
+export class AIQuotaExhaustedError extends Error {
+  readonly status = 503;
+  readonly retryAfterSeconds: number;
+  constructor(message: string, retryAfterSeconds = 60) {
+    super(message);
+    this.name = 'AIQuotaExhaustedError';
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+/**
+ * Classify the status code from a Gemini error.
+ * Gemini SDK sometimes sets .status, sometimes only embeds the code in message.
+ */
+function classifyStatus(error: any): number | null {
+  if (typeof error?.status === 'number') return error.status;
+  const msg = String(error?.message || '');
+  if (msg.includes('429') || msg.includes('Resource exhausted') || msg.includes('RESOURCE_EXHAUSTED')) return 429;
+  if (msg.includes('401') || msg.includes('Unauthorized')) return 401;
+  if (msg.includes('403') || msg.includes('Forbidden') || msg.includes('denied access')) return 403;
+  if (msg.includes('400') || msg.includes('Invalid') || msg.includes('API key expired')) return 400;
+  if (msg.includes('500') || msg.includes('Internal')) return 500;
+  return null;
+}
+
+/** Small jitter (±25% of base) to avoid thundering-herd when many users retry together. */
+function jittered(ms: number): number {
+  const jitter = ms * 0.25 * (Math.random() * 2 - 1);
+  return Math.max(100, Math.round(ms + jitter));
+}
+
+/**
+ * Executes an AI operation resiliently:
+ *   1. Across the key pool (failover on 429/401/403)
+ *   2. With longer same-key backoff if the pool is small — per-minute quota
+ *      windows usually reset within 30-60s, so a 20s backoff recovers the
+ *      call without surfacing an error.
+ *
+ * On final exhaustion throws AIQuotaExhaustedError with Retry-After hint.
  * @param fn — The AI operation to execute
  * @param spanName — Optional name for the tracing span (e.g. 'lessonPlan.generate')
  */
@@ -108,8 +150,14 @@ export async function runResiliently<T>(
 
   const startTime = Date.now();
   let lastError: any;
+  let last429 = false;
   const startIndex = Math.floor(Math.random() * poolSize);
-  const maxAttempts = Math.min(poolSize, 3);
+
+  // When the pool has >1 key, favour failover (each attempt = different key).
+  // When the pool has 1 key (common in dev / free tier), we still want a few
+  // attempts — subsequent retries hit the same key after a longer backoff,
+  // which is the right strategy for per-minute quota ceilings.
+  const maxAttempts = Math.max(3, Math.min(poolSize, 5));
 
   for (let i = 0; i < maxAttempts; i++) {
     const currentIndex = (startIndex + i) % poolSize;
@@ -118,7 +166,6 @@ export async function runResiliently<T>(
     try {
       const result = await fn({ config: { apiKey: currentKey } });
 
-      // Log success metrics for tracing
       if (spanName) {
         console.log(`[Trace] ${spanName} completed`, {
           spanName,
@@ -131,36 +178,56 @@ export async function runResiliently<T>(
       return result;
     } catch (error: any) {
       lastError = error;
+      const status = classifyStatus(error);
+      last429 = status === 429;
 
-      console.error(`[AI Resilience] ${spanName || 'unknown'} attempt ${i + 1} failed`, {
+      console.error(`[AI Resilience] ${spanName || 'unknown'} attempt ${i + 1}/${maxAttempts} failed`, {
         keyIndex: currentIndex,
+        poolSize,
         attemptNumber: i + 1,
-        maxAttempts,
         errorType: error.constructor?.name || 'Unknown',
-        errorMessage: error.message,
-        errorCode: error.code,
-        errorStatus: error.status,
-        errorDetail: error.detail,
-        parseErrors: error.detail?.parseErrors,
+        errorStatus: status,
+        errorMessage: (error.message || '').slice(0, 200),
         latencyMs: Date.now() - startTime,
       });
 
-      const status = error.status ||
-        (error.message?.includes('429') ? 429 :
-          error.message?.includes('401') ? 401 :
-            error.message?.includes('403') ? 403 : null);
-
-      if (status === 429 || status === 401 || status === 403) {
-        const delay = 1000 * Math.pow(2, i);
-        console.warn(`[AI Resilience] Failover triggered: Key ${currentIndex} failed with ${status}. Waiting ${delay}ms before retrying with next key...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
+      // Retry only on transient / auth errors. Safety filters + bad requests
+      // should fail fast — no amount of retry will fix them.
+      if (status !== 429 && status !== 401 && status !== 403) {
+        throw error;
       }
 
-      // For safety filters, bad requests, or other logic errors, don't retry with a new key
-      throw error;
+      // On the last attempt, don't wait — throw the shaped error.
+      if (i === maxAttempts - 1) break;
+
+      // Backoff strategy:
+      //   - 429 (quota) with single-key pool: longer waits (20s, 40s) so the
+      //     per-minute quota window resets. Capped at 60s total across retries
+      //     to stay well under Cloud Run's 300s timeout.
+      //   - 429/401/403 with multi-key pool: short waits (1s, 2s, 4s) — we
+      //     mostly care about rotating, not waiting.
+      //   - 401/403 anywhere: short waits (auth errors rarely benefit from
+      //     long waits).
+      let delay: number;
+      if (status === 429 && poolSize === 1) {
+        delay = jittered(20000 * Math.pow(2, i)); // 20s → 40s → 80s (last one caught by break above)
+      } else if (status === 429) {
+        delay = jittered(3000 * Math.pow(2, i));  // 3s → 6s → 12s
+      } else {
+        delay = jittered(1000 * Math.pow(2, i));  // 1s → 2s → 4s
+      }
+      console.warn(`[AI Resilience] ${status} on key ${currentIndex}. Backing off ${delay}ms before retry ${i + 2}/${maxAttempts}`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 
+  // All retries exhausted. Surface a typed error so API routes can return
+  // a clean 503 with Retry-After instead of a generic 500.
+  if (last429) {
+    throw new AIQuotaExhaustedError(
+      'AI service is temporarily overloaded. Please try again in a minute.',
+      60,
+    );
+  }
   throw lastError;
 }
