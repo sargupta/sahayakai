@@ -116,18 +116,29 @@ class OutboxManager {
         await tx.done;
     }
 
+    private _flushing = false;
+
     async flush(
         sendFn: (msg: OutboxMessage) => Promise<{ messageId: string }>
     ): Promise<void> {
-        const pending = await this.getAllPending();
-        for (const msg of pending) {
-            try {
-                await this.markSending(msg.clientMessageId);
-                await sendFn(msg);
-                await this.markSent(msg.clientMessageId);
-            } catch {
-                await this.markFailed(msg.clientMessageId);
+        // Prevent concurrent flushes (e.g. auto-sync + manual retry button).
+        // Without this guard, two flushes could both read the same pending list
+        // and both call sendFn → parent gets the same WhatsApp message twice.
+        if (this._flushing) return;
+        this._flushing = true;
+        try {
+            const pending = await this.getAllPending();
+            for (const msg of pending) {
+                try {
+                    await this.markSending(msg.clientMessageId);
+                    await sendFn(msg);
+                    await this.markSent(msg.clientMessageId);
+                } catch {
+                    await this.markFailed(msg.clientMessageId);
+                }
             }
+        } finally {
+            this._flushing = false;
         }
     }
 }
