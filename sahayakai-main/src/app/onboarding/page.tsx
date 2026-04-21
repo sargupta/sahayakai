@@ -390,7 +390,7 @@ export default function OnboardingPage() {
                                     <div className="flex items-start gap-2">
                                         <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                                         <div>
-                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Learning Objectives</p>
+                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Learning Objectives")}</p>
                                             <ul className="text-sm space-y-1 mt-1">
                                                 {previewExample.objectives.map((obj, i) => (
                                                     <li key={i} className="flex items-start gap-2">
@@ -410,10 +410,10 @@ export default function OnboardingPage() {
 
                                     {/* Activities preview */}
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activities</p>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Activities")}</p>
                                         {(showAllActivities ? previewExample.activities : previewExample.activities.slice(0, 3)).map((act, i) => (
                                             <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 animate-in fade-in duration-300">
-                                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{act.phase}</span>
+                                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{t(act.phase)}</span>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">{act.title}</p>
                                                     <p className="text-xs text-muted-foreground line-clamp-2">{act.description}</p>
@@ -428,9 +428,9 @@ export default function OnboardingPage() {
                                                 className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline w-full py-1"
                                             >
                                                 {showAllActivities ? (
-                                                    <><ChevronUp className="h-3 w-3" /> Show fewer</>
+                                                    <><ChevronUp className="h-3 w-3" /> {t("Show fewer")}</>
                                                 ) : (
-                                                    <><ChevronDown className="h-3 w-3" /> Show all {previewExample.activities.length} activities</>
+                                                    <><ChevronDown className="h-3 w-3" /> {t("Show all {n} activities").replace("{n}", String(previewExample.activities.length))}</>
                                                 )}
                                             </button>
                                         )}

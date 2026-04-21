@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { getNotificationsAction } from "@/app/actions/notifications";
 import { NotificationFeed } from "@/components/notifications-feed";
 import { Bell, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AuthGate } from "@/components/auth/auth-gate";
 
 export default function NotificationsPage() {
     const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -40,29 +40,13 @@ export default function NotificationsPage() {
 
     if (!firebaseUser) {
         return (
-            <div className="w-full max-w-md mx-auto px-4 py-20 text-center space-y-6">
-                <div className="bg-primary/8 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-                    <Bell className="h-10 w-10 text-primary" />
-                </div>
-                <div className="space-y-2">
-                    <h1 className="text-2xl font-bold">Sign-in Required</h1>
-                    <p className="text-muted-foreground">Please sign in to view your notifications.</p>
-                </div>
-                <Button
-                    onClick={async () => {
-                        const provider = new GoogleAuthProvider();
-                        provider.setCustomParameters({ prompt: 'select_account' });
-                        try {
-                            await signInWithPopup(auth, provider);
-                        } catch (err) {
-                            console.error('Sign-in failed:', err);
-                        }
-                    }}
-                    className="w-full"
-                >
-                    Sign in with Google
-                </Button>
-            </div>
+            <AuthGate
+                icon={Bell}
+                title="Sign in to see notifications"
+                description="Sign in to get notified when a fellow teacher connects, replies, or shares a resource."
+            >
+                {null}
+            </AuthGate>
         );
     }
 

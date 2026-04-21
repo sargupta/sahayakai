@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import {
   FolderPlus,
   Sparkles,
+  Library,
 } from 'lucide-react';
+import { AuthGate } from '@/components/auth/auth-gate';
 import { LanguageSelector } from '@/components/language-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProfileCard } from '@/components/profile-card';
@@ -66,7 +68,19 @@ export default function MyLibraryPage() {
     );
   }
 
-  const userId = user?.uid || "dev-user";
+  if (!user) {
+    return (
+      <AuthGate
+        icon={Library}
+        title="Sign in to open your library"
+        description="Your saved lesson plans, quizzes, worksheets, and resources will appear here."
+      >
+        {null}
+      </AuthGate>
+    );
+  }
+
+  const userId = user.uid;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">

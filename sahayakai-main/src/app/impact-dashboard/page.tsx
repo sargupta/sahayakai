@@ -2,10 +2,23 @@
 
 import { TeacherAnalyticsDashboard } from "@/components/teacher-analytics-dashboard";
 import { useAuth } from "@/context/auth-context";
+import { AuthGate } from "@/components/auth/auth-gate";
+import { BarChart3 } from "lucide-react";
 
 export default function ImpactDashboardPage() {
   const { user } = useAuth();
-  const userId = user?.uid || "dev-user";
+
+  if (!user) {
+    return (
+      <AuthGate
+        icon={BarChart3}
+        title="Sign in to see your impact"
+        description="Track lesson plans created, students reached, and classroom time saved."
+      >
+        {null}
+      </AuthGate>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-8">
@@ -16,7 +29,7 @@ export default function ImpactDashboardPage() {
         </p>
       </div>
 
-      <TeacherAnalyticsDashboard userId={userId} />
+      <TeacherAnalyticsDashboard userId={user.uid} />
     </div>
   );
 }

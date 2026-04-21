@@ -308,6 +308,126 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "ഉദാ. കേന്ദ്രീയ വിദ്യാലയം, ഡൽഹി",
         "Odia": "ଯଥା: କେନ୍ଦ୍ରୀୟ ବିଦ୍ୟାଳୟ, ଦିଲ୍ଲୀ"
     },
+    "Learning Objectives": {
+        "English": "Learning Objectives",
+        "Hindi": "सीखने के उद्देश्य",
+        "Kannada": "ಕಲಿಕಾ ಉದ್ದೇಶಗಳು",
+        "Tamil": "கற்றல் நோக்கங்கள்",
+        "Telugu": "అభ్యాస లక్ష్యాలు",
+        "Marathi": "शिकण्याची उद्दिष्टे",
+        "Bengali": "শেখার উদ্দেশ্য",
+        "Gujarati": "શીખવાના ઉદ્દેશ્યો",
+        "Punjabi": "ਸਿੱਖਣ ਦੇ ਉਦੇਸ਼",
+        "Malayalam": "പഠന ലക്ഷ്യങ്ങൾ",
+        "Odia": "ଶିକ୍ଷା ଉଦ୍ଦେଶ୍ୟ"
+    },
+    "Activities": {
+        "English": "Activities",
+        "Hindi": "गतिविधियाँ",
+        "Kannada": "ಚಟುವಟಿಕೆಗಳು",
+        "Tamil": "செயல்பாடுகள்",
+        "Telugu": "కార్యకలాపాలు",
+        "Marathi": "कृती",
+        "Bengali": "কার্যকলাপ",
+        "Gujarati": "પ્રવૃત્તિઓ",
+        "Punjabi": "ਗਤੀਵਿਧੀਆਂ",
+        "Malayalam": "പ്രവർത്തനങ്ങൾ",
+        "Odia": "କାର୍ଯ୍ୟକଳାପ"
+    },
+    "Show fewer": {
+        "English": "Show fewer",
+        "Hindi": "कम दिखाएँ",
+        "Kannada": "ಕಡಿಮೆ ತೋರಿಸಿ",
+        "Tamil": "குறைவாகக் காட்டு",
+        "Telugu": "తక్కువ చూపించు",
+        "Marathi": "कमी दाखवा",
+        "Bengali": "কম দেখান",
+        "Gujarati": "ઓછું બતાવો",
+        "Punjabi": "ਘੱਟ ਦਿਖਾਓ",
+        "Malayalam": "കുറച്ച് കാണിക്കുക",
+        "Odia": "କମ ଦେଖାନ୍ତୁ"
+    },
+    // {n} placeholder is replaced by the real count at render time.
+    "Show all {n} activities": {
+        "English": "Show all {n} activities",
+        "Hindi": "सभी {n} गतिविधियाँ दिखाएँ",
+        "Kannada": "ಎಲ್ಲಾ {n} ಚಟುವಟಿಕೆಗಳನ್ನು ತೋರಿಸಿ",
+        "Tamil": "அனைத்து {n} செயல்பாடுகளையும் காட்டு",
+        "Telugu": "అన్ని {n} కార్యకలాపాలను చూపించు",
+        "Marathi": "सर्व {n} कृती दाखवा",
+        "Bengali": "সব {n} কার্যকলাপ দেখান",
+        "Gujarati": "બધી {n} પ્રવૃત્તિઓ બતાવો",
+        "Punjabi": "ਸਾਰੀਆਂ {n} ਗਤੀਵਿਧੀਆਂ ਦਿਖਾਓ",
+        "Malayalam": "എല്ലാ {n} പ്രവർത്തനങ്ങളും കാണിക്കുക",
+        "Odia": "ସମସ୍ତ {n} କାର୍ଯ୍ୟକଳାପ ଦେଖାନ୍ତୁ"
+    },
+    // 5E pedagogy phase labels. Data file always stores these in English;
+    // t() translates at render time so Hindi + other UIs show the native term.
+    "Engage": {
+        "English": "Engage",
+        "Hindi": "जुड़ाव",
+        "Kannada": "ತೊಡಗಿಸು",
+        "Tamil": "ஈடுபடுத்து",
+        "Telugu": "నిమగ్నమవ్వండి",
+        "Marathi": "सहभागी व्हा",
+        "Bengali": "যুক্ত হন",
+        "Gujarati": "જોડાઓ",
+        "Punjabi": "ਜੁੜੋ",
+        "Malayalam": "ഇടപെടൽ",
+        "Odia": "ଯୋଡ଼ନ୍ତୁ"
+    },
+    "Explore": {
+        "English": "Explore",
+        "Hindi": "अन्वेषण",
+        "Kannada": "ಅನ್ವೇಷಣೆ",
+        "Tamil": "ஆராய்",
+        "Telugu": "అన్వేషించండి",
+        "Marathi": "शोध",
+        "Bengali": "অন্বেষণ",
+        "Gujarati": "અન્વેષણ",
+        "Punjabi": "ਖੋਜੋ",
+        "Malayalam": "പര്യവേക്ഷണം",
+        "Odia": "ଅନ୍ୱେଷଣ"
+    },
+    "Explain": {
+        "English": "Explain",
+        "Hindi": "व्याख्या",
+        "Kannada": "ವಿವರಿಸು",
+        "Tamil": "விளக்கு",
+        "Telugu": "వివరించండి",
+        "Marathi": "स्पष्टीकरण",
+        "Bengali": "ব্যাখ্যা",
+        "Gujarati": "સમજાવો",
+        "Punjabi": "ਸਮਝਾਓ",
+        "Malayalam": "വിശദീകരിക്കുക",
+        "Odia": "ବ୍ୟାଖ୍ୟା"
+    },
+    "Elaborate": {
+        "English": "Elaborate",
+        "Hindi": "विस्तार",
+        "Kannada": "ವಿಸ್ತರಿಸು",
+        "Tamil": "விரிவுபடுத்து",
+        "Telugu": "విస్తరించండి",
+        "Marathi": "विस्तार",
+        "Bengali": "বিস্তারিত",
+        "Gujarati": "વિસ્તૃત કરો",
+        "Punjabi": "ਵਿਸਤਾਰ",
+        "Malayalam": "വിശദമാക്കുക",
+        "Odia": "ବିସ୍ତାର"
+    },
+    "Evaluate": {
+        "English": "Evaluate",
+        "Hindi": "मूल्यांकन",
+        "Kannada": "ಮೌಲ್ಯಮಾಪನ",
+        "Tamil": "மதிப்பீடு",
+        "Telugu": "మూల్యాంకనం",
+        "Marathi": "मूल्यमापन",
+        "Bengali": "মূল্যায়ন",
+        "Gujarati": "મૂલ્યાંકન",
+        "Punjabi": "ਮੁਲਾਂਕਣ",
+        "Malayalam": "വിലയിരുത്തൽ",
+        "Odia": "ମୂଲ୍ୟାୟନ"
+    },
 };
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
