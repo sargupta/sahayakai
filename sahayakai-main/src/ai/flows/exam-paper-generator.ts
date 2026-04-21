@@ -461,15 +461,17 @@ const examPaperGeneratorFlow = ai.defineFlow(
           });
 
         } catch (persistenceError: unknown) {
-          StructuredLogger.error(
-            'Failed to persist exam paper',
+          // Non-blocking: user received the exam paper. Log WARN.
+          const err = persistenceError as Error;
+          StructuredLogger.warn(
+            'Failed to persist exam paper (non-blocking — user received content)',
             {
               service: 'exam-paper-generator-flow',
               operation: 'persistContent',
               userId: input.userId,
-              requestId
-            },
-            new PersistenceError('Persistence failed', 'saveContent')
+              requestId,
+              metadata: { error: err?.message },
+            }
           );
         }
       }

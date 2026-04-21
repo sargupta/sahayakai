@@ -5,6 +5,7 @@ export const maxDuration = 120;
 import { NextResponse } from 'next/server';
 import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -66,7 +67,7 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error: any) {
-        logger.error(`Visual Aid API Failed for prompt: "${promptText}"`, error, 'VISUAL_AID', { userId: request.headers.get('x-user-id') });
+        logAIError(error, 'VISUAL_AID', { message: `Visual Aid API Failed for prompt: "${promptText}"`, userId: request.headers.get('x-user-id') });
 
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';

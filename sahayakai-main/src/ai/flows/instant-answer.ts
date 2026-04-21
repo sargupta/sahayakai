@@ -273,16 +273,16 @@ const instantAnswerFlow = ai.defineFlow(
             metadata: { contentId }
           });
         } catch (persistenceError: any) {
-          // Log but don't throw - user still gets the answer
-          StructuredLogger.error(
-            'Failed to persist instant answer',
+          // Non-blocking: user received the answer. Log WARN.
+          StructuredLogger.warn(
+            'Failed to persist instant answer (non-blocking — user received content)',
             {
               service: 'instant-answer-flow',
               operation: 'persistContent',
               userId: input.userId,
-              requestId
-            },
-            new PersistenceError('Persistence failed', 'saveContent')
+              requestId,
+              metadata: { error: persistenceError?.message },
+            }
           );
         }
       }

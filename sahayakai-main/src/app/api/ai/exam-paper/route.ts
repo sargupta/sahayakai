@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { generateExamPaper } from '@/ai/flows/exam-paper-generator';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -102,7 +103,7 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        logger.error(`Exam Paper API Failed for: "${paperDesc}"`, error, 'EXAM_PAPER', { userId: request.headers.get('x-user-id') });
+        logAIError(error, 'EXAM_PAPER', { message: `Exam Paper API Failed for: "${paperDesc}"`, userId: request.headers.get('x-user-id') });
 
         return NextResponse.json(
             { error: 'Internal Server Error' },

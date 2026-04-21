@@ -72,8 +72,12 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
           timestamp: new Date().toISOString()
         };
 
+        // Per-variant failure is WARN not ERROR — if even one of the three
+        // variants (easy/medium/hard) succeeds, the user still gets a usable
+        // quiz. The route-level catch will log ERROR only if ALL three null
+        // out (throw on line ~102 below).
         const errorMsg = `Quiz Generation Failed (${difficulty} variant) for topic: "${input.topic || 'Unknown'}"`;
-        logger.error(errorMsg, new Error('Generation Error'), 'QUIZ', errorDetails);
+        logger.warn(errorMsg, 'QUIZ', errorDetails);
         return null;
       }
     })

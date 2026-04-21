@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getVideoRecommendations } from '@/ai/flows/video-storyteller';
 import { logger } from '@/lib/logger';
+import { logAIError } from '@/lib/ai-error-response';
 
 /**
  * @swagger
@@ -50,8 +51,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json(output);
     } catch (error) {
-        logger.error('Video Storyteller API Failed', error, 'VIDEO_STORYTELLER', {
-            userId: request.headers.get('x-user-id')
+        logAIError(error, 'VIDEO_STORYTELLER', {
+            message: 'Video Storyteller API Failed',
+            userId: request.headers.get('x-user-id'),
         });
 
         return NextResponse.json(
