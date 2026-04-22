@@ -37,7 +37,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
 
     if (!worksheet || !worksheet.worksheetContent) return null;
 
-    const displayTitle = title || worksheet.title || "Worksheet";
+    const displayTitle = title || worksheet.title || t.worksheetTitle;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(worksheet.worksheetContent);

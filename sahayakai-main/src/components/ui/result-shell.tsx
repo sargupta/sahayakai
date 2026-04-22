@@ -10,14 +10,15 @@
  * so the content changes between tools but the frame does not.
  *
  * Mobile-first: header stacks vertically below 640px, actions wrap to a
- * new row, title scales `text-xl → 2xl → 3xl`. Safe inside the 200–500px
- * content band defined in FLOATING_CHROME_AUDIT §9.
+ * new row, title scales `text-xl → 2xl → 3xl`. Actions render at 40px min
+ * height so they clear the iOS HIG touch-target floor on phones.
  *
  * See outputs/ux_review_2026_04_21/DISPLAY_CONSISTENCY_AUDIT.md §3 for the
  * contract shape this implements.
  */
 
 import * as React from "react";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,9 @@ export interface ResultShellMeta {
     variant?: "default" | "secondary" | "outline";
 }
 
+export type ResultShellSize = "compact" | "default";
+export type ResultShellVariant = "solid" | "glass";
+
 export interface ResultShellProps {
     /** Stable DOM id used by exportElementToPdf (e.g. "lesson-plan-pdf"). */
     id: string;
@@ -52,6 +56,20 @@ export interface ResultShellProps {
     meta?: ResultShellMeta[];
     /** Buttons rendered top-right (top-of-card on mobile). */
     actions?: ResultShellAction[];
+    /**
+     * Max-width of the card. `default` = `max-w-4xl` (forms, lesson plans,
+     * quizzes), `compact` = `max-w-2xl` (image-heavy or list-style outputs
+     * like visual aids, field trips, teacher advice).
+     */
+    size?: ResultShellSize;
+    /**
+     * Surface treatment.
+     * - `solid` (default): white card with soft shadow. Best legibility.
+     * - `glass`: translucent `bg-white/60 backdrop-blur` + primary-tinted
+     *   header gradient. Use for "creative" outputs where the content is
+     *   visual (images, maps, answers with callouts).
+     */
+    variant?: ResultShellVariant;
     /** Main body. */
     children: React.ReactNode;
     /** Optional footer (FeedbackDialog etc.). */
@@ -62,6 +80,21 @@ export interface ResultShellProps {
     contentClassName?: string;
 }
 
+const sizeClass: Record<ResultShellSize, string> = {
+    compact: "max-w-2xl",
+    default: "max-w-4xl",
+};
+
+const variantCardClass: Record<ResultShellVariant, string> = {
+    solid: "bg-white",
+    glass: "bg-white/70 backdrop-blur-lg border-white/60",
+};
+
+const variantHeaderClass: Record<ResultShellVariant, string> = {
+    solid: "",
+    glass: "bg-gradient-to-r from-primary/10 to-transparent",
+};
+
 export function ResultShell({
     id,
     title,
@@ -69,6 +102,8 @@ export function ResultShell({
     icon,
     meta,
     actions,
+    size = "default",
+    variant = "solid",
     children,
     footer,
     className,
@@ -78,7 +113,9 @@ export function ResultShell({
         <Card
             id={id}
             className={cn(
-                "mt-6 w-full max-w-4xl bg-white animate-fade-in-up overflow-hidden",
+                "mt-6 w-full animate-fade-in-up overflow-hidden",
+                sizeClass[size],
+                variantCardClass[variant],
                 className,
             )}
         >
@@ -87,6 +124,7 @@ export function ResultShell({
                     "gap-4 border-b border-border",
                     "flex flex-col sm:flex-row sm:items-start sm:justify-between",
                     "p-4 sm:p-6",
+                    variantHeaderClass[variant],
                 )}
             >
                 <div className="flex-1 min-w-0 space-y-2">
@@ -132,13 +170,18 @@ export function ResultShell({
                             <Button
                                 key={i}
                                 type="button"
-                                size="sm"
                                 variant={a.variant ?? "outline"}
                                 onClick={a.onClick}
                                 disabled={a.disabled || a.loading}
-                                className="h-9 px-3"
+                                aria-busy={a.loading ? true : undefined}
+                                // h-10 (40px) clears the iOS HIG touch-target
+                                // floor on mobile while staying visually paired
+                                // with the title on desktop.
+                                className="h-10 px-3.5 text-sm"
                             >
-                                {a.icon ? (
+                                {a.loading ? (
+                                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                                ) : a.icon ? (
                                     <span className="mr-1.5 [&>svg]:h-4 [&>svg]:w-4">
                                         {a.icon}
                                     </span>

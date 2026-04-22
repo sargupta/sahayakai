@@ -100,9 +100,10 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
     return (
         <ResultShell
             id={PDF_ID}
-            title={title || "Generated Visual Aid"}
+            title={title || t.visualAidTitle}
             icon={<Images />}
-            className="max-w-2xl"
+            size="compact"
+            variant="glass"
             actions={[
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },
@@ -139,7 +140,7 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
                 <div className="w-full space-y-4 text-left">
                     <div className="p-4 bg-accent/10 rounded-lg border border-primary/20">
                         <h4 className="font-bold text-primary mb-1">
-                            Pedagogical Context
+                            {t.pedagogicalContext}
                         </h4>
                         <p className="text-sm text-foreground/80">
                             {visualAid.pedagogicalContext}
@@ -147,7 +148,7 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
                     </div>
                     <div className="p-4 bg-accent/10 rounded-lg border border-primary/20">
                         <h4 className="font-bold text-primary mb-1">
-                            Discussion Spark
+                            {t.discussionSpark}
                         </h4>
                         <p className="text-sm text-foreground/80">
                             {visualAid.discussionSpark}

@@ -152,7 +152,7 @@ ${criterion.levels
                     <TableHeader className="bg-primary/10">
                         <TableRow>
                             <TableHead className="w-[25%] border border-primary/20 p-2 font-headline text-primary-foreground bg-primary">
-                                Criteria
+                                {t.criteria}
                             </TableHead>
                             {performanceLevels.map((level) => (
                                 <TableHead

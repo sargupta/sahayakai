@@ -7,19 +7,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen, Lock } from 'lucide-react';
-import { submitFeedback } from '@/app/actions/feedback';
+import { BookText, Download, CheckCircle2, ListTree, TestTube2, ClipboardList, Save, Copy, Clock, GraduationCap, BookOpen, Lock, Check } from 'lucide-react';
 import type { FC } from 'react';
 import type { LessonPlanOutput } from "@/ai/flows/lesson-plan-generator";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
-import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, X, Save as SaveIcon } from 'lucide-react'; // Removing ThumbsUp/Down imports if they conflict or keep if reusable icons
+import { Edit, X } from 'lucide-react';
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { ResultShell } from "@/components/ui/result-shell";
+import { exportElementToPdf } from "@/lib/export-pdf";
+import { getResultShellDict } from "@/lib/result-shell-i18n";
 
 // Simple markdown to HTML converter for basic formatting
 // Escapes HTML entities first to prevent XSS from AI-generated content
@@ -204,13 +204,15 @@ const displayTranslations: Record<string, any> = {
   }
 };
 
+const PDF_ID = "lesson-plan-pdf";
+
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en' }) => {
   const { toast } = useToast();
   const { canExport } = useSubscription();
   const t = displayTranslations[selectedLanguage] || displayTranslations.en;
+  const rs = getResultShellDict(selectedLanguage);
   const [editablePlan, setEditablePlan] = useState(lessonPlan);
   const [isEditing, setIsEditing] = useState(false);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
     setEditablePlan(lessonPlan);
@@ -224,74 +226,22 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
     });
   };
 
-  const handleFeedback = async (rating: 'thumbs-up' | 'thumbs-down') => {
-    await submitFeedback({
-      page: '/lesson-plan',
-      feature: 'lesson-plan-generator',
-      rating,
-      context: { title: lessonPlan.title }
-    });
-    setFeedbackSubmitted(true);
-    toast({
-      title: t.toasts.feedbackRecorded,
-      description: t.toasts.feedbackDesc,
-    });
-  };
-
   const handleCancelEdit = () => {
     setEditablePlan(lessonPlan);
     setIsEditing(false);
   };
 
   const handleDownload = async () => {
-    const element = document.getElementById('lesson-plan-pdf');
-    if (!element) return;
-
-    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-      import('jspdf'),
-      import('html2canvas'),
-    ]);
-
-    const actionButtons = element.querySelector('.no-print');
-    if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
-
-    try {
-      toast({ title: "Generating PDF...", description: "Preparing lesson plan." });
-
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      }
-
-      const cleanTitle = (lessonPlan.title || 'Lesson Plan').replace(/[^a-z0-9]/gi, '_');
-      pdf.save(`Sahayak_Lesson_${cleanTitle}_${lessonPlan.gradeLevel || ''}.pdf`);
-
-      toast({ title: "PDF Downloaded", description: "Your file is ready." });
-    } catch (error) {
-      console.error("PDF Error:", error);
-      toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
-    } finally {
-      if (actionButtons) (actionButtons as HTMLElement).style.display = '';
-    }
+    toast({ title: rs.pdfPreparingTitle, description: rs.pdfPreparingDesc });
+    const res = await exportElementToPdf({
+      elementId: PDF_ID,
+      filename: `Sahayak_Lesson_${lessonPlan.title || "Plan"}_${lessonPlan.gradeLevel || ""}.pdf`,
+    });
+    toast(
+      res.ok
+        ? { title: rs.pdfDoneTitle, description: rs.pdfDoneDesc }
+        : { title: rs.pdfFailedTitle, description: rs.pdfFailedDesc, variant: "destructive" }
+    );
   };
 
   const handleSave = async () => {
@@ -410,76 +360,54 @@ ${editablePlan.assessment}
     return null;
   }
 
+  const meta = [
+    lessonPlan.gradeLevel && { icon: <GraduationCap className="h-3.5 w-3.5" />, value: lessonPlan.gradeLevel },
+    lessonPlan.duration && { icon: <Clock className="h-3.5 w-3.5" />, value: lessonPlan.duration },
+    lessonPlan.subject && { icon: <BookOpen className="h-3.5 w-3.5" />, value: lessonPlan.subject },
+  ].filter(Boolean) as any[];
+
+  const proGatedCopy = () =>
+    canExport
+      ? handleCopy()
+      : toast({ title: "Pro Feature", description: "Upgrade to Pro to copy and export lesson plans." });
+
+  const proGatedDownload = () =>
+    canExport
+      ? handleDownload()
+      : toast({ title: "Pro Feature", description: "Upgrade to Pro to download PDF." });
+
+  const actions = isEditing
+    ? [
+        { label: rs.cancel, icon: <X />, onClick: handleCancelEdit, variant: "outline" as const },
+        { label: rs.save, icon: <Check />, onClick: handleSaveEdit, variant: "default" as const },
+      ]
+    : [
+        { label: rs.edit, icon: <Edit />, onClick: () => setIsEditing(true) },
+        { label: rs.copy, icon: canExport ? <Copy /> : <Lock />, onClick: proGatedCopy },
+        { label: rs.save, icon: <Save />, onClick: handleSave },
+        { label: rs.pdf, icon: canExport ? <Download /> : <Lock />, onClick: proGatedDownload },
+      ];
+
   return (
-    <Card id="lesson-plan-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
-      <CardHeader className="space-y-4">
-        <div className="flex flex-row items-start justify-between">
-          <div className="space-y-2 flex-1">
-            <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
-              <BookText className="h-7 w-7" />
-              {lessonPlan.title || t.fallbackTitle}
-            </CardTitle>
-
-            {/* Metadata Section */}
-            <div className="flex flex-wrap gap-3 mt-3">
-              {lessonPlan.gradeLevel && (
-                <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1">
-                  <GraduationCap className="h-4 w-4" />
-                  {lessonPlan.gradeLevel}
-                </Badge>
-              )}
-              {lessonPlan.duration && (
-                <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1">
-                  <Clock className="h-4 w-4" />
-                  {lessonPlan.duration}
-                </Badge>
-              )}
-              {lessonPlan.subject && (
-                <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1">
-                  <BookOpen className="h-4 w-4" />
-                  {lessonPlan.subject}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-start gap-2 no-print">
-            {isEditing ? (
-              <>
-                <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                  <X className="mr-2 h-4 w-4" />
-                  {t.buttons.cancel}
-                </Button>
-                <Button variant="default" size="sm" onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
-                  <Save className="mr-2 h-4 w-4" />
-                  {t.buttons.saveChanges}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t.buttons.edit}
-                </Button>
-                <Button variant="outline" size="sm" onClick={canExport ? handleCopy : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to copy and export lesson plans.' })}>
-                  {canExport ? <Copy className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
-                  {t.buttons.copy}
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleSave}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {t.buttons.save}
-                </Button>
-                <Button variant="outline" size="sm" onClick={canExport ? handleDownload : () => toast({ title: 'Pro Feature', description: 'Upgrade to Pro to download PDF.' })}>
-                  {canExport ? <Download className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
-                  {t.buttons.pdf}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <ResultShell
+      id={PDF_ID}
+      title={lessonPlan.title || t.fallbackTitle}
+      icon={<BookText />}
+      meta={meta}
+      actions={actions}
+      footer={
+        <FeedbackDialog
+          page="lesson-plan"
+          feature="lesson-plan-result"
+          context={{
+            topic: lessonPlan.title,
+            grade: lessonPlan.gradeLevel,
+            subject: lessonPlan.subject,
+          }}
+        />
+      }
+    >
+      <>
         <Accordion type="multiple" className="w-full" defaultValue={['Objectives', 'Activities']}>
 
           <AccordionItem value="Objectives">
@@ -611,18 +539,7 @@ ${editablePlan.assessment}
           </AccordionItem>
 
         </Accordion>
-      </CardContent>
-      <div className="p-6 border-t border-slate-100 flex justify-end">
-        <FeedbackDialog
-          page="lesson-plan"
-          feature="lesson-plan-result"
-          context={{
-            topic: lessonPlan.title,
-            grade: lessonPlan.gradeLevel,
-            subject: lessonPlan.subject
-          }}
-        />
-      </div>
-    </Card>
+      </>
+    </ResultShell>
   );
 };

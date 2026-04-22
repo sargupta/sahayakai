@@ -78,22 +78,25 @@ export function OmniOrb() {
 
     // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
     // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
-    // Uses a small delta threshold to ignore jitter; near-top always shows.
+    // Near-top always shows. A 24 px delta absorbs trackpad micro-scroll
+    // and iOS rubber-band; anything further triggers the transition.
     useEffect(() => {
         if (!isClient) return;
         let lastY = window.scrollY;
         let ticking = false;
+        const NEAR_TOP = 120;
+        const DELTA = 24;
         const onScroll = () => {
             if (ticking) return;
             ticking = true;
             requestAnimationFrame(() => {
                 const y = window.scrollY;
                 const delta = y - lastY;
-                if (y < 80) {
+                if (y < NEAR_TOP) {
                     setHiddenByScroll(false);
-                } else if (delta > 12) {
+                } else if (delta > DELTA) {
                     setHiddenByScroll(true);
-                } else if (delta < -12) {
+                } else if (delta < -DELTA) {
                     setHiddenByScroll(false);
                 }
                 lastY = y;
@@ -102,6 +105,18 @@ export function OmniOrb() {
         };
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
+    }, [isClient]);
+
+    // ── Respect prefers-reduced-motion: when user wants less motion, the
+    // orb still hides on scroll but without the slide/opacity transition.
+    const [reducedMotion, setReducedMotion] = useState(false);
+    useEffect(() => {
+        if (!isClient) return;
+        const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setReducedMotion(mq.matches);
+        const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+        mq.addEventListener("change", onChange);
+        return () => mq.removeEventListener("change", onChange);
     }, [isClient]);
 
     // ── Proactive daily-inspiration greeting (once per session) ──────────
@@ -337,7 +352,9 @@ export function OmniOrb() {
     return (
         <div
             ref={orbRef}
-            className={`fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[90] transition-[transform,opacity] duration-300 ${
+            className={`fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[90] ${
+                reducedMotion ? "" : "transition-[transform,opacity] duration-300"
+            } ${
                 hiddenByScroll && !orbOpen && !isDragging
                     ? "opacity-0 pointer-events-none"
                     : "opacity-100"

@@ -34,7 +34,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
 
     if (!answer || !answer.answer) return null;
 
-    const displayTitle = title || "Instant Answer";
+    const displayTitle = title || t.instantAnswerTitle;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(answer.answer);
@@ -107,6 +107,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
             id={PDF_ID}
             title={displayTitle}
             icon={<MessageSquareQuote />}
+            variant="glass"
             actions={[
                 { label: t.copy, icon: <Copy />, onClick: handleCopy },
                 { label: t.save, icon: <Save />, onClick: handleSave },
@@ -124,11 +125,10 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
                     </div>
                     <div className="flex-1 text-center sm:text-left">
                         <h4 className="font-headline text-lg sm:text-xl text-red-900 mb-1">
-                            Recommended Video
+                            {t.recommendedVideo}
                         </h4>
                         <p className="text-red-800/70 mb-3 text-sm">
-                            Watch a visual explanation of this topic on
-                            YouTube.
+                            {t.recommendedVideoBlurb}
                         </p>
                         <Button
                             variant="destructive"
@@ -142,7 +142,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
                                 )
                             }
                         >
-                            Watch on YouTube
+                            {t.watchOnYoutube}
                         </Button>
                     </div>
                 </div>

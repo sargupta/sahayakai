@@ -31,7 +31,7 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
 
-    const saveTitle = title || "Your Personalized Advice";
+    const saveTitle = title || t.teacherAdviceTitle;
 
     const handleSave = async () => {
         try {
@@ -99,7 +99,8 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
             id={PDF_ID}
             title={saveTitle}
             icon={<GraduationCap />}
-            className="max-w-2xl"
+            size="compact"
+            variant="glass"
             actions={[
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },

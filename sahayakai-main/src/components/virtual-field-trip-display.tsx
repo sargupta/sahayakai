@@ -95,7 +95,8 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
             id={PDF_ID}
             title={trip.title}
             icon={<Globe2 />}
-            className="max-w-2xl"
+            size="compact"
+            variant="glass"
             actions={[
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },
@@ -128,13 +129,13 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
                             <div className="bg-white/60 p-3 rounded-lg text-xs space-y-2 border border-primary/5">
                                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
                                     <strong className="text-primary/80 flex-shrink-0">
-                                        Context:
+                                        {t.contextLabel}:
                                     </strong>
                                     <span>{stop.culturalAnalogy}</span>
                                 </div>
                                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 border-t border-primary/5 pt-2">
                                     <strong className="text-primary/80 flex-shrink-0">
-                                        Pedagogy:
+                                        {t.pedagogyLabel}:
                                     </strong>
                                     <span>{stop.explanation}</span>
                                 </div>
@@ -142,11 +143,11 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div className="bg-white/50 p-2 rounded text-xs">
-                                    <strong>Fact:</strong>{" "}
+                                    <strong>{t.factLabel}:</strong>{" "}
                                     {stop.educationalFact}
                                 </div>
                                 <div className="bg-white/50 p-2 rounded text-xs italic">
-                                    <strong>Ask:</strong>{" "}
+                                    <strong>{t.askLabel}:</strong>{" "}
                                     {stop.reflectionPrompt}
                                 </div>
                             </div>
@@ -164,7 +165,7 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
                                         rel="noopener noreferrer"
                                     >
                                         <Send className="mr-2 h-4 w-4" />
-                                        Visit on Google Earth
+                                        {t.visitOnGoogleEarth}
                                     </Link>
                                 </Button>
                             </div>
