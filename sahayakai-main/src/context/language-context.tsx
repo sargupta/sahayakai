@@ -428,6 +428,58 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "വിലയിരുത്തൽ",
         "Odia": "ମୂଲ୍ୟାୟନ"
     },
+    "AI-Powered Teaching Assistant for Bharat": {
+        "English": "AI-Powered Teaching Assistant for Bharat",
+        "Hindi": "भारत के शिक्षकों के लिए AI सहायक",
+        "Kannada": "ಭಾರತದ ಶಿಕ್ಷಕರಿಗಾಗಿ AI ಸಹಾಯಕ",
+        "Tamil": "பாரதத்தின் ஆசிரியர்களுக்கான AI உதவியாளர்",
+        "Telugu": "భారత ఉపాధ్యాయుల కోసం AI సహాయకుడు",
+        "Marathi": "भारताच्या शिक्षकांसाठी AI सहाय्यक",
+        "Bengali": "ভারতের শিক্ষকদের জন্য AI সহায়ক",
+        "Gujarati": "ભારતના શિક્ષકો માટે AI સહાયક",
+        "Punjabi": "ਭਾਰਤ ਦੇ ਅਧਿਆਪਕਾਂ ਲਈ AI ਸਹਾਇਕ",
+        "Malayalam": "ഭാരതത്തിലെ അധ്യാപകർക്കായുള്ള AI സഹായി",
+        "Odia": "ଭାରତର ଶିକ୍ଷକମାନଙ୍କ ପାଇଁ AI ସହାୟକ"
+    },
+    "Thinking": {
+        "English": "Thinking",
+        "Hindi": "सोच रहा हूँ",
+        "Kannada": "ಯೋಚಿಸುತ್ತಿದ್ದೇನೆ",
+        "Tamil": "சிந்திக்கிறேன்",
+        "Telugu": "ఆలోచిస్తున్నాను",
+        "Marathi": "विचार करत आहे",
+        "Bengali": "চিন্তা করছি",
+        "Gujarati": "વિચારી રહ્યો છું",
+        "Punjabi": "ਸੋਚ ਰਿਹਾ ਹਾਂ",
+        "Malayalam": "ചിന്തിക്കുന്നു",
+        "Odia": "ଚିନ୍ତା କରୁଛି"
+    },
+    "Answer": {
+        "English": "Answer",
+        "Hindi": "उत्तर",
+        "Kannada": "ಉತ್ತರ",
+        "Tamil": "பதில்",
+        "Telugu": "సమాధానం",
+        "Marathi": "उत्तर",
+        "Bengali": "উত্তর",
+        "Gujarati": "જવાબ",
+        "Punjabi": "ਜਵਾਬ",
+        "Malayalam": "ഉത്തരം",
+        "Odia": "ଉତ୍ତର"
+    },
+    "Show different ideas": {
+        "English": "Show different ideas",
+        "Hindi": "अलग सुझाव दिखाएँ",
+        "Kannada": "ಬೇರೆ ಆಲೋಚನೆಗಳನ್ನು ತೋರಿಸಿ",
+        "Tamil": "வேறு யோசனைகளைக் காட்டு",
+        "Telugu": "వేరే ఆలోచనలను చూపించు",
+        "Marathi": "वेगळ्या कल्पना दाखवा",
+        "Bengali": "ভিন্ন ধারণা দেখান",
+        "Gujarati": "અલગ વિચારો બતાવો",
+        "Punjabi": "ਵੱਖ-ਵੱਖ ਸੁਝਾਅ ਦਿਖਾਓ",
+        "Malayalam": "വ്യത്യസ്ത ആശയങ്ങൾ കാണിക്കുക",
+        "Odia": "ଭିନ୍ନ ଚିନ୍ତାଧାରା ଦେଖାନ୍ତୁ"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:
