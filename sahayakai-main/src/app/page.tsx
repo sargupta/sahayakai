@@ -196,15 +196,15 @@ export default function Home() {
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
             {t("Ideas for your classes")}
           </p>
         ) : (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
             I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
           </p>
         )}
