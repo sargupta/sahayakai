@@ -18,6 +18,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
@@ -210,6 +211,7 @@ function VisualAidContent() {
   const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t: translate } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -292,7 +294,7 @@ function VisualAidContent() {
         } catch (err) {
           console.error("Failed to load saved visual aid:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved visual aid.",
             variant: "destructive"
           });
@@ -364,7 +366,7 @@ function VisualAidContent() {
     } catch (error: any) {
       console.error("Failed to generate visual aid:", error);
       toast({
-        title: "Generation Failed",
+        title: translate("Generation Failed"),
         description: error.message || "There was an error generating the visual aid. Please try again.",
         variant: "destructive",
       });

@@ -226,7 +226,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 function WorksheetWizardContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const { language: userLanguage } = useLanguage();
+  const { language: userLanguage, t: translate } = useLanguage();
   const [worksheet, setWorksheet] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { limitState, checkResponse, clearLimit } = useLimitGuard();
@@ -312,7 +312,7 @@ function WorksheetWizardContent() {
         } catch (err) {
           console.error("Failed to load saved worksheet:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved worksheet.",
             variant: "destructive"
           });
@@ -381,7 +381,7 @@ function WorksheetWizardContent() {
     } catch (error) {
       console.error("Failed to generate worksheet:", error);
       toast({
-        title: "Generation Failed",
+        title: translate("Generation Failed"),
         description: "There was an error generating the worksheet. Please try again.",
         variant: "destructive",
       });
@@ -411,7 +411,7 @@ function WorksheetWizardContent() {
 
   const handleSave = () => {
     toast({
-      title: "Saved to Library",
+      title: translate("Saved to Library"),
       description: "Your worksheet has been saved to your personal library.",
     });
   };

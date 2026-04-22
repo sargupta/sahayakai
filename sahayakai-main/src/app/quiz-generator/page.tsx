@@ -488,7 +488,7 @@ export default function QuizGeneratorPage() {
 
 function QuizGeneratorContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const { language: userLanguage } = useLanguage();
+  const { language: userLanguage, t: translate } = useLanguage();
   const [quiz, setQuiz] = useState<QuizVariantsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { limitState, checkResponse, clearLimit } = useLimitGuard();
@@ -596,7 +596,7 @@ function QuizGeneratorContent() {
         } catch (err) {
           console.error("Failed to load saved quiz:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved quiz.",
             variant: "destructive"
           });
@@ -679,7 +679,7 @@ function QuizGeneratorContent() {
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
-        title: "Generation Failed",
+        title: translate("Generation Failed"),
         description: "There was an error generating the quiz. Please try again.",
         variant: "destructive",
       });
