@@ -430,6 +430,33 @@ const dictionary: Record<string, Record<Language, string>> = {
     },
 };
 
+// BCP-47 language tags for each Language. Used for:
+//   - <html lang> attribute (screen readers, hyphenation, Chrome auto-translate)
+//   - Web Speech API's SpeechRecognition.lang (transcription in the right language)
+//   - Google Cloud TTS voice selection (already mapped separately in tts/route.ts)
+// Kept here (alongside the dictionary) so one edit covers both surfaces.
+export const BCP47_MAP: Record<Language, string> = {
+    English: 'en-IN',
+    Hindi: 'hi-IN',
+    Kannada: 'kn-IN',
+    Tamil: 'ta-IN',
+    Telugu: 'te-IN',
+    Marathi: 'mr-IN',
+    Bengali: 'bn-IN',
+    Gujarati: 'gu-IN',
+    Punjabi: 'pa-IN',
+    Malayalam: 'ml-IN',
+    Odia: 'or-IN',
+};
+
+// Sync <html lang> so screen readers pronounce correctly, browsers hyphenate
+// in the right script, and Chrome's auto-translate doesn't offer a pointless
+// "translate to English" on a Hindi page that is already Hindi.
+function syncHtmlLang(lang: Language) {
+    if (typeof document === 'undefined') return;
+    document.documentElement.lang = BCP47_MAP[lang];
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [language, setLanguageState] = useState<Language>('English');
     const [isLoaded, setIsLoaded] = useState(false);
@@ -440,6 +467,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
             const cached = localStorage.getItem('sahayakai-lang');
             if (cached && LANGUAGES.includes(cached as Language)) {
                 setLanguageState(cached as Language);
+                syncHtmlLang(cached as Language);
             }
         } catch { /* localStorage unavailable (restricted WebView) */ }
 
@@ -448,6 +476,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
                 const { profile } = await getProfileData(user.uid);
                 if (profile?.preferredLanguage) {
                     setLanguageState(profile.preferredLanguage as Language);
+                    syncHtmlLang(profile.preferredLanguage as Language);
                     try { localStorage.setItem('sahayakai-lang', profile.preferredLanguage); } catch {}
                 }
             }
@@ -458,6 +487,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const setLanguage = async (lang: Language, persist: boolean = true) => {
         setLanguageState(lang);
+        syncHtmlLang(lang);
         try { localStorage.setItem('sahayakai-lang', lang); } catch {}
         if (!persist) return;
 
