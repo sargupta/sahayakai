@@ -7,17 +7,18 @@ import type { ClassRecord } from "@/types/attendance";
 import { CreateClassDialog } from "@/components/attendance/create-class-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { AuthGate } from "@/components/auth/auth-gate";
 import {
     Plus, ClipboardList, Users, ChevronRight,
     CalendarDays, Loader2, Trash2, GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function AttendancePage() {
+function AttendancePageContent() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, loading: authLoading, requireAuth } = useAuth();
+    const { t } = useLanguage();
     const [classes, setClasses] = useState<ClassRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [createOpen, setCreateOpen] = useState(false);
@@ -38,14 +39,8 @@ export default function AttendancePage() {
     }, [toast]);
 
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            requireAuth();
-            setLoading(false);
-            return;
-        }
         load();
-    }, [authLoading, user, load, requireAuth]);
+    }, [load]);
 
     const handleDelete = async (cls: ClassRecord, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -65,17 +60,17 @@ export default function AttendancePage() {
     return (
         <div className="w-full max-w-2xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-black text-foreground font-headline tracking-tight">Attendance</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">Manage classes and track daily attendance</p>
+            <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <h1 className="text-2xl font-black text-foreground font-headline tracking-tight">{t("Attendance")}</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">{t("Manage classes and track daily attendance")}</p>
                 </div>
                 <Button
                     onClick={() => setCreateOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0"
                 >
                     <Plus className="h-4 w-4" />
-                    New Class
+                    <span className="hidden sm:inline">{t("New Class")}</span>
                 </Button>
             </div>
 
@@ -90,9 +85,9 @@ export default function AttendancePage() {
                         <ClipboardList className="h-10 w-10 text-primary/40" />
                     </div>
                     <div>
-                        <p className="text-base font-black text-foreground">No classes yet</p>
+                        <p className="text-base font-black text-foreground">{t("No classes yet")}</p>
                         <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                            Create your first class and add students — then take daily attendance in seconds.
+                            {t("Create your first class and add students — then take daily attendance in seconds.")}
                         </p>
                     </div>
                     <Button
@@ -100,7 +95,7 @@ export default function AttendancePage() {
                         className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                     >
                         <Plus className="h-4 w-4" />
-                        Create First Class
+                        {t("Create First Class")}
                     </Button>
                 </div>
             ) : (
@@ -125,7 +120,7 @@ export default function AttendancePage() {
                                 <div className="flex items-center gap-3 mt-1.5">
                                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                         <Users className="h-3 w-3" />
-                                        <span>{cls.studentCount} students</span>
+                                        <span>{cls.studentCount} {t("students")}</span>
                                     </div>
                                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                         <CalendarDays className="h-3 w-3" />
@@ -134,17 +129,21 @@ export default function AttendancePage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
+                                {/* Delete is always visible on mobile (touch has no hover).
+                                    Fades in on pointer-hover for mouse users only. */}
                                 <Button
                                     variant="ghost" size="icon"
                                     className={cn(
-                                        "h-8 w-8 text-muted-foreground/40 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity",
+                                        "h-9 w-9 text-muted-foreground/50 hover:text-red-500",
+                                        "sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity",
                                     )}
+                                    aria-label="Delete class"
                                     onClick={(e) => handleDelete(cls, e)}
                                     disabled={deleting === cls.id}
                                 >
                                     {deleting === cls.id
-                                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        : <Trash2 className="h-3.5 w-3.5" />
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : <Trash2 className="h-4 w-4" />
                                     }
                                 </Button>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
@@ -163,5 +162,18 @@ export default function AttendancePage() {
                 }}
             />
         </div>
+    );
+}
+
+export default function AttendancePage() {
+    const { t } = useLanguage();
+    return (
+        <AuthGate
+            icon={ClipboardList}
+            title={t("Attendance")}
+            description={t("Manage classes and track daily attendance")}
+        >
+            <AttendancePageContent />
+        </AuthGate>
     );
 }
