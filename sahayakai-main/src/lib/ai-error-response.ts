@@ -173,10 +173,15 @@ export function handleAIError(
             ...extra,
             zodIssues: error.issues,
         });
+        // Response shape convention (this app): `error` is the human-readable
+        // string the client will show in a toast (consumer at
+        // features/lesson-planner/hooks/use-lesson-plan.ts:421 reads
+        // `errorData.error` directly). `code` is the machine-readable
+        // classifier; `issues` is the per-field breakdown for form clients.
         return NextResponse.json(
             {
-                error: 'INVALID_ARGUMENT',
-                message: 'Request body failed schema validation.',
+                error: 'Request body failed schema validation.',
+                code: 'INVALID_ARGUMENT',
                 issues: error.issues.map((i) => ({
                     path: i.path.join('.'),
                     code: i.code,
@@ -206,8 +211,8 @@ export function handleAIError(
         });
         return NextResponse.json(
             {
-                error: 'AI_SERVICE_BUSY',
-                message: error?.message || 'AI service is temporarily overloaded. Please try again in a minute.',
+                error: 'AI service is temporarily overloaded. Please try again in a minute.',
+                code: 'AI_SERVICE_BUSY',
                 retryAfterSeconds: retryAfter,
             },
             {
