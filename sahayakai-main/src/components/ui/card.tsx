@@ -9,7 +9,10 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-2xl border bg-card text-card-foreground shadow-soft transition-colors duration-150",
+      // Radius sourced from the --radius design token (12px) so cards
+      // share curvature grammar with buttons + inputs. Previously
+      // rounded-2xl (16px) silently bypassed the token system.
+      "rounded-[var(--radius)] border bg-card text-card-foreground shadow-soft transition-colors duration-150",
       className
     )}
     {...props}

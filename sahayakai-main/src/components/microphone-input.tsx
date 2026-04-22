@@ -8,6 +8,7 @@ import { logger } from "@/lib/client-logger";
 import { tts } from "@/lib/tts";
 import { Mic, StopCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
+import { useLanguage, BCP47_MAP } from "@/context/language-context";
 
 declare global {
   interface Window {
@@ -38,6 +39,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   iconSize = "md"
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
+  const { language } = useLanguage();
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -228,6 +230,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     if (SpeechRecognition) {
       try {
         const recognition = new SpeechRecognition();
+        // Set the transcription language to the user's active app language.
+        // Without this, browsers default to `en-US` — a Hindi speaker gets
+        // garbled transcripts and the voice-first claim is silently broken.
+        recognition.lang = BCP47_MAP[language] ?? 'en-IN';
         recognition.continuous = true;
         recognition.interimResults = true;
 
