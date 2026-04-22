@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { auth } from "@/lib/firebase";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +51,7 @@ function GoogleGIcon({ className }: { className?: string }) {
  */
 export function AuthGate({ children, icon: Icon, title, description, signInLabel }: AuthGateProps) {
     const { user, loading } = useAuth();
+    const { t } = useLanguage();
     const { toast } = useToast();
 
     if (loading) {
@@ -78,8 +80,8 @@ export function AuthGate({ children, icon: Icon, title, description, signInLabel
                             await signInWithPopup(auth, provider);
                         } catch (err: any) {
                             toast({
-                                title: "Sign-in Failed",
-                                description: err?.message || "Please try again.",
+                                title: t("Sign-in Failed"),
+                                description: err?.message || t("Please try again."),
                                 variant: "destructive",
                             });
                         }
@@ -87,7 +89,7 @@ export function AuthGate({ children, icon: Icon, title, description, signInLabel
                     className="w-full gap-2"
                 >
                     <GoogleGIcon className="h-4 w-4" />
-                    {signInLabel ?? "Sign in with Google"}
+                    {signInLabel ?? t("Sign in with Google")}
                 </Button>
             </div>
         );

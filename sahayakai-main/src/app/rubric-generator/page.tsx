@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
@@ -93,6 +94,7 @@ function RubricGeneratorContent() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t: translate } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const searchParams = useSearchParams();
   const hasLoaded = useRef(false);
@@ -163,7 +165,7 @@ function RubricGeneratorContent() {
         } catch (err) {
           console.error("Failed to load saved rubric:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved rubric.",
             variant: "destructive"
           });
@@ -224,7 +226,7 @@ function RubricGeneratorContent() {
     } catch (error) {
       console.error("Failed to generate rubric:", error);
       toast({
-        title: "Generation Failed",
+        title: translate("Generation Failed"),
         description: "There was an error generating the rubric. Please try again.",
         variant: "destructive",
       });

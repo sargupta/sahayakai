@@ -142,8 +142,9 @@ const visualAidFlow = ai.defineFlow(
 
               Labels:
               - Accurately label the key parts of the diagram.
-              - Text must be legible, correctly spelled, and spatially correct (e.g., arrow pointing to roots labeled "Roots").
+              - Text must be legible, correctly spelled, and spatially correct.
               - Use simple block letters.
+              - **LANGUAGE LOCK (CRITICAL):** All label text MUST be in ${language || 'English'} only. Do NOT mix languages. If the language is Hindi/Tamil/Kannada/Telugu/Marathi/Bengali/Gujarati/Punjabi/Malayalam/Odia, write labels in the native script (e.g. Hindi uses Devanagari: "जड़" not "Jadh" for roots).
             `,
             config: {
               ...overrideConfig.config,

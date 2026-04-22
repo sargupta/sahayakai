@@ -19,6 +19,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { SubjectSelector } from "@/components/subject-selector";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
 import { useJarvisStore } from "@/store/jarvisStore";
@@ -221,6 +222,7 @@ function InstantAnswerContent() {
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t: translate } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -344,7 +346,7 @@ function InstantAnswerContent() {
         openAuthModal();
       }
       toast({
-        title: "Answer Generation Failed",
+        title: translate("Answer Generation Failed"),
         description: error.message || "There was an error getting an answer. Please try again.",
         variant: "destructive",
       });
@@ -361,7 +363,7 @@ function InstantAnswerContent() {
 
   const handleSave = () => {
     toast({
-      title: "Saved to Library",
+      title: translate("Saved to Library"),
       description: "Your answer has been saved to your personal library.",
     });
   };

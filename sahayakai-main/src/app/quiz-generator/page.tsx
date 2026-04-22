@@ -32,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { WorksheetDisplay } from "@/components/worksheet-display";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { useJarvisStore } from "@/store/jarvisStore";
@@ -486,6 +488,7 @@ export default function QuizGeneratorPage() {
 
 function QuizGeneratorContent() {
   const { requireAuth, openAuthModal } = useAuth();
+  const { language: userLanguage, t: translate } = useLanguage();
   const [quiz, setQuiz] = useState<QuizVariantsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { limitState, checkResponse, clearLimit } = useLimitGuard();
@@ -494,11 +497,13 @@ function QuizGeneratorContent() {
   const { clearFormSnapshot } = useJarvisStore();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
 
+  // Default the Language field to the user's profile language, not
+  // hardcoded 'en'. See use-lesson-plan.ts for the same pattern.
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[userLanguage] ?? "en",
       gradeLevel: undefined,
       numQuestions: 5,
       questionTypes: ["multiple_choice", "short_answer"],
@@ -591,7 +596,7 @@ function QuizGeneratorContent() {
         } catch (err) {
           console.error("Failed to load saved quiz:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved quiz.",
             variant: "destructive"
           });
@@ -674,7 +679,7 @@ function QuizGeneratorContent() {
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       toast({
-        title: "Generation Failed",
+        title: translate("Generation Failed"),
         description: "There was an error generating the quiz. Please try again.",
         variant: "destructive",
       });

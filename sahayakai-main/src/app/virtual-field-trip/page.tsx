@@ -19,6 +19,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import { useJarvisStore } from "@/store/jarvisStore";
@@ -197,6 +198,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 function VirtualFieldTripContent() {
   const { requireAuth, openAuthModal } = useAuth();
+  const { t: translate } = useLanguage();
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -277,7 +279,7 @@ function VirtualFieldTripContent() {
         } catch (err) {
           console.error("Failed to load saved field trip:", err);
           toast({
-            title: "Load Failed",
+            title: translate("Load Failed"),
             description: "Could not load the saved field trip.",
             variant: "destructive"
           });
@@ -345,7 +347,7 @@ function VirtualFieldTripContent() {
     } catch (error) {
       console.error("Failed to plan trip:", error);
       toast({
-        title: "Planning Failed",
+        title: translate("Planning Failed"),
         description: "There was an error planning the virtual trip. Please try again.",
         variant: "destructive",
       });
