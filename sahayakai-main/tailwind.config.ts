@@ -11,8 +11,38 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Inter"', 'sans-serif'],
-        headline: ['"Outfit"', 'sans-serif'],
+        // Indic script families listed after Inter so the browser picks
+        // the right glyphs per Unicode block automatically. Noto Sans
+        // families are loaded on-demand by LanguageContext when the user
+        // picks a non-English language; English-only sessions never fetch
+        // them. Order matters: Inter first so Latin characters still use
+        // it when mixed with Indic script (code-switching Hinglish).
+        body: [
+          '"Inter"',
+          '"Noto Sans Devanagari"',
+          '"Noto Sans Tamil"',
+          '"Noto Sans Kannada"',
+          '"Noto Sans Telugu"',
+          '"Noto Sans Bengali"',
+          '"Noto Sans Gujarati"',
+          '"Noto Sans Gurmukhi"',
+          '"Noto Sans Malayalam"',
+          '"Noto Sans Oriya"',
+          'sans-serif',
+        ],
+        headline: [
+          '"Outfit"',
+          '"Noto Sans Devanagari"',
+          '"Noto Sans Tamil"',
+          '"Noto Sans Kannada"',
+          '"Noto Sans Telugu"',
+          '"Noto Sans Bengali"',
+          '"Noto Sans Gujarati"',
+          '"Noto Sans Gurmukhi"',
+          '"Noto Sans Malayalam"',
+          '"Noto Sans Oriya"',
+          'sans-serif',
+        ],
         code: ['monospace'],
       },
       colors: {

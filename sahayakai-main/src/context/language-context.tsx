@@ -430,6 +430,66 @@ const dictionary: Record<string, Record<Language, string>> = {
     },
 };
 
+// BCP-47 language tags for each Language. Used for:
+//   - <html lang> attribute (screen readers, hyphenation, Chrome auto-translate)
+//   - Web Speech API's SpeechRecognition.lang (transcription in the right language)
+//   - Google Cloud TTS voice selection (already mapped separately in tts/route.ts)
+// Kept here (alongside the dictionary) so one edit covers both surfaces.
+export const BCP47_MAP: Record<Language, string> = {
+    English: 'en-IN',
+    Hindi: 'hi-IN',
+    Kannada: 'kn-IN',
+    Tamil: 'ta-IN',
+    Telugu: 'te-IN',
+    Marathi: 'mr-IN',
+    Bengali: 'bn-IN',
+    Gujarati: 'gu-IN',
+    Punjabi: 'pa-IN',
+    Malayalam: 'ml-IN',
+    Odia: 'or-IN',
+};
+
+// Sync <html lang> so screen readers pronounce correctly, browsers hyphenate
+// in the right script, and Chrome's auto-translate doesn't offer a pointless
+// "translate to English" on a Hindi page that is already Hindi.
+function syncHtmlLang(lang: Language) {
+    if (typeof document === 'undefined') return;
+    document.documentElement.lang = BCP47_MAP[lang];
+}
+
+// Google Fonts families for each Indic script. English uses Inter already
+// loaded in layout.tsx — no extra fetch needed. When the user picks a
+// non-English language we inject the matching Noto Sans family so
+// Devanagari/Tamil/etc. render with real glyph metrics instead of a jagged
+// OEM fallback on low-end Androids.
+const INDIC_FONT_URL: Partial<Record<Language, string>> = {
+    Hindi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap',
+    Marathi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap',
+    Kannada: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap',
+    Tamil: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap',
+    Telugu: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap',
+    Bengali: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap',
+    Gujarati: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700&display=swap',
+    Punjabi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Gurmukhi:wght@400;500;600;700&display=swap',
+    Malayalam: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap',
+    Odia: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap',
+};
+
+// Inject the Noto Sans family for the active language if not already loaded.
+// English-only sessions pay nothing. Each non-English session downloads ~30 KB
+// for its script. Idempotent: re-injecting the same URL is a no-op.
+function ensureIndicFontLoaded(lang: Language) {
+    if (typeof document === 'undefined') return;
+    const url = INDIC_FONT_URL[lang];
+    if (!url) return;
+    if (document.querySelector(`link[data-indic-font="${lang}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = url;
+    link.dataset.indicFont = lang;
+    document.head.appendChild(link);
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [language, setLanguageState] = useState<Language>('English');
     const [isLoaded, setIsLoaded] = useState(false);
@@ -440,6 +500,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
             const cached = localStorage.getItem('sahayakai-lang');
             if (cached && LANGUAGES.includes(cached as Language)) {
                 setLanguageState(cached as Language);
+                syncHtmlLang(cached as Language);
+                ensureIndicFontLoaded(cached as Language);
             }
         } catch { /* localStorage unavailable (restricted WebView) */ }
 
@@ -448,6 +510,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
                 const { profile } = await getProfileData(user.uid);
                 if (profile?.preferredLanguage) {
                     setLanguageState(profile.preferredLanguage as Language);
+                    syncHtmlLang(profile.preferredLanguage as Language);
+                    ensureIndicFontLoaded(profile.preferredLanguage as Language);
                     try { localStorage.setItem('sahayakai-lang', profile.preferredLanguage); } catch {}
                 }
             }
@@ -458,6 +522,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const setLanguage = async (lang: Language, persist: boolean = true) => {
         setLanguageState(lang);
+        syncHtmlLang(lang);
+        ensureIndicFontLoaded(lang);
         try { localStorage.setItem('sahayakai-lang', lang); } catch {}
         if (!persist) return;
 
