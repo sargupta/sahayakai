@@ -22,6 +22,8 @@ import { ImageUploader } from "@/components/image-uploader";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { WorksheetDisplay } from "@/components/worksheet-display";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { SubjectSelector } from "@/components/subject-selector";
@@ -224,6 +226,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 function WorksheetWizardContent() {
   const { requireAuth, openAuthModal } = useAuth();
+  const { language: userLanguage } = useLanguage();
   const [worksheet, setWorksheet] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { limitState, checkResponse, clearLimit } = useLimitGuard();
@@ -231,11 +234,13 @@ function WorksheetWizardContent() {
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
+  // Default the Language field to the user's profile language, not
+  // hardcoded 'en'. See use-lesson-plan.ts for the same pattern.
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[userLanguage] ?? "en",
       gradeLevel: "Class 4",
       subject: "General",
     },

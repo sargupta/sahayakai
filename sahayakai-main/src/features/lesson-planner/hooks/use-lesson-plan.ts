@@ -18,6 +18,8 @@ import { formSchema, FormValues, topicPlaceholderTranslations, loadingMessages }
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { useSearchParams } from "next/navigation";
 import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -26,6 +28,7 @@ import { useLimitGuard } from "@/hooks/use-limit-guard";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
+    const { language: userLanguage } = useLanguage();
     const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState("");
@@ -39,11 +42,16 @@ export function useLessonPlan() {
     const { trackContent, trackFeature, trackFriction } = useAnalytics();
     const { setStructuredData, saveFormSnapshot, formSnapshots, clearFormSnapshot } = useJarvisStore();
 
+    // Default the Language field to the user's selected app language (set at
+    // onboarding Step 0, persisted in LanguageContext + Firestore profile).
+    // Previously hardcoded "en" meant a Hindi user saw the dropdown set to
+    // English on every visit and had to manually toggle it — classic
+    // language-preference leak. Fallback to 'en' if the hook is mid-resolve.
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             topic: "",
-            language: "en",
+            language: LANGUAGE_TO_ISO[userLanguage] ?? "en",
             gradeLevels: [],
             subject: "General",
             imageDataUri: "",
