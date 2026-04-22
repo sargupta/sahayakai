@@ -1,13 +1,20 @@
-
 "use client";
 
-import type { FC } from 'react';
+import type { FC } from "react";
 import type { InstantAnswerOutput } from "@/ai/flows/instant-answer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from './ui/button';
-import { Copy, Save, MessageSquareQuote, Youtube, Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import ReactMarkdown from 'react-markdown';
+import { Button } from "./ui/button";
+import {
+    Copy,
+    Save,
+    MessageSquareQuote,
+    Youtube,
+    Download,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import { ResultShell } from "@/components/ui/result-shell";
+import { exportElementToPdf } from "@/lib/export-pdf";
+import { getResultShellDict } from "@/lib/result-shell-i18n";
 
 type InstantAnswerDisplayProps = {
     answer: InstantAnswerOutput & { videoSuggestionUrl?: string | null };
@@ -15,149 +22,131 @@ type InstantAnswerDisplayProps = {
     selectedLanguage?: string;
 };
 
-export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({ answer, title, selectedLanguage }) => {
+const PDF_ID = "instant-answer-card";
+
+export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
+    answer,
+    title,
+    selectedLanguage,
+}) => {
     const { toast } = useToast();
+    const t = getResultShellDict(selectedLanguage);
+
+    if (!answer || !answer.answer) return null;
+
+    const displayTitle = title || t.instantAnswerTitle;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(answer.answer);
-        toast({
-            title: "Copied to Clipboard",
-            description: "The answer has been copied to your clipboard.",
-        });
+        toast({ title: t.copiedTitle, description: t.copiedDesc });
     };
 
     const handleDownload = async () => {
-        const element = document.getElementById('instant-answer-card');
-        if (!element) return;
-
-        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-          import('jspdf'),
-          import('html2canvas'),
-        ]);
-
-        // Hide buttons for cleaner PDF
-        const actionButtons = element.querySelector('.no-print');
-        if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
-
-        try {
-            toast({ title: "Generating PDF...", description: "Preparing your download." });
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`Sahayak_InstantAnswer_${(title || 'Answer').replace(/[^a-z0-9]/gi, '_')}.pdf`);
-
-            toast({ title: "PDF Downloaded", description: "Your file is ready." });
-        } catch (error) {
-            toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
-        } finally {
-            if (actionButtons) (actionButtons as HTMLElement).style.display = '';
-        }
+        toast({ title: t.pdfPreparingTitle, description: t.pdfPreparingDesc });
+        const res = await exportElementToPdf({
+            elementId: PDF_ID,
+            filename: `Sahayak_InstantAnswer_${displayTitle}.pdf`,
+        });
+        toast(
+            res.ok
+                ? { title: t.pdfDoneTitle, description: t.pdfDoneDesc }
+                : {
+                      title: t.pdfFailedTitle,
+                      description: t.pdfFailedDesc,
+                      variant: "destructive",
+                  },
+        );
     };
 
     const handleSave = async () => {
         try {
-            const { auth } = await import('@/lib/firebase');
-            let user = auth.currentUser;
+            const { auth } = await import("@/lib/firebase");
+            const user = auth.currentUser;
             if (!user) {
-                toast({ title: "Login Required", description: "Please login to save.", variant: "destructive" });
+                toast({
+                    title: t.loginRequiredTitle,
+                    description: t.loginRequiredDesc,
+                    variant: "destructive",
+                });
                 return;
             }
-
             const token = await user.getIdToken();
-            const saveTitle = title || "Instant Answer";
-
             const payload = {
                 id: crypto.randomUUID(),
-                type: 'instant-answer',
-                title: saveTitle,
-                gradeLevel: answer.gradeLevel || 'Class 5',
-                subject: answer.subject || 'General',
-                topic: saveTitle,
-                language: selectedLanguage || 'en',
+                type: "instant-answer",
+                title: displayTitle,
+                gradeLevel: answer.gradeLevel || "Class 5",
+                subject: answer.subject || "General",
+                topic: displayTitle,
+                language: selectedLanguage || "en",
                 isPublic: false,
                 isDraft: false,
-                data: answer
+                data: answer,
             };
-
-            const response = await fetch('/api/content/save', {
-                method: 'POST',
+            const response = await fetch("/api/content/save", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
-
-            if (!response.ok) throw new Error('Server rejected save');
-
+            if (!response.ok) throw new Error("Server rejected save");
+            toast({ title: t.savedTitle, description: t.savedDesc });
+        } catch {
             toast({
-                title: "Saved to Library",
-                description: "Saved to your personal library.",
-            });
-        } catch (error) {
-            toast({
-                title: "Save Failed",
+                title: t.saveFailedTitle,
+                description: t.saveFailedDesc,
                 variant: "destructive",
-                description: "Could not save to library."
             });
         }
     };
 
-    if (!answer || !answer.answer) {
-        return null;
-    }
-
     return (
-        <Card id="instant-answer-card" className="mt-8 w-full max-w-4xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/20 pb-4 bg-gradient-to-r from-primary/10 to-transparent">
-                <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
-                    <MessageSquareQuote className="h-7 w-7 text-primary" />
-                    {title || "Instant Answer"}
-                </CardTitle>
-                <div className="flex items-center gap-2 no-print">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleSave}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                        <Download className="mr-2 h-4 w-4" />
-                        PDF
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="p-8 prose prose-slate max-w-none">
-                <div className="bg-white/50 rounded-xl p-6 border border-white/60 shadow-inner min-h-[100px]">
-                    <ReactMarkdown>{answer.answer}</ReactMarkdown>
-                </div>
+        <ResultShell
+            id={PDF_ID}
+            title={displayTitle}
+            icon={<MessageSquareQuote />}
+            variant="glass"
+            actions={[
+                { label: t.copy, icon: <Copy />, onClick: handleCopy },
+                { label: t.save, icon: <Save />, onClick: handleSave },
+                { label: t.pdf, icon: <Download />, onClick: handleDownload },
+            ]}
+        >
+            <div className="prose prose-slate max-w-none prose-sm sm:prose-base">
+                <ReactMarkdown>{answer.answer}</ReactMarkdown>
+            </div>
 
-                {answer.videoSuggestionUrl && (
-                    <div className="mt-8 p-6 bg-red-50/50 rounded-xl border border-red-100 flex flex-col md:flex-row items-center gap-6">
-                        <div className="bg-red-600 p-3 rounded-full flex-shrink-0">
-                            <Youtube className="h-8 w-8 text-white" />
-                        </div>
-                        <div className="flex-1 text-center md:text-left">
-                            <h4 className="font-headline text-xl text-red-900 mb-1">Recommended Video</h4>
-                            <p className="text-red-800/70 mb-4 text-sm">Watch a visual explanation of this topic on YouTube.</p>
-                            <Button
-                                variant="destructive"
-                                className="bg-red-600 hover:bg-red-700"
-                                onClick={() => answer.videoSuggestionUrl && window.open(answer.videoSuggestionUrl, '_blank')}
-                            >
-                                Watch on YouTube
-                            </Button>
-                        </div>
+            {answer.videoSuggestionUrl ? (
+                <div className="mt-6 p-4 sm:p-6 bg-red-50 rounded-xl border border-red-100 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                    <div className="bg-red-600 p-3 rounded-full flex-shrink-0">
+                        <Youtube className="h-7 w-7 text-white" />
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                    <div className="flex-1 text-center sm:text-left">
+                        <h4 className="font-headline text-lg sm:text-xl text-red-900 mb-1">
+                            {t.recommendedVideo}
+                        </h4>
+                        <p className="text-red-800/70 mb-3 text-sm">
+                            {t.recommendedVideoBlurb}
+                        </p>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() =>
+                                answer.videoSuggestionUrl &&
+                                window.open(
+                                    answer.videoSuggestionUrl,
+                                    "_blank",
+                                )
+                            }
+                        >
+                            {t.watchOnYoutube}
+                        </Button>
+                    </div>
+                </div>
+            ) : null}
+        </ResultShell>
     );
 };
