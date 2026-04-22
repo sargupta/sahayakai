@@ -8,13 +8,14 @@ if (isPlaceholder(process.env.GOOGLE_API_KEY)) delete process.env.GOOGLE_API_KEY
 if (isPlaceholder(process.env.GEMINI_API_KEY)) delete process.env.GEMINI_API_KEY;
 
 // 1. Central Genkit Instance
-// GENKIT_DEFAULT_MODEL env override lets local dev / ops swap model without
-// a code change (e.g. failover from gemini-2.0-flash to gemini-2.5-flash if
-// one model's daily quota is exhausted on a given key). Default stays on
-// 2.0-flash because of its lower cost profile.
+// GENKIT_DEFAULT_MODEL env override lets ops swap without a code change.
+// Default is `gemini-2.5-flash` — `gemini-2.0-flash` was moved off because
+// its free-tier per-minute quota was saturating in production (quiz flow
+// calls the API 3× in parallel, one per difficulty, which hits the cap
+// fast). 2.5-flash has the same pricing class with better throughput.
 export const ai = genkit({
   plugins: [googleAI()],
-  model: process.env.GENKIT_DEFAULT_MODEL || 'googleai/gemini-2.0-flash',
+  model: process.env.GENKIT_DEFAULT_MODEL || 'googleai/gemini-2.5-flash',
   // promptDir: 'src/ai/prompts',  // TODO: Enable after migrating flows from inline definePrompt() to ai.prompt()
 });
 
