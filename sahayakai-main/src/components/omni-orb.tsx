@@ -50,6 +50,10 @@ export function OmniOrb() {
     const [isClient, setIsClient] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [orbOpen, setOrbOpen] = useState(false);
+    // Auto-hide-on-scroll: keeps voice-first prominence on idle, gets out
+    // of the way while the teacher is reading generated output. Shown again
+    // on scroll-up, near top, or when the memory drawer is open.
+    const [hiddenByScroll, setHiddenByScroll] = useState(false);
     // Proactive greeting: shown once per browser session when profile exists
     const [proactiveTip, setProactiveTip] = useState<string | null>(null);
     const proactiveShown = useRef(false);
@@ -71,6 +75,34 @@ export function OmniOrb() {
         // through as uiState so VIDYA can "see" active form fields.
         setScreenContext({ path: pathname, uiState: structuredData });
     }, [pathname, setScreenContext, structuredData]);
+
+    // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
+    // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
+    // Uses a small delta threshold to ignore jitter; near-top always shows.
+    useEffect(() => {
+        if (!isClient) return;
+        let lastY = window.scrollY;
+        let ticking = false;
+        const onScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                const y = window.scrollY;
+                const delta = y - lastY;
+                if (y < 80) {
+                    setHiddenByScroll(false);
+                } else if (delta > 12) {
+                    setHiddenByScroll(true);
+                } else if (delta < -12) {
+                    setHiddenByScroll(false);
+                }
+                lastY = y;
+                ticking = false;
+            });
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, [isClient]);
 
     // ── Proactive daily-inspiration greeting (once per session) ──────────
     useEffect(() => {
@@ -305,8 +337,16 @@ export function OmniOrb() {
     return (
         <div
             ref={orbRef}
-            className="fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[9999]"
-            style={{ transform: `translate(${orbPos.x}px, ${orbPos.y}px)` }}
+            className={`fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[90] transition-[transform,opacity] duration-300 ${
+                hiddenByScroll && !orbOpen && !isDragging
+                    ? "opacity-0 pointer-events-none"
+                    : "opacity-100"
+            }`}
+            style={{
+                transform: `translate(${orbPos.x}px, ${
+                    orbPos.y + (hiddenByScroll && !orbOpen && !isDragging ? 120 : 0)
+                }px)`,
+            }}
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (

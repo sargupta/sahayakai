@@ -1,17 +1,16 @@
-
 "use client";
 
-import type { FC } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from './ui/button';
-import { Download, Copy, FileText, Printer, Save } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
-import { useToast } from '@/hooks/use-toast';
-
+import type { FC } from "react";
+import { Download, Copy, FileText, Save } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import { useToast } from "@/hooks/use-toast";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { ResultShell } from "@/components/ui/result-shell";
+import { exportElementToPdf } from "@/lib/export-pdf";
+import { getResultShellDict } from "@/lib/result-shell-i18n";
 
 type WorksheetDisplayProps = {
     worksheet: {
@@ -26,166 +25,111 @@ type WorksheetDisplayProps = {
     selectedLanguage?: string;
 };
 
-export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({ worksheet, title, selectedLanguage }) => {
+const PDF_ID = "worksheet-pdf";
+
+export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
+    worksheet,
+    title,
+    selectedLanguage,
+}) => {
     const { toast } = useToast();
+    const t = getResultShellDict(selectedLanguage);
+
+    if (!worksheet || !worksheet.worksheetContent) return null;
+
+    const displayTitle = title || worksheet.title || "Worksheet";
 
     const handleCopy = () => {
         navigator.clipboard.writeText(worksheet.worksheetContent);
-        toast({
-            title: "Copied to Clipboard",
-            description: "Worksheet content has been copied to your clipboard.",
-        });
+        toast({ title: t.copiedTitle, description: t.copiedDesc });
     };
 
     const handleDownload = async () => {
-        const element = document.getElementById('worksheet-pdf');
-        if (!element) return;
-
-        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-          import('jspdf'),
-          import('html2canvas'),
-        ]);
-
-        // Hide buttons for cleaner PDF
-        const actionButtons = element.querySelector('.no-print');
-        if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
-
-        try {
-            toast({ title: "Generating PDF...", description: "Preparing high-quality worksheet PDF." });
-
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-            const imgWidth = 210;
-            const pageHeight = 297;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            const cleanTitle = (title || worksheet.title || 'Worksheet').replace(/[^a-z0-9]/gi, '_');
-            pdf.save(`Sahayak_Worksheet_${cleanTitle}.pdf`);
-
-            toast({ title: "PDF Downloaded", description: "Your worksheet is ready." });
-        } catch (error) {
-            toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
-        } finally {
-            // Restore buttons
-            if (actionButtons) (actionButtons as HTMLElement).style.display = '';
-        }
+        toast({ title: t.pdfPreparingTitle, description: t.pdfPreparingDesc });
+        const res = await exportElementToPdf({
+            elementId: PDF_ID,
+            filename: `Sahayak_Worksheet_${displayTitle}.pdf`,
+        });
+        toast(
+            res.ok
+                ? { title: t.pdfDoneTitle, description: t.pdfDoneDesc }
+                : {
+                      title: t.pdfFailedTitle,
+                      description: t.pdfFailedDesc,
+                      variant: "destructive",
+                  },
+        );
     };
 
     const handleSave = async () => {
         try {
-            const { auth } = await import('@/lib/firebase');
+            const { auth } = await import("@/lib/firebase");
             let user = auth.currentUser;
-
             if (!user) {
-                const { signInAnonymously } = await import('firebase/auth');
-                const userCred = await signInAnonymously(auth);
-                user = userCred.user;
+                const { signInAnonymously } = await import("firebase/auth");
+                user = (await signInAnonymously(auth)).user;
             }
-
-            const saveTitle = title || worksheet.title || "Worksheet";
-
-            // Construct payload matching WorksheetDataSchema
+            const token = await user.getIdToken();
             const payload = {
                 id: crypto.randomUUID(),
-                type: 'worksheet',
-                title: saveTitle,
-                gradeLevel: worksheet.gradeLevel || 'Class 5',
-                subject: worksheet.subject || 'General',
-                topic: saveTitle,
-                language: selectedLanguage || 'en',
+                type: "worksheet",
+                title: displayTitle,
+                gradeLevel: worksheet.gradeLevel || "Class 5",
+                subject: worksheet.subject || "General",
+                topic: displayTitle,
+                language: selectedLanguage || "en",
                 isPublic: false,
                 isDraft: false,
-                data: {
-                    ...worksheet,
-                    layout: 'portrait',
-                }
+                data: { ...worksheet, layout: "portrait" },
             };
-
-            const token = await user.getIdToken();
-
-            const response = await fetch('/api/content/save', {
-                method: 'POST',
+            const response = await fetch("/api/content/save", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
-
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Server rejected save');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || "Server rejected save");
             }
-
+            toast({ title: t.savedTitle, description: t.savedDesc });
+        } catch (err) {
             toast({
-                title: "Saved to Library",
-                description: "Your worksheet has been saved to your personal library.",
-            });
-
-        } catch (error) {
-            toast({
-                title: "Save Failed",
-                description: error instanceof Error ? error.message : "Could not save to library.",
-                variant: "destructive"
+                title: t.saveFailedTitle,
+                description:
+                    err instanceof Error ? err.message : t.saveFailedDesc,
+                variant: "destructive",
             });
         }
     };
 
-    if (!worksheet || !worksheet.worksheetContent) {
-        return null;
-    }
-
     return (
-        <Card id="worksheet-pdf" className="mt-8 w-full max-w-4xl bg-white border border-slate-200 shadow-soft animate-fade-in-up">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
-                <CardTitle className="font-headline text-2xl md:text-3xl flex items-center gap-2">
-                    <FileText className="h-7 w-7 text-primary" />
-                    {title || "Worksheet"}
-                </CardTitle>
-                <div className="flex items-center gap-2 no-print">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleSave}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                        <Download className="mr-2 h-4 w-4" />
-                        PDF
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="p-8 prose prose-slate max-w-none prose-headings:font-headline prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl">
-                <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                >
-                    {worksheet.worksheetContent}
-                </ReactMarkdown>
-            </CardContent>
-            <div className="p-4 border-t border-border flex justify-end">
-              <FeedbackDialog
-                page="worksheet"
-                feature="worksheet-result"
-                context={{ title: title || worksheet.title || "Worksheet" }}
-              />
-            </div>
-        </Card>
+        <ResultShell
+            id={PDF_ID}
+            title={displayTitle}
+            icon={<FileText />}
+            actions={[
+                { label: t.copy, icon: <Copy />, onClick: handleCopy },
+                { label: t.save, icon: <Save />, onClick: handleSave },
+                { label: t.pdf, icon: <Download />, onClick: handleDownload },
+            ]}
+            contentClassName="p-4 sm:p-6 md:p-8 prose prose-slate max-w-none prose-sm sm:prose-base prose-headings:font-headline prose-h1:text-2xl sm:prose-h1:text-3xl prose-h2:text-xl sm:prose-h2:text-2xl prose-h3:text-lg sm:prose-h3:text-xl"
+            footer={
+                <FeedbackDialog
+                    page="worksheet"
+                    feature="worksheet-result"
+                    context={{ title: displayTitle }}
+                />
+            }
+        >
+            <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+            >
+                {worksheet.worksheetContent}
+            </ReactMarkdown>
+        </ResultShell>
     );
 };

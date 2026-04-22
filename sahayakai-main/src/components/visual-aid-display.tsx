@@ -1,14 +1,14 @@
-
 "use client";
 
-import type { FC } from 'react';
+import type { FC } from "react";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from './ui/button';
-import { Save, Download, Images } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
+import { Save, Download, Images } from "lucide-react";
+import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { ResultShell } from "@/components/ui/result-shell";
+import { exportElementToPdf } from "@/lib/export-pdf";
+import { getResultShellDict } from "@/lib/result-shell-i18n";
 
 type VisualAidDisplayProps = {
     visualAid: VisualAidOutput;
@@ -17,118 +17,105 @@ type VisualAidDisplayProps = {
     language?: string;
 };
 
-export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, gradeLevel, language }) => {
+const PDF_ID = "visual-aid-card";
+
+export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
+    visualAid,
+    title,
+    gradeLevel,
+    language,
+}) => {
     const { toast } = useToast();
+    const t = getResultShellDict(language);
 
     const handleSave = async () => {
         try {
-            // If the generation flow already persisted this visual aid, nothing to do.
             if (visualAid.storagePath) {
-                toast({ title: "Already in Library", description: "This visual aid was saved automatically when generated." });
+                toast({
+                    title: "Already in Library",
+                    description:
+                        "This visual aid was saved automatically when generated.",
+                });
                 return;
             }
-
-            const { auth } = await import('@/lib/firebase');
-            let user = auth.currentUser;
+            const { auth } = await import("@/lib/firebase");
+            const user = auth.currentUser;
             if (!user) {
-                toast({ title: "Login Required", description: "Please login to save.", variant: "destructive" });
+                toast({
+                    title: t.loginRequiredTitle,
+                    description: t.loginRequiredDesc,
+                    variant: "destructive",
+                });
                 return;
             }
-
             const token = await user.getIdToken();
-
             const payload = {
                 id: crypto.randomUUID(),
-                type: 'visual-aid',
-                title: title,
-                gradeLevel: gradeLevel || 'Class 5',
-                subject: visualAid.subject || 'Science',
+                type: "visual-aid",
+                title,
+                gradeLevel: gradeLevel || "Class 5",
+                subject: visualAid.subject || "Science",
                 topic: title,
-                language: language || 'English',
+                language: language || "English",
                 isPublic: false,
                 isDraft: false,
-                data: visualAid
+                data: visualAid,
             };
-
-            const response = await fetch('/api/content/save', {
-                method: 'POST',
+            const response = await fetch("/api/content/save", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
-
-            if (!response.ok) throw new Error('Server rejected save');
-
+            if (!response.ok) throw new Error("Server rejected save");
+            toast({ title: t.savedTitle, description: t.savedDesc });
+        } catch {
             toast({
-                title: "Saved to Library",
-                description: "Saved to your personal library.",
-            });
-        } catch (error) {
-            toast({
-                title: "Save Failed",
+                title: t.saveFailedTitle,
+                description: t.saveFailedDesc,
                 variant: "destructive",
-                description: "Could not save to library."
             });
         }
     };
 
-    const handleDownloadPDF = async () => {
-        const element = document.getElementById('visual-aid-card');
-        if (!element) return;
-
-        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-            import('jspdf'),
-            import('html2canvas'),
-        ]);
-
-        const actionButtons = element.querySelector('.no-print');
-        if (actionButtons) (actionButtons as HTMLElement).style.display = 'none';
-
-        try {
-            toast({ title: "Generating PDF...", description: "Preparing visual aid document." });
-
-            // Use html2canvas to capture the card
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`Sahayak_VisualAid_${title.substring(0, 20).replace(/[^a-z0-9]/gi, '_')}.pdf`);
-
-            toast({ title: "PDF Downloaded", description: "Your file is ready." });
-        } catch (error) {
-            toast({ title: "Download Failed", variant: "destructive", description: "Could not generate PDF." });
-        } finally {
-            if (actionButtons) (actionButtons as HTMLElement).style.display = '';
-        }
+    const handleDownload = async () => {
+        toast({ title: t.pdfPreparingTitle, description: t.pdfPreparingDesc });
+        const res = await exportElementToPdf({
+            elementId: PDF_ID,
+            filename: `Sahayak_VisualAid_${title.substring(0, 20)}.pdf`,
+        });
+        toast(
+            res.ok
+                ? { title: t.pdfDoneTitle, description: t.pdfDoneDesc }
+                : {
+                      title: t.pdfFailedTitle,
+                      description: t.pdfFailedDesc,
+                      variant: "destructive",
+                  },
+        );
     };
 
     return (
-        <Card id="visual-aid-card" className="mt-8 w-full max-w-2xl bg-white/30 backdrop-blur-lg border-white/40 shadow-xl animate-fade-in-up">
-            <CardHeader>
-                <div className="flex justify-between items-start no-print">
-                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                        <Images className="h-6 w-6" />
-                        Generated Visual Aid
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={handleSave}>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
-                            <Download className="mr-2 h-4 w-4" />
-                            PDF
-                        </Button>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center p-6 space-y-6">
+        <ResultShell
+            id={PDF_ID}
+            title={title || "Generated Visual Aid"}
+            icon={<Images />}
+            className="max-w-2xl"
+            actions={[
+                { label: t.save, icon: <Save />, onClick: handleSave },
+                { label: t.pdf, icon: <Download />, onClick: handleDownload },
+            ]}
+            footer={
+                <FeedbackDialog
+                    page="visual-aid"
+                    feature="visual-aid-result"
+                    context={{ title }}
+                />
+            }
+        >
+            <div className="flex flex-col items-center space-y-6">
                 <div className="w-full relative aspect-square max-w-[512px] border border-black/10 rounded-lg overflow-hidden bg-black/5">
                     {visualAid.imageDataUri ? (
                         <Image
@@ -141,29 +128,33 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({ visualAid, title, 
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
                             <Images className="h-10 w-10" />
-                            <p className="text-sm text-center px-4">Image not stored. Edit the prompt and click Generate to recreate.</p>
+                            <p className="text-sm text-center px-4">
+                                Image not stored. Edit the prompt and click
+                                Generate to recreate.
+                            </p>
                         </div>
                     )}
                 </div>
 
                 <div className="w-full space-y-4 text-left">
                     <div className="p-4 bg-accent/10 rounded-lg border border-primary/20">
-                        <h4 className="font-bold text-primary mb-1">Pedagogical Context</h4>
-                        <p className="text-sm text-foreground/80">{visualAid.pedagogicalContext}</p>
+                        <h4 className="font-bold text-primary mb-1">
+                            Pedagogical Context
+                        </h4>
+                        <p className="text-sm text-foreground/80">
+                            {visualAid.pedagogicalContext}
+                        </p>
                     </div>
                     <div className="p-4 bg-accent/10 rounded-lg border border-primary/20">
-                        <h4 className="font-bold text-primary mb-1">Discussion Spark</h4>
-                        <p className="text-sm text-foreground/80">{visualAid.discussionSpark}</p>
+                        <h4 className="font-bold text-primary mb-1">
+                            Discussion Spark
+                        </h4>
+                        <p className="text-sm text-foreground/80">
+                            {visualAid.discussionSpark}
+                        </p>
                     </div>
                 </div>
-            </CardContent>
-            <div className="p-4 border-t border-slate-100 flex justify-end">
-              <FeedbackDialog
-                page="visual-aid"
-                feature="visual-aid-result"
-                context={{ title }}
-              />
             </div>
-        </Card>
+        </ResultShell>
     );
 };

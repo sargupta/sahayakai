@@ -1,13 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Pages where the PWA install prompt may appear. On all other pages the
+// VIDYA orb is the primary floating element and showing the install card
+// would crowd a 375px viewport (see FLOATING_CHROME_AUDIT §6). The prompt
+// re-appears the next time the teacher visits the home page.
+const PWA_PROMPT_ALLOWED_ROUTES = new Set<string>(['/', '/onboarding']);
+
 export function PWAInstallPrompt() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -99,9 +107,10 @@ export function PWAInstallPrompt() {
   };
 
   if (!showPrompt || isInstalled) return null;
+  if (!PWA_PROMPT_ALLOWED_ROUTES.has(pathname)) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 left-4 right-4 z-[70] mx-auto max-w-md animate-in slide-in-from-bottom-4 duration-300">
       <div className="rounded-2xl border border-orange-200 bg-white p-4 shadow-xl">
         <div className="flex items-start gap-3">
           <img
