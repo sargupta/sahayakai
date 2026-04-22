@@ -10,6 +10,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { quizGeneratorFlow } from './quiz-definitions';
 import { logger } from '@/lib/logger';
+import { AIQuotaExhaustedError } from '@/ai/genkit';
+
+/**
+ * True when the error is (or wraps) an AIQuotaExhaustedError, or surfaces a
+ * 429/RESOURCE_EXHAUSTED signal in its message. Checks `name` first — survives
+ * production minification where `instanceof` fails across chunk boundaries.
+ */
+function looksLikeQuota(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const anyErr = err as { name?: string; message?: string };
+  if (anyErr.name === 'AIQuotaExhaustedError') return true;
+  const msg = String(anyErr.message || '');
+  return msg.includes('429')
+    || msg.includes('quota')
+    || msg.includes('RESOURCE_EXHAUSTED')
+    || msg.includes('temporarily overloaded');
+}
 
 export type { QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-generator-schemas';
 
@@ -41,24 +58,27 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   const now = new Date();
   const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
 
-  // Run 3 generations in parallel with detailed error tracking
+  // Run 3 generations in parallel. Track per-variant errors so we can re-throw
+  // a typed AIQuotaExhaustedError if every variant quota-failed — that lets the
+  // route layer return 503 + Retry-After instead of a generic 500.
+  const variantErrors: Array<unknown> = [];
   const results = await Promise.allSettled(
     difficulties.map(async (difficulty) => {
       try {
         const difficultyInput = { ...localizedInput, targetDifficulty: difficulty };
         return await quizGeneratorFlow(difficultyInput);
       } catch (error) {
-        // Enhanced diagnostic logging
+        variantErrors.push(error);
+
         const errorDetails = {
           difficulty,
           errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorName: (error as any)?.name,
           errorMessage: error instanceof Error ? error.message : String(error),
-          // NEW: Expose quota/auth signals
-          isQuotaError: error instanceof Error && (
-            error.message?.includes('429') ||
-            error.message?.includes('quota') ||
-            error.message?.includes('RESOURCE_EXHAUSTED')
-          ),
+          // Check name first — AIQuotaExhaustedError's wrapped message
+          // ("temporarily overloaded…") doesn't contain "429" so the old
+          // string-only classifier silently returned false.
+          isQuotaError: looksLikeQuota(error),
           isAuthError: error instanceof Error && (
             error.message?.includes('401') ||
             error.message?.includes('403') ||
@@ -73,9 +93,7 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
         };
 
         // Per-variant failure is WARN not ERROR — if even one of the three
-        // variants (easy/medium/hard) succeeds, the user still gets a usable
-        // quiz. The route-level catch will log ERROR only if ALL three null
-        // out (throw on line ~102 below).
+        // variants succeeds, the user still gets a usable quiz.
         const errorMsg = `Quiz Generation Failed (${difficulty} variant) for topic: "${input.topic || 'Unknown'}"`;
         logger.warn(errorMsg, 'QUIZ', errorDetails);
         return null;
@@ -102,8 +120,16 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
     isSaved: !!input.userId // If userId is present, it will be auto-saved below
   };
 
-  // If all failed, throw error
+  // If all failed, surface the best-shaped error so the route layer can map
+  // to the correct HTTP status. If *any* variant failed with a quota signal,
+  // re-throw AIQuotaExhaustedError → handleAIError → 503 + Retry-After.
   if (!easy && !medium && !hard) {
+    if (variantErrors.some(looksLikeQuota)) {
+      throw new AIQuotaExhaustedError(
+        'AI service is temporarily overloaded. Please try again in a minute.',
+        60,
+      );
+    }
     throw new Error('The AI model failed to generate any valid quiz variants.');
   }
 
