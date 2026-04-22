@@ -24,8 +24,10 @@ import {
 import {
   Globe, CreditCard, Shield, Download, Trash2, Loader2,
   Crown, ArrowRight, ChevronRight, GraduationCap,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification } from '@/types';
+import { AuthGate } from '@/components/auth/auth-gate';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -233,9 +235,13 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Please sign in to access settings.</p>
-      </div>
+      <AuthGate
+        icon={SettingsIcon}
+        title="Sign in to manage settings"
+        description="Sign in to customise your language, plan preferences, and notification settings."
+      >
+        {null}
+      </AuthGate>
     );
   }
 

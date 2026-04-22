@@ -9,7 +9,13 @@
  * @param topic - The topic string to parse
  * @returns The normalized grade string (e.g., "Class 5") or null if no grade found
  */
-export function extractGradeFromTopic(topic: string): string | null {
+export function extractGradeFromTopic(topic: string | null | undefined): string | null {
+    // Null-safety: callers sometimes pass `input.prompt` directly without
+    // asserting the field is present. A missing prompt should quietly return
+    // null, not crash the whole flow with "Cannot read properties of undefined
+    // (reading 'match')".
+    if (!topic) return null;
+
     const patterns = [
         /class\s*(\d+)/i,
         /grade\s*(\d+)/i,

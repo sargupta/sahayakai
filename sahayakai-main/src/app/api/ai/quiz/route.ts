@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
 import { QuizGeneratorInputSchema } from '@/ai/schemas/quiz-generator-schemas';
-import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 async function _handler(request: Request) {
@@ -28,12 +27,10 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        logAIError(error, 'QUIZ', { message: `Quiz API Failed for topic: "${topicText}"`, userId: request.headers.get('x-user-id') });
-
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
+        return handleAIError(error, 'QUIZ', {
+            message: `Quiz API Failed for topic: "${topicText}"`,
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 

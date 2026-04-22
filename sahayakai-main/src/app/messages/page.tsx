@@ -9,6 +9,7 @@ import { ConversationThread } from "@/components/messages/conversation-thread";
 import { NewConversationPicker } from "@/components/messages/new-conversation-picker";
 import { Conversation } from "@/types/messages";
 import { MessageCircle, Loader2 } from "lucide-react";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { PushPermissionBanner } from "@/components/notifications/push-permission-banner";
 import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
@@ -123,10 +124,13 @@ function MessagesPageContent() {
 
     if (!user) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <MessageCircle className="h-12 w-12 text-muted-foreground" />
-                <p className="text-sm font-bold text-foreground">Sign in to access your messages.</p>
-            </div>
+            <AuthGate
+                icon={MessageCircle}
+                title="Sign in to see your messages"
+                description="Sign in with Google to chat with other teachers and get notified of new replies."
+            >
+                {null}
+            </AuthGate>
         );
     }
 

@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server';
 import { logger } from './logger';
 
+// ZodError detection via name + shape rather than `instanceof ZodError`.
+// Next.js can load zod from both CJS (`zod/v3/types.cjs`) and ESM entrypoints
+// inside the same request, producing ZodError instances whose constructor
+// isn't the same identity as the one we imported. `instanceof` silently
+// returns false, and the check falls through to the 500 branch. This helper
+// sidesteps the issue by looking at the error's duck-type.
+function isZodError(err: unknown): err is { name: 'ZodError'; issues: Array<{ path: (string | number)[]; code: string; message: string }> } {
+    return (
+        !!err &&
+        typeof err === 'object' &&
+        (err as any).name === 'ZodError' &&
+        Array.isArray((err as any).issues)
+    );
+}
+
 /**
  * Shared catch-block helper for AI API routes.
  *
@@ -79,11 +94,65 @@ export function logAIError(
     ctx: AIErrorContext,
 ): void {
     const extra = { userId: ctx.userId ?? null, ...ctx.extra };
+    if (isZodError(error)) {
+        // Client bug, not a server bug — don't page on-call.
+        logger.warn(ctx.message, context, { ...extra, reason: 'invalid_request', zodIssues: error.issues });
+        return;
+    }
     if (isQuotaExhausted(error) || isSafetyViolation(error)) {
         logger.warn(ctx.message, context, { ...extra, reason: isSafetyViolation(error) ? 'safety' : 'quota' });
     } else {
         logger.error(ctx.message, error, context, extra);
     }
+}
+
+/**
+ * Stream-safe error classification.
+ *
+ * Streaming routes can't change HTTP status mid-response (headers are already
+ * flushed on the first `send()`), so they need a way to emit a richer `error`
+ * SSE event with a code the client can branch on. Use this in every SSE AI
+ * route catch block.
+ */
+export interface ClassifiedAIError {
+    /** Stable machine-readable code for the client to branch on */
+    code:
+        | 'AI_SERVICE_BUSY'
+        | 'AI_SERVICE_UNAVAILABLE'
+        | 'SAFETY_VIOLATION'
+        | 'AI_GENERATION_FAILED';
+    /** Human-friendly message safe to show the user */
+    message: string;
+    /** Whether the failure is transient (client should retry) or permanent */
+    transient: boolean;
+}
+
+export function classifyAIError(err: unknown): ClassifiedAIError {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (isSafetyViolation(err)) {
+        return { code: 'SAFETY_VIOLATION', message: msg, transient: false };
+    }
+    if (isQuotaExhausted(err)) {
+        return {
+            code: 'AI_SERVICE_BUSY',
+            message:
+                'AI service is temporarily overloaded. Please try again in a minute.',
+            transient: true,
+        };
+    }
+    if (msg.includes('403') || msg.includes('denied access')) {
+        return {
+            code: 'AI_SERVICE_UNAVAILABLE',
+            message:
+                'AI service is temporarily unavailable. Our team has been notified.',
+            transient: false,
+        };
+    }
+    return {
+        code: 'AI_GENERATION_FAILED',
+        message: 'AI generation failed. Please try again.',
+        transient: true,
+    };
 }
 
 export function handleAIError(
@@ -93,7 +162,37 @@ export function handleAIError(
 ): NextResponse {
     const extra = { userId: ctx.userId ?? null, ...ctx.extra };
 
-    // 1. User input violated safety policy → 400, WARN (user can rephrase)
+    // 1. Client sent a malformed body (Zod schema mismatch) → 400, WARN.
+    //    Previously every AI route caught ZodError alongside real errors and
+    //    returned a generic 500 "Internal Server Error", making it impossible
+    //    for the client to tell a bad request apart from a provider outage.
+    //    Return 400 with the structured Zod issues so form validators can
+    //    map each issue back to the correct field.
+    if (isZodError(error)) {
+        logger.warn(`${ctx.message} — invalid request body`, context, {
+            ...extra,
+            zodIssues: error.issues,
+        });
+        // Response shape convention (this app): `error` is the human-readable
+        // string the client will show in a toast (consumer at
+        // features/lesson-planner/hooks/use-lesson-plan.ts:421 reads
+        // `errorData.error` directly). `code` is the machine-readable
+        // classifier; `issues` is the per-field breakdown for form clients.
+        return NextResponse.json(
+            {
+                error: 'Request body failed schema validation.',
+                code: 'INVALID_ARGUMENT',
+                issues: error.issues.map((i) => ({
+                    path: i.path.join('.'),
+                    code: i.code,
+                    message: i.message,
+                })),
+            },
+            { status: 400 },
+        );
+    }
+
+    // 2. User input violated safety policy → 400, WARN (user can rephrase)
     if (isSafetyViolation(error)) {
         logger.warn(`${ctx.message} — safety violation`, context, extra);
         return NextResponse.json(
@@ -102,7 +201,7 @@ export function handleAIError(
         );
     }
 
-    // 2. Upstream AI quota exhausted → 503 with Retry-After, WARN (our retry
+    // 3. Upstream AI quota exhausted → 503 with Retry-After, WARN (our retry
     //    layer already tried; surface a friendly message to the user).
     if (isQuotaExhausted(error)) {
         const retryAfter = typeof error?.retryAfterSeconds === 'number' ? error.retryAfterSeconds : 60;
@@ -112,8 +211,8 @@ export function handleAIError(
         });
         return NextResponse.json(
             {
-                error: 'AI_SERVICE_BUSY',
-                message: error?.message || 'AI service is temporarily overloaded. Please try again in a minute.',
+                error: 'AI service is temporarily overloaded. Please try again in a minute.',
+                code: 'AI_SERVICE_BUSY',
                 retryAfterSeconds: retryAfter,
             },
             {
@@ -123,7 +222,7 @@ export function handleAIError(
         );
     }
 
-    // 3. Real error → 500, ERROR (actually worth paging on)
+    // 4. Real error → 500, ERROR (actually worth paging on)
     logger.error(ctx.message, error, context, extra);
     return NextResponse.json(
         { error: 'AI generation failed. Please try again.' },

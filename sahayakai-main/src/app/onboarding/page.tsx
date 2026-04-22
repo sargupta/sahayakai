@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP } from "@/types";
+import { tState, tSubject } from "@/lib/i18n-proper-nouns";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
@@ -390,7 +391,7 @@ export default function OnboardingPage() {
                                     <div className="flex items-start gap-2">
                                         <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                                         <div>
-                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Learning Objectives</p>
+                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Learning Objectives")}</p>
                                             <ul className="text-sm space-y-1 mt-1">
                                                 {previewExample.objectives.map((obj, i) => (
                                                     <li key={i} className="flex items-start gap-2">
@@ -410,10 +411,10 @@ export default function OnboardingPage() {
 
                                     {/* Activities preview */}
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activities</p>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Activities")}</p>
                                         {(showAllActivities ? previewExample.activities : previewExample.activities.slice(0, 3)).map((act, i) => (
                                             <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 animate-in fade-in duration-300">
-                                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{act.phase}</span>
+                                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{t(act.phase)}</span>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">{act.title}</p>
                                                     <p className="text-xs text-muted-foreground line-clamp-2">{act.description}</p>
@@ -428,9 +429,9 @@ export default function OnboardingPage() {
                                                 className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline w-full py-1"
                                             >
                                                 {showAllActivities ? (
-                                                    <><ChevronUp className="h-3 w-3" /> Show fewer</>
+                                                    <><ChevronUp className="h-3 w-3" /> {t("Show fewer")}</>
                                                 ) : (
-                                                    <><ChevronDown className="h-3 w-3" /> Show all {previewExample.activities.length} activities</>
+                                                    <><ChevronDown className="h-3 w-3" /> {t("Show all {n} activities").replace("{n}", String(previewExample.activities.length))}</>
                                                 )}
                                             </button>
                                         )}
@@ -541,10 +542,7 @@ export default function OnboardingPage() {
                         {t("Tell us about your teaching")}
                     </CardTitle>
                     <CardDescription className="text-base">
-                        {formData.preferredLanguage !== 'English' && (
-                            <span className="text-xs text-muted-foreground mr-2">({LANGUAGE_NATIVE_LABELS[formData.preferredLanguage]})</span>
-                        )}
-                        Help us personalize your experience
+                        {t("Help us personalize your experience")}
                     </CardDescription>
                 </CardHeader>
 
@@ -562,7 +560,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.schoolName.trim() && formData.state && activeSection !== 0 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {formData.state}</span>
+                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
                                 )}
                                 {formData.schoolName.trim() && formData.state ? (
                                     <Check className="h-4 w-4 text-green-600" />
@@ -577,7 +575,7 @@ export default function OnboardingPage() {
                                     <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
                                     <Input
                                         id="school"
-                                        placeholder="e.g. Kendriya Vidyalaya, Delhi"
+                                        placeholder={t("e.g. Kendriya Vidyalaya, Delhi")}
                                         value={formData.schoolName}
                                         onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
                                         className="h-11 text-sm shadow-soft"
@@ -587,11 +585,11 @@ export default function OnboardingPage() {
                                     <Label className="text-xs">{t("State")}*</Label>
                                     <Select value={formData.state} onValueChange={handleStateChange}>
                                         <SelectTrigger className="h-11 shadow-soft">
-                                            <SelectValue placeholder="Select your state" />
+                                            <SelectValue placeholder={t("Select your state")} />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[300px]">
                                             {INDIAN_STATES.map(s => (
-                                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                                                <SelectItem key={s} value={s}>{tState(s, formData.preferredLanguage)}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -666,7 +664,7 @@ export default function OnboardingPage() {
                             <div className="flex items-center gap-2">
                                 {formData.subjects.length > 0 && activeSection !== 2 && (
                                     <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                                        {formData.subjects.slice(0, 2).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
+                                        {formData.subjects.slice(0, 2).map(s => tSubject(s, formData.preferredLanguage)).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
                                     </span>
                                 )}
                                 {formData.subjects.length > 0 ? (
@@ -690,7 +688,7 @@ export default function OnboardingPage() {
                                                 onCheckedChange={() => handleSubjectChange(subject)}
                                                 className="rounded-full"
                                             />
-                                            <Label htmlFor={`sub-${subject}`} className="text-sm cursor-pointer font-medium group-hover:text-primary transition-colors">{subject}</Label>
+                                            <Label htmlFor={`sub-${subject}`} className="text-sm cursor-pointer font-medium group-hover:text-primary transition-colors">{tSubject(subject, formData.preferredLanguage)}</Label>
                                         </div>
                                     ))}
                                 </div>

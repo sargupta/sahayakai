@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -78,20 +78,16 @@ async function _handler(request: Request) {
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        logAIError(error, 'LESSON_PLAN', {
+        // handleAIError differentiates:
+        //   - safety violation → 400 + original message (user can rephrase)
+        //   - quota/429 → 503 + Retry-After + friendly message (tells the user
+        //     to wait, not that the feature is broken)
+        //   - everything else → 500 with the generic fallback
+        return handleAIError(error, 'LESSON_PLAN', {
             message: `Lesson Plan API Failed for topic: "${topicText}"`,
             userId: request.headers.get('x-user-id'),
             extra: { path: '/api/ai/lesson-plan', errorMessage },
         });
-
-        if (errorMessage.includes('Safety Violation')) {
-            return NextResponse.json({ error: errorMessage }, { status: 400 });
-        }
-
-        return NextResponse.json(
-            { error: 'AI generation failed. Please try again.' },
-            { status: 500 }
-        );
     }
 }
 

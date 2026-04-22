@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import {
     CalendarDays, FileSignature, PencilRuler, ClipboardCheck,
     Sparkles, GraduationCap, Globe2, Images, User, MessageCircle,
-    Mic, Loader2, ArrowRight, Crown, Infinity,
+    Mic, Loader2, ArrowRight, Crown, Infinity, Gauge,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 const FEATURE_META: Record<string, { icon: React.ElementType; label: string; href: string }> = {
     'lesson-plan':       { icon: CalendarDays,   label: 'Lesson Plans',       href: '/lesson-plan' },
@@ -42,7 +43,19 @@ export default function UsagePage() {
     const { user } = useAuth();
     const { usage, plan, isPro, loading } = useSubscription();
 
-    if (!user || loading) {
+    if (!user) {
+        return (
+            <AuthGate
+                icon={Gauge}
+                title="Sign in to see your usage"
+                description="Sign in to see how many generations you've used this month and what's left on your plan."
+            >
+                {null}
+            </AuthGate>
+        );
+    }
+
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
