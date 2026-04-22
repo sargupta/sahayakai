@@ -117,6 +117,16 @@ export const LANGUAGE_CODE_MAP: Record<string, Language> = {
     'gu': 'Gujarati', 'pa': 'Punjabi', 'ml': 'Malayalam', 'or': 'Odia'
 } as const;
 
+// Inverse of LANGUAGE_CODE_MAP. Used by AI tool form defaults so a user
+// who picked Hindi at onboarding sees the Language field pre-set to
+// 'hi' (not hardcoded 'en'). Source of truth lives in LANGUAGE_CODE_MAP
+// above — this is derived so the two stay in sync.
+export const LANGUAGE_TO_ISO: Record<Language, string> = {
+    English: 'en', Hindi: 'hi', Kannada: 'kn', Tamil: 'ta',
+    Telugu: 'te', Marathi: 'mr', Bengali: 'bn',
+    Gujarati: 'gu', Punjabi: 'pa', Malayalam: 'ml', Odia: 'or',
+};
+
 export const CONTENT_TYPES = [
     'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper',
 ] as const;

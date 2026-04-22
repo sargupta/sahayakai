@@ -23,6 +23,7 @@ import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { VoiceAssistant } from "@/components/voice-assistant";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
@@ -88,6 +89,7 @@ function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -210,7 +212,7 @@ function TeacherTrainingContent() {
     } catch (error) {
       console.error("Failed to get advice:", error);
       toast({
-        title: "Failed to Get Advice",
+        title: t("Failed to Get Advice"),
         description: "There was an error getting advice. Please try again.",
         variant: "destructive",
       });

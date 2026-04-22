@@ -194,7 +194,7 @@ export default function Home() {
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4">
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
-          <span>AI-Powered Teaching Assistant for Bharat</span>
+          <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
         </div>
         <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight">
           {greeting}, <span className="text-primary">{teacherName}.</span>
@@ -283,7 +283,7 @@ export default function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
-                <span className="ml-2">Thinking</span>
+                <span className="ml-2">{t("Thinking")}</span>
               </span>
             </div>
           )}
@@ -301,7 +301,7 @@ export default function Home() {
                   <X className="h-4 w-4" />
                 </Button>
                 <div className="prose prose-sm max-w-none text-foreground">
-                  <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
+                  <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
                   <div className="whitespace-pre-wrap">{answer}</div>
                   <p className="text-[10px] text-muted-foreground mt-3 not-prose">
                     Sahayak can make mistakes. Please review generated content.
@@ -340,7 +340,7 @@ export default function Home() {
               onClick={refreshSuggestions}
               className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
             >
-              <RefreshCw className="h-3 w-3" /> Show different ideas
+              <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
             </button>
             {!showAllToolsOnPage && (
               <button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import {
     Dialog,
     DialogContent,
@@ -21,6 +22,7 @@ import { useRouter } from "next/navigation";
 
 export function AuthDialog() {
     const { isAuthModalOpen, closeAuthModal } = useAuth();
+    const { t } = useLanguage();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -78,7 +80,7 @@ export function AuthDialog() {
                             Your AI Teaching Assistant
                         </DialogTitle>
                         <DialogDescription className="text-base text-muted-foreground max-w-[300px]">
-                            Built for teachers across Bharat. Sign in to save your work and access all tools.
+                            {t("Built for teachers across Bharat. Sign in to save your work and access all tools.")}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -107,7 +109,7 @@ export function AuthDialog() {
                                 className="w-full h-12 text-lg font-bold gap-3 shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]"
                             >
                                 <LogIn className="h-5 w-5" />
-                                Sign in with Google
+                                {t("Sign in with Google")}
                             </Button>
                             <p className="text-center text-xs text-muted-foreground mt-4">
                                 By signing in, you agree to our Terms of Service.
