@@ -118,7 +118,7 @@ function PricingContent() {
 
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Free */}
-                    <Card className={`relative ${plan === 'free' ? 'ring-2 ring-primary' : ''}`}>
+                    <Card className={`relative ${user && plan === 'free' ? 'ring-2 ring-primary' : ''}`}>
                         <CardHeader>
                             <CardTitle className="font-headline text-lg">Free</CardTitle>
                             <div className="mt-2">
@@ -135,10 +135,20 @@ function PricingContent() {
                                     </li>
                                 ))}
                             </ul>
-                            {plan === 'free' && (
-                                <div className="mt-4 rounded-md bg-muted p-2 text-center text-sm text-muted-foreground">
-                                    Current plan
-                                </div>
+                            {user ? (
+                                plan === 'free' && (
+                                    <div className="mt-4 rounded-md bg-muted p-2 text-center text-sm text-muted-foreground">
+                                        Current plan
+                                    </div>
+                                )
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="mt-4 w-full rounded-xl"
+                                    onClick={() => { window.location.href = '/'; }}
+                                >
+                                    Get Started Free
+                                </Button>
                             )}
                         </CardContent>
                     </Card>

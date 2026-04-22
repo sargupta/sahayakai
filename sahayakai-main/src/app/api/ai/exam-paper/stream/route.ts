@@ -2,6 +2,7 @@
 import { generateExamPaper } from '@/ai/flows/exam-paper-generator';
 import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { logAIError, classifyAIError } from '@/lib/ai-error-response';
 
 /**
  * SSE streaming endpoint for exam paper generation.
@@ -132,21 +133,22 @@ async function _handler(request: Request) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
+          const classified = classifyAIError(error);
 
-          logger.error(
-            `Exam Paper Stream Failed for: "${paperDesc}"`,
-            error,
-            'EXAM_PAPER_STREAM',
-            {
+          logAIError(error, 'EXAM_PAPER_STREAM', {
+            message: `Exam Paper Stream Failed for: "${paperDesc}"`,
+            userId,
+            extra: {
               path: '/api/ai/exam-paper/stream',
-              userId,
               errorMessage,
+              errorCode: classified.code,
             },
-          );
+          });
 
           send({
             type: 'error',
-            message: 'AI generation failed. Please try again.',
+            code: classified.code,
+            message: classified.message,
           });
         } finally {
           controller.close();
@@ -162,27 +164,31 @@ async function _handler(request: Request) {
       },
     });
   } catch (error) {
-    logger.error(
-      `Exam Paper Stream Failed for: "${paperDesc}"`,
-      error,
-      'EXAM_PAPER_STREAM',
-      {
+    const classified = classifyAIError(error);
+    const status = classified.code === 'AI_SERVICE_BUSY' ? 503 : 500;
+
+    logAIError(error, 'EXAM_PAPER_STREAM', {
+      message: `Exam Paper Stream Failed for: "${paperDesc}"`,
+      userId: request.headers.get('x-user-id'),
+      extra: {
         path: '/api/ai/exam-paper/stream',
-        userId: request.headers.get('x-user-id'),
+        errorCode: classified.code,
       },
-    );
+    });
 
     return new Response(
       sseEvent({
         type: 'error',
-        message: 'Internal Server Error',
+        code: classified.code,
+        message: classified.message,
       }),
       {
-        status: 500,
+        status,
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
+          ...(status === 503 ? { 'Retry-After': '60' } : {}),
         },
       },
     );

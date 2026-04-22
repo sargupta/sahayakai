@@ -336,30 +336,32 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarGroup>
-          <SidebarGroupLabel>Admin</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip="Mission Control">
-                <Link href="/admin/cost-dashboard" onClick={() => handleNavClick('/admin/cost-dashboard')}>
-                  <Zap />
-                  <span>Mission Control</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/log-dashboard')} tooltip="Log Dashboard">
-                <Link href="/admin/log-dashboard" onClick={() => handleNavClick('/admin/log-dashboard')}>
-                  <Terminal />
-                  <span>Log Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {/* Review Panel — hidden until feature is built */}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarFooter>
+      {sidebarUserId && (
+        <SidebarFooter>
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip="Mission Control">
+                  <Link href="/admin/cost-dashboard" onClick={() => handleNavClick('/admin/cost-dashboard')}>
+                    <Zap />
+                    <span>Mission Control</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/log-dashboard')} tooltip="Log Dashboard">
+                  <Link href="/admin/log-dashboard" onClick={() => handleNavClick('/admin/log-dashboard')}>
+                    <Terminal />
+                    <span>Log Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* Review Panel — hidden until feature is built */}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarFooter>
+      )}
     </Sidebar>
   )
 }

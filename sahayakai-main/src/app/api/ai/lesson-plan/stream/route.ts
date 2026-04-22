@@ -2,6 +2,7 @@
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { logAIError, classifyAIError } from '@/lib/ai-error-response';
 
 /**
  * SSE streaming endpoint for lesson plan generation.
@@ -70,26 +71,25 @@ async function _handler(request: Request) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
+          const classified = classifyAIError(error);
 
-          logger.error(
-            `Lesson Plan Stream Failed for topic: "${topicText}"`,
-            error,
-            'LESSON_PLAN_STREAM',
-            {
+          // Classify severity via the shared helper — quota/safety are WARN,
+          // everything else is ERROR (paging severity).
+          logAIError(error, 'LESSON_PLAN_STREAM', {
+            message: `Lesson Plan Stream Failed for topic: "${topicText}"`,
+            userId,
+            extra: {
               path: '/api/ai/lesson-plan/stream',
-              userId,
               errorMessage,
+              errorCode: classified.code,
             },
-          );
+          });
 
-          if (errorMessage.includes('Safety Violation')) {
-            send({ type: 'error', message: errorMessage });
-          } else {
-            send({
-              type: 'error',
-              message: 'AI generation failed. Please try again.',
-            });
-          }
+          send({
+            type: 'error',
+            code: classified.code,
+            message: classified.message,
+          });
         } finally {
           controller.close();
         }
@@ -106,31 +106,35 @@ async function _handler(request: Request) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : String(error);
+    const classified = classifyAIError(error);
+    const status = classified.code === 'AI_SERVICE_BUSY' ? 503 : 500;
 
-    logger.error(
-      `Lesson Plan Stream Failed for topic: "${topicText}"`,
-      error,
-      'LESSON_PLAN_STREAM',
-      {
+    logAIError(error, 'LESSON_PLAN_STREAM', {
+      message: `Lesson Plan Stream Failed for topic: "${topicText}"`,
+      userId: request.headers.get('x-user-id'),
+      extra: {
         path: '/api/ai/lesson-plan/stream',
-        userId: request.headers.get('x-user-id'),
         errorMessage,
+        errorCode: classified.code,
       },
-    );
+    });
 
-    // If we failed before the stream was created (e.g. bad JSON body),
-    // return a plain SSE error response.
+    // Pre-stream failure (e.g. bad JSON body, upstream 429 before the first
+    // token). We can still set a real HTTP status here since headers haven't
+    // been flushed.
     return new Response(
       sseEvent({
         type: 'error',
-        message: 'AI generation failed. Please try again.',
+        code: classified.code,
+        message: classified.message,
       }),
       {
-        status: 500,
+        status,
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
+          ...(status === 503 ? { 'Retry-After': '60' } : {}),
         },
       },
     );
