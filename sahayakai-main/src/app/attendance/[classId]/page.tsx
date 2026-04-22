@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getClassAction, getStudentsAction, getStudentSummariesAction, getTwilioConfigStatusAction } from "@/app/actions/attendance";
@@ -23,10 +24,11 @@ function todayStr() {
     return format(new Date(), 'yyyy-MM-dd');
 }
 
-export default function ClassDetailPage() {
+function ClassDetailContent() {
     const { classId } = useParams<{ classId: string }>();
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useLanguage();
 
     const [cls, setCls] = useState<ClassRecord | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -35,8 +37,6 @@ export default function ClassDetailPage() {
     const [loading, setLoading] = useState(true);
 
     const [contactStudent, setContactStudent] = useState<Student | null>(null);
-
-    const { user, loading: authLoading, requireAuth } = useAuth();
 
     const loadAll = useCallback(async () => {
         try {
@@ -61,14 +61,8 @@ export default function ClassDetailPage() {
     }, [classId, toast]);
 
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            requireAuth();
-            setLoading(false);
-            return;
-        }
         loadAll();
-    }, [authLoading, user, loadAll, requireAuth]);
+    }, [loadAll]);
 
     if (loading) {
         return (
@@ -79,7 +73,7 @@ export default function ClassDetailPage() {
     }
 
     if (!cls) {
-        return <div className="text-center py-20 text-muted-foreground">Class not found.</div>;
+        return <div className="text-center py-20 text-muted-foreground">{t("Class not found.")}</div>;
     }
 
     // Students with >= 2 consecutive absences — for alert list
@@ -94,7 +88,7 @@ export default function ClassDetailPage() {
                 </Button>
                 <div className="flex-1 min-w-0">
                     <h1 className="text-xl font-black font-headline tracking-tight text-foreground truncate">{cls.name}</h1>
-                    <p className="text-xs text-muted-foreground">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} students</p>
+                    <p className="text-xs text-muted-foreground">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} {t("students")}</p>
                 </div>
             </div>
 
@@ -103,7 +97,7 @@ export default function ClassDetailPage() {
                 <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
                     <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-red-700">Attendance Alert</p>
+                        <p className="text-xs font-bold text-red-700">{t("Attendance Alert")}</p>
                         <div className="flex flex-wrap gap-2 mt-1.5">
                             {atRisk.map((s) => {
                                 const student = students.find((st) => st.id === s.studentId);
@@ -131,15 +125,15 @@ export default function ClassDetailPage() {
                 <TabsList className="w-full grid grid-cols-3 h-10 bg-muted/50 rounded-xl">
                     <TabsTrigger value="today" className="gap-1.5 text-xs font-semibold rounded-lg">
                         <ClipboardList className="h-3.5 w-3.5" />
-                        Today
+                        {t("Today")}
                     </TabsTrigger>
                     <TabsTrigger value="students" className="gap-1.5 text-xs font-semibold rounded-lg">
                         <Users className="h-3.5 w-3.5" />
-                        Students
+                        {t("Students")}
                     </TabsTrigger>
                     <TabsTrigger value="reports" className="gap-1.5 text-xs font-semibold rounded-lg">
                         <BarChart2 className="h-3.5 w-3.5" />
-                        Reports
+                        {t("Reports")}
                     </TabsTrigger>
                 </TabsList>
 
@@ -166,7 +160,7 @@ export default function ClassDetailPage() {
                     {/* Contact parent buttons for each student */}
                     {students.length > 0 && (
                         <div className="mt-6 space-y-2">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide px-1">Parent Outreach</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide px-1">{t("Parent Outreach")}</p>
                             <div className="divide-y divide-border/30 rounded-xl border border-border/50 overflow-hidden">
                                 {students.map((s) => {
                                     const summary = summaries.find((sm) => sm.studentId === s.id);
@@ -176,9 +170,9 @@ export default function ClassDetailPage() {
                                                 <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
                                                 {summary && (
                                                     <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {summary.attendanceRate}% attendance this month
+                                                        {summary.attendanceRate}% {t("attendance this month")}
                                                         {summary.consecutiveAbsences >= 2 && (
-                                                            <span className="text-red-500 font-semibold ml-2">· {summary.consecutiveAbsences} absent in a row</span>
+                                                            <span className="text-red-500 font-semibold ml-2">· {summary.consecutiveAbsences} {t("absent in a row")}</span>
                                                         )}
                                                     </p>
                                                 )}
@@ -186,11 +180,11 @@ export default function ClassDetailPage() {
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                className="gap-1.5 text-xs h-8 shrink-0 hover:border-green-400 hover:text-green-700"
+                                                className="gap-1.5 text-xs h-9 shrink-0 hover:border-green-400 hover:text-green-700"
                                                 onClick={() => setContactStudent(s)}
                                             >
                                                 <Phone className="h-3 w-3" />
-                                                Contact
+                                                {t("Contact")}
                                             </Button>
                                         </div>
                                     );
@@ -219,5 +213,18 @@ export default function ClassDetailPage() {
                 />
             )}
         </div>
+    );
+}
+
+export default function ClassDetailPage() {
+    const { t } = useLanguage();
+    return (
+        <AuthGate
+            icon={ClipboardList}
+            title={t("Attendance")}
+            description={t("Manage classes and track daily attendance")}
+        >
+            <ClassDetailContent />
+        </AuthGate>
     );
 }
