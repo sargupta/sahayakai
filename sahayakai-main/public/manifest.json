@@ -1,7 +1,7 @@
 {
     "name": "SahayakAI — The Operating System for Teaching in India",
     "short_name": "SahayakAI",
-    "description": "AI-powered teaching assistant for India's K-12 teachers. Lesson plans, quizzes, worksheets in 11 Indian languages. Voice-first, offline-ready. NCERT, CBSE, ICSE & all state boards.",
+    "description": "AI-powered teaching assistant for India's K-12 teachers. Lesson plans, quizzes, worksheets in 11 Indian languages. Voice-first. NCERT, CBSE, ICSE & all state boards.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
