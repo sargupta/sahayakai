@@ -434,7 +434,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Mobile FAB */}
-      <div className="fixed bottom-20 right-4 sm:hidden z-50">
+      <div className="fixed bottom-20 right-4 sm:hidden z-[70]">
         <button
           onClick={() =>
             composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
