@@ -1,8 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { generateWorksheet } from '@/ai/flows/worksheet-wizard';
-import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { generateWorksheet, WorksheetWizardInputSchema } from '@/ai/flows/worksheet-wizard';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -54,32 +53,25 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        promptText = body.prompt || 'Unknown Prompt';
+        const json = await request.json();
+        promptText = json.prompt || 'Unknown Prompt';
 
-        // Call the AI Flow
+        // SECURITY: Validate input against schema — rejects missing prompt or
+        // malformed imageDataUri with a 400 instead of crashing inside the flow.
+        const body = WorksheetWizardInputSchema.parse(json);
+
         const output = await generateWorksheet({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);
 
-    } catch (error: any) {
-        logAIError(error, 'WORKSHEET', { message: `Worksheet API Failed for prompt: "${promptText}"`, userId: request.headers.get('x-user-id') });
-
-        const errorMessage = error.message || 'Internal Server Error';
-        const errorCode = error.errorCode || 'UNKNOWN_ERROR';
-        const context = error.context || null;
-
-        return NextResponse.json(
-            {
-                error: errorMessage,
-                errorCode: errorCode,
-                context: context
-            },
-            { status: 500 }
-        );
+    } catch (error) {
+        return handleAIError(error, 'WORKSHEET', {
+            message: `Worksheet API Failed for prompt: "${promptText}"`,
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 

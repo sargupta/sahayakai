@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTeacherTrainingAdvice } from '@/ai/flows/teacher-training';
 import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { logAIError, handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -55,7 +55,17 @@ async function _handler(request: Request) {
 
         return NextResponse.json(output);
 
-    } catch (error) {
+    } catch (error: any) {
+        // Zod schema mismatches → 400 via handleAIError (detects by name).
+        // The name-based check is required because Next.js can load zod
+        // from both CJS and ESM bundles, so `instanceof ZodError` may fail.
+        if (error?.name === 'ZodError') {
+            return handleAIError(error, 'TEACHER_TRAINING', {
+                message: `Teacher Training API Failed for question: "${questionText}"`,
+                userId: request.headers.get('x-user-id'),
+            });
+        }
+
         logAIError(error, 'TEACHER_TRAINING', { message: `Teacher Training API Failed for question: "${questionText}"`, userId: request.headers.get('x-user-id') });
 
         const errorMessage = error instanceof Error ? error.message : String(error);

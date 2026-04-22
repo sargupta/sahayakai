@@ -16,7 +16,7 @@ import { LANGUAGE_CODE_MAP } from '@/types/index';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 
 
-const WorksheetWizardInputSchema = z.object({
+export const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
     .string()
     .describe(

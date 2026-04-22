@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { generateRubric } from '@/ai/flows/rubric-generator';
 import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -60,12 +60,10 @@ async function _handler(request: Request) {
         return NextResponse.json(output);
 
     } catch (error) {
-        logAIError(error, 'RUBRIC', { message: `Rubric API Failed for assignment: "${assignmentText}"`, userId: request.headers.get('x-user-id') });
-
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
+        return handleAIError(error, 'RUBRIC', {
+            message: `Rubric API Failed for assignment: "${assignmentText}"`,
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 
