@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -45,6 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function AuthButton() {
     const { user, loading } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -86,7 +88,7 @@ export function AuthButton() {
             }
         } catch (error: any) {
             toast({
-                title: "Sign-in Failed",
+                title: t("Sign-in Failed"),
                 description: `Firebase Error: ${error.code} (${error.message})`,
                 variant: "destructive",
             });
@@ -118,11 +120,11 @@ export function AuthButton() {
                     variant="default"
                     size="sm"
                     onClick={handleSignIn}
-                    aria-label="Sign in with Google"
+                    aria-label={t("Sign in with Google")}
                     className="gap-2 shadow-sm font-bold"
                 >
                     <GoogleGIcon className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sign in with Google</span>
+                    <span className="hidden sm:inline">{t("Sign in with Google")}</span>
                 </Button>
             </div>
         );
