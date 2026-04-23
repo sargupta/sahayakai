@@ -14,9 +14,14 @@ export const Logo: FC = () => {
       <div className="rounded-lg bg-primary/20 p-2 text-primary">
         <BookOpenCheck className="h-6 w-6" />
       </div>
-      <h1 className="font-headline text-2xl font-bold text-foreground transition-all group-data-[collapsible=icon]:-ml-12 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
-        SahayakAI
-      </h1>
+      <div className="flex flex-col transition-all group-data-[collapsible=icon]:-ml-12 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+        <h1 className="font-headline text-2xl font-bold text-foreground leading-none">
+          SahayakAI
+        </h1>
+        <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-muted-foreground mt-0.5">
+          by SARGVISION
+        </span>
+      </div>
     </div>
   );
 };
