@@ -285,7 +285,7 @@ export default function CommunityPage() {
   if (showTeacherDirectory) {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <Button
             variant="ghost"
             size="sm"
@@ -299,6 +299,9 @@ export default function CommunityPage() {
             Find Teachers
           </h2>
         </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Search teachers across Bharat by subject, grade, school, or area. Send a connect request to start a conversation.
+        </p>
         <TeacherDirectory />
       </div>
     );
@@ -308,7 +311,7 @@ export default function CommunityPage() {
   if (showStaffRoom) {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <Button
             variant="ghost"
             size="sm"
@@ -322,6 +325,9 @@ export default function CommunityPage() {
             Staff Room
           </h2>
         </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          An open chat room for every teacher on SahayakAI. Ask questions, share ideas, say hello.
+        </p>
         <CommunityChat />
       </div>
     );
