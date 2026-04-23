@@ -1,54 +1,55 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { useLanguage } from "@/context/language-context";
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import {
     signInWithPopup,
-    GoogleAuthProvider
+    GoogleAuthProvider,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, Sparkles, ShieldCheck, Zap } from "lucide-react";
-import { Logo } from "@/components/logo";
 import { useRouter } from "next/navigation";
+import { GoogleGIcon } from "./google-g-icon";
 
+/**
+ * Auth dialog — signed-out modal for Google sign-in.
+ *
+ * Design language mirrors the B2B landing page: clean neutral surface,
+ * single saffron accent, conservative typography, Google's official
+ * Sign-In button styling (white surface + 1px neutral border + multi-colour
+ * G mark + dark text). No gradients, no decorative blur blobs, no mixed
+ * icon colours — enterprise buyers expect restraint.
+ */
 export function AuthDialog() {
     const { isAuthModalOpen, closeAuthModal } = useAuth();
-    const { t } = useLanguage();
     const { toast } = useToast();
     const router = useRouter();
 
     const handleSignIn = async () => {
         const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
+        provider.setCustomParameters({ prompt: "select_account" });
 
         try {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
-            // Profile check — redirect new users to onboarding
-            // Mirrors the same logic in AuthButton
+            // Profile check — redirect new users to onboarding. Mirrors AuthButton.
             try {
                 const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.exists === false) {
                         toast({
-                            title: "Almost there!",
-                            description: "Complete your professional profile to get started.",
+                            title: "Almost there",
+                            description: "Complete your profile to get started.",
                         });
                         closeAuthModal();
-                        router.push('/onboarding');
+                        router.push("/onboarding");
                         return;
                     }
                 }
@@ -57,7 +58,7 @@ export function AuthDialog() {
             }
         } catch (error: any) {
             toast({
-                title: "Sign-in Failed",
+                title: "Sign-in failed",
                 description: error.message,
                 variant: "destructive",
             });
@@ -66,72 +67,51 @@ export function AuthDialog() {
 
     return (
         <Dialog open={isAuthModalOpen} onOpenChange={closeAuthModal}>
-            <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-background/95 backdrop-blur-md">
-                <div className="relative overflow-hidden pt-8 pb-6 px-6">
-                    {/* Decorative Background Elements */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl" />
+            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden">
+                {/* Saffron top rail — same accent the landing nav uses.
+                    Subtle brand anchor; no heavy colour wash. */}
+                <div className="h-1 w-full bg-[hsl(var(--primary))]" />
 
-                    <DialogHeader className="relative z-10 flex flex-col items-center text-center space-y-4">
-                        <div className="mb-2 scale-125">
-                            <Logo />
-                        </div>
-                        <DialogTitle className="text-2xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
-                            Your AI Teaching Assistant
-                        </DialogTitle>
-                        <DialogDescription className="text-base text-muted-foreground max-w-[300px]">
-                            {t("Built for teachers across Bharat. Sign in to save your work and access all tools.")}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="relative z-10 mt-8 space-y-4">
-                        <div className="grid gap-3">
-                            <FeatureItem
-                                icon={<Zap className="h-5 w-5 text-primary" />}
-                                title="Fast AI Generation"
-                                description="Lessons, quizzes, and worksheets in seconds."
-                            />
-                            <FeatureItem
-                                icon={<ShieldCheck className="h-5 w-5 text-green-500" />}
-                                title="Cloud Storage"
-                                description="Your content is saved and accessible anywhere."
-                            />
-                            <FeatureItem
-                                icon={<Sparkles className="h-5 w-5 text-indigo-500" />}
-                                title="Smart Insights"
-                                description="Get AI-powered teaching advice and support."
-                            />
-                        </div>
-
-                        <div className="pt-6">
-                            <Button
-                                onClick={handleSignIn}
-                                className="w-full h-12 text-lg font-bold gap-3 shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]"
-                            >
-                                <LogIn className="h-5 w-5" />
-                                {t("Sign in with Google")}
-                            </Button>
-                            <p className="text-center text-xs text-muted-foreground mt-4">
-                                By signing in, you agree to our Terms of Service.
-                            </p>
-                        </div>
+                <div className="px-7 pt-7 pb-6">
+                    {/* Wordmark only — single clean identifier, no gradient title. */}
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[hsl(var(--primary))] text-white text-[12px] font-extrabold">
+                            S
+                        </span>
+                        <span className="font-headline text-[17px] font-bold tracking-tight text-foreground">
+                            SahayakAI
+                        </span>
                     </div>
+
+                    <DialogTitle className="text-[22px] font-headline font-bold tracking-tight text-foreground leading-snug">
+                        Sign in to continue
+                    </DialogTitle>
+                    <DialogDescription className="mt-2 text-[14px] text-muted-foreground leading-relaxed">
+                        Access your library, track your usage, and pick up where you left off — across every classroom tool.
+                    </DialogDescription>
+
+                    {/* Google Sign-In button — follows Google branding guidelines:
+                        white surface, 1px neutral border, multi-colour G mark,
+                        dark "Sign in with Google" label. Universally recognised
+                        pattern on enterprise login screens. */}
+                    <button
+                        type="button"
+                        onClick={handleSignIn}
+                        className="mt-8 w-full h-11 inline-flex items-center justify-center gap-3 rounded-full bg-white border border-neutral-300 text-[14px] font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm"
+                    >
+                        <GoogleGIcon className="h-[18px] w-[18px]" />
+                        Sign in with Google
+                    </button>
+
+                    <p className="mt-5 text-[11px] text-center text-muted-foreground leading-relaxed">
+                        By signing in, you agree to the{" "}
+                        <a href="/privacy-for-teachers" className="underline underline-offset-2 hover:text-foreground">
+                            Privacy notice
+                        </a>
+                        {" "}and Terms.
+                    </p>
                 </div>
             </DialogContent>
         </Dialog>
-    );
-}
-
-function FeatureItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
-    return (
-        <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
-            <div className="flex-shrink-0 mt-0.5">
-                {icon}
-            </div>
-            <div>
-                <h4 className="text-sm font-semibold text-foreground leading-tight">{title}</h4>
-                <p className="text-xs text-muted-foreground">{description}</p>
-            </div>
-        </div>
     );
 }
