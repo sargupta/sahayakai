@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/context/language-context';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -16,6 +17,7 @@ const PWA_PROMPT_ALLOWED_ROUTES = new Set<string>(['/', '/onboarding']);
 
 export function PWAInstallPrompt() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -120,13 +122,10 @@ export function PWAInstallPrompt() {
           />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-stone-900">
-              Install SahayakAI
+              {t("Install SahayakAI")}
             </h3>
             <p className="mt-0.5 text-xs text-stone-500">
-              Add to home screen for quick access & offline use
-            </p>
-            <p className="mt-0.5 text-xs text-stone-400">
-              होम स्क्रीन पर जोड़ें — ऑफलाइन भी चलेगा
+              {t("Add to home screen for quick access & offline use")}
             </p>
           </div>
           <button
@@ -145,13 +144,13 @@ export function PWAInstallPrompt() {
             onClick={handleDismiss}
             className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50"
           >
-            Not Now
+            {t("Not Now")}
           </button>
           <button
             onClick={handleInstall}
             className="flex-1 rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 active:bg-orange-700"
           >
-            Install App
+            {t("Install App")}
           </button>
         </div>
       </div>

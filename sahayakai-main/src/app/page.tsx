@@ -62,7 +62,7 @@ export default function Home() {
     refreshSuggestions, dismissProfileCard, dismissChecklist,
   } = useOnboardingProgress();
   const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro({ profile });
-  const [greeting, setGreeting] = useState("Namaste");
+  const [greetingKey, setGreetingKey] = useState<"Good Morning" | "Good Afternoon" | "Good Evening">("Good Morning");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [showAllToolsOnPage, setShowAllToolsOnPage] = useState(false);
@@ -74,11 +74,11 @@ export default function Home() {
 
   const { toast } = useToast();
   useEffect(() => {
-    // Client-side only logic
+    // Client-side only — Next.js SSR would render the server's timezone, not the user's.
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning");
-    else if (hour < 18) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
+    if (hour < 12) setGreetingKey("Good Morning");
+    else if (hour < 18) setGreetingKey("Good Afternoon");
+    else setGreetingKey("Good Evening");
 
     // Handle voice transcript from URL
     if (typeof window !== 'undefined') {
@@ -197,7 +197,7 @@ export default function Home() {
           <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
         </div>
         <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight">
-          {greeting}, <span className="text-primary">{teacherName}.</span>
+          {t(greetingKey)}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
           <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
@@ -205,7 +205,7 @@ export default function Home() {
           </p>
         ) : (
           <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
-            I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
+            {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
           </p>
         )}
       </div>
@@ -216,7 +216,7 @@ export default function Home() {
         {/* BIG MIC BUTTON */}
         <FeatureSpotlight
           id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
-          message="Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!"
+          message={t("Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!")}
           seenSpotlights={spotlightsSeen}
           onDismiss={markSpotlightSeen}
           position="bottom"
@@ -225,11 +225,11 @@ export default function Home() {
             <MicrophoneInput
               onTranscriptChange={handleTranscript}
               iconSize="xl"
-              label="Speak your topic"
+              label={t("Speak your topic")}
               className=""
             />
             <p className="text-muted-foreground text-sm md:text-sm">
-              Tap the microphone and tell Sahayak what you want to teach today
+              {t("Tap the microphone and tell Sahayak what you want to teach today")}
             </p>
           </div>
         </FeatureSpotlight>
@@ -242,7 +242,7 @@ export default function Home() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <AutoCompleteInput
-                      placeholder="Type a topic, e.g. 'Photosynthesis for Class 8'"
+                      placeholder={t("Type a topic, e.g. 'Photosynthesis for Class 8'")}
                       {...form.register("topic")}
                       value={form.watch("topic")}
                       selectedLanguage={userLanguage || "English"}
@@ -270,10 +270,10 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-2">
           <p className="text-center text-xs text-muted-foreground px-4">
-            try: "Quiz about photosynthesis" or "Lesson plan for solar system"
+            {t("try: \"Quiz about photosynthesis\" or \"Lesson plan for solar system\"")}
           </p>
           <p className="text-xs text-muted-foreground">
-            Works in हिंदी, ಕನ್ನಡ, தமிழ் + 8 more languages
+            {t("Works in Hindi, Kannada, Tamil + 8 more languages")}
           </p>
 
           {/* Thinking Indicator */}
