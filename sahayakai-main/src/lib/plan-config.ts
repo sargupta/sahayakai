@@ -41,6 +41,12 @@ export interface PlanLimits {
     canAccessAbsenceRecords: boolean;
     /** Can use AI parent messaging */
     canUseParentMessaging: boolean;
+    /**
+     * Monthly quota for cloud TTS / ASR voice minutes. Browser Speech APIs stay
+     * free for everyone, so this only gates Sarvam/ElevenLabs-backed cloud
+     * minutes. -1 = unlimited. 0 = browser-only, no cloud voice.
+     */
+    voiceCloudMinutesPerMonth: number;
 }
 
 export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
@@ -67,6 +73,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         canViewDetailedAnalytics: false,
         canAccessAbsenceRecords: false,
         canUseParentMessaging: false,
+        voiceCloudMinutesPerMonth: 0,
     },
     pro: {
         limits: {
@@ -91,6 +98,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,
         canUseParentMessaging: true,
+        voiceCloudMinutesPerMonth: 300,
     },
     gold: {
         limits: {
@@ -115,6 +123,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,
         canUseParentMessaging: true,
+        voiceCloudMinutesPerMonth: 1500,
     },
     premium: {
         limits: {
@@ -139,6 +148,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,
         canUseParentMessaging: true,
+        voiceCloudMinutesPerMonth: -1,
     },
 };
 
@@ -164,10 +174,74 @@ export const PLAN_DISPLAY_NAMES: Record<PlanType, string> = {
     premium: 'School Premium',
 };
 
-/** Plan prices in paise (for Razorpay) and rupees (for display). */
+/**
+ * Premium Anchored Pricing Ladder (SARGVISION, 2026).
+ *
+ * Positioning: SahayakAI is an Enterprise AI Teacher Copilot. Sticker anchors
+ * at the top of Indian prosumer AI SaaS (₹599/mo — same band as Notion
+ * Business / Canva Pro team seats), and we publish honest launch discounts
+ * on monthly plus a standard 16% annual incentive on top.
+ *
+ *   Sticker monthly   : ₹599/mo/teacher    (never paid — premium anchor)
+ *   Sticker annual    : ₹7,188/yr/teacher  (12 × sticker monthly)
+ *   Launch monthly    : ₹199/mo/teacher    (~67% off, "Launch pricing 2026")
+ *   Launch annual     : ₹1,999/yr/teacher  (~72% off sticker, ≈ ₹167/mo,
+ *                       16% cheaper than monthly × 12 — standard SaaS
+ *                       annual discount à la Slack / Notion / Canva.)
+ *                       Saves ₹389/yr vs monthly.
+ *   School Gold       : ₹2,999/teacher/yr  (min 20 teachers, principal PO)
+ *                       — 58% off sticker. Gold is 50% more per-seat than
+ *                       individual annual because it bundles school admin
+ *                       dashboard, bulk onboarding, WhatsApp Business,
+ *                       priority support, and 5× voice cloud (1500 min).
+ *                       Mirrors the Slack Pro → Business+, Notion Plus →
+ *                       Business, Canva Pro → Teams premium.
+ *   School Premium    : custom, floor ₹1,999/teacher/yr for chains / govt
+ *
+ * All amounts stored in paise for Razorpay + rupees for display. Plan IDs in
+ * Razorpay dashboard must be updated whenever these numbers change (see
+ * `src/lib/razorpay.ts` and env vars RAZORPAY_PLAN_PRO_MONTHLY / _ANNUAL).
+ */
 export const PLAN_PRICING = {
     pro: {
-        monthly: { paise: 14900, rupees: 149, label: '₹149/month' },
-        annual: { paise: 139900, rupees: 1399, label: '₹1,399/year' },
+        monthly: {
+            paise: 19900,
+            rupees: 199,
+            stickerRupees: 599,
+            discountPct: 67,
+            label: '₹199/month',
+            stickerLabel: '₹599/month',
+            badge: 'Launch pricing — save 67%',
+        },
+        annual: {
+            paise: 199900,
+            rupees: 1999,
+            stickerRupees: 7188,
+            discountPct: 72,
+            effectivePerMonthRupees: 167,
+            label: '₹1,999/year',
+            stickerLabel: '₹7,188/year',
+            badge: 'Save 72% — ₹167/mo billed annually',
+        },
+    },
+    gold: {
+        annual: {
+            paise: 299900,
+            rupees: 2999,
+            stickerRupees: 7188,
+            discountPct: 58,
+            minSeats: 20,
+            onboardingRupees: 10000,
+            label: '₹2,999/teacher/year',
+            stickerLabel: '₹7,188/teacher/year',
+            badge: 'School rate — 58% off sticker · min 20 teachers',
+        },
+    },
+    premium: {
+        annual: {
+            floorRupees: 1999,
+            label: 'From ₹1,999/teacher/year',
+            badge: 'Chains, premium schools, govt tenders · custom quote',
+        },
     },
 } as const;

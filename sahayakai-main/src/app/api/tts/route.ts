@@ -5,6 +5,7 @@ import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { sarvamTTS, toSarvamLangCode } from '@/lib/sarvam';
+import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes } from '@/lib/voice-quota-guard';
 
 // Cache the GCP access token for its full lifetime (1 hour).
 // Re-fetching on every request added 100–300 ms of latency per TTS call.
@@ -148,6 +149,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ audioContent: cached });
         }
 
+        // Voice cloud minute quota check — runs AFTER cache check so cache hits
+        // don't burn provider minutes. Free tier (limit=0) is 403'd here.
+        const quota = await ensureVoiceQuota(req);
+        if (!quota.ok) return quota.response;
+
         let audioContent: string;
 
         if (sarvamLang) {
@@ -172,6 +178,11 @@ export async function POST(req: NextRequest) {
         }
 
         setCachedAudio(cacheKey, audioContent);
+
+        // Provider call succeeded — burn voice quota minutes (fire-and-forget).
+        // Cache hits above returned early and cost nothing.
+        if (uid) recordVoiceMinutes(uid, estimateTTSMinutes(cleanText.length));
+
         return NextResponse.json({ audioContent });
 
     } catch (error: any) {
