@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
+import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
@@ -23,16 +24,13 @@ export const VisualAidInputSchema = z.object({
 });
 
 function normalizeInput(input: VisualAidInput): VisualAidInput {
-  let { language, gradeLevel } = input;
+  // Language normalisation is delegated to the shared helper so every
+  // AI flow agrees on ISO-to-display-name mapping. Historically this
+  // function only mapped 7 of the 11 supported languages, so pa/ml/or
+  // leaked through unnormalised.
+  const language = normalizeLanguage(input.language);
 
-  if (language) {
-    const langMap: Record<string, string> = {
-      'en': 'English', 'hi': 'Hindi', 'kn': 'Kannada',
-      'ta': 'Tamil', 'te': 'Telugu', 'mr': 'Marathi', 'bn': 'Bengali'
-    };
-    language = langMap[language.toLowerCase()] || language;
-  }
-
+  let { gradeLevel } = input;
   if (gradeLevel) {
     const match = gradeLevel.match(/(\d+)/);
     if (match) {
