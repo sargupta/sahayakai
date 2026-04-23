@@ -1,8 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { planVirtualFieldTrip } from '@/ai/flows/virtual-field-trip';
-import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { planVirtualFieldTrip, VirtualFieldTripInputSchema } from '@/ai/flows/virtual-field-trip';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -49,23 +48,23 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        topicName = body.topic || 'Unknown Topic';
+        const json = await request.json();
+        topicName = json.topic || 'Unknown Topic';
+
+        const body = VirtualFieldTripInputSchema.parse(json);
 
         const output = await planVirtualFieldTrip({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);
 
     } catch (error) {
-        logAIError(error, 'VIRTUAL_FIELD_TRIP', { message: `Virtual Field Trip API Failed for topic: "${topicName}"`, userId: request.headers.get('x-user-id') });
-
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
+        return handleAIError(error, 'VIRTUAL_FIELD_TRIP', {
+            message: `Virtual Field Trip API Failed for topic: "${topicName}"`,
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 

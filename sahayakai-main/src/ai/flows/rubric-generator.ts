@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 
-const RubricGeneratorInputSchema = z.object({
+export const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
   gradeLevel: z.string().optional().describe('The grade level for which the rubric is intended.'),
   subject: z.string().optional().describe('The academic subject.'),

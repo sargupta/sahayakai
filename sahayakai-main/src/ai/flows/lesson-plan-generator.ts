@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { UsageTracker } from '@/lib/usage-tracker';
 
-const LessonPlanInputSchema = z.object({
+export const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
   language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
   gradeLevels: z.array(z.string()).optional().describe('The grade levels for the lesson plan.'),

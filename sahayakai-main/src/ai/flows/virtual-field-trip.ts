@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 
-const VirtualFieldTripInputSchema = z.object({
+export const VirtualFieldTripInputSchema = z.object({
   topic: z.string().describe('The topic or theme for the virtual field trip.'),
   language: z.string().optional().describe('The language for the trip descriptions.'),
   gradeLevel: z.string().optional().describe('The grade level the trip should be tailored for.'),
