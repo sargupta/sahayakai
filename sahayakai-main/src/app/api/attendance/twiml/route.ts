@@ -196,6 +196,15 @@ export async function POST(req: NextRequest) {
 
         const newTurnCount = turnCount + 1;
 
+        // Build a terse score summary so the AI agent can quote scores if the
+        // parent asks about marks. Only populated when performanceContext was
+        // captured at outreach-creation time by the Contact-Parent modal.
+        const pc = data.performanceContext as { subjectBreakdown?: { subject: string; name: string; marksObtained: number; maxMarks: number; percentage: number }[]; latestPercentage?: number; isAtRisk?: boolean } | undefined;
+        const performanceSummary = pc?.subjectBreakdown?.length
+            ? pc.subjectBreakdown.slice(0, 3).map(a => `${a.subject}: ${a.marksObtained}/${a.maxMarks}`).join(', ')
+                + (typeof pc.latestPercentage === 'number' ? ` · overall ${Math.round(pc.latestPercentage)}%` : '')
+            : undefined;
+
         // Generate AI agent reply
         const agentResult = await generateAgentReply({
             studentName: data.studentName,
@@ -209,6 +218,7 @@ export async function POST(req: NextRequest) {
             transcript: transcript.map(t => ({ role: t.role, text: t.text })),
             parentSpeech,
             turnNumber: newTurnCount,
+            performanceSummary,
         });
 
         const agentReply = agentResult.reply + (agentResult.followUpQuestion ? ` ${agentResult.followUpQuestion}` : '');

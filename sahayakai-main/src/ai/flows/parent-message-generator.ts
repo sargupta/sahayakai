@@ -38,6 +38,19 @@ const REASON_CONTEXT: Record<OutreachReason, string> = {
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
+const PerformanceContextSchema = z.object({
+    latestPercentage: z.number().optional().describe('Weighted average across recent assessments (0-100)'),
+    isAtRisk: z.boolean().optional().describe('True when overall average < 35%'),
+    subjectBreakdown: z.array(z.object({
+        subject: z.string(),
+        name: z.string(),
+        marksObtained: z.number(),
+        maxMarks: z.number(),
+        percentage: z.number(),
+        date: z.string(),
+    })).optional().describe('Most recent assessments (2-3) with concrete scores the AI can cite'),
+}).optional();
+
 const ParentMessageInputSchema = z.object({
     studentName:              z.string().describe('Full name of the student'),
     className:                z.string().describe('Class name, e.g. "Class 6A"'),
@@ -49,6 +62,15 @@ const ParentMessageInputSchema = z.object({
     consecutiveAbsentDays:    z.number().optional().describe('Number of consecutive absent days (for absence reason)'),
     teacherName:              z.string().optional().describe('Teacher\'s name for the sign-off'),
     schoolName:               z.string().optional().describe('School name for context'),
+    /** Snapshot of the student's recent academic performance so the AI can
+     *  cite specific tests when the reason is poor_performance. Populated by
+     *  the Contact-Parent modal from classes/{cid}/students/{sid}/assessments. */
+    performanceContext:       PerformanceContextSchema,
+    /** Pre-built summary line derived from performanceContext — kept alongside
+     *  the structured data so the Handlebars prompt can reference it without
+     *  iterating over arrays (Genkit's prompt template is not full Handlebars).
+     *  Example: "Maths Unit Test: 18/25 (72%), Science Mid-term: 34/50 (68%)". */
+    performanceSummary:       z.string().optional(),
     userId:                   z.string().optional(),
 });
 
@@ -84,6 +106,9 @@ You are a caring and professional school teacher writing a message to a student'
 {{#if teacherNote}}
 - Teacher's note: {{teacherNote}}
 {{/if}}
+{{#if performanceSummary}}
+- Recent academic results: {{performanceSummary}}
+{{/if}}
 {{#if teacherName}}
 - From: {{teacherName}}
 {{/if}}
@@ -101,9 +126,9 @@ You are a caring and professional school teacher writing a message to a student'
 8. Do NOT introduce yourself as "Sahayak" or any AI name. You are the teacher or "your child's school" — never mention AI or any product name.
 7. Reason-specific guidance:
    - consecutive_absences: Express concern for the child's well-being. Ask if they need any support. Do not accuse.
-   - poor_performance: Offer help and partnership. Focus on improvement, not failure.
+   - poor_performance: Offer help and partnership. Focus on improvement, not failure. When "Recent academic results" is provided above, cite ONE specific score (e.g. "scored 18 out of 25 in the last Mathematics test") so the parent knows exactly what you are referring to — do not invent scores that are not listed.
    - behavioral_concern: Be factual but gentle. Acknowledge positive qualities. Ask for home support.
-   - positive_feedback: Be warm and celebratory. Specific praise is more meaningful than generic praise.
+   - positive_feedback: Be warm and celebratory. Specific praise is more meaningful than generic praise. If "Recent academic results" shows high scores, cite the highest as evidence.
 
 Return:
 - message: the complete message text
