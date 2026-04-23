@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP } from "@/types";
+import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES } from "@/types";
+import type { AdministrativeRole } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
-import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users } from "lucide-react";
+import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getOnboardingExample, type OnboardingExample } from "@/data/onboarding-examples";
 import { getOnboardingExampleTopic } from "@/lib/contextual-suggestions";
@@ -29,6 +30,22 @@ const BOARD_CATEGORIES = [
     { value: 'ICSE / ISC', label: 'ICSE / ISC' },
     { value: 'state_board', label: 'State Board' },
 ] as const;
+
+const ROLE_OPTIONS: { value: AdministrativeRole; label: string; hint: string }[] = [
+    { value: 'none', label: 'Classroom Teacher', hint: 'Teach one or more classes' },
+    { value: 'hod', label: 'HOD / Subject Lead', hint: 'Lead a subject department' },
+    { value: 'vice_principal', label: 'Vice Principal / Coordinator', hint: 'Manage academics for a wing' },
+    { value: 'principal', label: 'Principal / School Admin', hint: 'Run the school' },
+];
+
+const ROLE_LABEL: Record<AdministrativeRole, string> = {
+    'none': 'Classroom Teacher',
+    'hod': 'HOD',
+    'coordinator': 'Coordinator',
+    'exam_controller': 'Exam Controller',
+    'vice_principal': 'Vice Principal',
+    'principal': 'Principal',
+};
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -76,21 +93,30 @@ export default function OnboardingPage() {
         subjects: [] as string[],
         gradeLevels: [] as string[],
         preferredLanguage: "English" as Language,
+        administrativeRole: undefined as AdministrativeRole | undefined,
     });
 
     // B1: Auto-advance accordion when a section is complete
     useEffect(() => {
         if (step !== 1) return;
-        if (activeSection === 0 && formData.schoolName.trim() && formData.state) {
+        if (activeSection === 0 && formData.administrativeRole !== undefined) {
             const timer = setTimeout(() => setActiveSection(1), 400);
+            return () => clearTimeout(timer);
+        }
+    }, [step, activeSection, formData.administrativeRole]);
+
+    useEffect(() => {
+        if (step !== 1) return;
+        if (activeSection === 1 && formData.schoolName.trim() && formData.state) {
+            const timer = setTimeout(() => setActiveSection(2), 400);
             return () => clearTimeout(timer);
         }
     }, [step, activeSection, formData.schoolName, formData.state]);
 
     useEffect(() => {
         if (step !== 1) return;
-        if (activeSection === 1 && formData.educationBoard) {
-            const timer = setTimeout(() => setActiveSection(2), 400);
+        if (activeSection === 2 && formData.educationBoard) {
+            const timer = setTimeout(() => setActiveSection(3), 400);
             return () => clearTimeout(timer);
         }
     }, [step, activeSection, formData.educationBoard]);
@@ -126,6 +152,7 @@ export default function OnboardingPage() {
                             subjects: profile.subjects || [],
                             gradeLevels: profile.gradeLevels || [],
                             preferredLanguage: (profile.preferredLanguage as Language) || "English",
+                            administrativeRole: (profile.administrativeRole as AdministrativeRole | undefined),
                         }));
                         if (profile.educationBoard === 'CBSE') {
                             setFormData(prev => ({ ...prev, boardCategory: 'CBSE' }));
@@ -185,6 +212,10 @@ export default function OnboardingPage() {
         }));
     };
 
+    const handleRoleSelect = (role: AdministrativeRole) => {
+        setFormData(prev => ({ ...prev, administrativeRole: role }));
+    };
+
     const handleStateChange = (state: string) => {
         setFormData(prev => ({
             ...prev,
@@ -234,6 +265,12 @@ export default function OnboardingPage() {
                 onboardingPhase: 'first-generation',
                 profileCompletionLevel: 'basic',
             };
+
+            // Only include administrativeRole when set; Firestore's Admin SDK rejects
+            // undefined field writes by default (ignoreUndefinedProperties is not enabled).
+            if (formData.administrativeRole !== undefined) {
+                profileData.administrativeRole = formData.administrativeRole;
+            }
 
             await updateProfileAction(userId, profileData);
             await setLanguage(formData.preferredLanguage as Language, false);
@@ -292,7 +329,8 @@ export default function OnboardingPage() {
         }
     };
 
-    // Finish onboarding — save generated content to library if present, then go home
+    // Finish onboarding — save generated content to library if present, then route based on role.
+    // Principals and vice-principals go to the organization dashboard; everyone else goes home.
     const handleFinish = async () => {
         if (!userId) { router.push("/"); return; }
 
@@ -313,7 +351,13 @@ export default function OnboardingPage() {
         }
 
         await saveStep(updates);
-        router.push("/");
+
+        const isPrincipalRole = formData.administrativeRole === 'principal' || formData.administrativeRole === 'vice_principal';
+        if (isPrincipalRole) {
+            router.push("/organization/dashboard");
+        } else {
+            router.push("/");
+        }
     };
 
     if (loading) return (
@@ -517,8 +561,9 @@ export default function OnboardingPage() {
         );
     }
 
-    // Step 1 — Single-screen setup (School + State + Board + Subjects + Grades)
+    // Step 1 — Single-screen setup (Role + School + State + Board + Subjects + Grades)
     const isStep1Valid =
+        formData.administrativeRole !== undefined &&
         formData.schoolName.trim() &&
         formData.state &&
         formData.educationBoard &&
@@ -538,7 +583,7 @@ export default function OnboardingPage() {
                 </CardHeader>
 
                 <CardContent ref={stepContainerRef} className="space-y-2 px-4 sm:px-8">
-                    {/* Section 0: School & State */}
+                    {/* Section 0: Your role at school */}
                     <div ref={el => { sectionRefs.current[0] = el; }} className="rounded-xl border border-border overflow-hidden">
                         <button
                             type="button"
@@ -546,21 +591,70 @@ export default function OnboardingPage() {
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-semibold">{t("School / Institution Name")} & {t("State")}</span>
+                                <Briefcase className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("Your role at school")}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {formData.schoolName.trim() && formData.state && activeSection !== 0 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
+                                {formData.administrativeRole !== undefined && activeSection !== 0 && (
+                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                        {t(ROLE_LABEL[formData.administrativeRole])}
+                                    </span>
                                 )}
-                                {formData.schoolName.trim() && formData.state ? (
+                                {formData.administrativeRole !== undefined ? (
                                     <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 0 && "rotate-180")} />
                                 )}
                             </div>
                         </button>
                         {activeSection === 0 && (
+                            <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Select your role at school">
+                                    {ROLE_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => handleRoleSelect(opt.value)}
+                                            aria-pressed={formData.administrativeRole === opt.value}
+                                            className={cn(
+                                                "p-3 text-left rounded-xl border transition-all",
+                                                formData.administrativeRole === opt.value
+                                                    ? "bg-primary/5 border-primary shadow-soft"
+                                                    : "bg-card border-border hover:border-primary/50 hover:shadow-soft"
+                                            )}
+                                        >
+                                            <div className="text-sm font-semibold">{t(opt.label)}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5">{t(opt.hint)}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section 1: School & State */}
+                    <div ref={el => { sectionRefs.current[1] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 1 ? -1 : 1)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-semibold">{t("School / Institution Name")} & {t("State")}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {formData.schoolName.trim() && formData.state && activeSection !== 1 && (
+                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
+                                )}
+                                {formData.schoolName.trim() && formData.state ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 1 && "rotate-180")} />
+                                )}
+                            </div>
+                        </button>
+                        {activeSection === 1 && (
                             <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="space-y-1.5">
                                     <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
@@ -589,11 +683,11 @@ export default function OnboardingPage() {
                         )}
                     </div>
 
-                    {/* Section 1: Education Board */}
-                    <div ref={el => { sectionRefs.current[1] = el; }} className="rounded-xl border border-border overflow-hidden">
+                    {/* Section 2: Education Board */}
+                    <div ref={el => { sectionRefs.current[2] = el; }} className="rounded-xl border border-border overflow-hidden">
                         <button
                             type="button"
-                            onClick={() => setActiveSection(activeSection === 1 ? -1 : 1)}
+                            onClick={() => setActiveSection(activeSection === 2 ? -1 : 2)}
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
@@ -601,17 +695,17 @@ export default function OnboardingPage() {
                                 <span className="text-sm font-semibold">{t("Education Board")}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {formData.educationBoard && activeSection !== 1 && (
+                                {formData.educationBoard && activeSection !== 2 && (
                                     <span className="text-xs text-muted-foreground">{formData.educationBoard}</span>
                                 )}
                                 {formData.educationBoard ? (
                                     <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 2 && "rotate-180")} />
                                 )}
                             </div>
                         </button>
-                        {activeSection === 1 && (
+                        {activeSection === 2 && (
                             <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="grid grid-cols-3 gap-1.5">
                                     {BOARD_CATEGORIES.map(cat => (
@@ -641,11 +735,11 @@ export default function OnboardingPage() {
                         )}
                     </div>
 
-                    {/* Section 2: Subjects */}
-                    <div ref={el => { sectionRefs.current[2] = el; }} className="rounded-xl border border-border overflow-hidden">
+                    {/* Section 3: Subjects */}
+                    <div ref={el => { sectionRefs.current[3] = el; }} className="rounded-xl border border-border overflow-hidden">
                         <button
                             type="button"
-                            onClick={() => setActiveSection(activeSection === 2 ? -1 : 2)}
+                            onClick={() => setActiveSection(activeSection === 3 ? -1 : 3)}
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
@@ -653,7 +747,7 @@ export default function OnboardingPage() {
                                 <span className="text-sm font-semibold">{t("Subjects")}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {formData.subjects.length > 0 && activeSection !== 2 && (
+                                {formData.subjects.length > 0 && activeSection !== 3 && (
                                     <span className="text-xs text-muted-foreground truncate max-w-[160px]">
                                         {formData.subjects.slice(0, 2).map(s => tSubject(s, formData.preferredLanguage)).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
                                     </span>
@@ -661,11 +755,11 @@ export default function OnboardingPage() {
                                 {formData.subjects.length > 0 ? (
                                     <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 3 && "rotate-180")} />
                                 )}
                             </div>
                         </button>
-                        {activeSection === 2 && (
+                        {activeSection === 3 && (
                             <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Select your subjects">
                                     {SUBJECTS.map((subject) => (
@@ -687,11 +781,11 @@ export default function OnboardingPage() {
                         )}
                     </div>
 
-                    {/* Section 3: Grade Levels */}
-                    <div ref={el => { sectionRefs.current[3] = el; }} className="rounded-xl border border-border overflow-hidden">
+                    {/* Section 4: Grade Levels */}
+                    <div ref={el => { sectionRefs.current[4] = el; }} className="rounded-xl border border-border overflow-hidden">
                         <button
                             type="button"
-                            onClick={() => setActiveSection(activeSection === 3 ? -1 : 3)}
+                            onClick={() => setActiveSection(activeSection === 4 ? -1 : 4)}
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
@@ -699,7 +793,7 @@ export default function OnboardingPage() {
                                 <span className="text-sm font-semibold">{t("Classes")}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {formData.gradeLevels.length > 0 && activeSection !== 3 && (
+                                {formData.gradeLevels.length > 0 && activeSection !== 4 && (
                                     <span className="text-xs text-muted-foreground truncate max-w-[160px]">
                                         {formData.gradeLevels.slice(0, 3).join(', ')}{formData.gradeLevels.length > 3 ? ` +${formData.gradeLevels.length - 3}` : ''}
                                     </span>
@@ -707,11 +801,11 @@ export default function OnboardingPage() {
                                 {formData.gradeLevels.length > 0 ? (
                                     <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 4 && "rotate-180")} />
                                 )}
                             </div>
                         </button>
-                        {activeSection === 3 && (
+                        {activeSection === 4 && (
                             <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2" role="group" aria-label="Select your classes">
                                     {GRADE_LEVELS.slice(3).map((grade) => (

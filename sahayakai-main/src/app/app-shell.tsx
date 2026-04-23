@@ -17,12 +17,20 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
+const MARKETING_PATHS = ["/for-schools"];
+
+function isMarketingPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return MARKETING_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
 /**
  * Routes the visitor through one of two layouts:
  *
- * 1. Landing layout — when the visitor is on `/` AND not authenticated. Renders
- *    children directly with no sidebar / header / global app chrome. The
- *    landing page brings its own LandingNav and LandingFooter.
+ * 1. Landing layout — (a) cold visitor on `/`, OR (b) any visitor (auth state
+ *    agnostic) on a /(marketing) surface. Renders children directly with no
+ *    sidebar / header / global app chrome. Marketing pages bring their own nav
+ *    and footer (LandingNav / LandingFooter composition).
  *
  * 2. App layout — every other case. Renders the existing SidebarProvider +
  *    AppSidebar + header + main wrapper, plus the global OmniOrb / GlobalHooks /
@@ -35,15 +43,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isMarketing = isMarketingPath(pathname);
 
   // On the home route, wait for auth to resolve before deciding which layout
   // to render. This prevents a landing-page flash for returning authenticated
   // teachers and a dashboard-chrome flash for cold visitors.
   if (isHome && loading) return null;
 
-  // Cold visitor on the home route → landing layout, no app chrome.
-  // PWAInstallPrompt still mounts so cold visitors can install the app.
-  if (isHome && !user) {
+  // Cold visitor on the home route OR any visitor on a marketing surface
+  // → landing layout, no app chrome. Marketing pages always stay chrome-free
+  // regardless of auth state since they are for cold buyers and sales demos.
+  if ((isHome && !user) || isMarketing) {
     return (
       <>
         {children}
