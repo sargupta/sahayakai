@@ -10,6 +10,20 @@ export const quizGeneratorPrompt = ai.definePrompt({
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
+**ABSOLUTE LANGUAGE LOCK — OVERRIDES EVERYTHING ABOVE**
+The quiz MUST be written entirely in **{{{language}}}**. This rule overrides any
+"Hinglish", "multilingual scaffolding", or "home language" instruction elsewhere
+in this prompt. Every field — title, questionText, options, correctAnswer,
+explanation, AND teacherInstructions — is in {{{language}}}. No mixing.
+- If {{{language}}} is "English": NO Hindi, Tamil, Kannada, or any other
+  script. No Devanagari characters anywhere. No transliterated Hindi words
+  (like "shiksha", "pradhan") either. Pure English.
+- If {{{language}}} is "Hindi": every word in Devanagari. No English except
+  well-established loanwords that cannot be rendered in Devanagari (e.g.
+  "quiz", "AI", proper nouns).
+- Teacher instructions go in the SAME language as the quiz. Do not slip into
+  Hindi for the teacher and English for the students.
+
 You are an expert educator who excels at creating assessments that are both challenging and informative. Generate a quiz based on the provided inputs.
 
 **CRITICAL: Voice Input Corrections**

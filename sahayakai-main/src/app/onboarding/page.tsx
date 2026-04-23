@@ -138,14 +138,14 @@ export default function OnboardingPage() {
                             setStep(1);
                         }
                     }
-                    if (!profile?.preferredLanguage) {
-                        const browserLang = navigator.language?.split('-')[0];
-                        const { LANGUAGE_CODE_MAP } = await import('@/types');
-                        const detected = LANGUAGE_CODE_MAP[browserLang];
-                        if (detected) {
-                            setFormData(prev => ({ ...prev, preferredLanguage: detected }));
-                        }
-                    }
+                    // Default remains English for new teachers. We used to
+                    // auto-detect from navigator.language (e.g. hi-IN →
+                    // preSelected Hindi), but that bypassed the teacher's
+                    // explicit choice: a teacher on an Indic-locale browser
+                    // who wanted English still ended up with Hindi because
+                    // they never actively changed the pre-selected value.
+                    // The spec is "default English, teacher explicitly
+                    // changes during onboarding" — so we no longer auto-pick.
                 } catch (err) {
                     console.error("Failed to load profile for onboarding:", err);
                 }
