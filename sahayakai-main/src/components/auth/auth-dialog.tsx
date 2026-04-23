@@ -45,8 +45,8 @@ export function AuthDialog() {
                     const data = await response.json();
                     if (data.exists === false) {
                         toast({
-                            title: "Almost there",
-                            description: "Complete your profile to get started.",
+                            title: "Profile setup required",
+                            description: "Finish your profile to continue.",
                         });
                         closeAuthModal();
                         router.push("/onboarding");

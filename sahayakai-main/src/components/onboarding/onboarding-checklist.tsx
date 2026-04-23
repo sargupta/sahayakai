@@ -111,7 +111,7 @@ export function OnboardingChecklist({ items, onDismiss, className }: OnboardingC
                                     <Circle className="h-4 w-4 text-border shrink-0" />
                                 )}
                                 <Icon className="h-4 w-4 shrink-0 opacity-60" />
-                                <span className={cn(done && "line-through")}>{item.label}</span>
+                                <span className={cn(done && "line-through text-muted-foreground")}>{item.label}</span>
                             </Link>
                         );
                     })}

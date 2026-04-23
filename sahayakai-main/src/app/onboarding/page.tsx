@@ -328,15 +328,12 @@ export default function OnboardingPage() {
         return (
             <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
                 <Card className="w-full max-w-lg rounded-2xl border border-border shadow-soft">
-                    <CardHeader className="text-center space-y-2 pb-4">
-                        <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
-                            <GraduationCap className="h-8 w-8 text-primary" />
-                        </div>
-                        <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline tracking-tight">
+                    <CardHeader className="text-center space-y-2 pb-4 pt-7">
+                        <CardTitle className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
                             {t("Choose your language")}
                         </CardTitle>
                         <CardDescription className="text-base">
-                            SahayakAI works in your language
+                            SahayakAI works in 11 Indian languages.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-8 pb-8">
@@ -373,12 +370,9 @@ export default function OnboardingPage() {
                 <div className="w-full max-w-2xl space-y-6">
                     {/* Pre-generated example */}
                     <Card className="rounded-2xl border border-border shadow-soft">
-                        <CardHeader className="text-center space-y-2 pb-3">
-                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
-                                <Sparkles className="h-8 w-8 text-primary" />
-                            </div>
-                            <CardTitle className="text-xl sm:text-2xl font-extrabold font-headline tracking-tight">
-                                {t("Here is what SahayakAI creates for you")}
+                        <CardHeader className="text-center space-y-1.5 pb-3 pt-6">
+                            <CardTitle className="text-xl sm:text-2xl font-bold font-headline tracking-tight">
+                                {t("Sample lesson plan")}
                             </CardTitle>
                             <CardDescription>
                                 {previewExample?.title}
@@ -391,7 +385,7 @@ export default function OnboardingPage() {
                                     <div className="flex items-start gap-2">
                                         <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                                         <div>
-                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Learning Objectives")}</p>
+                                            <p className="text-xs font-semibold text-muted-foreground">{t("Learning objectives")}</p>
                                             <ul className="text-sm space-y-1 mt-1">
                                                 {previewExample.objectives.map((obj, i) => (
                                                     <li key={i} className="flex items-start gap-2">
@@ -411,7 +405,7 @@ export default function OnboardingPage() {
 
                                     {/* Activities preview */}
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Activities")}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground">{t("Activities")}</p>
                                         {(showAllActivities ? previewExample.activities : previewExample.activities.slice(0, 3)).map((act, i) => (
                                             <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 animate-in fade-in duration-300">
                                                 <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">{t(act.phase)}</span>
@@ -444,7 +438,7 @@ export default function OnboardingPage() {
                     {/* Real generation CTA */}
                     <Card className="rounded-2xl border border-primary/20 bg-primary/5 shadow-soft">
                         <CardContent className="p-4 sm:p-6 space-y-4">
-                            <h3 className="font-headline font-bold text-base">{t("Now create one for your topic")}</h3>
+                            <h3 className="font-headline font-bold text-base">{t("Create your own")}</h3>
 
                             <div className="flex gap-2 items-center">
                                 <Input
@@ -495,8 +489,8 @@ export default function OnboardingPage() {
                                 <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
                                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
                                     <div>
-                                        <p className="text-sm font-medium">Creating your lesson plan...</p>
-                                        <p className="text-xs text-muted-foreground">This usually takes 20-30 seconds</p>
+                                        <p className="text-sm font-medium">Generating lesson plan</p>
+                                        <p className="text-xs text-muted-foreground">Usually takes 20–30 seconds.</p>
                                     </div>
                                 </div>
                             )}
@@ -509,12 +503,12 @@ export default function OnboardingPage() {
                             {t("Back")}
                         </Button>
                         <div className="flex gap-2">
-                            <Button variant="ghost" onClick={handleFinish} className="text-sm text-muted-foreground">
-                                {t("I will explore on my own")}
+                            <Button variant="outline" onClick={handleFinish} className="rounded-xl h-11">
+                                {t("Skip for now")}
                             </Button>
-                            <Button onClick={handleFinish} className="rounded-xl gap-1 shadow-lg shadow-primary/20">
+                            <Button onClick={handleFinish} className="rounded-xl gap-1 shadow-sm h-11 px-5">
+                                {generatedContent ? t("Save and continue") : t("Continue")}
                                 <ArrowRight className="h-4 w-4" />
-                                {generatedContent ? t("Save and Start") : t("Get Started")}
                             </Button>
                         </div>
                     </div>
@@ -534,15 +528,12 @@ export default function OnboardingPage() {
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
             <Card className="w-full max-w-lg sm:max-w-2xl rounded-2xl border border-border shadow-soft">
-                <CardHeader className="text-center space-y-2 pb-4 sm:pb-6">
-                    <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
-                        <GraduationCap className="h-8 w-8 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl sm:text-3xl font-extrabold font-headline tracking-tight">
+                <CardHeader className="text-center space-y-2 pb-4 sm:pb-6 pt-7">
+                    <CardTitle className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
                         {t("Tell us about your teaching")}
                     </CardTitle>
                     <CardDescription className="text-base">
-                        {t("Help us personalize your experience")}
+                        {t("We use this to personalise lesson plans, quizzes, and the community feed.")}
                     </CardDescription>
                 </CardHeader>
 
@@ -555,7 +546,7 @@ export default function OnboardingPage() {
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-primary" />
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-semibold">{t("School / Institution Name")} & {t("State")}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -563,9 +554,9 @@ export default function OnboardingPage() {
                                     <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
                                 )}
                                 {formData.schoolName.trim() && formData.state ? (
-                                    <Check className="h-4 w-4 text-green-600" />
+                                    <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 0 && "rotate-180")} />
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 )}
                             </div>
                         </button>
@@ -606,7 +597,7 @@ export default function OnboardingPage() {
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <GraduationCap className="h-4 w-4 text-primary" />
+                                <GraduationCap className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-semibold">{t("Education Board")}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -614,9 +605,9 @@ export default function OnboardingPage() {
                                     <span className="text-xs text-muted-foreground">{formData.educationBoard}</span>
                                 )}
                                 {formData.educationBoard ? (
-                                    <Check className="h-4 w-4 text-green-600" />
+                                    <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 1 && "rotate-180")} />
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 )}
                             </div>
                         </button>
@@ -631,7 +622,7 @@ export default function OnboardingPage() {
                                             className={cn(
                                                 "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                 formData.boardCategory === cat.value
-                                                    ? "bg-primary text-white border-primary shadow-lg"
+                                                    ? "bg-primary text-white border-primary shadow-sm"
                                                     : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                             )}
                                             aria-pressed={formData.boardCategory === cat.value}
@@ -644,7 +635,7 @@ export default function OnboardingPage() {
                                     <p className="text-xs text-muted-foreground mt-2">Selected: {formData.educationBoard}</p>
                                 )}
                                 {formData.boardCategory === 'state_board' && !formData.state && (
-                                    <p className="text-xs text-orange-600 mt-2">Please select your state first</p>
+                                    <p className="text-xs text-destructive mt-2">Please select your state first.</p>
                                 )}
                             </div>
                         )}
@@ -658,7 +649,7 @@ export default function OnboardingPage() {
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <BookOpen className="h-4 w-4 text-primary" />
+                                <BookOpen className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-semibold">{t("Subjects")}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -668,9 +659,9 @@ export default function OnboardingPage() {
                                     </span>
                                 )}
                                 {formData.subjects.length > 0 ? (
-                                    <Check className="h-4 w-4 text-green-600" />
+                                    <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 2 && "rotate-180")} />
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 )}
                             </div>
                         </button>
@@ -704,7 +695,7 @@ export default function OnboardingPage() {
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
                         >
                             <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-primary" />
+                                <Users className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-semibold">{t("Classes")}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -714,9 +705,9 @@ export default function OnboardingPage() {
                                     </span>
                                 )}
                                 {formData.gradeLevels.length > 0 ? (
-                                    <Check className="h-4 w-4 text-green-600" />
+                                    <Check className="h-4 w-4 text-primary" />
                                 ) : (
-                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 3 && "rotate-180")} />
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 )}
                             </div>
                         </button>
@@ -732,7 +723,7 @@ export default function OnboardingPage() {
                                             className={cn(
                                                 "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                 formData.gradeLevels.includes(grade)
-                                                    ? "bg-primary text-white border-primary shadow-lg"
+                                                    ? "bg-primary text-white border-primary shadow-sm"
                                                     : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:shadow-soft"
                                             )}
                                         >
@@ -759,7 +750,7 @@ export default function OnboardingPage() {
                                                 className={cn(
                                                     "px-2 py-2.5 text-xs font-semibold rounded-xl border transition-all",
                                                     formData.gradeLevels.includes(grade)
-                                                        ? "bg-primary text-white border-primary shadow-lg"
+                                                        ? "bg-primary text-white border-primary shadow-sm"
                                                         : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:shadow-soft"
                                                 )}
                                             >
@@ -785,10 +776,11 @@ export default function OnboardingPage() {
                     <Button
                         onClick={handleStep1Submit}
                         disabled={!isStep1Valid || submitting}
-                        className="gap-2 rounded-xl shadow-lg shadow-primary/20 px-6"
+                        className="gap-2 rounded-xl shadow-sm px-5 h-11"
                     >
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                        {t("Show me what SahayakAI can do")}
+                        {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {t("Continue")}
+                        {!submitting && <ArrowRight className="h-4 w-4" />}
                     </Button>
                 </CardFooter>
             </Card>
