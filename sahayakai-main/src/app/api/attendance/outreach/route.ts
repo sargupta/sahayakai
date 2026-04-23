@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
-import type { ParentOutreach, OutreachReason, CallStatus } from '@/types/attendance';
+import type { ParentOutreach, OutreachReason, CallStatus, PerformanceContext } from '@/types/attendance';
 import type { Language } from '@/types';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
 
@@ -28,13 +28,16 @@ export async function POST(req: NextRequest) {
             teacherNote?: string;
             generatedMessage: string;
             deliveryMethod: 'twilio_call' | 'whatsapp_copy';
+            performanceContext?: PerformanceContext;
         };
 
         const db = await getDb();
         const now = new Date().toISOString();
         const ref = db.collection('parent_outreach').doc();
 
-        const record: Omit<ParentOutreach, 'id'> = {
+        // Firestore rejects literal `undefined` in writes — build the doc
+        // conditionally instead of setting optional fields to undefined.
+        const record: Record<string, unknown> = {
             teacherUid: userId,
             classId: data.classId,
             className: data.className,
@@ -43,13 +46,14 @@ export async function POST(req: NextRequest) {
             parentPhone: data.parentPhone,
             parentLanguage: data.parentLanguage,
             reason: data.reason,
-            teacherNote: data.teacherNote,
             generatedMessage: data.generatedMessage,
             deliveryMethod: data.deliveryMethod,
             callStatus: (data.deliveryMethod === 'twilio_call' ? 'initiated' : 'manual') as CallStatus,
             createdAt: now,
             updatedAt: now,
         };
+        if (data.teacherNote) record.teacherNote = data.teacherNote;
+        if (data.performanceContext) record.performanceContext = data.performanceContext;
 
         await ref.set(record);
         return NextResponse.json({ outreachId: ref.id });

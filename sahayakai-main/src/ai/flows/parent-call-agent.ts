@@ -30,6 +30,9 @@ const AgentReplyInputSchema = z.object({
     transcript: z.array(TranscriptTurnSchema),
     parentSpeech: z.string().describe('What the parent just said (transcribed)'),
     turnNumber: z.number(),
+    /** One-line summary of recent test scores the agent can quote if the
+     *  parent asks "what were his marks?". Built from PerformanceContext. */
+    performanceSummary: z.string().optional(),
 });
 
 const AgentReplyOutputSchema = z.object({
@@ -53,6 +56,7 @@ const agentReplyPrompt = ai.definePrompt({
 - Teacher's original message: {{teacherMessage}}
 {{#if teacherName}}- Teacher: {{teacherName}}{{/if}}
 {{#if schoolName}}- School: {{schoolName}}{{/if}}
+{{#if performanceSummary}}- Recent academic scores (quote ONLY if parent asks about marks/performance): {{performanceSummary}}{{/if}}
 - Parent's language: {{parentLanguage}}
 
 **Conversation so far:**
