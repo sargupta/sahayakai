@@ -19,7 +19,7 @@ export const Logo: FC = () => {
           SahayakAI
         </h1>
         <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-muted-foreground mt-0.5">
-          by SARGVISION
+          by SARGVISION Intelligence
         </span>
       </div>
     </div>
