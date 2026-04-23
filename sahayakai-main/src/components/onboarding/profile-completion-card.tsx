@@ -11,8 +11,9 @@ import { DEPARTMENTS } from "@/types";
 import { updateProfileAction } from "@/app/actions/profile";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-import { Loader2, UserCircle, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface ProfileCompletionCardProps {
     onComplete?: () => void;
@@ -61,23 +62,19 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
     };
 
     return (
-        <Card className={`border border-primary/20 bg-primary/5 rounded-2xl shadow-soft ${className}`}>
+        <Card className={cn("border border-border rounded-2xl shadow-soft bg-card", className)}>
             <CardHeader className="pb-3 relative">
                 <button
                     onClick={() => { setDismissed(true); onDismiss?.(); }}
                     className="absolute top-3 right-3 text-muted-foreground hover:text-foreground p-1"
+                    aria-label="Dismiss"
                 >
                     <X className="h-4 w-4" />
                 </button>
-                <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                        <UserCircle className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                        <CardTitle className="text-base font-bold">{t("Complete your profile")}</CardTitle>
-                        <CardDescription className="text-xs">These details help us recommend better content</CardDescription>
-                    </div>
-                </div>
+                <CardTitle className="text-base font-bold">{t("Complete your profile")}</CardTitle>
+                <CardDescription className="text-xs">
+                    A few more details so we can recommend better content.
+                </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 pb-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
