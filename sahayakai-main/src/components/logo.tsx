@@ -1,11 +1,14 @@
-"use client";
-
 import { BookOpenCheck } from 'lucide-react';
 import type { FC } from 'react';
-import { useSidebar } from '@/components/ui/sidebar';
 
+/**
+ * Logo is used both inside the sidebar (where a parent [data-collapsible]
+ * group handles the collapse) AND outside it (e.g. inside AuthDialog on the
+ * landing page where no SidebarProvider exists). It must therefore avoid
+ * calling useSidebar() — the collapse behaviour is already pure CSS via the
+ * group-data selectors below, no hook needed.
+ */
 export const Logo: FC = () => {
-  const { state } = useSidebar();
   return (
     <div className="flex items-center gap-2">
       <div className="rounded-lg bg-primary/20 p-2 text-primary">
