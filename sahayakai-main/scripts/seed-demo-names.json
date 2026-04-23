@@ -1,0 +1,34 @@
+{
+  "_note": "Synthetic names for demo-school seed. NOT scraped from real schools. Any resemblance to real teachers is coincidental. Names drawn from a Karnataka-region-plausible pool (Kannada/Tamil/Malayalam/Hindi mix).",
+  "principal": {
+    "name": "Arundhati Ravichandran",
+    "language": "English"
+  },
+  "teachers": [
+    { "name": "Priya Nair", "subjects": ["Mathematics"], "gradeLevels": ["Class 6", "Class 7", "Class 8"], "language": "Kannada", "role": "none", "profile": "active" },
+    { "name": "Rajesh Shastri", "subjects": ["Science"], "gradeLevels": ["Class 8", "Class 9", "Class 10"], "language": "English", "role": "hod", "profile": "active" },
+    { "name": "Lalitha Venkatesh", "subjects": ["English"], "gradeLevels": ["Class 5", "Class 6", "Class 7"], "language": "English", "role": "none", "profile": "active" },
+    { "name": "Mohan Iyengar", "subjects": ["Social Science", "History"], "gradeLevels": ["Class 7", "Class 8"], "language": "Kannada", "role": "none", "profile": "active" },
+    { "name": "Sreelatha Panicker", "subjects": ["Science"], "gradeLevels": ["Class 6", "Class 7"], "language": "Malayalam", "role": "none", "profile": "active" },
+    { "name": "Kavita Mahadevan", "subjects": ["Mathematics"], "gradeLevels": ["Class 9", "Class 10"], "language": "English", "role": "coordinator", "profile": "active" },
+    { "name": "Venu Gopalan", "subjects": ["Computer Science"], "gradeLevels": ["Class 8", "Class 9", "Class 10"], "language": "English", "role": "none", "profile": "active" },
+    { "name": "Meera Sadashiva", "subjects": ["Hindi"], "gradeLevels": ["Class 5", "Class 6"], "language": "Hindi", "role": "none", "profile": "active" },
+    { "name": "Anupama Krishnaswamy", "subjects": ["Mathematics", "Science"], "gradeLevels": ["Class 5", "Class 6"], "language": "Kannada", "role": "none", "profile": "regular" },
+    { "name": "Bharati Suryanarayana", "subjects": ["English"], "gradeLevels": ["Class 8", "Class 9"], "language": "English", "role": "none", "profile": "regular" },
+    { "name": "Divya Rangachari", "subjects": ["Science"], "gradeLevels": ["Class 7"], "language": "English", "role": "none", "profile": "regular" },
+    { "name": "Ganesh Naidu", "subjects": ["Social Science"], "gradeLevels": ["Class 9", "Class 10"], "language": "Telugu", "role": "none", "profile": "regular" },
+    { "name": "Harini Doraiswamy", "subjects": ["Kannada"], "gradeLevels": ["Class 5", "Class 6", "Class 7"], "language": "Kannada", "role": "none", "profile": "regular" },
+    { "name": "Indira Murthy", "subjects": ["Mathematics"], "gradeLevels": ["Class 8"], "language": "English", "role": "none", "profile": "regular" },
+    { "name": "Jagadish Ananth", "subjects": ["Science", "Environmental Studies (EVS)"], "gradeLevels": ["Class 4", "Class 5"], "language": "Kannada", "role": "none", "profile": "regular" },
+    { "name": "Kalyani Bhaskar", "subjects": ["English"], "gradeLevels": ["Class 6", "Class 7"], "language": "English", "role": "none", "profile": "regular" },
+    { "name": "Lakshmanan Subramanian", "subjects": ["Tamil"], "gradeLevels": ["Class 7", "Class 8"], "language": "Tamil", "role": "none", "profile": "regular" },
+    { "name": "Mallika Somanath", "subjects": ["Geography"], "gradeLevels": ["Class 9", "Class 10"], "language": "English", "role": "none", "profile": "regular" },
+    { "name": "Nagaraj Pillai", "subjects": ["Mathematics"], "gradeLevels": ["Class 5"], "language": "Malayalam", "role": "none", "profile": "regular" },
+    { "name": "Padma Ramaswamy", "subjects": ["Hindi"], "gradeLevels": ["Class 8", "Class 9"], "language": "Hindi", "role": "none", "profile": "regular" },
+    { "name": "Raghavendra Keshava", "subjects": ["Science"], "gradeLevels": ["Class 10"], "language": "Kannada", "role": "vice_principal", "profile": "at-risk" },
+    { "name": "Shantala Kamath", "subjects": ["Civics"], "gradeLevels": ["Class 9"], "language": "English", "role": "none", "profile": "at-risk" },
+    { "name": "Thejas Rao", "subjects": ["Mathematics"], "gradeLevels": ["Class 7"], "language": "Kannada", "role": "none", "profile": "at-risk" },
+    { "name": "Uma Cheluvarajan", "subjects": ["English"], "gradeLevels": ["Class 5"], "language": "English", "role": "none", "profile": "at-risk" },
+    { "name": "Vasanti Narasimhan", "subjects": ["Art", "General"], "gradeLevels": ["Class 4", "Class 5"], "language": "Kannada", "role": "none", "profile": "at-risk" }
+  ]
+}

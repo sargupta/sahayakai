@@ -1153,6 +1153,94 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "സംസാരിക്കാൻ ടാപ്പ് ചെയ്യുക",
         "Odia": "କହିବା ପାଇଁ ଟାପ୍ କରନ୍ତୁ"
     },
+    // --- Onboarding role picker (Section 0) ---
+    // EN + HI + KN translated for the Karnataka pilot. Other 8 languages fall back to English
+    // as placeholder (t() returns the entry's English value); replace with native translations
+    // when those pilots launch.
+    "Your role at school": {
+        "English": "Your role at school", "Hindi": "स्कूल में आपकी भूमिका", "Kannada": "ಶಾಲೆಯಲ್ಲಿ ನಿಮ್ಮ ಪಾತ್ರ",
+        "Tamil": "Your role at school", "Telugu": "Your role at school", "Marathi": "Your role at school",
+        "Bengali": "Your role at school", "Gujarati": "Your role at school", "Punjabi": "Your role at school",
+        "Malayalam": "Your role at school", "Odia": "Your role at school"
+    },
+    "Classroom Teacher": {
+        "English": "Classroom Teacher", "Hindi": "कक्षा शिक्षक", "Kannada": "ತರಗತಿ ಶಿಕ್ಷಕ",
+        "Tamil": "Classroom Teacher", "Telugu": "Classroom Teacher", "Marathi": "Classroom Teacher",
+        "Bengali": "Classroom Teacher", "Gujarati": "Classroom Teacher", "Punjabi": "Classroom Teacher",
+        "Malayalam": "Classroom Teacher", "Odia": "Classroom Teacher"
+    },
+    "Teach one or more classes": {
+        "English": "Teach one or more classes", "Hindi": "एक या अधिक कक्षाएँ पढ़ाते हैं", "Kannada": "ಒಂದು ಅಥವಾ ಹೆಚ್ಚಿನ ತರಗತಿಗಳನ್ನು ಕಲಿಸುತ್ತೀರಿ",
+        "Tamil": "Teach one or more classes", "Telugu": "Teach one or more classes", "Marathi": "Teach one or more classes",
+        "Bengali": "Teach one or more classes", "Gujarati": "Teach one or more classes", "Punjabi": "Teach one or more classes",
+        "Malayalam": "Teach one or more classes", "Odia": "Teach one or more classes"
+    },
+    "HOD / Subject Lead": {
+        "English": "HOD / Subject Lead", "Hindi": "विभागाध्यक्ष / विषय प्रमुख", "Kannada": "ವಿಭಾಗ ಮುಖ್ಯಸ್ಥ / ವಿಷಯ ಮುಖ್ಯಸ್ಥ",
+        "Tamil": "HOD / Subject Lead", "Telugu": "HOD / Subject Lead", "Marathi": "HOD / Subject Lead",
+        "Bengali": "HOD / Subject Lead", "Gujarati": "HOD / Subject Lead", "Punjabi": "HOD / Subject Lead",
+        "Malayalam": "HOD / Subject Lead", "Odia": "HOD / Subject Lead"
+    },
+    "HOD": {
+        "English": "HOD", "Hindi": "विभागाध्यक्ष", "Kannada": "ವಿಭಾಗ ಮುಖ್ಯಸ್ಥ",
+        "Tamil": "HOD", "Telugu": "HOD", "Marathi": "HOD",
+        "Bengali": "HOD", "Gujarati": "HOD", "Punjabi": "HOD",
+        "Malayalam": "HOD", "Odia": "HOD"
+    },
+    "Lead a subject department": {
+        "English": "Lead a subject department", "Hindi": "किसी विषय विभाग का नेतृत्व करते हैं", "Kannada": "ವಿಷಯ ವಿಭಾಗವನ್ನು ಮುನ್ನಡೆಸುತ್ತೀರಿ",
+        "Tamil": "Lead a subject department", "Telugu": "Lead a subject department", "Marathi": "Lead a subject department",
+        "Bengali": "Lead a subject department", "Gujarati": "Lead a subject department", "Punjabi": "Lead a subject department",
+        "Malayalam": "Lead a subject department", "Odia": "Lead a subject department"
+    },
+    "Vice Principal / Coordinator": {
+        "English": "Vice Principal / Coordinator", "Hindi": "उप-प्राचार्य / समन्वयक", "Kannada": "ಉಪ ಮುಖ್ಯೋಪಾಧ್ಯಾಯ / ಸಂಯೋಜಕ",
+        "Tamil": "Vice Principal / Coordinator", "Telugu": "Vice Principal / Coordinator", "Marathi": "Vice Principal / Coordinator",
+        "Bengali": "Vice Principal / Coordinator", "Gujarati": "Vice Principal / Coordinator", "Punjabi": "Vice Principal / Coordinator",
+        "Malayalam": "Vice Principal / Coordinator", "Odia": "Vice Principal / Coordinator"
+    },
+    "Vice Principal": {
+        "English": "Vice Principal", "Hindi": "उप-प्राचार्य", "Kannada": "ಉಪ ಮುಖ್ಯೋಪಾಧ್ಯಾಯ",
+        "Tamil": "Vice Principal", "Telugu": "Vice Principal", "Marathi": "Vice Principal",
+        "Bengali": "Vice Principal", "Gujarati": "Vice Principal", "Punjabi": "Vice Principal",
+        "Malayalam": "Vice Principal", "Odia": "Vice Principal"
+    },
+    "Manage academics for a wing": {
+        "English": "Manage academics for a wing", "Hindi": "किसी विंग के शैक्षणिक कार्य संभालते हैं", "Kannada": "ಒಂದು ವಿಭಾಗದ ಶೈಕ್ಷಣಿಕ ಕಾರ್ಯಗಳನ್ನು ನಿರ್ವಹಿಸುತ್ತೀರಿ",
+        "Tamil": "Manage academics for a wing", "Telugu": "Manage academics for a wing", "Marathi": "Manage academics for a wing",
+        "Bengali": "Manage academics for a wing", "Gujarati": "Manage academics for a wing", "Punjabi": "Manage academics for a wing",
+        "Malayalam": "Manage academics for a wing", "Odia": "Manage academics for a wing"
+    },
+    "Principal / School Admin": {
+        "English": "Principal / School Admin", "Hindi": "प्राचार्य / विद्यालय प्रशासक", "Kannada": "ಮುಖ್ಯೋಪಾಧ್ಯಾಯ / ಶಾಲಾ ನಿರ್ವಾಹಕ",
+        "Tamil": "Principal / School Admin", "Telugu": "Principal / School Admin", "Marathi": "Principal / School Admin",
+        "Bengali": "Principal / School Admin", "Gujarati": "Principal / School Admin", "Punjabi": "Principal / School Admin",
+        "Malayalam": "Principal / School Admin", "Odia": "Principal / School Admin"
+    },
+    "Principal": {
+        "English": "Principal", "Hindi": "प्राचार्य", "Kannada": "ಮುಖ್ಯೋಪಾಧ್ಯಾಯ",
+        "Tamil": "Principal", "Telugu": "Principal", "Marathi": "Principal",
+        "Bengali": "Principal", "Gujarati": "Principal", "Punjabi": "Principal",
+        "Malayalam": "Principal", "Odia": "Principal"
+    },
+    "Run the school": {
+        "English": "Run the school", "Hindi": "विद्यालय का संचालन करते हैं", "Kannada": "ಶಾಲೆಯನ್ನು ನಡೆಸುತ್ತೀರಿ",
+        "Tamil": "Run the school", "Telugu": "Run the school", "Marathi": "Run the school",
+        "Bengali": "Run the school", "Gujarati": "Run the school", "Punjabi": "Run the school",
+        "Malayalam": "Run the school", "Odia": "Run the school"
+    },
+    "Coordinator": {
+        "English": "Coordinator", "Hindi": "समन्वयक", "Kannada": "ಸಂಯೋಜಕ",
+        "Tamil": "Coordinator", "Telugu": "Coordinator", "Marathi": "Coordinator",
+        "Bengali": "Coordinator", "Gujarati": "Coordinator", "Punjabi": "Coordinator",
+        "Malayalam": "Coordinator", "Odia": "Coordinator"
+    },
+    "Exam Controller": {
+        "English": "Exam Controller", "Hindi": "परीक्षा नियंत्रक", "Kannada": "ಪರೀಕ್ಷಾ ನಿಯಂತ್ರಕ",
+        "Tamil": "Exam Controller", "Telugu": "Exam Controller", "Marathi": "Exam Controller",
+        "Bengali": "Exam Controller", "Gujarati": "Exam Controller", "Punjabi": "Exam Controller",
+        "Malayalam": "Exam Controller", "Odia": "Exam Controller"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:
