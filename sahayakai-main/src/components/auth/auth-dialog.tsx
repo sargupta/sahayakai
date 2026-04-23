@@ -83,7 +83,7 @@ export function AuthDialog() {
                                 SahayakAI
                             </span>
                             <span className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground">
-                                by SARGVISION
+                                by SARGVISION Intelligence
                             </span>
                         </span>
                     </div>
