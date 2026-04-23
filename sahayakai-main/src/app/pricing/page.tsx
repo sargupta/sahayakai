@@ -2,84 +2,74 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, Sparkles, School, ArrowRight, Crown, Loader2 } from 'lucide-react';
+import { ArrowRight, Crown, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useSearchParams } from 'next/navigation';
 import { PLAN_PRICING } from '@/lib/plan-config';
 import { forceTokenRefresh } from '@/lib/get-auth-token';
+import { LandingNav } from '@/components/landing/landing-nav';
+import { LandingFooter } from '@/components/landing/landing-footer';
+import { ScriptMarks } from '@/components/landing/script-marks';
 
 const FREE_FEATURES = [
     '10 lesson plans / month',
     '5 quizzes & worksheets / month',
-    'Instant Answer (20/day)',
+    'Instant Answer · 20/day',
     'Voice in 11 Indian languages (browser)',
     'Community library access',
     'Basic Impact Dashboard',
 ];
 
 const PRO_FEATURES = [
-    'Full AI Teacher Copilot — all 6 pillars',
+    'Full AI Teacher Copilot · all 6 pillars',
     '25 lesson plans / month',
     '15 quizzes / month',
-    'Unlimited worksheets, rubrics & Instant Answer',
+    'Unlimited worksheets, rubrics, Instant Answer',
     'Premium AI model (Gemini 2.0 Flash)',
-    'Voice cloud (Sarvam) — 300 minutes / month',
+    'Voice cloud (Sarvam) · 300 minutes / month',
     'PDF / DOCX export without watermark',
     'Student absence records + AI parent messaging',
     'Detailed Impact Dashboard + analytics',
 ];
 
 const GOLD_FEATURES = [
-    'Everything in Pro — unlimited usage',
+    'Everything in Pro · unlimited usage',
     'School admin dashboard + teacher onboarding',
     '1,500 voice cloud minutes / teacher / month',
     'WhatsApp Business integration',
     'Priority Indian-timezone support',
-    'Volume pricing: 20-49 ₹2,999 · 50-99 ₹2,499 · 100-249 ₹1,999 · 250+ custom',
+    'Volume: 20-49 ₹2,999 · 50-99 ₹2,499 · 100-249 ₹1,999 · 250+ custom',
     '₹10,000 one-time onboarding + training',
 ];
 
-// INR formatter for sticker display (₹29,988 etc).
 const inr = (n: number) => n.toLocaleString('en-IN');
 
 export default function PricingPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading pricing...</p></div>}>
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                    <p className="text-neutral-500 text-sm">Loading pricing…</p>
+                </div>
+            }
+        >
             <PricingContent />
         </Suspense>
     );
 }
 
 function PricingContent() {
-    const { user } = useAuth();
+    const { user, openAuthModal } = useAuth();
     const { plan, loading, refresh } = useSubscription();
     const searchParams = useSearchParams();
     const status = searchParams.get('status');
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
     const [creating, setCreating] = useState(false);
 
-    // G2 + G3 — Post-payment activation flow.
-    //
-    // When Razorpay redirects us back to /pricing?status=success the server
-    // webhook may still be writing the custom claim. Three things have to
-    // happen before the dashboard will actually unlock Pro features:
-    //   1. Razorpay webhook fires subscription.charged (5-30s typical)
-    //   2. Webhook writes planType=pro to Firestore + Firebase custom claim
-    //   3. Client force-refreshes its Firebase ID token so the new claim
-    //      lands in middleware's x-user-plan header
-    //
-    // Until #3 the client is split-brain: useSubscription may already report
-    // isPro=true (it reads Firestore via /api/usage) while gated API routes
-    // still see a stale JWT and return 403. Force-refreshing fixes it.
-    //
-    // We poll every 3s for up to 60s: each tick force-refreshes the token
-    // (so a newly-written claim lands ASAP) and re-fetches useSubscription.
-    // Gives up after 20 attempts and shows a "please refresh" message.
     const [activating, setActivating] = useState(status === 'success' && plan === 'free');
     const [activationTimedOut, setActivationTimedOut] = useState(false);
     const pollRef = useRef<number | null>(null);
@@ -88,13 +78,12 @@ function PricingContent() {
         if (status !== 'success') return;
         if (!user) return;
         if (plan !== 'free') {
-            // Plan already upgraded — we're done
             setActivating(false);
             return;
         }
 
         let attempts = 0;
-        const maxAttempts = 20; // 20 × 3s = 60s
+        const maxAttempts = 20;
 
         const tick = async () => {
             attempts += 1;
@@ -110,7 +99,6 @@ function PricingContent() {
             }
         };
 
-        // Kick off an immediate first attempt, then every 3s
         tick();
         pollRef.current = window.setInterval(tick, 3000);
 
@@ -123,7 +111,6 @@ function PricingContent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status, user?.uid]);
 
-    // Close the activating overlay once useSubscription reports the paid plan.
     useEffect(() => {
         if (activating && plan !== 'free') {
             setActivating(false);
@@ -134,18 +121,12 @@ function PricingContent() {
         }
     }, [activating, plan]);
 
-    // --- Public checkout state (unauthed Start Pro flow) ---
-    // When a visitor clicks "Start Pro" without being signed in we show an
-    // email dialog instead of dumping them on the homepage. They pay on
-    // Razorpay, then receive a passwordless sign-in link (sent by the
-    // webhook after provisioning). See /api/billing/create-public-subscription.
     const [emailDialogPlan, setEmailDialogPlan] = useState<string | null>(null);
     const [emailInput, setEmailInput] = useState('');
     const [emailError, setEmailError] = useState<string | null>(null);
 
     const handleSubscribe = async (planKey: string) => {
         if (!user) {
-            // Anonymous visitor — collect email and kick off public checkout
             setEmailDialogPlan(planKey);
             setEmailError(null);
             return;
@@ -165,7 +146,6 @@ function PricingContent() {
 
             const data = await res.json();
             if (data.shortUrl) {
-                // Redirect to Razorpay checkout
                 window.location.href = data.shortUrl;
             } else {
                 alert('Failed to create subscription. Please try again.');
@@ -208,271 +188,231 @@ function PricingContent() {
         }
     };
 
+    const proPricing = billingPeriod === 'monthly' ? PLAN_PRICING.pro.monthly : PLAN_PRICING.pro.annual;
+    const proPlanKey = billingPeriod === 'monthly' ? 'pro_monthly' : 'pro_annual';
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 px-4 py-12">
-            <div className="mx-auto max-w-4xl">
+        <div className="flex flex-col min-h-screen">
+            <LandingNav onAuthClick={openAuthModal} />
+
+            <div
+                className="relative flex-1"
+                style={{
+                    background:
+                        'radial-gradient(ellipse 90% 70% at 50% 40%, hsl(28 75% 94%) 0%, hsl(34 60% 97%) 32%, hsl(40 20% 99.5%) 64%, hsl(40 20% 99.5%) 100%)',
+                }}
+            >
+                <ScriptMarks />
+
+                {/* Status banners */}
                 {status === 'success' && activating && (
-                    <div className="mb-8 flex items-center justify-center gap-3 rounded-lg bg-amber-50 p-4 text-center text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>
-                            Payment received — activating your Pro plan… (up to 60 seconds)
-                        </span>
+                    <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
+                        <div className="flex items-center justify-center gap-3 rounded-[12px] border border-saffron-200 bg-saffron-50 px-4 py-3 text-[13px] text-saffron-700">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Payment received. Activating your Pro plan… (up to 60 seconds)</span>
+                        </div>
                     </div>
                 )}
                 {status === 'success' && !activating && !activationTimedOut && plan !== 'free' && (
-                    <div className="mb-8 rounded-lg bg-green-50 p-4 text-center text-green-800 dark:bg-green-950 dark:text-green-200">
-                        Pro plan activated. You can now use every feature — welcome aboard.
+                    <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
+                        <div className="rounded-[12px] border border-saffron-200 bg-saffron-50 px-4 py-3 text-center text-[13px] text-saffron-700">
+                            Pro plan activated. You can now use every feature. Welcome aboard.
+                        </div>
                     </div>
                 )}
                 {status === 'success' && activationTimedOut && plan === 'free' && (
-                    <div className="mb-8 rounded-lg bg-amber-50 p-4 text-center text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-                        Activation is taking longer than usual. Please refresh the page in a minute.
-                        If the problem persists, contact{' '}
-                        <a href="mailto:contact@sargvision.com" className="underline">
-                            contact@sargvision.com
-                        </a>
-                        .
+                    <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
+                        <div className="rounded-[12px] border border-neutral-200 bg-white px-4 py-3 text-center text-[13px] text-neutral-700">
+                            Activation is taking longer than usual. Please refresh the page in a minute. If the problem persists, contact{' '}
+                            <a href="mailto:contact@sargvision.com" className="underline">
+                                contact@sargvision.com
+                            </a>
+                            .
+                        </div>
                     </div>
                 )}
                 {status === 'error' && (
-                    <div className="mb-8 rounded-lg bg-red-50 p-4 text-center text-red-800 dark:bg-red-950 dark:text-red-200">
-                        Payment could not be verified. If you were charged, please contact{' '}
-                        <a href="mailto:contact@sargvision.com" className="underline">
-                            contact@sargvision.com
-                        </a>
-                        .
+                    <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
+                        <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-center text-[13px] text-red-700">
+                            Payment could not be verified. If you were charged, please contact{' '}
+                            <a href="mailto:contact@sargvision.com" className="underline">
+                                contact@sargvision.com
+                            </a>
+                            .
+                        </div>
                     </div>
                 )}
 
-                <div className="mb-10 text-center">
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200">
-                        <Sparkles className="h-3 w-3" />
-                        Launch pricing · First 10,000 teachers · Through 2026
+                {/* Hero */}
+                <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 sm:px-12 pt-[52px] pb-8">
+                    <div className="inline-flex items-center gap-2 text-[12px] font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[6px] mb-7">
+                        <span className="w-1.5 h-1.5 rounded-full bg-saffron" />
+                        Pricing, for Indian teachers
                     </div>
-                    <h1 className="font-headline text-3xl font-bold tracking-tight md:text-5xl">
-                        The AI Teacher Copilot.
-                        <br className="hidden md:block" />
-                        <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                            {' '}Priced for Bharat.
-                        </span>
+
+                    <h1 className="font-headline font-extrabold tracking-tight text-[42px] sm:text-[54px] leading-[1.05] max-w-[24ch] text-foreground">
+                        Less than a textbook.{' '}
+                        <span className="italic font-normal text-saffron-700">Yours to cancel anytime.</span>
                     </h1>
-                    <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-                        Full 6-pillar copilot. NCERT + state boards. 11 Indian languages.
-                        <br className="hidden md:block" />
-                        Save ₹389/year with annual — ₹167/month. Less than a textbook.
+
+                    <p className="font-body text-[16px] sm:text-[17px] text-neutral-600 leading-[1.55] max-w-[58ch] mt-6 mx-auto">
+                        Every plan includes NCERT + 28 state boards, 11 Indian languages, voice-first input on any Android phone, and the full 6-pillar copilot.
                     </p>
-                </div>
+                </section>
 
                 {/* Billing toggle */}
-                <div className="mb-8 flex items-center justify-center gap-3">
-                    <button
-                        onClick={() => setBillingPeriod('monthly')}
-                        className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'monthly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        onClick={() => setBillingPeriod('annual')}
-                        className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${billingPeriod === 'annual' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                        Annual <span className="text-xs opacity-75">(save 30%)</span>
-                    </button>
+                <div className="relative z-10 flex items-center justify-center gap-4 mt-2">
+                    <div className="inline-flex items-center rounded-full border border-black/10 bg-white/70 backdrop-blur p-[3px]">
+                        <BillingToggle
+                            active={billingPeriod === 'monthly'}
+                            onClick={() => setBillingPeriod('monthly')}
+                            label="Monthly"
+                        />
+                        <BillingToggle
+                            active={billingPeriod === 'annual'}
+                            onClick={() => setBillingPeriod('annual')}
+                            label="Annual"
+                        />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-saffron-700">
+                        Save 2 months
+                    </span>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-3">
-                    {/* Free */}
-                    <Card className={`relative ${plan === 'free' ? 'ring-2 ring-primary' : ''}`}>
-                        <CardHeader>
-                            <CardTitle className="font-headline text-lg">Free</CardTitle>
-                            <div className="mt-2">
-                                <span className="font-headline text-3xl font-bold">₹0</span>
-                                <span className="text-muted-foreground">/month</span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {FREE_FEATURES.map((f) => (
-                                    <li key={f} className="flex items-start gap-2 text-sm">
-                                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            {plan === 'free' && (
-                                <div className="mt-4 rounded-md bg-muted p-2 text-center text-sm text-muted-foreground">
-                                    Current plan
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Pro — the headline anchored card */}
-                    <Card className={`relative ring-2 ring-amber-500/50 shadow-elevated ${plan === 'pro' ? 'ring-amber-500/80' : ''}`}>
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
-                            Most Popular · {billingPeriod === 'monthly'
-                                ? `${PLAN_PRICING.pro.monthly.discountPct}% OFF`
-                                : `${PLAN_PRICING.pro.annual.discountPct}% OFF`}
-                        </div>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                                <Sparkles className="h-5 w-5 text-amber-500" />
-                                Pro — Individual Teacher
-                            </CardTitle>
-                            <div className="mt-3">
-                                {/* Sticker (crossed-out anchor) */}
-                                <div className="text-sm text-muted-foreground line-through">
-                                    ₹{inr(
-                                        billingPeriod === 'monthly'
-                                            ? PLAN_PRICING.pro.monthly.stickerRupees
-                                            : PLAN_PRICING.pro.annual.stickerRupees
-                                    )}
-                                    /{billingPeriod === 'monthly' ? 'month' : 'year'}
-                                </div>
-                                {/* Launch price */}
-                                <div className="mt-0.5">
-                                    <span className="font-headline text-4xl font-bold text-amber-600">
-                                        ₹{inr(
-                                            billingPeriod === 'monthly'
-                                                ? PLAN_PRICING.pro.monthly.rupees
-                                                : PLAN_PRICING.pro.annual.rupees
-                                        )}
-                                    </span>
-                                    <span className="ml-1 text-muted-foreground">
-                                        /{billingPeriod === 'monthly' ? 'month' : 'year'}
-                                    </span>
-                                </div>
-                                {billingPeriod === 'annual' && (
-                                    <div className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                                        ≈ ₹{PLAN_PRICING.pro.annual.effectivePerMonthRupees}/month
-                                        · Save ₹{inr(PLAN_PRICING.pro.monthly.rupees * 12 - PLAN_PRICING.pro.annual.rupees)} vs monthly
-                                    </div>
-                                )}
-                                <div className="mt-2 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                                    {billingPeriod === 'monthly'
-                                        ? PLAN_PRICING.pro.monthly.badge
-                                        : PLAN_PRICING.pro.annual.badge}
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {PRO_FEATURES.map((f) => (
-                                    <li key={f} className="flex items-start gap-2 text-sm">
-                                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            {plan === 'pro' ? (
-                                <div className="mt-4 rounded-md bg-amber-50 p-2 text-center text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                                    Current plan
-                                </div>
+                {/* Tier columns */}
+                <section className="relative z-10 px-6 sm:px-12 py-12 flex justify-center">
+                    <div className="max-w-[960px] w-full grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-0 md:divide-x md:divide-black/10">
+                        {/* Free */}
+                        <TierColumn>
+                            <TierName name="Free" />
+                            <TierPrice amount="₹0" unit="forever" emphasis={false} />
+                            {plan === 'free' ? (
+                                <YourPlanChip />
                             ) : (
-                                <Button
-                                    className="mt-4 w-full rounded-xl bg-amber-600 hover:bg-amber-700"
-                                    onClick={() => handleSubscribe(billingPeriod === 'monthly' ? 'pro_monthly' : 'pro_annual')}
-                                    disabled={creating || loading}
+                                <button
+                                    type="button"
+                                    onClick={() => (user ? undefined : openAuthModal())}
+                                    className="mt-5 self-start text-[13px] font-medium text-neutral-600 hover:text-foreground transition-colors"
                                 >
-                                    {creating ? 'Processing…' : `Start Pro — ₹${inr(
-                                        billingPeriod === 'monthly'
-                                            ? PLAN_PRICING.pro.monthly.rupees
-                                            : PLAN_PRICING.pro.annual.rupees
-                                    )}`}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
+                                    {user ? 'Start here' : 'Start free →'}
+                                </button>
                             )}
-                        </CardContent>
-                    </Card>
+                            <FeatureList items={FREE_FEATURES} />
+                        </TierColumn>
 
-                    {/* School Gold — the real B2B revenue play */}
-                    <Card className="relative border-neutral-200">
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                                <School className="h-5 w-5 text-orange-600" />
-                                School Gold
-                            </CardTitle>
-                            <div className="mt-3">
-                                <div className="text-sm text-muted-foreground line-through">
-                                    ₹{inr(PLAN_PRICING.gold.annual.stickerRupees)}/teacher/year
-                                </div>
-                                <div className="mt-0.5">
-                                    <span className="font-headline text-3xl font-bold">
-                                        ₹{inr(PLAN_PRICING.gold.annual.rupees)}
-                                    </span>
-                                    <span className="ml-1 text-sm text-muted-foreground">
-                                        /teacher/year
-                                    </span>
-                                </div>
-                                <div className="mt-1 text-xs text-muted-foreground">
-                                    ≈ ₹{Math.round(PLAN_PRICING.gold.annual.rupees / 12)}/teacher/month · billed annually
-                                </div>
-                                <div className="mt-2 inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-800 dark:bg-orange-950/40 dark:text-orange-200">
-                                    {PLAN_PRICING.gold.annual.badge}
-                                </div>
+                        {/* Pro — emphasized */}
+                        <TierColumn>
+                            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
+                                Most popular
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2 text-sm">
-                                {GOLD_FEATURES.map((f) => (
-                                    <li key={f} className="flex items-start gap-2">
-                                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            <Button variant="outline" className="mt-4 w-full rounded-xl border-orange-300 text-orange-700 hover:bg-orange-50 hover:text-orange-800" asChild>
+                            <TierName name="Pro" />
+                            <TierPrice
+                                amount={`₹${inr(proPricing.rupees)}`}
+                                unit={billingPeriod === 'monthly' ? '/month' : '/year'}
+                                sticker={`₹${inr(proPricing.stickerRupees)}`}
+                                emphasis
+                            />
+                            {billingPeriod === 'annual' && (
+                                <div className="mt-1 text-[12px] font-medium text-saffron-700">
+                                    ≈ ₹{PLAN_PRICING.pro.annual.effectivePerMonthRupees}/mo · save ₹
+                                    {inr(PLAN_PRICING.pro.monthly.rupees * 12 - PLAN_PRICING.pro.annual.rupees)} vs monthly
+                                </div>
+                            )}
+                            {plan === 'pro' ? (
+                                <YourPlanChip />
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubscribe(proPlanKey)}
+                                    disabled={creating || loading}
+                                    className="mt-5 self-start inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {creating ? (
+                                        <>
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            Processing…
+                                        </>
+                                    ) : (
+                                        <>
+                                            Start Pro
+                                            <ArrowRight className="h-3.5 w-3.5" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                            <FeatureList items={PRO_FEATURES} />
+                        </TierColumn>
+
+                        {/* School Gold */}
+                        <TierColumn>
+                            <TierName name="School Gold" />
+                            <TierPrice
+                                amount={`₹${inr(PLAN_PRICING.gold.annual.rupees)}`}
+                                unit="/teacher/year"
+                                sticker={`₹${inr(PLAN_PRICING.gold.annual.stickerRupees)}`}
+                                emphasis={false}
+                            />
+                            <div className="mt-1 text-[12px] text-neutral-500">
+                                ≈ ₹{Math.round(PLAN_PRICING.gold.annual.rupees / 12)}/teacher/month · billed annually · min 20 teachers
+                            </div>
+                            {plan === 'gold' ? (
+                                <YourPlanChip />
+                            ) : (
                                 <a
                                     href="https://calendly.com/contact-sargvision/30min"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    className="mt-5 self-start inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-white border border-black/15 text-foreground hover:bg-black/5 transition-colors"
                                 >
                                     Book a school demo
-                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                    <ArrowRight className="h-3.5 w-3.5" />
                                 </a>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
+                            )}
+                            <FeatureList items={GOLD_FEATURES} />
+                        </TierColumn>
+                    </div>
+                </section>
 
-                {/* School Premium — full-width enterprise rail below the 3 cards */}
-                <div className="mt-6">
-                    <Card className="border-neutral-200 bg-gradient-to-br from-amber-50/50 via-white to-orange-50/50 dark:from-amber-950/20 dark:via-background dark:to-orange-950/20">
-                        <CardContent className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
-                            <div className="flex items-start gap-4">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-                                    <Crown className="h-5 w-5" />
+                {/* School Premium — editorial rail */}
+                <section className="relative z-10 px-6 sm:px-12 pb-16 flex justify-center">
+                    <div className="max-w-[960px] w-full flex flex-col md:flex-row md:items-center md:justify-between gap-5 rounded-[14px] bg-white border border-black/5 px-6 sm:px-8 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-saffron-50 text-saffron-700">
+                                <Crown className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
+                                    School Premium
                                 </div>
-                                <div>
-                                    <div className="font-headline text-lg font-bold">
-                                        School Premium — Chains, Govt & 250+ Schools
-                                    </div>
-                                    <div className="mt-1 text-sm text-muted-foreground">
-                                        {PLAN_PRICING.premium.annual.label} · custom MoU for government &amp; chains · dedicated CSM · private deployment options.
-                                    </div>
-                                    <div className="mt-2 text-xs text-muted-foreground">
-                                        Current pilots: Karnataka Govt · Chanakya University · Dr. Ramdas Pai Chair on Education
-                                    </div>
+                                <div className="font-headline font-semibold text-[18px] text-foreground leading-tight">
+                                    Chains, government &amp; 250+ schools
+                                </div>
+                                <div className="mt-1.5 text-[13px] text-neutral-600 leading-[1.55]">
+                                    {PLAN_PRICING.premium.annual.label} · custom MoU for government and chains · dedicated CSM · private deployment options.
+                                </div>
+                                <div className="mt-1.5 text-[12px] text-neutral-500">
+                                    Current pilots: Karnataka Govt · Chanakya University · Dr. Ramdas Pai Chair on Education
                                 </div>
                             </div>
-                            <Button className="shrink-0 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700" asChild>
-                                <a
-                                    href="mailto:contact@sargvision.com?subject=SahayakAI%20School%20Premium%20Enquiry"
-                                >
-                                    Contact SARGVISION
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </a>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                        <a
+                            href="mailto:contact@sargvision.com?subject=SahayakAI%20School%20Premium%20Enquiry"
+                            className="inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer shrink-0"
+                        >
+                            Contact SARGVISION
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
+                    </div>
+                </section>
 
-                <p className="mt-8 text-center text-xs text-muted-foreground">
-                    Individual plans include 18% GST · School plans billed exclusive of GST (ITC claimable).
-                    Cancel anytime. 7-day refund guarantee. Launch pricing valid through 2026 for the first 10,000 teachers.
+                <p className="relative z-10 pb-14 mx-auto max-w-[640px] px-6 text-center text-[12px] text-neutral-500 leading-[1.55]">
+                    Individual plans include 18% GST. School plans billed exclusive of GST (ITC claimable). Cancel anytime. 7-day refund guarantee. Launch pricing valid through 2026 for the first 10,000 teachers.
                 </p>
             </div>
 
-            {/* Public checkout email dialog — shown when an unauthed visitor clicks Start Pro */}
+            <LandingFooter />
+
+            {/* Public checkout email dialog */}
             <Dialog
                 open={emailDialogPlan !== null}
                 onOpenChange={(open) => {
@@ -508,7 +448,7 @@ function PricingContent() {
                             aria-invalid={!!emailError}
                         />
                         {emailError && (
-                            <p className="text-sm text-red-600 dark:text-red-400">{emailError}</p>
+                            <p className="text-sm text-red-600">{emailError}</p>
                         )}
                     </div>
                     <DialogFooter className="gap-2 sm:justify-end">
@@ -525,7 +465,7 @@ function PricingContent() {
                         <Button
                             onClick={handlePublicCheckout}
                             disabled={creating || !emailInput.trim()}
-                            className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
+                            className="bg-saffron hover:bg-saffron-600 text-white"
                         >
                             {creating ? (
                                 <>
@@ -542,6 +482,84 @@ function PricingContent() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+        </div>
+    );
+}
+
+// ---- Editorial pricing sub-components ----
+
+function BillingToggle({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`text-[13px] font-medium px-[16px] py-[7px] rounded-full transition-colors cursor-pointer ${
+                active
+                    ? 'bg-saffron text-white shadow-[0_6px_14px_-6px_hsl(28_70%_45%/0.4)]'
+                    : 'text-neutral-500 hover:text-foreground'
+            }`}
+        >
+            {label}
+        </button>
+    );
+}
+
+function TierColumn({ children }: { children: React.ReactNode }) {
+    return <div className="flex flex-col px-0 md:px-8 first:md:pl-0 last:md:pr-0">{children}</div>;
+}
+
+function TierName({ name }: { name: string }) {
+    return <h2 className="font-headline font-semibold text-[16px] text-foreground">{name}</h2>;
+}
+
+function TierPrice({
+    amount,
+    unit,
+    sticker,
+    emphasis,
+}: {
+    amount: string;
+    unit: string;
+    sticker?: string;
+    emphasis: boolean;
+}) {
+    return (
+        <div className="mt-3">
+            {sticker && (
+                <div className="text-[12px] text-neutral-400 line-through mb-0.5">{sticker}</div>
+            )}
+            <div className="flex items-baseline gap-1.5">
+                <span
+                    className={`font-headline font-extrabold tracking-tight ${
+                        emphasis ? 'text-[44px] text-saffron-700 leading-none' : 'text-[32px] text-foreground leading-none'
+                    }`}
+                >
+                    {amount}
+                </span>
+                <span className="text-[13px] text-neutral-500">{unit}</span>
+            </div>
+        </div>
+    );
+}
+
+function FeatureList({ items }: { items: readonly string[] }) {
+    return (
+        <ul className="mt-6 space-y-2.5">
+            {items.map((item) => (
+                <li key={item} className="flex gap-2.5 text-[13px] text-neutral-700 leading-[1.5]">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-saffron flex-none" />
+                    <span>{item}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function YourPlanChip() {
+    return (
+        <div className="mt-5 inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-saffron-700 self-start">
+            <span className="w-1.5 h-1.5 rounded-full bg-saffron" />
+            Your plan
         </div>
     );
 }

@@ -17,7 +17,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
-const MARKETING_PATHS = ["/for-schools"];
+const MARKETING_PATHS = ["/for-schools", "/pricing", "/privacy-for-teachers"];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;
