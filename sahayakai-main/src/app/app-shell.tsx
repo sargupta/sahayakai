@@ -1,0 +1,87 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Logo } from "@/components/logo";
+import { AuthButton } from "@/components/auth/auth-button";
+import { GlobalHooks } from "@/components/global-hooks";
+import { OmniOrb } from "@/components/omni-orb";
+import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { AnalyticsProvider } from "@/components/analytics-provider";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+
+/**
+ * Routes the visitor through one of two layouts:
+ *
+ * 1. Landing layout — when the visitor is on `/` AND not authenticated. Renders
+ *    children directly with no sidebar / header / global app chrome. The
+ *    landing page brings its own LandingNav and LandingFooter.
+ *
+ * 2. App layout — every other case. Renders the existing SidebarProvider +
+ *    AppSidebar + header + main wrapper, plus the global OmniOrb / GlobalHooks /
+ *    MotherTongueGreeting.
+ *
+ * <AuthDialog /> stays at the layout level OUTSIDE this shell so it can be
+ * opened by both layouts (the landing page CTAs need it).
+ */
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
+  // On the home route, wait for auth to resolve before deciding which layout
+  // to render. This prevents a landing-page flash for returning authenticated
+  // teachers and a dashboard-chrome flash for cold visitors.
+  if (isHome && loading) return null;
+
+  // Cold visitor on the home route → landing layout, no app chrome.
+  // PWAInstallPrompt still mounts so cold visitors can install the app.
+  if (isHome && !user) {
+    return (
+      <>
+        {children}
+        <PWAInstallPrompt />
+      </>
+    );
+  }
+
+  // All other cases → existing app chrome (mirrors what main's layout.tsx had).
+  return (
+    <>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="md:hidden">
+                <Logo />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <AuthButton />
+            </div>
+          </header>
+          <main className="flex min-h-[calc(100vh-3.5rem)] w-full max-w-[100vw] overflow-x-hidden flex-col items-center p-3 pb-28 sm:p-4 sm:pb-28 md:p-8 md:pb-32">
+            <ErrorBoundary>
+              <AnalyticsProvider>{children}</AnalyticsProvider>
+            </ErrorBoundary>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+
+      {/* Global hooks / orb / greeting render only inside the app shell. */}
+      <GlobalHooks />
+      <OmniOrb />
+      <MotherTongueGreeting />
+      <PWAInstallPrompt />
+    </>
+  );
+}
