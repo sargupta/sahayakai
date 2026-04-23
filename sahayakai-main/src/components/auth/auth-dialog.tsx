@@ -74,10 +74,12 @@ export function AuthDialog() {
 
                 <div className="px-7 pt-7 pb-6">
                     {/* Wordmark only — single clean identifier, no gradient title. */}
-                    <div className="flex items-center gap-2 mb-6">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[hsl(var(--primary))] text-white text-[12px] font-extrabold">
-                            S
-                        </span>
+                    <div className="flex items-center gap-2.5 mb-6">
+                        <img
+                            src="/icons/icon-192x192.png"
+                            alt="SahayakAI logo"
+                            className="h-8 w-8 rounded-lg object-cover"
+                        />
                         <span className="flex items-baseline gap-1.5">
                             <span className="font-headline text-[17px] font-bold tracking-tight text-foreground">
                                 SahayakAI
