@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 
-const TeacherTrainingInputSchema = z.object({
+export const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
   language: z.string().optional().describe('The language for the response.'),
   subject: z.string().optional().describe('The academic subject.'),

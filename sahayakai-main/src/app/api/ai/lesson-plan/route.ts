@@ -1,8 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
-import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { generateLessonPlan, LessonPlanInputSchema } from '@/ai/flows/lesson-plan-generator';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
@@ -64,14 +62,16 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        topicText = body.topic || 'Unknown Topic';
+        const json = await request.json();
+        topicText = json.topic || 'Unknown Topic';
 
-        // Call the AI Flow
-        // We inject the userId so the flow handles persistence automatically.
+        // Pre-validate input so schema errors return 400 via handleAIError
+        // rather than crashing inside Genkit's own validator as a 500.
+        const body = LessonPlanInputSchema.parse(json);
+
         const output = await generateLessonPlan({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);
