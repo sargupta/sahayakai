@@ -11,7 +11,12 @@ export function LandingNav({ onAuthClick }: Props) {
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-saffron text-white text-[11px] font-extrabold">
           S
         </span>
-        SahayakAI
+        <span className="flex items-baseline gap-1.5">
+          SahayakAI
+          <span className="text-[10px] font-medium tracking-wide uppercase text-neutral-400">
+            by SARGVISION
+          </span>
+        </span>
       </div>
 
       <div className="hidden md:flex gap-7 text-[13px] text-neutral-600 font-medium">
