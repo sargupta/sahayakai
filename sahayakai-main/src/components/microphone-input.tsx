@@ -50,6 +50,15 @@ type MicrophoneInputProps = {
   isFloating?: boolean;
   label?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
+  /**
+   * Optional per-conversation greeting overrides (used by VIDYA assistant
+   * with auto-language detection). When provided, these supersede the
+   * default greeting derived from the global LanguageContext, so VIDYA can
+   * speak in a language the assistant resolved per session.
+   */
+  greetingLang?: string;   // BCP-47 locale, e.g. "kn-IN"
+  greetingText?: string;   // localised greeting string
+  greetingLabel?: string;  // localised "listening" label shown during greeting
 };
 
 export const MicrophoneInput: FC<MicrophoneInputProps> = ({
@@ -59,7 +68,10 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   size = "default",
   isFloating = false,
   label,
-  iconSize = "md"
+  iconSize = "md",
+  greetingLang,
+  greetingText,
+  greetingLabel,
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
   const { language, t } = useLanguage();
@@ -324,14 +336,17 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
         setStatus('greeting');
-        // Single-language greeting in the teacher's selected language — was
-        // previously hard-coded as "नमस्ते! Good morning Teacher" (Hindi +
-        // English) regardless of preference, which is the mixed-language bug
-        // the user reported. Falls back to English when no localised greeting
-        // is defined.
-        const { text: greetingText, ttsLang } = buildMicGreeting(language);
+        // Greeting precedence:
+        //   1. greetingText/Lang props (used by VIDYA's per-conversation
+        //      auto-language detection so a teacher who switched to Kannada
+        //      hears the next greeting in Kannada)
+        //   2. global LanguageContext via buildMicGreeting (default for
+        //      flows that don't manage language per-session)
+        const fallback = buildMicGreeting(language);
+        const finalText = greetingText || fallback.text;
+        const finalLang = greetingLang || fallback.ttsLang;
         try {
-          await tts.speak(greetingText, ttsLang);
+          await tts.speak(finalText, finalLang);
         } catch (e) {
           logger.warn("Greeting interrupted or failed");
         }
@@ -551,9 +566,11 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   // never sees Hindi, and vice versa.
   const getLabelString = () => {
     switch (status) {
-      case 'greeting':     return t("I'm listening...");
+      // greetingLabel (if provided by VIDYA) overrides the t() lookup so the
+      // listening label matches the resolved per-conversation language.
+      case 'greeting':     return greetingLabel || t("I'm listening...");
       case 'initializing': return t("Getting ready…");
-      case 'recording':    return t("I'm listening...");
+      case 'recording':    return greetingLabel || t("I'm listening...");
       case 'processing':   return t("Thinking…");
       default:             return label || t("Tap to speak");
     }
