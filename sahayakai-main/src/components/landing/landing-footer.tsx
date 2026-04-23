@@ -4,9 +4,11 @@ export function LandingFooter() {
       <div className="max-w-[1040px] mx-auto grid gap-10 md:grid-cols-3 text-[13px] text-neutral-600">
         <div>
           <div className="flex items-center gap-2 font-headline font-bold text-[16px] tracking-tight text-foreground">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-saffron text-white text-[11px] font-extrabold">
-              S
-            </span>
+            <img
+              src="/icons/icon-192x192.png"
+              alt="SahayakAI logo"
+              className="h-7 w-7 rounded-md object-cover"
+            />
             SahayakAI
           </div>
           <p className="mt-3 max-w-[28ch] leading-[1.55]">
