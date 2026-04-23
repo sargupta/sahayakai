@@ -1,23 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Logo } from '@/components/logo';
-import { MicrophoneInput } from '@/components/microphone-input';
-import { GlobalVoiceInterface } from '@/components/global-voice-interface';
-import { OmniOrb } from '@/components/omni-orb';
-import { MotherTongueGreeting } from '@/components/mother-tongue-greeting';
 import { LanguageProvider } from '@/context/language-context';
 import { AuthProvider } from '@/context/auth-context';
-import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDialog } from '@/components/auth/auth-dialog';
-import { GlobalHooks } from '@/components/global-hooks';
 import { StructuredData } from '@/components/structured-data';
-import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
-
-import { AnalyticsProvider } from "@/components/analytics-provider";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { AppShell } from './app-shell';
 
 
 export const metadata: Metadata = {
@@ -131,39 +119,12 @@ export default function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning>
         <LanguageProvider>
           <AuthProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset>
-                <header className="flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
-                  <div className="flex items-center gap-4">
-                    <SidebarTrigger />
-                    <div className="md:hidden">
-                      <Logo />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <AuthButton />
-                  </div>
-                </header>
-                <main className="flex min-h-[calc(100vh-3.5rem)] w-full max-w-[100vw] overflow-x-hidden flex-col items-center p-3 pb-28 sm:p-4 sm:pb-28 md:p-8 md:pb-32">
-                  <ErrorBoundary>
-                    <AnalyticsProvider>
-                      {children}
-                    </AnalyticsProvider>
-                  </ErrorBoundary>
-                </main>
-              </SidebarInset>
-              <AuthDialog />
-            </SidebarProvider>
-
-            {/* OmniOrb needs AuthProvider for useAuth — must live inside it */}
-            <GlobalHooks />
-            <OmniOrb />
-            <MotherTongueGreeting />
+            <AppShell>{children}</AppShell>
+            {/* AuthDialog lives outside AppShell so the landing page CTAs
+                can open it (the landing layout has no SidebarProvider). */}
+            <AuthDialog />
           </AuthProvider>
           <Toaster />
-          <PWAInstallPrompt />
-          {/* <GlobalVoiceInterface /> */}
         </LanguageProvider>
       </body>
     </html>
