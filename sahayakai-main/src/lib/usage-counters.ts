@@ -193,6 +193,52 @@ export async function rollbackQuota(userId: string, feature: GatedFeature): Prom
     }
 }
 
+// --- Voice cloud minute accumulation (separate from count-based features) ---
+//
+// Voice cloud TTS/STT is metered in MINUTES, not call count, because a single
+// long-form lesson narration consumes far more provider cost than a 5-second
+// utterance. This is intentionally separate from the atomic reserveQuota /
+// rollbackQuota flow above — voice minutes are estimated post-call (from
+// char count or audio bytes), so a transactional pre-reserve doesn't apply.
+// Field name `voiceCloudMinutes_YYYY-MM` lives alongside the per-feature
+// counters in the same usageCounters/{uid} doc.
+
+function getVoiceMinutesField(): string {
+    return `voiceCloudMinutes_${getMonthKey()}`;
+}
+
+/** Read this month's accumulated voice cloud minutes for a user. */
+export async function getMonthlyVoiceCloudMinutes(userId: string): Promise<number> {
+    const counters = await getUserCounters(userId);
+    return counters[getVoiceMinutesField()] ?? 0;
+}
+
+/**
+ * Add `minutes` to the user's monthly voice cloud counter. Fractional minutes
+ * are stored as-is (FieldValue.increment supports floats). Fail-open on error
+ * so a Firestore blip doesn't block paying users.
+ */
+export async function incrementVoiceCloudMinutes(userId: string, minutes: number): Promise<void> {
+    if (!minutes || minutes <= 0) return;
+    try {
+        const { getDb } = await import('./firebase-admin');
+        const db = await getDb();
+
+        const ref = db.collection('usageCounters').doc(userId);
+        await ref.set(
+            {
+                [getVoiceMinutesField()]: FieldValue.increment(minutes),
+                lastUpdated: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+        );
+
+        invalidateCache(userId);
+    } catch (error) {
+        console.error(`[UsageCounters] Failed to increment voice minutes for ${userId}:`, error);
+    }
+}
+
 /**
  * Get all usage data for a user (for client-side display).
  * Returns { feature: { used, limit } } for the current month.

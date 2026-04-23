@@ -70,6 +70,8 @@ export async function POST(request: Request) {
                 const subscription = event.payload.subscription.entity;
                 const payment = event.payload.payment.entity;
                 const userId = subscription.notes?.userId;
+                const isPublic = subscription.notes?.isPublic === 'true';
+                const noteEmail: string | undefined = subscription.notes?.email;
 
                 if (!userId) {
                     console.error('[Webhook] subscription.charged missing userId in notes');
@@ -113,6 +115,48 @@ export async function POST(request: Request) {
                 }
 
                 console.log(`[Webhook] Provisioned ${planType} for user ${userId}, payment ${payment.id}`);
+
+                // Public checkout: send a passwordless sign-in link so the
+                // anonymous buyer can actually reach their new Pro account.
+                // Falls back gracefully if email delivery fails — the charge
+                // still completes and the user can request a login link later.
+                // Magic link is stored in Firestore so admins/support can
+                // resend it manually until SMTP/SES delivery is wired.
+                if (isPublic && noteEmail) {
+                    try {
+                        const { getAuth } = await import('firebase-admin/auth');
+                        const origin = process.env.PUBLIC_APP_URL || 'https://sahayakai.com';
+                        const actionCodeSettings = {
+                            url: `${origin}/?welcome=pro`,
+                            handleCodeInApp: true,
+                        };
+                        const link = await getAuth().generateSignInWithEmailLink(
+                            noteEmail,
+                            actionCodeSettings
+                        );
+                        await db.collection('pendingSignInLinks').doc(userId).set(
+                            {
+                                email: noteEmail,
+                                link,
+                                planType,
+                                subscriptionId: subscription.id,
+                                createdAt: new Date(),
+                            },
+                            { merge: true }
+                        );
+                        console.log(
+                            `[Webhook] Magic sign-in link generated for public buyer ${noteEmail} (user ${userId})`
+                        );
+                    } catch (linkErr) {
+                        // Don't throw — the payment + plan are already provisioned
+                        // atomically above. Magic link delivery is the only thing
+                        // affected; admin can manually resend from Firestore.
+                        console.error(
+                            `[Webhook] Failed to generate magic link for public buyer ${noteEmail}:`,
+                            linkErr
+                        );
+                    }
+                }
                 break;
             }
 
