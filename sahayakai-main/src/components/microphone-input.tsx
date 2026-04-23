@@ -10,6 +10,29 @@ import { Mic, StopCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useLanguage, BCP47_MAP } from "@/context/language-context";
 
+/** Localised mic greeting — spoken when the teacher first taps the mic.
+ *  Keyed by the Language display name used across the app. Falls back to
+ *  English for languages not explicitly listed. */
+function buildMicGreeting(lang: string): { text: string; ttsLang: string } {
+    const hour = new Date().getHours();
+    switch (lang) {
+        case 'Hindi':
+            return {
+                text: hour < 12 ? 'नमस्ते शिक्षक! सुप्रभात। मैं आपकी क्या मदद कर सकता हूँ?'
+                    : hour < 17 ? 'नमस्ते शिक्षक! मैं आपकी क्या मदद कर सकता हूँ?'
+                    : 'नमस्ते शिक्षक! शुभ संध्या। मैं आपकी क्या मदद कर सकता हूँ?',
+                ttsLang: 'hi-IN',
+            };
+        default:
+            return {
+                text: hour < 12 ? 'Good morning, Teacher. How can I help you today?'
+                    : hour < 17 ? 'Good afternoon, Teacher. How can I help you today?'
+                    : 'Good evening, Teacher. How can I help you today?',
+                ttsLang: 'en-IN',
+            };
+    }
+}
+
 declare global {
   interface Window {
     webkitSpeechRecognition: any;
@@ -39,7 +62,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   iconSize = "md"
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -301,13 +324,14 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
         setStatus('greeting');
-        const hour = new Date().getHours();
-        const greetingText = hour < 12 ? 'नमस्ते! Good morning Teacher. How can I help you today?'
-          : hour < 17 ? 'नमस्ते! Good afternoon Teacher. How can I help you today?'
-            : 'नमस्ते! Good evening Teacher. How can I help you today?';
-
+        // Single-language greeting in the teacher's selected language — was
+        // previously hard-coded as "नमस्ते! Good morning Teacher" (Hindi +
+        // English) regardless of preference, which is the mixed-language bug
+        // the user reported. Falls back to English when no localised greeting
+        // is defined.
+        const { text: greetingText, ttsLang } = buildMicGreeting(language);
         try {
-          await tts.speak(greetingText, "hi-IN");
+          await tts.speak(greetingText, ttsLang);
         } catch (e) {
           logger.warn("Greeting interrupted or failed");
         }
@@ -522,14 +546,16 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     return "";
   };
 
-  // Status mapping for the visual label badge
+  // Status mapping for the visual label badge — all strings route through
+  // the language dictionary so a teacher with preferredLanguage=English
+  // never sees Hindi, and vice versa.
   const getLabelString = () => {
     switch (status) {
-      case 'greeting': return "नमस्ते! I'm listening..."; // Native Unicode Script overriding English parameter
-      case 'initializing': return "Getting ready… tap to cancel";
-      case 'recording': return "I'm listening...";
-      case 'processing': return "Thinking… tap to cancel";
-      default: return label || "Tap to speak";
+      case 'greeting':     return t("I'm listening...");
+      case 'initializing': return t("Getting ready…");
+      case 'recording':    return t("I'm listening...");
+      case 'processing':   return t("Thinking…");
+      default:             return label || t("Tap to speak");
     }
   };
 
