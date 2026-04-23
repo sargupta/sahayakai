@@ -130,6 +130,19 @@ Remember: ALWAYS return valid JSON. Never return plain text.
  * Append this IMMEDIATELY AFTER ${SAHAYAK_SOUL_PROMPT} in every content-generation
  * flow prompt. It explicitly cancels the agentic { response, action } format so the
  * model outputs the flow's own structured schema instead.
+ *
+ * Also — critically — it overrides the "Multilingual Scaffolding: Use Hinglish/
+ * Home Language naturally" directive from SAHAYAK_SOUL_PROMPT above. That
+ * directive is right for VIDYA's conversational replies (where warmth matters),
+ * but catastrophic for structured output (teacher requested a quiz in English,
+ * AI produced English questions + Hindi teacher instructions + Devanagari
+ * parentheticals — a real prod bug reported 2026-04-23).
+ *
+ * Every structured-output flow (quiz, lesson plan, rubric, worksheet, visual
+ * aid, field trip, instant answer, teacher training, parent message) MUST
+ * also pass its normalised `language` value into the prompt and reinforce
+ * the lock in its own flow-specific section. This constant provides the
+ * anchor; flows extend it.
  */
 export const STRUCTURED_OUTPUT_OVERRIDE = `
 ### ⚠️ STRUCTURED CONTENT GENERATION MODE — OVERRIDE ALL ABOVE FORMAT RULES
@@ -138,4 +151,17 @@ The { "response": "...", "action": ... } JSON format described above does NOT ap
 You MUST output ONLY a JSON object that exactly matches the output schema defined by this flow.
 DO NOT include a "response" key. DO NOT include an "action" key.
 If you cannot fulfill the request, set appropriate fields to null — but still return valid JSON matching the schema.
+
+### ⚠️ SINGLE-LANGUAGE OUTPUT LOCK — OVERRIDES "MULTILINGUAL SCAFFOLDING" ABOVE
+The "Use Hinglish/Home Language naturally" directive from the VIDYA soul does
+NOT apply to structured output. The teacher asked for content in a specific
+language; you must honour it for EVERY field of the output JSON.
+- If the input language is English: write every field in English. No
+  Devanagari, no Tamil/Bengali/Kannada/other Indic scripts, no transliterated
+  Hindi words (like "shiksha", "pradhan"), no parenthetical glosses.
+- If the input language is Hindi (or any other): write every field entirely
+  in that language's script. Only established loanwords ("quiz", "AI", proper
+  nouns) may remain in Latin script.
+- "Teacher-facing" fields (instructions, notes, commentary) follow the SAME
+  language as student-facing fields. No mixing between audiences.
 `;

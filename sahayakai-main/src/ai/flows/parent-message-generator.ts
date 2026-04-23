@@ -9,6 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import type { OutreachReason } from '@/types/attendance';
+import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 // ── Language → BCP-47 code map ────────────────────────────────────────────────
 // Do NOT let the AI decide this — hard-coded to prevent hallucination.
@@ -162,6 +163,10 @@ const parentMessageFlow = ai.defineFlow(
 export async function generateParentMessage(input: ParentMessageInput): Promise<ParentMessageOutput> {
     let enrichedInput = {
         ...input,
+        // Normalise the parent's language ("en" → "English") before the prompt
+        // LOCK reads it; otherwise a "hi" code could leak Hinglish into the
+        // message even when the parent speaks pure Hindi.
+        parentLanguage: normalizeLanguage(input.parentLanguage),
         // Always resolve reasonContext here — never rely on the template to do a dynamic lookup
         reasonContext: REASON_CONTEXT[input.reason as OutreachReason] ?? REASON_CONTEXT.consecutive_absences,
     };
