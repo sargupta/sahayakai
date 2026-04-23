@@ -7,10 +7,12 @@ type Props = {
 export function LandingNav({ onAuthClick }: Props) {
   return (
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
-      <div className="flex items-center gap-2 font-headline font-bold text-[18px] tracking-tight text-foreground">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-saffron text-white text-[11px] font-extrabold">
-          S
-        </span>
+      <div className="flex items-center gap-2.5 font-headline font-bold text-[18px] tracking-tight text-foreground">
+        <img
+          src="/icons/icon-192x192.png"
+          alt="SahayakAI logo"
+          className="h-8 w-8 rounded-lg object-cover"
+        />
         <span className="flex items-baseline gap-1.5">
           SahayakAI
           <span className="text-[10px] font-medium tracking-wide uppercase text-neutral-400">
