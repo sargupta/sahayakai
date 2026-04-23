@@ -73,7 +73,7 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                 </button>
                 <CardTitle className="text-base font-bold">{t("Complete your profile")}</CardTitle>
                 <CardDescription className="text-xs">
-                    A few more details so we can recommend better content.
+                    {t("A few more details so we can recommend better content.")}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 pb-4">
