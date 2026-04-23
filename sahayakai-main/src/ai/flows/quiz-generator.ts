@@ -53,6 +53,20 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
     }
   }
 
+  // Normalize language: form/API often sends ISO code ("en", "hi") but the
+  // prompt's "Language Lock" instruction is clearer when given the full name
+  // ("English", "Hindi"). Without this, the AI sometimes read "en" as a hint
+  // that English + Hinglish mixing was acceptable and produced quizzes with
+  // ~1,000 Devanagari words leaking into a supposedly-English output.
+  if (localizedInput.language) {
+    const { LANGUAGE_CODE_MAP } = await import('@/types/index');
+    const lower = localizedInput.language.toLowerCase();
+    const mapped = (LANGUAGE_CODE_MAP as Record<string, string>)[lower];
+    if (mapped) localizedInput.language = mapped;
+  } else {
+    localizedInput.language = 'English';
+  }
+
   const difficulties = ['easy', 'medium', 'hard'] as const;
   const contentId = uuidv4();
   const now = new Date();
