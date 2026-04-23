@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
+import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const RubricGeneratorInputSchema = z.object({
   assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
@@ -75,6 +76,8 @@ export async function generateRubric(input: RubricGeneratorInput): Promise<Rubri
       // Non-blocking — proceed without teacher context
     }
   }
+
+  localizedInput.language = normalizeLanguage(localizedInput.language);
 
   return rubricGeneratorFlow(localizedInput);
 }

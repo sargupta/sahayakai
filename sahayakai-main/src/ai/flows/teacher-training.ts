@@ -12,6 +12,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
@@ -49,6 +50,8 @@ export async function getTeacherTrainingAdvice(input: TeacherTrainingInput): Pro
       }
     }
   }
+
+  localizedInput.language = normalizeLanguage(localizedInput.language);
 
   return teacherTrainingFlow(localizedInput);
 }
