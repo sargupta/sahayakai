@@ -320,31 +320,38 @@ export async function getRecommendedTeachersAction(userId: string) {
 export async function getAllTeachersAction(currentUserId?: string) {
     const db = await getDb();
 
-    // Fetch all teachers
-    // Note: In a massive scale app, we'd use pagination. 
-    // For the initial "show all" requirement, we fetch up to 200.
+    // orderBy('displayName') silently excludes users whose displayName field is missing
+    // (Firestore behaviour). Orphan users wouldn't appear in the directory at all.
+    // Use createdAt as the sort key so every user doc is considered, then sort in memory.
     const snapshot = await db.collection('users')
-        .orderBy('displayName', 'asc')
-        .limit(200)
+        .limit(500)
         .get();
 
     const teachers = snapshot.docs
         .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-        .filter(teacher => teacher.uid !== currentUserId); // Exclude self if provided
+        .filter(teacher => teacher.uid !== currentUserId);
 
-    // Sanitize output for public directory - Only use real data
-    const sanitized = teachers.map(t => ({
-        uid: t.uid,
-        displayName: t.displayName, // Must be real
-        photoURL: t.photoURL,
-        initial: t.displayName?.[0] || t.initial,
-        schoolName: t.schoolName,
-        subjects: t.subjects || [],
-        gradeLevels: t.gradeLevels || [],
-        bio: t.bio,
-        impactScore: t.impactScore || 0,
-        followersCount: t.followersCount || 0
-    })).filter(t => t.displayName); // Ensure only teachers with names are shown
+    const sanitized = teachers.map(t => {
+        // Fallback chain so teachers with partial profiles still surface in the directory.
+        const name = t.displayName
+            || t.schoolName
+            || (typeof t.email === 'string' ? t.email.split('@')[0] : null)
+            || 'Teacher';
+        return {
+            uid: t.uid,
+            displayName: name,
+            photoURL: t.photoURL,
+            initial: (name?.[0] || 'T').toUpperCase(),
+            schoolName: t.schoolName,
+            subjects: t.subjects || [],
+            gradeLevels: t.gradeLevels || [],
+            bio: t.bio,
+            impactScore: t.impactScore || 0,
+            followersCount: t.followersCount || 0,
+        };
+    });
+
+    sanitized.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
     return dbAdapter.serialize(sanitized);
 }

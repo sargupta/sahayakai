@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft, UserSearch, X, Info } from 'lucide-react';
+import { Users, Plus, ArrowLeft, UserSearch, X, Info, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db as clientDb } from '@/lib/firebase';
@@ -229,6 +229,29 @@ export default function CommunityPage() {
     }
   }, []);
 
+  // Refresh feed when tab regains focus + every 45 s while visible.
+  // The unified feed is assembled from Firestore queries, not onSnapshot;
+  // without this, posts by other teachers never appear until manual reload.
+  useEffect(() => {
+    if (!user) return;
+
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') handleRefreshFeed();
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') handleRefreshFeed();
+    }, 45_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(interval);
+    };
+  }, [user, handleRefreshFeed]);
+
   const handleLoadMore = useCallback(() => {
     // Placeholder for pagination
   }, []);
@@ -348,15 +371,28 @@ export default function CommunityPage() {
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
-            onClick={handleOpenTeacherDirectory}
-          >
-            <UserSearch className="h-4 w-4" />
-            <span className="hidden sm:inline">Find Teachers</span>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
+              onClick={handleOpenStaffRoom}
+              aria-label="Open Staff Room"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Staff Room</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
+              onClick={handleOpenTeacherDirectory}
+              aria-label="Find Teachers"
+            >
+              <UserSearch className="h-4 w-4" />
+              <span className="hidden sm:inline">Find Teachers</span>
+            </Button>
+          </div>
         </div>
       </div>
 
