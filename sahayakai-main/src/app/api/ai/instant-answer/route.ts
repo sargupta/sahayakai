@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { instantAnswer } from '@/ai/flows/instant-answer';
-import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { instantAnswer, InstantAnswerInputSchema } from '@/ai/flows/instant-answer';
+import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 /**
@@ -48,35 +47,25 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        questionText = body.question || 'Unknown Question';
+        const json = await request.json();
+        questionText = json.question || 'Unknown Question';
+
+        const body = InstantAnswerInputSchema.parse(json);
 
         const output = await instantAnswer({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);
 
-    } catch (error: any) {
-        const errorMessage = error.message || 'Internal Server Error';
-        const errorCode = error.errorCode || 'UNKNOWN_ERROR';
-        const context = error.context || null;
-
-        logAIError(error, 'INSTANT_ANSWER', {
+    } catch (error) {
+        // handleAIError: schema → 400, quota → 503 + Retry-After, else 500.
+        return handleAIError(error, 'INSTANT_ANSWER', {
             message: `Instant Answer API Failed for question: "${questionText}"`,
             userId: request.headers.get('x-user-id'),
-            extra: { path: '/api/ai/instant-answer', errorMessage, errorCode, context },
+            extra: { path: '/api/ai/instant-answer' },
         });
-
-        return NextResponse.json(
-            {
-                error: errorMessage,
-                errorCode: errorCode,
-                context: context
-            },
-            { status: 500 }
-        );
     }
 }
 

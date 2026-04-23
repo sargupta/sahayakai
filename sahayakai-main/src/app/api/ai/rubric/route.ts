@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { generateRubric } from '@/ai/flows/rubric-generator';
-import { logger } from '@/lib/logger';
+import { generateRubric, RubricGeneratorInputSchema } from '@/ai/flows/rubric-generator';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
@@ -49,12 +48,14 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        assignmentText = body.assignmentDescription || 'Unknown Assignment';
+        const json = await request.json();
+        assignmentText = json.assignmentDescription || 'Unknown Assignment';
+
+        const body = RubricGeneratorInputSchema.parse(json);
 
         const output = await generateRubric({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);

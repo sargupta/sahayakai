@@ -3,8 +3,7 @@
 export const maxDuration = 120;
 
 import { NextResponse } from 'next/server';
-import { generateVisualAid } from '@/ai/flows/visual-aid-designer';
-import { logger } from '@/lib/logger';
+import { generateVisualAid, VisualAidInputSchema } from '@/ai/flows/visual-aid-designer';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
@@ -52,21 +51,37 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        promptText = body.prompt || 'Unknown Prompt';
+        const json = await request.json();
+        promptText = json.prompt || 'Unknown Prompt';
+
+        const body = VisualAidInputSchema.parse(json);
 
         // NOTE: checkImageRateLimit is called INSIDE generateVisualAid after
         // the image is confirmed, so failed/timed-out generations don't consume quota.
-
-        // Call the AI Flow
         const output = await generateVisualAid({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);
 
     } catch (error: any) {
+        // Zod schema errors → 400 with structured issues (matches other routes).
+        if (error?.name === 'ZodError') {
+            return NextResponse.json(
+                {
+                    error: 'Request body failed schema validation.',
+                    code: 'INVALID_ARGUMENT',
+                    issues: (error.issues || []).map((i: any) => ({
+                        path: i.path?.join('.'),
+                        code: i.code,
+                        message: i.message,
+                    })),
+                },
+                { status: 400 },
+            );
+        }
+
         logAIError(error, 'VISUAL_AID', { message: `Visual Aid API Failed for prompt: "${promptText}"`, userId: request.headers.get('x-user-id') });
 
         const errorMessage = error.message || 'Internal Server Error';

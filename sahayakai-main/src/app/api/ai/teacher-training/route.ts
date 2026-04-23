@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTeacherTrainingAdvice } from '@/ai/flows/teacher-training';
+import { getTeacherTrainingAdvice, TeacherTrainingInputSchema } from '@/ai/flows/teacher-training';
 import { logger } from '@/lib/logger';
 import { logAIError, handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
@@ -45,12 +45,17 @@ async function _handler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
-        const body = await request.json();
-        questionText = body.question || 'Unknown Question';
+        const json = await request.json();
+        questionText = json.question || 'Unknown Question';
+
+        // Validate input up-front so schema mismatches return HTTP 400 via
+        // handleAIError instead of falling through to the generic 500 path
+        // when Genkit's internal schema validator throws.
+        const body = TeacherTrainingInputSchema.parse(json);
 
         const output = await getTeacherTrainingAdvice({
             ...body,
-            userId: userId
+            userId: userId,
         });
 
         return NextResponse.json(output);

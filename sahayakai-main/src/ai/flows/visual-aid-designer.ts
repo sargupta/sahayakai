@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
 
-const VisualAidInputSchema = z.object({
+export const VisualAidInputSchema = z.object({
   prompt: z.string().describe('A description of the visual aid to generate.'),
   language: z.string().optional().describe('The language for any text in the visual aid.'),
   gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),

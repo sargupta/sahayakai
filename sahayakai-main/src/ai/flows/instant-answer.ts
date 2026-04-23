@@ -16,7 +16,7 @@ import { UsageTracker } from '@/lib/usage-tracker';
 
 
 import { validateTopicSafety } from '@/lib/safety';
-const InstantAnswerInputSchema = z.object({
+export const InstantAnswerInputSchema = z.object({
   question: z.string().describe('The question asked by the user.'),
   language: z.string().optional().describe('The language for the answer (e.g. English, Hindi).'),
   gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
