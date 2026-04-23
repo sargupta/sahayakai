@@ -73,6 +73,34 @@ export interface CallSummary {
     generatedAt: string;
 }
 
+/**
+ * Structured academic signal fed into the parent-call conversation.
+ * Populated by the Contact-Parent modal from the most recent assessments
+ * in `classes/{classId}/students/{studentId}/assessments` so the AI-generated
+ * message and live-call agent can reference specific test marks instead of
+ * relying on attendance-only metrics + free-text teacherNote.
+ *
+ * All fields optional — absent means "no recent assessment data available".
+ * See spawned task "Wire Assessment data into ParentOutreach" for history.
+ */
+export interface PerformanceContext {
+    /** IDs of the most recent assessments (usually 2–3) used to populate this context. */
+    recentAssessmentIds?: string[];
+    /** Weighted average across the recent assessments (0–100). */
+    latestPercentage?: number;
+    /** Per-subject breakdown so the AI can cite specific tests. */
+    subjectBreakdown?: {
+        subject: string;
+        name: string;               // e.g. "Unit Test 1 — Fractions & Decimals"
+        marksObtained: number;
+        maxMarks: number;
+        percentage: number;         // 0–100
+        date: string;               // YYYY-MM-DD
+    }[];
+    /** Mirror of StudentPerformanceTrend.isAtRisk — average < 35%. */
+    isAtRisk?: boolean;
+}
+
 export interface ParentOutreach {
     id: string;
     teacherUid: string;
@@ -96,6 +124,8 @@ export interface ParentOutreach {
     turnCount?: number;
     /** Which voice pipeline mode was used: 'streaming' (Pipecat) or 'batch' (Twilio Gather/Say) */
     voicePipelineMode?: 'streaming' | 'batch';
+    /** Snapshot of recent academic performance, populated when the call is created. */
+    performanceContext?: PerformanceContext;
     createdAt: string;
     updatedAt: string;
 }

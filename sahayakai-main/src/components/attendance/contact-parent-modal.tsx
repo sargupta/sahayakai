@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
-import type { Student, OutreachReason, CallSummary, TranscriptTurn } from "@/types/attendance";
+import type { Student, OutreachReason, CallSummary, TranscriptTurn, PerformanceContext } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -63,6 +63,8 @@ export function ContactParentModal({
     const [calling, setCalling] = useState(false);
     const [outreachId, setOutreachId] = useState<string | null>(null);
     const [callResult, setCallResult] = useState<CallResult | null>(null);
+    const [performanceContext, setPerformanceContext] = useState<PerformanceContext | null>(null);
+    const [loadingPerf, setLoadingPerf] = useState(false);
 
     const canCall = twilioConfigured && !!TWILIO_LANGUAGE_MAP[student.parentLanguage];
     const unsupportedForCall = twilioConfigured && !TWILIO_LANGUAGE_MAP[student.parentLanguage];
@@ -76,8 +78,55 @@ export function ContactParentModal({
             setGeneratedMessage("");
             setOutreachId(null);
             setCallResult(null);
+            setPerformanceContext(null);
         }, 300);
     };
+
+    // Fetch recent assessments on modal open so the AI-generated message can
+    // cite specific scores (e.g. "scored 18 out of 25 in the unit test")
+    // instead of relying on attendance-only metrics + free-text teacherNote.
+    useEffect(() => {
+        if (!open || !student.id || !classId) return;
+        let abort = false;
+        (async () => {
+            setLoadingPerf(true);
+            try {
+                const { auth } = await import('@/lib/firebase');
+                const token = await auth.currentUser?.getIdToken();
+                if (!token) return;
+                // Current academic year — forces the filtered path which returns
+                // full Assessment docs (with marksObtained + maxMarks) rather
+                // than the compact trend shape.
+                const res = await fetch(
+                    `/api/performance/student/${student.id}?classId=${classId}&academicYear=2025-26`,
+                    { headers: { Authorization: `Bearer ${token}` } },
+                );
+                if (!res.ok || abort) return;
+                const data = await res.json() as { assessments?: { id: string; subject: string; name: string; marksObtained: number; maxMarks: number; percentage: number; date: string }[] };
+                const recent = (data.assessments ?? []).slice(0, 3);
+                if (recent.length === 0) { setPerformanceContext(null); return; }
+                const avg = recent.reduce((s, a) => s + a.percentage, 0) / recent.length;
+                setPerformanceContext({
+                    recentAssessmentIds: recent.map((a) => a.id),
+                    latestPercentage: Math.round(avg * 10) / 10,
+                    isAtRisk: avg < 35,
+                    subjectBreakdown: recent.map((a) => ({
+                        subject: a.subject,
+                        name: a.name,
+                        marksObtained: a.marksObtained,
+                        maxMarks: a.maxMarks,
+                        percentage: Math.round(a.percentage * 10) / 10,
+                        date: a.date,
+                    })),
+                });
+            } catch {
+                // Non-blocking — modal still works without performance context.
+            } finally {
+                if (!abort) setLoadingPerf(false);
+            }
+        })();
+        return () => { abort = true; };
+    }, [open, student.id, classId]);
 
     // Poll for call summary after call is initiated.
     // Tracks pending setTimeout + abort signal so we can stop polling cleanly
@@ -174,6 +223,7 @@ export function ContactParentModal({
                     teacherNote: note || undefined,
                     parentLanguage: student.parentLanguage,
                     consecutiveAbsentDays: consecutiveAbsences,
+                    performanceContext: performanceContext ?? undefined,
                     userId: user?.uid,
                 }),
             });
@@ -205,6 +255,7 @@ export function ContactParentModal({
                 teacherNote: note || undefined,
                 generatedMessage,
                 deliveryMethod,
+                performanceContext: performanceContext ?? undefined,
             }),
         });
         if (!res.ok) {
@@ -319,6 +370,38 @@ export function ContactParentModal({
                                 {REASONS.find((r) => r.value === reason)?.label}
                             </Badge>
                         </div>
+
+                        {/* Performance context the AI will reference. Shown so the
+                            teacher knows what scores the generated message will cite. */}
+                        {loadingPerf ? (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Loading recent marks…
+                            </div>
+                        ) : performanceContext?.subjectBreakdown?.length ? (
+                            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                    Recent marks (AI will reference)
+                                    {performanceContext.isAtRisk && (
+                                        <Badge variant="destructive" className="ml-2 text-[9px] h-4 px-1">At-risk</Badge>
+                                    )}
+                                </p>
+                                {performanceContext.subjectBreakdown.slice(0, 3).map((a, i) => (
+                                    <div key={i} className="flex items-baseline justify-between gap-3 text-xs">
+                                        <span className="text-foreground/80 truncate">
+                                            {a.subject} · {a.name.replace(/\s*[—-].*$/, '').trim()}
+                                        </span>
+                                        <span className="font-semibold tabular-nums shrink-0">
+                                            {a.marksObtained}/{a.maxMarks}
+                                            <span className="text-muted-foreground font-normal ml-1">
+                                                ({Math.round(a.percentage)}%)
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+
                         <Textarea
                             placeholder="Add specific details (optional) — e.g., 'Absent Mon, Tue, Wed' or 'Scored 12/50 in Math test'"
                             value={note}

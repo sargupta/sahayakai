@@ -420,6 +420,7 @@ export async function saveOutreachRecordAction(data: {  // premium gate enforced
     teacherNote?: string;
     generatedMessage: string;
     deliveryMethod: 'twilio_call' | 'whatsapp_copy';
+    performanceContext?: import('@/types/attendance').PerformanceContext;
 }): Promise<{ outreachId: string }> {
     const uid = await getAuthUserId();
     await requireProPlan(uid);
@@ -428,7 +429,8 @@ export async function saveOutreachRecordAction(data: {  // premium gate enforced
     const now = new Date().toISOString();
     const ref = db.collection('parent_outreach').doc();
 
-    const record: Omit<ParentOutreach, 'id'> = {
+    // Build doc conditionally — Firestore rejects literal `undefined`.
+    const record: Record<string, unknown> = {
         teacherUid: uid,
         classId: data.classId,
         className: data.className,
@@ -437,13 +439,14 @@ export async function saveOutreachRecordAction(data: {  // premium gate enforced
         parentPhone: data.parentPhone,
         parentLanguage: data.parentLanguage,
         reason: data.reason,
-        teacherNote: data.teacherNote,
         generatedMessage: data.generatedMessage,
         deliveryMethod: data.deliveryMethod,
         callStatus: data.deliveryMethod === 'twilio_call' ? 'initiated' : 'manual',
         createdAt: now,
         updatedAt: now,
     };
+    if (data.teacherNote) record.teacherNote = data.teacherNote;
+    if (data.performanceContext) record.performanceContext = data.performanceContext;
 
     await ref.set(record);
     return { outreachId: ref.id };
