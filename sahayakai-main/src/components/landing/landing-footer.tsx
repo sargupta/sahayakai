@@ -54,6 +54,10 @@ export function LandingFooter() {
           </ul>
         </div>
       </div>
+      <div className="max-w-[1040px] mx-auto mt-10 pt-6 border-t border-neutral-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-neutral-500">
+        <div>© {new Date().getFullYear()} SARGVISION Intelligence Pvt. Ltd. All rights reserved.</div>
+        <div className="tracking-wide">SahayakAI is a product of SARGVISION Intelligence.</div>
+      </div>
     </footer>
   );
 }

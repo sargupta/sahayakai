@@ -78,8 +78,13 @@ export function AuthDialog() {
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[hsl(var(--primary))] text-white text-[12px] font-extrabold">
                             S
                         </span>
-                        <span className="font-headline text-[17px] font-bold tracking-tight text-foreground">
-                            SahayakAI
+                        <span className="flex items-baseline gap-1.5">
+                            <span className="font-headline text-[17px] font-bold tracking-tight text-foreground">
+                                SahayakAI
+                            </span>
+                            <span className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground">
+                                by SARGVISION
+                            </span>
                         </span>
                     </div>
 
