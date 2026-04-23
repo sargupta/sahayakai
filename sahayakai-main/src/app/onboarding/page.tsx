@@ -333,7 +333,7 @@ export default function OnboardingPage() {
                             {t("Choose your language")}
                         </CardTitle>
                         <CardDescription className="text-base">
-                            SahayakAI works in 11 Indian languages.
+                            {t("SahayakAI works in 11 Indian languages.")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-8 pb-8">
@@ -489,8 +489,8 @@ export default function OnboardingPage() {
                                 <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
                                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
                                     <div>
-                                        <p className="text-sm font-medium">Generating lesson plan</p>
-                                        <p className="text-xs text-muted-foreground">Usually takes 20–30 seconds.</p>
+                                        <p className="text-sm font-medium">{t("Generating lesson plan")}</p>
+                                        <p className="text-xs text-muted-foreground">{t("Usually takes 20–30 seconds.")}</p>
                                     </div>
                                 </div>
                             )}
@@ -635,7 +635,7 @@ export default function OnboardingPage() {
                                     <p className="text-xs text-muted-foreground mt-2">Selected: {formData.educationBoard}</p>
                                 )}
                                 {formData.boardCategory === 'state_board' && !formData.state && (
-                                    <p className="text-xs text-destructive mt-2">Please select your state first.</p>
+                                    <p className="text-xs text-destructive mt-2">{t("Please select your state first.")}</p>
                                 )}
                             </div>
                         )}
