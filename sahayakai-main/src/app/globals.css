@@ -35,6 +35,17 @@
     --primary-foreground: 0 0% 100%;
     /* White text on Saffron */
 
+    /* Saffron scale for landing page — same hue ~28° as --primary, shaded
+       across lightness. Used by landing-hero CTAs, landing-pillar-strip
+       active-card glow, and animated-headline border. */
+    --saffron-50: 28 100% 96%;
+    --saffron-100: 28 96% 92%;
+    --saffron-200: 28 95% 84%;
+    --saffron-300: 28 88% 73%;
+    --saffron-600: 24 75% 50%;
+    --saffron-700: 20 78% 38%;
+    --saffron-800: 18 82% 30%;
+
     /* Secondary - Warm Green (Indian Flag) */
     --secondary: 123 37% 25%;
     /* #2C5F2D - Deep Green */
