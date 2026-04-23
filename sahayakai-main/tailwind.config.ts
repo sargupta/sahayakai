@@ -60,6 +60,21 @@ export default {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
+        // Saffron scale — same hue as --primary but across the lightness
+        // spectrum. Used by the landing page (hero CTAs, pillar-strip active
+        // card, animated-headline). DEFAULT and 500 both map to --primary so
+        // `bg-saffron` stays consistent with `bg-primary` elsewhere in the app.
+        saffron: {
+          DEFAULT: 'hsl(var(--primary))',
+          50: 'hsl(var(--saffron-50))',
+          100: 'hsl(var(--saffron-100))',
+          200: 'hsl(var(--saffron-200))',
+          300: 'hsl(var(--saffron-300))',
+          500: 'hsl(var(--primary))',
+          600: 'hsl(var(--saffron-600))',
+          700: 'hsl(var(--saffron-700))',
+          800: 'hsl(var(--saffron-800))',
+        },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
