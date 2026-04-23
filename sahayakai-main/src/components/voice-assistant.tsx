@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,13 @@ import {
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
+import {
+    resolveTurnLanguage,
+    langCodeToBCP47,
+    langNameToCode,
+    type LangCode,
+} from "@/lib/detect-language";
+import { useJarvisStore } from "@/store/jarvisStore";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -32,7 +39,30 @@ interface Message {
     role: "user" | "ai";
     content: string;
     action?: VidyaAction | null;
+    /** 2-letter ISO code of the language this turn was resolved to. */
+    lang?: LangCode;
 }
+
+/**
+ * One-shot greetings per language. Used by the mic component's first-open
+ * greeting so the teacher hears VIDYA in their own language before saying
+ * anything. English is the default for anyone without a `preferredLanguage`
+ * set in Settings — greetings for other languages are only used when the
+ * teacher explicitly picked that language at onboarding.
+ */
+const GREETINGS: Record<LangCode, { text: string; label: string }> = {
+    en: { text: "Hello Teacher! How can I help you today?", label: "Listening..." },
+    hi: { text: "नमस्ते शिक्षक! मैं आज आपकी कैसे मदद कर सकती हूँ?", label: "सुन रही हूँ..." },
+    kn: { text: "ನಮಸ್ಕಾರ ಶಿಕ್ಷಕರೇ! ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?", label: "ಕೇಳುತ್ತಿದ್ದೇನೆ..." },
+    ta: { text: "வணக்கம் ஆசிரியரே! இன்று உங்களுக்கு எப்படி உதவ முடியும்?", label: "கேட்கிறேன்..." },
+    te: { text: "నమస్కారం ఉపాధ్యాయులారా! ఈ రోజు మీకు ఎలా సహాయం చేయగలను?", label: "వింటున్నాను..." },
+    mr: { text: "नमस्कार शिक्षक! मी आज तुमची कशी मदत करू शकते?", label: "ऐकत आहे..." },
+    bn: { text: "নমস্কার শিক্ষক! আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?", label: "শুনছি..." },
+    gu: { text: "નમસ્તે શિક્ષક! હું આજે તમારી કેવી રીતે મદદ કરી શકું?", label: "સાંભળી રહી છું..." },
+    pa: { text: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਅਧਿਆਪਕ! ਮੈਂ ਅੱਜ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦੀ ਹਾਂ?", label: "ਸੁਣ ਰਹੀ ਹਾਂ..." },
+    ml: { text: "നമസ്കാരം അധ്യാപകരേ! ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കും?", label: "കേൾക്കുന്നു..." },
+    or: { text: "ନମସ୍କାର ଶିକ୍ଷକ! ଆଜି ମୁଁ ଆପଣଙ୍କୁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?", label: "ଶୁଣୁଛି..." },
+};
 
 interface VoiceAssistantProps {
     context: string;
@@ -152,6 +182,32 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // Teacher profile — source of truth for initial greeting language and
+    // for the last-resort fallback when neither STT nor script detection
+    // yields a language for the current turn.
+    const teacherProfile = useJarvisStore(s => s.teacherProfile);
+
+    // Session-sticky language. Null until the first turn resolves a language.
+    // Resets on: new conversation (resetSession), page reload (in-memory state
+    // only, not persisted), sign-out (component unmounts with user flip),
+    // and when a later turn's signal genuinely disagrees with the sticky
+    // value (handled inside resolveTurnLanguage's short-utterance guard).
+    const [sessionLanguage, setSessionLanguage] = useState<LangCode | null>(null);
+
+    // Greeting config for MicrophoneInput — resolved from sessionLanguage
+    // first (so a sticky language survives closing + reopening the assistant),
+    // then teacherProfile.preferredLanguage if explicit, else English.
+    const greetingConfig = useMemo(() => {
+        const profileCode = langNameToCode(teacherProfile?.preferredLanguage);
+        const code: LangCode = sessionLanguage || profileCode || 'en';
+        const g = GREETINGS[code] || GREETINGS.en;
+        return {
+            greetingLang: langCodeToBCP47(code),
+            greetingText: g.text,
+            greetingLabel: g.label,
+        };
+    }, [sessionLanguage, teacherProfile?.preferredLanguage]);
+
     // Auto-scroll
     useEffect(() => {
         if (scrollRef.current) {
@@ -162,20 +218,51 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
     const sendMessage = async (text: string, detectedLang?: string) => {
         if (!text.trim()) return;
 
-        const userMsg: Message = { role: "user", content: text };
+        // ─── Resolve the effective language for THIS turn ──────────────────
+        // Precedence (highest → lowest): STT-detected → Unicode script
+        // detection on typed text → session sticky → teacher profile → 'en'.
+        // The helper also enforces the short-utterance guard so a one-word
+        // reply ("haan", "ok") does NOT flip the sticky language.
+        const effectiveLang = resolveTurnLanguage({
+            sttLang: detectedLang,
+            typedText: text,
+            sessionLang: sessionLanguage,
+            profileLangName: teacherProfile?.preferredLanguage,
+        });
+
+        // Update sticky ONLY if the resolution trusted a real signal for
+        // this turn (STT or script detection succeeded). If the fallback
+        // chain hit profile/'en', don't burn the sticky — it might already
+        // hold a richer session-specific value.
+        const turnHadRealSignal = Boolean(detectedLang) ||
+            /[\u0900-\u0DFF]/.test(text); // any Indic script char
+        if (turnHadRealSignal && effectiveLang !== sessionLanguage) {
+            setSessionLanguage(effectiveLang);
+        } else if (!sessionLanguage) {
+            // First turn with no real signal — seed sticky so tool-calls
+            // still get a language param. Uses profile or 'en'.
+            setSessionLanguage(effectiveLang);
+        }
+
+        const userMsg: Message = { role: "user", content: text, lang: effectiveLang };
         setMessages(prev => [...prev, userMsg]);
         setIsLoading(true);
         setTextInput("");
         if (!isOpen) setIsOpen(true);
 
         try {
-            // Build chat history — separate user and AI messages for the backend
+            // Build chat history — separate user and AI messages for the
+            // backend and include per-turn language so the LLM can anchor
+            // multi-turn responses to the right language when the current
+            // utterance is too short to re-detect.
             const chatHistory = messages.flatMap(m => {
-                if (m.role === "user") return [{ user: m.content, ai: "" }];
-                if (m.role === "ai") return [{ user: "", ai: m.content }];
+                if (m.role === "user") return [{ user: m.content, ai: "", lang: m.lang }];
+                if (m.role === "ai") return [{ user: "", ai: m.content, lang: m.lang }];
                 return [];
             }).filter(t => t.user.trim() || t.ai.trim());
 
+            // Auth header required since /api/assistant is no longer a public route
+            // (hotfix 4b24884dd). Token is from Firebase auth, falsy if not signed in.
             const token = await auth.currentUser?.getIdToken();
             const response = await fetch("/api/assistant", {
                 method: "POST",
@@ -187,7 +274,11 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                     message: text,
                     chatHistory,
                     currentScreenContext: { path: context },
-                    detectedLanguage: detectedLang || null,
+                    // Always send the resolved language — never null — so the
+                    // assistant route can mandate action.params.language on
+                    // every tool call without guessing from text.
+                    detectedLanguage: effectiveLang,
+                    teacherProfile,
                 }),
             });
 
@@ -198,13 +289,15 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                 role: "ai",
                 content: data.response,
                 action: data.action || null,
+                lang: effectiveLang,
             }]);
 
         } catch (error) {
             setMessages(prev => [...prev, {
                 role: "ai",
-                content: "Main abhi ek chhoti mushkil se guzar rahi hoon. Thodi der mein dobara try karein!",
+                content: "I'm having a small issue right now. Please try again in a moment!",
                 action: null,
+                lang: effectiveLang,
             }]);
         } finally {
             setIsLoading(false);
@@ -218,12 +311,22 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
         if (action.params.topic) params.set("topic", action.params.topic);
         if (action.params.subject) params.set("subject", action.params.subject);
         if (action.params.gradeLevel) params.set("gradeLevel", action.params.gradeLevel);
-        if (action.params.language) params.set("language", action.params.language);
+        // If the LLM omitted action.params.language (shouldn't happen under
+        // the updated soul prompt, but belt-and-braces) fall back to the
+        // session sticky so the destination flow still renders in the right
+        // language.
+        const lang = action.params.language || sessionLanguage;
+        if (lang) params.set("language", lang);
         router.push(`${config.route}?${params.toString()}`);
         setIsOpen(false);
     };
 
-    const resetSession = () => setMessages([]);
+    // Clears messages AND resets the sticky language — a new conversation
+    // starts with a clean slate per the user's reset-trigger requirement.
+    const resetSession = () => {
+        setMessages([]);
+        setSessionLanguage(null);
+    };
 
     // ─── Closed State (FAB) ──────────────────────────────────────────────────
     if (!isOpen) {
@@ -290,17 +393,17 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                     <Brain className="h-10 w-10 text-primary/50" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-foreground text-base">Namaste! Main VIDYA hoon</p>
+                                    <p className="font-bold text-foreground text-base">Hello! I'm VIDYA</p>
                                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                                        Your Senior Pedagogical Mentor. Ask me to create lesson plans, quizzes, worksheets, visual aids, and more — I'll take you right there!
+                                        Your Senior Pedagogical Mentor. Ask me to create lesson plans, quizzes, worksheets, visual aids, and more — in any Indian language. Speak or type and I'll match your language automatically.
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 w-full mt-2">
                                     {[
-                                        { text: "Lesson plan banana hai", icon: <FileText className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "Quiz chahiye mujhe", icon: <ClipboardList className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "Visual aid banao", icon: <Lightbulb className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "Videos dikhao", icon: <Video className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Make a lesson plan", icon: <FileText className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "I need a quiz", icon: <ClipboardList className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Create a visual aid", icon: <Lightbulb className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: "Show me videos", icon: <Video className="w-3.5 h-3.5 inline-block shrink-0" /> },
                                     ].map(s => (
                                         <button key={s.text} onClick={() => sendMessage(s.text)}
                                             className="text-left text-xs p-2 rounded-xl border border-border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all text-foreground font-medium flex items-center gap-1.5">
@@ -380,6 +483,9 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                 label="Or tap to speak..."
                                 iconSize="sm"
                                 className="scale-90"
+                                greetingLang={greetingConfig.greetingLang}
+                                greetingText={greetingConfig.greetingText}
+                                greetingLabel={greetingConfig.greetingLabel}
                             />
                         </div>
                     </div>

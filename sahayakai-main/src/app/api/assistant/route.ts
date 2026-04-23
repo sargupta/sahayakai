@@ -143,9 +143,27 @@ async function _handler(req: Request) {
             }
         }
 
-        const languageInstruction = detectedLanguage
-            ? `\nDetected speech language: "${detectedLanguage}" — You MUST respond in this language. Set action.params.language to "${detectedLanguage}" if triggering a flow.`
-            : '';
+        // Language resolution for the assistant turn:
+        //   1. Explicit `detectedLanguage` from the client (VoiceAssistant
+        //      always sends a resolved code; omni-orb may pass null).
+        //   2. If null, fall back to the `lang` field on the most recent
+        //      user entry in chatHistory — keeps sticky language alive
+        //      across turns even when current turn has no signal (short reply).
+        //   3. If still null, soul.ts §9 precedence chain takes over (defaults to en).
+        let resolvedLanguage: string | null = detectedLanguage ?? null;
+        if (!resolvedLanguage) {
+            for (let i = chatHistory.length - 1; i >= 0; i--) {
+                const entry = chatHistory[i];
+                if (entry?.lang && typeof entry.lang === 'string') {
+                    resolvedLanguage = entry.lang;
+                    break;
+                }
+            }
+        }
+
+        const languageInstruction = resolvedLanguage
+            ? `\nResolved conversation language: "${resolvedLanguage}". You MUST respond in this language and set action.params.language to "${resolvedLanguage}" on every tool-call. Do not switch languages mid-reply unless the teacher explicitly asks.`
+            : `\nNo language signal detected yet — respond in English ("en") and set action.params.language to "en".`;
 
         const systemPrompt = `${SAHAYAK_SOUL_PROMPT}
 
@@ -165,9 +183,13 @@ Active form fields (what the teacher is currently working on): ${JSON.stringify(
                         const text = msg.parts.map((p: any) => p.text).join('');
                         if (text.trim()) lines.push(`${msg.role}: ${text}`);
                     }
-                    // Format 2: VoiceAssistant { user, ai }
-                    if (msg.user?.trim()) lines.push(`user: ${msg.user}`);
-                    if (msg.ai?.trim()) lines.push(`ai: ${msg.ai}`);
+                    // Format 2: VoiceAssistant { user, ai, lang? }
+                    // Prefix each turn with [lang=<code>] so the LLM can anchor
+                    // multi-turn replies to the right language even when the
+                    // current utterance is too short to re-detect.
+                    const langTag = msg.lang ? `[lang=${msg.lang}] ` : '';
+                    if (msg.user?.trim()) lines.push(`user: ${langTag}${msg.user}`);
+                    if (msg.ai?.trim()) lines.push(`ai: ${langTag}${msg.ai}`);
                     return lines;
                 })
                 .filter(Boolean)
