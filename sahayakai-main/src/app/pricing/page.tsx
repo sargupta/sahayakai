@@ -22,6 +22,12 @@ import {
     Users,
     HeartHandshake,
     Building2,
+    KeyRound,
+    Server,
+    FileCheck,
+    Wrench,
+    Headphones,
+    Timer,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -51,6 +57,7 @@ const FREE_FEATURES: Feature[] = [
 const PRO_FEATURES: Feature[] = [
     { icon: Sparkles, text: 'All 6 tools unlocked' },
     { icon: BookOpen, text: '25 lesson plans per month' },
+    { icon: ClipboardList, text: '25 quizzes per month' },
     { icon: ClipboardList, text: 'Unlimited worksheets and rubrics' },
     { icon: Zap, text: 'Unlimited instant answers' },
     { icon: Mic, text: '300 voice cloud minutes per month' },
@@ -67,6 +74,19 @@ const GOLD_FEATURES: Feature[] = [
     { icon: HeartHandshake, text: 'Priority support in your timezone' },
     { icon: Building2, text: 'Volume discount for 50+ teachers' },
     { icon: Users, text: 'One-time onboarding and training' },
+];
+
+// Enterprise differentiators: what Premium adds on top of Gold. Addresses
+// the "why not just Gold at scale" question for 250+ teacher chains + govt.
+const PREMIUM_ADDITIONS: Feature[] = [
+    { icon: KeyRound, text: 'SSO and SCIM provisioning (Okta, Azure AD, Google Workspace)' },
+    { icon: Server, text: 'Private deployment on your own cloud (AWS, GCP, or on-prem)' },
+    { icon: Timer, text: '99.9% uptime SLA with written commitments' },
+    { icon: Headphones, text: 'Dedicated customer success manager' },
+    { icon: FileCheck, text: 'Audit logs and DPDP compliance reports' },
+    { icon: Wrench, text: 'Custom AI fine-tuning on your board and curriculum' },
+    { icon: Shield, text: 'API access and ERP integration (Fedena, Campus, custom)' },
+    { icon: Users, text: 'Unlimited voice cloud minutes (no per-teacher cap)' },
 ];
 
 const inr = (n: number) => n.toLocaleString('en-IN');
@@ -448,35 +468,54 @@ function PricingContent() {
                     </div>
                 </section>
 
-                {/* School Premium — editorial rail */}
+                {/* School Premium — enterprise differentiators. */}
                 <section className="relative z-10 px-6 sm:px-12 pb-16 flex justify-center">
-                    <div className="max-w-[960px] w-full flex flex-col md:flex-row md:items-center md:justify-between gap-5 rounded-[14px] bg-white border border-black/5 px-6 sm:px-8 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-saffron-50 text-saffron-700">
-                                <Crown className="h-4 w-4" />
+                    <div className="max-w-[960px] w-full rounded-[14px] bg-white border border-black/5 px-6 sm:px-8 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-saffron-50 text-saffron-700">
+                                    <Crown className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
+                                        {t('School Premium')}
+                                    </div>
+                                    <div className="font-headline font-semibold text-[18px] text-foreground leading-tight">
+                                        {t('Chains, government & 250+ teacher schools')}
+                                    </div>
+                                    <div className="mt-1.5 text-[13px] text-neutral-600 leading-[1.55]">
+                                        {t('Custom agreement, enterprise security, private deployment.')}
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
-                                    {t('School Premium')}
-                                </div>
-                                <div className="font-headline font-semibold text-[18px] text-foreground leading-tight">
-                                    Chains, government &amp; 250+ schools
-                                </div>
-                                <div className="mt-1.5 text-[13px] text-neutral-600 leading-[1.55]">
-                                    {PLAN_PRICING.premium.annual.label} · custom agreement · dedicated support · private deployment options.
-                                </div>
-                                <div className="mt-1.5 text-[12px] text-neutral-500">
-                                    Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.
-                                </div>
-                            </div>
+                            <a
+                                href="mailto:contact@sargvision.com?subject=SahayakAI%20School%20Premium%20Enquiry"
+                                className="inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer shrink-0"
+                            >
+                                {t('Contact SARGVISION')}
+                                <ArrowRight className="h-3.5 w-3.5" />
+                            </a>
                         </div>
-                        <a
-                            href="mailto:contact@sargvision.com?subject=SahayakAI%20School%20Premium%20Enquiry"
-                            className="inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer shrink-0"
-                        >
-                            Contact SARGVISION
-                            <ArrowRight className="h-3.5 w-3.5" />
-                        </a>
+
+                        {/* What Premium adds on top of Gold (the "why go Premium at 250+" question). */}
+                        <div className="mt-6 pt-5 border-t border-black/5">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-saffron-700 mb-3">
+                                {t('What Premium adds on top of Gold')}
+                            </div>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                                {PREMIUM_ADDITIONS.map(({ icon: Icon, text }) => (
+                                    <li key={text} className="flex items-start gap-2.5 text-[13px] text-neutral-700 leading-[1.5]">
+                                        <span className="mt-[2px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-saffron-50 text-saffron-700">
+                                            <Icon className="h-3 w-3" aria-hidden />
+                                        </span>
+                                        <span>{t(text)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-4 text-[12px] text-neutral-500 leading-[1.55]">
+                                {t('Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.')}
+                            </p>
+                        </div>
                     </div>
                 </section>
 

@@ -78,7 +78,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
     pro: {
         limits: {
             'lesson-plan': 25,
-            'quiz': 15,
+            'quiz': 25,
             'worksheet': -1,
             'rubric': -1,
             'instant-answer': -1,
