@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse
 from .agents.parent_call.router import router as parent_call_router
 from .auth import auth_middleware
 from .config import get_settings
+from .logging_config import configure_logging
 from .shared.errors import AgentError
 from .telemetry import init_telemetry
 
@@ -38,6 +39,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     set by Cloud Run at container start are visible.
     """
     settings = get_settings()
+    configure_logging()
     log.info(
         "app.startup",
         env=settings.env,

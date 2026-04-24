@@ -4,6 +4,10 @@ Short, load-bearing document. Every design decision here is traceable to a revie
 finding from Round 1 (2026-04-24) or to the parent plan at
 `sahayakai-main/.claude/plans/ai-agent-quality-and-migration-plan.md`.
 
+**ADK design-pattern source of truth: https://adk.dev/** — when an agent
+module, tool, or orchestration pattern is ambiguous, defer to the adk.dev
+reference before inventing a local convention. User directive, 2026-04-24.
+
 ## 1. Why this service exists
 
 Stateful and voice AI agents move server-side so:

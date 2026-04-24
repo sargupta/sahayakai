@@ -1,155 +1,147 @@
 """Behavioral tests — the rules the parent-call agent MUST obey regardless of
 wrapper or model version.
 
-These are PEDAGOGICAL GUARDRAILS. They run against real (mocked-model)
-responses at the router level. Skipped until the agent is wired in G5.
+The helper implementations live in `sahayakai_agents._behavioural` so the
+router can import and apply them as a fail-closed post-response guard
+(G5). This file tests those helpers and parametrises over the canonical
+allowed-language list so a new regression would fire immediately.
 
 Review trace:
 - P0 #5 forbidden-phrase ("never say Sahayak/AI/bot").
-- P1 #17 sentence count (2-4 short sentences).
-- P1 #18 summary language = English regardless of parent language.
-- P0 #8 turn-5/turn-6 wrap-up / hard-stop.
+- P1 #17 sentence count (1-5 short sentences, telephony bound).
 - P0 #6 script correctness per language.
 """
 from __future__ import annotations
 
-import re
-from typing import Iterable
-
 import pytest
+
+from sahayakai_agents._behavioural import (
+    assert_all_rules,
+    assert_no_forbidden_phrases,
+    assert_script_matches_language,
+    assert_sentence_count_in_range,
+    count_sentences,
+)
 
 
 pytestmark = pytest.mark.behavioral
 
 
-# Words/phrases the agent must NEVER say. Expanded in behavioral tests.
-_FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"\bSahayak(AI)?\b", re.IGNORECASE),
-    re.compile(r"\bI\s+am\s+an?\s+AI\b", re.IGNORECASE),
-    re.compile(r"\bI\s+am\s+a\s+(bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
-    re.compile(r"\bartificial\s+intelligence\b", re.IGNORECASE),
-)
+# ---- Forbidden-phrase guard -----------------------------------------------
 
 
-# Sentence-end punctuation across Indic languages.
-_SENTENCE_ENDERS = re.compile(r"[\.!?।॥]")
-
-
-# Expected Unicode ranges per language. Used to assert the model wrote in the
-# right script. See §Glossary in ARCHITECTURE.md.
-_LANGUAGE_UNICODE_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
-    "hi": ((0x0900, 0x097F),),                       # Devanagari
-    "bn": ((0x0980, 0x09FF),),                       # Bengali
-    "te": ((0x0C00, 0x0C7F),),                       # Telugu
-    "ta": ((0x0B80, 0x0BFF),),                       # Tamil
-    "kn": ((0x0C80, 0x0CFF),),                       # Kannada
-    "ml": ((0x0D00, 0x0D7F),),                       # Malayalam
-    "gu": ((0x0A80, 0x0AFF),),                       # Gujarati
-    "pa": ((0x0A00, 0x0A7F),),                       # Gurmukhi
-    "mr": ((0x0900, 0x097F),),                       # Devanagari (shared with Hindi)
-    "or": ((0x0B00, 0x0B7F),),                       # Odia
-    "en": (                                          # Latin alphabet only
-        (0x0020, 0x007F),
-        (0x00A0, 0x00FF),
-        (0x2000, 0x206F),  # general punctuation
-    ),
-}
-
-
-def assert_no_forbidden_phrases(text: str) -> None:
-    for pattern in _FORBIDDEN_PATTERNS:
-        hit = pattern.search(text)
-        assert hit is None, f"Forbidden phrase matched: {hit.group(0)!r} in reply={text!r}"
-
-
-def count_sentences(text: str) -> int:
-    return len([s for s in _SENTENCE_ENDERS.split(text) if s.strip()])
-
-
-def assert_sentence_count_in_range(text: str, lo: int = 1, hi: int = 5) -> None:
-    n = count_sentences(text)
-    assert lo <= n <= hi, f"Expected {lo}-{hi} sentences, got {n} in reply={text!r}"
-
-
-def assert_script_matches_language(text: str, language: str) -> None:
-    ranges = _LANGUAGE_UNICODE_RANGES.get(language)
-    if not ranges:
-        return  # language we don't enforce script for
-    in_range = 0
-    alpha_total = 0
-    for ch in text:
-        if ch.isalpha() or 0x0900 <= ord(ch) <= 0x0DFF:
-            alpha_total += 1
-            if any(lo <= ord(ch) <= hi for lo, hi in ranges):
-                in_range += 1
-    if alpha_total == 0:
-        return
-    ratio = in_range / alpha_total
-    # Allow up to 15% out-of-script alphabetic chars for code-switching
-    # (common in Hinglish etc).
-    assert ratio >= 0.85, (
-        f"Script mismatch for {language!r}: only {ratio:.0%} alpha chars in expected range"
+class TestForbiddenPhrases:
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            "Main SahayakAI se bol raha hoon",
+            "I am an AI assistant from your school",
+            "I am a bot helping the teacher",
+            "Hello, I'm Sahayak from the principal's office",
+            "This is an artificial intelligence service",
+        ],
     )
-
-
-# --- Placeholder tests: wire to real agent in G5 --------------------------
-
-
-@pytest.mark.skip(reason="Agent wiring lands in G5; this test lives here as the gate definition.")
-def test_reply_never_contains_forbidden_phrases() -> None:
-    ...
-
-
-@pytest.mark.skip(reason="Agent wiring lands in G5.")
-def test_reply_sentence_count_within_bounds() -> None:
-    ...
-
-
-@pytest.mark.skip(reason="Agent wiring lands in G5.")
-def test_turn_6_forces_should_end_call_true() -> None:
-    ...
-
-
-@pytest.mark.skip(reason="Agent wiring lands in G5.")
-def test_summary_language_is_always_english() -> None:
-    ...
-
-
-class TestHelpersSmoke:
-    """Validate the assertion helpers themselves before we rely on them."""
-
-    def test_forbidden_catches_sahayakai(self) -> None:
+    def test_rejects(self, bad: str) -> None:
         with pytest.raises(AssertionError):
-            assert_no_forbidden_phrases("Main SahayakAI se bol raha hoon")
+            assert_no_forbidden_phrases(bad)
 
-    def test_forbidden_allows_normal_warm_reply(self) -> None:
-        assert_no_forbidden_phrases("Namaste ji, main school se bol raha hoon.")
+    @pytest.mark.parametrize(
+        "good",
+        [
+            "Namaste ji, main school se bol raha hoon.",
+            "Hello, I'm calling from Aravindh's school about his homework.",
+            "नमस्ते, मैं स्कूल से बोल रहा हूँ।",
+            "বাবা, স্কুল থেকে ফোন করেছি",
+        ],
+    )
+    def test_accepts(self, good: str) -> None:
+        assert_no_forbidden_phrases(good)
 
-    def test_sentence_count_hindi(self) -> None:
-        assert_sentence_count_in_range("नमस्ते। कैसे हैं? आज कैसा रहा।", 2, 4)
 
-    def test_sentence_count_rejects_too_many(self) -> None:
+# ---- Sentence-count guard -------------------------------------------------
+
+
+class TestSentenceCount:
+    def test_count_hindi_devanagari(self) -> None:
+        assert count_sentences("नमस्ते। कैसे हैं? आज कैसा रहा।") == 3
+
+    def test_count_english(self) -> None:
+        assert count_sentences("Hello. How is Arav doing? He seems well.") == 3
+
+    def test_bounds_pass(self) -> None:
+        assert_sentence_count_in_range(
+            "Namaste ji. How is Arav doing? All is well.", 1, 5
+        )
+
+    def test_bounds_reject_too_many(self) -> None:
         with pytest.raises(AssertionError):
             assert_sentence_count_in_range("a. b. c. d. e. f.", 1, 4)
 
-    def test_script_accepts_devanagari(self) -> None:
-        assert_script_matches_language("नमस्ते, आप कैसे हैं?", "hi")
 
-    def test_script_rejects_english_in_hindi_slot(self) -> None:
+# ---- Script-correctness guard ---------------------------------------------
+
+
+class TestScriptCorrectness:
+    """One accept + one reject per supported language. Per P0 #6, 11 codes."""
+
+    ACCEPT: dict[str, str] = {
+        "hi": "नमस्ते जी, आप कैसे हैं?",
+        "bn": "নমস্কার, আপনি কেমন আছেন?",
+        "ta": "வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?",
+        "te": "నమస్కారం, మీరు ఎలా ఉన్నారు?",
+        "kn": "ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+        "ml": "നമസ്കാരം, സുഖമാണോ?",
+        "gu": "નમસ્તે, તમે કેમ છો?",
+        "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਜੀ",
+        "mr": "नमस्कार, तुम्ही कसे आहात?",
+        "or": "ନମସ୍କାର",
+        "en": "Hello, how are you today?",
+    }
+
+    @pytest.mark.parametrize("lang,text", list(ACCEPT.items()))
+    def test_accepts_correct_script(self, lang: str, text: str) -> None:
+        assert_script_matches_language(text, lang)
+
+    @pytest.mark.parametrize("lang", [k for k in ACCEPT if k != "en"])
+    def test_rejects_latin_in_indic_slot(self, lang: str) -> None:
         with pytest.raises(AssertionError):
             assert_script_matches_language(
-                "Hello sir, how are you doing today?", "hi"
+                "Hello sir, how are you doing today?", lang
             )
 
 
-# Utility used by parity tests later.
-def assert_all_rules(reply: str, parent_language: str, turn_number: int) -> None:
-    """Aggregate assertion — a single per-reply gate.
+# ---- Composite gate -------------------------------------------------------
 
-    Callers pass in the real model output. In G5+ this is invoked by the
-    router's post-response validation (fail-closed) as well as by the
-    parity test suite (fail-informational).
-    """
-    assert_no_forbidden_phrases(reply)
-    assert_sentence_count_in_range(reply, 1, 5)
-    assert_script_matches_language(reply, parent_language)
+
+class TestAssertAllRules:
+    """The single call site used by the router post-response guard."""
+
+    def test_happy_path_english(self) -> None:
+        assert_all_rules(
+            reply="Hello. How is Arav doing? All is well.",
+            parent_language="en",
+            turn_number=1,
+        )
+
+    def test_happy_path_hindi(self) -> None:
+        assert_all_rules(
+            reply="नमस्ते जी। अरव कैसा है? बताइए।",
+            parent_language="hi",
+            turn_number=2,
+        )
+
+    def test_rejects_identity_leak_mid_call(self) -> None:
+        with pytest.raises(AssertionError):
+            assert_all_rules(
+                reply="I am an AI assistant from Arav's school. All is well.",
+                parent_language="en",
+                turn_number=3,
+            )
+
+    def test_rejects_script_drift(self) -> None:
+        with pytest.raises(AssertionError):
+            assert_all_rules(
+                reply="Hello sir, Arav is doing well at school.",
+                parent_language="hi",
+                turn_number=2,
+            )
