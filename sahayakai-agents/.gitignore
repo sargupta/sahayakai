@@ -17,7 +17,12 @@ env/
 
 # Build / dist
 build/
-dist/
+# Ignore contents of dist/ (not the dir itself) so we can still track the
+# one generated artifact below.
+dist/*
+# Keep the generated TypeScript types so the Next.js side can consume them
+# without running the codegen locally. CI regenerates and diffs this file.
+!dist/types.generated.ts
 *.egg
 .tox/
 
