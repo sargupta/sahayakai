@@ -102,20 +102,74 @@ class Settings(BaseSettings):
         raw = self.genai_shadow_api_key.get_secret_value()
         return tuple(k.strip() for k in raw.split(",") if k.strip())
 
-    def assert_shadow_keys_isolated(self) -> None:
-        """P0 #2: shadow keys must not overlap with live keys in production.
+    def assert_prod_invariants(self) -> None:
+        """Fail boot in production if anything is misconfigured.
 
-        A misconfigured deploy that puts the same key in both pools would let
-        shadow traffic 429 live traffic. Catch it at boot.
+        Combines several Round-2 findings:
+        - P0 #2 shadow-key isolation: live vs shadow pools must not overlap.
+        - R2 P0-3: `request_signing_key` must not be the hardcoded dev
+          default and must be at least 32 chars.
+        - R2 P0-2: `audience` must be non-empty (otherwise every ID-token
+          verification will 401).
+        - R2 extra: `allowed_invokers` must contain at least one entry,
+          `genai_keys` must have at least one key.
         """
         if not self.is_production:
             return
+
+        errors: list[str] = []
+
         overlap = set(self.genai_keys) & set(self.genai_shadow_keys)
         if overlap:
-            raise RuntimeError(
-                "Shadow Gemini key pool overlaps with live pool in production. "
-                "P0 #2 violation. Rotate keys and redeploy."
+            errors.append(
+                "Shadow Gemini key pool overlaps with live pool (P0 #2). "
+                "Rotate keys and redeploy."
             )
+
+        signing = self.request_signing_key.get_secret_value()
+        if signing == "dev-only-change-me":
+            errors.append(
+                "SAHAYAKAI_REQUEST_SIGNING_KEY is the dev default in production "
+                "(Round-2 P0-3). Provision a real rotating secret."
+            )
+        if len(signing) < 32:
+            errors.append(
+                "SAHAYAKAI_REQUEST_SIGNING_KEY is shorter than 32 characters; "
+                "use a 256-bit random value."
+            )
+
+        if not self.audience:
+            errors.append(
+                "SAHAYAKAI_AGENTS_AUDIENCE is empty (Round-2 P0-2). "
+                "Every ID-token verification will 401. "
+                "Set it to the Cloud Run service URL after first deploy."
+            )
+        elif "${" in self.audience:
+            errors.append(
+                f"SAHAYAKAI_AGENTS_AUDIENCE contains an unresolved placeholder: "
+                f"{self.audience!r}. Substitution failed at deploy time."
+            )
+
+        if not self.allowed_invokers:
+            errors.append(
+                "SAHAYAKAI_AGENTS_ALLOWED_INVOKERS is empty; no caller can "
+                "invoke this service."
+            )
+
+        if not self.genai_keys:
+            errors.append(
+                "GOOGLE_GENAI_API_KEY pool is empty; model calls will fail."
+            )
+
+        if errors:
+            joined = "\n  - ".join(errors)
+            raise RuntimeError(
+                f"sahayakai-agents refuses to boot in production due to config errors:\n  - {joined}"
+            )
+
+    # Deprecated alias for the old name; keep for one release so older
+    # callers in tests don't snap.
+    assert_shadow_keys_isolated = assert_prod_invariants
 
 
 @lru_cache(maxsize=1)
@@ -126,5 +180,5 @@ def get_settings() -> Settings:
     call, or call `get_settings.cache_clear()` between cases.
     """
     settings = Settings()
-    settings.assert_shadow_keys_isolated()
+    settings.assert_prod_invariants()
     return settings

@@ -46,8 +46,17 @@ spec:
               value: sahayakai-b4248
             - name: GOOGLE_CLOUD_REGION
               value: asia-southeast1
+            # Audience is populated from the Cloud Run service's resolved
+            # URL after the first deploy. Round-2 P0-2 fix: previous
+            # `${REGION_HASH}` placeholder was never substituted; we now
+            # derive the value at boot from the K_SERVICE env var that
+            # Cloud Run sets, falling back to this explicit override if
+            # a specific custom domain is in use.
             - name: SAHAYAKAI_AGENTS_AUDIENCE
-              value: https://sahayakai-agents-${REGION_HASH}-as.a.run.app
+              valueFrom:
+                secretKeyRef:
+                  name: SAHAYAKAI_AGENTS_AUDIENCE
+                  key: latest
             - name: SAHAYAKAI_AGENTS_ALLOWED_INVOKERS
               value: sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
             - name: GOOGLE_GENAI_API_KEY

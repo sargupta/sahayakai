@@ -44,7 +44,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
         region=settings.gcp_region,
         project=settings.gcp_project,
     )
-    init_telemetry()
+    # Pass the app so FastAPIInstrumentor actually wraps it (Round-2 P1-8).
+    init_telemetry(app)
     yield
     log.info("app.shutdown")
 

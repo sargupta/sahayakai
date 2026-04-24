@@ -20,8 +20,9 @@ from __future__ import annotations
 import time
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 
+from ...shared.errors import NotImplementedAgentError
 from .schemas import (
     AgentReplyRequest,
     AgentReplyResponse,
@@ -48,18 +49,12 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
         parent_language=payload.parentLanguage,
         has_transcript=payload.transcript is not None,
     )
-    # Intentional: fail loud. The scaffold must never be mistaken for a real
-    # agent. Next.js circuit breaker will fall back to Genkit on this 501.
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail={
-            "code": "NOT_IMPLEMENTED",
-            "message": (
-                "parent-call reply handler is scaffolded only. "
-                "ADK LlmAgent wiring ships in G5."
-            ),
-            "scaffoldLatencyMs": int((time.monotonic() - started) * 1000),
-        },
+    # Intentional: fail loud via the typed envelope so Next.js circuit
+    # breaker sees `{"error": {...}}` and falls back to Genkit.
+    raise NotImplementedAgentError(
+        f"parent-call reply handler is scaffolded only. "
+        f"ADK LlmAgent wiring ships in G5. "
+        f"scaffoldLatencyMs={int((time.monotonic() - started) * 1000)}"
     )
 
 
@@ -76,14 +71,8 @@ async def parent_call_summary(payload: CallSummaryRequest) -> CallSummaryRespons
         turns=len(payload.transcript),
         parent_language=payload.parentLanguage,
     )
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail={
-            "code": "NOT_IMPLEMENTED",
-            "message": (
-                "parent-call summary handler is scaffolded only. "
-                "ADK LlmAgent wiring ships in G5."
-            ),
-            "scaffoldLatencyMs": int((time.monotonic() - started) * 1000),
-        },
+    raise NotImplementedAgentError(
+        f"parent-call summary handler is scaffolded only. "
+        f"ADK LlmAgent wiring ships in G5. "
+        f"scaffoldLatencyMs={int((time.monotonic() - started) * 1000)}"
     )

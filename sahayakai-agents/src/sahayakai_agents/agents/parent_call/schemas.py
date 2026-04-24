@@ -8,12 +8,23 @@ types are regenerated from these models via `datamodel-codegen` in CI.
 Review trace:
 - P1 #14 single source of truth.
 - P0 #10 `callSid` + `turnNumber` composite key; `turnNumber` is required for writes.
+- Round-2 fix: `parentLanguage` is now an explicit Literal over the 11
+  supported language codes rather than an open 2-5 char string. A typo like
+  `"sw"` now fails validation at the edge instead of hitting the model and
+  drifting the parent-facing reply.
 """
 from __future__ import annotations
 
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# The 11 languages SahayakAI actually supports. Keep in sync with the
+# SAHAYAK_SOUL_PROMPT language mapping and with the client-side language
+# picker in sahayakai-main.
+ParentLanguage = Literal[
+    "en", "hi", "bn", "te", "mr", "ta", "gu", "kn", "pa", "ml", "or"
+]
 
 
 class TranscriptTurn(BaseModel):
@@ -45,7 +56,7 @@ class AgentReplyRequest(BaseModel):
     teacherName: str | None = Field(default=None, max_length=200)
     schoolName: str | None = Field(default=None, max_length=200)
 
-    parentLanguage: str = Field(min_length=2, max_length=5)
+    parentLanguage: ParentLanguage
 
     # What the parent said this turn (already transcribed).
     parentSpeech: str = Field(min_length=0, max_length=4000)
@@ -54,8 +65,10 @@ class AgentReplyRequest(BaseModel):
     performanceSummary: str | None = Field(default=None, max_length=2000)
 
     # Optional. During shadow mode Next.js can still pass the full transcript
-    # defensively. Sidecar otherwise loads from Firestore.
-    transcript: list[TranscriptTurn] | None = None
+    # defensively. Sidecar otherwise loads from Firestore. Bounded to 24
+    # turns so a malformed or malicious payload can't drive sidecar memory
+    # pressure past its cap on any single call.
+    transcript: list[TranscriptTurn] | None = Field(default=None, max_length=24)
 
 
 class AgentReplyResponse(BaseModel):
@@ -105,9 +118,9 @@ class CallSummaryRequest(BaseModel):
     teacherMessage: str
     teacherName: str | None = None
     schoolName: str | None = None
-    parentLanguage: str = Field(min_length=2, max_length=5)
+    parentLanguage: ParentLanguage
 
-    transcript: list[TranscriptTurn]
+    transcript: list[TranscriptTurn] = Field(max_length=24)
     callDurationSeconds: int | None = None
 
 

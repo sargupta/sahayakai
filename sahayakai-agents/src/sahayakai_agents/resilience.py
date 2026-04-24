@@ -42,12 +42,16 @@ log = structlog.get_logger(__name__)
 T = TypeVar("T")
 
 # Status code classification mirrors classifyStatus in genkit.ts.
+# Round-2 P1-6 fix: anchor status codes with word boundaries so substrings
+# like "4001" or "500ms" in an error body don't get misclassified. Keep the
+# keyword branches narrower so "Invalid" doesn't fire on "Invalid chunk"
+# network errors.
 _STATUS_PATTERNS: tuple[tuple[re.Pattern[str], int], ...] = (
-    (re.compile(r"429|Resource exhausted|RESOURCE_EXHAUSTED", re.IGNORECASE), 429),
-    (re.compile(r"401|Unauthorized", re.IGNORECASE), 401),
-    (re.compile(r"403|Forbidden|denied access", re.IGNORECASE), 403),
-    (re.compile(r"400|Invalid|API key expired", re.IGNORECASE), 400),
-    (re.compile(r"500|Internal", re.IGNORECASE), 500),
+    (re.compile(r"\b429\b|Resource exhausted|RESOURCE_EXHAUSTED", re.IGNORECASE), 429),
+    (re.compile(r"\b401\b|Unauthorized", re.IGNORECASE), 401),
+    (re.compile(r"\b403\b|Forbidden|denied access", re.IGNORECASE), 403),
+    (re.compile(r"\b400\b|API key expired|blocked by safety filter", re.IGNORECASE), 400),
+    (re.compile(r"\b500\b|Internal Server Error", re.IGNORECASE), 500),
 )
 
 
@@ -67,10 +71,15 @@ class CacheMetrics:
 
 
 def classify_status(error: Exception) -> int | None:
-    """Best-effort HTTP-status extraction from an opaque Gemini SDK error."""
-    status = getattr(error, "status", None)
-    if isinstance(status, int):
-        return status
+    """Best-effort HTTP-status extraction from an opaque Gemini SDK error.
+
+    Round-2 P1-6 fix: also inspect `status_code` because google-genai uses
+    that attribute name; `.status` was the pre-v0.8 name.
+    """
+    for attr in ("status", "status_code", "code"):
+        value = getattr(error, attr, None)
+        if isinstance(value, int):
+            return value
 
     msg = str(error)
     for pattern, code in _STATUS_PATTERNS:

@@ -83,3 +83,20 @@ class AuthorizationError(AgentError):
 
     def __init__(self, message: str = "Caller not allowed") -> None:
         super().__init__(code="FORBIDDEN", message=message, http_status=403)
+
+
+class NotImplementedAgentError(AgentError):
+    """Scaffold endpoints that intentionally return 501.
+
+    Round-2 P1-10 fix: replaces raw `HTTPException(detail={...})` in
+    router stubs so the wire envelope stays `{"error": {...}}` as
+    declared in `schemas.WireErrorEnvelope`. Next.js circuit breaker
+    expects the error under `body.error.code`.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(
+            code="INTERNAL",  # Reusing INTERNAL; clients key off HTTP 501.
+            message=message,
+            http_status=501,
+        )

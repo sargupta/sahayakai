@@ -1,36 +1,60 @@
 """OpenTelemetry initialization.
 
-Production: exports traces to Cloud Trace in the same GCP project as the main
-service. Local dev: no-op unless OTEL_EXPORTER_OTLP_ENDPOINT is set.
+Production: exports traces to Cloud Trace in the same GCP project as the
+main service. Local dev: no-op unless OTEL_EXPORTER_OTLP_ENDPOINT is set.
 
-Wired into FastAPI via `FastAPIInstrumentor.instrument_app(app)` from
-`main.py`.
+Round-2 P1-8 fix: `FastAPIInstrumentor.instrument_app(app)` must actually
+run; `init_telemetry()` alone only wires the provider and exporter. We now
+accept the FastAPI app as an argument and instrument it here so the main
+module does not need to reach for the instrumentation package directly.
 """
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import structlog
 
 from .config import get_settings
+
+if TYPE_CHECKING:  # pragma: no cover — import-only.
+    from fastapi import FastAPI
 
 log = structlog.get_logger(__name__)
 
 _initialised = False
 
 
-def init_telemetry() -> None:
-    """Idempotent. Called once from the FastAPI startup event."""
+def init_telemetry(app: "FastAPI | None" = None) -> None:
+    """Idempotent. Called once from the FastAPI lifespan.
+
+    Accepts an optional `app` so production runs auto-instrument every
+    request. In dev mode (`env != production`) we still install the
+    instrumentor if the app is passed — it is harmless without an exporter.
+    """
     global _initialised
     if _initialised:
         return
     _initialised = True
 
     settings = get_settings()
+
+    # FastAPI instrumentation first — works even in dev so traces propagate
+    # to an OTLP endpoint if one is configured.
+    if app is not None:
+        try:
+            from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+            FastAPIInstrumentor.instrument_app(app)
+            log.info("telemetry.fastapi_instrumented")
+        except ImportError as exc:
+            log.warning("telemetry.fastapi_instrumentor_missing", error=str(exc))
+
     if not settings.is_production:
-        log.info("telemetry.dev_mode_skip")
+        log.info("telemetry.dev_mode_skip_cloud_trace")
         return
 
-    # Cloud Trace exporter + OpenTelemetry SDK wiring. The imports are local to
-    # avoid paying the cost in tests and in dev.
+    # Cloud Trace exporter + OpenTelemetry SDK wiring. Local imports avoid
+    # paying the cost in tests and in dev.
     try:
         from opentelemetry import trace
         from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter

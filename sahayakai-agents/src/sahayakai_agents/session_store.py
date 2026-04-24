@@ -12,15 +12,27 @@ Why composite key (call_sid, turn_number) not just call_sid:
   key, the second write would silently overwrite the first.
 - Review P0 #10.
 
-TTL:
-- A separate `agent_sessions/{call_sid}` metadata doc records `endedAt`.
-- Firestore TTL policy (set at deploy time, not here) purges ended sessions
-  older than `session_ttl_hours`.
+TTL (Round-2 P0-5 fix):
+- A separate `agent_sessions/{call_sid}` metadata doc records `expireAt`, a
+  future datetime computed as `now + session_ttl_hours`.
+- Firestore TTL policy (set at deploy time via `gcloud firestore fields ttl
+  update`) purges docs whose `expireAt` is <= now. Writing `expireAt` as a
+  future timestamp means docs live until the TTL elapses, not until the
+  write itself.
+
+Async wrapper (Round-2 P0-4 fix):
+- Firestore's stable Python client is synchronous. FastAPI handlers are
+  async. Calling the sync client directly inside an `async def` would hold
+  the event loop for the full Firestore round-trip (~50-200ms), collapsing
+  effective concurrency to ~5-10 even with `containerConcurrency=20`.
+- All public methods are `async def` and dispatch the blocking work through
+  `asyncio.to_thread`. The sync call bodies remain as helpers for testing.
 """
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Iterable
 
 import structlog
@@ -42,10 +54,11 @@ class TurnRecord:
 
 
 class SessionStore:
-    """Async-friendly wrapper around the Firestore sync client.
+    """Async wrapper around the Firestore sync client.
 
-    Firestore's Python async client is alpha; we use the stable sync client via
-    `asyncio.to_thread` (applied at call sites) for now.
+    Firestore's Python async client is still alpha; we use the stable sync
+    client via `asyncio.to_thread` so blocking I/O doesn't park the event
+    loop. Tests can instantiate directly and call `_sync_*` helpers.
     """
 
     def __init__(self, client: firestore.Client | None = None) -> None:
@@ -61,8 +74,9 @@ class SessionStore:
     def _turn_doc(self, call_sid: str, turn_number: int) -> firestore.DocumentReference:
         return self._call_doc(call_sid).collection("turns").document(f"{turn_number:04d}")
 
-    def append_turn(self, turn: TurnRecord) -> None:
-        """Write a turn with OCC. Raises `SessionConflictError` on duplicate."""
+    # --- Sync primitives (test-accessible, not called from handlers) --------
+
+    def _sync_append_turn(self, turn: TurnRecord) -> None:
         doc_ref = self._turn_doc(turn.call_sid, turn.turn_number)
         meta_ref = self._call_doc(turn.call_sid)
 
@@ -73,6 +87,17 @@ class SessionStore:
                 raise SessionConflictError(
                     f"Turn {turn.turn_number} on call {turn.call_sid} already written"
                 )
+            # OCC on metadata as well: refuse a turn whose number is <= a
+            # previously-written one. Protects against Twilio retry storms
+            # that arrive out-of-order.
+            meta_snap = meta_ref.get(transaction=txn)
+            if meta_snap.exists:
+                last = int((meta_snap.to_dict() or {}).get("lastTurnNumber") or 0)
+                if turn.turn_number <= last:
+                    raise SessionConflictError(
+                        f"Turn {turn.turn_number} is <= lastTurnNumber={last} "
+                        f"on call {turn.call_sid}"
+                    )
             txn.set(
                 doc_ref,
                 {
@@ -98,8 +123,7 @@ class SessionStore:
             role=turn.role,
         )
 
-    def load_transcript(self, call_sid: str) -> list[TurnRecord]:
-        """Read all turns for a call, in turn-number order."""
+    def _sync_load_transcript(self, call_sid: str) -> list[TurnRecord]:
         turns_ref = self._call_doc(call_sid).collection("turns")
         snaps = turns_ref.order_by("__name__").stream()
         out: list[TurnRecord] = []
@@ -121,23 +145,38 @@ class SessionStore:
             )
         return out
 
-    def mark_ended(self, call_sid: str, duration_seconds: float | None = None) -> None:
-        """Record that a call has ended. TTL policy will purge later."""
+    def _sync_mark_ended(self, call_sid: str, duration_seconds: float | None = None) -> None:
+        ttl_hours = get_settings().session_ttl_hours
+        expire_at = datetime.now(UTC) + timedelta(hours=ttl_hours)
         self._call_doc(call_sid).set(
             {
                 "endedAt": datetime.now(UTC),
+                "expireAt": expire_at,
                 "durationSeconds": duration_seconds,
             },
             merge=True,
         )
 
-    # --- Test hooks ---------------------------------------------------------
-
-    def _clear_for_test(self, call_sid: str) -> None:
-        """Delete a session doc + its turns. Test-only."""
+    def _sync_clear_for_test(self, call_sid: str) -> None:
         for snap in self._call_doc(call_sid).collection("turns").stream():
             snap.reference.delete()
         self._call_doc(call_sid).delete()
+
+    # --- Async wrappers used by FastAPI handlers ----------------------------
+
+    async def append_turn(self, turn: TurnRecord) -> None:
+        await asyncio.to_thread(self._sync_append_turn, turn)
+
+    async def load_transcript(self, call_sid: str) -> list[TurnRecord]:
+        return await asyncio.to_thread(self._sync_load_transcript, call_sid)
+
+    async def mark_ended(
+        self, call_sid: str, duration_seconds: float | None = None
+    ) -> None:
+        await asyncio.to_thread(self._sync_mark_ended, call_sid, duration_seconds)
+
+    async def clear_for_test(self, call_sid: str) -> None:
+        await asyncio.to_thread(self._sync_clear_for_test, call_sid)
 
 
 def transcript_to_wire(turns: Iterable[TurnRecord]) -> list[dict[str, str]]:

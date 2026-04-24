@@ -3,11 +3,18 @@
 #
 #   gcloud builds submit --config=deploy/cloudbuild.yaml \
 #     --project=sahayakai-b4248 --region=asia-southeast1 .
+#
+# Round-2 P1-7 fix: the previous version deployed via `gcloud run deploy`
+# which ignored `deploy/service.yaml` entirely (no min-instances, no
+# secrets, no allowed invokers, no ingress restriction). We now substitute
+# the image into service.yaml with `envsubst` and use `gcloud run services
+# replace` so every setting lands.
 
 substitutions:
   _REGION: asia-southeast1
   _REPO: sahayakai
   _SERVICE: sahayakai-agents
+  _STAGING_SUFFIX: -staging
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -40,21 +47,34 @@ steps:
       - --all-tags
       - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}
 
-  # Staging deploy only. Production deploy is a manual follow-up so humans
-  # review traces before traffic routes.
+  # Materialise the service spec with the concrete image, then apply it.
+  # `gcloud run services replace` is the only command that respects every
+  # annotation and env binding declared in service.yaml.
+  - id: render-staging-service
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        apt-get update && apt-get install -y --no-install-recommends gettext-base
+        export IMAGE=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+        envsubst '$${IMAGE}' < deploy/service.yaml > /workspace/service.rendered.yaml
+        # Staging suffix applied to the Knative Service metadata.name so
+        # staging and prod coexist.
+        sed -i "s/^  name: ${_SERVICE}$/  name: ${_SERVICE}${_STAGING_SUFFIX}/" /workspace/service.rendered.yaml
+        cat /workspace/service.rendered.yaml
+
   - id: deploy-staging
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
       - run
-      - deploy
-      - ${_SERVICE}-staging
-      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - services
+      - replace
+      - /workspace/service.rendered.yaml
       - --region=${_REGION}
       - --project=${PROJECT_ID}
-      - --no-traffic
-      - --min-instances=1
-      - --max-instances=3
+    waitFor: [render-staging-service]
 
 images:
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
