@@ -363,7 +363,7 @@ export default function CommunityPage() {
   // ── Main Feed View ───────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-      {/* Header */}
+      {/* Header — title only */}
       <div className="rounded-3xl overflow-hidden bg-background border border-border shadow-soft">
         <div className="px-6 py-5 flex items-center gap-4">
           <div className="p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
@@ -377,29 +377,37 @@ export default function CommunityPage() {
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
-              onClick={handleOpenStaffRoom}
-              aria-label="Open Staff Room"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Staff Room</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
-              onClick={handleOpenTeacherDirectory}
-              aria-label="Find Teachers"
-            >
-              <UserSearch className="h-4 w-4" />
-              <span className="hidden sm:inline">Find Teachers</span>
-            </Button>
-          </div>
         </div>
+      </div>
+
+      {/* Primary action tiles — labeled entry points, visible at every breakpoint */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <button
+          onClick={handleOpenStaffRoom}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          aria-label="Open Staff Room — chat with every teacher"
+        >
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-foreground">Staff Room</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Open chat with every teacher</div>
+          </div>
+        </button>
+        <button
+          onClick={handleOpenTeacherDirectory}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          aria-label="Find Teachers — search by subject or school"
+        >
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <UserSearch className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-foreground">Find Teachers</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Search by subject or school</div>
+          </div>
+        </button>
       </div>
 
       {/* First-visit inline hint */}
