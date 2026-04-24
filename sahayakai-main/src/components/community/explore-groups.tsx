@@ -74,7 +74,7 @@ export function ExploreGroups({
                   )}
                   <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                     <Users className="h-3 w-3" />
-                    <span>{group.memberCount} members</span>
+                    <span>{group.memberCount} {group.memberCount === 1 ? "member" : "members"}</span>
                   </div>
                 </div>
                 <Button

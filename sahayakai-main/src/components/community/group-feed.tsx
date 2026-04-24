@@ -209,7 +209,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
               </h2>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-3.5 w-3.5" />
-                <span>{group.memberCount} members</span>
+                <span>{group.memberCount} {group.memberCount === 1 ? "member" : "members"}</span>
                 <span className="text-xs">·</span>
                 <Badge variant="secondary" className="text-xs font-normal">
                   {group.type.replace("_", " ")}

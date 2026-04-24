@@ -58,7 +58,13 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
     const existingSet = new Set(existingGroupIds);
     const newGroupIds: string[] = [];
 
-    // Subject+grade groups
+    // Subject+grade groups: create ALL so they're discoverable, but only
+    // auto-join the FIRST (subject[0] × gradeLevels[0]). Extra subject-grade
+    // matches surface in "Discover Groups" for the teacher to opt into —
+    // otherwise a teacher with 5 subjects × 6 grades wakes up in 30 groups
+    // and the sidebar becomes noise.
+    const MAX_SUBJECT_GRADE_AUTO_JOINS = 1;
+    let subjectGradeAutoJoins = 0;
     for (const subject of subjects) {
         for (const grade of gradeLevels) {
             const groupId = `${normalizeKey(subject)}_${normalizeKey(grade)}_${normalizeKey(board || 'general')}`;
@@ -88,13 +94,19 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                 await groupRef.set(groupData);
             }
 
+            // Cap: only auto-join the first subject-grade combination.
+            // The rest remain visible in Discover Groups for opt-in.
+            if (subjectGradeAutoJoins >= MAX_SUBJECT_GRADE_AUTO_JOINS) continue;
+
             try {
                 await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
                 await groupRef.update({ memberCount: FieldValue.increment(1) });
                 newGroupIds.push(groupId);
+                subjectGradeAutoJoins++;
             } catch {
                 // Already a member — skip (create fails if doc exists)
                 newGroupIds.push(groupId);
+                subjectGradeAutoJoins++;
             }
         }
     }

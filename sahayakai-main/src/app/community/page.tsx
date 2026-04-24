@@ -423,8 +423,9 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {/* Group chips — with Explore entry point for mobile */}
-      <div className="mt-4">
+      {/* Group chips — mobile-only. Desktop has the groups sidebar, so rendering
+          chips there would duplicate the same list twice on the screen. */}
+      <div className="mt-4 lg:hidden">
         <GroupList
           groups={myGroups}
           selectedGroupId={selectedGroupId}

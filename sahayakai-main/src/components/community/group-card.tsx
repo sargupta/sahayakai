@@ -73,7 +73,7 @@ export function GroupCard({
           <p className="font-bold text-sm truncate">{group.name}</p>
           <p className="text-xs text-slate-500 flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {group.memberCount} members
+            {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
           </p>
         </div>
       </Card>
@@ -89,7 +89,7 @@ export function GroupCard({
         <div className="flex items-center gap-3 text-xs text-slate-500">
           <span className="flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {group.memberCount} members
+            {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
           </span>
           {lastActive && (
             <span className="flex items-center gap-1">

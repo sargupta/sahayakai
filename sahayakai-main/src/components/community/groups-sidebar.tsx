@@ -36,6 +36,8 @@ interface GroupsSidebarProps {
   onConnectTeacher: (uid: string) => void;
 }
 
+const MY_GROUPS_COLLAPSED_LIMIT = 5;
+
 export function GroupsSidebar({
   myGroups,
   suggestedGroups,
@@ -55,6 +57,11 @@ export function GroupsSidebar({
   const [connectingTeachers, setConnectingTeachers] = useState<Set<string>>(
     new Set()
   );
+  const [myGroupsExpanded, setMyGroupsExpanded] = useState(false);
+  const visibleMyGroups = myGroupsExpanded
+    ? myGroups
+    : myGroups.slice(0, MY_GROUPS_COLLAPSED_LIMIT);
+  const hiddenMyGroupsCount = Math.max(0, myGroups.length - MY_GROUPS_COLLAPSED_LIMIT);
 
   const handleJoinGroup = async (groupId: string) => {
     setJoiningGroups((prev) => new Set(prev).add(groupId));
@@ -184,7 +191,7 @@ export function GroupsSidebar({
         </div>
       </Card>
 
-      {/* My Groups (moved below social surfaces — people first, groups second) */}
+      {/* My Groups — collapsed after 5 rows to keep sidebar scannable */}
       {myGroups.length > 0 && (
         <div>
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
@@ -192,7 +199,7 @@ export function GroupsSidebar({
           </h3>
           <Card className="p-4">
             <div className="space-y-1">
-              {myGroups.map((group) => (
+              {visibleMyGroups.map((group) => (
                 <button
                   key={group.id}
                   onClick={() => onSelectGroup(group.id)}
@@ -207,12 +214,20 @@ export function GroupsSidebar({
                       {group.name}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {group.memberCount} members
+                      {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
                     </p>
                   </div>
                 </button>
               ))}
             </div>
+            {hiddenMyGroupsCount > 0 && (
+              <button
+                onClick={() => setMyGroupsExpanded((v) => !v)}
+                className="mt-2 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                {myGroupsExpanded ? "Show fewer" : `Show all (${myGroups.length})`}
+              </button>
+            )}
           </Card>
         </div>
       )}
@@ -238,7 +253,7 @@ export function GroupsSidebar({
                       {group.name}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {group.memberCount} members
+                      {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
                     </p>
                   </button>
                   <Button
