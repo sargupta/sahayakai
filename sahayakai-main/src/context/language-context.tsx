@@ -1569,6 +1569,73 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "We will ask you again only if we change anything important.",
         "Odia": "We will ask you again only if we change anything important."
     },
+    // Pricing: volume table + School Starter rail (2026-04-24)
+    "Volume pricing": {
+        "English": "Volume pricing", "Hindi": "वॉल्यूम मूल्य", "Kannada": "ಪ್ರಮಾಣದ ಬೆಲೆ",
+        "Tamil": "Volume pricing", "Telugu": "Volume pricing", "Marathi": "Volume pricing",
+        "Bengali": "Volume pricing", "Gujarati": "Volume pricing", "Punjabi": "Volume pricing",
+        "Malayalam": "Volume pricing", "Odia": "Volume pricing"
+    },
+    "Custom quote": {
+        "English": "Custom quote", "Hindi": "कस्टम कोट", "Kannada": "ಕಸ್ಟಮ್ ಕೋಟ್",
+        "Tamil": "Custom quote", "Telugu": "Custom quote", "Marathi": "Custom quote",
+        "Bengali": "Custom quote", "Gujarati": "Custom quote", "Punjabi": "Custom quote",
+        "Malayalam": "Custom quote", "Odia": "Custom quote"
+    },
+    "Minimum 20 teachers · billed annually": {
+        "English": "Minimum 20 teachers · billed annually",
+        "Hindi": "न्यूनतम 20 शिक्षक · वार्षिक बिलिंग",
+        "Kannada": "ಕನಿಷ್ಠ 20 ಶಿಕ್ಷಕರು · ವಾರ್ಷಿಕ ಬಿಲ್",
+        "Tamil": "Minimum 20 teachers · billed annually", "Telugu": "Minimum 20 teachers · billed annually", "Marathi": "Minimum 20 teachers · billed annually",
+        "Bengali": "Minimum 20 teachers · billed annually", "Gujarati": "Minimum 20 teachers · billed annually", "Punjabi": "Minimum 20 teachers · billed annually",
+        "Malayalam": "Minimum 20 teachers · billed annually", "Odia": "Minimum 20 teachers · billed annually"
+    },
+    "School Starter": {
+        "English": "School Starter", "Hindi": "स्कूल स्टार्टर", "Kannada": "ಸ್ಕೂಲ್ ಸ್ಟಾರ್ಟರ್",
+        "Tamil": "School Starter", "Telugu": "School Starter", "Marathi": "School Starter",
+        "Bengali": "School Starter", "Gujarati": "School Starter", "Punjabi": "School Starter",
+        "Malayalam": "School Starter", "Odia": "School Starter"
+    },
+    "For small schools (5–19 teachers)": {
+        "English": "For small schools (5–19 teachers)",
+        "Hindi": "छोटे स्कूलों के लिए (5–19 शिक्षक)",
+        "Kannada": "ಚಿಕ್ಕ ಶಾಲೆಗಳಿಗಾಗಿ (5–19 ಶಿಕ್ಷಕರು)",
+        "Tamil": "For small schools (5–19 teachers)", "Telugu": "For small schools (5–19 teachers)", "Marathi": "For small schools (5–19 teachers)",
+        "Bengali": "For small schools (5–19 teachers)", "Gujarati": "For small schools (5–19 teachers)", "Punjabi": "For small schools (5–19 teachers)",
+        "Malayalam": "For small schools (5–19 teachers)", "Odia": "For small schools (5–19 teachers)"
+    },
+    "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.": {
+        "English": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Hindi": "हर शिक्षक के लिए Pro की सभी सुविधाएँ, साथ में एक सरल प्रिंसिपल डैशबोर्ड और ऑनबोर्डिंग सहायता। 20 शिक्षकों की कोई न्यूनतम सीमा नहीं।",
+        "Kannada": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ Pro ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳು, ಜೊತೆಗೆ ಸರಳ ಪ್ರಿನ್ಸಿಪಾಲ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮತ್ತು ಆನ್‌ಬೋರ್ಡಿಂಗ್ ಸಹಾಯ. 20 ಶಿಕ್ಷಕರ ಕನಿಷ್ಠ ಮಿತಿ ಇಲ್ಲ.",
+        "Tamil": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Telugu": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Marathi": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Bengali": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Gujarati": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Punjabi": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Malayalam": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
+        "Odia": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum."
+    },
+    "Pricing tailored to your school. We come to you.": {
+        "English": "Pricing tailored to your school. We come to you.",
+        "Hindi": "आपके स्कूल के अनुसार मूल्य। हम आपके पास आते हैं।",
+        "Kannada": "ನಿಮ್ಮ ಶಾಲೆಗೆ ಅನುಗುಣವಾಗಿ ಬೆಲೆ. ನಾವು ನಿಮ್ಮ ಬಳಿಗೆ ಬರುತ್ತೇವೆ.",
+        "Tamil": "Pricing tailored to your school. We come to you.",
+        "Telugu": "Pricing tailored to your school. We come to you.",
+        "Marathi": "Pricing tailored to your school. We come to you.",
+        "Bengali": "Pricing tailored to your school. We come to you.",
+        "Gujarati": "Pricing tailored to your school. We come to you.",
+        "Punjabi": "Pricing tailored to your school. We come to you.",
+        "Malayalam": "Pricing tailored to your school. We come to you.",
+        "Odia": "Pricing tailored to your school. We come to you."
+    },
+    "Book a small-school call": {
+        "English": "Book a small-school call", "Hindi": "छोटे-स्कूल कॉल बुक करें", "Kannada": "ಚಿಕ್ಕ-ಶಾಲೆ ಕರೆ ಬುಕ್ ಮಾಡಿ",
+        "Tamil": "Book a small-school call", "Telugu": "Book a small-school call", "Marathi": "Book a small-school call",
+        "Bengali": "Book a small-school call", "Gujarati": "Book a small-school call", "Punjabi": "Book a small-school call",
+        "Malayalam": "Book a small-school call", "Odia": "Book a small-school call"
+    },
     "About SahayakAI": {
         "English": "About SahayakAI", "Hindi": "SahayakAI के बारे में", "Kannada": "SahayakAI ಬಗ್ಗೆ",
         "Tamil": "About SahayakAI", "Telugu": "About SahayakAI", "Marathi": "About SahayakAI",
