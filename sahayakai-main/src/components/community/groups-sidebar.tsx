@@ -86,87 +86,7 @@ export function GroupsSidebar({
 
   return (
     <aside className="hidden lg:block w-72 space-y-5 sticky top-4">
-      {/* My Groups */}
-      {myGroups.length > 0 && (
-        <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            My Groups
-          </h3>
-          <Card className="p-4">
-            <div className="space-y-1">
-              {myGroups.map((group) => (
-                <button
-                  key={group.id}
-                  onClick={() => onSelectGroup(group.id)}
-                  className="w-full flex items-start gap-3 rounded-lg p-2 text-left hover:bg-slate-50 transition-colors"
-                >
-                  <span
-                    className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ background: getGroupColor(group.name) }}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {group.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {group.memberCount} members
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Discover Groups */}
-      {suggestedGroups.length > 0 && (
-        <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            Discover Groups
-          </h3>
-          <Card className="p-4">
-            <div className="space-y-3">
-              {suggestedGroups.slice(0, 5).map((group) => (
-                <div
-                  key={group.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <button
-                    className="min-w-0 text-left"
-                    onClick={() => onPreviewGroup?.(group.id)}
-                  >
-                    <p className="text-sm font-medium truncate hover:underline">
-                      {group.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {group.memberCount} members
-                    </p>
-                  </button>
-                  <Button
-                    size="sm"
-                    variant={joinedGroups.has(group.id) ? "ghost" : "outline"}
-                    className={cn(
-                      "shrink-0 text-xs",
-                      joinedGroups.has(group.id) && "text-emerald-600"
-                    )}
-                    disabled={joiningGroups.has(group.id) || joinedGroups.has(group.id)}
-                    onClick={() => handleJoinGroup(group.id)}
-                  >
-                    {joinedGroups.has(group.id)
-                      ? "Joined"
-                      : joiningGroups.has(group.id)
-                        ? "Joining..."
-                        : "Join"}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* People You May Know */}
+      {/* People You May Know (moved above groups per UX feedback — social first, then structure) */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -263,6 +183,86 @@ export function GroupsSidebar({
           <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
         </div>
       </Card>
+
+      {/* My Groups (moved below social surfaces — people first, groups second) */}
+      {myGroups.length > 0 && (
+        <div>
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            My Groups
+          </h3>
+          <Card className="p-4">
+            <div className="space-y-1">
+              {myGroups.map((group) => (
+                <button
+                  key={group.id}
+                  onClick={() => onSelectGroup(group.id)}
+                  className="w-full flex items-start gap-3 rounded-lg p-2 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <span
+                    className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ background: getGroupColor(group.name) }}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {group.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {group.memberCount} members
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Discover Groups */}
+      {suggestedGroups.length > 0 && (
+        <div>
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Discover Groups
+          </h3>
+          <Card className="p-4">
+            <div className="space-y-3">
+              {suggestedGroups.slice(0, 5).map((group) => (
+                <div
+                  key={group.id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <button
+                    className="min-w-0 text-left"
+                    onClick={() => onPreviewGroup?.(group.id)}
+                  >
+                    <p className="text-sm font-medium truncate hover:underline">
+                      {group.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {group.memberCount} members
+                    </p>
+                  </button>
+                  <Button
+                    size="sm"
+                    variant={joinedGroups.has(group.id) ? "ghost" : "outline"}
+                    className={cn(
+                      "shrink-0 text-xs",
+                      joinedGroups.has(group.id) && "text-emerald-600"
+                    )}
+                    disabled={joiningGroups.has(group.id) || joinedGroups.has(group.id)}
+                    onClick={() => handleJoinGroup(group.id)}
+                  >
+                    {joinedGroups.has(group.id)
+                      ? "Joined"
+                      : joiningGroups.has(group.id)
+                        ? "Joining..."
+                        : "Join"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
     </aside>
   );
 }
