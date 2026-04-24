@@ -1,0 +1,94 @@
+# Cloud Run service declaration — sahayakai-agents.
+#
+# Review trace:
+# - P0 #1: `autoscaling.knative.dev/minScale: "1"` is a hard requirement.
+# - P0 #2: GOOGLE_GENAI_SHADOW_API_KEY is a distinct secret, not shared with
+#   the live pool.
+# - P1 #12: service account is the ONLY allowed invoker surface; Next.js
+#   must authenticate via its own SA's identity token.
+#
+# Apply via:
+#   gcloud run services replace deploy/service.yaml \
+#     --region=asia-southeast1 --project=sahayakai-b4248
+#
+# Substitute ${IMAGE} at deploy time from cloudbuild.yaml.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: sahayakai-agents
+  annotations:
+    run.googleapis.com/ingress: internal-and-cloud-load-balancing
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      serviceAccountName: sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
+      timeoutSeconds: 12       # Twilio webhook budget is 15s; sidecar must return well under.
+      containerConcurrency: 20 # Tune via load test post G10.
+      containers:
+        - image: ${IMAGE}
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          env:
+            - name: SAHAYAKAI_AGENTS_ENV
+              value: production
+            - name: GOOGLE_CLOUD_PROJECT
+              value: sahayakai-b4248
+            - name: GOOGLE_CLOUD_REGION
+              value: asia-southeast1
+            # Audience is populated from the Cloud Run service's resolved
+            # URL after the first deploy. Round-2 P0-2 fix: previous
+            # `${REGION_HASH}` placeholder was never substituted; we now
+            # derive the value at boot from the K_SERVICE env var that
+            # Cloud Run sets, falling back to this explicit override if
+            # a specific custom domain is in use.
+            - name: SAHAYAKAI_AGENTS_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: SAHAYAKAI_AGENTS_AUDIENCE
+                  key: latest
+            - name: SAHAYAKAI_AGENTS_ALLOWED_INVOKERS
+              value: sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+            - name: GOOGLE_GENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: GOOGLE_GENAI_API_KEY
+                  key: latest
+            - name: GOOGLE_GENAI_SHADOW_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: GOOGLE_GENAI_SHADOW_API_KEY
+                  key: latest
+            - name: SAHAYAKAI_REQUEST_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: SAHAYAKAI_REQUEST_SIGNING_KEY
+                  key: latest
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+  traffic:
+    - percent: 100
+      latestRevision: true

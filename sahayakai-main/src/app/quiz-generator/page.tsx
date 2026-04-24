@@ -28,6 +28,7 @@ import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { SectionCard } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
@@ -709,8 +710,8 @@ function QuizGeneratorContent() {
 
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+    <div className="container-wide py-8 space-y-8">
+      <SectionCard className="overflow-hidden p-0 md:p-0 space-y-0">
         {/* Clean Top Bar */}
         <div className="card-accent-bar" />
 
@@ -816,7 +817,7 @@ function QuizGeneratorContent() {
                 </div>
 
                 {/* RIGHT COLUMN: Configuration (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-soft h-fit">
+                <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-surface-md border border-border shadow-soft h-fit">
                   {/* Subject, Grade and Language Selection */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border/30 pt-4 mt-2">
                     <FormField
@@ -986,7 +987,7 @@ function QuizGeneratorContent() {
                     )}
                   />
 
-                  <Button type="submit" disabled={isLoading || !canUseAI} className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">
+                  <Button type="submit" disabled={isLoading || !canUseAI} className="w-full py-5 text-base font-headline rounded-surface-md shadow-elevated transition-shadow duration-micro ease-out-quart">
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -997,27 +998,30 @@ function QuizGeneratorContent() {
                     )}
                   </Button>
                   {aiUnavailableReason && (
-                    <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+                    <p className="text-xs text-amber-600 mt-2 text-center">{aiUnavailableReason}</p>
                   )}
                 </div>
               </div>
             </form>
           </Form>
         </div>
-      </div>
+      </SectionCard>
 
       {/* Results Section */}
       {quiz && (
         <>
-          <div className="my-8 flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <hr className="flex-1 border-border/40" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <span className="type-caption text-muted-foreground px-2">Result</span>
             <hr className="flex-1 border-border/40" />
           </div>
-          <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
+          <SectionCard
+            tone="muted"
+            className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5"
+          >
             <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />
-          </div>
-          <ShareToCommunityCTA contentType="quiz" className="mt-3" />
+          </SectionCard>
+          <ShareToCommunityCTA contentType="quiz" />
         </>
       )}
     </div>
