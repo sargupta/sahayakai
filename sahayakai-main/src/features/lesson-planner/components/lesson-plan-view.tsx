@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
+import { SectionCard } from "@/components/layout";
 import { LessonPlanDisplay } from "@/components/lesson-plan-display";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { LessonPlanHeader } from "@/components/lesson-plan/lesson-plan-header";
@@ -309,27 +310,23 @@ export function LessonPlanView({
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const t = translations[selectedLanguage] || translations.en;
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 py-8 md:py-12">
+        <div className="container-wide py-8 md:py-12 space-y-8">
 
             {/* Limit-hit: show UpgradePrompt instead of form */}
             {(limitState.limitReached || limitState.upgradeRequired) && (
-                <div className="mb-6">
-                    <UpgradePrompt
-                        feature={limitState.feature || 'lesson-plan'}
-                        used={limitState.used ?? 0}
-                        limit={limitState.limit ?? 0}
-                    />
-                </div>
+                <UpgradePrompt
+                    feature={limitState.feature || 'lesson-plan'}
+                    used={limitState.used ?? 0}
+                    limit={limitState.limit ?? 0}
+                />
             )}
 
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
-                {/* Clean Top Bar */}
+            {/* Main form surface — uses SectionCard primitive (Phase 2.2) but
+                preserves the centered title via LessonPlanHeader and the
+                decorative top accent bar. */}
+            <SectionCard className="overflow-hidden p-0 md:p-0 space-y-0">
                 <div className="card-accent-bar" />
-
-                <LessonPlanHeader
-                    title={t.title}
-                    description={t.description}
-                />
+                <LessonPlanHeader title={t.title} description={t.description} />
                 <div className="flex justify-center -mt-3 mb-2">
                     <UsageRemainingBadge feature="lesson-plan" />
                 </div>
@@ -366,7 +363,7 @@ export function LessonPlanView({
                                         }}
                                         generateButton={
                                             <>
-                                                <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-headline">
+                                                <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 bg-primary hover:bg-primary/90 text-white shadow-elevated transition-shadow duration-micro ease-out-quart font-headline rounded-surface-md">
                                                     {isLoading ? (
                                                         <>
                                                             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -377,7 +374,7 @@ export function LessonPlanView({
                                                     )}
                                                 </Button>
                                                 {aiUnavailableReason && (
-                                                    <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+                                                    <p className="text-xs text-amber-600 mt-2 text-center">{aiUnavailableReason}</p>
                                                 )}
                                             </>
                                         }
@@ -387,19 +384,22 @@ export function LessonPlanView({
                         </form>
                     </Form>
                 </CardContent>
-            </div>
+            </SectionCard>
 
             {lessonPlan && (
                 <>
-                    <div className="my-8 flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                         <hr className="flex-1 border-border/40" />
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+                        <span className="type-caption text-muted-foreground px-2">Result</span>
                         <hr className="flex-1 border-border/40" />
                     </div>
-                    <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <SectionCard
+                        tone="muted"
+                        className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5 animate-in fade-in slide-in-from-bottom-8 duration-medium"
+                    >
                         <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
-                    </div>
-                    <ShareToCommunityCTA contentType="lesson-plan" className="mt-3" />
+                    </SectionCard>
+                    <ShareToCommunityCTA contentType="lesson-plan" />
                 </>
             )}
         </div>
