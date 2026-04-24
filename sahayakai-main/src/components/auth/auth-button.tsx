@@ -48,30 +48,48 @@ export function AuthButton() {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
+            // Prime the auth-token cookie synchronously before the first
+            // server-route call. Without this we race onIdTokenChanged and
+            // the profile-check / any server-action goes without x-user-id.
+            try {
+                const token = await user.getIdToken();
+                const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+                document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+            } catch {
+                // Non-fatal — cookie sync hook will retry via onIdTokenChanged.
+            }
+
             // Check if profile exists — be resilient to API errors
             // IMPORTANT: Only redirect to onboarding on a DEFINITIVE false.
             // A failed API call should NOT send a returning teacher to onboarding.
+            let redirectToOnboarding = false;
             try {
                 const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.exists === false) {
+                        redirectToOnboarding = true;
                         toast({
                             title: "Almost there!",
                             description: "Complete your professional profile to join the community.",
                         });
-                        router.push('/onboarding');
-                        return;
                     }
                 }
-                // If response is not ok OR exists is true/undefined, treat as returning user
-                toast({
-                    title: "Welcome back!",
-                    description: "You're all set!",
-                });
-            } catch (profileCheckError) {
+                if (!redirectToOnboarding) {
+                    toast({ title: "Welcome back!", description: "You're all set!" });
+                }
+            } catch {
                 // API error — don't block login with onboarding redirect
                 toast({ title: "Welcome back!", description: "Logging you in..." });
+            }
+
+            // Force a server-component refresh so pages rendered while
+            // logged-out pick up the new auth state without needing a
+            // manual reload.
+            if (redirectToOnboarding) {
+                router.push('/onboarding');
+            } else {
+                router.refresh();
             }
         } catch (error: any) {
             toast({

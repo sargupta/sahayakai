@@ -1,10 +1,15 @@
 "use client";
 
+import { useLanguage } from "@/context/language-context";
+import { LanguageSwitcher } from "@/components/marketing/language-switcher";
+
 type Props = {
   onAuthClick: () => void;
 };
 
 export function LandingNav({ onAuthClick }: Props) {
+  const { t } = useLanguage();
+
   return (
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
       <div className="flex items-center gap-2.5 font-headline font-bold text-[18px] tracking-tight text-foreground">
@@ -15,7 +20,7 @@ export function LandingNav({ onAuthClick }: Props) {
         />
         <span className="flex items-baseline gap-1.5">
           SahayakAI
-          <span className="text-[10px] font-medium tracking-wide uppercase text-neutral-400">
+          <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-neutral-400">
             by SARGVISION Intelligence
           </span>
         </span>
@@ -31,19 +36,20 @@ export function LandingNav({ onAuthClick }: Props) {
       </div>
 
       <div className="flex gap-2.5 items-center">
+        <LanguageSwitcher />
         <button
           type="button"
           onClick={onAuthClick}
           className="hidden sm:inline text-[13px] text-neutral-600 font-medium hover:text-foreground cursor-pointer transition-colors"
         >
-          Log in
+          {t("Log in")}
         </button>
         <button
           type="button"
           onClick={onAuthClick}
           className="inline-flex items-center text-[13px] bg-[#0b0b0f] text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-[#1c1c21] transition-colors cursor-pointer"
         >
-          Start free
+          {t("Start free")}
         </button>
       </div>
     </nav>

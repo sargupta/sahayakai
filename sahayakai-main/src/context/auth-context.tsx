@@ -15,7 +15,11 @@ function syncAuthCookie(token: string | null) {
     if (typeof document === 'undefined') return;
     if (token) {
         const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Strict${secure}`;
+        // SameSite=Lax: still CSRF-safe, but the cookie survives the return
+        // navigation from an OAuth popup. Strict was silently dropping the
+        // cookie on sign-in return in Chrome, so middleware saw an
+        // unauthenticated request right after a successful popup sign-in.
+        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
     } else {
         document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }

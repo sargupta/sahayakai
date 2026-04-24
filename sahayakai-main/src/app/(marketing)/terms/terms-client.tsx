@@ -3,10 +3,21 @@
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { ScriptMarks } from "@/components/landing/script-marks";
+import { PageAudio } from "@/components/marketing/page-audio";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 
 export function TermsClient() {
     const { openAuthModal } = useAuth();
+    const { t } = useLanguage();
+
+    const tldr = [
+        "Whatever you create with SahayakAI is yours.",
+        "You can cancel anytime. 7-day refund on any paid plan.",
+        "Your data stays in India and you control it.",
+        "SahayakAI never asks for student personal data.",
+        "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
+    ];
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -21,18 +32,39 @@ export function TermsClient() {
             >
                 <ScriptMarks />
 
+                <main>
                 <section className="relative z-10 max-w-[720px] mx-auto px-6 sm:px-12 pt-[52px] pb-8">
                     <div className="inline-flex items-center gap-2 text-[12px] font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[6px] mb-6">
                         <span className="w-1.5 h-1.5 rounded-full bg-saffron" />
-                        Legal
+                        {t("Legal")}
                     </div>
 
                     <h1 className="font-headline font-extrabold tracking-tight text-[40px] sm:text-[48px] leading-[1.05] text-foreground">
-                        Terms of Service
+                        {t("Terms of Service")}
                     </h1>
                     <p className="font-body text-[15px] text-neutral-500 mt-3">
                         Last updated: April 2026. Governed by the laws of India.
                     </p>
+                </section>
+
+                {/* Plain-language TL;DR — the only part most teachers need to read. */}
+                <section className="relative z-10 max-w-[720px] mx-auto px-6 sm:px-12 pb-10">
+                    <div className="rounded-[14px] bg-white border-l-4 border-saffron-200 px-7 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-saffron-700 mb-3">
+                            {t("In plain words")}
+                        </div>
+                        <ul className="space-y-3">
+                            {tldr.map((key) => (
+                                <li key={key} className="flex gap-2.5 text-[15px] text-foreground leading-[1.55]">
+                                    <span className="mt-[9px] w-1.5 h-1.5 rounded-full bg-saffron flex-none" />
+                                    <span>{t(key)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="mt-4 text-[12px] text-neutral-500 uppercase tracking-[0.08em] font-semibold">
+                            {t("Full legal terms below")} ↓
+                        </div>
+                    </div>
                 </section>
 
                 <article className="relative z-10 max-w-[720px] mx-auto px-6 sm:px-12 pb-16 font-body text-[15px] text-neutral-700 leading-[1.7]">
@@ -172,9 +204,11 @@ export function TermsClient() {
                         </p>
                     </Section>
                 </article>
+                </main>
             </div>
 
             <LandingFooter />
+            <PageAudio />
         </div>
     );
 }

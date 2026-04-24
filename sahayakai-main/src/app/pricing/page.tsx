@@ -1,11 +1,28 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
+import type { ComponentType } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Crown, Loader2 } from 'lucide-react';
+import {
+    ArrowRight,
+    Crown,
+    Loader2,
+    BookOpen,
+    ClipboardList,
+    Mic,
+    Shield,
+    Download,
+    MessageCircle,
+    BarChart3,
+    Sparkles,
+    Zap,
+    Users,
+    HeartHandshake,
+    Building2,
+} from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useSearchParams } from 'next/navigation';
@@ -14,36 +31,42 @@ import { forceTokenRefresh } from '@/lib/get-auth-token';
 import { LandingNav } from '@/components/landing/landing-nav';
 import { LandingFooter } from '@/components/landing/landing-footer';
 import { ScriptMarks } from '@/components/landing/script-marks';
+import { PageAudio } from '@/components/marketing/page-audio';
+import { useLanguage } from '@/context/language-context';
 
-const FREE_FEATURES = [
-    '10 lesson plans / month',
-    '5 quizzes & worksheets / month',
-    'Instant Answer · 20/day',
-    'Voice in 11 Indian languages (browser)',
-    'Community library access',
-    'Basic Impact Dashboard',
+type Feature = { icon: ComponentType<{ className?: string }>; text: string };
+
+// Feature copy uses plain verbs and specific numbers. Avoids jargon like
+// "Copilot", "Gemini 2.0 Flash", "Sarvam cloud" — rural teacher should parse
+// these at a glance without needing a tech background.
+const FREE_FEATURES: Feature[] = [
+    { icon: BookOpen, text: '10 lesson plans per month' },
+    { icon: ClipboardList, text: '5 quizzes + 5 worksheets per month' },
+    { icon: Zap, text: '20 instant answers per day' },
+    { icon: Mic, text: 'Voice in 11 Indian languages' },
+    { icon: Users, text: 'Community library access' },
+    { icon: BarChart3, text: 'Basic impact dashboard' },
 ];
 
-const PRO_FEATURES = [
-    'Full AI Teacher Copilot · all 6 pillars',
-    '25 lesson plans / month',
-    '15 quizzes / month',
-    'Unlimited worksheets, rubrics, Instant Answer',
-    'Premium AI model (Gemini 2.0 Flash)',
-    'Voice cloud (Sarvam) · 300 minutes / month',
-    'PDF / DOCX export without watermark',
-    'Student absence records + AI parent messaging',
-    'Detailed Impact Dashboard + analytics',
+const PRO_FEATURES: Feature[] = [
+    { icon: Sparkles, text: 'All 6 tools unlocked' },
+    { icon: BookOpen, text: '25 lesson plans per month' },
+    { icon: ClipboardList, text: 'Unlimited worksheets and rubrics' },
+    { icon: Zap, text: 'Unlimited instant answers' },
+    { icon: Mic, text: '300 voice cloud minutes per month' },
+    { icon: Download, text: 'Download as PDF or Word (no watermark)' },
+    { icon: MessageCircle, text: 'AI-powered parent messages' },
+    { icon: BarChart3, text: 'Detailed impact dashboard' },
 ];
 
-const GOLD_FEATURES = [
-    'Everything in Pro · unlimited usage',
-    'School admin dashboard + teacher onboarding',
-    '1,500 voice cloud minutes / teacher / month',
-    'WhatsApp Business integration',
-    'Priority Indian-timezone support',
-    'Volume: 20-49 ₹2,999 · 50-99 ₹2,499 · 100-249 ₹1,999 · 250+ custom',
-    '₹10,000 one-time onboarding + training',
+const GOLD_FEATURES: Feature[] = [
+    { icon: Sparkles, text: 'Everything in Pro, unlimited' },
+    { icon: Shield, text: 'Principal dashboard + teacher onboarding' },
+    { icon: Mic, text: '1,500 voice cloud minutes per teacher' },
+    { icon: MessageCircle, text: 'WhatsApp Business integration' },
+    { icon: HeartHandshake, text: 'Priority support in your timezone' },
+    { icon: Building2, text: 'Volume discount for 50+ teachers' },
+    { icon: Users, text: 'One-time onboarding and training' },
 ];
 
 const inr = (n: number) => n.toLocaleString('en-IN');
@@ -65,9 +88,12 @@ export default function PricingPage() {
 function PricingContent() {
     const { user, openAuthModal } = useAuth();
     const { plan, loading, refresh } = useSubscription();
+    const { t } = useLanguage();
     const searchParams = useSearchParams();
     const status = searchParams.get('status');
-    const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
+    // Default to monthly — lower upfront commitment, easier conversion for B2C freemium.
+    // The SAVE 2 MONTHS pill next to the toggle nudges toward annual.
+    const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
     const [creating, setCreating] = useState(false);
 
     const [activating, setActivating] = useState(status === 'success' && plan === 'free');
@@ -204,6 +230,7 @@ function PricingContent() {
             >
                 <ScriptMarks />
 
+                <main>
                 {/* Status banners */}
                 {status === 'success' && activating && (
                     <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
@@ -249,40 +276,50 @@ function PricingContent() {
                 <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 sm:px-12 pt-[52px] pb-8">
                     <div className="inline-flex items-center gap-2 text-[12px] font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[6px] mb-7">
                         <span className="w-1.5 h-1.5 rounded-full bg-saffron" />
-                        Pricing, for Indian teachers
+                        {t('Pricing, for Indian teachers')}
                     </div>
 
                     <h1 className="font-headline font-extrabold tracking-tight text-[42px] sm:text-[54px] leading-[1.05] max-w-[24ch] text-foreground">
-                        Less than a textbook.{' '}
-                        <span className="italic font-normal text-saffron-700">Yours to cancel anytime.</span>
+                        {t('Less than a textbook.')}{' '}
+                        <span className="italic font-normal text-saffron-700">{t('Yours to cancel anytime.')}</span>
                     </h1>
 
                     <p className="font-body text-[16px] sm:text-[17px] text-neutral-600 leading-[1.55] max-w-[58ch] mt-6 mx-auto">
-                        Every plan includes NCERT + 28 state boards, 11 Indian languages, voice-first input on any Android phone, and the full 6-pillar copilot.
+                        {t('Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.')}
                     </p>
                 </section>
 
-                {/* Billing toggle */}
-                <div className="relative z-10 flex items-center justify-center gap-4 mt-2">
+                {/* Billing toggle + prominent savings pill (conversion nudge toward annual). */}
+                <div className="relative z-10 flex items-center justify-center gap-3 mt-2 flex-wrap">
                     <div
                         role="radiogroup"
-                        aria-label="Billing period"
+                        aria-label={t('Monthly') + ' / ' + t('Annual')}
                         className="inline-flex items-center rounded-full border border-black/10 bg-white/70 backdrop-blur p-[3px]"
                     >
                         <BillingToggle
                             active={billingPeriod === 'monthly'}
                             onClick={() => setBillingPeriod('monthly')}
-                            label="Monthly"
+                            label={t('Monthly')}
                         />
                         <BillingToggle
                             active={billingPeriod === 'annual'}
                             onClick={() => setBillingPeriod('annual')}
-                            label="Annual"
+                            label={t('Annual')}
                         />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-saffron-700">
-                        Save 2 months
-                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setBillingPeriod('annual')}
+                        aria-label={t('Save 2 months')}
+                        className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] rounded-full px-[12px] py-[6px] transition-all cursor-pointer ${
+                            billingPeriod === 'annual'
+                                ? 'bg-saffron-50 text-saffron-700 border border-saffron-200'
+                                : 'bg-saffron text-white shadow-[0_10px_22px_-8px_hsl(28_70%_45%/0.5)] hover:bg-saffron-600'
+                        }`}
+                    >
+                        <Sparkles className="h-3 w-3" strokeWidth={2.4} />
+                        {t('Save 2 months')}
+                    </button>
                 </div>
 
                 {/* Tier columns */}
@@ -290,8 +327,8 @@ function PricingContent() {
                     <div className="max-w-[960px] w-full grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-0 md:divide-x md:divide-black/10">
                         {/* Free */}
                         <TierColumn>
-                            <TierName name="Free" />
-                            <TierPrice amount="₹0" unit="forever" emphasis={false} />
+                            <TierName name={t('Free')} />
+                            <TierPrice amount="₹0" unit={t('forever')} emphasis={false} />
                             {plan === 'free' ? (
                                 <YourPlanChip />
                             ) : (
@@ -300,7 +337,7 @@ function PricingContent() {
                                     onClick={() => (user ? undefined : openAuthModal())}
                                     className="mt-5 self-start text-[13px] font-medium text-neutral-600 hover:text-foreground transition-colors"
                                 >
-                                    {user ? 'Start here' : 'Start free →'}
+                                    {user ? t('Start here') : `${t('Start free')} →`}
                                 </button>
                             )}
                             <FeatureList items={FREE_FEATURES} />
@@ -309,21 +346,18 @@ function PricingContent() {
                         {/* Pro — emphasized */}
                         <TierColumn>
                             <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
-                                Most popular
+                                {t('Most popular')}
                             </div>
-                            <TierName name="Pro" />
+                            <TierName name={t('Pro')} />
                             <TierPrice
                                 amount={`₹${inr(proPricing.rupees)}`}
-                                unit={billingPeriod === 'monthly' ? '/month' : '/year'}
+                                unit={billingPeriod === 'monthly' ? t('/month') : t('/year')}
                                 sticker={`₹${inr(proPricing.stickerRupees)}`}
                                 emphasis
                             />
-                            {billingPeriod === 'annual' && (
-                                <div className="mt-1 text-[12px] font-medium text-saffron-700">
-                                    ≈ ₹{PLAN_PRICING.pro.annual.effectivePerMonthRupees}/mo · save ₹
-                                    {inr(PLAN_PRICING.pro.monthly.rupees * 12 - PLAN_PRICING.pro.annual.rupees)} vs monthly
-                                </div>
-                            )}
+                            <div className="mt-1 text-[12px] text-saffron-700 font-medium">
+                                {t('Tax included')} · {t('7-day refund. Cancel anytime.')}
+                            </div>
                             {plan === 'pro' ? (
                                 <YourPlanChip />
                             ) : (
@@ -336,11 +370,11 @@ function PricingContent() {
                                     {creating ? (
                                         <>
                                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                            Processing…
+                                            {t('Start Pro')}…
                                         </>
                                     ) : (
                                         <>
-                                            Start Pro
+                                            {t('Start Pro')}
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </>
                                     )}
@@ -351,15 +385,15 @@ function PricingContent() {
 
                         {/* School Gold */}
                         <TierColumn>
-                            <TierName name="School Gold" />
+                            <TierName name={t('School Gold')} />
                             <TierPrice
                                 amount={`₹${inr(PLAN_PRICING.gold.annual.rupees)}`}
-                                unit="/teacher/year"
+                                unit={t('/teacher/year')}
                                 sticker={`₹${inr(PLAN_PRICING.gold.annual.stickerRupees)}`}
                                 emphasis={false}
                             />
                             <div className="mt-1 text-[12px] text-neutral-500">
-                                ≈ ₹{Math.round(PLAN_PRICING.gold.annual.rupees / 12)}/teacher/month · billed annually · min 20 teachers
+                                Minimum 20 teachers · billed annually · {t('Tax included')} for GST-registered schools
                             </div>
                             {plan === 'gold' ? (
                                 <YourPlanChip />
@@ -370,7 +404,7 @@ function PricingContent() {
                                     rel="noopener noreferrer"
                                     className="mt-5 self-start inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-white border border-black/15 text-foreground hover:bg-black/5 transition-colors"
                                 >
-                                    Book a school demo
+                                    {t('Book a school demo')}
                                     <ArrowRight className="h-3.5 w-3.5" />
                                 </a>
                             )}
@@ -388,16 +422,16 @@ function PricingContent() {
                             </div>
                             <div>
                                 <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
-                                    School Premium
+                                    {t('School Premium')}
                                 </div>
                                 <div className="font-headline font-semibold text-[18px] text-foreground leading-tight">
                                     Chains, government &amp; 250+ schools
                                 </div>
                                 <div className="mt-1.5 text-[13px] text-neutral-600 leading-[1.55]">
-                                    {PLAN_PRICING.premium.annual.label} · custom MoU for government and chains · dedicated CSM · private deployment options.
+                                    {PLAN_PRICING.premium.annual.label} · custom agreement · dedicated support · private deployment options.
                                 </div>
                                 <div className="mt-1.5 text-[12px] text-neutral-500">
-                                    Engaging with Karnataka state education stakeholders and Tier 2 CBSE school chains in Karnataka and Telangana.
+                                    Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.
                                 </div>
                             </div>
                         </div>
@@ -412,11 +446,13 @@ function PricingContent() {
                 </section>
 
                 <p className="relative z-10 pb-14 mx-auto max-w-[640px] px-6 text-center text-[12px] text-neutral-500 leading-[1.55]">
-                    Individual plans include 18% GST. School plans billed exclusive of GST (ITC claimable). Cancel anytime. 7-day refund guarantee. Launch pricing valid through 2026 for the first 10,000 teachers.
+                    {t('7-day refund. Cancel anytime.')} Launch pricing valid through 2026 for the first 10,000 teachers.
                 </p>
+                </main>
             </div>
 
             <LandingFooter />
+            <PageAudio />
 
             {/* Public checkout email dialog */}
             <Dialog
@@ -551,13 +587,15 @@ function TierPrice({
     );
 }
 
-function FeatureList({ items }: { items: readonly string[] }) {
+function FeatureList({ items }: { items: readonly Feature[] }) {
     return (
-        <ul className="mt-6 space-y-2.5">
-            {items.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[13px] text-neutral-700 leading-[1.5]">
-                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-saffron flex-none" />
-                    <span>{item}</span>
+        <ul className="mt-6 space-y-3">
+            {items.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-start gap-2.5 text-[13px] text-neutral-700 leading-[1.5]">
+                    <span className="mt-[2px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-saffron-50 text-saffron-700">
+                        <Icon className="h-3 w-3" aria-hidden />
+                    </span>
+                    <span>{text}</span>
                 </li>
             ))}
         </ul>
@@ -565,10 +603,11 @@ function FeatureList({ items }: { items: readonly string[] }) {
 }
 
 function YourPlanChip() {
+    const { t } = useLanguage();
     return (
         <div className="mt-5 inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-saffron-700 self-start">
             <span className="w-1.5 h-1.5 rounded-full bg-saffron" />
-            Your plan
+            {t('Your plan')}
         </div>
     );
 }
