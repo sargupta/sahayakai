@@ -15,3 +15,6 @@ export type { InlineMicButtonProps } from "./inline-mic-button";
 
 export { PageCTA } from "./page-cta";
 export type { PageCTAProps, CTAAction } from "./page-cta";
+
+export { EmptyState } from "./empty-state";
+export type { EmptyStateProps } from "./empty-state";

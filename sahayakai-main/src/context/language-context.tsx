@@ -184,6 +184,13 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "প্রাথমিক নেভিগেশন", "Gujarati": "પ્રાથમિક નેવિગેશન", "Punjabi": "ਮੁੱਖ ਨੇਵੀਗੇਸ਼ਨ",
         "Malayalam": "പ്രാഥമിക നാവിഗേഷൻ", "Odia": "ପ୍ରାଥମିକ ନେଭିଗେସନ୍"
     },
+    // Phase 7 (2026-04-24) — Trust layer
+    "Example": {
+        "English": "Example", "Hindi": "उदाहरण", "Kannada": "ಉದಾಹರಣೆ",
+        "Tamil": "உதாரணம்", "Telugu": "ఉదాహరణ", "Marathi": "उदाहरण",
+        "Bengali": "উদাহরণ", "Gujarati": "ઉદાહરણ", "Punjabi": "ਉਦਾਹਰਣ",
+        "Malayalam": "ഉദാഹരണം", "Odia": "ଉଦାହରଣ"
+    },
     "Save and continue": {
         "English": "Save and continue", "Hindi": "सहेजें और जारी रखें", "Kannada": "ಉಳಿಸಿ ಮತ್ತು ಮುಂದುವರಿಸಿ",
         "Tamil": "சேமித்து தொடரவும்", "Telugu": "సేవ్ చేసి కొనసాగించండి", "Marathi": "जतन करा आणि सुरू ठेवा",
