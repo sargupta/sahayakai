@@ -55,7 +55,7 @@ export const pillars: Pillar[] = [
   {
     number: "06",
     name: "Operating system",
-    description: "PWA · 28 state boards · offline-first on cheap phones",
+    description: "PWA · 28 state boards · works on the cheapest Android phones",
     rotatingPhrase: "an operating system.",
     Icon: LayoutGrid,
   },

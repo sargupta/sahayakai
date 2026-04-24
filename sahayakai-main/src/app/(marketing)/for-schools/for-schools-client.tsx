@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Calendar, MessageCircle, Sparkles } from "lucide-react";
 import { useLandingTitleIndex } from "@/hooks/use-landing-title-index";
 import { LandingNav } from "@/components/landing/landing-nav";
@@ -68,13 +67,15 @@ function ForSchoolsHero({ whatsAppLink }: { whatsAppLink: string }) {
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center w-full sm:w-auto">
-        <Link
+        <a
           href={whatsAppLink}
+          target={whatsAppLink.startsWith("http") ? "_blank" : undefined}
+          rel={whatsAppLink.startsWith("http") ? "noopener noreferrer" : undefined}
           className="inline-flex items-center justify-center gap-2 text-[14px] font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
         >
           <MessageCircle className="w-[15px] h-[15px]" strokeWidth={2.2} />
           Book a 30-minute demo
-        </Link>
+        </a>
         <a
           href="https://calendly.com/contact-sargvision/30min"
           target="_blank"
@@ -185,13 +186,15 @@ function BookDemoBlock({ whatsAppLink }: { whatsAppLink: string }) {
           No sales deck.
         </p>
         <div className="mt-6">
-          <Link
+          <a
             href={whatsAppLink}
+            target={whatsAppLink.startsWith("http") ? "_blank" : undefined}
+            rel={whatsAppLink.startsWith("http") ? "noopener noreferrer" : undefined}
             className="inline-flex items-center justify-center gap-2 text-[14px] font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
           >
             <MessageCircle className="w-[15px] h-[15px]" strokeWidth={2.2} />
             WhatsApp us
-          </Link>
+          </a>
         </div>
         <p className="mt-4 text-[12px] text-neutral-500">
           Currently booking demos in Karnataka: Mysuru, Hubballi, Mangaluru, Belagavi, Shivamogga.

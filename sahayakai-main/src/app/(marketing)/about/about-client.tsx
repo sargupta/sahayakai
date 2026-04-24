@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Calendar, MessageCircle } from "lucide-react";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
@@ -46,7 +45,7 @@ export function AboutClient() {
                     </h1>
 
                     <p className="font-body text-[17px] sm:text-[18px] text-neutral-600 leading-[1.55] max-w-[54ch] mt-6 mx-auto">
-                        India has 1.01 crore school teachers and one of the most demanding pedagogies on the planet. SahayakAI gives every one of them back six hours a week, a professional instrument, and a network of peers &mdash; in 11 Indian languages, on any Android phone.
+                        India has 1.01 crore school teachers and one of the most demanding pedagogies on the planet. SahayakAI gives every one of them back six hours a week, a professional instrument, and a network of peers, in 11 Indian languages, on any Android phone.
                     </p>
                 </section>
 
@@ -57,7 +56,7 @@ export function AboutClient() {
                             Our mission
                         </div>
                         <p className="font-headline font-medium italic text-[18px] leading-[1.55] text-foreground">
-                            Give Indian teachers the same professional infrastructure lawyers, doctors, and bankers have had for decades. Built for our languages, our boards, our classrooms &mdash; not translated from Palo Alto.
+                            Give Indian teachers the same digital infrastructure lawyers, doctors, and bankers have had for decades. Built for our languages, our boards, our classrooms. Built in India, for Indian classrooms.
                         </p>
                     </div>
                 </section>
@@ -71,7 +70,7 @@ export function AboutClient() {
                         Every existing tool was built for a teacher who isn&rsquo;t Indian. English-only interfaces. Desktop-first assumptions. Subscription tiers that cost more than a textbook. Zero grounding in NCERT or the twenty-eight state boards. Zero respect for voice as a primary input when most of India types with one thumb.
                     </p>
                     <p className="mt-3">
-                        SahayakAI starts from the opposite corner. Voice-first. Eleven Indian languages. NCERT and board-aligned. Works on a ₹5,000 Android phone over 2G. Priced less than a single textbook. Built so a teacher in Raichur and a principal in Bengaluru can use the same product on the same morning.
+                        SahayakAI starts from the opposite corner. Voice-first. 11 Indian languages. NCERT and board-aligned. Designed for low-bandwidth Android phones. Priced less than a single textbook. Built so a teacher in Raichur and a principal in Bengaluru can use the same product on the same morning.
                     </p>
                 </Section>
 
@@ -79,7 +78,7 @@ export function AboutClient() {
                 <Section kicker="02" title="What you can do with SahayakAI">
                     <ul className="mt-1 space-y-2.5">
                         <Bullet>
-                            <strong>Prep desk.</strong> Voice-first lesson prep across 7 AI tools &mdash; lesson plans, quizzes, worksheets, rubrics, visual aids, exam papers, and virtual field trips. NCERT and state-board aligned. 11 languages.
+                            <strong>Prep desk.</strong> Voice-first lesson prep across 7 AI tools: lesson plans, quizzes, worksheets, rubrics, visual aids, exam papers, and virtual field trips. NCERT and state-board aligned. 11 languages.
                         </Bullet>
                         <Bullet>
                             <strong>AI co-teacher.</strong> VIDYA, a persistent pedagogy coach that lives on every page and answers in your language.
@@ -91,7 +90,7 @@ export function AboutClient() {
                             <strong>Staffroom.</strong> India&rsquo;s first structured professional teacher network. Share lesson plans, rubrics, and ideas.
                         </Bullet>
                         <Bullet>
-                            <strong>Pro inbox.</strong> Purpose-built professional messaging for teachers &mdash; searchable, structured, not WhatsApp.
+                            <strong>Pro inbox.</strong> Purpose-built professional messaging for teachers. Searchable, structured, not WhatsApp.
                         </Bullet>
                         <Bullet>
                             <strong>Operating system.</strong> PWA that installs like an app. 28 state boards. Designed for cheap phones and slow networks.
@@ -102,21 +101,20 @@ export function AboutClient() {
                 {/* Who builds it */}
                 <Section kicker="03" title="Who builds it">
                     <p>
-                        SahayakAI is a product of <strong>SARGVISION Intelligence Pvt. Ltd.</strong>, an education-AI company based in Bengaluru. We are a small team of engineers, designers, and pedagogy leads &mdash; including a Chanakya University Chair on Education, a Karnataka pilot cohort of 150 teachers, and partnerships across the state government.
+                        SahayakAI is a product of <strong>SARGVISION Intelligence Pvt. Ltd.</strong>, an education-AI company based in Bengaluru. A small team of engineers, designers, and pedagogy leads in active conversation with Indian school leaders, academic institutions, and state government education departments.
                     </p>
                     <p className="mt-3">
-                        We raised to build in India, for India. We ship on Indian infrastructure, we staff on Indian timezones, and we price in rupees. Every naya paisa of our pricing goes back into making the product better for our teachers.
+                        We build in India, for India. We ship on Indian infrastructure, staff on Indian timezones, and price in rupees. We reinvest aggressively into the product so every plan we sell makes SahayakAI a little better for the next teacher who installs it.
                     </p>
                 </Section>
 
                 {/* Reach */}
                 <Section kicker="04" title="Where we are today">
                     <ul className="mt-1 space-y-2.5">
-                        <Bullet>Live with 150 Karnataka teachers across five districts</Bullet>
-                        <Bullet>Partnership with Chanakya University and the Dr. Ramdas Pai Chair on Education</Bullet>
-                        <Bullet>Pilot MoU in-discussion with the Karnataka Government Education Department</Bullet>
-                        <Bullet>Opening to Tier 2 CBSE mid-fee private schools in Karnataka &amp; Telangana</Bullet>
-                        <Bullet>Next lane: 8 other states &mdash; starting with Kannada and Telugu because that&rsquo;s where our relationships are warmest</Bullet>
+                        <Bullet>In active pilots with Karnataka teacher cohorts</Bullet>
+                        <Bullet>Engaging with Karnataka state education stakeholders on state-wide rollout</Bullet>
+                        <Bullet>Opening to Tier 2 CBSE mid-fee private schools in Karnataka and Telangana</Bullet>
+                        <Bullet>Next lane: seven other states, starting with Kannada and Telugu because that is where our relationships are warmest</Bullet>
                     </ul>
                 </Section>
 
@@ -127,19 +125,21 @@ export function AboutClient() {
                             Talk to the founder
                         </div>
                         <h2 className="font-headline font-extrabold tracking-tight text-[28px] sm:text-[32px] leading-tight text-foreground">
-                            Build with us, or buy with us.
+                            Build with us, or join us.
                         </h2>
                         <p className="mt-3 text-[15px] text-neutral-600 leading-[1.55] max-w-[46ch] mx-auto">
-                            If you are a school leader, a government official, or a teacher who wants to pilot SahayakAI &mdash; come say hello.
+                            If you are a school leader, a government official, or a teacher who wants to pilot SahayakAI, come say hello.
                         </p>
                         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                            <Link
+                            <a
                                 href={whatsAppLink}
+                                target={whatsAppLink.startsWith("http") ? "_blank" : undefined}
+                                rel={whatsAppLink.startsWith("http") ? "noopener noreferrer" : undefined}
                                 className="inline-flex items-center justify-center gap-2 text-[14px] font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
                             >
                                 <MessageCircle className="w-[15px] h-[15px]" strokeWidth={2.2} />
                                 Message us
-                            </Link>
+                            </a>
                             <a
                                 href="https://calendly.com/contact-sargvision/30min"
                                 target="_blank"
