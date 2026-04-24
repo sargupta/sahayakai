@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LibraryCard } from "./library-card";
 import { BaseContent, ContentType } from "@/types";
-import { Loader2, Search, FilterX, Grid, List as ListIcon } from "lucide-react";
+import { Loader2, Search, FilterX, Grid, List as ListIcon, BookOpen, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/layout";
 import {
     Select,
     SelectContent,
@@ -424,23 +425,45 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                     </div>
                 )}
                 </div>
+            ) : query || typeFilter !== "all" ? (
+                <EmptyState
+                    icon={FilterX}
+                    title="No resources match those filters"
+                    description="Try adjusting your filters or clearing them to see everything."
+                    cta={{
+                        label: "Clear all filters",
+                        onClick: () => { setQuery(""); setTypeFilter("all"); },
+                    }}
+                />
             ) : (
-                <div className="flex flex-col items-center justify-center py-32 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
-                    <FilterX className="h-16 w-16 text-slate-300 mb-4" />
-                    <h3 className="text-xl font-bold text-slate-800">No resources found</h3>
-                    <p className="text-slate-500 max-w-xs text-center mt-2">
-                        {query || typeFilter !== "all"
-                            ? "Try adjusting your filters or search terms."
-                            : "Your library is empty. Start generating with SahayakAI!"}
-                    </p>
-                    <Button
-                        variant="outline"
-                        className="mt-6"
-                        onClick={() => { setQuery(""); setTypeFilter("all"); }}
-                    >
-                        Clear all filters
-                    </Button>
-                </div>
+                <EmptyState
+                    icon={BookOpen}
+                    title="Your library is empty"
+                    description="Lesson plans, quizzes, worksheets, and more will appear here once you create them. Tap below to create your first."
+                    sample={
+                        <div className="flex items-start gap-3 text-left">
+                            <div className="h-10 w-10 rounded-surface-sm bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <BookOpen className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                                <div className="font-headline font-semibold text-sm text-foreground">
+                                    Photosynthesis — Class 8 Science
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    Lesson Plan · 45 min · English · 3 days ago
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    cta={{
+                        label: "Create your first lesson plan",
+                        href: "/lesson-plan",
+                    }}
+                    secondaryCta={{
+                        label: "Browse community library",
+                        href: "/community-library",
+                    }}
+                />
             )}
         </div>
     );
