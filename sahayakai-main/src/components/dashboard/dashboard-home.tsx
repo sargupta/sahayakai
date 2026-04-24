@@ -17,6 +17,7 @@ import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, L
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { SectionCard } from "@/components/layout";
 import { SampleOutputSection } from "@/components/landing/sample-output-section";
 import { useCommunityIntro } from "@/hooks/use-community-intro";
 import { CommunityNudgeBanner } from "@/components/community/community-nudge-banner";
@@ -39,9 +40,9 @@ type FormValues = z.infer<typeof formSchema>;
 
 const SuggestionCard = ({ suggestion }: { suggestion: ContextualSuggestion }) => (
   <Link href={suggestion.toolHref} className="group">
-    <Card className="h-full border border-border border-l-[3px] border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary transition-colors duration-150 overflow-hidden">
+    <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
       <CardContent className="p-4 flex flex-col gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70">{suggestion.toolLabel}</span>
+        <span className="type-caption text-primary/70">{suggestion.toolLabel}</span>
         <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
         <p className="text-xs text-muted-foreground">{suggestion.subject} &middot; {suggestion.gradeLevel}</p>
         <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -168,9 +169,9 @@ export function DashboardHome() {
 
   const QuickActionCard = ({ title, icon: Icon, href, color, description }: { title: string, icon: any, href: string, color: string, description: string }) => (
     <Link href={href} className="group">
-      <Card className="h-full border border-border border-l-[3px] border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary transition-colors duration-150 overflow-hidden">
+      <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
         <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
-          <div className={cn("p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/15 transition-all duration-200")}>
+          <div className={cn("p-3 rounded-surface-md bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors duration-micro ease-out-quart")}>
             <Icon className="h-6 w-6 md:h-8 md:w-8" />
           </div>
           <div className="space-y-1 md:space-y-2">
@@ -186,9 +187,9 @@ export function DashboardHome() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-6xl mx-auto px-4 py-8 md:py-12 gap-8 md:gap-12 relative">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide py-8 md:py-12 gap-8 md:gap-12 relative">
       {/* Clean Top Bar for Consistency */}
-      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-xl" />
+      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-surface-md" />
 
       {/* Hero Section */}
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -236,7 +237,7 @@ export function DashboardHome() {
 
         {/* OR TEXT INPUT (SECONDARY) */}
         <div className="w-full">
-          <Card className="border-none shadow-xl bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-all focus-within:ring-primary/40 focus-within:ring-2">
+          <Card className="border-none rounded-surface-md shadow-elevated bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-shadow duration-micro ease-out-quart focus-within:ring-primary/40 focus-within:ring-2">
             <CardContent className="p-2">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
@@ -288,27 +289,30 @@ export function DashboardHome() {
             </div>
           )}
 
-          {/* Instant Answer Card */}
+          {/* Instant Answer — uses SectionCard for consistent surface treatment */}
           {answer && (
-            <Card className="w-full max-w-2xl mt-4 border-primary/20 bg-card shadow-lg animate-in fade-in slide-in-from-bottom-2 border-l-4 border-primary">
-              <CardContent className="p-4 md:p-6 relative">
+            <SectionCard
+              className="w-full max-w-2xl mt-4 border-l-4 border-l-primary shadow-elevated animate-in fade-in slide-in-from-bottom-2 relative"
+              action={
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-muted-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
                   onClick={() => setAnswer(null)}
+                  aria-label="Close answer"
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                <div className="prose prose-sm max-w-none text-foreground">
-                  <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
-                  <div className="whitespace-pre-wrap">{answer}</div>
-                  <p className="text-[10px] text-muted-foreground mt-3 not-prose">
-                    Sahayak can make mistakes. Please review generated content.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              }
+            >
+              <div className="prose prose-sm max-w-none text-foreground">
+                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
+                <div className="whitespace-pre-wrap">{answer}</div>
+                <p className="text-xs text-muted-foreground mt-3 not-prose">
+                  Sahayak can make mistakes. Please review generated content.
+                </p>
+              </div>
+            </SectionCard>
           )}
         </div>
       </div>
