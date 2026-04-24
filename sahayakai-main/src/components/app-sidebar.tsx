@@ -31,7 +31,7 @@ import type { UserProfile } from "@/types"
  * A cold principal evaluating pricing or privacy should never see the internal
  * AI-tools nav. Expand this list when adding new marketing routes.
  */
-const MARKETING_PATHS = ['/for-schools', '/pricing', '/privacy-for-teachers'];
+const MARKETING_PATHS = ['/for-schools', '/pricing', '/privacy-for-teachers', '/terms', '/about'];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;
