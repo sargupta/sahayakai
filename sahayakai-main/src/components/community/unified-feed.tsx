@@ -70,10 +70,12 @@ export function UnifiedFeed({
 
   if (visibleItems.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl py-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          Your feed is quiet. Join more groups or connect with teachers to see
-          activity here.
+      <div className="mx-auto max-w-2xl py-10 px-6 text-center rounded-2xl border border-dashed border-border bg-background/50">
+        <p className="text-sm font-medium text-foreground">Nothing here yet</p>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Posts from teachers in your groups and the daily SahayakAI education briefing will appear here.
+          <br className="hidden sm:inline" />
+          Share your first post above to start the conversation.
         </p>
       </div>
     );
