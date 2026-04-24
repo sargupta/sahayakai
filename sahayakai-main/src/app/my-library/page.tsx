@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { AuthGate } from '@/components/auth/auth-gate';
 import { LanguageSelector } from '@/components/language-selector';
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
+import { SectionCard } from '@/components/layout';
 import { ProfileCard } from '@/components/profile-card';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
@@ -83,7 +84,7 @@ export default function MyLibraryPage() {
   const userId = user.uid;
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">
+    <div className="container-wide space-y-8 pb-20">
       <ProfileCard
         name={profile?.displayName || auth.currentUser?.displayName || "Teacher"}
         avatarUrl={avatar}
@@ -95,20 +96,20 @@ export default function MyLibraryPage() {
         language={language}
       />
 
-      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+      <SectionCard className="overflow-hidden p-0 md:p-0 space-y-0">
         {/* Clean Top Bar */}
         <div className="h-0.5 w-full bg-primary/60" />
         <CardContent className="p-0">
           <div className="p-6 border-b border-border/40">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h1 className="font-headline tracking-tight text-2xl sm:text-3xl text-foreground">{t.pageTitle}</h1>
+              <h1 className="type-h2 text-foreground">{t.pageTitle}</h1>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
-                <Button variant="outline" className="hidden md:flex">
+                <Button variant="outline" className="hidden md:flex rounded-surface-md">
                   <FolderPlus className="mr-2 h-4 w-4" />
                   {t.newFolder}
                 </Button>
-                <Button className="shadow-lg shadow-primary/20">
+                <Button className="rounded-surface-md shadow-elevated transition-shadow duration-micro ease-out-quart">
                   <Sparkles className="mr-2 h-4 w-4" />
                   {t.createNew}
                 </Button>
@@ -123,7 +124,7 @@ export default function MyLibraryPage() {
             />
           </div>
         </CardContent>
-      </div>
+      </SectionCard>
     </div>
   );
 }
