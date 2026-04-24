@@ -202,39 +202,57 @@ export const PLAN_DISPLAY_NAMES: Record<PlanType, string> = {
  * Razorpay dashboard must be updated whenever these numbers change (see
  * `src/lib/razorpay.ts` and env vars RAZORPAY_PLAN_PRO_MONTHLY / _ANNUAL).
  */
+/**
+ * Sticker anchor update (2026-04-24). Previous anchors (₹599/mo, ₹7,188/yr)
+ * implied post-launch prices at 3× current — not credible and read as bait.
+ * New anchors put the "launch price → normal price" step at ~2×, which is
+ * the maximum a buyer will believe you would raise to. Volume (gold) rate
+ * anchored at ~1.7× current — also more defensible.
+ *
+ * IMPORTANT: Razorpay-facing amounts (`paise`, `rupees`) are UNCHANGED.
+ * Only display/anchor fields (`stickerRupees`, `stickerLabel`, `discountPct`,
+ * `badge`) are updated. No Razorpay dashboard update required.
+ */
 export const PLAN_PRICING = {
     pro: {
         monthly: {
             paise: 19900,
             rupees: 199,
-            stickerRupees: 599,
-            discountPct: 67,
+            stickerRupees: 399,
+            discountPct: 50,
             label: '₹199/month',
-            stickerLabel: '₹599/month',
-            badge: 'Launch pricing — save 67%',
+            stickerLabel: '₹399/month',
+            badge: 'Launch pricing · save ₹200/mo',
         },
         annual: {
             paise: 199900,
             rupees: 1999,
-            stickerRupees: 7188,
-            discountPct: 72,
+            stickerRupees: 3999,
+            discountPct: 50,
             effectivePerMonthRupees: 167,
             label: '₹1,999/year',
-            stickerLabel: '₹7,188/year',
-            badge: 'Save 72% — ₹167/mo billed annually',
+            stickerLabel: '₹3,999/year',
+            badge: 'Save ₹2,000/year · ₹167/month billed annually',
         },
     },
     gold: {
         annual: {
             paise: 299900,
             rupees: 2999,
-            stickerRupees: 7188,
-            discountPct: 58,
+            stickerRupees: 4999,
+            discountPct: 40,
             minSeats: 20,
             onboardingRupees: 10000,
             label: '₹2,999/teacher/year',
-            stickerLabel: '₹7,188/teacher/year',
-            badge: 'School rate — 58% off sticker · min 20 teachers',
+            stickerLabel: '₹4,999/teacher/year',
+            badge: 'School rate · min 20 teachers',
+            // Volume ladder — surfaced as a small table under the Gold price.
+            volumeTiers: [
+                { minSeats: 20, maxSeats: 49, rupees: 2999, label: '20–49 teachers' },
+                { minSeats: 50, maxSeats: 99, rupees: 2499, label: '50–99 teachers' },
+                { minSeats: 100, maxSeats: 249, rupees: 1999, label: '100–249 teachers' },
+                { minSeats: 250, maxSeats: null as number | null, rupees: null as number | null, label: '250+ teachers (custom quote)' },
+            ] as const,
         },
     },
     premium: {
