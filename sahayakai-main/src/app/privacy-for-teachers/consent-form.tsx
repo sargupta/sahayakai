@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { getProfileData, updateProfileAction } from '@/app/actions/profile';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/language-context';
 
 /**
  * Version tag for the current privacy commitments copy. Bump this when the
@@ -37,11 +40,28 @@ function toDate(value: unknown): Date | undefined {
 export function PrivacyConsentForm() {
     const { user, openAuthModal } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
+    const router = useRouter();
     const [checked, setChecked] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [acceptedAt, setAcceptedAt] = useState<Date | undefined>();
     const [acceptedVersion, setAcceptedVersion] = useState<string | undefined>();
     const [profileLoaded, setProfileLoaded] = useState(false);
+    const [justAccepted, setJustAccepted] = useState(false);
+    const [redirectSeconds, setRedirectSeconds] = useState(5);
+
+    // Auto-redirect countdown after a fresh acceptance. Gives rural non-tech
+    // teachers a clear next step without forcing them to find the tiny
+    // "Back to home" link in the footer.
+    useEffect(() => {
+        if (!justAccepted) return;
+        if (redirectSeconds <= 0) {
+            router.push('/');
+            return;
+        }
+        const tick = setTimeout(() => setRedirectSeconds((s) => s - 1), 1000);
+        return () => clearTimeout(tick);
+    }, [justAccepted, redirectSeconds, router]);
 
     useEffect(() => {
         if (!user) {
@@ -80,9 +100,10 @@ export function PrivacyConsentForm() {
             setAcceptedAt(now);
             setAcceptedVersion(PRIVACY_VERSION);
             setChecked(false);
+            setJustAccepted(true);
             toast({
-                title: 'Thank you',
-                description: 'Your acceptance has been recorded.',
+                title: t('Thank you!'),
+                description: t('Taking you to your dashboard…'),
             });
         } catch {
             toast({
@@ -134,18 +155,55 @@ export function PrivacyConsentForm() {
     const acceptedCurrentVersion = alreadyAccepted && acceptedVersion === PRIVACY_VERSION;
 
     if (acceptedCurrentVersion) {
+        // Warm confirmation + prominent next-step CTA + auto-redirect countdown.
+        // For a rural non-tech teacher, landing on a static "YOUR ACCEPTANCE"
+        // legal block after clicking Accept is confusing — they expect to move
+        // forward. We show a big green check, a friendly thank-you headline,
+        // the primary "Go to my dashboard" button, and auto-redirect in 5s as
+        // fallback. The legal version stamp stays as a small muted line.
         return (
             <div className="mt-12 pt-10 border-t border-black/[0.08]">
-                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary mb-3">
-                    Your acceptance
+                <div className="rounded-[16px] bg-saffron-50 border border-saffron-200 px-6 py-8 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                    <div className="flex items-start gap-4 mb-5">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-saffron text-white">
+                            <CheckCircle2 className="h-6 w-6" strokeWidth={2.2} />
+                        </div>
+                        <div>
+                            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-saffron-700 mb-1">
+                                {t('All set')}
+                            </div>
+                            <h3 className="font-headline text-[22px] sm:text-[26px] font-bold tracking-tight text-foreground leading-tight">
+                                {justAccepted
+                                    ? t('Thank you! Your privacy choices are saved.')
+                                    : t('You agreed to these privacy terms.')}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                        <Button
+                            onClick={() => router.push('/')}
+                            size="lg"
+                            className="rounded-full px-6 font-medium bg-saffron text-white hover:bg-saffron-600 shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)]"
+                        >
+                            {t('Go to my dashboard')}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        {justAccepted && redirectSeconds > 0 && (
+                            <span className="text-[13px] text-neutral-600">
+                                {t('Taking you there in')} {redirectSeconds}…
+                            </span>
+                        )}
+                    </div>
+
+                    <p className="mt-6 text-[12px] text-neutral-500 leading-[1.55] max-w-[58ch]">
+                        {t('Saved on')} {formatAcceptedDate(acceptedAt)}.
+                        {' '}
+                        {t('We will ask you again only if we change anything important.')}
+                        {' '}
+                        <span className="opacity-70">(v{acceptedVersion})</span>
+                    </p>
                 </div>
-                <p className="font-headline text-[18px] sm:text-[20px] font-semibold text-foreground leading-tight mb-2">
-                    You accepted these commitments on {formatAcceptedDate(acceptedAt)}.
-                </p>
-                <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[58ch]">
-                    Version {acceptedVersion}. We will prompt you again if we materially change this page,
-                    so you always see what you agreed to.
-                </p>
             </div>
         );
     }

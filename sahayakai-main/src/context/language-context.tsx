@@ -1486,6 +1486,89 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "Legal", "Gujarati": "Legal", "Punjabi": "Legal",
         "Malayalam": "Legal", "Odia": "Legal"
     },
+    // Post-consent confirmation (added for rural-teacher UX)
+    "All set": {
+        "English": "All set", "Hindi": "तैयार है", "Kannada": "ಸಿದ್ಧವಾಗಿದೆ",
+        "Tamil": "All set", "Telugu": "All set", "Marathi": "All set",
+        "Bengali": "All set", "Gujarati": "All set", "Punjabi": "All set",
+        "Malayalam": "All set", "Odia": "All set"
+    },
+    "Thank you!": {
+        "English": "Thank you!", "Hindi": "धन्यवाद!", "Kannada": "ಧನ್ಯವಾದಗಳು!",
+        "Tamil": "Thank you!", "Telugu": "Thank you!", "Marathi": "Thank you!",
+        "Bengali": "Thank you!", "Gujarati": "Thank you!", "Punjabi": "Thank you!",
+        "Malayalam": "Thank you!", "Odia": "Thank you!"
+    },
+    "Thank you! Your privacy choices are saved.": {
+        "English": "Thank you! Your privacy choices are saved.",
+        "Hindi": "धन्यवाद! आपकी निजता की पसंद सुरक्षित हो गई है।",
+        "Kannada": "ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಗೌಪ್ಯತೆಯ ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ.",
+        "Tamil": "Thank you! Your privacy choices are saved.",
+        "Telugu": "Thank you! Your privacy choices are saved.",
+        "Marathi": "Thank you! Your privacy choices are saved.",
+        "Bengali": "Thank you! Your privacy choices are saved.",
+        "Gujarati": "Thank you! Your privacy choices are saved.",
+        "Punjabi": "Thank you! Your privacy choices are saved.",
+        "Malayalam": "Thank you! Your privacy choices are saved.",
+        "Odia": "Thank you! Your privacy choices are saved."
+    },
+    "You agreed to these privacy terms.": {
+        "English": "You agreed to these privacy terms.",
+        "Hindi": "आपने इन निजता शर्तों से सहमति दी है।",
+        "Kannada": "ನೀವು ಈ ಗೌಪ್ಯತಾ ನಿಯಮಗಳನ್ನು ಒಪ್ಪಿಕೊಂಡಿದ್ದೀರಿ.",
+        "Tamil": "You agreed to these privacy terms.",
+        "Telugu": "You agreed to these privacy terms.",
+        "Marathi": "You agreed to these privacy terms.",
+        "Bengali": "You agreed to these privacy terms.",
+        "Gujarati": "You agreed to these privacy terms.",
+        "Punjabi": "You agreed to these privacy terms.",
+        "Malayalam": "You agreed to these privacy terms.",
+        "Odia": "You agreed to these privacy terms."
+    },
+    "Go to my dashboard": {
+        "English": "Go to my dashboard", "Hindi": "मेरे डैशबोर्ड पर जाएं", "Kannada": "ನನ್ನ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ",
+        "Tamil": "Go to my dashboard", "Telugu": "Go to my dashboard", "Marathi": "Go to my dashboard",
+        "Bengali": "Go to my dashboard", "Gujarati": "Go to my dashboard", "Punjabi": "Go to my dashboard",
+        "Malayalam": "Go to my dashboard", "Odia": "Go to my dashboard"
+    },
+    "Taking you there in": {
+        "English": "Taking you there in", "Hindi": "आपको ले जा रहे हैं", "Kannada": "ನಿಮ್ಮನ್ನು ಕರೆದೊಯ್ಯಲಾಗುತ್ತಿದೆ",
+        "Tamil": "Taking you there in", "Telugu": "Taking you there in", "Marathi": "Taking you there in",
+        "Bengali": "Taking you there in", "Gujarati": "Taking you there in", "Punjabi": "Taking you there in",
+        "Malayalam": "Taking you there in", "Odia": "Taking you there in"
+    },
+    "Taking you to your dashboard…": {
+        "English": "Taking you to your dashboard…",
+        "Hindi": "आपको आपके डैशबोर्ड पर ले जा रहे हैं…",
+        "Kannada": "ನಿಮ್ಮನ್ನು ನಿಮ್ಮ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಕರೆದೊಯ್ಯಲಾಗುತ್ತಿದೆ…",
+        "Tamil": "Taking you to your dashboard…",
+        "Telugu": "Taking you to your dashboard…",
+        "Marathi": "Taking you to your dashboard…",
+        "Bengali": "Taking you to your dashboard…",
+        "Gujarati": "Taking you to your dashboard…",
+        "Punjabi": "Taking you to your dashboard…",
+        "Malayalam": "Taking you to your dashboard…",
+        "Odia": "Taking you to your dashboard…"
+    },
+    "Saved on": {
+        "English": "Saved on", "Hindi": "सहेजा गया", "Kannada": "ಉಳಿಸಲಾಗಿದೆ",
+        "Tamil": "Saved on", "Telugu": "Saved on", "Marathi": "Saved on",
+        "Bengali": "Saved on", "Gujarati": "Saved on", "Punjabi": "Saved on",
+        "Malayalam": "Saved on", "Odia": "Saved on"
+    },
+    "We will ask you again only if we change anything important.": {
+        "English": "We will ask you again only if we change anything important.",
+        "Hindi": "अगर हम कुछ महत्वपूर्ण बदलेंगे, तभी हम आपसे फिर पूछेंगे।",
+        "Kannada": "ಯಾವುದೇ ಪ್ರಮುಖ ಬದಲಾವಣೆಯಿದ್ದರೆ ಮಾತ್ರ ನಾವು ನಿಮ್ಮನ್ನು ಮತ್ತೆ ಕೇಳುತ್ತೇವೆ.",
+        "Tamil": "We will ask you again only if we change anything important.",
+        "Telugu": "We will ask you again only if we change anything important.",
+        "Marathi": "We will ask you again only if we change anything important.",
+        "Bengali": "We will ask you again only if we change anything important.",
+        "Gujarati": "We will ask you again only if we change anything important.",
+        "Punjabi": "We will ask you again only if we change anything important.",
+        "Malayalam": "We will ask you again only if we change anything important.",
+        "Odia": "We will ask you again only if we change anything important."
+    },
     "About SahayakAI": {
         "English": "About SahayakAI", "Hindi": "SahayakAI के बारे में", "Kannada": "SahayakAI ಬಗ್ಗೆ",
         "Tamil": "About SahayakAI", "Telugu": "About SahayakAI", "Marathi": "About SahayakAI",
