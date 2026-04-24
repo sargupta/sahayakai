@@ -1153,6 +1153,20 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "സംസാരിക്കാൻ ടാപ്പ് ചെയ്യുക",
         "Odia": "କହିବା ପାଇଁ ଟାପ୍ କରନ୍ତୁ"
     },
+    // Inline mic button aria-label (Phase 2 FieldRow primitive)
+    "Speak instead of typing": {
+        "English": "Speak instead of typing",
+        "Hindi": "टाइप करने के बजाय बोलें",
+        "Kannada": "ಟೈಪ್ ಮಾಡುವ ಬದಲು ಮಾತನಾಡಿ",
+        "Tamil": "தட்டச்சு செய்வதற்குப் பதிலாக பேசுங்கள்",
+        "Telugu": "టైప్ చేయడానికి బదులుగా మాట్లాడండి",
+        "Marathi": "टाईप करण्याऐवजी बोला",
+        "Bengali": "টাইপ করার পরিবর্তে বলুন",
+        "Gujarati": "ટાઇપ કરવાને બદલે બોલો",
+        "Punjabi": "ਟਾਈਪ ਕਰਨ ਦੀ ਬਜਾਏ ਬੋਲੋ",
+        "Malayalam": "ടൈപ്പ് ചെയ്യുന്നതിനു പകരം സംസാരിക്കുക",
+        "Odia": "ଟାଇପ୍ କରିବା ବଦଳରେ କହନ୍ତୁ"
+    },
     // --- Onboarding role picker (Section 0) ---
     // EN + HI + KN translated for the Karnataka pilot. Other 8 languages fall back to English
     // as placeholder (t() returns the entry's English value); replace with native translations
@@ -1240,6 +1254,273 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Tamil": "Exam Controller", "Telugu": "Exam Controller", "Marathi": "Exam Controller",
         "Bengali": "Exam Controller", "Gujarati": "Exam Controller", "Punjabi": "Exam Controller",
         "Malayalam": "Exam Controller", "Odia": "Exam Controller"
+    },
+    // ---- Marketing pages (added 2026-04-24 for rural-teacher accessibility) ----
+    // Translation priority: English + Hindi + Kannada are translated; other 8 languages
+    // fall back to English (rolling — contribute via /submit-content in-app form).
+    "Listen in your language": {
+        "English": "Listen in your language", "Hindi": "अपनी भाषा में सुनें", "Kannada": "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿ",
+        "Tamil": "Listen in your language", "Telugu": "Listen in your language", "Marathi": "Listen in your language",
+        "Bengali": "Listen in your language", "Gujarati": "Listen in your language", "Punjabi": "Listen in your language",
+        "Malayalam": "Listen in your language", "Odia": "Listen in your language"
+    },
+    "Stop listening": {
+        "English": "Stop listening", "Hindi": "सुनना बंद करें", "Kannada": "ಕೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ",
+        "Tamil": "Stop listening", "Telugu": "Stop listening", "Marathi": "Stop listening",
+        "Bengali": "Stop listening", "Gujarati": "Stop listening", "Punjabi": "Stop listening",
+        "Malayalam": "Stop listening", "Odia": "Stop listening"
+    },
+    "Language": {
+        "English": "Language", "Hindi": "भाषा", "Kannada": "ಭಾಷೆ",
+        "Tamil": "Language", "Telugu": "Language", "Marathi": "Language",
+        "Bengali": "Language", "Gujarati": "Language", "Punjabi": "Language",
+        "Malayalam": "Language", "Odia": "Language"
+    },
+    "Start free": {
+        "English": "Start free", "Hindi": "मुफ्त शुरू करें", "Kannada": "ಉಚಿತವಾಗಿ ಪ್ರಾರಂಭಿಸಿ",
+        "Tamil": "Start free", "Telugu": "Start free", "Marathi": "Start free",
+        "Bengali": "Start free", "Gujarati": "Start free", "Punjabi": "Start free",
+        "Malayalam": "Start free", "Odia": "Start free"
+    },
+    "Log in": {
+        "English": "Log in", "Hindi": "लॉग इन करें", "Kannada": "ಲಾಗ್ ಇನ್",
+        "Tamil": "Log in", "Telugu": "Log in", "Marathi": "Log in",
+        "Bengali": "Log in", "Gujarati": "Log in", "Punjabi": "Log in",
+        "Malayalam": "Log in", "Odia": "Log in"
+    },
+    "Pricing, for Indian teachers": {
+        "English": "Pricing, for Indian teachers", "Hindi": "भारतीय शिक्षकों के लिए कीमत", "Kannada": "ಭಾರತೀಯ ಶಿಕ್ಷಕರಿಗಾಗಿ ಬೆಲೆ",
+        "Tamil": "Pricing, for Indian teachers", "Telugu": "Pricing, for Indian teachers", "Marathi": "Pricing, for Indian teachers",
+        "Bengali": "Pricing, for Indian teachers", "Gujarati": "Pricing, for Indian teachers", "Punjabi": "Pricing, for Indian teachers",
+        "Malayalam": "Pricing, for Indian teachers", "Odia": "Pricing, for Indian teachers"
+    },
+    "Less than a textbook.": {
+        "English": "Less than a textbook.", "Hindi": "एक किताब से भी कम।", "Kannada": "ಪಠ್ಯಪುಸ್ತಕಕ್ಕಿಂತ ಕಡಿಮೆ.",
+        "Tamil": "Less than a textbook.", "Telugu": "Less than a textbook.", "Marathi": "Less than a textbook.",
+        "Bengali": "Less than a textbook.", "Gujarati": "Less than a textbook.", "Punjabi": "Less than a textbook.",
+        "Malayalam": "Less than a textbook.", "Odia": "Less than a textbook."
+    },
+    "Yours to cancel anytime.": {
+        "English": "Yours to cancel anytime.", "Hindi": "कभी भी रद्द करें।", "Kannada": "ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಿ.",
+        "Tamil": "Yours to cancel anytime.", "Telugu": "Yours to cancel anytime.", "Marathi": "Yours to cancel anytime.",
+        "Bengali": "Yours to cancel anytime.", "Gujarati": "Yours to cancel anytime.", "Punjabi": "Yours to cancel anytime.",
+        "Malayalam": "Yours to cancel anytime.", "Odia": "Yours to cancel anytime."
+    },
+    "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.": {
+        "English": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Hindi": "हर प्लान में NCERT और 28 राज्य बोर्ड, 11 भारतीय भाषाएँ, और किसी भी एंड्रॉयड फोन पर वॉयस इनपुट शामिल है।",
+        "Kannada": "ಪ್ರತಿ ಪ್ಲಾನ್ NCERT ಮತ್ತು 28 ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳು, 11 ಭಾರತೀಯ ಭಾಷೆಗಳು, ಮತ್ತು ಯಾವುದೇ ಆಂಡ್ರಾಯ್ಡ್ ಫೋನ್‌ನಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಅನ್ನು ಒಳಗೊಂಡಿರುತ್ತದೆ.",
+        "Tamil": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Telugu": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Marathi": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Bengali": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Gujarati": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Punjabi": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Malayalam": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
+        "Odia": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone."
+    },
+    "Monthly": {
+        "English": "Monthly", "Hindi": "मासिक", "Kannada": "ಮಾಸಿಕ",
+        "Tamil": "Monthly", "Telugu": "Monthly", "Marathi": "Monthly",
+        "Bengali": "Monthly", "Gujarati": "Monthly", "Punjabi": "Monthly",
+        "Malayalam": "Monthly", "Odia": "Monthly"
+    },
+    "Annual": {
+        "English": "Annual", "Hindi": "वार्षिक", "Kannada": "ವಾರ್ಷಿಕ",
+        "Tamil": "Annual", "Telugu": "Annual", "Marathi": "Annual",
+        "Bengali": "Annual", "Gujarati": "Annual", "Punjabi": "Annual",
+        "Malayalam": "Annual", "Odia": "Annual"
+    },
+    "Save 2 months": {
+        "English": "Save 2 months", "Hindi": "2 महीने बचाएं", "Kannada": "2 ತಿಂಗಳು ಉಳಿಸಿ",
+        "Tamil": "Save 2 months", "Telugu": "Save 2 months", "Marathi": "Save 2 months",
+        "Bengali": "Save 2 months", "Gujarati": "Save 2 months", "Punjabi": "Save 2 months",
+        "Malayalam": "Save 2 months", "Odia": "Save 2 months"
+    },
+    "Free": {
+        "English": "Free", "Hindi": "मुफ़्त", "Kannada": "ಉಚಿತ",
+        "Tamil": "Free", "Telugu": "Free", "Marathi": "Free",
+        "Bengali": "Free", "Gujarati": "Free", "Punjabi": "Free",
+        "Malayalam": "Free", "Odia": "Free"
+    },
+    "forever": {
+        "English": "forever", "Hindi": "हमेशा के लिए", "Kannada": "ಶಾಶ್ವತವಾಗಿ",
+        "Tamil": "forever", "Telugu": "forever", "Marathi": "forever",
+        "Bengali": "forever", "Gujarati": "forever", "Punjabi": "forever",
+        "Malayalam": "forever", "Odia": "forever"
+    },
+    "Most popular": {
+        "English": "Most popular", "Hindi": "सबसे लोकप्रिय", "Kannada": "ಅತ್ಯಂತ ಜನಪ್ರಿಯ",
+        "Tamil": "Most popular", "Telugu": "Most popular", "Marathi": "Most popular",
+        "Bengali": "Most popular", "Gujarati": "Most popular", "Punjabi": "Most popular",
+        "Malayalam": "Most popular", "Odia": "Most popular"
+    },
+    "Pro": {
+        "English": "Pro", "Hindi": "प्रो", "Kannada": "ಪ್ರೊ",
+        "Tamil": "Pro", "Telugu": "Pro", "Marathi": "Pro",
+        "Bengali": "Pro", "Gujarati": "Pro", "Punjabi": "Pro",
+        "Malayalam": "Pro", "Odia": "Pro"
+    },
+    "School Gold": {
+        "English": "School Gold", "Hindi": "स्कूल गोल्ड", "Kannada": "ಸ್ಕೂಲ್ ಗೋಲ್ಡ್",
+        "Tamil": "School Gold", "Telugu": "School Gold", "Marathi": "School Gold",
+        "Bengali": "School Gold", "Gujarati": "School Gold", "Punjabi": "School Gold",
+        "Malayalam": "School Gold", "Odia": "School Gold"
+    },
+    "School Premium": {
+        "English": "School Premium", "Hindi": "स्कूल प्रीमियम", "Kannada": "ಸ್ಕೂಲ್ ಪ್ರೀಮಿಯಂ",
+        "Tamil": "School Premium", "Telugu": "School Premium", "Marathi": "School Premium",
+        "Bengali": "School Premium", "Gujarati": "School Premium", "Punjabi": "School Premium",
+        "Malayalam": "School Premium", "Odia": "School Premium"
+    },
+    "/month": {
+        "English": "/month", "Hindi": "/माह", "Kannada": "/ತಿಂಗಳು",
+        "Tamil": "/month", "Telugu": "/month", "Marathi": "/month",
+        "Bengali": "/month", "Gujarati": "/month", "Punjabi": "/month",
+        "Malayalam": "/month", "Odia": "/month"
+    },
+    "/year": {
+        "English": "/year", "Hindi": "/वर्ष", "Kannada": "/ವರ್ಷ",
+        "Tamil": "/year", "Telugu": "/year", "Marathi": "/year",
+        "Bengali": "/year", "Gujarati": "/year", "Punjabi": "/year",
+        "Malayalam": "/year", "Odia": "/year"
+    },
+    "/teacher/year": {
+        "English": "/teacher/year", "Hindi": "/शिक्षक/वर्ष", "Kannada": "/ಶಿಕ್ಷಕ/ವರ್ಷ",
+        "Tamil": "/teacher/year", "Telugu": "/teacher/year", "Marathi": "/teacher/year",
+        "Bengali": "/teacher/year", "Gujarati": "/teacher/year", "Punjabi": "/teacher/year",
+        "Malayalam": "/teacher/year", "Odia": "/teacher/year"
+    },
+    "Start Pro": {
+        "English": "Start Pro", "Hindi": "प्रो शुरू करें", "Kannada": "ಪ್ರೊ ಪ್ರಾರಂಭಿಸಿ",
+        "Tamil": "Start Pro", "Telugu": "Start Pro", "Marathi": "Start Pro",
+        "Bengali": "Start Pro", "Gujarati": "Start Pro", "Punjabi": "Start Pro",
+        "Malayalam": "Start Pro", "Odia": "Start Pro"
+    },
+    "Book a school demo": {
+        "English": "Book a school demo", "Hindi": "स्कूल डेमो बुक करें", "Kannada": "ಸ್ಕೂಲ್ ಡೆಮೊ ಬುಕ್ ಮಾಡಿ",
+        "Tamil": "Book a school demo", "Telugu": "Book a school demo", "Marathi": "Book a school demo",
+        "Bengali": "Book a school demo", "Gujarati": "Book a school demo", "Punjabi": "Book a school demo",
+        "Malayalam": "Book a school demo", "Odia": "Book a school demo"
+    },
+    "Your plan": {
+        "English": "Your plan", "Hindi": "आपका प्लान", "Kannada": "ನಿಮ್ಮ ಪ್ಲಾನ್",
+        "Tamil": "Your plan", "Telugu": "Your plan", "Marathi": "Your plan",
+        "Bengali": "Your plan", "Gujarati": "Your plan", "Punjabi": "Your plan",
+        "Malayalam": "Your plan", "Odia": "Your plan"
+    },
+    "Tax included": {
+        "English": "Tax included", "Hindi": "टैक्स शामिल", "Kannada": "ತೆರಿಗೆ ಸೇರಿದೆ",
+        "Tamil": "Tax included", "Telugu": "Tax included", "Marathi": "Tax included",
+        "Bengali": "Tax included", "Gujarati": "Tax included", "Punjabi": "Tax included",
+        "Malayalam": "Tax included", "Odia": "Tax included"
+    },
+    "7-day refund. Cancel anytime.": {
+        "English": "7-day refund. Cancel anytime.", "Hindi": "7 दिन का रिफंड। कभी भी रद्द करें।", "Kannada": "7 ದಿನಗಳ ಮರುಪಾವತಿ. ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಿ.",
+        "Tamil": "7-day refund. Cancel anytime.", "Telugu": "7-day refund. Cancel anytime.", "Marathi": "7-day refund. Cancel anytime.",
+        "Bengali": "7-day refund. Cancel anytime.", "Gujarati": "7-day refund. Cancel anytime.", "Punjabi": "7-day refund. Cancel anytime.",
+        "Malayalam": "7-day refund. Cancel anytime.", "Odia": "7-day refund. Cancel anytime."
+    },
+    // Terms TL;DR (plain-language summary)
+    "In plain words": {
+        "English": "In plain words", "Hindi": "आसान शब्दों में", "Kannada": "ಸುಲಭ ಪದಗಳಲ್ಲಿ",
+        "Tamil": "In plain words", "Telugu": "In plain words", "Marathi": "In plain words",
+        "Bengali": "In plain words", "Gujarati": "In plain words", "Punjabi": "In plain words",
+        "Malayalam": "In plain words", "Odia": "In plain words"
+    },
+    "Whatever you create with SahayakAI is yours.": {
+        "English": "Whatever you create with SahayakAI is yours.",
+        "Hindi": "आप SahayakAI से जो भी बनाते हैं, वह आपका है।",
+        "Kannada": "SahayakAI ನೊಂದಿಗೆ ನೀವು ಏನು ರಚಿಸುತ್ತೀರೋ ಅದು ನಿಮ್ಮದು.",
+        "Tamil": "Whatever you create with SahayakAI is yours.", "Telugu": "Whatever you create with SahayakAI is yours.", "Marathi": "Whatever you create with SahayakAI is yours.",
+        "Bengali": "Whatever you create with SahayakAI is yours.", "Gujarati": "Whatever you create with SahayakAI is yours.", "Punjabi": "Whatever you create with SahayakAI is yours.",
+        "Malayalam": "Whatever you create with SahayakAI is yours.", "Odia": "Whatever you create with SahayakAI is yours."
+    },
+    "You can cancel anytime. 7-day refund on any paid plan.": {
+        "English": "You can cancel anytime. 7-day refund on any paid plan.",
+        "Hindi": "आप कभी भी रद्द कर सकते हैं। किसी भी भुगतान प्लान पर 7 दिन का रिफंड।",
+        "Kannada": "ನೀವು ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಬಹುದು. ಯಾವುದೇ ಪಾವತಿ ಪ್ಲಾನ್‌ನಲ್ಲಿ 7 ದಿನಗಳ ಮರುಪಾವತಿ.",
+        "Tamil": "You can cancel anytime. 7-day refund on any paid plan.", "Telugu": "You can cancel anytime. 7-day refund on any paid plan.", "Marathi": "You can cancel anytime. 7-day refund on any paid plan.",
+        "Bengali": "You can cancel anytime. 7-day refund on any paid plan.", "Gujarati": "You can cancel anytime. 7-day refund on any paid plan.", "Punjabi": "You can cancel anytime. 7-day refund on any paid plan.",
+        "Malayalam": "You can cancel anytime. 7-day refund on any paid plan.", "Odia": "You can cancel anytime. 7-day refund on any paid plan."
+    },
+    "Your data stays in India and you control it.": {
+        "English": "Your data stays in India and you control it.",
+        "Hindi": "आपका डेटा भारत में रहता है और उस पर आपका नियंत्रण है।",
+        "Kannada": "ನಿಮ್ಮ ಡೇಟಾ ಭಾರತದಲ್ಲಿ ಇರುತ್ತದೆ ಮತ್ತು ಅದನ್ನು ನೀವೇ ನಿಯಂತ್ರಿಸುತ್ತೀರಿ.",
+        "Tamil": "Your data stays in India and you control it.", "Telugu": "Your data stays in India and you control it.", "Marathi": "Your data stays in India and you control it.",
+        "Bengali": "Your data stays in India and you control it.", "Gujarati": "Your data stays in India and you control it.", "Punjabi": "Your data stays in India and you control it.",
+        "Malayalam": "Your data stays in India and you control it.", "Odia": "Your data stays in India and you control it."
+    },
+    "SahayakAI never asks for student personal data.": {
+        "English": "SahayakAI never asks for student personal data.",
+        "Hindi": "SahayakAI कभी भी छात्रों का निजी डेटा नहीं मांगता।",
+        "Kannada": "SahayakAI ಎಂದಿಗೂ ವಿದ್ಯಾರ್ಥಿಗಳ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಕೇಳುವುದಿಲ್ಲ.",
+        "Tamil": "SahayakAI never asks for student personal data.", "Telugu": "SahayakAI never asks for student personal data.", "Marathi": "SahayakAI never asks for student personal data.",
+        "Bengali": "SahayakAI never asks for student personal data.", "Gujarati": "SahayakAI never asks for student personal data.", "Punjabi": "SahayakAI never asks for student personal data.",
+        "Malayalam": "SahayakAI never asks for student personal data.", "Odia": "SahayakAI never asks for student personal data."
+    },
+    "If there is a problem, email grievance@sargvision.com. We respond within 7 days.": {
+        "English": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
+        "Hindi": "अगर कोई समस्या है, तो grievance@sargvision.com पर ईमेल करें। हम 7 दिनों के भीतर जवाब देते हैं।",
+        "Kannada": "ಸಮಸ್ಯೆ ಇದ್ದರೆ, grievance@sargvision.com ಗೆ ಇಮೇಲ್ ಮಾಡಿ. ನಾವು 7 ದಿನಗಳೊಳಗೆ ಉತ್ತರಿಸುತ್ತೇವೆ.",
+        "Tamil": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Telugu": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Marathi": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
+        "Bengali": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Gujarati": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Punjabi": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
+        "Malayalam": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Odia": "If there is a problem, email grievance@sargvision.com. We respond within 7 days."
+    },
+    "Full legal terms below": {
+        "English": "Full legal terms below", "Hindi": "नीचे पूर्ण कानूनी शर्तें", "Kannada": "ಕೆಳಗೆ ಪೂರ್ಣ ಕಾನೂನು ನಿಯಮಗಳು",
+        "Tamil": "Full legal terms below", "Telugu": "Full legal terms below", "Marathi": "Full legal terms below",
+        "Bengali": "Full legal terms below", "Gujarati": "Full legal terms below", "Punjabi": "Full legal terms below",
+        "Malayalam": "Full legal terms below", "Odia": "Full legal terms below"
+    },
+    "Terms of Service": {
+        "English": "Terms of Service", "Hindi": "सेवा की शर्तें", "Kannada": "ಸೇವಾ ನಿಯಮಗಳು",
+        "Tamil": "Terms of Service", "Telugu": "Terms of Service", "Marathi": "Terms of Service",
+        "Bengali": "Terms of Service", "Gujarati": "Terms of Service", "Punjabi": "Terms of Service",
+        "Malayalam": "Terms of Service", "Odia": "Terms of Service"
+    },
+    "Legal": {
+        "English": "Legal", "Hindi": "कानूनी", "Kannada": "ಕಾನೂನು",
+        "Tamil": "Legal", "Telugu": "Legal", "Marathi": "Legal",
+        "Bengali": "Legal", "Gujarati": "Legal", "Punjabi": "Legal",
+        "Malayalam": "Legal", "Odia": "Legal"
+    },
+    "About SahayakAI": {
+        "English": "About SahayakAI", "Hindi": "SahayakAI के बारे में", "Kannada": "SahayakAI ಬಗ್ಗೆ",
+        "Tamil": "About SahayakAI", "Telugu": "About SahayakAI", "Marathi": "About SahayakAI",
+        "Bengali": "About SahayakAI", "Gujarati": "About SahayakAI", "Punjabi": "About SahayakAI",
+        "Malayalam": "About SahayakAI", "Odia": "About SahayakAI"
+    },
+    "Our mission": {
+        "English": "Our mission", "Hindi": "हमारा मिशन", "Kannada": "ನಮ್ಮ ಧ್ಯೇಯ",
+        "Tamil": "Our mission", "Telugu": "Our mission", "Marathi": "Our mission",
+        "Bengali": "Our mission", "Gujarati": "Our mission", "Punjabi": "Our mission",
+        "Malayalam": "Our mission", "Odia": "Our mission"
+    },
+    "Message us": {
+        "English": "Message us", "Hindi": "हमें संदेश भेजें", "Kannada": "ನಮಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ",
+        "Tamil": "Message us", "Telugu": "Message us", "Marathi": "Message us",
+        "Bengali": "Message us", "Gujarati": "Message us", "Punjabi": "Message us",
+        "Malayalam": "Message us", "Odia": "Message us"
+    },
+    "Book a demo": {
+        "English": "Book a demo", "Hindi": "डेमो बुक करें", "Kannada": "ಡೆಮೊ ಬುಕ್ ಮಾಡಿ",
+        "Tamil": "Book a demo", "Telugu": "Book a demo", "Marathi": "Book a demo",
+        "Bengali": "Book a demo", "Gujarati": "Book a demo", "Punjabi": "Book a demo",
+        "Malayalam": "Book a demo", "Odia": "Book a demo"
+    },
+    "SahayakAI for Schools": {
+        "English": "SahayakAI for Schools", "Hindi": "स्कूलों के लिए SahayakAI", "Kannada": "ಶಾಲೆಗಳಿಗಾಗಿ SahayakAI",
+        "Tamil": "SahayakAI for Schools", "Telugu": "SahayakAI for Schools", "Marathi": "SahayakAI for Schools",
+        "Bengali": "SahayakAI for Schools", "Gujarati": "SahayakAI for Schools", "Punjabi": "SahayakAI for Schools",
+        "Malayalam": "SahayakAI for Schools", "Odia": "SahayakAI for Schools"
+    },
+    "Book a 30-minute demo": {
+        "English": "Book a 30-minute demo", "Hindi": "30 मिनट का डेमो बुक करें", "Kannada": "30 ನಿಮಿಷಗಳ ಡೆಮೊ ಬುಕ್ ಮಾಡಿ",
+        "Tamil": "Book a 30-minute demo", "Telugu": "Book a 30-minute demo", "Marathi": "Book a 30-minute demo",
+        "Bengali": "Book a 30-minute demo", "Gujarati": "Book a 30-minute demo", "Punjabi": "Book a 30-minute demo",
+        "Malayalam": "Book a 30-minute demo", "Odia": "Book a 30-minute demo"
     },
 };
 
