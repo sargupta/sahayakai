@@ -352,7 +352,7 @@ export function OmniOrb() {
     return (
         <div
             ref={orbRef}
-            className={`fixed bottom-4 right-4 sm:bottom-12 sm:right-12 z-[90] ${
+            className={`fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 z-[90] ${
                 reducedMotion ? "" : "transition-[transform,opacity] duration-300"
             } ${
                 hiddenByScroll && !orbOpen && !isDragging
