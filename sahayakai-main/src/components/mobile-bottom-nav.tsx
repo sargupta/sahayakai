@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Home, Sparkles, Library, User } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
@@ -72,6 +73,30 @@ export function MobileBottomNav() {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const { t } = useLanguage();
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  // Scroll-hide behaviour: slide the nav down on scroll-down, back up on
+  // scroll-up. Gives more vertical space for long-form content on mobile
+  // (lesson plans, quiz results) while keeping the nav one swipe away.
+  useEffect(() => {
+    const THRESHOLD = 12; // ignore jitter
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastScrollY.current;
+      if (Math.abs(dy) < THRESHOLD) return;
+      if (y < 48) {
+        setHidden(false);
+      } else if (dy > 0) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const isActive = (tab: Tab) => {
     if (tab.kind !== "nav") return false;
@@ -88,6 +113,8 @@ export function MobileBottomNav() {
         "h-14 pb-[env(safe-area-inset-bottom)]",
         "bg-background/95 backdrop-blur-md border-t border-border",
         "shadow-floating",
+        "transition-transform duration-small ease-out-quart",
+        hidden && "translate-y-full",
       )}
     >
       {TABS.map((tab) => {
