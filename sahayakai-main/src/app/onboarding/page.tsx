@@ -34,7 +34,9 @@ const BOARD_CATEGORIES = [
 const ROLE_OPTIONS: { value: AdministrativeRole; label: string; hint: string }[] = [
     { value: 'none', label: 'Classroom Teacher', hint: 'Teach one or more classes' },
     { value: 'hod', label: 'HOD / Subject Lead', hint: 'Lead a subject department' },
-    { value: 'vice_principal', label: 'Vice Principal / Coordinator', hint: 'Manage academics for a wing' },
+    { value: 'coordinator', label: 'Coordinator', hint: 'Coordinate across teachers or sections' },
+    { value: 'exam_controller', label: 'Exam Controller', hint: 'Run examinations and assessment' },
+    { value: 'vice_principal', label: 'Vice Principal', hint: 'Manage academics for a wing' },
     { value: 'principal', label: 'Principal / School Admin', hint: 'Run the school' },
 ];
 

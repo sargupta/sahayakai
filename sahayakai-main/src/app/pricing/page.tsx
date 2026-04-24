@@ -216,7 +216,9 @@ function PricingContent() {
                 {status === 'success' && !activating && !activationTimedOut && plan !== 'free' && (
                     <div className="relative z-10 mx-auto max-w-[720px] mt-8 px-6">
                         <div className="rounded-[12px] border border-saffron-200 bg-saffron-50 px-4 py-3 text-center text-[13px] text-saffron-700">
-                            Pro plan activated. You can now use every feature. Welcome aboard.
+                            {plan === 'pro' && 'Pro plan activated. You can now use every feature. Welcome aboard.'}
+                            {plan === 'gold' && 'School Gold activated. Your whole school now has access. Welcome aboard.'}
+                            {plan === 'premium' && 'School Premium activated. Your custom plan is live. Welcome aboard.'}
                         </div>
                     </div>
                 )}
@@ -262,7 +264,11 @@ function PricingContent() {
 
                 {/* Billing toggle */}
                 <div className="relative z-10 flex items-center justify-center gap-4 mt-2">
-                    <div className="inline-flex items-center rounded-full border border-black/10 bg-white/70 backdrop-blur p-[3px]">
+                    <div
+                        role="radiogroup"
+                        aria-label="Billing period"
+                        className="inline-flex items-center rounded-full border border-black/10 bg-white/70 backdrop-blur p-[3px]"
+                    >
                         <BillingToggle
                             active={billingPeriod === 'monthly'}
                             onClick={() => setBillingPeriod('monthly')}
@@ -391,7 +397,7 @@ function PricingContent() {
                                     {PLAN_PRICING.premium.annual.label} · custom MoU for government and chains · dedicated CSM · private deployment options.
                                 </div>
                                 <div className="mt-1.5 text-[12px] text-neutral-500">
-                                    Current pilots: Karnataka Govt · Chanakya University · Dr. Ramdas Pai Chair on Education
+                                    Engaging with Karnataka state education stakeholders and Tier 2 CBSE school chains in Karnataka and Telangana.
                                 </div>
                             </div>
                         </div>
@@ -493,6 +499,9 @@ function BillingToggle({ active, onClick, label }: { active: boolean; onClick: (
         <button
             type="button"
             onClick={onClick}
+            role="radio"
+            aria-checked={active}
+            aria-label={`Bill ${label.toLowerCase()}`}
             className={`text-[13px] font-medium px-[16px] py-[7px] rounded-full transition-colors cursor-pointer ${
                 active
                     ? 'bg-saffron text-white shadow-[0_6px_14px_-6px_hsl(28_70%_45%/0.4)]'

@@ -51,7 +51,7 @@ export function TermsClient() {
                         </p>
                         <ul className="mt-3 space-y-2">
                             <Bullet>At least 18 years old, or using the product under a school account where the school has confirmed your role</Bullet>
-                            <Bullet>Using SahayakAI for your own teaching, administrative, or academic work — not to resell or rebadge the service</Bullet>
+                            <Bullet>Using SahayakAI for your own teaching, administrative, or academic work, not to resell or rebadge the service</Bullet>
                             <Bullet>Accessing the service in compliance with the laws of India</Bullet>
                         </ul>
                     </Section>
@@ -67,10 +67,36 @@ export function TermsClient() {
 
                     <Section kicker="04" title="Privacy and student data (DPDP)">
                         <p>
-                            We are committed to the Digital Personal Data Protection Act, 2023 (DPDP). SahayakAI does not require student personal data to function. When teachers do enter minimal class-level information (class numbers, subject names, attendance markers), we process it under the grounds specified in your consent.
+                            We comply with the Digital Personal Data Protection Act, 2023 (DPDP). SahayakAI does not require student personal data to function. When teachers enter minimal class-level information (class numbers, subject names, attendance markers), we process it under the grounds specified in your consent.
                         </p>
                         <p className="mt-3">
-                            Full privacy rules, your rights as a Data Principal, and how to exercise them are available at{" "}
+                            <strong>Your rights as a Data Principal under DPDP include:</strong>
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                            <Bullet>Access: request a summary of your personal data we process</Bullet>
+                            <Bullet>Correction and erasure: update or delete inaccurate or no-longer-needed data</Bullet>
+                            <Bullet>Nomination: nominate a person to exercise your rights in case of death or incapacity</Bullet>
+                            <Bullet>Grievance redressal: raise concerns with our Grievance Officer</Bullet>
+                            <Bullet>Withdraw consent at any time without penalty</Bullet>
+                        </ul>
+                        <p className="mt-3">
+                            <strong>Data retention.</strong> Account data is retained while your subscription is active and for up to 180 days after cancellation for compliance and billing reconciliation, after which it is purged unless otherwise required by law.
+                        </p>
+                        <p className="mt-3">
+                            <strong>Breach notification.</strong> In the event of a personal-data breach, we notify affected Data Principals and the Data Protection Board of India within the timelines prescribed by the DPDP Act.
+                        </p>
+                        <p className="mt-3">
+                            <strong>Cross-border processing.</strong> AI inference is performed through third-party providers (Google Gemini, Sarvam). We process only the minimal prompt data needed to generate your output and do not retain personal data on these third-party systems beyond the request lifecycle.
+                        </p>
+                        <p className="mt-3">
+                            <strong>Grievance Officer.</strong> Abhishek Gupta, SARGVISION Intelligence Pvt. Ltd., Bengaluru, Karnataka, India. Email:{" "}
+                            <a href="mailto:grievance@sargvision.com" className="underline hover:text-foreground">
+                                grievance@sargvision.com
+                            </a>
+                            . We respond to DPDP requests within 7 working days and resolve them within 30 days where possible.
+                        </p>
+                        <p className="mt-3">
+                            Full privacy rules are available at{" "}
                             <a href="/privacy-for-teachers" className="underline hover:text-foreground">
                                 /privacy-for-teachers
                             </a>
@@ -107,25 +133,42 @@ export function TermsClient() {
 
                     <Section kicker="08" title="Liability">
                         <p>
-                            SARGVISION&rsquo;s total liability to you under these terms is limited to the amount you have paid us in the twelve months preceding any claim. We are not liable for indirect, incidental, or consequential losses, including loss of teaching time, reputational impact, or lost opportunities arising from AI errors.
+                            SARGVISION&rsquo;s total liability to you under these terms is limited to the amount you have paid us in the twelve months preceding any claim, except where such limitation is prohibited by applicable law. We are not liable for indirect, incidental, or consequential losses, including loss of teaching time, reputational impact, or lost opportunities arising from AI errors.
+                        </p>
+                        <p className="mt-3">
+                            Nothing in this clause limits liability for fraud, gross negligence, or any other liability that cannot be limited under Indian law (including the Consumer Protection Act, 2019).
                         </p>
                     </Section>
 
-                    <Section kicker="09" title="Changes to these terms">
+                    <Section kicker="09" title="Dispute resolution">
+                        <p>
+                            If a dispute arises, parties first attempt good-faith resolution through direct discussion for at least 30 days. Unresolved disputes are referred to arbitration under the Arbitration and Conciliation Act, 1996, seated in Bengaluru, Karnataka, conducted in English before a single arbitrator appointed by mutual agreement.
+                        </p>
+                        <p className="mt-3">
+                            The courts of Bengaluru have exclusive jurisdiction for any matters that cannot be referred to arbitration.
+                        </p>
+                    </Section>
+
+                    <Section kicker="10" title="Changes to these terms">
                         <p>
                             We may update these terms as the product evolves or as Indian law changes. Material changes are communicated via email (for paid users) or an in-product banner at least 14 days before they take effect.
                         </p>
                     </Section>
 
-                    <Section kicker="10" title="Jurisdiction and contact">
+                    <Section kicker="11" title="Governing law and contact">
                         <p>
-                            These terms are governed by the laws of the Republic of India. Disputes are subject to the exclusive jurisdiction of the courts of Bengaluru, Karnataka.
+                            These terms are governed by the laws of the Republic of India.
                         </p>
                         <p className="mt-3">
                             Questions, grievances, or DPDP requests:{" "}
                             <a href="mailto:contact@sargvision.com" className="underline hover:text-foreground">
                                 contact@sargvision.com
                             </a>
+                            . For DPDP-specific matters, use{" "}
+                            <a href="mailto:grievance@sargvision.com" className="underline hover:text-foreground">
+                                grievance@sargvision.com
+                            </a>
+                            .
                         </p>
                     </Section>
                 </article>
