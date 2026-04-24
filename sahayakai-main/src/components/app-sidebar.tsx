@@ -26,10 +26,29 @@ import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature
 import { updateProfileAction } from "@/app/actions/profile"
 import type { UserProfile } from "@/types"
 
+/**
+ * Public/marketing surfaces where the teacher-tool sidebar must not render.
+ * A cold principal evaluating pricing or privacy should never see the internal
+ * AI-tools nav. Expand this list when adding new marketing routes.
+ */
+const MARKETING_PATHS = ['/for-schools', '/pricing', '/privacy-for-teachers', '/terms', '/about'];
+
+function isMarketingPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return MARKETING_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
+
+  // Hide on public/marketing surfaces. SidebarProvider still wraps so context
+  // stays available to SidebarTrigger in the header; the trigger button renders
+  // but toggles nothing visible, which is an acceptable degradation on marketing
+  // pages. When landing-page-restore merges, we can move these routes into the
+  // (marketing) route group with its own layout that omits the trigger entirely.
+  if (isMarketingPath(pathname)) return null;
   const [totalUnread, setTotalUnread] = useState(0);
   const [showCommunityNew, setShowCommunityNew] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);

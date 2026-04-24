@@ -120,8 +120,6 @@ export default function RootLayout({
         <LanguageProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>
-            {/* AuthDialog lives outside AppShell so the landing page CTAs
-                can open it (the landing layout has no SidebarProvider). */}
             <AuthDialog />
           </AuthProvider>
           <Toaster />
