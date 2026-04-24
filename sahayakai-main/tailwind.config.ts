@@ -117,11 +117,30 @@ export default {
         elevated: '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
         glow: '0 0 0 3px hsl(28 70% 59% / 0.12), 0 4px 12px -2px rgb(0 0 0 / 0.08)',
         'inner-soft': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.04)',
+        // Phase 1 (2026-04-24): floating shadow for modals/sheets/menus
+        floating: 'var(--shadow-floating)',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        // Phase 1 (2026-04-24): namespaced surface radii — write
+        // `rounded-surface-md`, `rounded-surface-lg`, `rounded-pill`.
+        // Existing `rounded-lg/md/sm` left untouched for back-compat.
+        'surface-sm': 'var(--radius-sm)',
+        'surface-md': 'var(--radius-md)',
+        'surface-lg': 'var(--radius-lg)',
+        pill: 'var(--radius-pill)',
+      },
+      transitionTimingFunction: {
+        // Phase 1 (2026-04-24): single canonical easing curve
+        'out-quart': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      transitionDuration: {
+        // Phase 1 (2026-04-24): durations match --motion-* CSS vars
+        micro: '150ms',
+        small: '250ms',
+        medium: '350ms',
       },
       keyframes: {
         'accordion-down': {
