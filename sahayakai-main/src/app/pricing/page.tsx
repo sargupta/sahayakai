@@ -393,7 +393,7 @@ function PricingContent() {
                                 emphasis={false}
                             />
                             <div className="mt-1 text-[12px] text-neutral-500">
-                                Minimum 20 teachers · billed annually · {t('Tax included')} for GST-registered schools
+                                {t('Minimum 20 teachers · billed annually')}
                             </div>
                             {plan === 'gold' ? (
                                 <YourPlanChip />
@@ -408,8 +408,43 @@ function PricingContent() {
                                     <ArrowRight className="h-3.5 w-3.5" />
                                 </a>
                             )}
+                            <GoldVolumeTable />
                             <FeatureList items={GOLD_FEATURES} />
                         </TierColumn>
+                    </div>
+                </section>
+
+                {/* School Starter — editorial rail for small schools (5–19 teachers). */}
+                <section className="relative z-10 px-6 sm:px-12 pb-6 flex justify-center">
+                    <div className="max-w-[960px] w-full flex flex-col md:flex-row md:items-center md:justify-between gap-5 rounded-[14px] bg-saffron-50 border border-saffron-200 px-6 sm:px-8 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white text-saffron-700 border border-saffron-200">
+                                <Building2 className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-saffron-700 mb-1">
+                                    {t('School Starter')}
+                                </div>
+                                <div className="font-headline font-semibold text-[18px] text-foreground leading-tight">
+                                    {t('For small schools (5–19 teachers)')}
+                                </div>
+                                <div className="mt-1.5 text-[13px] text-neutral-700 leading-[1.55]">
+                                    {t('Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.')}
+                                </div>
+                                <div className="mt-1.5 text-[12px] text-neutral-600">
+                                    {t('Pricing tailored to your school. We come to you.')}
+                                </div>
+                            </div>
+                        </div>
+                        <a
+                            href="https://calendly.com/contact-sargvision/30min"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 text-[13px] font-medium px-[18px] py-[11px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer shrink-0"
+                        >
+                            {t('Book a small-school call')}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
                     </div>
                 </section>
 
@@ -583,6 +618,27 @@ function TierPrice({
                 </span>
                 <span className="text-[13px] text-neutral-500">{unit}</span>
             </div>
+        </div>
+    );
+}
+
+function GoldVolumeTable() {
+    const { t } = useLanguage();
+    return (
+        <div className="mt-6 rounded-[10px] bg-saffron-50/60 border border-saffron-200/60 px-4 py-3">
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-saffron-700 mb-2">
+                {t('Volume pricing')}
+            </div>
+            <dl className="space-y-1.5 text-[12px] text-neutral-700">
+                {PLAN_PRICING.gold.annual.volumeTiers.map((tier) => (
+                    <div key={tier.label} className="flex items-baseline justify-between gap-3">
+                        <dt className="text-neutral-600">{tier.label}</dt>
+                        <dd className="font-semibold text-foreground whitespace-nowrap">
+                            {tier.rupees !== null ? `₹${inr(tier.rupees)}` : t('Custom quote')}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
         </div>
     );
 }
