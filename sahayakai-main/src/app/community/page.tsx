@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft, UserSearch, X, Info } from 'lucide-react';
+import { Users, Plus, ArrowLeft, UserSearch, X, Info, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db as clientDb } from '@/lib/firebase';
@@ -229,6 +229,29 @@ export default function CommunityPage() {
     }
   }, []);
 
+  // Refresh feed when tab regains focus + every 45 s while visible.
+  // The unified feed is assembled from Firestore queries, not onSnapshot;
+  // without this, posts by other teachers never appear until manual reload.
+  useEffect(() => {
+    if (!user) return;
+
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') handleRefreshFeed();
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') handleRefreshFeed();
+    }, 45_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(interval);
+    };
+  }, [user, handleRefreshFeed]);
+
   const handleLoadMore = useCallback(() => {
     // Placeholder for pagination
   }, []);
@@ -262,7 +285,7 @@ export default function CommunityPage() {
   if (showTeacherDirectory) {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <Button
             variant="ghost"
             size="sm"
@@ -276,6 +299,9 @@ export default function CommunityPage() {
             Find Teachers
           </h2>
         </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Search teachers across Bharat by subject, grade, school, or area. Send a connect request to start a conversation.
+        </p>
         <TeacherDirectory />
       </div>
     );
@@ -285,7 +311,7 @@ export default function CommunityPage() {
   if (showStaffRoom) {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <Button
             variant="ghost"
             size="sm"
@@ -299,6 +325,9 @@ export default function CommunityPage() {
             Staff Room
           </h2>
         </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          An open chat room for every teacher on SahayakAI. Ask questions, share ideas, say hello.
+        </p>
         <CommunityChat />
       </div>
     );
@@ -334,7 +363,7 @@ export default function CommunityPage() {
   // ── Main Feed View ───────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-      {/* Header */}
+      {/* Header — title only */}
       <div className="rounded-3xl overflow-hidden bg-background border border-border shadow-soft">
         <div className="px-6 py-5 flex items-center gap-4">
           <div className="p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
@@ -348,16 +377,37 @@ export default function CommunityPage() {
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5 text-xs font-bold border-primary/20 text-primary hover:bg-primary/8"
-            onClick={handleOpenTeacherDirectory}
-          >
-            <UserSearch className="h-4 w-4" />
-            <span className="hidden sm:inline">Find Teachers</span>
-          </Button>
         </div>
+      </div>
+
+      {/* Primary action tiles — labeled entry points, visible at every breakpoint */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <button
+          onClick={handleOpenStaffRoom}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          aria-label="Open Staff Room — chat with every teacher"
+        >
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-foreground">Staff Room</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Open chat with every teacher</div>
+          </div>
+        </button>
+        <button
+          onClick={handleOpenTeacherDirectory}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          aria-label="Find Teachers — search by subject or school"
+        >
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <UserSearch className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-foreground">Find Teachers</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Search by subject or school</div>
+          </div>
+        </button>
       </div>
 
       {/* First-visit inline hint */}

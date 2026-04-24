@@ -4,6 +4,7 @@ import { Calendar, MessageCircle } from "lucide-react";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { ScriptMarks } from "@/components/landing/script-marks";
+import { PageAudio } from "@/components/marketing/page-audio";
 import { useAuth } from "@/context/auth-context";
 
 function getWhatsAppDeepLink(): string {
@@ -32,6 +33,7 @@ export function AboutClient() {
             >
                 <ScriptMarks />
 
+                <main>
                 {/* Hero */}
                 <section className="relative z-10 max-w-[760px] mx-auto px-6 sm:px-12 pt-[52px] pb-10 text-center">
                     <div className="inline-flex items-center gap-2 text-[12px] font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[6px] mb-7">
@@ -152,9 +154,11 @@ export function AboutClient() {
                         </div>
                     </div>
                 </section>
+                </main>
             </div>
 
             <LandingFooter />
+            <PageAudio />
         </div>
     );
 }
