@@ -18,6 +18,7 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { CommandPalette, openCommandPalette } from "@/components/command-palette";
 import { LanguagePill } from "@/components/language-pill";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 
@@ -98,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <AuthButton />
             </div>
           </header>
-          <main className="flex min-h-[calc(100vh-3.5rem)] w-full max-w-[100vw] overflow-x-hidden flex-col items-center p-3 pb-28 sm:p-4 sm:pb-28 md:p-8 md:pb-32">
+          <main className="flex min-h-[calc(100vh-3.5rem)] w-full max-w-[100vw] overflow-x-hidden flex-col items-center p-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] md:p-8 md:pb-32">
             <ErrorBoundary>
               <AnalyticsProvider>{children}</AnalyticsProvider>
             </ErrorBoundary>
@@ -106,12 +107,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarInset>
       </SidebarProvider>
 
-      {/* Global hooks / orb / greeting / command palette render only inside
-          the app shell. Palette binds ⌘K + ctrl+K globally. */}
+      {/* Global hooks / orb / greeting / command palette / mobile nav render
+          only inside the app shell. Palette binds ⌘K + ctrl+K globally.
+          Bottom nav is md:hidden and sits below the OmniOrb (orb repositioned
+          to clear it on mobile). */}
       <GlobalHooks />
       <OmniOrb />
       <MotherTongueGreeting />
       <CommandPalette />
+      <MobileBottomNav />
       <PWAInstallPrompt />
     </>
   );
