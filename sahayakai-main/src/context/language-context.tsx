@@ -123,6 +123,67 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "চালিয়ে যান", "Gujarati": "ચાલુ રાખો", "Punjabi": "ਜਾਰੀ ਰੱਖੋ",
         "Malayalam": "തുടരുക", "Odia": "ଜାରି ରଖନ୍ତୁ"
     },
+    // Phase 3/6 (2026-04-24) — sidebar group headers + header affordances
+    "Create": {
+        "English": "Create", "Hindi": "बनाएँ", "Kannada": "ರಚಿಸಿ",
+        "Tamil": "உருவாக்கவும்", "Telugu": "సృష్టించండి", "Marathi": "तयार करा",
+        "Bengali": "তৈরি করুন", "Gujarati": "બનાવો", "Punjabi": "ਬਣਾਓ",
+        "Malayalam": "സൃഷ്ടിക്കുക", "Odia": "ତିଆରି କରନ୍ତୁ"
+    },
+    "Assess": {
+        "English": "Assess", "Hindi": "आकलन", "Kannada": "ಮೌಲ್ಯಮಾಪನ",
+        "Tamil": "மதிப்பீடு", "Telugu": "మూల్యాంకనం", "Marathi": "मूल्यमापन",
+        "Bengali": "মূল্যায়ন", "Gujarati": "મૂલ્યાંકન", "Punjabi": "ਮੁਲਾਂਕਣ",
+        "Malayalam": "മൂല്യനിർണ്ണയം", "Odia": "ମୂଲ୍ୟାଙ୍କନ"
+    },
+    "Ask": {
+        "English": "Ask", "Hindi": "पूछें", "Kannada": "ಕೇಳಿ",
+        "Tamil": "கேள்", "Telugu": "అడగండి", "Marathi": "विचारा",
+        "Bengali": "জিজ্ঞাসা", "Gujarati": "પૂછો", "Punjabi": "ਪੁੱਛੋ",
+        "Malayalam": "ചോദിക്കൂ", "Odia": "ପଚାରନ୍ତୁ"
+    },
+    "My work": {
+        "English": "My work", "Hindi": "मेरा काम", "Kannada": "ನನ್ನ ಕೆಲಸ",
+        "Tamil": "என் வேலை", "Telugu": "నా పని", "Marathi": "माझे काम",
+        "Bengali": "আমার কাজ", "Gujarati": "મારું કામ", "Punjabi": "ਮੇਰਾ ਕੰਮ",
+        "Malayalam": "എന്റെ ജോലി", "Odia": "ମୋର କାମ"
+    },
+    "Account": {
+        "English": "Account", "Hindi": "खाता", "Kannada": "ಖಾತೆ",
+        "Tamil": "கணக்கு", "Telugu": "ఖాతా", "Marathi": "खाते",
+        "Bengali": "অ্যাকাউন্ট", "Gujarati": "એકાઉન્ટ", "Punjabi": "ਖਾਤਾ",
+        "Malayalam": "അക്കൗണ്ട്", "Odia": "ଖାତା"
+    },
+    "Search": {
+        "English": "Search", "Hindi": "खोजें", "Kannada": "ಹುಡುಕಿ",
+        "Tamil": "தேடு", "Telugu": "శోధించండి", "Marathi": "शोधा",
+        "Bengali": "অনুসন্ধান", "Gujarati": "શોધો", "Punjabi": "ਖੋਜੋ",
+        "Malayalam": "തിരയുക", "Odia": "ଖୋଜନ୍ତୁ"
+    },
+    "Search tools, pages, actions…": {
+        "English": "Search tools, pages, actions…", "Hindi": "टूल्स, पेज, क्रियाएँ खोजें…", "Kannada": "ಪರಿಕರಗಳು, ಪುಟಗಳು, ಕ್ರಿಯೆಗಳನ್ನು ಹುಡುಕಿ…",
+        "Tamil": "கருவிகள், பக்கங்கள், செயல்கள் தேடு…", "Telugu": "టూల్స్, పేజీలు, చర్యలు శోధించండి…", "Marathi": "टूल्स, पाने, क्रिया शोधा…",
+        "Bengali": "টুল, পেজ, অ্যাকশন অনুসন্ধান করুন…", "Gujarati": "ટૂલ્સ, પેજ, ક્રિયાઓ શોધો…", "Punjabi": "ਟੂਲ, ਪੰਨੇ, ਕਾਰਵਾਈਆਂ ਖੋਜੋ…",
+        "Malayalam": "ടൂളുകൾ, പേജുകൾ, ആക്ഷനുകൾ തിരയുക…", "Odia": "ଟୁଲ୍ସ, ପୃଷ୍ଠା, କାର୍ଯ୍ୟ ଖୋଜନ୍ତୁ…"
+    },
+    "No matches. Try a different word.": {
+        "English": "No matches. Try a different word.", "Hindi": "कोई मेल नहीं। दूसरा शब्द आज़माएँ।", "Kannada": "ಯಾವುದೇ ಹೊಂದಿಕೆ ಇಲ್ಲ. ಬೇರೆ ಪದವನ್ನು ಪ್ರಯತ್ನಿಸಿ.",
+        "Tamil": "பொருத்தங்கள் இல்லை. வேறு சொல்லை முயற்சிக்கவும்.", "Telugu": "సరిపోలికలు లేవు. వేరే పదాన్ని ప్రయత్నించండి.", "Marathi": "जुळण्या नाहीत. दुसरा शब्द वापरून पहा.",
+        "Bengali": "কোনো মিল নেই। অন্য শব্দ চেষ্টা করুন।", "Gujarati": "કોઈ મેળ નથી. બીજો શબ્દ અજમાવો.", "Punjabi": "ਕੋਈ ਮੇਲ ਨਹੀਂ। ਦੂਜਾ ਸ਼ਬਦ ਅਜ਼ਮਾਓ।",
+        "Malayalam": "പൊരുത്തങ്ങളില്ല. മറ്റൊരു വാക്ക് പരീക്ഷിക്കുക.", "Odia": "କୌଣସି ମେଳ ନାହିଁ। ଅନ୍ୟ ଶବ୍ଦ ଚେଷ୍ଟା କରନ୍ତୁ।"
+    },
+    "Change language": {
+        "English": "Change language", "Hindi": "भाषा बदलें", "Kannada": "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
+        "Tamil": "மொழி மாற்று", "Telugu": "భాష మార్చండి", "Marathi": "भाषा बदला",
+        "Bengali": "ভাষা পরিবর্তন করুন", "Gujarati": "ભાષા બદલો", "Punjabi": "ਭਾਸ਼ਾ ਬਦਲੋ",
+        "Malayalam": "ഭാഷ മാറ്റുക", "Odia": "ଭାଷା ବଦଳାନ୍ତୁ"
+    },
+    "Primary navigation": {
+        "English": "Primary navigation", "Hindi": "मुख्य नेविगेशन", "Kannada": "ಪ್ರಾಥಮಿಕ ನ್ಯಾವಿಗೇಶನ್",
+        "Tamil": "முதன்மை வழிசெலுத்தல்", "Telugu": "ప్రాథమిక నావిగేషన్", "Marathi": "मुख्य नेव्हिगेशन",
+        "Bengali": "প্রাথমিক নেভিগেশন", "Gujarati": "પ્રાથમિક નેવિગેશન", "Punjabi": "ਮੁੱਖ ਨੇਵੀਗੇਸ਼ਨ",
+        "Malayalam": "പ്രാഥമിക നാവിഗേഷൻ", "Odia": "ପ୍ରାଥମିକ ନେଭିଗେସନ୍"
+    },
     "Save and continue": {
         "English": "Save and continue", "Hindi": "सहेजें और जारी रखें", "Kannada": "ಉಳಿಸಿ ಮತ್ತು ಮುಂದುವರಿಸಿ",
         "Tamil": "சேமித்து தொடரவும்", "Telugu": "సేవ్ చేసి కొనసాగించండి", "Marathi": "जतन करा आणि सुरू ठेवा",
