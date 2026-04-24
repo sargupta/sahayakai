@@ -16,6 +16,10 @@ import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { CommandPalette, openCommandPalette } from "@/components/command-palette";
+import { LanguagePill } from "@/components/language-pill";
+import { Search } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 const MARKETING_PATHS = ["/for-schools", "/pricing", "/privacy-for-teachers", "/terms", "/about"];
 
@@ -41,6 +45,7 @@ function isMarketingPath(pathname: string | null): boolean {
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isMarketing = isMarketingPath(pathname);
@@ -75,7 +80,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Logo />
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Search trigger — opens command palette (⌘K on desktop) */}
+              <button
+                type="button"
+                onClick={openCommandPalette}
+                aria-label={t("Search")}
+                className="inline-flex items-center gap-2 h-9 px-3 rounded-pill bg-muted/60 hover:bg-muted text-muted-foreground transition-colors duration-micro ease-out-quart"
+              >
+                <Search className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs font-medium">{t("Search")}</span>
+                <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-surface-sm bg-background text-[10px] font-mono text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </button>
+              <LanguagePill />
               <AuthButton />
             </div>
           </header>
@@ -87,10 +106,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarInset>
       </SidebarProvider>
 
-      {/* Global hooks / orb / greeting render only inside the app shell. */}
+      {/* Global hooks / orb / greeting / command palette render only inside
+          the app shell. Palette binds ⌘K + ctrl+K globally. */}
       <GlobalHooks />
       <OmniOrb />
       <MotherTongueGreeting />
+      <CommandPalette />
       <PWAInstallPrompt />
     </>
   );
