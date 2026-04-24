@@ -6,6 +6,7 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingPillarStrip } from "@/components/landing/landing-pillar-strip";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { ScriptMarks } from "@/components/landing/script-marks";
+import { PageAudio } from "@/components/marketing/page-audio";
 import { useAuth } from "@/context/auth-context";
 
 function getWhatsAppDeepLink(): string {
@@ -36,14 +37,17 @@ export function ForSchoolsClient() {
       >
         <ScriptMarks />
 
-        <ForSchoolsHero whatsAppLink={whatsAppLink} />
-        <LandingPillarStrip titleIndex={titleIndex} />
-        <PrincipalQuote />
-        <DashboardPreview />
-        <BookDemoBlock whatsAppLink={whatsAppLink} />
+        <main>
+          <ForSchoolsHero whatsAppLink={whatsAppLink} />
+          <LandingPillarStrip titleIndex={titleIndex} />
+          <PrincipalQuote />
+          <DashboardPreview />
+          <BookDemoBlock whatsAppLink={whatsAppLink} />
+        </main>
       </div>
 
       <LandingFooter />
+      <PageAudio />
     </div>
   );
 }
