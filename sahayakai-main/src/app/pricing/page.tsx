@@ -91,7 +91,9 @@ function PricingContent() {
     const { t } = useLanguage();
     const searchParams = useSearchParams();
     const status = searchParams.get('status');
-    const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
+    // Default to monthly — lower upfront commitment, easier conversion for B2C freemium.
+    // The SAVE 2 MONTHS pill next to the toggle nudges toward annual.
+    const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
     const [creating, setCreating] = useState(false);
 
     const [activating, setActivating] = useState(status === 'success' && plan === 'free');
@@ -287,8 +289,8 @@ function PricingContent() {
                     </p>
                 </section>
 
-                {/* Billing toggle */}
-                <div className="relative z-10 flex items-center justify-center gap-4 mt-2">
+                {/* Billing toggle + prominent savings pill (conversion nudge toward annual). */}
+                <div className="relative z-10 flex items-center justify-center gap-3 mt-2 flex-wrap">
                     <div
                         role="radiogroup"
                         aria-label={t('Monthly') + ' / ' + t('Annual')}
@@ -305,9 +307,19 @@ function PricingContent() {
                             label={t('Annual')}
                         />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-saffron-700">
+                    <button
+                        type="button"
+                        onClick={() => setBillingPeriod('annual')}
+                        aria-label={t('Save 2 months')}
+                        className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] rounded-full px-[12px] py-[6px] transition-all cursor-pointer ${
+                            billingPeriod === 'annual'
+                                ? 'bg-saffron-50 text-saffron-700 border border-saffron-200'
+                                : 'bg-saffron text-white shadow-[0_10px_22px_-8px_hsl(28_70%_45%/0.5)] hover:bg-saffron-600'
+                        }`}
+                    >
+                        <Sparkles className="h-3 w-3" strokeWidth={2.4} />
                         {t('Save 2 months')}
-                    </span>
+                    </button>
                 </div>
 
                 {/* Tier columns */}
