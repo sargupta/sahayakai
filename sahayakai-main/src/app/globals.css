@@ -230,6 +230,17 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Phase 6 (2026-04-24): Indic typography baseline.
+       Ensures Devanagari/Tamil/Bengali/etc. diacritics aren't clipped
+       when paragraphs inherit leading from parents. Utility classes
+       (leading-none, leading-tight) still override per-element. */
+    line-height: 1.5;
+  }
+
+  /* Paragraphs get a comfortable Indic-safe line-height by default.
+     Elements with explicit Tailwind leading-* still override this. */
+  p {
+    line-height: 1.6;
   }
 }
 
