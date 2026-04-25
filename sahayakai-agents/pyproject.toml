@@ -78,10 +78,48 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
-ignore = ["PLR0913"]  # many kw-args is fine for agent schemas
+ignore = [
+  "PLR0913",  # many kw-args is fine for agent schemas
+  # Pylint refactor lints that fire on intentional patterns:
+  "PLR2004",  # magic numbers — Unicode codepoint ranges and HTTP status codes
+              # are read more clearly inline than via constants
+  "PLC0415",  # local imports — used deliberately for lazy-loading SDKs
+              # (google.genai, google.adk) so test paths that don't
+              # exercise them avoid the import cost
+  "PLW0603",  # global statement — used by the process-scoped
+              # `_session_store` singleton with explicit reset semantics
+]
+# Tests are allowed style relaxations that production code is not.
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "E501",   # long lines in fixture data are easier to read unwrapped
+  "SIM108", # explicit if/else reads better than ternary in test setups
+  "SIM118", # `key in dict.keys()` is fine in test assertions
+  "UP047",  # PEP 695 generics are not yet ubiquitous in our deps
+]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 warn_unused_ignores = true
 ignore_missing_imports = true  # adk / pybars3 have lagging stubs
+
+# Per-module relaxations for files that wrap unstubbed Google SDKs.
+# Strict mode flags every untyped call into firestore / gcp-trace /
+# google.auth.id_token; downgrading those modules to non-strict keeps
+# the signal high in the rest of the codebase. Each entry pairs with
+# an SDK whose stubs are incomplete or absent on PyPI as of Apr 2026.
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.session_store"
+disallow_untyped_calls = false
+warn_return_any = false
+disable_error_code = ["return-value", "unused-ignore"]
+
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.telemetry"
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.auth"
+disallow_untyped_calls = false
+disable_error_code = ["call-overload", "attr-defined"]

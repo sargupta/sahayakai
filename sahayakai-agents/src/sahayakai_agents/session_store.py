@@ -31,9 +31,9 @@ Async wrapper (Round-2 P0-4 fix):
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Iterable
 
 import structlog
 from google.cloud import firestore  # type: ignore[import-untyped]

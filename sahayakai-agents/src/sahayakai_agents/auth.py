@@ -22,7 +22,7 @@ import base64
 import hashlib
 import hmac
 import time
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 import structlog
 from fastapi import Request, Response

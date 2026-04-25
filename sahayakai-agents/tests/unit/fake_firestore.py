@@ -16,8 +16,9 @@ expects the real SDK).
 """
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 from sahayakai_agents.session_store import SessionStore, TurnRecord
 from sahayakai_agents.shared.errors import SessionConflictError
@@ -42,14 +43,14 @@ class FakeSnap:
 class FakeDocRef:
     """Stand-in for `firestore.DocumentReference`."""
 
-    store: "FakeStore"
+    store: FakeStore
     path: tuple[str, ...]
     id: str = ""
 
     def __post_init__(self) -> None:
         self.id = self.path[-1]
 
-    def get(self, transaction: "FakeTxn | None" = None) -> FakeSnap:
+    def get(self, transaction: FakeTxn | None = None) -> FakeSnap:
         data = self.store.get(self.path)
         return FakeSnap(_data=data, id=self.id)
 
@@ -64,7 +65,7 @@ class FakeDocRef:
     def delete(self) -> None:
         self.store.delete(self.path)
 
-    def collection(self, name: str) -> "FakeCollection":
+    def collection(self, name: str) -> FakeCollection:
         return FakeCollection(self.store, self.path + (name,))
 
 
@@ -72,13 +73,13 @@ class FakeDocRef:
 class FakeCollection:
     """Stand-in for `firestore.CollectionReference`."""
 
-    store: "FakeStore"
+    store: FakeStore
     path: tuple[str, ...]
 
     def document(self, doc_id: str) -> FakeDocRef:
         return FakeDocRef(self.store, self.path + (doc_id,))
 
-    def order_by(self, _field: str) -> "FakeCollection":
+    def order_by(self, _field: str) -> FakeCollection:
         return self
 
     def stream(self) -> Iterator[FakeSnap]:

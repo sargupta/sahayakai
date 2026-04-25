@@ -19,7 +19,6 @@ from sahayakai_agents.shared.errors import SessionConflictError
 
 from .fake_firestore import make_fake_session_store
 
-
 pytestmark = pytest.mark.unit
 
 

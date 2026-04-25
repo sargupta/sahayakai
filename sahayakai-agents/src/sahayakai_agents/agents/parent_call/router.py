@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from fastapi import APIRouter
@@ -71,7 +72,7 @@ async def _call_gemini_structured(
     model: str,
     prompt: str,
     response_schema: type,
-):
+) -> Any:
     """One Gemini call with structured JSON output.
 
     `google-genai` is imported lazily so tests can mock without installing
@@ -86,8 +87,8 @@ async def _call_gemini_structured(
     https://googleapis.github.io/python-genai/ \u2014 "For async operations,
     replace `client.models` with `client.aio.models`."
     """
-    from google import genai  # type: ignore[import-untyped]
-    from google.genai import types as genai_types  # type: ignore[import-untyped]
+    from google import genai
+    from google.genai import types as genai_types
 
     client = genai.Client(api_key=api_key)
     return await client.aio.models.generate_content(
@@ -101,11 +102,11 @@ async def _call_gemini_structured(
     )
 
 
-def _extract_text(result) -> str:  # type: ignore[no-untyped-def]
+def _extract_text(result: Any) -> str:
     """Pull the model's JSON text out of a google-genai response."""
     text = getattr(result, "text", None)
     if text:
-        return text
+        return str(text)
     candidates = getattr(result, "candidates", None) or []
     for cand in candidates:
         content = getattr(cand, "content", None)
@@ -113,7 +114,7 @@ def _extract_text(result) -> str:  # type: ignore[no-untyped-def]
         for part in parts:
             text = getattr(part, "text", None)
             if text:
-                return text
+                return str(text)
     raise AgentError(
         code="INTERNAL",
         message="Gemini returned empty response",

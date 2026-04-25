@@ -41,7 +41,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-import pybars  # type: ignore[import-untyped]
+import pybars
 import structlog
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -120,12 +120,13 @@ def _compiled(template_name: str) -> Any:
 
 def render_reply_prompt(context: dict[str, Any]) -> str:
     """Render the per-turn reply prompt with call context + parent speech."""
-    return _compiled("reply")(context)
+    # pybars3 returns a string but is unstubbed, so mypy sees Any.
+    return str(_compiled("reply")(context))
 
 
 def render_summary_prompt(context: dict[str, Any]) -> str:
     """Render the post-call summary prompt with the full transcript."""
-    return _compiled("summary")(context)
+    return str(_compiled("summary")(context))
 
 
 def build_reply_context(

@@ -17,7 +17,6 @@ from fastapi import Request
 from sahayakai_agents.auth import _verify_content_digest
 from sahayakai_agents.shared.errors import AuthenticationError
 
-
 pytestmark = pytest.mark.unit
 
 
