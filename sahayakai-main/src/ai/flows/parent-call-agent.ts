@@ -8,6 +8,7 @@
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
+import { assertAllRules, BehaviouralGuardError } from '@/lib/parent-call-guard';
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,32 @@ const agentReplyPrompt = ai.definePrompt({
 
 export async function generateAgentReply(input: AgentReplyInput): Promise<AgentReplyOutput> {
     const result = await runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply');
-    return result.output!;
+    const output = result.output!;
+
+    // Round-2 audit P0 BEHAV-1: post-response behavioural guard, fail-closed.
+    // Mirrors the Python sidecar's `assert_all_rules` so the Genkit
+    // fallback path cannot ship "I am an AI assistant" or wrong-script
+    // replies that the sidecar would have caught. The TwiML route's outer
+    // try/catch already lands a safe canned wrap-up on any throw from
+    // this function, so throwing is the right move here.
+    try {
+        assertAllRules({
+            reply: output.reply,
+            parentLanguage: input.parentLanguage,
+            turnNumber: input.turnNumber,
+        });
+    } catch (err) {
+        if (err instanceof BehaviouralGuardError) {
+            console.error('[parentCall.agentReply] behavioural guard failed', {
+                axis: err.axis,
+                details: err.details,
+                parentLanguage: err.parentLanguage,
+                turnNumber: input.turnNumber,
+            });
+        }
+        throw err;
+    }
+    return output;
 }
 
 // ── Call Summary ─────────────────────────────────────────────────────────────
