@@ -1328,100 +1328,100 @@ const dictionary: Record<string, Record<Language, string>> = {
     // fall back to English (rolling — contribute via /submit-content in-app form).
     "Listen in your language": {
         "English": "Listen in your language", "Hindi": "अपनी भाषा में सुनें", "Kannada": "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿ",
-        "Tamil": "Listen in your language", "Telugu": "Listen in your language", "Marathi": "Listen in your language",
-        "Bengali": "Listen in your language", "Gujarati": "Listen in your language", "Punjabi": "Listen in your language",
-        "Malayalam": "Listen in your language", "Odia": "Listen in your language"
+        "Tamil": "உங்கள் மொழியில் கேளுங்கள்", "Telugu": "మీ భాషలో వినండి", "Marathi": "आपल्या भाषेत ऐका",
+        "Bengali": "আপনার ভাষায় শুনুন", "Gujarati": "તમારી ભાષામાં સાંભળો", "Punjabi": "ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਸੁਣੋ",
+        "Malayalam": "നിങ്ങളുടെ ഭാഷയിൽ കേൾക്കുക", "Odia": "ଆପଣଙ୍କ ଭାଷାରେ ଶୁଣନ୍ତୁ"
     },
     "Stop listening": {
         "English": "Stop listening", "Hindi": "सुनना बंद करें", "Kannada": "ಕೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ",
-        "Tamil": "Stop listening", "Telugu": "Stop listening", "Marathi": "Stop listening",
-        "Bengali": "Stop listening", "Gujarati": "Stop listening", "Punjabi": "Stop listening",
-        "Malayalam": "Stop listening", "Odia": "Stop listening"
+        "Tamil": "கேட்பதை நிறுத்து", "Telugu": "వినడం ఆపండి", "Marathi": "ऐकणे थांबवा",
+        "Bengali": "শোনা বন্ধ করুন", "Gujarati": "સાંભળવાનું બંધ કરો", "Punjabi": "ਸੁਣਨਾ ਬੰਦ ਕਰੋ",
+        "Malayalam": "കേൾക്കുന്നത് നിർത്തുക", "Odia": "ଶୁଣିବା ବନ୍ଦ କରନ୍ତୁ"
     },
     "Language": {
         "English": "Language", "Hindi": "भाषा", "Kannada": "ಭಾಷೆ",
-        "Tamil": "Language", "Telugu": "Language", "Marathi": "Language",
-        "Bengali": "Language", "Gujarati": "Language", "Punjabi": "Language",
-        "Malayalam": "Language", "Odia": "Language"
+        "Tamil": "மொழி", "Telugu": "భాష", "Marathi": "भाषा",
+        "Bengali": "ভাষা", "Gujarati": "ભાષા", "Punjabi": "ਭਾਸ਼ਾ",
+        "Malayalam": "ഭാഷ", "Odia": "ଭାଷା"
     },
     "Start free": {
         "English": "Start free", "Hindi": "मुफ्त शुरू करें", "Kannada": "ಉಚಿತವಾಗಿ ಪ್ರಾರಂಭಿಸಿ",
-        "Tamil": "Start free", "Telugu": "Start free", "Marathi": "Start free",
-        "Bengali": "Start free", "Gujarati": "Start free", "Punjabi": "Start free",
-        "Malayalam": "Start free", "Odia": "Start free"
+        "Tamil": "இலவசமாக தொடங்கு", "Telugu": "ఉచితంగా ప్రారంభించండి", "Marathi": "मोफत सुरू करा",
+        "Bengali": "বিনামূল্যে শুরু করুন", "Gujarati": "મફત શરૂ કરો", "Punjabi": "ਮੁਫ਼ਤ ਸ਼ੁਰੂ ਕਰੋ",
+        "Malayalam": "സൗജന്യമായി ആരംഭിക്കുക", "Odia": "ମାଗଣାରେ ଆରମ୍ଭ କରନ୍ତୁ"
     },
     "Log in": {
         "English": "Log in", "Hindi": "लॉग इन करें", "Kannada": "ಲಾಗ್ ಇನ್",
-        "Tamil": "Log in", "Telugu": "Log in", "Marathi": "Log in",
-        "Bengali": "Log in", "Gujarati": "Log in", "Punjabi": "Log in",
-        "Malayalam": "Log in", "Odia": "Log in"
+        "Tamil": "உள்நுழை", "Telugu": "లాగిన్", "Marathi": "लॉग इन करा",
+        "Bengali": "লগ ইন করুন", "Gujarati": "લોગ ઇન કરો", "Punjabi": "ਲੌਗ ਇਨ ਕਰੋ",
+        "Malayalam": "ലോഗിൻ ചെയ്യുക", "Odia": "ଲଗ୍ ଇନ୍ କରନ୍ତୁ"
     },
     "Pricing, for Indian teachers": {
         "English": "Pricing, for Indian teachers", "Hindi": "भारतीय शिक्षकों के लिए कीमत", "Kannada": "ಭಾರತೀಯ ಶಿಕ್ಷಕರಿಗಾಗಿ ಬೆಲೆ",
-        "Tamil": "Pricing, for Indian teachers", "Telugu": "Pricing, for Indian teachers", "Marathi": "Pricing, for Indian teachers",
-        "Bengali": "Pricing, for Indian teachers", "Gujarati": "Pricing, for Indian teachers", "Punjabi": "Pricing, for Indian teachers",
-        "Malayalam": "Pricing, for Indian teachers", "Odia": "Pricing, for Indian teachers"
+        "Tamil": "இந்திய ஆசிரியர்களுக்கான விலை", "Telugu": "భారతీయ ఉపాధ్యాయుల కోసం ధర", "Marathi": "भारतीय शिक्षकांसाठी किंमत",
+        "Bengali": "ভারতীয় শিক্ষকদের জন্য মূল্য", "Gujarati": "ભારતીય શિક્ષકો માટે કિંમત", "Punjabi": "ਭਾਰਤੀ ਅਧਿਆਪਕਾਂ ਲਈ ਕੀਮਤ",
+        "Malayalam": "ഇന്ത്യൻ അധ്യാപകർക്കുള്ള വില", "Odia": "ଭାରତୀୟ ଶିକ୍ଷକଙ୍କ ପାଇଁ ମୂଲ୍ୟ"
     },
     "Less than a textbook.": {
         "English": "Less than a textbook.", "Hindi": "एक किताब से भी कम।", "Kannada": "ಪಠ್ಯಪುಸ್ತಕಕ್ಕಿಂತ ಕಡಿಮೆ.",
-        "Tamil": "Less than a textbook.", "Telugu": "Less than a textbook.", "Marathi": "Less than a textbook.",
-        "Bengali": "Less than a textbook.", "Gujarati": "Less than a textbook.", "Punjabi": "Less than a textbook.",
-        "Malayalam": "Less than a textbook.", "Odia": "Less than a textbook."
+        "Tamil": "ஒரு பாடப்புத்தகத்தை விட குறைவு.", "Telugu": "పాఠ్యపుస్తకం కంటే తక్కువ.", "Marathi": "पाठ्यपुस्तकापेक्षा कमी.",
+        "Bengali": "একটি পাঠ্যবইয়ের চেয়ে কম।", "Gujarati": "પાઠ્યપુસ્તક કરતાં ઓછું.", "Punjabi": "ਇੱਕ ਪਾਠ ਪੁਸਤਕ ਤੋਂ ਘੱਟ।",
+        "Malayalam": "ഒരു പാഠപുസ്തകത്തേക്കാൾ കുറവ്.", "Odia": "ଗୋଟିଏ ପାଠ୍ୟପୁସ୍ତକଠାରୁ କମ୍।"
     },
     "Yours to cancel anytime.": {
         "English": "Yours to cancel anytime.", "Hindi": "कभी भी रद्द करें।", "Kannada": "ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಿ.",
-        "Tamil": "Yours to cancel anytime.", "Telugu": "Yours to cancel anytime.", "Marathi": "Yours to cancel anytime.",
-        "Bengali": "Yours to cancel anytime.", "Gujarati": "Yours to cancel anytime.", "Punjabi": "Yours to cancel anytime.",
-        "Malayalam": "Yours to cancel anytime.", "Odia": "Yours to cancel anytime."
+        "Tamil": "எப்போது வேண்டுமானாலும் ரத்து செய்யலாம்.", "Telugu": "ఎప్పుడైనా రద్దు చేసుకోవచ్చు.", "Marathi": "कधीही रद्द करा.",
+        "Bengali": "যেকোনো সময় বাতিল করুন।", "Gujarati": "ગમે ત્યારે રદ કરો.", "Punjabi": "ਕਦੇ ਵੀ ਰੱਦ ਕਰੋ।",
+        "Malayalam": "എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം.", "Odia": "ଯେକୌଣସି ସମୟରେ ବାତିଲ କରନ୍ତୁ।"
     },
     "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.": {
         "English": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
         "Hindi": "हर प्लान में NCERT और 28 राज्य बोर्ड, 11 भारतीय भाषाएँ, और किसी भी एंड्रॉयड फोन पर वॉयस इनपुट शामिल है।",
         "Kannada": "ಪ್ರತಿ ಪ್ಲಾನ್ NCERT ಮತ್ತು 28 ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳು, 11 ಭಾರತೀಯ ಭಾಷೆಗಳು, ಮತ್ತು ಯಾವುದೇ ಆಂಡ್ರಾಯ್ಡ್ ಫೋನ್‌ನಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಅನ್ನು ಒಳಗೊಂಡಿರುತ್ತದೆ.",
-        "Tamil": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Telugu": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Marathi": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Bengali": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Gujarati": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Punjabi": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Malayalam": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone.",
-        "Odia": "Every plan includes NCERT and 28 state boards, 11 Indian languages, and voice-first input on any Android phone."
+        "Tamil": "ஒவ்வொரு திட்டத்திலும் NCERT மற்றும் 28 மாநில வாரியங்கள், 11 இந்திய மொழிகள், மற்றும் எந்த Android ஃபோனிலும் குரல் உள்ளீடு அடங்கும்.",
+        "Telugu": "ప్రతి ప్లాన్‌లో NCERT మరియు 28 రాష్ట్ర బోర్డులు, 11 భారతీయ భాషలు, మరియు ఏ Android ఫోన్‌లోనైనా వాయిస్ ఇన్‌పుట్ ఉంటాయి.",
+        "Marathi": "प्रत्येक प्लॅनमध्ये NCERT आणि 28 राज्य मंडळे, 11 भारतीय भाषा, आणि कोणत्याही Android फोनवर व्हॉइस इनपुट समाविष्ट आहे.",
+        "Bengali": "প্রতিটি প্ল্যানে NCERT এবং 28টি রাজ্য বোর্ড, 11টি ভারতীয় ভাষা, এবং যেকোনো Android ফোনে ভয়েস ইনপুট অন্তর্ভুক্ত রয়েছে।",
+        "Gujarati": "દરેક પ્લાનમાં NCERT અને 28 રાજ્ય બોર્ડ, 11 ભારતીય ભાષાઓ, અને કોઈપણ Android ફોન પર વૉઇસ ઇનપુટ સામેલ છે.",
+        "Punjabi": "ਹਰੇਕ ਪਲਾਨ ਵਿੱਚ NCERT ਅਤੇ 28 ਰਾਜ ਬੋਰਡ, 11 ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ, ਅਤੇ ਕਿਸੇ ਵੀ Android ਫ਼ੋਨ 'ਤੇ ਵੌਇਸ ਇਨਪੁੱਟ ਸ਼ਾਮਲ ਹੈ।",
+        "Malayalam": "ഓരോ പ്ലാനിലും NCERT യും 28 സംസ്ഥാന ബോർഡുകളും, 11 ഇന്ത്യൻ ഭാഷകളും, ഏത് Android ഫോണിലും വോയ്സ് ഇൻപുട്ടും ഉൾപ്പെടുന്നു.",
+        "Odia": "ପ୍ରତ୍ୟେକ ପ୍ଲାନରେ NCERT ଏବଂ 28ଟି ରାଜ୍ୟ ବୋର୍ଡ, 11ଟି ଭାରତୀୟ ଭାଷା, ଏବଂ ଯେକୌଣସି Android ଫୋନରେ ଭଏସ୍ ଇନପୁଟ୍ ଅନ୍ତର୍ଭୁକ୍ତ।"
     },
     "Monthly": {
         "English": "Monthly", "Hindi": "मासिक", "Kannada": "ಮಾಸಿಕ",
-        "Tamil": "Monthly", "Telugu": "Monthly", "Marathi": "Monthly",
-        "Bengali": "Monthly", "Gujarati": "Monthly", "Punjabi": "Monthly",
-        "Malayalam": "Monthly", "Odia": "Monthly"
+        "Tamil": "மாதாந்திரம்", "Telugu": "నెలవారీ", "Marathi": "मासिक",
+        "Bengali": "মাসিক", "Gujarati": "માસિક", "Punjabi": "ਮਹੀਨਾਵਾਰ",
+        "Malayalam": "പ്രതിമാസം", "Odia": "ମାସିକ"
     },
     "Annual": {
         "English": "Annual", "Hindi": "वार्षिक", "Kannada": "ವಾರ್ಷಿಕ",
-        "Tamil": "Annual", "Telugu": "Annual", "Marathi": "Annual",
-        "Bengali": "Annual", "Gujarati": "Annual", "Punjabi": "Annual",
-        "Malayalam": "Annual", "Odia": "Annual"
+        "Tamil": "வருடாந்திரம்", "Telugu": "వార్షిక", "Marathi": "वार्षिक",
+        "Bengali": "বার্ষিক", "Gujarati": "વાર્ષિક", "Punjabi": "ਸਾਲਾਨਾ",
+        "Malayalam": "വാർഷികം", "Odia": "ବାର୍ଷିକ"
     },
     "Save 2 months": {
         "English": "Save 2 months", "Hindi": "2 महीने बचाएं", "Kannada": "2 ತಿಂಗಳು ಉಳಿಸಿ",
-        "Tamil": "Save 2 months", "Telugu": "Save 2 months", "Marathi": "Save 2 months",
-        "Bengali": "Save 2 months", "Gujarati": "Save 2 months", "Punjabi": "Save 2 months",
-        "Malayalam": "Save 2 months", "Odia": "Save 2 months"
+        "Tamil": "2 மாதங்கள் சேமியுங்கள்", "Telugu": "2 నెలలు ఆదా చేయండి", "Marathi": "2 महिने वाचवा",
+        "Bengali": "2 মাস সাশ্রয় করুন", "Gujarati": "2 મહિના બચાવો", "Punjabi": "2 ਮਹੀਨੇ ਬਚਾਓ",
+        "Malayalam": "2 മാസം ലാഭിക്കുക", "Odia": "2 ମାସ ସଞ୍ଚୟ କରନ୍ତୁ"
     },
     "Free": {
         "English": "Free", "Hindi": "मुफ़्त", "Kannada": "ಉಚಿತ",
-        "Tamil": "Free", "Telugu": "Free", "Marathi": "Free",
-        "Bengali": "Free", "Gujarati": "Free", "Punjabi": "Free",
-        "Malayalam": "Free", "Odia": "Free"
+        "Tamil": "இலவசம்", "Telugu": "ఉచితం", "Marathi": "मोफत",
+        "Bengali": "বিনামূল্যে", "Gujarati": "મફત", "Punjabi": "ਮੁਫ਼ਤ",
+        "Malayalam": "സൗജന്യം", "Odia": "ମାଗଣା"
     },
     "forever": {
         "English": "forever", "Hindi": "हमेशा के लिए", "Kannada": "ಶಾಶ್ವತವಾಗಿ",
-        "Tamil": "forever", "Telugu": "forever", "Marathi": "forever",
-        "Bengali": "forever", "Gujarati": "forever", "Punjabi": "forever",
-        "Malayalam": "forever", "Odia": "forever"
+        "Tamil": "எப்போதும்", "Telugu": "ఎల్లప్పుడూ", "Marathi": "कायमस्वरूपी",
+        "Bengali": "চিরকাল", "Gujarati": "હંમેશા", "Punjabi": "ਹਮੇਸ਼ਾ ਲਈ",
+        "Malayalam": "എന്നും", "Odia": "ସବୁଦିନ ପାଇଁ"
     },
     "Most popular": {
         "English": "Most popular", "Hindi": "सबसे लोकप्रिय", "Kannada": "ಅತ್ಯಂತ ಜನಪ್ರಿಯ",
-        "Tamil": "Most popular", "Telugu": "Most popular", "Marathi": "Most popular",
-        "Bengali": "Most popular", "Gujarati": "Most popular", "Punjabi": "Most popular",
-        "Malayalam": "Most popular", "Odia": "Most popular"
+        "Tamil": "மிகவும் பிரபலம்", "Telugu": "అత్యంత జనాదరణ", "Marathi": "सर्वाधिक लोकप्रिय",
+        "Bengali": "সবচেয়ে জনপ্রিয়", "Gujarati": "સૌથી લોકપ્રિય", "Punjabi": "ਸਭ ਤੋਂ ਪ੍ਰਸਿੱਧ",
+        "Malayalam": "ഏറ്റവും ജനപ്രിയം", "Odia": "ସର୍ବାଧିକ ଲୋକପ୍ରିୟ"
     },
     "Pro": {
         "English": "Pro", "Hindi": "प्रो", "Kannada": "ಪ್ರೊ",
@@ -1443,220 +1443,245 @@ const dictionary: Record<string, Record<Language, string>> = {
     },
     "/month": {
         "English": "/month", "Hindi": "/माह", "Kannada": "/ತಿಂಗಳು",
-        "Tamil": "/month", "Telugu": "/month", "Marathi": "/month",
-        "Bengali": "/month", "Gujarati": "/month", "Punjabi": "/month",
-        "Malayalam": "/month", "Odia": "/month"
+        "Tamil": "/மாதம்", "Telugu": "/నెల", "Marathi": "/महिना",
+        "Bengali": "/মাস", "Gujarati": "/મહિનો", "Punjabi": "/ਮਹੀਨਾ",
+        "Malayalam": "/മാസം", "Odia": "/ମାସ"
     },
     "/year": {
         "English": "/year", "Hindi": "/वर्ष", "Kannada": "/ವರ್ಷ",
-        "Tamil": "/year", "Telugu": "/year", "Marathi": "/year",
-        "Bengali": "/year", "Gujarati": "/year", "Punjabi": "/year",
-        "Malayalam": "/year", "Odia": "/year"
+        "Tamil": "/வருடம்", "Telugu": "/సంవత్సరం", "Marathi": "/वर्ष",
+        "Bengali": "/বছর", "Gujarati": "/વર્ષ", "Punjabi": "/ਸਾਲ",
+        "Malayalam": "/വർഷം", "Odia": "/ବର୍ଷ"
     },
     "/teacher/year": {
         "English": "/teacher/year", "Hindi": "/शिक्षक/वर्ष", "Kannada": "/ಶಿಕ್ಷಕ/ವರ್ಷ",
-        "Tamil": "/teacher/year", "Telugu": "/teacher/year", "Marathi": "/teacher/year",
-        "Bengali": "/teacher/year", "Gujarati": "/teacher/year", "Punjabi": "/teacher/year",
-        "Malayalam": "/teacher/year", "Odia": "/teacher/year"
+        "Tamil": "/ஆசிரியர்/வருடம்", "Telugu": "/ఉపాధ్యాయుడు/సంవత్సరం", "Marathi": "/शिक्षक/वर्ष",
+        "Bengali": "/শিক্ষক/বছর", "Gujarati": "/શિક્ષક/વર્ષ", "Punjabi": "/ਅਧਿਆਪਕ/ਸਾਲ",
+        "Malayalam": "/അധ്യാപകൻ/വർഷം", "Odia": "/ଶିକ୍ଷକ/ବର୍ଷ"
     },
     "Start Pro": {
         "English": "Start Pro", "Hindi": "प्रो शुरू करें", "Kannada": "ಪ್ರೊ ಪ್ರಾರಂಭಿಸಿ",
-        "Tamil": "Start Pro", "Telugu": "Start Pro", "Marathi": "Start Pro",
-        "Bengali": "Start Pro", "Gujarati": "Start Pro", "Punjabi": "Start Pro",
-        "Malayalam": "Start Pro", "Odia": "Start Pro"
+        "Tamil": "Pro தொடங்கு", "Telugu": "Pro ప్రారంభించండి", "Marathi": "Pro सुरू करा",
+        "Bengali": "Pro শুরু করুন", "Gujarati": "Pro શરૂ કરો", "Punjabi": "Pro ਸ਼ੁਰੂ ਕਰੋ",
+        "Malayalam": "Pro ആരംഭിക്കുക", "Odia": "Pro ଆରମ୍ଭ କରନ୍ତୁ"
     },
     "Book a school demo": {
         "English": "Book a school demo", "Hindi": "स्कूल डेमो बुक करें", "Kannada": "ಸ್ಕೂಲ್ ಡೆಮೊ ಬುಕ್ ಮಾಡಿ",
-        "Tamil": "Book a school demo", "Telugu": "Book a school demo", "Marathi": "Book a school demo",
-        "Bengali": "Book a school demo", "Gujarati": "Book a school demo", "Punjabi": "Book a school demo",
-        "Malayalam": "Book a school demo", "Odia": "Book a school demo"
+        "Tamil": "பள்ளி டெமோ புக் செய்யுங்கள்", "Telugu": "స్కూల్ డెమో బుక్ చేయండి", "Marathi": "शाळेचा डेमो बुक करा",
+        "Bengali": "স্কুল ডেমো বুক করুন", "Gujarati": "શાળા ડેમો બુક કરો", "Punjabi": "ਸਕੂਲ ਡੈਮੋ ਬੁੱਕ ਕਰੋ",
+        "Malayalam": "സ്കൂൾ ഡെമോ ബുക്ക് ചെയ്യുക", "Odia": "ସ୍କୁଲ୍ ଡେମୋ ବୁକ୍ କରନ୍ତୁ"
     },
     "Your plan": {
         "English": "Your plan", "Hindi": "आपका प्लान", "Kannada": "ನಿಮ್ಮ ಪ್ಲಾನ್",
-        "Tamil": "Your plan", "Telugu": "Your plan", "Marathi": "Your plan",
-        "Bengali": "Your plan", "Gujarati": "Your plan", "Punjabi": "Your plan",
-        "Malayalam": "Your plan", "Odia": "Your plan"
+        "Tamil": "உங்கள் திட்டம்", "Telugu": "మీ ప్లాన్", "Marathi": "आपला प्लॅन",
+        "Bengali": "আপনার প্ল্যান", "Gujarati": "તમારો પ્લાન", "Punjabi": "ਤੁਹਾਡਾ ਪਲਾਨ",
+        "Malayalam": "നിങ്ങളുടെ പ്ലാൻ", "Odia": "ଆପଣଙ୍କ ପ୍ଲାନ୍"
     },
     "Tax included": {
         "English": "Tax included", "Hindi": "टैक्स शामिल", "Kannada": "ತೆರಿಗೆ ಸೇರಿದೆ",
-        "Tamil": "Tax included", "Telugu": "Tax included", "Marathi": "Tax included",
-        "Bengali": "Tax included", "Gujarati": "Tax included", "Punjabi": "Tax included",
-        "Malayalam": "Tax included", "Odia": "Tax included"
+        "Tamil": "வரி உட்பட", "Telugu": "పన్ను కలిపి", "Marathi": "कर समाविष्ट",
+        "Bengali": "কর অন্তর্ভুক্ত", "Gujarati": "કર સામેલ", "Punjabi": "ਟੈਕਸ ਸ਼ਾਮਲ",
+        "Malayalam": "നികുതി ഉൾപ്പെടെ", "Odia": "କର ଅନ୍ତର୍ଭୁକ୍ତ"
     },
     "7-day refund. Cancel anytime.": {
         "English": "7-day refund. Cancel anytime.", "Hindi": "7 दिन का रिफंड। कभी भी रद्द करें।", "Kannada": "7 ದಿನಗಳ ಮರುಪಾವತಿ. ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಿ.",
-        "Tamil": "7-day refund. Cancel anytime.", "Telugu": "7-day refund. Cancel anytime.", "Marathi": "7-day refund. Cancel anytime.",
-        "Bengali": "7-day refund. Cancel anytime.", "Gujarati": "7-day refund. Cancel anytime.", "Punjabi": "7-day refund. Cancel anytime.",
-        "Malayalam": "7-day refund. Cancel anytime.", "Odia": "7-day refund. Cancel anytime."
+        "Tamil": "7-நாள் பணத்திரும்ப பெறல். எப்போது வேண்டுமானாலும் ரத்து செய்யலாம்.", "Telugu": "7-రోజుల రీఫండ్. ఎప్పుడైనా రద్దు చేయవచ్చు.", "Marathi": "7-दिवसांचा परतावा. कधीही रद्द करा.",
+        "Bengali": "7-দিনের রিফান্ড। যেকোনো সময় বাতিল করুন।", "Gujarati": "7-દિવસનું રિફંડ. ગમે ત્યારે રદ કરો.", "Punjabi": "7-ਦਿਨ ਦੀ ਵਾਪਸੀ। ਕਦੇ ਵੀ ਰੱਦ ਕਰੋ।",
+        "Malayalam": "7-ദിവസത്തെ റീഫണ്ട്. എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം.", "Odia": "7-ଦିନର ରିଫଣ୍ଡ୍। ଯେକୌଣସି ସମୟରେ ବାତିଲ କରନ୍ତୁ।"
     },
     // Terms TL;DR (plain-language summary)
     "In plain words": {
         "English": "In plain words", "Hindi": "आसान शब्दों में", "Kannada": "ಸುಲಭ ಪದಗಳಲ್ಲಿ",
-        "Tamil": "In plain words", "Telugu": "In plain words", "Marathi": "In plain words",
-        "Bengali": "In plain words", "Gujarati": "In plain words", "Punjabi": "In plain words",
-        "Malayalam": "In plain words", "Odia": "In plain words"
+        "Tamil": "எளிய வார்த்தைகளில்", "Telugu": "సులభమైన మాటల్లో", "Marathi": "सोप्या शब्दांत",
+        "Bengali": "সহজ কথায়", "Gujarati": "સરળ શબ્દોમાં", "Punjabi": "ਸਾਧਾਰਨ ਸ਼ਬਦਾਂ ਵਿੱਚ",
+        "Malayalam": "ലളിതമായ വാക്കുകളിൽ", "Odia": "ସରଳ ଶବ୍ଦରେ"
     },
     "Whatever you create with SahayakAI is yours.": {
         "English": "Whatever you create with SahayakAI is yours.",
         "Hindi": "आप SahayakAI से जो भी बनाते हैं, वह आपका है।",
         "Kannada": "SahayakAI ನೊಂದಿಗೆ ನೀವು ಏನು ರಚಿಸುತ್ತೀರೋ ಅದು ನಿಮ್ಮದು.",
-        "Tamil": "Whatever you create with SahayakAI is yours.", "Telugu": "Whatever you create with SahayakAI is yours.", "Marathi": "Whatever you create with SahayakAI is yours.",
-        "Bengali": "Whatever you create with SahayakAI is yours.", "Gujarati": "Whatever you create with SahayakAI is yours.", "Punjabi": "Whatever you create with SahayakAI is yours.",
-        "Malayalam": "Whatever you create with SahayakAI is yours.", "Odia": "Whatever you create with SahayakAI is yours."
+        "Tamil": "SahayakAI உடன் நீங்கள் உருவாக்குவது எதுவாக இருந்தாலும் அது உங்களுடையது.",
+        "Telugu": "SahayakAI తో మీరు సృష్టించేది ఏదైనా మీదే.",
+        "Marathi": "SahayakAI सह तुम्ही जे काही तयार करता ते तुमचे आहे.",
+        "Bengali": "SahayakAI দিয়ে আপনি যা কিছু তৈরি করেন তা আপনার।",
+        "Gujarati": "SahayakAI સાથે તમે જે કંઈ બનાવો છો તે તમારું છે.",
+        "Punjabi": "SahayakAI ਨਾਲ ਤੁਸੀਂ ਜੋ ਵੀ ਬਣਾਉਂਦੇ ਹੋ, ਉਹ ਤੁਹਾਡਾ ਹੈ।",
+        "Malayalam": "SahayakAI ഉപയോഗിച്ച് നിങ്ങൾ സൃഷ്ടിക്കുന്നതെന്തും നിങ്ങളുടേതാണ്.",
+        "Odia": "SahayakAI ସହିତ ଆପଣ ଯାହା ସୃଷ୍ଟି କରନ୍ତି, ତାହା ଆପଣଙ୍କର।"
     },
     "You can cancel anytime. 7-day refund on any paid plan.": {
         "English": "You can cancel anytime. 7-day refund on any paid plan.",
         "Hindi": "आप कभी भी रद्द कर सकते हैं। किसी भी भुगतान प्लान पर 7 दिन का रिफंड।",
         "Kannada": "ನೀವು ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಬಹುದು. ಯಾವುದೇ ಪಾವತಿ ಪ್ಲಾನ್‌ನಲ್ಲಿ 7 ದಿನಗಳ ಮರುಪಾವತಿ.",
-        "Tamil": "You can cancel anytime. 7-day refund on any paid plan.", "Telugu": "You can cancel anytime. 7-day refund on any paid plan.", "Marathi": "You can cancel anytime. 7-day refund on any paid plan.",
-        "Bengali": "You can cancel anytime. 7-day refund on any paid plan.", "Gujarati": "You can cancel anytime. 7-day refund on any paid plan.", "Punjabi": "You can cancel anytime. 7-day refund on any paid plan.",
-        "Malayalam": "You can cancel anytime. 7-day refund on any paid plan.", "Odia": "You can cancel anytime. 7-day refund on any paid plan."
+        "Tamil": "நீங்கள் எப்போது வேண்டுமானாலும் ரத்து செய்யலாம். எந்த பணம் செலுத்தும் திட்டத்திலும் 7-நாள் பணத்திரும்ப பெறல்.",
+        "Telugu": "మీరు ఎప్పుడైనా రద్దు చేయవచ్చు. ఏ చెల్లింపు ప్లాన్‌పైనైనా 7-రోజుల రీఫండ్.",
+        "Marathi": "तुम्ही कधीही रद्द करू शकता. कोणत्याही सशुल्क प्लॅनवर 7-दिवसांचा परतावा.",
+        "Bengali": "আপনি যেকোনো সময় বাতিল করতে পারেন। যেকোনো পেইড প্ল্যানে 7-দিনের রিফান্ড।",
+        "Gujarati": "તમે ગમે ત્યારે રદ કરી શકો છો. કોઈપણ પેઇડ પ્લાન પર 7-દિવસનું રિફંડ.",
+        "Punjabi": "ਤੁਸੀਂ ਕਦੇ ਵੀ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ। ਕਿਸੇ ਵੀ ਅਦਾਇਗੀ ਪਲਾਨ 'ਤੇ 7-ਦਿਨ ਦੀ ਵਾਪਸੀ।",
+        "Malayalam": "നിങ്ങൾക്ക് എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം. ഏതൊരു പണമടച്ച പ്ലാനിലും 7-ദിവസത്തെ റീഫണ്ട്.",
+        "Odia": "ଆପଣ ଯେକୌଣସି ସମୟରେ ବାତିଲ କରିପାରିବେ। ଯେକୌଣସି ଦେୟ ପ୍ଲାନ୍‌ରେ 7-ଦିନର ରିଫଣ୍ଡ୍।"
     },
     "Your data stays in India and you control it.": {
         "English": "Your data stays in India and you control it.",
         "Hindi": "आपका डेटा भारत में रहता है और उस पर आपका नियंत्रण है।",
         "Kannada": "ನಿಮ್ಮ ಡೇಟಾ ಭಾರತದಲ್ಲಿ ಇರುತ್ತದೆ ಮತ್ತು ಅದನ್ನು ನೀವೇ ನಿಯಂತ್ರಿಸುತ್ತೀರಿ.",
-        "Tamil": "Your data stays in India and you control it.", "Telugu": "Your data stays in India and you control it.", "Marathi": "Your data stays in India and you control it.",
-        "Bengali": "Your data stays in India and you control it.", "Gujarati": "Your data stays in India and you control it.", "Punjabi": "Your data stays in India and you control it.",
-        "Malayalam": "Your data stays in India and you control it.", "Odia": "Your data stays in India and you control it."
+        "Tamil": "உங்கள் தரவு இந்தியாவில் இருக்கிறது மற்றும் அதை நீங்கள் கட்டுப்படுத்துகிறீர்கள்.",
+        "Telugu": "మీ డేటా భారతదేశంలోనే ఉంటుంది మరియు మీరే దానిని నియంత్రిస్తారు.",
+        "Marathi": "तुमचा डेटा भारतात राहतो आणि तुम्ही त्यावर नियंत्रण ठेवता.",
+        "Bengali": "আপনার ডেটা ভারতে থাকে এবং আপনি এটি নিয়ন্ত্রণ করেন।",
+        "Gujarati": "તમારો ડેટા ભારતમાં રહે છે અને તમે તેને નિયંત્રિત કરો છો.",
+        "Punjabi": "ਤੁਹਾਡਾ ਡਾਟਾ ਭਾਰਤ ਵਿੱਚ ਰਹਿੰਦਾ ਹੈ ਅਤੇ ਤੁਸੀਂ ਇਸਨੂੰ ਕੰਟਰੋਲ ਕਰਦੇ ਹੋ।",
+        "Malayalam": "നിങ്ങളുടെ ഡാറ്റ ഇന്ത്യയിൽ തന്നെ തുടരുന്നു, അത് നിങ്ങൾ നിയന്ത്രിക്കുന്നു.",
+        "Odia": "ଆପଣଙ୍କ ଡାଟା ଭାରତରେ ରହେ ଏବଂ ଆପଣ ଏହାକୁ ନିୟନ୍ତ୍ରଣ କରନ୍ତି।"
     },
     "SahayakAI never asks for student personal data.": {
         "English": "SahayakAI never asks for student personal data.",
         "Hindi": "SahayakAI कभी भी छात्रों का निजी डेटा नहीं मांगता।",
         "Kannada": "SahayakAI ಎಂದಿಗೂ ವಿದ್ಯಾರ್ಥಿಗಳ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಕೇಳುವುದಿಲ್ಲ.",
-        "Tamil": "SahayakAI never asks for student personal data.", "Telugu": "SahayakAI never asks for student personal data.", "Marathi": "SahayakAI never asks for student personal data.",
-        "Bengali": "SahayakAI never asks for student personal data.", "Gujarati": "SahayakAI never asks for student personal data.", "Punjabi": "SahayakAI never asks for student personal data.",
-        "Malayalam": "SahayakAI never asks for student personal data.", "Odia": "SahayakAI never asks for student personal data."
+        "Tamil": "SahayakAI மாணவர்களின் தனிப்பட்ட தரவை ஒருபோதும் கேட்பதில்லை.",
+        "Telugu": "SahayakAI విద్యార్థుల వ్యక్తిగత డేటాను ఎప్పుడూ అడగదు.",
+        "Marathi": "SahayakAI कधीही विद्यार्थ्यांचा वैयक्तिक डेटा मागत नाही.",
+        "Bengali": "SahayakAI কখনোই শিক্ষার্থীদের ব্যক্তিগত ডেটা চায় না।",
+        "Gujarati": "SahayakAI ક્યારેય વિદ્યાર્થીઓનો વ્યક્તિગત ડેટા માંગતું નથી.",
+        "Punjabi": "SahayakAI ਕਦੇ ਵੀ ਵਿਦਿਆਰਥੀਆਂ ਦਾ ਨਿੱਜੀ ਡਾਟਾ ਨਹੀਂ ਮੰਗਦਾ।",
+        "Malayalam": "SahayakAI വിദ്യാർത്ഥികളുടെ വ്യക്തിഗത ഡാറ്റ ഒരിക്കലും ചോദിക്കുന്നില്ല.",
+        "Odia": "SahayakAI କେବେ ବି ଛାତ୍ରମାନଙ୍କର ବ୍ୟକ୍ତିଗତ ଡାଟା ମାଗେ ନାହିଁ।"
     },
     "If there is a problem, email grievance@sargvision.com. We respond within 7 days.": {
         "English": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
         "Hindi": "अगर कोई समस्या है, तो grievance@sargvision.com पर ईमेल करें। हम 7 दिनों के भीतर जवाब देते हैं।",
         "Kannada": "ಸಮಸ್ಯೆ ಇದ್ದರೆ, grievance@sargvision.com ಗೆ ಇಮೇಲ್ ಮಾಡಿ. ನಾವು 7 ದಿನಗಳೊಳಗೆ ಉತ್ತರಿಸುತ್ತೇವೆ.",
-        "Tamil": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Telugu": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Marathi": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
-        "Bengali": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Gujarati": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Punjabi": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
-        "Malayalam": "If there is a problem, email grievance@sargvision.com. We respond within 7 days.", "Odia": "If there is a problem, email grievance@sargvision.com. We respond within 7 days."
+        "Tamil": "சிக்கல் இருந்தால், grievance@sargvision.com க்கு மின்னஞ்சல் அனுப்பவும். நாங்கள் 7 நாட்களுக்குள் பதிலளிப்போம்.",
+        "Telugu": "సమస్య ఉంటే, grievance@sargvision.com కు ఇమెయిల్ చేయండి. మేము 7 రోజుల్లోపు స్పందిస్తాము.",
+        "Marathi": "समस्या असल्यास, grievance@sargvision.com वर ईमेल करा. आम्ही 7 दिवसांच्या आत प्रतिसाद देतो.",
+        "Bengali": "কোনো সমস্যা হলে, grievance@sargvision.com এ ইমেইল করুন। আমরা 7 দিনের মধ্যে উত্তর দিই।",
+        "Gujarati": "જો કોઈ સમસ્યા હોય, તો grievance@sargvision.com પર ઇમેઇલ કરો. અમે 7 દિવસની અંદર જવાબ આપીએ છીએ.",
+        "Punjabi": "ਜੇ ਕੋਈ ਸਮੱਸਿਆ ਹੈ, ਤਾਂ grievance@sargvision.com 'ਤੇ ਈਮੇਲ ਕਰੋ। ਅਸੀਂ 7 ਦਿਨਾਂ ਦੇ ਅੰਦਰ ਜਵਾਬ ਦਿੰਦੇ ਹਾਂ।",
+        "Malayalam": "ഒരു പ്രശ്നമുണ്ടെങ്കിൽ, grievance@sargvision.com ൽ ഇമെയിൽ അയയ്ക്കുക. ഞങ്ങൾ 7 ദിവസത്തിനുള്ളിൽ മറുപടി നൽകുന്നു.",
+        "Odia": "କୌଣସି ସମସ୍ୟା ଥିଲେ, grievance@sargvision.com କୁ ଇମେଲ୍ କରନ୍ତୁ। ଆମେ 7 ଦିନ ମଧ୍ୟରେ ଉତ୍ତର ଦେଉଛୁ।"
     },
     "Full legal terms below": {
         "English": "Full legal terms below", "Hindi": "नीचे पूर्ण कानूनी शर्तें", "Kannada": "ಕೆಳಗೆ ಪೂರ್ಣ ಕಾನೂನು ನಿಯಮಗಳು",
-        "Tamil": "Full legal terms below", "Telugu": "Full legal terms below", "Marathi": "Full legal terms below",
-        "Bengali": "Full legal terms below", "Gujarati": "Full legal terms below", "Punjabi": "Full legal terms below",
-        "Malayalam": "Full legal terms below", "Odia": "Full legal terms below"
+        "Tamil": "முழு சட்டப் பிரிவுகள் கீழே", "Telugu": "పూర్తి చట్టపరమైన నిబంధనలు క్రింద", "Marathi": "खाली संपूर्ण कायदेशीर अटी",
+        "Bengali": "নিচে সম্পূর্ণ আইনি শর্তাবলী", "Gujarati": "નીચે સંપૂર્ણ કાનૂની શરતો", "Punjabi": "ਹੇਠਾਂ ਪੂਰੀਆਂ ਕਾਨੂੰਨੀ ਸ਼ਰਤਾਂ",
+        "Malayalam": "പൂർണ്ണ നിയമ നിബന്ധനകൾ താഴെ", "Odia": "ତଳେ ସଂପୂର୍ଣ୍ଣ ଆଇନଗତ ସର୍ତ୍ତାବଳୀ"
     },
     "Terms of Service": {
         "English": "Terms of Service", "Hindi": "सेवा की शर्तें", "Kannada": "ಸೇವಾ ನಿಯಮಗಳು",
-        "Tamil": "Terms of Service", "Telugu": "Terms of Service", "Marathi": "Terms of Service",
-        "Bengali": "Terms of Service", "Gujarati": "Terms of Service", "Punjabi": "Terms of Service",
-        "Malayalam": "Terms of Service", "Odia": "Terms of Service"
+        "Tamil": "சேவை விதிமுறைகள்", "Telugu": "సేవా నిబంధనలు", "Marathi": "सेवा अटी",
+        "Bengali": "পরিষেবার শর্তাবলী", "Gujarati": "સેવાની શરતો", "Punjabi": "ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ",
+        "Malayalam": "സേവന നിബന്ധനകൾ", "Odia": "ସେବା ସର୍ତ୍ତାବଳୀ"
     },
     "Legal": {
         "English": "Legal", "Hindi": "कानूनी", "Kannada": "ಕಾನೂನು",
-        "Tamil": "Legal", "Telugu": "Legal", "Marathi": "Legal",
-        "Bengali": "Legal", "Gujarati": "Legal", "Punjabi": "Legal",
-        "Malayalam": "Legal", "Odia": "Legal"
+        "Tamil": "சட்டம்", "Telugu": "చట్టపరమైన", "Marathi": "कायदेशीर",
+        "Bengali": "আইনি", "Gujarati": "કાનૂની", "Punjabi": "ਕਾਨੂੰਨੀ",
+        "Malayalam": "നിയമപരം", "Odia": "ଆଇନଗତ"
     },
     // Post-consent confirmation (added for rural-teacher UX)
     "All set": {
         "English": "All set", "Hindi": "तैयार है", "Kannada": "ಸಿದ್ಧವಾಗಿದೆ",
-        "Tamil": "All set", "Telugu": "All set", "Marathi": "All set",
-        "Bengali": "All set", "Gujarati": "All set", "Punjabi": "All set",
-        "Malayalam": "All set", "Odia": "All set"
+        "Tamil": "தயார்", "Telugu": "సిద్ధం", "Marathi": "तयार आहे",
+        "Bengali": "প্রস্তুত", "Gujarati": "તૈયાર છે", "Punjabi": "ਤਿਆਰ ਹੈ",
+        "Malayalam": "തയ്യാർ", "Odia": "ପ୍ରସ୍ତୁତ"
     },
     "Thank you!": {
         "English": "Thank you!", "Hindi": "धन्यवाद!", "Kannada": "ಧನ್ಯವಾದಗಳು!",
-        "Tamil": "Thank you!", "Telugu": "Thank you!", "Marathi": "Thank you!",
-        "Bengali": "Thank you!", "Gujarati": "Thank you!", "Punjabi": "Thank you!",
-        "Malayalam": "Thank you!", "Odia": "Thank you!"
+        "Tamil": "நன்றி!", "Telugu": "ధన్యవాదాలు!", "Marathi": "धन्यवाद!",
+        "Bengali": "ধন্যবাদ!", "Gujarati": "આભાર!", "Punjabi": "ਧੰਨਵਾਦ!",
+        "Malayalam": "നന്ദി!", "Odia": "ଧନ୍ୟବାଦ!"
     },
     "Thank you! Your privacy choices are saved.": {
         "English": "Thank you! Your privacy choices are saved.",
         "Hindi": "धन्यवाद! आपकी निजता की पसंद सुरक्षित हो गई है।",
         "Kannada": "ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಗೌಪ್ಯತೆಯ ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ.",
-        "Tamil": "Thank you! Your privacy choices are saved.",
-        "Telugu": "Thank you! Your privacy choices are saved.",
-        "Marathi": "Thank you! Your privacy choices are saved.",
-        "Bengali": "Thank you! Your privacy choices are saved.",
-        "Gujarati": "Thank you! Your privacy choices are saved.",
-        "Punjabi": "Thank you! Your privacy choices are saved.",
-        "Malayalam": "Thank you! Your privacy choices are saved.",
-        "Odia": "Thank you! Your privacy choices are saved."
+        "Tamil": "நன்றி! உங்கள் தனியுரிமை விருப்பங்கள் சேமிக்கப்பட்டன.",
+        "Telugu": "ధన్యవాదాలు! మీ గోప్యతా ఎంపికలు సేవ్ చేయబడ్డాయి.",
+        "Marathi": "धन्यवाद! तुमच्या गोपनीयतेच्या निवडी जतन केल्या आहेत.",
+        "Bengali": "ধন্যবাদ! আপনার গোপনীয়তা পছন্দগুলি সংরক্ষিত হয়েছে।",
+        "Gujarati": "આભાર! તમારી ગોપનીયતા પસંદગીઓ સાચવવામાં આવી છે.",
+        "Punjabi": "ਧੰਨਵਾਦ! ਤੁਹਾਡੀਆਂ ਪਰਦੇਦਾਰੀ ਚੋਣਾਂ ਸੁਰੱਖਿਅਤ ਹੋ ਗਈਆਂ ਹਨ।",
+        "Malayalam": "നന്ദി! നിങ്ങളുടെ സ്വകാര്യതാ തിരഞ്ഞെടുപ്പുകൾ സംരക്ഷിച്ചു.",
+        "Odia": "ଧନ୍ୟବାଦ! ଆପଣଙ୍କ ଗୋପନୀୟତା ପସନ୍ଦଗୁଡିକ ସଞ୍ଚୟ ହୋଇଛି।"
     },
     "You agreed to these privacy terms.": {
         "English": "You agreed to these privacy terms.",
         "Hindi": "आपने इन निजता शर्तों से सहमति दी है।",
         "Kannada": "ನೀವು ಈ ಗೌಪ್ಯತಾ ನಿಯಮಗಳನ್ನು ಒಪ್ಪಿಕೊಂಡಿದ್ದೀರಿ.",
-        "Tamil": "You agreed to these privacy terms.",
-        "Telugu": "You agreed to these privacy terms.",
-        "Marathi": "You agreed to these privacy terms.",
-        "Bengali": "You agreed to these privacy terms.",
-        "Gujarati": "You agreed to these privacy terms.",
-        "Punjabi": "You agreed to these privacy terms.",
-        "Malayalam": "You agreed to these privacy terms.",
-        "Odia": "You agreed to these privacy terms."
+        "Tamil": "இந்த தனியுரிமை விதிமுறைகளுக்கு நீங்கள் ஒப்புக்கொண்டீர்கள்.",
+        "Telugu": "మీరు ఈ గోప్యతా నిబంధనలకు అంగీకరించారు.",
+        "Marathi": "तुम्ही या गोपनीयता अटींना सहमती दिली आहे.",
+        "Bengali": "আপনি এই গোপনীয়তা শর্তাবলীতে সম্মত হয়েছেন।",
+        "Gujarati": "તમે આ ગોપનીયતા શરતો સાથે સંમત થયા છો.",
+        "Punjabi": "ਤੁਸੀਂ ਇਹਨਾਂ ਪਰਦੇਦਾਰੀ ਸ਼ਰਤਾਂ ਨਾਲ ਸਹਿਮਤ ਹੋਏ ਹੋ।",
+        "Malayalam": "ഈ സ്വകാര്യതാ നിബന്ധനകൾ നിങ്ങൾ അംഗീകരിച്ചു.",
+        "Odia": "ଆପଣ ଏହି ଗୋପନୀୟତା ସର୍ତ୍ତାବଳୀକୁ ସମ୍ମତ ହୋଇଛନ୍ତି।"
     },
     "Go to my dashboard": {
         "English": "Go to my dashboard", "Hindi": "मेरे डैशबोर्ड पर जाएं", "Kannada": "ನನ್ನ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ",
-        "Tamil": "Go to my dashboard", "Telugu": "Go to my dashboard", "Marathi": "Go to my dashboard",
-        "Bengali": "Go to my dashboard", "Gujarati": "Go to my dashboard", "Punjabi": "Go to my dashboard",
-        "Malayalam": "Go to my dashboard", "Odia": "Go to my dashboard"
+        "Tamil": "எனது டாஷ்போர்டுக்கு செல்", "Telugu": "నా డాష్‌బోర్డ్‌కు వెళ్లండి", "Marathi": "माझ्या डॅशबोर्डवर जा",
+        "Bengali": "আমার ড্যাশবোর্ডে যান", "Gujarati": "મારા ડેશબોર્ડ પર જાઓ", "Punjabi": "ਮੇਰੇ ਡੈਸ਼ਬੋਰਡ 'ਤੇ ਜਾਓ",
+        "Malayalam": "എന്റെ ഡാഷ്ബോർഡിലേക്ക് പോകുക", "Odia": "ମୋ ଡ୍ୟାସବୋର୍ଡକୁ ଯାଆନ୍ତୁ"
     },
     "Taking you there in": {
         "English": "Taking you there in", "Hindi": "आपको ले जा रहे हैं", "Kannada": "ನಿಮ್ಮನ್ನು ಕರೆದೊಯ್ಯಲಾಗುತ್ತಿದೆ",
-        "Tamil": "Taking you there in", "Telugu": "Taking you there in", "Marathi": "Taking you there in",
-        "Bengali": "Taking you there in", "Gujarati": "Taking you there in", "Punjabi": "Taking you there in",
-        "Malayalam": "Taking you there in", "Odia": "Taking you there in"
+        "Tamil": "உங்களை அழைத்துச் செல்கிறோம்", "Telugu": "మిమ్మల్ని తీసుకువెళుతున్నాం", "Marathi": "तुम्हाला नेत आहोत",
+        "Bengali": "আপনাকে নিয়ে যাচ্ছি", "Gujarati": "તમને લઈ જઈ રહ્યા છીએ", "Punjabi": "ਤੁਹਾਨੂੰ ਲਿਜਾ ਰਹੇ ਹਾਂ",
+        "Malayalam": "നിങ്ങളെ കൊണ്ടുപോകുന്നു", "Odia": "ଆପଣଙ୍କୁ ନେଇଯାଉଛୁ"
     },
     "Taking you to your dashboard…": {
         "English": "Taking you to your dashboard…",
         "Hindi": "आपको आपके डैशबोर्ड पर ले जा रहे हैं…",
         "Kannada": "ನಿಮ್ಮನ್ನು ನಿಮ್ಮ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಕರೆದೊಯ್ಯಲಾಗುತ್ತಿದೆ…",
-        "Tamil": "Taking you to your dashboard…",
-        "Telugu": "Taking you to your dashboard…",
-        "Marathi": "Taking you to your dashboard…",
-        "Bengali": "Taking you to your dashboard…",
-        "Gujarati": "Taking you to your dashboard…",
-        "Punjabi": "Taking you to your dashboard…",
-        "Malayalam": "Taking you to your dashboard…",
-        "Odia": "Taking you to your dashboard…"
+        "Tamil": "உங்களை உங்கள் டாஷ்போர்டுக்கு அழைத்துச் செல்கிறோம்…",
+        "Telugu": "మిమ్మల్ని మీ డాష్‌బోర్డ్‌కు తీసుకువెళుతున్నాం…",
+        "Marathi": "तुम्हाला तुमच्या डॅशबोर्डवर नेत आहोत…",
+        "Bengali": "আপনাকে আপনার ড্যাশবোর্ডে নিয়ে যাচ্ছি…",
+        "Gujarati": "તમને તમારા ડેશબોર્ડ પર લઈ જઈ રહ્યા છીએ…",
+        "Punjabi": "ਤੁਹਾਨੂੰ ਤੁਹਾਡੇ ਡੈਸ਼ਬੋਰਡ 'ਤੇ ਲਿਜਾ ਰਹੇ ਹਾਂ…",
+        "Malayalam": "നിങ്ങളെ നിങ്ങളുടെ ഡാഷ്ബോർഡിലേക്ക് കൊണ്ടുപോകുന്നു…",
+        "Odia": "ଆପଣଙ୍କୁ ଆପଣଙ୍କ ଡ୍ୟାସବୋର୍ଡକୁ ନେଇଯାଉଛୁ…"
     },
     "Saved on": {
         "English": "Saved on", "Hindi": "सहेजा गया", "Kannada": "ಉಳಿಸಲಾಗಿದೆ",
-        "Tamil": "Saved on", "Telugu": "Saved on", "Marathi": "Saved on",
-        "Bengali": "Saved on", "Gujarati": "Saved on", "Punjabi": "Saved on",
-        "Malayalam": "Saved on", "Odia": "Saved on"
+        "Tamil": "சேமிக்கப்பட்டது", "Telugu": "సేవ్ చేయబడింది", "Marathi": "जतन केले",
+        "Bengali": "সংরক্ষিত", "Gujarati": "સાચવ્યું", "Punjabi": "ਸੁਰੱਖਿਅਤ ਕੀਤਾ",
+        "Malayalam": "സംരക്ഷിച്ചു", "Odia": "ସଞ୍ଚିତ"
     },
     "We will ask you again only if we change anything important.": {
         "English": "We will ask you again only if we change anything important.",
         "Hindi": "अगर हम कुछ महत्वपूर्ण बदलेंगे, तभी हम आपसे फिर पूछेंगे।",
         "Kannada": "ಯಾವುದೇ ಪ್ರಮುಖ ಬದಲಾವಣೆಯಿದ್ದರೆ ಮಾತ್ರ ನಾವು ನಿಮ್ಮನ್ನು ಮತ್ತೆ ಕೇಳುತ್ತೇವೆ.",
-        "Tamil": "We will ask you again only if we change anything important.",
-        "Telugu": "We will ask you again only if we change anything important.",
-        "Marathi": "We will ask you again only if we change anything important.",
-        "Bengali": "We will ask you again only if we change anything important.",
-        "Gujarati": "We will ask you again only if we change anything important.",
-        "Punjabi": "We will ask you again only if we change anything important.",
-        "Malayalam": "We will ask you again only if we change anything important.",
-        "Odia": "We will ask you again only if we change anything important."
+        "Tamil": "ஏதேனும் முக்கியமான மாற்றம் செய்தால் மட்டுமே நாங்கள் மீண்டும் கேட்போம்.",
+        "Telugu": "ముఖ్యమైనది ఏదైనా మారిస్తేనే మేము మిమ్మల్ని మళ్లీ అడుగుతాము.",
+        "Marathi": "जर आम्ही महत्त्वाचे काही बदलले तरच आम्ही पुन्हा विचारू.",
+        "Bengali": "যদি আমরা গুরুত্বপূর্ণ কিছু পরিবর্তন করি তবেই আমরা আবার জিজ্ঞাসা করব।",
+        "Gujarati": "જો અમે કંઈ મહત્વપૂર્ણ બદલીશું, તો જ અમે તમને ફરી પૂછીશું.",
+        "Punjabi": "ਜੇ ਅਸੀਂ ਕੁਝ ਮਹੱਤਵਪੂਰਨ ਬਦਲਾਂਗੇ, ਤਾਂ ਹੀ ਅਸੀਂ ਤੁਹਾਨੂੰ ਫਿਰ ਪੁੱਛਾਂਗੇ।",
+        "Malayalam": "പ്രധാനപ്പെട്ടത് എന്തെങ്കിലും മാറ്റിയാൽ മാത്രം ഞങ്ങൾ വീണ്ടും ചോദിക്കും.",
+        "Odia": "ଯଦି ଆମେ କିଛି ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ବଦଳାଇବୁ, ତେବେ ଆମେ ଆପଣଙ୍କୁ ପୁନଃ ପଚାରିବୁ।"
     },
     // Pricing: volume table + School Starter rail (2026-04-24)
     "Volume pricing": {
         "English": "Volume pricing", "Hindi": "वॉल्यूम मूल्य", "Kannada": "ಪ್ರಮಾಣದ ಬೆಲೆ",
-        "Tamil": "Volume pricing", "Telugu": "Volume pricing", "Marathi": "Volume pricing",
-        "Bengali": "Volume pricing", "Gujarati": "Volume pricing", "Punjabi": "Volume pricing",
-        "Malayalam": "Volume pricing", "Odia": "Volume pricing"
+        "Tamil": "அளவு விலை நிர்ணயம்", "Telugu": "వాల్యూమ్ ధర", "Marathi": "व्हॉल्यूम किंमत",
+        "Bengali": "ভলিউম মূল্য", "Gujarati": "વોલ્યુમ કિંમત", "Punjabi": "ਵੌਲਿਊਮ ਕੀਮਤ",
+        "Malayalam": "വോളിയം വില", "Odia": "ଭଲ୍ୟୁମ୍ ମୂଲ୍ୟ"
     },
     "Custom quote": {
         "English": "Custom quote", "Hindi": "कस्टम कोट", "Kannada": "ಕಸ್ಟಮ್ ಕೋಟ್",
-        "Tamil": "Custom quote", "Telugu": "Custom quote", "Marathi": "Custom quote",
-        "Bengali": "Custom quote", "Gujarati": "Custom quote", "Punjabi": "Custom quote",
-        "Malayalam": "Custom quote", "Odia": "Custom quote"
+        "Tamil": "தனிப்பயன் மேற்கோள்", "Telugu": "కస్టమ్ కోట్", "Marathi": "कस्टम कोट",
+        "Bengali": "কাস্টম কোট", "Gujarati": "કસ્ટમ કોટ", "Punjabi": "ਕਸਟਮ ਕੋਟ",
+        "Malayalam": "കസ്റ്റം ക്വോട്ട്", "Odia": "କଷ୍ଟମ୍ କୋଟ୍"
     },
     "Minimum 20 teachers · billed annually": {
         "English": "Minimum 20 teachers · billed annually",
         "Hindi": "न्यूनतम 20 शिक्षक · वार्षिक बिलिंग",
         "Kannada": "ಕನಿಷ್ಠ 20 ಶಿಕ್ಷಕರು · ವಾರ್ಷಿಕ ಬಿಲ್",
-        "Tamil": "Minimum 20 teachers · billed annually", "Telugu": "Minimum 20 teachers · billed annually", "Marathi": "Minimum 20 teachers · billed annually",
-        "Bengali": "Minimum 20 teachers · billed annually", "Gujarati": "Minimum 20 teachers · billed annually", "Punjabi": "Minimum 20 teachers · billed annually",
-        "Malayalam": "Minimum 20 teachers · billed annually", "Odia": "Minimum 20 teachers · billed annually"
+        "Tamil": "குறைந்தபட்சம் 20 ஆசிரியர்கள் · வருடாந்திர பில்லிங்", "Telugu": "కనిష్ఠం 20 ఉపాధ్యాయులు · వార్షిక బిల్లింగ్", "Marathi": "किमान 20 शिक्षक · वार्षिक बिलिंग",
+        "Bengali": "ন্যূনতম 20 জন শিক্ষক · বার্ষিক বিলিং", "Gujarati": "ઓછામાં ઓછા 20 શિક્ષકો · વાર્ષિક બિલિંગ", "Punjabi": "ਘੱਟੋ-ਘੱਟ 20 ਅਧਿਆਪਕ · ਸਾਲਾਨਾ ਬਿਲਿੰਗ",
+        "Malayalam": "കുറഞ്ഞത് 20 അധ്യാപകർ · വാർഷിക ബില്ലിംഗ്", "Odia": "ସର୍ବନିମ୍ନ 20 ଶିକ୍ଷକ · ବାର୍ଷିକ ବିଲିଂ"
     },
     "School Starter": {
         "English": "School Starter", "Hindi": "स्कूल स्टार्टर", "Kannada": "ಸ್ಕೂಲ್ ಸ್ಟಾರ್ಟರ್",
@@ -1668,259 +1693,264 @@ const dictionary: Record<string, Record<Language, string>> = {
         "English": "For small schools (5–19 teachers)",
         "Hindi": "छोटे स्कूलों के लिए (5–19 शिक्षक)",
         "Kannada": "ಚಿಕ್ಕ ಶಾಲೆಗಳಿಗಾಗಿ (5–19 ಶಿಕ್ಷಕರು)",
-        "Tamil": "For small schools (5–19 teachers)", "Telugu": "For small schools (5–19 teachers)", "Marathi": "For small schools (5–19 teachers)",
-        "Bengali": "For small schools (5–19 teachers)", "Gujarati": "For small schools (5–19 teachers)", "Punjabi": "For small schools (5–19 teachers)",
-        "Malayalam": "For small schools (5–19 teachers)", "Odia": "For small schools (5–19 teachers)"
+        "Tamil": "சிறு பள்ளிகளுக்கு (5–19 ஆசிரியர்கள்)", "Telugu": "చిన్న పాఠశాలల కోసం (5–19 ఉపాధ్యాయులు)", "Marathi": "लहान शाळांसाठी (5–19 शिक्षक)",
+        "Bengali": "ছোট স্কুলের জন্য (5–19 জন শিক্ষক)", "Gujarati": "નાની શાળાઓ માટે (5–19 શિક્ષકો)", "Punjabi": "ਛੋਟੇ ਸਕੂਲਾਂ ਲਈ (5–19 ਅਧਿਆਪਕ)",
+        "Malayalam": "ചെറിയ സ്കൂളുകൾക്കായി (5–19 അധ്യാപകർ)", "Odia": "ଛୋଟ ସ୍କୁଲ୍ ପାଇଁ (5–19 ଶିକ୍ଷକ)"
     },
     "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.": {
         "English": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
         "Hindi": "हर शिक्षक के लिए Pro की सभी सुविधाएँ, साथ में एक सरल प्रिंसिपल डैशबोर्ड और ऑनबोर्डिंग सहायता। 20 शिक्षकों की कोई न्यूनतम सीमा नहीं।",
         "Kannada": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ Pro ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳು, ಜೊತೆಗೆ ಸರಳ ಪ್ರಿನ್ಸಿಪಾಲ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮತ್ತು ಆನ್‌ಬೋರ್ಡಿಂಗ್ ಸಹಾಯ. 20 ಶಿಕ್ಷಕರ ಕನಿಷ್ಠ ಮಿತಿ ಇಲ್ಲ.",
-        "Tamil": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Telugu": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Marathi": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Bengali": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Gujarati": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Punjabi": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Malayalam": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum.",
-        "Odia": "Everything in Pro for every teacher, plus a simple principal dashboard and onboarding help. No 20-teacher minimum."
+        "Tamil": "ஒவ்வொரு ஆசிரியருக்கும் Pro இல் உள்ள அனைத்தும், கூடுதலாக ஒரு எளிய principal டாஷ்போர்டு மற்றும் onboarding உதவி. 20-ஆசிரியர் குறைந்தபட்சம் இல்லை.",
+        "Telugu": "ప్రతి ఉపాధ్యాయుడికి Pro లోని అన్ని ఫీచర్లు, పాటు సాధారణ principal డాష్‌బోర్డ్ మరియు onboarding సహాయం. 20-ఉపాధ్యాయుల కనీస పరిమితి లేదు.",
+        "Marathi": "प्रत्येक शिक्षकासाठी Pro मधील सर्व काही, तसेच एक साधा principal डॅशबोर्ड आणि onboarding मदत. 20-शिक्षक किमान मर्यादा नाही.",
+        "Bengali": "প্রতিটি শিক্ষকের জন্য Pro এর সবকিছু, সাথে একটি সাধারণ principal ড্যাশবোর্ড এবং onboarding সহায়তা। 20-শিক্ষক ন্যূনতম নেই।",
+        "Gujarati": "દરેક શિક્ષક માટે Pro માં બધું જ, સાથે એક સરળ principal ડેશબોર્ડ અને onboarding સહાય. 20-શિક્ષક ન્યૂનતમ નથી.",
+        "Punjabi": "ਹਰੇਕ ਅਧਿਆਪਕ ਲਈ Pro ਵਿੱਚ ਸਭ ਕੁਝ, ਨਾਲ ਹੀ ਇੱਕ ਸਧਾਰਨ principal ਡੈਸ਼ਬੋਰਡ ਅਤੇ onboarding ਮਦਦ। 20-ਅਧਿਆਪਕ ਘੱਟੋ-ਘੱਟ ਨਹੀਂ।",
+        "Malayalam": "ഓരോ അധ്യാപകനും Pro ലെ എല്ലാം, കൂടാതെ ലളിതമായ principal ഡാഷ്ബോർഡും onboarding സഹായവും. 20-അധ്യാപക മിനിമം ഇല്ല.",
+        "Odia": "ପ୍ରତ୍ୟେକ ଶିକ୍ଷକଙ୍କ ପାଇଁ Pro ର ସବୁକିଛି, ସହିତ ଏକ ସରଳ principal ଡ୍ୟାସବୋର୍ଡ ଏବଂ onboarding ସହାୟତା। 20-ଶିକ୍ଷକ ସର୍ବନିମ୍ନ ନାହିଁ।"
     },
     "Pricing tailored to your school. We come to you.": {
         "English": "Pricing tailored to your school. We come to you.",
         "Hindi": "आपके स्कूल के अनुसार मूल्य। हम आपके पास आते हैं।",
         "Kannada": "ನಿಮ್ಮ ಶಾಲೆಗೆ ಅನುಗುಣವಾಗಿ ಬೆಲೆ. ನಾವು ನಿಮ್ಮ ಬಳಿಗೆ ಬರುತ್ತೇವೆ.",
-        "Tamil": "Pricing tailored to your school. We come to you.",
-        "Telugu": "Pricing tailored to your school. We come to you.",
-        "Marathi": "Pricing tailored to your school. We come to you.",
-        "Bengali": "Pricing tailored to your school. We come to you.",
-        "Gujarati": "Pricing tailored to your school. We come to you.",
-        "Punjabi": "Pricing tailored to your school. We come to you.",
-        "Malayalam": "Pricing tailored to your school. We come to you.",
-        "Odia": "Pricing tailored to your school. We come to you."
+        "Tamil": "உங்கள் பள்ளிக்கு ஏற்ப விலை. நாங்கள் உங்களிடம் வருகிறோம்.",
+        "Telugu": "మీ పాఠశాలకు అనుగుణంగా ధర. మేము మీ వద్దకు వస్తాము.",
+        "Marathi": "तुमच्या शाळेनुसार किंमत. आम्ही तुमच्याकडे येतो.",
+        "Bengali": "আপনার স্কুলের জন্য তৈরি মূল্য। আমরা আপনার কাছে আসি।",
+        "Gujarati": "તમારી શાળાને અનુરૂપ કિંમત. અમે તમારી પાસે આવીએ છીએ.",
+        "Punjabi": "ਤੁਹਾਡੇ ਸਕੂਲ ਅਨੁਸਾਰ ਕੀਮਤ। ਅਸੀਂ ਤੁਹਾਡੇ ਕੋਲ ਆਉਂਦੇ ਹਾਂ।",
+        "Malayalam": "നിങ്ങളുടെ സ്കൂളിന് അനുയോജ്യമായ വില. ഞങ്ങൾ നിങ്ങളുടെ അടുത്തേക്ക് വരുന്നു.",
+        "Odia": "ଆପଣଙ୍କ ସ୍କୁଲ୍ ପାଇଁ ଉପଯୁକ୍ତ ମୂଲ୍ୟ। ଆମେ ଆପଣଙ୍କ ପାଖକୁ ଆସୁଛୁ।"
     },
     "Book a small-school call": {
         "English": "Book a small-school call", "Hindi": "छोटे-स्कूल कॉल बुक करें", "Kannada": "ಚಿಕ್ಕ-ಶಾಲೆ ಕರೆ ಬುಕ್ ಮಾಡಿ",
-        "Tamil": "Book a small-school call", "Telugu": "Book a small-school call", "Marathi": "Book a small-school call",
-        "Bengali": "Book a small-school call", "Gujarati": "Book a small-school call", "Punjabi": "Book a small-school call",
-        "Malayalam": "Book a small-school call", "Odia": "Book a small-school call"
+        "Tamil": "சிறு பள்ளி அழைப்பை புக் செய்யுங்கள்", "Telugu": "చిన్న పాఠశాల కాల్ బుక్ చేయండి", "Marathi": "लहान शाळेचा कॉल बुक करा",
+        "Bengali": "ছোট স্কুল কল বুক করুন", "Gujarati": "નાની-શાળા કૉલ બુક કરો", "Punjabi": "ਛੋਟੇ-ਸਕੂਲ ਕਾਲ ਬੁੱਕ ਕਰੋ",
+        "Malayalam": "ചെറിയ-സ്കൂൾ കോൾ ബുക്ക് ചെയ്യുക", "Odia": "ଛୋଟ-ସ୍କୁଲ କଲ୍ ବୁକ୍ କରନ୍ତୁ"
     },
     // ---- /pricing tier feature bullets (2026-04-25 i18n fix) ----
     // Free
     "10 lesson plans per month": {
         "English": "10 lesson plans per month", "Hindi": "10 पाठ योजनाएँ प्रति माह", "Kannada": "ತಿಂಗಳಿಗೆ 10 ಪಾಠ ಯೋಜನೆಗಳು",
-        "Tamil": "10 lesson plans per month", "Telugu": "10 lesson plans per month", "Marathi": "10 lesson plans per month",
-        "Bengali": "10 lesson plans per month", "Gujarati": "10 lesson plans per month", "Punjabi": "10 lesson plans per month",
-        "Malayalam": "10 lesson plans per month", "Odia": "10 lesson plans per month"
+        "Tamil": "மாதத்திற்கு 10 பாடத் திட்டங்கள்", "Telugu": "నెలకు 10 పాఠ ప్రణాళికలు", "Marathi": "महिन्याला 10 पाठ योजना",
+        "Bengali": "প্রতি মাসে 10টি পাঠ পরিকল্পনা", "Gujarati": "મહિને 10 પાઠ યોજનાઓ", "Punjabi": "ਮਹੀਨੇ ਵਿੱਚ 10 ਪਾਠ ਯੋਜਨਾਵਾਂ",
+        "Malayalam": "മാസത്തിൽ 10 പാഠ പദ്ധതികൾ", "Odia": "ମାସରେ 10ଟି ପାଠ ଯୋଜନା"
     },
     "5 quizzes + 5 worksheets per month": {
         "English": "5 quizzes + 5 worksheets per month",
         "Hindi": "5 क्विज़ + 5 वर्कशीट प्रति माह",
         "Kannada": "ತಿಂಗಳಿಗೆ 5 ಕ್ವಿಜ್ + 5 ವರ್ಕ್‌ಶೀಟ್‌ಗಳು",
-        "Tamil": "5 quizzes + 5 worksheets per month", "Telugu": "5 quizzes + 5 worksheets per month", "Marathi": "5 quizzes + 5 worksheets per month",
-        "Bengali": "5 quizzes + 5 worksheets per month", "Gujarati": "5 quizzes + 5 worksheets per month", "Punjabi": "5 quizzes + 5 worksheets per month",
-        "Malayalam": "5 quizzes + 5 worksheets per month", "Odia": "5 quizzes + 5 worksheets per month"
+        "Tamil": "மாதத்திற்கு 5 quizzes + 5 worksheets", "Telugu": "నెలకు 5 quizzes + 5 worksheets", "Marathi": "महिन्याला 5 quizzes + 5 worksheets",
+        "Bengali": "প্রতি মাসে 5টি quizzes + 5টি worksheets", "Gujarati": "મહિને 5 quizzes + 5 worksheets", "Punjabi": "ਮਹੀਨੇ ਵਿੱਚ 5 quizzes + 5 worksheets",
+        "Malayalam": "മാസത്തിൽ 5 quizzes + 5 worksheets", "Odia": "ମାସରେ 5ଟି quizzes + 5ଟି worksheets"
     },
     "20 instant answers per day": {
         "English": "20 instant answers per day",
         "Hindi": "20 तुरंत जवाब प्रति दिन",
         "Kannada": "ದಿನಕ್ಕೆ 20 ತತ್‌ಕ್ಷಣ ಉತ್ತರಗಳು",
-        "Tamil": "20 instant answers per day", "Telugu": "20 instant answers per day", "Marathi": "20 instant answers per day",
-        "Bengali": "20 instant answers per day", "Gujarati": "20 instant answers per day", "Punjabi": "20 instant answers per day",
-        "Malayalam": "20 instant answers per day", "Odia": "20 instant answers per day"
+        "Tamil": "தினமும் 20 உடனடி பதில்கள்", "Telugu": "రోజుకు 20 తక్షణ సమాధానాలు", "Marathi": "दररोज 20 त्वरित उत्तरे",
+        "Bengali": "প্রতিদিন 20টি তাত্ক্ষণিক উত্তর", "Gujarati": "દિવસે 20 તાત્કાલિક જવાબો", "Punjabi": "ਰੋਜ਼ਾਨਾ 20 ਤੁਰੰਤ ਜਵਾਬ",
+        "Malayalam": "ദിവസവും 20 തൽക്ഷണ ഉത്തരങ്ങൾ", "Odia": "ଦୈନିକ 20ଟି ତତକ୍ଷଣ ଉତ୍ତର"
     },
     "Voice in 11 Indian languages": {
         "English": "Voice in 11 Indian languages",
         "Hindi": "11 भारतीय भाषाओं में वॉयस",
         "Kannada": "11 ಭಾರತೀಯ ಭಾಷೆಗಳಲ್ಲಿ ಧ್ವನಿ",
-        "Tamil": "Voice in 11 Indian languages", "Telugu": "Voice in 11 Indian languages", "Marathi": "Voice in 11 Indian languages",
-        "Bengali": "Voice in 11 Indian languages", "Gujarati": "Voice in 11 Indian languages", "Punjabi": "Voice in 11 Indian languages",
-        "Malayalam": "Voice in 11 Indian languages", "Odia": "Voice in 11 Indian languages"
+        "Tamil": "11 இந்திய மொழிகளில் குரல்", "Telugu": "11 భారతీయ భాషల్లో వాయిస్", "Marathi": "11 भारतीय भाषांमध्ये व्हॉइस",
+        "Bengali": "11টি ভারতীয় ভাষায় ভয়েস", "Gujarati": "11 ભારતીય ભાષાઓમાં વૉઇસ", "Punjabi": "11 ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਵੌਇਸ",
+        "Malayalam": "11 ഇന്ത്യൻ ഭാഷകളിൽ വോയ്സ്", "Odia": "11ଟି ଭାରତୀୟ ଭାଷାରେ ଭଏସ୍"
     },
     "Community library access": {
         "English": "Community library access",
         "Hindi": "कम्युनिटी लाइब्रेरी का उपयोग",
         "Kannada": "ಸಮುದಾಯ ಗ್ರಂಥಾಲಯ ಪ್ರವೇಶ",
-        "Tamil": "Community library access", "Telugu": "Community library access", "Marathi": "Community library access",
-        "Bengali": "Community library access", "Gujarati": "Community library access", "Punjabi": "Community library access",
-        "Malayalam": "Community library access", "Odia": "Community library access"
+        "Tamil": "சமூக நூலக அணுகல்", "Telugu": "కమ్యూనిటీ లైబ్రరీ యాక్సెస్", "Marathi": "समुदाय ग्रंथालय प्रवेश",
+        "Bengali": "কমিউনিটি লাইব্রেরি অ্যাক্সেস", "Gujarati": "કમ્યુનિટી લાઇબ્રેરી ઍક્સેસ", "Punjabi": "ਕਮਿਊਨਿਟੀ ਲਾਇਬ੍ਰੇਰੀ ਪਹੁੰਚ",
+        "Malayalam": "കമ്മ്യൂണിറ്റി ലൈബ്രറി ആക്സസ്", "Odia": "କମ୍ୟୁନିଟି ଲାଇବ୍ରେରୀ ପ୍ରବେଶ"
     },
     "Basic impact dashboard": {
         "English": "Basic impact dashboard",
         "Hindi": "बेसिक इम्पैक्ट डैशबोर्ड",
         "Kannada": "ಮೂಲ ಪ್ರಭಾವ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
-        "Tamil": "Basic impact dashboard", "Telugu": "Basic impact dashboard", "Marathi": "Basic impact dashboard",
-        "Bengali": "Basic impact dashboard", "Gujarati": "Basic impact dashboard", "Punjabi": "Basic impact dashboard",
-        "Malayalam": "Basic impact dashboard", "Odia": "Basic impact dashboard"
+        "Tamil": "அடிப்படை தாக்க டாஷ்போர்டு", "Telugu": "ప్రాథమిక ప్రభావ డాష్‌బోర్డ్", "Marathi": "मूलभूत प्रभाव डॅशबोर्ड",
+        "Bengali": "মৌলিক প্রভাব ড্যাশবোর্ড", "Gujarati": "મૂળભૂત ઇમ્પેક્ટ ડેશબોર્ડ", "Punjabi": "ਬੁਨਿਆਦੀ ਪ੍ਰਭਾਵ ਡੈਸ਼ਬੋਰਡ",
+        "Malayalam": "അടിസ്ഥാന ഇംപാക്ട് ഡാഷ്ബോർഡ്", "Odia": "ମୌଳିକ ପ୍ରଭାବ ଡ୍ୟାସବୋର୍ଡ"
     },
     // Pro
     "All 6 tools unlocked": {
         "English": "All 6 tools unlocked",
         "Hindi": "सभी 6 टूल अनलॉक",
         "Kannada": "ಎಲ್ಲ 6 ಪರಿಕರಗಳು ಅನ್‌ಲಾಕ್",
-        "Tamil": "All 6 tools unlocked", "Telugu": "All 6 tools unlocked", "Marathi": "All 6 tools unlocked",
-        "Bengali": "All 6 tools unlocked", "Gujarati": "All 6 tools unlocked", "Punjabi": "All 6 tools unlocked",
-        "Malayalam": "All 6 tools unlocked", "Odia": "All 6 tools unlocked"
+        "Tamil": "அனைத்து 6 கருவிகளும் அன்லாக்", "Telugu": "అన్ని 6 సాధనాలు అన్‌లాక్", "Marathi": "सर्व 6 साधने अनलॉक",
+        "Bengali": "সব 6টি টুল আনলক", "Gujarati": "બધાં 6 ટૂલ્સ અનલૉક", "Punjabi": "ਸਾਰੇ 6 ਟੂਲ ਅਨਲੌਕ",
+        "Malayalam": "എല്ലാ 6 ഉപകരണങ്ങളും അൺലോക്ക്", "Odia": "ସମସ୍ତ 6ଟି ଟୁଲ୍ ଅନଲକ୍"
     },
     "25 lesson plans per month": {
         "English": "25 lesson plans per month",
         "Hindi": "25 पाठ योजनाएँ प्रति माह",
         "Kannada": "ತಿಂಗಳಿಗೆ 25 ಪಾಠ ಯೋಜನೆಗಳು",
-        "Tamil": "25 lesson plans per month", "Telugu": "25 lesson plans per month", "Marathi": "25 lesson plans per month",
-        "Bengali": "25 lesson plans per month", "Gujarati": "25 lesson plans per month", "Punjabi": "25 lesson plans per month",
-        "Malayalam": "25 lesson plans per month", "Odia": "25 lesson plans per month"
+        "Tamil": "மாதத்திற்கு 25 பாடத் திட்டங்கள்", "Telugu": "నెలకు 25 పాఠ ప్రణాళికలు", "Marathi": "महिन्याला 25 पाठ योजना",
+        "Bengali": "প্রতি মাসে 25টি পাঠ পরিকল্পনা", "Gujarati": "મહિને 25 પાઠ યોજનાઓ", "Punjabi": "ਮਹੀਨੇ ਵਿੱਚ 25 ਪਾਠ ਯੋਜਨਾਵਾਂ",
+        "Malayalam": "മാസത്തിൽ 25 പാഠ പദ്ധതികൾ", "Odia": "ମାସରେ 25ଟି ପାଠ ଯୋଜନା"
     },
     "25 quizzes per month": {
         "English": "25 quizzes per month",
         "Hindi": "25 क्विज़ प्रति माह",
         "Kannada": "ತಿಂಗಳಿಗೆ 25 ಕ್ವಿಜ್‌ಗಳು",
-        "Tamil": "25 quizzes per month", "Telugu": "25 quizzes per month", "Marathi": "25 quizzes per month",
-        "Bengali": "25 quizzes per month", "Gujarati": "25 quizzes per month", "Punjabi": "25 quizzes per month",
-        "Malayalam": "25 quizzes per month", "Odia": "25 quizzes per month"
+        "Tamil": "மாதத்திற்கு 25 quizzes", "Telugu": "నెలకు 25 quizzes", "Marathi": "महिन्याला 25 quizzes",
+        "Bengali": "প্রতি মাসে 25টি quizzes", "Gujarati": "મહિને 25 quizzes", "Punjabi": "ਮਹੀਨੇ ਵਿੱਚ 25 quizzes",
+        "Malayalam": "മാസത്തിൽ 25 quizzes", "Odia": "ମାସରେ 25ଟି quizzes"
     },
     "Unlimited worksheets and rubrics": {
         "English": "Unlimited worksheets and rubrics",
         "Hindi": "असीमित वर्कशीट और रूब्रिक",
         "Kannada": "ಅಪರಿಮಿತ ವರ್ಕ್‌ಶೀಟ್ ಮತ್ತು ರೂಬ್ರಿಕ್‌ಗಳು",
-        "Tamil": "Unlimited worksheets and rubrics", "Telugu": "Unlimited worksheets and rubrics", "Marathi": "Unlimited worksheets and rubrics",
-        "Bengali": "Unlimited worksheets and rubrics", "Gujarati": "Unlimited worksheets and rubrics", "Punjabi": "Unlimited worksheets and rubrics",
-        "Malayalam": "Unlimited worksheets and rubrics", "Odia": "Unlimited worksheets and rubrics"
+        "Tamil": "வரம்பற்ற worksheets மற்றும் rubrics", "Telugu": "పరిమితి లేని worksheets మరియు rubrics", "Marathi": "अमर्यादित worksheets आणि rubrics",
+        "Bengali": "সীমাহীন worksheets এবং rubrics", "Gujarati": "અમર્યાદિત worksheets અને rubrics", "Punjabi": "ਅਣਗਿਣਤ worksheets ਅਤੇ rubrics",
+        "Malayalam": "പരിധിയില്ലാത്ത worksheets ഉം rubrics ഉം", "Odia": "ଅସୀମିତ worksheets ଏବଂ rubrics"
     },
     "Unlimited instant answers": {
         "English": "Unlimited instant answers",
         "Hindi": "असीमित तुरंत जवाब",
         "Kannada": "ಅಪರಿಮಿತ ತತ್‌ಕ್ಷಣ ಉತ್ತರಗಳು",
-        "Tamil": "Unlimited instant answers", "Telugu": "Unlimited instant answers", "Marathi": "Unlimited instant answers",
-        "Bengali": "Unlimited instant answers", "Gujarati": "Unlimited instant answers", "Punjabi": "Unlimited instant answers",
-        "Malayalam": "Unlimited instant answers", "Odia": "Unlimited instant answers"
+        "Tamil": "வரம்பற்ற உடனடி பதில்கள்", "Telugu": "పరిమితి లేని తక్షణ సమాధానాలు", "Marathi": "अमर्यादित त्वरित उत्तरे",
+        "Bengali": "সীমাহীন তাত্ক্ষণিক উত্তর", "Gujarati": "અમર્યાદિત તાત્કાલિક જવાબો", "Punjabi": "ਅਣਗਿਣਤ ਤੁਰੰਤ ਜਵਾਬ",
+        "Malayalam": "പരിധിയില്ലാത്ത തൽക്ഷണ ഉത്തരങ്ങൾ", "Odia": "ଅସୀମିତ ତତକ୍ଷଣ ଉତ୍ତର"
     },
     "300 voice cloud minutes per month": {
         "English": "300 voice cloud minutes per month",
         "Hindi": "300 वॉयस क्लाउड मिनट प्रति माह",
         "Kannada": "ತಿಂಗಳಿಗೆ 300 ಧ್ವನಿ ಕ್ಲೌಡ್ ನಿಮಿಷಗಳು",
-        "Tamil": "300 voice cloud minutes per month", "Telugu": "300 voice cloud minutes per month", "Marathi": "300 voice cloud minutes per month",
-        "Bengali": "300 voice cloud minutes per month", "Gujarati": "300 voice cloud minutes per month", "Punjabi": "300 voice cloud minutes per month",
-        "Malayalam": "300 voice cloud minutes per month", "Odia": "300 voice cloud minutes per month"
+        "Tamil": "மாதத்திற்கு 300 voice cloud நிமிடங்கள்", "Telugu": "నెలకు 300 voice cloud నిమిషాలు", "Marathi": "महिन्याला 300 voice cloud मिनिटे",
+        "Bengali": "প্রতি মাসে 300 voice cloud মিনিট", "Gujarati": "મહિને 300 voice cloud મિનિટ", "Punjabi": "ਮਹੀਨੇ ਵਿੱਚ 300 voice cloud ਮਿੰਟ",
+        "Malayalam": "മാസത്തിൽ 300 voice cloud മിനിറ്റുകൾ", "Odia": "ମାସରେ 300ଟି voice cloud ମିନିଟ୍"
     },
     "Download as PDF or Word (no watermark)": {
         "English": "Download as PDF or Word (no watermark)",
         "Hindi": "PDF या Word में डाउनलोड करें (बिना वॉटरमार्क)",
         "Kannada": "PDF ಅಥವಾ Word ರೂಪದಲ್ಲಿ ಡೌನ್‌ಲೋಡ್ (ವಾಟರ್‌ಮಾರ್ಕ್ ಇಲ್ಲ)",
-        "Tamil": "Download as PDF or Word (no watermark)", "Telugu": "Download as PDF or Word (no watermark)", "Marathi": "Download as PDF or Word (no watermark)",
-        "Bengali": "Download as PDF or Word (no watermark)", "Gujarati": "Download as PDF or Word (no watermark)", "Punjabi": "Download as PDF or Word (no watermark)",
-        "Malayalam": "Download as PDF or Word (no watermark)", "Odia": "Download as PDF or Word (no watermark)"
+        "Tamil": "PDF அல்லது Word ஆக டவுன்லோட் செய்யுங்கள் (வாட்டர்மார்க் இல்லை)",
+        "Telugu": "PDF లేదా Word గా డౌన్‌లోడ్ చేయండి (వాటర్‌మార్క్ లేదు)",
+        "Marathi": "PDF किंवा Word म्हणून डाउनलोड करा (वॉटरमार्क नाही)",
+        "Bengali": "PDF বা Word হিসাবে ডাউনলোড করুন (কোনো ওয়াটারমার্ক নেই)",
+        "Gujarati": "PDF અથવા Word તરીકે ડાઉનલોડ કરો (કોઈ વૉટરમાર્ક નહીં)",
+        "Punjabi": "PDF ਜਾਂ Word ਵਜੋਂ ਡਾਊਨਲੋਡ ਕਰੋ (ਕੋਈ ਵਾਟਰਮਾਰਕ ਨਹੀਂ)",
+        "Malayalam": "PDF അല്ലെങ്കിൽ Word ആയി ഡൗൺലോഡ് ചെയ്യുക (വാട്ടർമാർക്ക് ഇല്ല)",
+        "Odia": "PDF କିମ୍ବା Word ଭାବରେ ଡାଉନଲୋଡ୍ କରନ୍ତୁ (କୌଣସି ୱାଟରମାର୍କ ନାହିଁ)"
     },
     "AI-powered parent messages": {
         "English": "AI-powered parent messages",
         "Hindi": "AI-संचालित अभिभावक संदेश",
         "Kannada": "AI-ಚಾಲಿತ ಪೋಷಕ ಸಂದೇಶಗಳು",
-        "Tamil": "AI-powered parent messages", "Telugu": "AI-powered parent messages", "Marathi": "AI-powered parent messages",
-        "Bengali": "AI-powered parent messages", "Gujarati": "AI-powered parent messages", "Punjabi": "AI-powered parent messages",
-        "Malayalam": "AI-powered parent messages", "Odia": "AI-powered parent messages"
+        "Tamil": "AI-இயக்கும் பெற்றோர் செய்திகள்", "Telugu": "AI-ఆధారిత తల్లిదండ్రుల సందేశాలు", "Marathi": "AI-संचालित पालक संदेश",
+        "Bengali": "AI-চালিত অভিভাবক বার্তা", "Gujarati": "AI-સંચાલિત માતા-પિતા સંદેશા", "Punjabi": "AI-ਸੰਚਾਲਿਤ ਮਾਪੇ ਸੰਦੇਸ਼",
+        "Malayalam": "AI-ഉപയോഗിച്ച രക്ഷിതാവ് സന്ദേശങ്ങൾ", "Odia": "AI-ଚାଳିତ ଅଭିଭାବକ ବାର୍ତ୍ତା"
     },
     "Detailed impact dashboard": {
         "English": "Detailed impact dashboard",
         "Hindi": "विस्तृत इम्पैक्ट डैशबोर्ड",
         "Kannada": "ವಿವರವಾದ ಪ್ರಭಾವ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
-        "Tamil": "Detailed impact dashboard", "Telugu": "Detailed impact dashboard", "Marathi": "Detailed impact dashboard",
-        "Bengali": "Detailed impact dashboard", "Gujarati": "Detailed impact dashboard", "Punjabi": "Detailed impact dashboard",
-        "Malayalam": "Detailed impact dashboard", "Odia": "Detailed impact dashboard"
+        "Tamil": "விரிவான தாக்க டாஷ்போர்டு", "Telugu": "వివరణాత్మక ప్రభావ డాష్‌బోర్డ్", "Marathi": "तपशीलवार प्रभाव डॅशबोर्ड",
+        "Bengali": "বিস্তারিত প্রভাব ড্যাশবোর্ড", "Gujarati": "વિગતવાર ઇમ્પેક્ટ ડેશબોર્ડ", "Punjabi": "ਵਿਸਤ੍ਰਿਤ ਪ੍ਰਭਾਵ ਡੈਸ਼ਬੋਰਡ",
+        "Malayalam": "വിശദമായ ഇംപാക്ട് ഡാഷ്ബോർഡ്", "Odia": "ବିସ୍ତୃତ ପ୍ରଭାବ ଡ୍ୟାସବୋର୍ଡ"
     },
     // Gold
     "Everything in Pro, unlimited": {
         "English": "Everything in Pro, unlimited",
         "Hindi": "Pro में सब कुछ, असीमित",
         "Kannada": "Pro ನಲ್ಲಿ ಎಲ್ಲವೂ, ಅಪರಿಮಿತ",
-        "Tamil": "Everything in Pro, unlimited", "Telugu": "Everything in Pro, unlimited", "Marathi": "Everything in Pro, unlimited",
-        "Bengali": "Everything in Pro, unlimited", "Gujarati": "Everything in Pro, unlimited", "Punjabi": "Everything in Pro, unlimited",
-        "Malayalam": "Everything in Pro, unlimited", "Odia": "Everything in Pro, unlimited"
+        "Tamil": "Pro இல் உள்ள அனைத்தும், வரம்பற்றது", "Telugu": "Pro లోని అన్నీ, పరిమితి లేకుండా", "Marathi": "Pro मधील सर्व काही, अमर्यादित",
+        "Bengali": "Pro এর সবকিছু, সীমাহীন", "Gujarati": "Pro માં બધું જ, અમર્યાદિત", "Punjabi": "Pro ਵਿੱਚ ਸਭ ਕੁਝ, ਅਣਗਿਣਤ",
+        "Malayalam": "Pro ലെ എല്ലാം, പരിധിയില്ലാതെ", "Odia": "Pro ର ସବୁକିଛି, ଅସୀମିତ"
     },
     "Principal dashboard + teacher onboarding": {
         "English": "Principal dashboard + teacher onboarding",
         "Hindi": "प्रिंसिपल डैशबोर्ड + शिक्षक ऑनबोर्डिंग",
         "Kannada": "ಪ್ರಿನ್ಸಿಪಾಲ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ + ಶಿಕ್ಷಕರ ಆನ್‌ಬೋರ್ಡಿಂಗ್",
-        "Tamil": "Principal dashboard + teacher onboarding", "Telugu": "Principal dashboard + teacher onboarding", "Marathi": "Principal dashboard + teacher onboarding",
-        "Bengali": "Principal dashboard + teacher onboarding", "Gujarati": "Principal dashboard + teacher onboarding", "Punjabi": "Principal dashboard + teacher onboarding",
-        "Malayalam": "Principal dashboard + teacher onboarding", "Odia": "Principal dashboard + teacher onboarding"
+        "Tamil": "Principal டாஷ்போர்டு + ஆசிரியர் onboarding", "Telugu": "Principal డాష్‌బోర్డ్ + ఉపాధ్యాయ onboarding", "Marathi": "Principal डॅशबोर्ड + शिक्षक onboarding",
+        "Bengali": "Principal ড্যাশবোর্ড + শিক্ষক onboarding", "Gujarati": "Principal ડેશબોર્ડ + શિક્ષક onboarding", "Punjabi": "Principal ਡੈਸ਼ਬੋਰਡ + ਅਧਿਆਪਕ onboarding",
+        "Malayalam": "Principal ഡാഷ്ബോർഡ് + അധ്യാപക onboarding", "Odia": "Principal ଡ୍ୟାସବୋର୍ଡ + ଶିକ୍ଷକ onboarding"
     },
     "1,500 voice cloud minutes per teacher": {
         "English": "1,500 voice cloud minutes per teacher",
         "Hindi": "1,500 वॉयस क्लाउड मिनट प्रति शिक्षक",
         "Kannada": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ 1,500 ಧ್ವನಿ ಕ್ಲೌಡ್ ನಿಮಿಷಗಳು",
-        "Tamil": "1,500 voice cloud minutes per teacher", "Telugu": "1,500 voice cloud minutes per teacher", "Marathi": "1,500 voice cloud minutes per teacher",
-        "Bengali": "1,500 voice cloud minutes per teacher", "Gujarati": "1,500 voice cloud minutes per teacher", "Punjabi": "1,500 voice cloud minutes per teacher",
-        "Malayalam": "1,500 voice cloud minutes per teacher", "Odia": "1,500 voice cloud minutes per teacher"
+        "Tamil": "ஆசிரியருக்கு 1,500 voice cloud நிமிடங்கள்", "Telugu": "ఉపాధ్యాయుడికి 1,500 voice cloud నిమిషాలు", "Marathi": "शिक्षकामागे 1,500 voice cloud मिनिटे",
+        "Bengali": "প্রতি শিক্ষকের জন্য 1,500 voice cloud মিনিট", "Gujarati": "શિક્ષક દીઠ 1,500 voice cloud મિનિટ", "Punjabi": "ਪ੍ਰਤੀ ਅਧਿਆਪਕ 1,500 voice cloud ਮਿੰਟ",
+        "Malayalam": "ഓരോ അധ്യാപകനും 1,500 voice cloud മിനിറ്റുകൾ", "Odia": "ପ୍ରତି ଶିକ୍ଷକଙ୍କ ପାଇଁ 1,500ଟି voice cloud ମିନିଟ୍"
     },
     "WhatsApp Business integration": {
         "English": "WhatsApp Business integration",
         "Hindi": "WhatsApp Business एकीकरण",
         "Kannada": "WhatsApp Business ಸಂಯೋಜನೆ",
-        "Tamil": "WhatsApp Business integration", "Telugu": "WhatsApp Business integration", "Marathi": "WhatsApp Business integration",
-        "Bengali": "WhatsApp Business integration", "Gujarati": "WhatsApp Business integration", "Punjabi": "WhatsApp Business integration",
-        "Malayalam": "WhatsApp Business integration", "Odia": "WhatsApp Business integration"
+        "Tamil": "WhatsApp Business ஒருங்கிணைப்பு", "Telugu": "WhatsApp Business అనుసంధానం", "Marathi": "WhatsApp Business समाकलन",
+        "Bengali": "WhatsApp Business সংহতকরণ", "Gujarati": "WhatsApp Business સંકલન", "Punjabi": "WhatsApp Business ਏਕੀਕਰਨ",
+        "Malayalam": "WhatsApp Business സംയോജനം", "Odia": "WhatsApp Business ସମନ୍ୱୟ"
     },
     "Priority support in your timezone": {
         "English": "Priority support in your timezone",
         "Hindi": "आपके टाइमज़ोन में प्राथमिकता सहायता",
         "Kannada": "ನಿಮ್ಮ ಸಮಯ ವಲಯದಲ್ಲಿ ಆದ್ಯತೆಯ ಬೆಂಬಲ",
-        "Tamil": "Priority support in your timezone", "Telugu": "Priority support in your timezone", "Marathi": "Priority support in your timezone",
-        "Bengali": "Priority support in your timezone", "Gujarati": "Priority support in your timezone", "Punjabi": "Priority support in your timezone",
-        "Malayalam": "Priority support in your timezone", "Odia": "Priority support in your timezone"
+        "Tamil": "உங்கள் நேர மண்டலத்தில் முன்னுரிமை ஆதரவு", "Telugu": "మీ సమయ మండలంలో ప్రాధాన్యత మద్దతు", "Marathi": "तुमच्या टाइमझोनमध्ये प्राधान्य समर्थन",
+        "Bengali": "আপনার টাইমজোনে অগ্রাধিকার সহায়তা", "Gujarati": "તમારા ટાઇમઝોનમાં પ્રાથમિકતા સહાય", "Punjabi": "ਤੁਹਾਡੇ ਟਾਈਮਜ਼ੋਨ ਵਿੱਚ ਤਰਜੀਹੀ ਸਹਾਇਤਾ",
+        "Malayalam": "നിങ്ങളുടെ ടൈം‌സോണിൽ മുൻഗണനാ പിന്തുണ", "Odia": "ଆପଣଙ୍କ ଟାଇମଜୋନରେ ଅଗ୍ରାଧିକାର ସମର୍ଥନ"
     },
     "Volume discount for 50+ teachers": {
         "English": "Volume discount for 50+ teachers",
         "Hindi": "50+ शिक्षकों के लिए वॉल्यूम डिस्काउंट",
         "Kannada": "50+ ಶಿಕ್ಷಕರಿಗೆ ವಾಲ್ಯೂಮ್ ರಿಯಾಯಿತಿ",
-        "Tamil": "Volume discount for 50+ teachers", "Telugu": "Volume discount for 50+ teachers", "Marathi": "Volume discount for 50+ teachers",
-        "Bengali": "Volume discount for 50+ teachers", "Gujarati": "Volume discount for 50+ teachers", "Punjabi": "Volume discount for 50+ teachers",
-        "Malayalam": "Volume discount for 50+ teachers", "Odia": "Volume discount for 50+ teachers"
+        "Tamil": "50+ ஆசிரியர்களுக்கு வாலியூம் தள்ளுபடி", "Telugu": "50+ ఉపాధ్యాయులకు వాల్యూమ్ తగ్గింపు", "Marathi": "50+ शिक्षकांसाठी व्हॉल्यूम सूट",
+        "Bengali": "50+ শিক্ষকের জন্য ভলিউম ছাড়", "Gujarati": "50+ શિક્ષકો માટે વોલ્યુમ ડિસ્કાઉન્ટ", "Punjabi": "50+ ਅਧਿਆਪਕਾਂ ਲਈ ਵੌਲਿਊਮ ਛੋਟ",
+        "Malayalam": "50+ അധ്യാപകർക്ക് വോളിയം കിഴിവ്", "Odia": "50+ ଶିକ୍ଷକଙ୍କ ପାଇଁ ଭଲ୍ୟୁମ୍ ରିହାତି"
     },
     "One-time onboarding and training": {
         "English": "One-time onboarding and training",
         "Hindi": "एक बार की ऑनबोर्डिंग और प्रशिक्षण",
         "Kannada": "ಒಂದು-ಬಾರಿ ಆನ್‌ಬೋರ್ಡಿಂಗ್ ಮತ್ತು ತರಬೇತಿ",
-        "Tamil": "One-time onboarding and training", "Telugu": "One-time onboarding and training", "Marathi": "One-time onboarding and training",
-        "Bengali": "One-time onboarding and training", "Gujarati": "One-time onboarding and training", "Punjabi": "One-time onboarding and training",
-        "Malayalam": "One-time onboarding and training", "Odia": "One-time onboarding and training"
+        "Tamil": "ஒரு முறை onboarding மற்றும் பயிற்சி", "Telugu": "ఒక్కసారి onboarding మరియు శిక్షణ", "Marathi": "एकदाची onboarding आणि प्रशिक्षण",
+        "Bengali": "একবারের onboarding এবং প্রশিক্ষণ", "Gujarati": "એક વખતની onboarding અને તાલીમ", "Punjabi": "ਇੱਕ ਵਾਰ ਦੀ onboarding ਅਤੇ ਸਿਖਲਾਈ",
+        "Malayalam": "ഒറ്റത്തവണ onboarding ഉം പരിശീലനവും", "Odia": "ଗୋଟିଏ ଥର onboarding ଏବଂ ତାଲିମ"
     },
     // Volume tier labels
     "20–49 teachers": {
         "English": "20–49 teachers", "Hindi": "20–49 शिक्षक", "Kannada": "20–49 ಶಿಕ್ಷಕರು",
-        "Tamil": "20–49 teachers", "Telugu": "20–49 teachers", "Marathi": "20–49 teachers",
-        "Bengali": "20–49 teachers", "Gujarati": "20–49 teachers", "Punjabi": "20–49 teachers",
-        "Malayalam": "20–49 teachers", "Odia": "20–49 teachers"
+        "Tamil": "20–49 ஆசிரியர்கள்", "Telugu": "20–49 ఉపాధ్యాయులు", "Marathi": "20–49 शिक्षक",
+        "Bengali": "20–49 জন শিক্ষক", "Gujarati": "20–49 શિક્ષકો", "Punjabi": "20–49 ਅਧਿਆਪਕ",
+        "Malayalam": "20–49 അധ്യാപകർ", "Odia": "20–49 ଶିକ୍ଷକ"
     },
     "50–99 teachers": {
         "English": "50–99 teachers", "Hindi": "50–99 शिक्षक", "Kannada": "50–99 ಶಿಕ್ಷಕರು",
-        "Tamil": "50–99 teachers", "Telugu": "50–99 teachers", "Marathi": "50–99 teachers",
-        "Bengali": "50–99 teachers", "Gujarati": "50–99 teachers", "Punjabi": "50–99 teachers",
-        "Malayalam": "50–99 teachers", "Odia": "50–99 teachers"
+        "Tamil": "50–99 ஆசிரியர்கள்", "Telugu": "50–99 ఉపాధ్యాయులు", "Marathi": "50–99 शिक्षक",
+        "Bengali": "50–99 জন শিক্ষক", "Gujarati": "50–99 શિક્ષકો", "Punjabi": "50–99 ਅਧਿਆਪਕ",
+        "Malayalam": "50–99 അധ്യാപകർ", "Odia": "50–99 ଶିକ୍ଷକ"
     },
     "100–249 teachers": {
         "English": "100–249 teachers", "Hindi": "100–249 शिक्षक", "Kannada": "100–249 ಶಿಕ್ಷಕರು",
-        "Tamil": "100–249 teachers", "Telugu": "100–249 teachers", "Marathi": "100–249 teachers",
-        "Bengali": "100–249 teachers", "Gujarati": "100–249 teachers", "Punjabi": "100–249 teachers",
-        "Malayalam": "100–249 teachers", "Odia": "100–249 teachers"
+        "Tamil": "100–249 ஆசிரியர்கள்", "Telugu": "100–249 ఉపాధ్యాయులు", "Marathi": "100–249 शिक्षक",
+        "Bengali": "100–249 জন শিক্ষক", "Gujarati": "100–249 શિક્ષકો", "Punjabi": "100–249 ਅਧਿਆਪਕ",
+        "Malayalam": "100–249 അധ്യാപകർ", "Odia": "100–249 ଶିକ୍ଷକ"
     },
     "250+ teachers (custom quote)": {
         "English": "250+ teachers (custom quote)",
         "Hindi": "250+ शिक्षक (कस्टम कोट)",
         "Kannada": "250+ ಶಿಕ್ಷಕರು (ಕಸ್ಟಮ್ ಕೋಟ್)",
-        "Tamil": "250+ teachers (custom quote)", "Telugu": "250+ teachers (custom quote)", "Marathi": "250+ teachers (custom quote)",
-        "Bengali": "250+ teachers (custom quote)", "Gujarati": "250+ teachers (custom quote)", "Punjabi": "250+ teachers (custom quote)",
-        "Malayalam": "250+ teachers (custom quote)", "Odia": "250+ teachers (custom quote)"
+        "Tamil": "250+ ஆசிரியர்கள் (தனிப்பயன் மேற்கோள்)", "Telugu": "250+ ఉపాధ్యాయులు (కస్టమ్ కోట్)", "Marathi": "250+ शिक्षक (कस्टम कोट)",
+        "Bengali": "250+ জন শিক্ষক (কাস্টম কোট)", "Gujarati": "250+ શિક્ષકો (કસ્ટમ કોટ)", "Punjabi": "250+ ਅਧਿਆਪਕ (ਕਸਟਮ ਕੋਟ)",
+        "Malayalam": "250+ അധ്യാപകർ (കസ്റ്റം ക്വോട്ട്)", "Odia": "250+ ଶିକ୍ଷକ (କଷ୍ଟମ୍ କୋଟ୍)"
     },
     // Nav labels
     "Product": {
         "English": "Product", "Hindi": "उत्पाद", "Kannada": "ಉತ್ಪನ್ನ",
-        "Tamil": "Product", "Telugu": "Product", "Marathi": "Product",
-        "Bengali": "Product", "Gujarati": "Product", "Punjabi": "Product",
-        "Malayalam": "Product", "Odia": "Product"
+        "Tamil": "தயாரிப்பு", "Telugu": "ఉత్పత్తి", "Marathi": "उत्पादन",
+        "Bengali": "পণ্য", "Gujarati": "ઉત્પાદન", "Punjabi": "ਉਤਪਾਦ",
+        "Malayalam": "ഉൽപ്പന്നം", "Odia": "ଉତ୍ପାଦ"
     },
     "Pricing": {
         "English": "Pricing", "Hindi": "कीमत", "Kannada": "ಬೆಲೆ",
-        "Tamil": "Pricing", "Telugu": "Pricing", "Marathi": "Pricing",
-        "Bengali": "Pricing", "Gujarati": "Pricing", "Punjabi": "Pricing",
-        "Malayalam": "Pricing", "Odia": "Pricing"
+        "Tamil": "விலை", "Telugu": "ధర", "Marathi": "किंमत",
+        "Bengali": "মূল্য", "Gujarati": "કિંમત", "Punjabi": "ਕੀਮਤ",
+        "Malayalam": "വില", "Odia": "ମୂଲ୍ୟ"
     },
     // Premium enterprise differentiators (2026-04-24 pricing review)
     "Chains, government & 250+ teacher schools": {
@@ -1964,22 +1994,22 @@ const dictionary: Record<string, Record<Language, string>> = {
     },
     "Contact SARGVISION": {
         "English": "Contact SARGVISION", "Hindi": "SARGVISION से संपर्क करें", "Kannada": "SARGVISION ಅನ್ನು ಸಂಪರ್ಕಿಸಿ",
-        "Tamil": "Contact SARGVISION", "Telugu": "Contact SARGVISION", "Marathi": "Contact SARGVISION",
-        "Bengali": "Contact SARGVISION", "Gujarati": "Contact SARGVISION", "Punjabi": "Contact SARGVISION",
-        "Malayalam": "Contact SARGVISION", "Odia": "Contact SARGVISION"
+        "Tamil": "SARGVISION ஐ தொடர்பு கொள்ளவும்", "Telugu": "SARGVISION ను సంప్రదించండి", "Marathi": "SARGVISION शी संपर्क साधा",
+        "Bengali": "SARGVISION এর সাথে যোগাযোগ করুন", "Gujarati": "SARGVISION નો સંપર્ક કરો", "Punjabi": "SARGVISION ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+        "Malayalam": "SARGVISION നെ ബന്ധപ്പെടുക", "Odia": "SARGVISION ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ"
     },
     "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.": {
         "English": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
         "Hindi": "कर्नाटक और तेलंगाना में राज्य शिक्षा हितधारकों और Tier 2 स्कूल चेन के साथ जुड़ रहे हैं।",
         "Kannada": "ಕರ್ನಾಟಕ ಮತ್ತು ತೆಲಂಗಾಣದ ರಾಜ್ಯ ಶಿಕ್ಷಣ ಭಾಗೀದಾರರು ಮತ್ತು ಟಯರ್ 2 ಶಾಲಾ ಸರಪಳಿಗಳೊಂದಿಗೆ ತೊಡಗಿಸಿಕೊಂಡಿದ್ದೇವೆ.",
-        "Tamil": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Telugu": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Marathi": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Bengali": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Gujarati": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Punjabi": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Malayalam": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana.",
-        "Odia": "Engaging with state education stakeholders and Tier 2 school chains in Karnataka and Telangana."
+        "Tamil": "கர்நாடகா மற்றும் தெலுங்கானாவில் மாநில கல்வி பங்குதாரர்கள் மற்றும் Tier 2 பள்ளி சங்கிலிகளுடன் ஈடுபடுகிறோம்.",
+        "Telugu": "కర్ణాటక మరియు తెలంగాణలో రాష్ట్ర విద్యా భాగస్వాములు మరియు Tier 2 పాఠశాల చైన్‌లతో నిమగ్నమవుతున్నాము.",
+        "Marathi": "कर्नाटक आणि तेलंगणामध्ये राज्य शिक्षण भागधारक आणि Tier 2 शाळा साखळ्यांसोबत संलग्न आहोत.",
+        "Bengali": "কর্ণাটক এবং তেলেঙ্গানায় রাজ্য শিক্ষা অংশীদার এবং Tier 2 স্কুল চেইনের সাথে সংযুক্ত হচ্ছি।",
+        "Gujarati": "કર્ણાટક અને તેલંગાણામાં રાજ્ય શિક્ષણ હિતધારકો અને Tier 2 શાળા ચેઇન સાથે જોડાઈ રહ્યા છીએ.",
+        "Punjabi": "ਕਰਨਾਟਕ ਅਤੇ ਤੇਲੰਗਾਨਾ ਵਿੱਚ ਰਾਜ ਸਿੱਖਿਆ ਹਿੱਸੇਦਾਰਾਂ ਅਤੇ Tier 2 ਸਕੂਲ ਚੇਨਾਂ ਨਾਲ ਜੁੜ ਰਹੇ ਹਾਂ।",
+        "Malayalam": "കർണാടകത്തിലും തെലങ്കാനയിലും സംസ്ഥാന വിദ്യാഭ്യാസ പങ്കാളികളുമായും Tier 2 സ്കൂൾ ശൃംഖലകളുമായും ഇടപഴകുന്നു.",
+        "Odia": "କର୍ଣ୍ଣାଟକ ଏବଂ ତେଲେଙ୍ଗାନାରେ ରାଜ୍ୟ ଶିକ୍ଷା ଅଂଶୀଦାର ଏବଂ Tier 2 ସ୍କୁଲ୍ ଶୃଙ୍ଖଳା ସହିତ ଜଡିତ ହେଉଛୁ।"
     },
     // Premium feature bullets — English-only for now (highly technical enterprise terms
     // don't translate cleanly; B2B enterprise buyers read English). Listed as keys so
@@ -2027,14 +2057,14 @@ const dictionary: Record<string, Record<Language, string>> = {
         "English": "Dedicated customer success manager",
         "Hindi": "समर्पित ग्राहक सफलता प्रबंधक",
         "Kannada": "ಮೀಸಲಾದ ಗ್ರಾಹಕ ಯಶಸ್ಸು ವ್ಯವಸ್ಥಾಪಕ",
-        "Tamil": "Dedicated customer success manager",
-        "Telugu": "Dedicated customer success manager",
-        "Marathi": "Dedicated customer success manager",
-        "Bengali": "Dedicated customer success manager",
-        "Gujarati": "Dedicated customer success manager",
-        "Punjabi": "Dedicated customer success manager",
-        "Malayalam": "Dedicated customer success manager",
-        "Odia": "Dedicated customer success manager"
+        "Tamil": "அர்ப்பணிப்புள்ள வாடிக்கையாளர் வெற்றி மேலாளர்",
+        "Telugu": "అంకిత కస్టమర్ సక్సెస్ మేనేజర్",
+        "Marathi": "समर्पित ग्राहक यश व्यवस्थापक",
+        "Bengali": "নিবেদিত গ্রাহক সাফল্য ব্যবস্থাপক",
+        "Gujarati": "સમર્પિત ગ્રાહક સફળતા વ્યવસ્થાપક",
+        "Punjabi": "ਸਮਰਪਿਤ ਗਾਹਕ ਸਫਲਤਾ ਪ੍ਰਬੰਧਕ",
+        "Malayalam": "സമർപ്പിത കസ്റ്റമർ സക്സസ് മാനേജർ",
+        "Odia": "ସମର୍ପିତ ଗ୍ରାହକ ସଫଳତା ପରିଚାଳକ"
     },
     "Audit logs and DPDP compliance reports": {
         "English": "Audit logs and DPDP compliance reports",
@@ -2053,14 +2083,14 @@ const dictionary: Record<string, Record<Language, string>> = {
         "English": "Custom AI fine-tuning on your board and curriculum",
         "Hindi": "आपके बोर्ड और पाठ्यक्रम पर कस्टम AI फाइन-ट्यूनिंग",
         "Kannada": "ನಿಮ್ಮ ಬೋರ್ಡ್ ಮತ್ತು ಪಠ್ಯಕ್ರಮದ ಮೇಲೆ ಕಸ್ಟಮ್ AI ಫೈನ್-ಟ್ಯೂನಿಂಗ್",
-        "Tamil": "Custom AI fine-tuning on your board and curriculum",
-        "Telugu": "Custom AI fine-tuning on your board and curriculum",
-        "Marathi": "Custom AI fine-tuning on your board and curriculum",
-        "Bengali": "Custom AI fine-tuning on your board and curriculum",
-        "Gujarati": "Custom AI fine-tuning on your board and curriculum",
-        "Punjabi": "Custom AI fine-tuning on your board and curriculum",
-        "Malayalam": "Custom AI fine-tuning on your board and curriculum",
-        "Odia": "Custom AI fine-tuning on your board and curriculum"
+        "Tamil": "உங்கள் வாரியம் மற்றும் பாடத்திட்டத்தில் தனிப்பயன் AI fine-tuning",
+        "Telugu": "మీ బోర్డు మరియు పాఠ్యప్రణాళికపై కస్టమ్ AI fine-tuning",
+        "Marathi": "आपल्या मंडळ आणि अभ्यासक्रमावर कस्टम AI fine-tuning",
+        "Bengali": "আপনার বোর্ড এবং পাঠ্যক্রমে কাস্টম AI fine-tuning",
+        "Gujarati": "તમારા બોર્ડ અને અભ્યાસક્રમ પર કસ્ટમ AI fine-tuning",
+        "Punjabi": "ਤੁਹਾਡੇ ਬੋਰਡ ਅਤੇ ਪਾਠਕ੍ਰਮ 'ਤੇ ਕਸਟਮ AI fine-tuning",
+        "Malayalam": "നിങ്ങളുടെ ബോർഡിലും പാഠ്യപദ്ധതിയിലും കസ്റ്റം AI fine-tuning",
+        "Odia": "ଆପଣଙ୍କ ବୋର୍ଡ ଏବଂ ପାଠ୍ୟକ୍ରମ ଉପରେ କଷ୍ଟମ୍ AI fine-tuning"
     },
     "API access and ERP integration (Fedena, Campus, custom)": {
         "English": "API access and ERP integration (Fedena, Campus, custom)",
@@ -2079,20 +2109,20 @@ const dictionary: Record<string, Record<Language, string>> = {
         "English": "Unlimited voice cloud minutes (no per-teacher cap)",
         "Hindi": "असीमित वॉयस क्लाउड मिनट (प्रति शिक्षक कोई सीमा नहीं)",
         "Kannada": "ಅನಿಯಮಿತ ಧ್ವನಿ ಕ್ಲೌಡ್ ನಿಮಿಷಗಳು (ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ ಯಾವುದೇ ಮಿತಿ ಇಲ್ಲ)",
-        "Tamil": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Telugu": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Marathi": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Bengali": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Gujarati": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Punjabi": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Malayalam": "Unlimited voice cloud minutes (no per-teacher cap)",
-        "Odia": "Unlimited voice cloud minutes (no per-teacher cap)"
+        "Tamil": "வரம்பற்ற voice cloud நிமிடங்கள் (ஆசிரியர் வரம்பு இல்லை)",
+        "Telugu": "పరిమితి లేని voice cloud నిమిషాలు (ఉపాధ్యాయ పరిమితి లేదు)",
+        "Marathi": "अमर्यादित voice cloud मिनिटे (शिक्षकामागे मर्यादा नाही)",
+        "Bengali": "সীমাহীন voice cloud মিনিট (শিক্ষক প্রতি সীমা নেই)",
+        "Gujarati": "અમર્યાદિત voice cloud મિનિટ (શિક્ષક દીઠ મર્યાદા નથી)",
+        "Punjabi": "ਅਣਗਿਣਤ voice cloud ਮਿੰਟ (ਪ੍ਰਤੀ ਅਧਿਆਪਕ ਕੋਈ ਸੀਮਾ ਨਹੀਂ)",
+        "Malayalam": "പരിധിയില്ലാത്ത voice cloud മിനിറ്റുകൾ (ഓരോ അധ്യാപകനും പരിധിയില്ല)",
+        "Odia": "ଅସୀମିତ voice cloud ମିନିଟ୍ (ପ୍ରତି ଶିକ୍ଷକଙ୍କ ପାଇଁ କୌଣସି ସୀମା ନାହିଁ)"
     },
     "About SahayakAI": {
         "English": "About SahayakAI", "Hindi": "SahayakAI के बारे में", "Kannada": "SahayakAI ಬಗ್ಗೆ",
-        "Tamil": "About SahayakAI", "Telugu": "About SahayakAI", "Marathi": "About SahayakAI",
-        "Bengali": "About SahayakAI", "Gujarati": "About SahayakAI", "Punjabi": "About SahayakAI",
-        "Malayalam": "About SahayakAI", "Odia": "About SahayakAI"
+        "Tamil": "SahayakAI பற்றி", "Telugu": "SahayakAI గురించి", "Marathi": "SahayakAI विषयी",
+        "Bengali": "SahayakAI সম্পর্কে", "Gujarati": "SahayakAI વિશે", "Punjabi": "SahayakAI ਬਾਰੇ",
+        "Malayalam": "SahayakAI നെക്കുറിച്ച്", "Odia": "SahayakAI ବିଷୟରେ"
     },
     "Our mission": {
         "English": "Our mission", "Hindi": "हमारा मिशन", "Kannada": "ನಮ್ಮ ಧ್ಯೇಯ",
