@@ -9,12 +9,16 @@ authors = [
   { name = "Abhishek Gupta", email = "abhi.ist.15@gmail.com" },
 ]
 
-# Pinned exact-or-compatible per review Round 1 decisions.
-# - google-adk ==1.0.0 (GA, pinned per parent plan §4)
-# - google-genai pinned explicitly, not left transitive (P1 #16)
+# Pinned to latest stable per Round-2 audit findings (Apr 2026).
+# - google-adk: was ==1.0.0 (31 minor versions stale, missed CVE-2026-4810).
+#   Now ~=1.31 (current 1.31.1, bi-weekly cadence).
+# - google-genai: was ==0.10.0 (which does not exist on PyPI — fictitious pin).
+#   Now >=1.73,<2.0 (current 1.73.1, Apr 14 2026 release).
+#   See https://pypi.org/project/google-genai/ and SDK reference
+#   https://googleapis.github.io/python-genai/.
 dependencies = [
-  "google-adk==1.0.0",
-  "google-genai==0.10.0",
+  "google-adk~=1.31",
+  "google-genai>=1.73,<2.0",
   "fastapi~=0.115",
   "uvicorn[standard]~=0.32",
   "pydantic~=2.9",

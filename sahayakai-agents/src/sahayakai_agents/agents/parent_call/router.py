@@ -77,14 +77,22 @@ async def _call_gemini_structured(
     `google-genai` is imported lazily so tests can mock without installing
     the SDK. We request strict JSON matching the Pydantic schema via
     `response_mime_type='application/json'` + `response_schema=<type>`.
+
+    Round-2 audit P0 fix: uses the OFFICIAL async surface
+    `client.aio.models.generate_content` (google-genai 1.73+). The previous
+    code called the synchronous `client.models.generate_content` from inside
+    an `async def` function, blocking the event loop and collapsing
+    effective concurrency to ~1. See
+    https://googleapis.github.io/python-genai/ \u2014 "For async operations,
+    replace `client.models` with `client.aio.models`."
     """
     from google import genai  # type: ignore[import-untyped]
     from google.genai import types as genai_types  # type: ignore[import-untyped]
 
     client = genai.Client(api_key=api_key)
-    return client.models.generate_content(
+    return await client.aio.models.generate_content(
         model=model,
-        contents=[{"role": "user", "parts": [{"text": prompt}]}],
+        contents=prompt,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=response_schema,

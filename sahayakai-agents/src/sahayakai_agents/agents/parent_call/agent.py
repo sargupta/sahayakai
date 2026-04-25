@@ -173,11 +173,16 @@ def build_summary_context(
 # ---- Model-facing Pydantic schemas ---------------------------------------
 
 
+# Round-2 audit P0 fix (issue google-genai #699): the Gemini API rejects
+# response schemas that carry `default:` values. Removing all defaults from
+# these model-facing schemas. Nullable fields stay nullable but become
+# required: the model must always emit the key (possibly as null), and our
+# router contract still treats it as optional via Pydantic's `| None` union.
 class AgentReplyCore(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reply: str = Field(min_length=1, max_length=4000)
     shouldEndCall: bool
-    followUpQuestion: str | None = Field(default=None, max_length=500)
+    followUpQuestion: str | None = Field(max_length=500)
 
 
 class CallSummaryCore(BaseModel):
@@ -190,7 +195,7 @@ class CallSummaryCore(BaseModel):
     parentSentiment: ParentSentiment
     callQuality: CallQuality
     followUpNeeded: bool
-    followUpSuggestion: str | None = None
+    followUpSuggestion: str | None
 
 
 # ---- Model selection -----------------------------------------------------
