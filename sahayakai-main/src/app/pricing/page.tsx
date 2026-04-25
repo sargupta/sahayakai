@@ -671,7 +671,7 @@ function GoldVolumeTable() {
             <dl className="space-y-1.5 text-[12px] text-neutral-700">
                 {PLAN_PRICING.gold.annual.volumeTiers.map((tier) => (
                     <div key={tier.label} className="flex items-baseline justify-between gap-3">
-                        <dt className="text-neutral-600">{tier.label}</dt>
+                        <dt className="text-neutral-600">{t(tier.label)}</dt>
                         <dd className="font-semibold text-foreground whitespace-nowrap">
                             {tier.rupees !== null ? `₹${inr(tier.rupees)}` : t('Custom quote')}
                         </dd>
@@ -683,6 +683,7 @@ function GoldVolumeTable() {
 }
 
 function FeatureList({ items }: { items: readonly Feature[] }) {
+    const { t } = useLanguage();
     return (
         <ul className="mt-6 space-y-3">
             {items.map(({ icon: Icon, text }) => (
@@ -690,7 +691,7 @@ function FeatureList({ items }: { items: readonly Feature[] }) {
                     <span className="mt-[2px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-saffron-50 text-saffron-700">
                         <Icon className="h-3 w-3" aria-hidden />
                     </span>
-                    <span>{text}</span>
+                    <span>{t(text)}</span>
                 </li>
             ))}
         </ul>

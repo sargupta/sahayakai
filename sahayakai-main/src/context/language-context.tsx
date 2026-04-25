@@ -1704,6 +1704,224 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "Book a small-school call", "Gujarati": "Book a small-school call", "Punjabi": "Book a small-school call",
         "Malayalam": "Book a small-school call", "Odia": "Book a small-school call"
     },
+    // ---- /pricing tier feature bullets (2026-04-25 i18n fix) ----
+    // Free
+    "10 lesson plans per month": {
+        "English": "10 lesson plans per month", "Hindi": "10 पाठ योजनाएँ प्रति माह", "Kannada": "ತಿಂಗಳಿಗೆ 10 ಪಾಠ ಯೋಜನೆಗಳು",
+        "Tamil": "10 lesson plans per month", "Telugu": "10 lesson plans per month", "Marathi": "10 lesson plans per month",
+        "Bengali": "10 lesson plans per month", "Gujarati": "10 lesson plans per month", "Punjabi": "10 lesson plans per month",
+        "Malayalam": "10 lesson plans per month", "Odia": "10 lesson plans per month"
+    },
+    "5 quizzes + 5 worksheets per month": {
+        "English": "5 quizzes + 5 worksheets per month",
+        "Hindi": "5 क्विज़ + 5 वर्कशीट प्रति माह",
+        "Kannada": "ತಿಂಗಳಿಗೆ 5 ಕ್ವಿಜ್ + 5 ವರ್ಕ್‌ಶೀಟ್‌ಗಳು",
+        "Tamil": "5 quizzes + 5 worksheets per month", "Telugu": "5 quizzes + 5 worksheets per month", "Marathi": "5 quizzes + 5 worksheets per month",
+        "Bengali": "5 quizzes + 5 worksheets per month", "Gujarati": "5 quizzes + 5 worksheets per month", "Punjabi": "5 quizzes + 5 worksheets per month",
+        "Malayalam": "5 quizzes + 5 worksheets per month", "Odia": "5 quizzes + 5 worksheets per month"
+    },
+    "20 instant answers per day": {
+        "English": "20 instant answers per day",
+        "Hindi": "20 तुरंत जवाब प्रति दिन",
+        "Kannada": "ದಿನಕ್ಕೆ 20 ತತ್‌ಕ್ಷಣ ಉತ್ತರಗಳು",
+        "Tamil": "20 instant answers per day", "Telugu": "20 instant answers per day", "Marathi": "20 instant answers per day",
+        "Bengali": "20 instant answers per day", "Gujarati": "20 instant answers per day", "Punjabi": "20 instant answers per day",
+        "Malayalam": "20 instant answers per day", "Odia": "20 instant answers per day"
+    },
+    "Voice in 11 Indian languages": {
+        "English": "Voice in 11 Indian languages",
+        "Hindi": "11 भारतीय भाषाओं में वॉयस",
+        "Kannada": "11 ಭಾರತೀಯ ಭಾಷೆಗಳಲ್ಲಿ ಧ್ವನಿ",
+        "Tamil": "Voice in 11 Indian languages", "Telugu": "Voice in 11 Indian languages", "Marathi": "Voice in 11 Indian languages",
+        "Bengali": "Voice in 11 Indian languages", "Gujarati": "Voice in 11 Indian languages", "Punjabi": "Voice in 11 Indian languages",
+        "Malayalam": "Voice in 11 Indian languages", "Odia": "Voice in 11 Indian languages"
+    },
+    "Community library access": {
+        "English": "Community library access",
+        "Hindi": "कम्युनिटी लाइब्रेरी का उपयोग",
+        "Kannada": "ಸಮುದಾಯ ಗ್ರಂಥಾಲಯ ಪ್ರವೇಶ",
+        "Tamil": "Community library access", "Telugu": "Community library access", "Marathi": "Community library access",
+        "Bengali": "Community library access", "Gujarati": "Community library access", "Punjabi": "Community library access",
+        "Malayalam": "Community library access", "Odia": "Community library access"
+    },
+    "Basic impact dashboard": {
+        "English": "Basic impact dashboard",
+        "Hindi": "बेसिक इम्पैक्ट डैशबोर्ड",
+        "Kannada": "ಮೂಲ ಪ್ರಭಾವ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+        "Tamil": "Basic impact dashboard", "Telugu": "Basic impact dashboard", "Marathi": "Basic impact dashboard",
+        "Bengali": "Basic impact dashboard", "Gujarati": "Basic impact dashboard", "Punjabi": "Basic impact dashboard",
+        "Malayalam": "Basic impact dashboard", "Odia": "Basic impact dashboard"
+    },
+    // Pro
+    "All 6 tools unlocked": {
+        "English": "All 6 tools unlocked",
+        "Hindi": "सभी 6 टूल अनलॉक",
+        "Kannada": "ಎಲ್ಲ 6 ಪರಿಕರಗಳು ಅನ್‌ಲಾಕ್",
+        "Tamil": "All 6 tools unlocked", "Telugu": "All 6 tools unlocked", "Marathi": "All 6 tools unlocked",
+        "Bengali": "All 6 tools unlocked", "Gujarati": "All 6 tools unlocked", "Punjabi": "All 6 tools unlocked",
+        "Malayalam": "All 6 tools unlocked", "Odia": "All 6 tools unlocked"
+    },
+    "25 lesson plans per month": {
+        "English": "25 lesson plans per month",
+        "Hindi": "25 पाठ योजनाएँ प्रति माह",
+        "Kannada": "ತಿಂಗಳಿಗೆ 25 ಪಾಠ ಯೋಜನೆಗಳು",
+        "Tamil": "25 lesson plans per month", "Telugu": "25 lesson plans per month", "Marathi": "25 lesson plans per month",
+        "Bengali": "25 lesson plans per month", "Gujarati": "25 lesson plans per month", "Punjabi": "25 lesson plans per month",
+        "Malayalam": "25 lesson plans per month", "Odia": "25 lesson plans per month"
+    },
+    "25 quizzes per month": {
+        "English": "25 quizzes per month",
+        "Hindi": "25 क्विज़ प्रति माह",
+        "Kannada": "ತಿಂಗಳಿಗೆ 25 ಕ್ವಿಜ್‌ಗಳು",
+        "Tamil": "25 quizzes per month", "Telugu": "25 quizzes per month", "Marathi": "25 quizzes per month",
+        "Bengali": "25 quizzes per month", "Gujarati": "25 quizzes per month", "Punjabi": "25 quizzes per month",
+        "Malayalam": "25 quizzes per month", "Odia": "25 quizzes per month"
+    },
+    "Unlimited worksheets and rubrics": {
+        "English": "Unlimited worksheets and rubrics",
+        "Hindi": "असीमित वर्कशीट और रूब्रिक",
+        "Kannada": "ಅಪರಿಮಿತ ವರ್ಕ್‌ಶೀಟ್ ಮತ್ತು ರೂಬ್ರಿಕ್‌ಗಳು",
+        "Tamil": "Unlimited worksheets and rubrics", "Telugu": "Unlimited worksheets and rubrics", "Marathi": "Unlimited worksheets and rubrics",
+        "Bengali": "Unlimited worksheets and rubrics", "Gujarati": "Unlimited worksheets and rubrics", "Punjabi": "Unlimited worksheets and rubrics",
+        "Malayalam": "Unlimited worksheets and rubrics", "Odia": "Unlimited worksheets and rubrics"
+    },
+    "Unlimited instant answers": {
+        "English": "Unlimited instant answers",
+        "Hindi": "असीमित तुरंत जवाब",
+        "Kannada": "ಅಪರಿಮಿತ ತತ್‌ಕ್ಷಣ ಉತ್ತರಗಳು",
+        "Tamil": "Unlimited instant answers", "Telugu": "Unlimited instant answers", "Marathi": "Unlimited instant answers",
+        "Bengali": "Unlimited instant answers", "Gujarati": "Unlimited instant answers", "Punjabi": "Unlimited instant answers",
+        "Malayalam": "Unlimited instant answers", "Odia": "Unlimited instant answers"
+    },
+    "300 voice cloud minutes per month": {
+        "English": "300 voice cloud minutes per month",
+        "Hindi": "300 वॉयस क्लाउड मिनट प्रति माह",
+        "Kannada": "ತಿಂಗಳಿಗೆ 300 ಧ್ವನಿ ಕ್ಲೌಡ್ ನಿಮಿಷಗಳು",
+        "Tamil": "300 voice cloud minutes per month", "Telugu": "300 voice cloud minutes per month", "Marathi": "300 voice cloud minutes per month",
+        "Bengali": "300 voice cloud minutes per month", "Gujarati": "300 voice cloud minutes per month", "Punjabi": "300 voice cloud minutes per month",
+        "Malayalam": "300 voice cloud minutes per month", "Odia": "300 voice cloud minutes per month"
+    },
+    "Download as PDF or Word (no watermark)": {
+        "English": "Download as PDF or Word (no watermark)",
+        "Hindi": "PDF या Word में डाउनलोड करें (बिना वॉटरमार्क)",
+        "Kannada": "PDF ಅಥವಾ Word ರೂಪದಲ್ಲಿ ಡೌನ್‌ಲೋಡ್ (ವಾಟರ್‌ಮಾರ್ಕ್ ಇಲ್ಲ)",
+        "Tamil": "Download as PDF or Word (no watermark)", "Telugu": "Download as PDF or Word (no watermark)", "Marathi": "Download as PDF or Word (no watermark)",
+        "Bengali": "Download as PDF or Word (no watermark)", "Gujarati": "Download as PDF or Word (no watermark)", "Punjabi": "Download as PDF or Word (no watermark)",
+        "Malayalam": "Download as PDF or Word (no watermark)", "Odia": "Download as PDF or Word (no watermark)"
+    },
+    "AI-powered parent messages": {
+        "English": "AI-powered parent messages",
+        "Hindi": "AI-संचालित अभिभावक संदेश",
+        "Kannada": "AI-ಚಾಲಿತ ಪೋಷಕ ಸಂದೇಶಗಳು",
+        "Tamil": "AI-powered parent messages", "Telugu": "AI-powered parent messages", "Marathi": "AI-powered parent messages",
+        "Bengali": "AI-powered parent messages", "Gujarati": "AI-powered parent messages", "Punjabi": "AI-powered parent messages",
+        "Malayalam": "AI-powered parent messages", "Odia": "AI-powered parent messages"
+    },
+    "Detailed impact dashboard": {
+        "English": "Detailed impact dashboard",
+        "Hindi": "विस्तृत इम्पैक्ट डैशबोर्ड",
+        "Kannada": "ವಿವರವಾದ ಪ್ರಭಾವ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+        "Tamil": "Detailed impact dashboard", "Telugu": "Detailed impact dashboard", "Marathi": "Detailed impact dashboard",
+        "Bengali": "Detailed impact dashboard", "Gujarati": "Detailed impact dashboard", "Punjabi": "Detailed impact dashboard",
+        "Malayalam": "Detailed impact dashboard", "Odia": "Detailed impact dashboard"
+    },
+    // Gold
+    "Everything in Pro, unlimited": {
+        "English": "Everything in Pro, unlimited",
+        "Hindi": "Pro में सब कुछ, असीमित",
+        "Kannada": "Pro ನಲ್ಲಿ ಎಲ್ಲವೂ, ಅಪರಿಮಿತ",
+        "Tamil": "Everything in Pro, unlimited", "Telugu": "Everything in Pro, unlimited", "Marathi": "Everything in Pro, unlimited",
+        "Bengali": "Everything in Pro, unlimited", "Gujarati": "Everything in Pro, unlimited", "Punjabi": "Everything in Pro, unlimited",
+        "Malayalam": "Everything in Pro, unlimited", "Odia": "Everything in Pro, unlimited"
+    },
+    "Principal dashboard + teacher onboarding": {
+        "English": "Principal dashboard + teacher onboarding",
+        "Hindi": "प्रिंसिपल डैशबोर्ड + शिक्षक ऑनबोर्डिंग",
+        "Kannada": "ಪ್ರಿನ್ಸಿಪಾಲ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ + ಶಿಕ್ಷಕರ ಆನ್‌ಬೋರ್ಡಿಂಗ್",
+        "Tamil": "Principal dashboard + teacher onboarding", "Telugu": "Principal dashboard + teacher onboarding", "Marathi": "Principal dashboard + teacher onboarding",
+        "Bengali": "Principal dashboard + teacher onboarding", "Gujarati": "Principal dashboard + teacher onboarding", "Punjabi": "Principal dashboard + teacher onboarding",
+        "Malayalam": "Principal dashboard + teacher onboarding", "Odia": "Principal dashboard + teacher onboarding"
+    },
+    "1,500 voice cloud minutes per teacher": {
+        "English": "1,500 voice cloud minutes per teacher",
+        "Hindi": "1,500 वॉयस क्लाउड मिनट प्रति शिक्षक",
+        "Kannada": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ 1,500 ಧ್ವನಿ ಕ್ಲೌಡ್ ನಿಮಿಷಗಳು",
+        "Tamil": "1,500 voice cloud minutes per teacher", "Telugu": "1,500 voice cloud minutes per teacher", "Marathi": "1,500 voice cloud minutes per teacher",
+        "Bengali": "1,500 voice cloud minutes per teacher", "Gujarati": "1,500 voice cloud minutes per teacher", "Punjabi": "1,500 voice cloud minutes per teacher",
+        "Malayalam": "1,500 voice cloud minutes per teacher", "Odia": "1,500 voice cloud minutes per teacher"
+    },
+    "WhatsApp Business integration": {
+        "English": "WhatsApp Business integration",
+        "Hindi": "WhatsApp Business एकीकरण",
+        "Kannada": "WhatsApp Business ಸಂಯೋಜನೆ",
+        "Tamil": "WhatsApp Business integration", "Telugu": "WhatsApp Business integration", "Marathi": "WhatsApp Business integration",
+        "Bengali": "WhatsApp Business integration", "Gujarati": "WhatsApp Business integration", "Punjabi": "WhatsApp Business integration",
+        "Malayalam": "WhatsApp Business integration", "Odia": "WhatsApp Business integration"
+    },
+    "Priority support in your timezone": {
+        "English": "Priority support in your timezone",
+        "Hindi": "आपके टाइमज़ोन में प्राथमिकता सहायता",
+        "Kannada": "ನಿಮ್ಮ ಸಮಯ ವಲಯದಲ್ಲಿ ಆದ್ಯತೆಯ ಬೆಂಬಲ",
+        "Tamil": "Priority support in your timezone", "Telugu": "Priority support in your timezone", "Marathi": "Priority support in your timezone",
+        "Bengali": "Priority support in your timezone", "Gujarati": "Priority support in your timezone", "Punjabi": "Priority support in your timezone",
+        "Malayalam": "Priority support in your timezone", "Odia": "Priority support in your timezone"
+    },
+    "Volume discount for 50+ teachers": {
+        "English": "Volume discount for 50+ teachers",
+        "Hindi": "50+ शिक्षकों के लिए वॉल्यूम डिस्काउंट",
+        "Kannada": "50+ ಶಿಕ್ಷಕರಿಗೆ ವಾಲ್ಯೂಮ್ ರಿಯಾಯಿತಿ",
+        "Tamil": "Volume discount for 50+ teachers", "Telugu": "Volume discount for 50+ teachers", "Marathi": "Volume discount for 50+ teachers",
+        "Bengali": "Volume discount for 50+ teachers", "Gujarati": "Volume discount for 50+ teachers", "Punjabi": "Volume discount for 50+ teachers",
+        "Malayalam": "Volume discount for 50+ teachers", "Odia": "Volume discount for 50+ teachers"
+    },
+    "One-time onboarding and training": {
+        "English": "One-time onboarding and training",
+        "Hindi": "एक बार की ऑनबोर्डिंग और प्रशिक्षण",
+        "Kannada": "ಒಂದು-ಬಾರಿ ಆನ್‌ಬೋರ್ಡಿಂಗ್ ಮತ್ತು ತರಬೇತಿ",
+        "Tamil": "One-time onboarding and training", "Telugu": "One-time onboarding and training", "Marathi": "One-time onboarding and training",
+        "Bengali": "One-time onboarding and training", "Gujarati": "One-time onboarding and training", "Punjabi": "One-time onboarding and training",
+        "Malayalam": "One-time onboarding and training", "Odia": "One-time onboarding and training"
+    },
+    // Volume tier labels
+    "20–49 teachers": {
+        "English": "20–49 teachers", "Hindi": "20–49 शिक्षक", "Kannada": "20–49 ಶಿಕ್ಷಕರು",
+        "Tamil": "20–49 teachers", "Telugu": "20–49 teachers", "Marathi": "20–49 teachers",
+        "Bengali": "20–49 teachers", "Gujarati": "20–49 teachers", "Punjabi": "20–49 teachers",
+        "Malayalam": "20–49 teachers", "Odia": "20–49 teachers"
+    },
+    "50–99 teachers": {
+        "English": "50–99 teachers", "Hindi": "50–99 शिक्षक", "Kannada": "50–99 ಶಿಕ್ಷಕರು",
+        "Tamil": "50–99 teachers", "Telugu": "50–99 teachers", "Marathi": "50–99 teachers",
+        "Bengali": "50–99 teachers", "Gujarati": "50–99 teachers", "Punjabi": "50–99 teachers",
+        "Malayalam": "50–99 teachers", "Odia": "50–99 teachers"
+    },
+    "100–249 teachers": {
+        "English": "100–249 teachers", "Hindi": "100–249 शिक्षक", "Kannada": "100–249 ಶಿಕ್ಷಕರು",
+        "Tamil": "100–249 teachers", "Telugu": "100–249 teachers", "Marathi": "100–249 teachers",
+        "Bengali": "100–249 teachers", "Gujarati": "100–249 teachers", "Punjabi": "100–249 teachers",
+        "Malayalam": "100–249 teachers", "Odia": "100–249 teachers"
+    },
+    "250+ teachers (custom quote)": {
+        "English": "250+ teachers (custom quote)",
+        "Hindi": "250+ शिक्षक (कस्टम कोट)",
+        "Kannada": "250+ ಶಿಕ್ಷಕರು (ಕಸ್ಟಮ್ ಕೋಟ್)",
+        "Tamil": "250+ teachers (custom quote)", "Telugu": "250+ teachers (custom quote)", "Marathi": "250+ teachers (custom quote)",
+        "Bengali": "250+ teachers (custom quote)", "Gujarati": "250+ teachers (custom quote)", "Punjabi": "250+ teachers (custom quote)",
+        "Malayalam": "250+ teachers (custom quote)", "Odia": "250+ teachers (custom quote)"
+    },
+    // Nav labels
+    "Product": {
+        "English": "Product", "Hindi": "उत्पाद", "Kannada": "ಉತ್ಪನ್ನ",
+        "Tamil": "Product", "Telugu": "Product", "Marathi": "Product",
+        "Bengali": "Product", "Gujarati": "Product", "Punjabi": "Product",
+        "Malayalam": "Product", "Odia": "Product"
+    },
+    "Pricing": {
+        "English": "Pricing", "Hindi": "कीमत", "Kannada": "ಬೆಲೆ",
+        "Tamil": "Pricing", "Telugu": "Pricing", "Marathi": "Pricing",
+        "Bengali": "Pricing", "Gujarati": "Pricing", "Punjabi": "Pricing",
+        "Malayalam": "Pricing", "Odia": "Pricing"
+    },
     // Premium enterprise differentiators (2026-04-24 pricing review)
     "Chains, government & 250+ teacher schools": {
         "English": "Chains, government & 250+ teacher schools",
