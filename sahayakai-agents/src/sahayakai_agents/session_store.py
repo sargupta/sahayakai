@@ -71,13 +71,27 @@ class SessionStore:
     def _call_doc(self, call_sid: str) -> firestore.DocumentReference:
         return self._client.collection(self._collection).document(call_sid)
 
-    def _turn_doc(self, call_sid: str, turn_number: int) -> firestore.DocumentReference:
-        return self._call_doc(call_sid).collection("turns").document(f"{turn_number:04d}")
+    def _turn_doc(
+        self, call_sid: str, turn_number: int, role: str
+    ) -> firestore.DocumentReference:
+        """Doc path for one role's contribution to a turn.
+
+        Round-2 audit P0 fix (multi-turn doc collision): the doc id is now
+        the composite `{turn_number:04d}_{role}` so the parent's utterance
+        and the agent's reply for the SAME turn number land in distinct
+        documents. The previous scheme `{turn_number:04d}` collided
+        because router writes both roles per turn with the same
+        `turn_number`, and the second write 409'd via OCC. Lex-ordering
+        across turns is preserved (`0001_agent`, `0001_parent` come before
+        `0002_*`).
+        """
+        doc_id = f"{turn_number:04d}_{role}"
+        return self._call_doc(call_sid).collection("turns").document(doc_id)
 
     # --- Sync primitives (test-accessible, not called from handlers) --------
 
     def _sync_append_turn(self, turn: TurnRecord) -> None:
-        doc_ref = self._turn_doc(turn.call_sid, turn.turn_number)
+        doc_ref = self._turn_doc(turn.call_sid, turn.turn_number, turn.role)
         meta_ref = self._call_doc(turn.call_sid)
 
         @firestore.transactional
@@ -85,19 +99,38 @@ class SessionStore:
             snap = doc_ref.get(transaction=txn)
             if snap.exists:
                 raise SessionConflictError(
-                    f"Turn {turn.turn_number} on call {turn.call_sid} already written"
+                    f"Turn {turn.turn_number} ({turn.role}) on call "
+                    f"{turn.call_sid} already written"
                 )
-            # OCC on metadata as well: refuse a turn whose number is <= a
-            # previously-written one. Protects against Twilio retry storms
-            # that arrive out-of-order.
+            # OCC on metadata: only the *parent* role advances the turn
+            # counter. The agent role rides the same turn number as the
+            # parent it replies to, so for `agent` we require strict
+            # equality with the in-flight turn (parent already bumped
+            # `lastTurnNumber`). This rejects out-of-order Twilio retries
+            # without rejecting the legitimate parent\u2192agent pair.
             meta_snap = meta_ref.get(transaction=txn)
-            if meta_snap.exists:
-                last = int((meta_snap.to_dict() or {}).get("lastTurnNumber") or 0)
+            last = (
+                int((meta_snap.to_dict() or {}).get("lastTurnNumber") or 0)
+                if meta_snap.exists
+                else 0
+            )
+            if turn.role == "parent":
                 if turn.turn_number <= last:
                     raise SessionConflictError(
-                        f"Turn {turn.turn_number} is <= lastTurnNumber={last} "
-                        f"on call {turn.call_sid}"
+                        f"Parent turn {turn.turn_number} is <= lastTurnNumber={last} "
+                        f"on call {turn.call_sid} (out-of-order or replay)"
                     )
+            elif turn.role == "agent":
+                if turn.turn_number != last:
+                    raise SessionConflictError(
+                        f"Agent turn {turn.turn_number} does not match "
+                        f"lastTurnNumber={last} on call {turn.call_sid} "
+                        "(parent must be persisted first)"
+                    )
+            else:
+                raise SessionConflictError(
+                    f"Unknown role {turn.role!r} on call {turn.call_sid}"
+                )
             txn.set(
                 doc_ref,
                 {
@@ -106,14 +139,23 @@ class SessionStore:
                     "createdAt": turn.created_at,
                 },
             )
-            txn.set(
-                meta_ref,
-                {
-                    "lastTurnNumber": turn.turn_number,
-                    "updatedAt": turn.created_at,
-                },
-                merge=True,
-            )
+            # Bump the meta turn counter only on parent writes; agent
+            # writes ride the same turn number.
+            if turn.role == "parent":
+                txn.set(
+                    meta_ref,
+                    {
+                        "lastTurnNumber": turn.turn_number,
+                        "updatedAt": turn.created_at,
+                    },
+                    merge=True,
+                )
+            else:
+                txn.set(
+                    meta_ref,
+                    {"updatedAt": turn.created_at},
+                    merge=True,
+                )
 
         _txn(self._client.transaction())
         log.debug(
@@ -124,15 +166,29 @@ class SessionStore:
         )
 
     def _sync_load_transcript(self, call_sid: str) -> list[TurnRecord]:
+        """Load all turns for a call, in `(turn_number, role)` lex order.
+
+        Doc IDs follow the `{turn_number:04d}_{role}` scheme. Lexicographic
+        ordering on Firestore's `__name__` puts `0001_agent` before
+        `0001_parent` (alphabetical on role), but the `role` is overwritten
+        by the actual turn data anyway. For load purposes the only thing
+        that matters is per-turn-number ordering across the conversation.
+        """
         turns_ref = self._call_doc(call_sid).collection("turns")
         snaps = turns_ref.order_by("__name__").stream()
         out: list[TurnRecord] = []
         for snap in snaps:
             data = snap.to_dict() or {}
+            # Doc id is `{turn_number:04d}_{role}`; tolerate the legacy
+            # bare-number format for any documents written before the
+            # composite-key migration.
+            head = snap.id.split("_", 1)[0]
             try:
-                turn_number = int(snap.id)
+                turn_number = int(head)
             except ValueError:
-                log.warning("session_store.malformed_turn_id", call_sid=call_sid, id=snap.id)
+                log.warning(
+                    "session_store.malformed_turn_id", call_sid=call_sid, id=snap.id
+                )
                 continue
             out.append(
                 TurnRecord(

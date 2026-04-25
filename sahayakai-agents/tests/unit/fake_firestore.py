@@ -126,8 +126,13 @@ def make_fake_session_store() -> SessionStore:
     """Build a `SessionStore` backed by `FakeStore`.
 
     Side-steps `SessionStore.__init__` (which would build a real Firestore
-    client) and replaces `_sync_append_turn` with a shim that enforces the
+    client) and replaces `_sync_append_turn` with a shim that mirrors the
     same OCC invariants as the production path.
+
+    NOTE: this re-implements production logic. PY-5 reviewer flagged this
+    as drift risk. Until we extract the OCC body into a non-decorated
+    helper that both production and tests share, keep this shim
+    byte-for-byte aligned with `session_store._sync_append_turn`.
     """
     fake = FakeStore()
     store = SessionStore.__new__(SessionStore)  # bypass __init__
@@ -135,30 +140,52 @@ def make_fake_session_store() -> SessionStore:
     store._collection = "agent_sessions"  # type: ignore[attr-defined]
 
     def _append(turn: TurnRecord) -> None:
-        doc_ref = store._turn_doc(turn.call_sid, turn.turn_number)  # type: ignore[attr-defined]
+        # Composite key per Round-2 multi-turn doc collision fix.
+        doc_ref = store._turn_doc(turn.call_sid, turn.turn_number, turn.role)  # type: ignore[attr-defined]
         meta_ref = store._call_doc(turn.call_sid)  # type: ignore[attr-defined]
         txn = fake.transaction()
         snap = doc_ref.get(transaction=txn)
         if snap.exists:
             raise SessionConflictError(
-                f"Turn {turn.turn_number} on call {turn.call_sid} already written"
+                f"Turn {turn.turn_number} ({turn.role}) on call "
+                f"{turn.call_sid} already written"
             )
         meta_snap = meta_ref.get(transaction=txn)
-        if meta_snap.exists:
-            last = int((meta_snap.to_dict() or {}).get("lastTurnNumber") or 0)
+        last = (
+            int((meta_snap.to_dict() or {}).get("lastTurnNumber") or 0)
+            if meta_snap.exists
+            else 0
+        )
+        # Role-aware OCC: parent strictly advances; agent rides last.
+        if turn.role == "parent":
             if turn.turn_number <= last:
                 raise SessionConflictError(
-                    f"Turn {turn.turn_number} <= lastTurnNumber={last}"
+                    f"Parent turn {turn.turn_number} is <= lastTurnNumber={last} "
+                    f"on call {turn.call_sid} (out-of-order or replay)"
                 )
+        elif turn.role == "agent":
+            if turn.turn_number != last:
+                raise SessionConflictError(
+                    f"Agent turn {turn.turn_number} does not match "
+                    f"lastTurnNumber={last} on call {turn.call_sid} "
+                    "(parent must be persisted first)"
+                )
+        else:
+            raise SessionConflictError(
+                f"Unknown role {turn.role!r} on call {turn.call_sid}"
+            )
         txn.set(
             doc_ref,
             {"role": turn.role, "text": turn.text, "createdAt": turn.created_at},
         )
-        txn.set(
-            meta_ref,
-            {"lastTurnNumber": turn.turn_number, "updatedAt": turn.created_at},
-            merge=True,
-        )
+        if turn.role == "parent":
+            txn.set(
+                meta_ref,
+                {"lastTurnNumber": turn.turn_number, "updatedAt": turn.created_at},
+                merge=True,
+            )
+        else:
+            txn.set(meta_ref, {"updatedAt": turn.created_at}, merge=True)
 
     store._sync_append_turn = _append  # type: ignore[method-assign]
     return store
