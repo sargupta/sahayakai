@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 
 interface ContentGalleryProps {
     userId: string;
@@ -30,6 +31,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
     const router = useRouter();
     const { toast } = useToast();
     const { user, loading: authLoading, openAuthModal } = useAuth();
+    const { t } = useLanguage();
     const [items, setItems] = useState<BaseContent[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -428,18 +430,18 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             ) : query || typeFilter !== "all" ? (
                 <EmptyState
                     icon={FilterX}
-                    title="No resources match those filters"
-                    description="Try adjusting your filters or clearing them to see everything."
+                    title={t("No resources match those filters")}
+                    description={t("Try adjusting your filters or clearing them to see everything.")}
                     cta={{
-                        label: "Clear all filters",
+                        label: t("Clear all filters"),
                         onClick: () => { setQuery(""); setTypeFilter("all"); },
                     }}
                 />
             ) : (
                 <EmptyState
                     icon={BookOpen}
-                    title="Your library is empty"
-                    description="Lesson plans, quizzes, worksheets, and more will appear here once you create them. Tap below to create your first."
+                    title={t("Your library is empty")}
+                    description={t("Lesson plans, quizzes, worksheets, and more will appear here once you create them. Tap below to create your first.")}
                     sample={
                         <div className="flex items-start gap-3 text-left">
                             <div className="h-10 w-10 rounded-surface-sm bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -447,20 +449,20 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             </div>
                             <div className="space-y-1 min-w-0">
                                 <div className="font-headline font-semibold text-sm text-foreground">
-                                    Photosynthesis — Class 8 Science
+                                    {t("Photosynthesis — Class 8 Science")}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    Lesson Plan · 45 min · English · 3 days ago
+                                    {t("Lesson Plan")} · 45 min · {t("English")} · 3 {t("days ago")}
                                 </div>
                             </div>
                         </div>
                     }
                     cta={{
-                        label: "Create your first lesson plan",
+                        label: t("Create your first lesson plan"),
                         href: "/lesson-plan",
                     }}
                     secondaryCta={{
-                        label: "Browse community library",
+                        label: t("Browse community library"),
                         href: "/community-library",
                     }}
                 />
