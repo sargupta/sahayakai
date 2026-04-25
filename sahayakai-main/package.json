@@ -21,7 +21,8 @@
     "api:docs": "ts-node scripts/generate-api-docs.ts",
     "api:all": "npm run api:validate && npm run api:test",
     "metrics:check": "node scripts/check-metrics.js",
-    "teacher:lookup": "node scripts/lookup-teacher.js"
+    "teacher:lookup": "node scripts/lookup-teacher.js",
+    "record:parent-call-fixtures": "tsx scripts/record-parent-call-fixtures.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.28.0",
