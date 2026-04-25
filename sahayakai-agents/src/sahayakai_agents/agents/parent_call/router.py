@@ -167,6 +167,15 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
     )
 
     # Render + call.
+    # Round-2 audit AI-3 P1 fix: do NOT append `parentSpeech` to `transcript`
+    # before rendering. The Handlebars template already renders both blocks
+    # separately:
+    #   {{#each transcript}} ... {{/each}}        \u2190 history
+    #   Parent just said: "{{parentSpeech}}"      \u2190 live utterance
+    # The previous code appended a duplicate parent turn so the model saw
+    # the live utterance twice (and on turn 1 the entire "history" was a
+    # duplicate of the live line). That confused the model's turn-count
+    # reasoning and wasted prompt tokens.
     context = build_reply_context(
         student_name=payload.studentName,
         class_name=payload.className,
@@ -176,8 +185,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
         teacher_name=payload.teacherName,
         school_name=payload.schoolName,
         parent_language=payload.parentLanguage,
-        transcript=transcript
-        + [TranscriptTurn(role="parent", text=payload.parentSpeech)],
+        transcript=transcript,
         parent_speech=payload.parentSpeech,
         turn_number=payload.turnNumber,
         performance_summary=payload.performanceSummary,
