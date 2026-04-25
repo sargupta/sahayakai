@@ -69,8 +69,8 @@ export function AuthGate({ children, icon: Icon, title, description, signInLabel
                     <Icon className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-bold">{title}</h1>
-                    <p className="text-muted-foreground">{description}</p>
+                    <h1 className="text-2xl font-bold">{t(title)}</h1>
+                    <p className="text-muted-foreground">{t(description)}</p>
                 </div>
                 <Button
                     onClick={async () => {
