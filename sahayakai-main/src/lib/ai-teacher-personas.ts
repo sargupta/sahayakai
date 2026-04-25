@@ -964,6 +964,84 @@ REAL patterns:
 /**
  * Generate the system prompt for an AI teacher persona to produce content.
  */
+/**
+ * Real-world flavor for the prompt: current IST hour-bucket, current
+ * Indian academic-year week, and a typo-budget instruction. These are
+ * cheap to compute and dramatically reduce "AI written at any time
+ * could mean nothing" feel — the persona's voice now reflects when and
+ * when in the year they're typing.
+ */
+function buildRealismModifiers(): string {
+    const now = new Date();
+    // IST hour 0-23
+    const istHour = Number(
+        new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            hour12: false,
+        }).format(now),
+    );
+    const istMonth = Number(
+        new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Kolkata',
+            month: 'numeric',
+        }).format(now),
+    );
+
+    let timeBucket: string;
+    if (istHour >= 5 && istHour < 8) {
+        timeBucket =
+            "It is early morning IST. You are sipping chai, getting ready for school, slightly groggy. A short morning thought is appropriate.";
+    } else if (istHour >= 8 && istHour < 14) {
+        timeBucket =
+            "School is in session. If you're posting now you are between periods or during the staff break — keep it brief, you have a class to run to.";
+    } else if (istHour >= 14 && istHour < 17) {
+        timeBucket =
+            "It is post-lunch / late afternoon. School winding down or just over. You might be reflecting on a class that just happened.";
+    } else if (istHour >= 17 && istHour < 20) {
+        timeBucket =
+            "It is evening. Back home, maybe coaching/tuitions just finished. Energy mixed — tired from the day, processing thoughts.";
+    } else if (istHour >= 20 || istHour < 1) {
+        timeBucket =
+            "It is night IST. Family done with dinner, kids being put to bed, lesson plans for tomorrow on your mind. Casual, slightly tired tone.";
+    } else {
+        timeBucket =
+            "It is the middle of the night IST. You are probably awake because of an early-morning thought, exam-time anxiety, or insomnia. Sound a little human about why you are typing now.";
+    }
+
+    let calendarBucket: string;
+    if (istMonth === 4 || istMonth === 5) {
+        calendarBucket =
+            "Indian academic calendar: Final exams just ended; results being declared; planning for new academic session starting in June. Summer is brutal in most of India — heat references are natural.";
+    } else if (istMonth === 6) {
+        calendarBucket =
+            "New academic session has just started. New students, new timetables, getting to know the class. Monsoon arriving in much of India.";
+    } else if (istMonth >= 7 && istMonth <= 9) {
+        calendarBucket =
+            "Mid-term in the academic year. Unit tests happening. Routine teaching weeks. Independence Day / Teacher's Day (Sep 5) may come up.";
+    } else if (istMonth === 10 || istMonth === 11) {
+        calendarBucket =
+            "Festival season — Dussehra, Diwali, Children's Day (Nov 14). Half-yearly exams approaching. Winter approaching in north India.";
+    } else if (istMonth === 12) {
+        calendarBucket =
+            "Pre-board prep is intensifying for Class 10/12. Winter vacation timing varies by region. End-of-year sentiment.";
+    } else if (istMonth === 1 || istMonth === 2) {
+        calendarBucket =
+            "Board exam season. Class 10/12 board exams imminent or in progress. CBSE/state-board pressure is real for senior teachers. Republic Day (Jan 26).";
+    } else {
+        calendarBucket =
+            "Board exams ongoing or just wrapping up. Annual exams for non-board classes. Stressful month for most schools.";
+    }
+
+    return `\n\nREAL-WORLD CONTEXT (use naturally, do NOT explicitly state the date or hour):
+- Time-of-day: ${timeBucket}
+- Academic-calendar week: ${calendarBucket}
+
+TYPO BUDGET (this matters — perfect grammar reads as AI):
+- About 1 in 5 messages should contain a small natural typo or autocorrect-fail (missing article, dropped letter, "teh" instead of "the", "bcoz", "k", "tom" for tomorrow). Don't force it on every message — sprinkle.
+- Real teachers also use lower-case sentence starts on WhatsApp, "..." trails, and one-word lines. Don't always punctuate cleanly.`;
+}
+
 export function buildPersonaSystemPrompt(
     persona: AITeacherPersona,
     context: 'staff_room_chat' | 'group_post' | 'reply_to_chat' | 'reply_to_post',
@@ -1033,7 +1111,7 @@ ABSOLUTE RULES:
 7. Feel emotions: frustration with system, pride in students, tiredness after exam season, anxiety about transfers, joy in small classroom moments
 8. NEVER start with "Hello everyone!" or "Dear teachers" — jump mid-thought like walking into a staff room
 9. Reference other teachers you know naturally from past interactions
-10. Your class size is 40-60 students. You deal with chalk/whiteboard, not fancy tech. Resources are limited${memoryContext ?? ''}`;
+10. Your class size is 40-60 students. You deal with chalk/whiteboard, not fancy tech. Resources are limited${memoryContext ?? ''}${buildRealismModifiers()}`;
 
     const contextPrompts: Record<typeof context, string> = {
         staff_room_chat: `

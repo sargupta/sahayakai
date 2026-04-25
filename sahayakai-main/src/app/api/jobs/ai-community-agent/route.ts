@@ -24,8 +24,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import {
-    AI_TEACHER_PERSONAS,
-    pickRandomPersonas,
     buildPersonaSystemPrompt,
     buildMemoryContext,
     loadPersonaMemory,
@@ -34,6 +32,7 @@ import {
     type AITeacherPersona,
     type PersonaMemory,
 } from '@/lib/ai-teacher-personas';
+import { getAllPersonas, pickFromPool } from '@/lib/ai-persona-runtime';
 
 export const maxDuration = 120;
 
@@ -59,12 +58,12 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
     return result.text.trim();
 }
 
-async function ensureAITeacherProfiles(db: FirebaseFirestore.Firestore) {
-    // Ensure all AI teacher user docs exist
+async function ensureAITeacherProfiles(db: FirebaseFirestore.Firestore, personas: AITeacherPersona[]) {
+    // Ensure all AI teacher user docs exist (static + runtime).
     const batch = db.batch();
     let created = 0;
 
-    for (const persona of AI_TEACHER_PERSONAS) {
+    for (const persona of personas) {
         const userRef = db.collection('users').doc(persona.uid);
         const userSnap = await userRef.get();
         if (!userSnap.exists) {
@@ -402,13 +401,16 @@ export async function POST() {
         const { getDb } = await import('@/lib/firebase-admin');
         const db = await getDb();
 
-        // Step 0: Ensure AI teacher profiles exist
-        await ensureAITeacherProfiles(db);
+        // Step 0: Load combined persona pool (static + runtime) and ensure
+        // their user docs exist. Runtime personas are seeded by the
+        // /api/jobs/grow-persona-pool job.
+        const personaPool = await getAllPersonas();
+        await ensureAITeacherProfiles(db, personaPool);
 
-        // Step 1: Pick 2-3 random personas for this run
-        const chatPersonas = pickRandomPersonas(2);
-        const postPersona = pickRandomPersonas(1, chatPersonas.map(p => p.id))[0];
-        const likePersona = pickRandomPersonas(1, [
+        // Step 1: Pick personas for this run (no overlap between roles).
+        const chatPersonas = pickFromPool(personaPool, 2);
+        const postPersona = pickFromPool(personaPool, 1, chatPersonas.map(p => p.id))[0];
+        const likePersona = pickFromPool(personaPool, 1, [
             ...chatPersonas.map(p => p.id),
             postPersona?.id,
         ].filter(Boolean) as string[])[0];
@@ -427,7 +429,7 @@ export async function POST() {
             .reverse();
 
         // Step 3: Collect engagement signals (learn from past performance)
-        const engagementPersona = pickRandomPersonas(1)[0];
+        const engagementPersona = pickFromPool(personaPool, 1)[0];
         if (engagementPersona) {
             await collectEngagementSignals(db, engagementPersona).catch(err =>
                 logger.warn(`Engagement collection failed: ${err}`, 'AI_AGENT'),
