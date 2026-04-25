@@ -123,3 +123,12 @@ disallow_untyped_calls = false
 module = "sahayakai_agents.auth"
 disallow_untyped_calls = false
 disable_error_code = ["call-overload", "attr-defined"]
+
+# Test fakes use dynamic attribute assignment to swap real method
+# implementations — mypy flags every `# type: ignore[method-assign]` as
+# unused under strict mode because the assignment target is Any once
+# the method has been replaced. Drop the strictness for the fakes only.
+[[tool.mypy.overrides]]
+module = "tests.unit.fake_firestore"
+warn_unused_ignores = false
+disable_error_code = ["unused-ignore"]
