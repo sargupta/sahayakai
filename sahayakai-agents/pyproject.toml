@@ -31,7 +31,10 @@ dependencies = [
   "opentelemetry-instrumentation-fastapi~=0.48b0",
   "opentelemetry-exporter-gcp-trace~=1.8",
   "httpx~=0.27",
-  "pystache~=0.6",
+  # Round-2 audit P0 PROMPT-1: was `pystache~=0.6` but Mustache cannot
+  # parse `{{#if x}}...{{/if}}` (Handlebars-only). pybars3 is a real
+  # Handlebars implementation that matches Genkit's Node renderer.
+  "pybars3~=0.9",
   "structlog~=24.4",
   "langdetect~=1.0",
 ]
@@ -81,4 +84,4 @@ ignore = ["PLR0913"]  # many kw-args is fine for agent schemas
 python_version = "3.12"
 strict = true
 warn_unused_ignores = true
-ignore_missing_imports = true  # adk / pystache have lagging stubs
+ignore_missing_imports = true  # adk / pybars3 have lagging stubs

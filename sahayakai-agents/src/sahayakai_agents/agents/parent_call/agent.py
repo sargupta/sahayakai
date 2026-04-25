@@ -41,7 +41,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-import pystache  # type: ignore[import-untyped]
+import pybars  # type: ignore[import-untyped]
 import structlog
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -89,22 +89,43 @@ def load_summary_prompt() -> str:
     return _load_prompt("summary.handlebars")
 
 
-# ---- pystache rendering ---------------------------------------------------
+# ---- Handlebars rendering -------------------------------------------------
 
-# pystache accepts Mustache, which is a subset of Handlebars. Our shared
-# prompts use only features that overlap: `{{var}}`, `{{#if x}}...{{/if}}`,
-# `{{#each xs}}...{{/each}}`, and `{{! comment }}`.
-_renderer = pystache.Renderer(missing_tags="ignore", escape=lambda s: s)
+# Round-2 audit P0 PROMPT-1 fix: switched from `pystache` to `pybars3`.
+# The shared prompts use Handlebars-specific tags `{{#if x}}...{{/if}}`
+# which Mustache does not support — pystache raised
+# `pystache.parser.ParsingError: Section end tag mismatch ... expected
+# {{/if teacherName}}`, meaning every render against a real prompt 502'd
+# in production. pybars3 is a faithful Handlebars implementation and
+# matches what Genkit renders on the Node side, keeping the byte-drift
+# CI guard meaningful.
+_compiler = pybars.Compiler()
+
+
+@lru_cache(maxsize=2)
+def _compiled(template_name: str) -> Any:
+    """Compile + cache the Handlebars template once per process.
+
+    `pybars3` compiles to a callable closure; caching avoids re-parsing
+    the (~2 KB) prompt on every request.
+    """
+    if template_name == "reply":
+        source = load_reply_prompt()
+    elif template_name == "summary":
+        source = load_summary_prompt()
+    else:
+        raise ValueError(f"Unknown template name: {template_name!r}")
+    return _compiler.compile(source)
 
 
 def render_reply_prompt(context: dict[str, Any]) -> str:
     """Render the per-turn reply prompt with call context + parent speech."""
-    return _renderer.render(load_reply_prompt(), context)
+    return _compiled("reply")(context)
 
 
 def render_summary_prompt(context: dict[str, Any]) -> str:
     """Render the post-call summary prompt with the full transcript."""
-    return _renderer.render(load_summary_prompt(), context)
+    return _compiled("summary")(context)
 
 
 def build_reply_context(
