@@ -1,0 +1,215 @@
+/**
+ * HTTP client for the sahayakai-agents Python sidecar.
+ *
+ * Used by the parent-call dispatcher when `parentCallSidecarMode` is
+ * `shadow`, `canary`, or `full`. Does three things the raw `fetch`
+ * does not:
+ *
+ * 1. **Mints a Google ID token** scoped to the sidecar Cloud Run URL
+ *    (`SAHAYAKAI_AGENTS_AUDIENCE`) so the sidecar's IAM-invoker check
+ *    passes. Uses `google-auth-library`'s `getIdTokenClient(audience)`,
+ *    the canonical pattern for service-to-service Cloud Run calls.
+ *
+ * 2. **HMAC-signs the body** with `SAHAYAKAI_REQUEST_SIGNING_KEY`
+ *    (Secret Manager) so the sidecar can detect tampering before
+ *    dispatch. See `signing.ts` for the wire shape.
+ *
+ * 3. **Bounds the request to 3.5 s** via `AbortController`. The sidecar
+ *    has its own 8 s `timeoutSeconds` on Cloud Run and Twilio gives
+ *    us 15 s end-to-end including STT and TTS. 3.5 s leaves ~5 s of
+ *    margin for TTS speak budget and the sidecar's resilient backoff;
+ *    timing out client-side prevents a slow sidecar from blowing the
+ *    whole TwiML window.
+ *
+ * Errors are surfaced as typed shapes so the caller can decide whether
+ * to fall back to Genkit (`SidecarTimeoutError`, `SidecarHttpError`),
+ * fail the call (`SidecarConfigError`), or surface as canned wrap-up
+ * (`SidecarBehaviouralError` → 502 from the sidecar's fail-closed guard).
+ *
+ * Round-2 audit reference: P0 BEHAV-1 (sidecar fail-closed must
+ * propagate to Twilio fallback path), TRANSPORT-1 (3.5 s ceiling).
+ */
+
+import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { computeBodyDigest } from './signing';
+
+// ─── Errors ────────────────────────────────────────────────────────────────
+
+export class SidecarConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SidecarConfigError';
+  }
+}
+
+export class SidecarTimeoutError extends Error {
+  readonly elapsedMs: number;
+  constructor(elapsedMs: number) {
+    super(`Sidecar request timed out after ${elapsedMs}ms`);
+    this.name = 'SidecarTimeoutError';
+    this.elapsedMs = elapsedMs;
+  }
+}
+
+export class SidecarHttpError extends Error {
+  readonly status: number;
+  readonly bodyExcerpt: string;
+  constructor(status: number, bodyExcerpt: string) {
+    super(`Sidecar returned HTTP ${status}: ${bodyExcerpt}`);
+    this.name = 'SidecarHttpError';
+    this.status = status;
+    this.bodyExcerpt = bodyExcerpt;
+  }
+}
+
+/**
+ * The sidecar's behavioural guard tripped (502 with axis info). Genkit
+ * fallback should NOT be tried — the model output is suspect and the
+ * canned safe-wrap-up is the right next step.
+ */
+export class SidecarBehaviouralError extends Error {
+  readonly axis: string;
+  constructor(axis: string, details: string) {
+    super(`Sidecar behavioural guard failed (${axis}): ${details}`);
+    this.name = 'SidecarBehaviouralError';
+    this.axis = axis;
+  }
+}
+
+// ─── Wire schemas ──────────────────────────────────────────────────────────
+
+/**
+ * Mirror of `AgentReplyRequest` in
+ * `sahayakai-agents/src/sahayakai_agents/agents/parent_call/schemas.py`.
+ * Hand-typed for now; replaced by `dist/types.generated.ts` once the
+ * codegen step lands (Track B drift check).
+ */
+export interface SidecarReplyRequest {
+  callSid: string;
+  turnNumber: number;
+  studentName: string;
+  className: string;
+  subject: string;
+  reason: string;
+  teacherMessage: string;
+  teacherName?: string;
+  schoolName?: string;
+  parentLanguage: string;
+  /** Optional — sidecar loads from Firestore by callSid when omitted. */
+  transcript?: Array<{ role: 'agent' | 'parent'; text: string }>;
+  parentSpeech: string;
+  performanceSummary?: string;
+}
+
+export interface SidecarReplyResponse {
+  reply: string;
+  shouldEndCall: boolean;
+  followUpQuestion: string | null;
+  sessionId: string;
+  turnNumber: number;
+  latencyMs: number;
+  modelUsed: string;
+  cacheHitRatio: number | null;
+}
+
+// ─── ID-token client cache ────────────────────────────────────────────────
+
+const TIMEOUT_MS = 3_500;
+const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
+const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
+
+/**
+ * `IdTokenClient` lazily refreshes the ID token internally; caching the
+ * client across requests amortises the JWT-mint cost. One client per
+ * audience for the lifetime of the Cloud Run instance.
+ */
+const tokenClientByAudience = new Map<string, Promise<IdTokenClient>>();
+
+async function getTokenClient(audience: string): Promise<IdTokenClient> {
+  let cached = tokenClientByAudience.get(audience);
+  if (!cached) {
+    const auth = new GoogleAuth();
+    cached = auth.getIdTokenClient(audience);
+    tokenClientByAudience.set(audience, cached);
+  }
+  return cached;
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────
+
+export interface CallSidecarReplyOptions {
+  /** Override the timeout for tests / local dev. */
+  timeoutMs?: number;
+  /** Optional fetch impl for tests. Defaults to global `fetch`. */
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * Call the sidecar's `/v1/parent-call/reply` endpoint.
+ *
+ * Returns a typed response on 200, throws a typed error on every other
+ * outcome. The dispatcher in `route.ts` chooses the fallback strategy.
+ */
+export async function callSidecarReply(
+  request: SidecarReplyRequest,
+  options: CallSidecarReplyOptions = {},
+): Promise<SidecarReplyResponse> {
+  const baseUrl = process.env[BASE_URL_ENV];
+  const audience = process.env[AUDIENCE_ENV];
+  if (!baseUrl) {
+    throw new SidecarConfigError(`${BASE_URL_ENV} is not set`);
+  }
+  if (!audience) {
+    throw new SidecarConfigError(`${AUDIENCE_ENV} is not set`);
+  }
+
+  const url = `${baseUrl.replace(/\/+$/, '')}/v1/parent-call/reply`;
+  const rawBody = JSON.stringify(request);
+  const digest = await computeBodyDigest(rawBody);
+
+  const tokenClient = await getTokenClient(audience);
+  const authHeaders = await tokenClient.getRequestHeaders();
+
+  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+
+  let res: Response;
+  try {
+    res = await fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+        'X-Content-Digest': digest,
+      },
+      body: rawBody,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new SidecarTimeoutError(Date.now() - startedAt);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const excerpt = text.slice(0, 500);
+
+    if (res.status === 502 && /behavioural\s+guard/i.test(text)) {
+      // Sidecar's fail-closed behavioural guard tripped. Pull axis if
+      // present so observability can break down by rule.
+      const axisMatch = text.match(/\(([a-z_]+)\)/i);
+      throw new SidecarBehaviouralError(axisMatch?.[1] ?? 'unknown', excerpt);
+    }
+    throw new SidecarHttpError(res.status, excerpt);
+  }
+
+  return (await res.json()) as SidecarReplyResponse;
+}
