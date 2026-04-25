@@ -81,12 +81,15 @@ if [[ -n "$last_iso" ]]; then
     fi
 fi
 
-# Guard 3: working tree clean (we don't want to ship stray local changes)
-echo "▸ guard 3/3: checking git working tree..."
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "✗ ABORT: uncommitted changes in working tree:"
-    git status --short | head -10
-    echo "  Commit or stash before deploying — `gcloud run deploy --source .` would ship these."
+# Guard 3: tracked files clean — i.e. nothing modified or staged that
+# differs from HEAD. We deliberately do NOT block on untracked files
+# because parallel sessions and worktrees often leave junk lying around;
+# untracked items are excluded from the deploy via .gcloudignore.
+echo "▸ guard 3/3: checking git tracked files..."
+if ! git diff --quiet HEAD --; then
+    echo "✗ ABORT: tracked files differ from HEAD:"
+    git diff --name-status HEAD -- | head -10
+    echo "  Commit or stash these before deploying."
     exit 4
 fi
 HEAD_SHA=$(git rev-parse --short HEAD)

@@ -12,3 +12,6 @@ README.md
 docs/
 output/
 scripts/
+# Per-agent worktrees and tooling — never deploy
+.claude/
+keynote-mcp/
