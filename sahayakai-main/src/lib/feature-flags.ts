@@ -24,6 +24,21 @@ export interface FeatureToggle {
   blocklist?: string[];
 }
 
+/**
+ * Parent-call sidecar dispatch mode.
+ *
+ * - `off`     — Genkit only. Default. Sidecar untouched even if deployed.
+ * - `shadow`  — Genkit serves the response; sidecar called fire-and-forget
+ *                in parallel for parity scoring. Output ignored.
+ * - `canary`  — Sidecar serves the response; Genkit fallback on any
+ *                sidecar error/timeout, with the canned safe-wrap-up as
+ *                last resort.
+ * - `full`    — Sidecar serves; same fallbacks as `canary` but
+ *                `parentCallSidecarPercent` is treated as 100 regardless
+ *                of value.
+ */
+export type ParentCallSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
+
 /** The full Firestore document shape at `system_config/feature_flags` */
 export interface FeatureFlagsConfig {
   // ── Global switches ────────────────────────────
@@ -41,6 +56,21 @@ export interface FeatureFlagsConfig {
   /** UIDs that always see subscription regardless of rollout % */
   subscriptionAllowlist: string[];
 
+  // ── Parent-call sidecar (ADK Python) rollout ───
+  /**
+   * Routing mode for the parent-call agent. See `ParentCallSidecarMode`.
+   * Defaults to `off` in `FALLBACK_CONFIG` so a Firestore outage cannot
+   * accidentally route real Twilio calls to an undeployed sidecar.
+   */
+  parentCallSidecarMode: ParentCallSidecarMode;
+  /**
+   * 0-100: percentage of calls routed to the sidecar in `shadow` /
+   * `canary` modes. Bucketing is done on `callSid` (sticky for the
+   * lifetime of one Twilio call), not `uid` — TwiML webhooks have no
+   * authenticated user. `full` mode treats this as 100 regardless.
+   */
+  parentCallSidecarPercent: number;
+
   // ── Per-feature toggles ────────────────────────
   features: Record<string, FeatureToggle>;
 
@@ -57,6 +87,11 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   subscriptionEnabled: false,    // safe: no one sees paywalls
   subscriptionRolloutPercent: 0,
   subscriptionAllowlist: [],
+  // Sidecar OFF on fallback so a Firestore outage cannot send live calls
+  // to an undeployed or misconfigured sidecar. Genkit alone is the safe
+  // baseline.
+  parentCallSidecarMode: 'off',
+  parentCallSidecarPercent: 0,
   features: {},
   updatedAt: '',
   updatedBy: 'fallback',
@@ -219,6 +254,72 @@ export async function getMaintenanceInfo(): Promise<{ active: boolean; message: 
     active: cfg.maintenanceMode,
     message: cfg.maintenanceMessage || 'Billing is under maintenance. All features are free during this time.',
   };
+}
+
+// ─── Parent-call sidecar dispatch ───────────────────────────────────────────
+
+/**
+ * Deterministic hash of `callSid` → 0-99. Twilio call SIDs are stable
+ * for the lifetime of a single call, so bucketing on `callSid` keeps
+ * each call on a single dispatch path even across `<Gather>` retries.
+ *
+ * Same algorithm as `userBucket` so the rollout maths reads identically
+ * everywhere — only the input domain differs.
+ */
+export function callSidBucket(callSid: string): number {
+  let hash = 0;
+  for (let i = 0; i < callSid.length; i++) {
+    hash = ((hash << 5) - hash + callSid.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 100;
+}
+
+export interface ParentCallSidecarDecision {
+  /** Final dispatch mode for THIS call after percent-bucket evaluation. */
+  mode: ParentCallSidecarMode;
+  /** Human-readable reason for telemetry (logged on every TwiML turn). */
+  reason: string;
+  /** The 0-99 hash bucket; emitted for debugging hot-spotted call IDs. */
+  bucket: number;
+}
+
+/**
+ * Decide whether THIS call/turn routes to the sidecar.
+ *
+ * Logic order:
+ * 1. configured mode is `off` → off
+ * 2. configured mode is `full` → full (percent ignored)
+ * 3. configured mode is `shadow` or `canary`:
+ *    - bucket < percent → shadow / canary
+ *    - bucket >= percent → off
+ *
+ * Bucket is computed on `callSid` so all turns of one call land on the
+ * same path — half-shadow, half-Genkit within a single call would make
+ * the transcript incoherent.
+ */
+export async function decideParentCallDispatch(
+  callSid: string,
+): Promise<ParentCallSidecarDecision> {
+  const cfg = await readConfig();
+  const bucket = callSidBucket(callSid);
+
+  if (cfg.parentCallSidecarMode === 'off') {
+    return { mode: 'off', reason: 'flag_off', bucket };
+  }
+  if (cfg.parentCallSidecarMode === 'full') {
+    return { mode: 'full', reason: 'flag_full', bucket };
+  }
+
+  // shadow or canary: percent-gated
+  const percent = Math.max(0, Math.min(100, cfg.parentCallSidecarPercent));
+  if (bucket < percent) {
+    return {
+      mode: cfg.parentCallSidecarMode,
+      reason: `bucket_${bucket}_under_${percent}`,
+      bucket,
+    };
+  }
+  return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
 }
 
 // ─── Debug Helper ───────────────────────────────────────────────────────────
