@@ -1,0 +1,83 @@
+# cloudbuild.yaml
+#
+# Single source of truth for the SahayakAI Cloud Run deploy pipeline.
+# Triggered by `git push origin main` via the Cloud Build GitHub trigger
+# `sahayakai-main-deploy` (see scripts/setup-build-trigger.sh).
+#
+# Steps:
+#   1. Build the Docker image, tag it with both :latest and :<short-sha>.
+#   2. Push both tags to Artifact Registry.
+#   3. Deploy to Cloud Run with --no-traffic. The new revision is built
+#      and held warm but does NOT auto-receive traffic. A human (or
+#      release agent) flips it explicitly via:
+#          gcloud run services update-traffic sahayakai-hotfix-resilience \
+#              --region=asia-southeast1 --project=$PROJECT_ID --to-latest
+#
+# Why --no-traffic? Because two parallel pushes can race. If either
+# auto-routed traffic on success, whichever finished last would clobber
+# the other. With --no-traffic, both produce ready revisions and the
+# operator picks the winner explicitly.
+#
+# Variables:
+#   $PROJECT_ID  — provided by Cloud Build automatically
+#   $SHORT_SHA   — provided by Cloud Build automatically (first 7 chars)
+
+steps:
+  # ── 1. Build ──────────────────────────────────────────────────────────────
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+      - --file=Dockerfile
+      - .
+
+  # ── 2. Push both tags ─────────────────────────────────────────────────────
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+    waitFor: [build]
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+    waitFor: [build]
+
+  # ── 3. Deploy to Cloud Run, NO traffic ────────────────────────────────────
+  # Tag the revision with the short sha so it is reachable directly at
+  # https://dep-<sha>---<service>-<hash>.run.app for verification.
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-hotfix-resilience
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --region=asia-southeast1
+      - --project=$PROJECT_ID
+      - --no-traffic
+      - --tag=sha-$SHORT_SHA
+      - --quiet
+    waitFor: [push-sha]
+
+# Build options
+options:
+  # Use higher-CPU machine to keep Next.js build under 10 min.
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+  # Avoid concurrent builds for the same trigger — Cloud Build will
+  # queue subsequent invocations rather than running them in parallel.
+  # (Setting CONCURRENCY=1 happens at the trigger level, not here.)
+
+# Hard cap so a hung build never blocks the queue forever.
+timeout: 1800s
+
+# Image list for Cloud Build artifact tracking.
+images:
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest

@@ -75,13 +75,24 @@ probe() {
     fi
 }
 
+# API endpoints — present/absent is a hard signal regardless of auth.
 probe "/api/jobs/grow-persona-pool exists"          POST  "/api/jobs/grow-persona-pool?count=1"  "200"  status
 probe "/api/jobs/ai-community-agent exists"         POST  "/api/jobs/ai-community-agent"         "200"  status
 probe "/api/jobs/daily-briefing exists (GET=405)"   GET   "/api/jobs/daily-briefing"             "405"  status
+
+# UI strings — these MUST be in the SSR HTML even for unauthenticated
+# users. The action tiles render unconditionally inside the page
+# component, so missing here means the latest community/page.tsx did
+# not get deployed.
 probe "Community: 'Open chat with every teacher'"   GET   "/community"                           "Open chat with every teacher"  body
 probe "Community: 'Search by subject'"              GET   "/community"                           "Search by subject"             body
-probe "Community: 'Nothing here yet' empty-state"   GET   "/community"                           "Nothing here yet"              body
-probe "Community: '1 member' singular pluralisation" GET  "/community"                           "1 member"                       body
+
+# NOTE: We deliberately do NOT probe for "Nothing here yet" or "1
+# member" here. Those strings only render server-side for an
+# authenticated user with an empty feed or a 1-member group. An
+# unauthenticated curl will always show them as missing — they are
+# false negatives and cause noisy audits. Verify those manually in
+# a logged-in browser session against the live URL above.
 
 echo
 echo "── Recent commits on origin/main ─────────────────────────────────"
