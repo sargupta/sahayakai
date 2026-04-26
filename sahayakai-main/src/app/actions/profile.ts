@@ -2,13 +2,28 @@
 
 import { dbAdapter } from "@/lib/db/adapter";
 import { certificationService } from "@/lib/services/certification-service";
-import { getAuthInstance } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
 import { validateAdmin } from "@/lib/auth-utils";
 import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-helpers";
 
-export async function getProfileData(userId: string) {
+/**
+ * Read a user's profile data.
+ *
+ * Wave 1: now derives uid from session. The positional `_userId` arg is
+ * preserved for compat — value is checked against session and rejected if
+ * mismatched (to surface bad call sites loudly during the rollout).
+ *
+ * Note: profile data ALSO surfaces in public APIs (teacher directory, etc.)
+ * via dedicated sanitised actions. This one returns the FULL profile and
+ * therefore must be self-only.
+ */
+export async function getProfileData(_userId?: string) {
+    const userId = await requireAuth();
+    if (_userId && _userId !== userId) {
+        throw new Error('Forbidden: cannot read another user\'s profile via this action');
+    }
     try {
         const [profile, certifications] = await Promise.all([
             dbAdapter.getUser(userId),
@@ -22,13 +37,20 @@ export async function getProfileData(userId: string) {
     }
 }
 
+/**
+ * Add a certification to the caller's profile.
+ *
+ * Wave 1: now derives uid from session — userId field on FormData is ignored.
+ * Previously any caller could add certifications to any user's profile by
+ * passing a different uid in the FormData.
+ */
 export async function addCertificationAction(formData: FormData) {
-    const userId = formData.get("userId") as string;
+    const userId = await requireAuth();
     const certName = formData.get("certName") as string;
     const issuingBody = formData.get("issuingBody") as string;
     const issueDate = formData.get("issueDate") as string;
 
-    if (!userId || !certName) throw new Error("Missing required fields");
+    if (!certName) throw new Error("Missing required field: certName");
 
     await certificationService.addCertification({
         userId,
@@ -41,8 +63,20 @@ export async function addCertificationAction(formData: FormData) {
     revalidatePath("/my-profile");
 }
 
-export async function updateProfileAction(userId: string, data: any) {
-    if (!userId) throw new Error("Unauthorized");
+/**
+ * Update the caller's own profile.
+ *
+ * Wave 1: dropped trust-the-client `userId` parameter (the previous check
+ * `if (!userId)` validated PRESENCE but not OWNERSHIP — any signed-in user
+ * could pass another user's uid and overwrite their profile). Now uid is
+ * derived from session and the supplied `_userId` is rejected if it doesn't
+ * match.
+ */
+export async function updateProfileAction(_userId: string, data: any) {
+    const userId = await requireAuth();
+    if (_userId !== userId) {
+        throw new Error('Forbidden: cannot update another user\'s profile');
+    }
 
     await dbAdapter.updateUser(userId, data);
 
@@ -50,11 +84,16 @@ export async function updateProfileAction(userId: string, data: any) {
 }
 
 /**
- * Mark a single onboarding checklist item as completed.
- * Uses Firestore update() with dot notation for atomic nested field writes.
+ * Mark a single onboarding checklist item as completed for the caller.
+ *
+ * Wave 1: dropped trust-the-client uid. Same spoof attack as updateProfileAction.
  */
-export async function markChecklistItemAction(userId: string, itemId: string) {
-    if (!userId || !itemId) return;
+export async function markChecklistItemAction(_userId: string, itemId: string) {
+    if (!itemId) return;
+    const userId = await requireAuth();
+    if (_userId !== userId) {
+        throw new Error('Forbidden: cannot update another user\'s checklist');
+    }
     try {
         const { getDb } = await import("@/lib/firebase-admin");
         const db = await getDb();

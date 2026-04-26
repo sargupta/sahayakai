@@ -4,6 +4,7 @@
 import type { LessonPlanOutput } from '@/ai/flows/lesson-plan-generator';
 import { validateTopicSafety } from '@/lib/safety';
 import { logger } from '@/lib/logger';
+import { requireAuth } from '@/lib/auth-helpers';
 
 // Dynamic imports are used for server-only modules to prevents client-bundle errors
 // when this Action is imported by Client Components.
@@ -62,6 +63,10 @@ function generateCacheId(topic: string, grade: string, language: string): string
 
 /**
  * Checks Firestore for a cached lesson plan.
+ *
+ * Wave 1: gated to authenticated users. The cache content itself is non-PII
+ * (keyed by topic hash), but we still rate-limit reads via the auth gate to
+ * prevent anonymous cache scraping.
  */
 export async function getCachedLessonPlan(
     topic: string,
@@ -69,6 +74,7 @@ export async function getCachedLessonPlan(
     language: string
 ): Promise<LessonPlanOutput | null> {
     try {
+        await requireAuth();
         const cacheId = generateCacheId(topic, grade, language);
 
         // If PII was detected, cacheId is null. Return null immediately.
@@ -99,6 +105,16 @@ export async function getCachedLessonPlan(
 
 /**
  * Saves a generated lesson plan to Firestore cache.
+ *
+ * Wave 1 hardening: gated to authenticated users. Previously a malicious
+ * client could call this server action directly to poison the SHARED cache
+ * (other teachers see the cached result on the same topic/grade/language)
+ * with arbitrary content.
+ *
+ * Note: this still doesn't validate that the caller actually generated this
+ * plan via the legitimate AI flow — just that they're a real user. A future
+ * pass should verify the plan originated from a recent flow invocation
+ * (e.g. via a signed cache token).
  */
 export async function saveLessonPlanToCache(
     plan: LessonPlanOutput,
@@ -107,6 +123,7 @@ export async function saveLessonPlanToCache(
     language: string
 ): Promise<void> {
     try {
+        await requireAuth();
         const cacheId = generateCacheId(topic, grade, language);
 
         // If PII detected, do NOT save.
