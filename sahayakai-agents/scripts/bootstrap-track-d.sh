@@ -153,19 +153,28 @@ NEXTJS_EMAIL="${SA_NEXTJS}@${PROJECT_ID}.iam.gserviceaccount.com"
 AUTO_ABORT_EMAIL="${SA_AUTO_ABORT}@${PROJECT_ID}.iam.gserviceaccount.com"
 SHADOW_ROLLUP_EMAIL="${SA_SHADOW_ROLLUP}@${PROJECT_ID}.iam.gserviceaccount.com"
 
-# Agents (sidecar) runtime
+# Round-2 audit P0 IAM-3 fix (30-agent review, group D3): drop the
+# project-level `roles/secretmanager.secretAccessor` grants. They give
+# Next.js access to ALL secrets in the project — including
+# GOOGLE_GENAI_SHADOW_API_KEY and FIREBASE_SERVICE_ACCOUNT_KEY — neither
+# of which Next.js should ever read. Per-secret bindings in section 3
+# below grant exactly the secrets each SA actually needs.
+
+# Agents (sidecar) runtime — project-wide read/write/trace/log only.
+# Per-secret accessor bindings are applied in section 3.
 info "  ${AGENTS_EMAIL}"
 grant_role "serviceAccount:${AGENTS_EMAIL}" "roles/datastore.user"
-grant_role "serviceAccount:${AGENTS_EMAIL}" "roles/secretmanager.secretAccessor"
 grant_role "serviceAccount:${AGENTS_EMAIL}" "roles/cloudtrace.agent"
 grant_role "serviceAccount:${AGENTS_EMAIL}" "roles/logging.logWriter"
 
-# Next.js runtime
+# Next.js runtime — same shape; per-secret accessor bindings in section 3.
 info "  ${NEXTJS_EMAIL}"
-grant_role "serviceAccount:${NEXTJS_EMAIL}" "roles/secretmanager.secretAccessor"
 grant_role "serviceAccount:${NEXTJS_EMAIL}" "roles/datastore.user"
 grant_role "serviceAccount:${NEXTJS_EMAIL}" "roles/logging.logWriter"
-# `roles/run.invoker` granted per-service later (after sidecar exists).
+# `roles/run.invoker` on the sidecar service is granted by
+# `scripts/grant-nextjs-invoker.sh` AFTER the sidecar deploys (section 5
+# of the runbook). Cannot be granted here because the service does not
+# yet exist.
 
 # Auto-abort runtime
 info "  ${AUTO_ABORT_EMAIL}"
@@ -187,6 +196,14 @@ ensure_secret SAHAYAKAI_AGENTS_AUDIENCE
 ensure_secret GOOGLE_GENAI_SHADOW_API_KEY
 
 # Grant runtime read access on each.
+#
+# Tight scope per Round-2 audit IAM-3: each SA gets ONLY the secrets it
+# actually reads. NEVER grants Next.js the shadow-key (sidecar-only) or
+# the shadow key access to FIREBASE_SERVICE_ACCOUNT_KEY (Next.js-only).
+#
+# Both runtimes share SIGNING_KEY (HMAC sign on Next.js, HMAC verify
+# on sidecar) and AGENTS_AUDIENCE (mint-token audience on Next.js,
+# verify-token audience on sidecar).
 for secret in SAHAYAKAI_REQUEST_SIGNING_KEY SAHAYAKAI_AGENTS_AUDIENCE; do
   for sa in "${AGENTS_EMAIL}" "${NEXTJS_EMAIL}"; do
     gcloud secrets add-iam-policy-binding "${secret}" \
@@ -195,11 +212,28 @@ for secret in SAHAYAKAI_REQUEST_SIGNING_KEY SAHAYAKAI_AGENTS_AUDIENCE; do
       --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || true
   done
 done
-gcloud secrets add-iam-policy-binding GOOGLE_GENAI_SHADOW_API_KEY \
-  --member="serviceAccount:${AGENTS_EMAIL}" \
-  --role=roles/secretmanager.secretAccessor \
-  --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || true
-ok "Per-secret accessor bindings applied."
+
+# Sidecar-only secrets (live + shadow Gemini keys).
+for secret in GOOGLE_GENAI_API_KEY GOOGLE_GENAI_SHADOW_API_KEY; do
+  if gcloud secrets describe "${secret}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud secrets add-iam-policy-binding "${secret}" \
+      --member="serviceAccount:${AGENTS_EMAIL}" \
+      --role=roles/secretmanager.secretAccessor \
+      --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || true
+  fi
+done
+
+# Next.js-only secrets (Firebase Admin SDK key, Firebase web API key).
+for secret in FIREBASE_SERVICE_ACCOUNT_KEY NEXT_PUBLIC_FIREBASE_API_KEY YOUTUBE_API_KEY; do
+  if gcloud secrets describe "${secret}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud secrets add-iam-policy-binding "${secret}" \
+      --member="serviceAccount:${NEXTJS_EMAIL}" \
+      --role=roles/secretmanager.secretAccessor \
+      --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || true
+  fi
+done
+
+ok "Per-secret accessor bindings applied (tight scope)."
 
 # ── 4. Pub/Sub topic ───────────────────────────────────────────────────
 section "4/8  Pub/Sub topic"
