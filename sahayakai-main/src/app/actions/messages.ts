@@ -148,6 +148,29 @@ export async function sendMessageAction({
     if (type === 'audio' && !audioUrl) throw new Error('Audio URL is required for voice messages');
     if (trimmed.length > 1000) throw new Error('Message too long (max 1000 chars)');
 
+    // Wave 3: validate non-text payloads too. Previously only text length was
+    // capped — a malicious client could send a 10 MB resource.title or a
+    // gigabyte-long audioUrl and Firestore would happily store it.
+    if (audioUrl) {
+        if (typeof audioUrl !== 'string') throw new Error('Invalid audio URL');
+        if (audioUrl.length > 1024) throw new Error('Audio URL too long');
+        if (!audioUrl.startsWith('https://firebasestorage.googleapis.com/') &&
+            !audioUrl.startsWith('https://storage.googleapis.com/')) {
+            throw new Error('Audio URL must point to Firebase Storage');
+        }
+    }
+    if (audioDuration !== undefined) {
+        if (typeof audioDuration !== 'number' || audioDuration < 0 || audioDuration > 600) {
+            throw new Error('Audio duration must be 0-600 seconds');
+        }
+    }
+    if (resource) {
+        if (typeof resource !== 'object') throw new Error('Invalid resource payload');
+        if (typeof resource.id !== 'string' || resource.id.length > 256) throw new Error('Invalid resource id');
+        if (typeof resource.title !== 'string' || resource.title.length > 200) throw new Error('Invalid resource title');
+        if (typeof resource.route !== 'string' || resource.route.length > 64) throw new Error('Invalid resource route');
+    }
+
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -304,9 +327,14 @@ export async function getTotalUnreadCountAction(userId: string): Promise<number>
     if (callerId !== userId) throw new Error('Unauthorized');
 
     const db = await getDb();
+    // Wave 3: cap at 500 conversations. Without a limit, a power-user with
+    // thousands of group conversations would load every doc on every sidebar
+    // badge refresh — a perpetual O(N) Firestore read on the hottest path.
+    // 500 is well above the 99th-percentile teacher's conversation count.
     const snap = await db
         .collection('conversations')
         .where('participantIds', 'array-contains', userId)
+        .limit(500)
         .get();
 
     let total = 0;
