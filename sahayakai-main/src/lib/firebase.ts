@@ -3,6 +3,17 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics"; // Analytics often breaks in SSR if not handled carefully
 
+// Firebase web-config values (apiKey + projectId + storageBucket etc.)
+// are by design browser-exposed — see https://firebase.google.com/docs/projects/api-keys.
+// Access control is enforced by Firestore security rules + App Check,
+// not by hiding these values. They are configuration, not secrets.
+//
+// The literal fallbacks here exist so a Next.js build inside a
+// minimally-configured Docker image (e.g. CI without `--build-arg`)
+// still produces a working bundle for the staging / smoke-test path.
+// Production deploys MUST set the env vars explicitly via
+// apphosting.yaml's secret reference (rotation discipline) or the
+// cloud-run.yml `--set-secrets` line.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw",
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sahayakai-b4248.firebaseapp.com",
