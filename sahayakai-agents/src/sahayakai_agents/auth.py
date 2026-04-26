@@ -71,11 +71,35 @@ def _verify_id_token(token: str, audience: str) -> dict[str, object]:
     return payload
 
 
-def _verify_content_digest(request: Request, raw_body: bytes) -> None:
-    """Recompute HMAC-SHA256 of the body and compare against X-Content-Digest.
+# Round-2 audit P1 REPLAY-1 fix (30-agent review, group A5 + B3):
+# HMAC + ID-token alone do NOT prevent replay. A captured
+# (Authorization, X-Content-Digest, body) tuple is replayable for the
+# full ID-token TTL (~1 hour). Gemini API spend, Firestore writes, and
+# behavioural-guard side effects all happen on every replay.
+#
+# Defence: the caller adds `X-Request-Timestamp: <unix-millis>` and
+# folds it into the HMAC input. The verifier here re-checks the
+# timestamp is within a ±5-minute window (Cloud Run / load balancer
+# clock skew + occasional retry tolerance). Any captured request older
+# than 5 minutes is silently dropped.
+_TIMESTAMP_SKEW_MS = 5 * 60 * 1000  # ±5 min
+_TIMESTAMP_HEADER = "x-request-timestamp"
 
-    Format: `X-Content-Digest: sha256=<base64-stdencoded>`.
-    A missing header on a non-empty body is a hard failure.
+
+def _verify_content_digest(request: Request, raw_body: bytes) -> None:
+    """Recompute HMAC-SHA256 of (timestamp + body) and compare against
+    `X-Content-Digest`.
+
+    Wire format:
+      X-Request-Timestamp: <unix milliseconds>
+      X-Content-Digest:    sha256=<base64-stdencoded(hmac(secret,
+                                                          ts+":"+body))>
+
+    The colon is a stable delimiter so a body containing the timestamp
+    bytes can't collide with a request from a different timestamp.
+    A missing timestamp on a non-empty body is a hard failure (no
+    backwards-compat with the pre-fix shape — every Next.js client is
+    upgraded in lockstep).
     """
     if not raw_body:
         # Empty bodies (e.g. idempotent GET) don't need HMAC.
@@ -94,8 +118,26 @@ def _verify_content_digest(request: Request, raw_body: bytes) -> None:
     except (ValueError, base64.binascii.Error) as exc:
         raise AuthenticationError("X-Content-Digest is not valid base64") from exc
 
+    timestamp_str = request.headers.get(_TIMESTAMP_HEADER)
+    if not timestamp_str:
+        raise AuthenticationError("Missing X-Request-Timestamp header")
+    try:
+        timestamp_ms = int(timestamp_str)
+    except ValueError as exc:
+        raise AuthenticationError("X-Request-Timestamp is not an integer") from exc
+
+    now_ms = int(time.time() * 1000)
+    skew = abs(now_ms - timestamp_ms)
+    if skew > _TIMESTAMP_SKEW_MS:
+        raise AuthenticationError(
+            f"X-Request-Timestamp out of range (skew {skew}ms > {_TIMESTAMP_SKEW_MS}ms)"
+        )
+
     key = get_settings().request_signing_key.get_secret_value().encode("utf-8")
-    computed = hmac.new(key, raw_body, hashlib.sha256).digest()
+    # Bind timestamp to body so the same body at a different time
+    # produces a different MAC — kills replay within the skew window.
+    signed_input = timestamp_str.encode("utf-8") + b":" + raw_body
+    computed = hmac.new(key, signed_input, hashlib.sha256).digest()
 
     # Constant-time compare to avoid timing oracles.
     if not hmac.compare_digest(expected, computed):

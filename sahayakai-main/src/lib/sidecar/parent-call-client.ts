@@ -32,7 +32,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { computeBodyDigest } from './signing';
+import { signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -186,7 +186,10 @@ export async function callSidecarReply(
 
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/parent-call/reply`;
   const rawBody = JSON.stringify(request);
-  const digest = await computeBodyDigest(rawBody);
+  // Wave 4 fix 4 / P1 REPLAY-1: signRequest binds digest to a
+  // per-request timestamp. The matching `X-Request-Timestamp` header
+  // MUST be sent alongside the digest or the sidecar rejects.
+  const { timestamp, digest } = await signRequest(rawBody);
 
   const tokenClient = await getTokenClient(audience);
   const authHeaders = await tokenClient.getRequestHeaders();
@@ -205,6 +208,7 @@ export async function callSidecarReply(
         ...authHeaders,
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
+        'X-Request-Timestamp': timestamp,
       },
       body: rawBody,
       signal: controller.signal,

@@ -76,15 +76,47 @@ async function getSigningKey(): Promise<string> {
 /**
  * Compute the `X-Content-Digest` header value for a request body.
  *
- * The body is hashed verbatim — callers must pass the exact bytes that
- * will be sent on the wire (no JSON re-stringification after digest
- * computation). Mismatch between digest input and wire bytes is the
- * single most common cause of 400 Bad Digest in Cloud Run middlewares.
+ * Round-2 audit P1 REPLAY-1 fix (30-agent review, group A5 + B3):
+ * the digest now binds to a per-request timestamp, killing replay.
+ * The sidecar's auth middleware checks the timestamp is within ±5
+ * minutes of server time; any captured request older than that is
+ * dropped.
+ *
+ * Wire format:
+ *   X-Request-Timestamp: <unix milliseconds>
+ *   X-Content-Digest:    sha256=<base64(hmac(secret, ts+":"+rawBody))>
+ *
+ * Returns BOTH headers as a {timestamp, digest} pair so the caller
+ * sets them as a unit — they MUST be sent together.
+ */
+export interface SignedHeaders {
+  timestamp: string;
+  digest: string;
+}
+
+export async function signRequest(rawBody: string): Promise<SignedHeaders> {
+  const key = await getSigningKey();
+  const timestamp = String(Date.now());
+  const mac = crypto
+    .createHmac('sha256', key)
+    .update(`${timestamp}:`, 'utf8')
+    .update(rawBody, 'utf8')
+    .digest('base64');
+  return { timestamp, digest: `sha256=${mac}` };
+}
+
+/**
+ * Backwards-compat wrapper. NEW CODE should use `signRequest` so the
+ * timestamp travels with the digest. This wrapper is retained for
+ * tests that mock the digest path; it generates a digest for the
+ * current timestamp and discards the timestamp value (verification
+ * will fail without the matching `X-Request-Timestamp` header).
+ *
+ * @deprecated Use `signRequest(rawBody)` instead.
  */
 export async function computeBodyDigest(rawBody: string): Promise<string> {
-  const key = await getSigningKey();
-  const mac = crypto.createHmac('sha256', key).update(rawBody, 'utf8').digest('base64');
-  return `sha256=${mac}`;
+  const { digest } = await signRequest(rawBody);
+  return digest;
 }
 
 /**
