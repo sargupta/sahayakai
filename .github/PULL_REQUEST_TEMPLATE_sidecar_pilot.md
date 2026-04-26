@@ -155,18 +155,20 @@ sahayakai-agents/  (Python)
   ruff check src tests scripts cloud_functions  → All checks passed!
   mypy src/                                     → 16 source files, 0 errors
   mypy scripts/compare_parity.py                → 0 errors
-  mypy cloud_functions/auto_abort/main.py       → 0 errors
-  pytest                                        → 119 passed (~3s)
-                                                  - 49 unit
+  mypy cloud_functions/                         → 2 source files, 0 errors
+  pytest                                        → 135 passed (~3s)
+                                                  - 53 unit (incl. 4 replay-protection)
                                                   - 5 integration
                                                   - 38 behavioural (11-language matrix)
-                                                  - 20 auto-abort demote (this PR)
-                                                  - 7 shadow-diff aggregator (this PR)
+                                                  - 32 auto-abort (incl. recovery + dedupe)
+                                                  - 7 shadow-rollup
 
 sahayakai-main/  (TypeScript)
   tsc --noEmit          → 0 errors
-  jest src/__tests__/lib/sidecar-dispatch.test.ts
-                        → 19 passed (0.23s)
+  jest src/__tests__/   → 65 passed across 3 suites
+                          - 19 dispatcher (off/shadow/canary/full × 3 outcomes)
+                          - 41 guard (incl. confusable folding, ZWJ strip)
+                          - 5 timeout (deterministic 10s-ceiling)
 ```
 
 ## Rollout plan (post-merge)
