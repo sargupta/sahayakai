@@ -2478,6 +2478,316 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "Book a 30-minute demo", "Gujarati": "Book a 30-minute demo", "Punjabi": "Book a 30-minute demo",
         "Malayalam": "Book a 30-minute demo", "Odia": "Book a 30-minute demo"
     },
+
+    // ── Landing page (marketing surface, all 11 languages) ──────────────────
+    // Hero
+    "For schools, chains & governments": {
+        "English": "For schools, chains & governments", "Hindi": "स्कूलों, चेन्स और सरकारों के लिए", "Kannada": "ಶಾಲೆಗಳು, ಚೈನ್‌ಗಳು ಮತ್ತು ಸರ್ಕಾರಗಳಿಗಾಗಿ",
+        "Tamil": "பள்ளிகள், சங்கிலிகள் & அரசாங்கங்களுக்காக", "Telugu": "పాఠశాలలు, చైన్‌లు & ప్రభుత్వాల కోసం", "Marathi": "शाळा, साखळ्या आणि सरकारांसाठी",
+        "Bengali": "স্কুল, চেইন ও সরকারের জন্য", "Gujarati": "શાળાઓ, ચેઇન અને સરકારો માટે", "Punjabi": "ਸਕੂਲਾਂ, ਚੇਨਾਂ ਅਤੇ ਸਰਕਾਰਾਂ ਲਈ",
+        "Malayalam": "സ്കൂളുകൾ, ചെയിനുകൾ & സർക്കാരുകൾക്കായി", "Odia": "ବିଦ୍ୟାଳୟ, ଚେନ୍ ଓ ସରକାରଙ୍କ ପାଇଁ"
+    },
+    "Give your teachers": {
+        "English": "Give your teachers", "Hindi": "अपने शिक्षकों को दें", "Kannada": "ನಿಮ್ಮ ಶಿಕ್ಷಕರಿಗೆ ನೀಡಿ",
+        "Tamil": "உங்கள் ஆசிரியர்களுக்கு வழங்குங்கள்", "Telugu": "మీ ఉపాధ్యాయులకు ఇవ్వండి", "Marathi": "तुमच्या शिक्षकांना द्या",
+        "Bengali": "আপনার শিক্ষকদের দিন", "Gujarati": "તમારા શિક્ષકોને આપો", "Punjabi": "ਆਪਣੇ ਅਧਿਆਪਕਾਂ ਨੂੰ ਦਿਓ",
+        "Malayalam": "നിങ്ങളുടെ അധ്യാപകർക്ക് നൽകൂ", "Odia": "ଆପଣଙ୍କ ଶିକ୍ଷକମାନଙ୍କୁ ଦିଅନ୍ତୁ"
+    },
+    "Not just a lesson plan generator.": {
+        "English": "Not just a lesson plan generator.", "Hindi": "सिर्फ़ एक पाठ योजना जनरेटर नहीं।", "Kannada": "ಕೇವಲ ಪಾಠ ಯೋಜನೆ ಜನರೇಟರ್ ಅಲ್ಲ.",
+        "Tamil": "வெறும் பாட திட்ட உருவாக்கி அல்ல.", "Telugu": "కేవలం పాఠ్య ప్రణాళిక జనరేటర్ కాదు.", "Marathi": "फक्त एक धडा योजना जनरेटर नाही.",
+        "Bengali": "শুধু একটি পাঠ পরিকল্পনা জেনারেটর নয়।", "Gujarati": "માત્ર પાઠ યોજના જનરેટર નથી.", "Punjabi": "ਸਿਰਫ਼ ਇੱਕ ਪਾਠ ਯੋਜਨਾ ਜਨਰੇਟਰ ਨਹੀਂ।",
+        "Malayalam": "വെറും ഒരു പാഠ പദ്ധതി ജനറേറ്റർ അല്ല.", "Odia": "କେବଳ ଗୋଟିଏ ପାଠ୍ୟ ଯୋଜନା ଜେନେରେଟର ନୁହେଁ।"
+    },
+    "is the professional infrastructure Indian educators never had — in 11 languages, across 28 state boards, on the cheapest smartphones.": {
+        "English": "is the professional infrastructure Indian educators never had — in 11 languages, across 28 state boards, on the cheapest smartphones.",
+        "Hindi": "वह पेशेवर बुनियादी ढाँचा है जो भारतीय शिक्षकों के पास कभी नहीं था — 11 भाषाओं में, 28 राज्य बोर्डों पर, सबसे सस्ते स्मार्टफ़ोनों पर।",
+        "Kannada": "ಭಾರತೀಯ ಶಿಕ್ಷಕರಿಗೆ ಎಂದಿಗೂ ಇಲ್ಲದ ವೃತ್ತಿಪರ ಮೂಲಸೌಕರ್ಯ — 11 ಭಾಷೆಗಳಲ್ಲಿ, 28 ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳಲ್ಲಿ, ಅಗ್ಗದ ಸ್ಮಾರ್ಟ್‌ಫೋನ್‌ಗಳಲ್ಲಿ.",
+        "Tamil": "இந்திய ஆசிரியர்களுக்கு என்றுமே இல்லாத தொழில்முறை உள்கட்டமைப்பு — 11 மொழிகளில், 28 மாநில வாரியங்களில், மலிவான ஸ்மார்ட்போன்களில்.",
+        "Telugu": "భారతీయ ఉపాధ్యాయులకు ఎన్నడూ లేని వృత్తిపరమైన మౌలిక సదుపాయం — 11 భాషలలో, 28 రాష్ట్ర బోర్డులలో, చౌకైన స్మార్ట్‌ఫోన్లలో.",
+        "Marathi": "भारतीय शिक्षकांकडे कधीच नव्हती अशी व्यावसायिक पायाभूत सुविधा — 11 भाषांमध्ये, 28 राज्य मंडळांवर, सर्वात स्वस्त स्मार्टफोनवर.",
+        "Bengali": "ভারতীয় শিক্ষকদের কখনও ছিল না এমন পেশাদার অবকাঠামো — ১১টি ভাষায়, ২৮টি রাজ্য বোর্ডে, সবচেয়ে সস্তা স্মার্টফোনে।",
+        "Gujarati": "ભારતીય શિક્ષકો પાસે ક્યારેય નહોતું એવું વ્યાવસાયિક માળખું — 11 ભાષાઓમાં, 28 રાજ્ય બોર્ડ પર, સૌથી સસ્તા સ્માર્ટફોન પર.",
+        "Punjabi": "ਉਹ ਪੇਸ਼ੇਵਰ ਬੁਨਿਆਦੀ ਢਾਂਚਾ ਜੋ ਭਾਰਤੀ ਅਧਿਆਪਕਾਂ ਕੋਲ ਕਦੇ ਨਹੀਂ ਸੀ — 11 ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ, 28 ਰਾਜ ਬੋਰਡਾਂ ’ਤੇ, ਸਭ ਤੋਂ ਸਸਤੇ ਸਮਾਰਟਫ਼ੋਨਾਂ ’ਤੇ।",
+        "Malayalam": "ഇന്ത്യൻ അധ്യാപകർക്ക് ഒരിക്കലും ഇല്ലാതിരുന്ന തൊഴിൽപരമായ അടിസ്ഥാന സൗകര്യം — 11 ഭാഷകളിൽ, 28 സംസ്ഥാന ബോർഡുകളിൽ, ഏറ്റവും വിലകുറഞ്ഞ സ്മാർട്ട്‌ഫോണുകളിൽ.",
+        "Odia": "ଭାରତୀୟ ଶିକ୍ଷକମାନଙ୍କ ପାଖରେ କେବେ ନଥିଲା ଯେଉଁ ବୃତ୍ତିଗତ ଭିତ୍ତିଭୂମି — ୧୧ଟି ଭାଷାରେ, ୨୮ଟି ରାଜ୍ୟ ବୋର୍ଡରେ, ସର୍ବନିମ୍ନ ମୂଲ୍ୟର ସ୍ମାର୍ଟଫୋନରେ।"
+    },
+    "For governments →": {
+        "English": "For governments →", "Hindi": "सरकारों के लिए →", "Kannada": "ಸರ್ಕಾರಗಳಿಗಾಗಿ →",
+        "Tamil": "அரசாங்கங்களுக்காக →", "Telugu": "ప్రభుత్వాల కోసం →", "Marathi": "सरकारांसाठी →",
+        "Bengali": "সরকারের জন্য →", "Gujarati": "સરકારો માટે →", "Punjabi": "ਸਰਕਾਰਾਂ ਲਈ →",
+        "Malayalam": "സർക്കാരുകൾക്കായി →", "Odia": "ସରକାରଙ୍କ ପାଇଁ →"
+    },
+    "Indian languages": {
+        "English": "Indian languages", "Hindi": "भारतीय भाषाएँ", "Kannada": "ಭಾರತೀಯ ಭಾಷೆಗಳು",
+        "Tamil": "இந்திய மொழிகள்", "Telugu": "భారతీయ భాషలు", "Marathi": "भारतीय भाषा",
+        "Bengali": "ভারতীয় ভাষা", "Gujarati": "ભારતીય ભાષાઓ", "Punjabi": "ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ",
+        "Malayalam": "ഇന്ത്യൻ ഭാഷകൾ", "Odia": "ଭାରତୀୟ ଭାଷାଗୁଡ଼ିକ"
+    },
+    "state boards": {
+        "English": "state boards", "Hindi": "राज्य बोर्ड", "Kannada": "ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳು",
+        "Tamil": "மாநில வாரியங்கள்", "Telugu": "రాష్ట్ర బోర్డులు", "Marathi": "राज्य मंडळे",
+        "Bengali": "রাজ্য বোর্ড", "Gujarati": "રાજ્ય બોર્ડ", "Punjabi": "ਰਾਜ ਬੋਰਡ",
+        "Malayalam": "സംസ്ഥാന ബോർഡുകൾ", "Odia": "ରାଜ୍ୟ ବୋର୍ଡ"
+    },
+    "2+ hrs": {
+        "English": "2+ hrs", "Hindi": "2+ घंटे", "Kannada": "2+ ಗಂಟೆಗಳು",
+        "Tamil": "2+ மணி", "Telugu": "2+ గం.", "Marathi": "2+ तास",
+        "Bengali": "২+ ঘণ্টা", "Gujarati": "2+ કલાક", "Punjabi": "2+ ਘੰਟੇ",
+        "Malayalam": "2+ മണിക്കൂർ", "Odia": "୨+ ଘଣ୍ଟା"
+    },
+    "saved daily": {
+        "English": "saved daily", "Hindi": "रोज़ बचत", "Kannada": "ಪ್ರತಿದಿನ ಉಳಿತಾಯ",
+        "Tamil": "தினமும் சேமிக்கப்பட்டது", "Telugu": "రోజూ ఆదా", "Marathi": "रोज वाचवले",
+        "Bengali": "প্রতিদিন সঞ্চিত", "Gujarati": "દરરોજ બચત", "Punjabi": "ਰੋਜ਼ਾਨਾ ਬਚਤ",
+        "Malayalam": "ദിവസേന ലാഭം", "Odia": "ପ୍ରତିଦିନ ସଞ୍ଚୟ"
+    },
+    "~200 hrs/year": {
+        "English": "~200 hrs/year", "Hindi": "~200 घंटे/वर्ष", "Kannada": "~200 ಗಂಟೆ/ವರ್ಷ",
+        "Tamil": "~200 மணி/ஆண்டு", "Telugu": "~200 గం./సం.", "Marathi": "~200 तास/वर्ष",
+        "Bengali": "~২০০ ঘণ্টা/বছর", "Gujarati": "~200 કલાક/વર્ષ", "Punjabi": "~200 ਘੰਟੇ/ਸਾਲ",
+        "Malayalam": "~200 മണിക്കൂർ/വർഷം", "Odia": "~୨୦୦ ଘଣ୍ଟା/ବର୍ଷ"
+    },
+    "per teacher": {
+        "English": "per teacher", "Hindi": "प्रति शिक्षक", "Kannada": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ",
+        "Tamil": "ஒரு ஆசிரியருக்கு", "Telugu": "ఉపాధ్యాయునికి", "Marathi": "प्रति शिक्षक",
+        "Bengali": "প্রতি শিক্ষক", "Gujarati": "પ્રતિ શિક્ષક", "Punjabi": "ਪ੍ਰਤੀ ਅਧਿਆਪਕ",
+        "Malayalam": "ഓരോ അധ്യാപകനും", "Odia": "ପ୍ରତି ଶିକ୍ଷକ"
+    },
+
+    // Pillar names
+    "pillar.prep-desk.name": {
+        "English": "Prep desk", "Hindi": "तैयारी डेस्क", "Kannada": "ಪ್ರಿಪ್ ಡೆಸ್ಕ್",
+        "Tamil": "தயாரிப்பு மேசை", "Telugu": "ప్రిప్ డెస్క్", "Marathi": "तयारी डेस्क",
+        "Bengali": "প্রস্তুতি ডেস্ক", "Gujarati": "તૈયારી ડેસ્ક", "Punjabi": "ਤਿਆਰੀ ਡੈਸਕ",
+        "Malayalam": "തയ്യാറെടുപ്പ് ഡെസ്ക്", "Odia": "ପ୍ରସ୍ତୁତି ଡେସ୍କ"
+    },
+    "pillar.ai-co-teacher.name": {
+        "English": "AI co-teacher", "Hindi": "AI सह-शिक्षक", "Kannada": "AI ಸಹ-ಶಿಕ್ಷಕ",
+        "Tamil": "AI இணை-ஆசிரியர்", "Telugu": "AI సహ-ఉపాధ్యాయుడు", "Marathi": "AI सह-शिक्षक",
+        "Bengali": "AI সহ-শিক্ষক", "Gujarati": "AI સહ-શિક્ષક", "Punjabi": "AI ਸਹਿ-ਅਧਿਆਪਕ",
+        "Malayalam": "AI സഹ-അധ്യാപകൻ", "Odia": "AI ସହ-ଶିକ୍ଷକ"
+    },
+    "pillar.parent-hotline.name": {
+        "English": "Parent hotline", "Hindi": "अभिभावक हॉटलाइन", "Kannada": "ಪೋಷಕ ಹಾಟ್‌ಲೈನ್",
+        "Tamil": "பெற்றோர் ஹாட்லைன்", "Telugu": "తల్లిదండ్రుల హాట్‌లైన్", "Marathi": "पालक हॉटलाइन",
+        "Bengali": "অভিভাবক হটলাইন", "Gujarati": "વાલી હોટલાઇન", "Punjabi": "ਮਾਤਾ-ਪਿਤਾ ਹੌਟਲਾਈਨ",
+        "Malayalam": "രക്ഷിതാവ് ഹോട്ട്‌ലൈൻ", "Odia": "ଅଭିଭାବକ ହଟ୍‌ଲାଇନ୍"
+    },
+    "pillar.staffroom.name": {
+        "English": "Staffroom", "Hindi": "स्टाफ़रूम", "Kannada": "ಸಿಬ್ಬಂದಿ ಕೊಠಡಿ",
+        "Tamil": "ஆசிரியர் அறை", "Telugu": "స్టాఫ్‌రూమ్", "Marathi": "स्टाफरूम",
+        "Bengali": "স্টাফরুম", "Gujarati": "સ્ટાફરૂમ", "Punjabi": "ਸਟਾਫ਼ਰੂਮ",
+        "Malayalam": "സ്റ്റാഫ്റൂം", "Odia": "ଷ୍ଟାଫରୁମ"
+    },
+    "pillar.pro-inbox.name": {
+        "English": "Pro inbox", "Hindi": "प्रो इनबॉक्स", "Kannada": "ಪ್ರೋ ಇನ್‌ಬಾಕ್ಸ್",
+        "Tamil": "புரோ இன்பாக்ஸ்", "Telugu": "ప్రో ఇన్‌బాక్స్", "Marathi": "प्रो इनबॉक्स",
+        "Bengali": "প্রো ইনবক্স", "Gujarati": "પ્રો ઇનબૉક્સ", "Punjabi": "ਪ੍ਰੋ ਇਨਬਾਕਸ",
+        "Malayalam": "പ്രോ ഇൻബോക്സ്", "Odia": "ପ୍ରୋ ଇନବକ୍ସ"
+    },
+    "pillar.operating-system.name": {
+        "English": "Operating system", "Hindi": "ऑपरेटिंग सिस्टम", "Kannada": "ಆಪರೇಟಿಂಗ್ ಸಿಸ್ಟಮ್",
+        "Tamil": "இயக்க அமைப்பு", "Telugu": "ఆపరేటింగ్ సిస్టమ్", "Marathi": "ऑपरेटिंग सिस्टम",
+        "Bengali": "অপারেটিং সিস্টেম", "Gujarati": "ઓપરેટિંગ સિસ્ટમ", "Punjabi": "ਆਪਰੇਟਿੰਗ ਸਿਸਟਮ",
+        "Malayalam": "ഓപ്പറേറ്റിംഗ് സിസ്റ്റം", "Odia": "ଅପରେଟିଂ ସିଷ୍ଟମ୍"
+    },
+
+    // Pillar descriptions
+    "pillar.prep-desk.desc": {
+        "English": "Voice-first lesson prep · 7 AI tools · 11 languages",
+        "Hindi": "आवाज़-पहले पाठ तैयारी · 7 AI टूल · 11 भाषाएँ",
+        "Kannada": "ಧ್ವನಿ-ಪ್ರಥಮ ಪಾಠ ತಯಾರಿಕೆ · 7 AI ಸಾಧನಗಳು · 11 ಭಾಷೆಗಳು",
+        "Tamil": "குரல்-முதன்மை பாடம் தயாரிப்பு · 7 AI கருவிகள் · 11 மொழிகள்",
+        "Telugu": "వాయిస్-ఫస్ట్ పాఠ్య ప్రణాళిక · 7 AI సాధనాలు · 11 భాషలు",
+        "Marathi": "आवाज-प्रथम धडा तयारी · 7 AI साधने · 11 भाषा",
+        "Bengali": "ভয়েস-ফার্স্ট পাঠ প্রস্তুতি · ৭টি AI টুল · ১১টি ভাষা",
+        "Gujarati": "વોઇસ-ફર્સ્ટ પાઠ તૈયારી · 7 AI સાધનો · 11 ભાષાઓ",
+        "Punjabi": "ਆਵਾਜ਼-ਪਹਿਲਾਂ ਪਾਠ ਤਿਆਰੀ · 7 AI ਟੂਲ · 11 ਭਾਸ਼ਾਵਾਂ",
+        "Malayalam": "ശബ്ദ-പ്രഥമ പാഠ തയ്യാറെടുപ്പ് · 7 AI ഉപകരണങ്ങൾ · 11 ഭാഷകൾ",
+        "Odia": "ସ୍ୱର-ପ୍ରଥମ ପାଠ ପ୍ରସ୍ତୁତି · ୭ଟି AI ଉପକରଣ · ୧୧ଟି ଭାଷା"
+    },
+    "pillar.ai-co-teacher.desc": {
+        "English": "VIDYA · persistent pedagogy coach on every page",
+        "Hindi": "VIDYA · हर पेज पर लगातार शिक्षण कोच",
+        "Kannada": "VIDYA · ಪ್ರತಿ ಪುಟದಲ್ಲೂ ನಿರಂತರ ಶಿಕ್ಷಣ ಕೋಚ್",
+        "Tamil": "VIDYA · ஒவ்வொரு பக்கத்திலும் நிலையான கற்பித்தல் பயிற்சியாளர்",
+        "Telugu": "VIDYA · ప్రతి పేజీలో నిరంతర బోధన కోచ్",
+        "Marathi": "VIDYA · प्रत्येक पानावर सततचा शिक्षण प्रशिक्षक",
+        "Bengali": "VIDYA · প্রতিটি পৃষ্ঠায় ধারাবাহিক শিক্ষাদান কোচ",
+        "Gujarati": "VIDYA · દરેક પાના પર સતત શિક્ષણ કોચ",
+        "Punjabi": "VIDYA · ਹਰ ਪੰਨੇ 'ਤੇ ਨਿਰੰਤਰ ਸਿੱਖਿਆ ਕੋਚ",
+        "Malayalam": "VIDYA · എല്ലാ പേജിലും തുടർച്ചയായ അധ്യാപന കോച്ച്",
+        "Odia": "VIDYA · ପ୍ରତ୍ୟେକ ପୃଷ୍ଠାରେ ନିରନ୍ତର ଶିକ୍ଷଣ କୋଚ୍"
+    },
+    "pillar.parent-hotline.desc": {
+        "English": "AI voice calls to parents in their own language",
+        "Hindi": "अभिभावकों को उनकी ही भाषा में AI वॉयस कॉल",
+        "Kannada": "ಪೋಷಕರಿಗೆ ಅವರ ಸ್ವಂತ ಭಾಷೆಯಲ್ಲಿ AI ಧ್ವನಿ ಕರೆಗಳು",
+        "Tamil": "பெற்றோருக்கு அவர்களின் சொந்த மொழியில் AI குரல் அழைப்புகள்",
+        "Telugu": "తల్లిదండ్రులకు వారి స్వంత భాషలో AI వాయిస్ కాల్‌లు",
+        "Marathi": "पालकांना त्यांच्याच भाषेत AI व्हॉइस कॉल्स",
+        "Bengali": "অভিভাবকদের নিজস্ব ভাষায় AI ভয়েস কল",
+        "Gujarati": "વાલીઓને તેમની પોતાની ભાષામાં AI વોઇસ કૉલ",
+        "Punjabi": "ਮਾਤਾ-ਪਿਤਾ ਨੂੰ ਉਹਨਾਂ ਦੀ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ AI ਆਵਾਜ਼ ਕਾਲਾਂ",
+        "Malayalam": "രക്ഷിതാക്കൾക്ക് അവരുടെ സ്വന്തം ഭാഷയിൽ AI വോയ്സ് കോളുകൾ",
+        "Odia": "ଅଭିଭାବକମାନଙ୍କୁ ସେମାନଙ୍କ ନିଜସ୍ୱ ଭାଷାରେ AI ଭଏସ୍ କଲ୍"
+    },
+    "pillar.staffroom.desc": {
+        "English": "India's first structured professional teacher network",
+        "Hindi": "भारत का पहला संरचित पेशेवर शिक्षक नेटवर्क",
+        "Kannada": "ಭಾರತದ ಮೊದಲ ರಚನಾತ್ಮಕ ವೃತ್ತಿಪರ ಶಿಕ್ಷಕ ಜಾಲ",
+        "Tamil": "இந்தியாவின் முதல் கட்டமைக்கப்பட்ட தொழில்முறை ஆசிரியர் வலையமைப்பு",
+        "Telugu": "భారతదేశపు మొదటి నిర్మాణాత్మక వృత్తిపరమైన ఉపాధ్యాయ నెట్‌వర్క్",
+        "Marathi": "भारतातील पहिले संरचित व्यावसायिक शिक्षक नेटवर्क",
+        "Bengali": "ভারতের প্রথম কাঠামোবদ্ধ পেশাদার শিক্ষক নেটওয়ার্ক",
+        "Gujarati": "ભારતનું પ્રથમ સંરચિત વ્યાવસાયિક શિક્ષક નેટવર્ક",
+        "Punjabi": "ਭਾਰਤ ਦਾ ਪਹਿਲਾ ਢਾਂਚਾਗਤ ਪੇਸ਼ੇਵਰ ਅਧਿਆਪਕ ਨੈੱਟਵਰਕ",
+        "Malayalam": "ഇന്ത്യയിലെ ആദ്യ ഘടനാപരമായ പ്രൊഫഷണൽ അധ്യാപക നെറ്റ്‌വർക്ക്",
+        "Odia": "ଭାରତର ପ୍ରଥମ ସଂରଚିତ ବୃତ୍ତିଗତ ଶିକ୍ଷକ ନେଟୱର୍କ"
+    },
+    "pillar.pro-inbox.desc": {
+        "English": "Purpose-built professional messaging, structured + searchable",
+        "Hindi": "उद्देश्य-निर्मित पेशेवर संदेश, संरचित + खोज योग्य",
+        "Kannada": "ಉದ್ದೇಶ-ನಿರ್ಮಿತ ವೃತ್ತಿಪರ ಸಂದೇಶ, ರಚನಾತ್ಮಕ + ಹುಡುಕಲು ಸಾಧ್ಯ",
+        "Tamil": "நோக்கம்-கொண்ட தொழில்முறை செய்தி, கட்டமைக்கப்பட்ட + தேடக்கூடிய",
+        "Telugu": "ఉద్దేశ్యం-నిర్మించిన వృత్తిపరమైన మెసేజింగ్, నిర్మాణాత్మక + వెతకగలిగే",
+        "Marathi": "उद्देश-निर्मित व्यावसायिक संदेशन, संरचित + शोधण्यायोग्य",
+        "Bengali": "উদ্দেশ্য-নির্মিত পেশাদার মেসেজিং, কাঠামোবদ্ধ + অনুসন্ধানযোগ্য",
+        "Gujarati": "હેતુ-નિર્મિત વ્યાવસાયિક સંદેશ, સંરચિત + શોધી શકાય તેવું",
+        "Punjabi": "ਉਦੇਸ਼-ਨਿਰਮਿਤ ਪੇਸ਼ੇਵਰ ਸੁਨੇਹਾ, ਢਾਂਚਾਗਤ + ਖੋਜਣਯੋਗ",
+        "Malayalam": "ഉദ്ദേശ്യ-നിർമിത പ്രൊഫഷണൽ മെസേജിംഗ്, ഘടനാപരമായ + തിരയാവുന്ന",
+        "Odia": "ଉଦ୍ଦେଶ୍ୟ-ନିର୍ମିତ ବୃତ୍ତିଗତ ସନ୍ଦେଶ, ସଂରଚିତ + ଖୋଜିବାଯୋଗ୍ୟ"
+    },
+    "pillar.operating-system.desc": {
+        "English": "PWA · 28 state boards · works on the cheapest Android phones",
+        "Hindi": "PWA · 28 राज्य बोर्ड · सबसे सस्ते एंड्रॉइड फ़ोनों पर काम करता है",
+        "Kannada": "PWA · 28 ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳು · ಅಗ್ಗದ ಆಂಡ್ರಾಯ್ಡ್ ಫೋನ್‌ಗಳಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
+        "Tamil": "PWA · 28 மாநில வாரியங்கள் · மலிவான ஆண்ட்ராய்டு போன்களில் இயங்குகிறது",
+        "Telugu": "PWA · 28 రాష్ట్ర బోర్డులు · చౌకైన ఆండ్రాయిడ్ ఫోన్‌లలో పనిచేస్తుంది",
+        "Marathi": "PWA · 28 राज्य मंडळे · सर्वात स्वस्त अँड्रॉइड फोनवर काम करते",
+        "Bengali": "PWA · ২৮টি রাজ্য বোর্ড · সবচেয়ে সস্তা অ্যান্ড্রয়েড ফোনে কাজ করে",
+        "Gujarati": "PWA · 28 રાજ્ય બોર્ડ · સૌથી સસ્તા એન્ડ્રોઇડ ફોન પર કામ કરે છે",
+        "Punjabi": "PWA · 28 ਰਾਜ ਬੋਰਡ · ਸਭ ਤੋਂ ਸਸਤੇ ਐਂਡਰਾਇਡ ਫ਼ੋਨਾਂ 'ਤੇ ਕੰਮ ਕਰਦਾ ਹੈ",
+        "Malayalam": "PWA · 28 സംസ്ഥാന ബോർഡുകൾ · ഏറ്റവും വിലകുറഞ്ഞ ആൻഡ്രോയിഡ് ഫോണുകളിൽ പ്രവർത്തിക്കുന്നു",
+        "Odia": "PWA · ୨୮ଟି ରାଜ୍ୟ ବୋର୍ଡ · ସର୍ବନିମ୍ନ ମୂଲ୍ୟର ଆଣ୍ଡ୍ରଏଡ୍ ଫୋନରେ କାମ କରେ"
+    },
+
+    // Pillar rotating phrases (slot into "Give your teachers ___")
+    "pillar.prep-desk.rotating": {
+        "English": "a prep desk.", "Hindi": "एक तैयारी डेस्क।", "Kannada": "ಒಂದು ಪ್ರಿಪ್ ಡೆಸ್ಕ್.",
+        "Tamil": "ஒரு தயாரிப்பு மேசை.", "Telugu": "ఒక ప్రిప్ డెస్క్.", "Marathi": "एक तयारी डेस्क.",
+        "Bengali": "একটি প্রস্তুতি ডেস্ক।", "Gujarati": "એક તૈયારી ડેસ્ક.", "Punjabi": "ਇੱਕ ਤਿਆਰੀ ਡੈਸਕ।",
+        "Malayalam": "ഒരു തയ്യാറെടുപ്പ് ഡെസ്ക്.", "Odia": "ଗୋଟିଏ ପ୍ରସ୍ତୁତି ଡେସ୍କ।"
+    },
+    "pillar.ai-co-teacher.rotating": {
+        "English": "an AI co-teacher.", "Hindi": "एक AI सह-शिक्षक।", "Kannada": "ಒಬ್ಬ AI ಸಹ-ಶಿಕ್ಷಕ.",
+        "Tamil": "ஒரு AI இணை-ஆசிரியர்.", "Telugu": "ఒక AI సహ-ఉపాధ్యాయుడు.", "Marathi": "एक AI सह-शिक्षक.",
+        "Bengali": "একজন AI সহ-শিক্ষক।", "Gujarati": "એક AI સહ-શિક્ષક.", "Punjabi": "ਇੱਕ AI ਸਹਿ-ਅਧਿਆਪਕ।",
+        "Malayalam": "ഒരു AI സഹ-അധ്യാപകൻ.", "Odia": "ଜଣେ AI ସହ-ଶିକ୍ଷକ।"
+    },
+    "pillar.parent-hotline.rotating": {
+        "English": "a parent hotline.", "Hindi": "एक अभिभावक हॉटलाइन।", "Kannada": "ಒಂದು ಪೋಷಕ ಹಾಟ್‌ಲೈನ್.",
+        "Tamil": "ஒரு பெற்றோர் ஹாட்லைன்.", "Telugu": "ఒక తల్లిదండ్రుల హాట్‌లైన్.", "Marathi": "एक पालक हॉटलाइन.",
+        "Bengali": "একটি অভিভাবক হটলাইন।", "Gujarati": "એક વાલી હોટલાઇન.", "Punjabi": "ਇੱਕ ਮਾਤਾ-ਪਿਤਾ ਹੌਟਲਾਈਨ।",
+        "Malayalam": "ഒരു രക്ഷിതാവ് ഹോട്ട്‌ലൈൻ.", "Odia": "ଗୋଟିଏ ଅଭିଭାବକ ହଟ୍‌ଲାଇନ୍।"
+    },
+    "pillar.staffroom.rotating": {
+        "English": "a staffroom.", "Hindi": "एक स्टाफ़रूम।", "Kannada": "ಒಂದು ಸಿಬ್ಬಂದಿ ಕೊಠಡಿ.",
+        "Tamil": "ஒரு ஆசிரியர் அறை.", "Telugu": "ఒక స్టాఫ్‌రూమ్.", "Marathi": "एक स्टाफरूम.",
+        "Bengali": "একটি স্টাফরুম।", "Gujarati": "એક સ્ટાફરૂમ.", "Punjabi": "ਇੱਕ ਸਟਾਫ਼ਰੂਮ।",
+        "Malayalam": "ഒരു സ്റ്റാഫ്റൂം.", "Odia": "ଗୋଟିଏ ଷ୍ଟାଫରୁମ।"
+    },
+    "pillar.pro-inbox.rotating": {
+        "English": "a professional inbox.", "Hindi": "एक पेशेवर इनबॉक्स।", "Kannada": "ಒಂದು ವೃತ್ತಿಪರ ಇನ್‌ಬಾಕ್ಸ್.",
+        "Tamil": "ஒரு தொழில்முறை இன்பாக்ஸ்.", "Telugu": "ఒక వృత్తిపరమైన ఇన్‌బాక్స్.", "Marathi": "एक व्यावसायिक इनबॉक्स.",
+        "Bengali": "একটি পেশাদার ইনবক্স।", "Gujarati": "એક વ્યાવસાયિક ઇનબૉક્સ.", "Punjabi": "ਇੱਕ ਪੇਸ਼ੇਵਰ ਇਨਬਾਕਸ।",
+        "Malayalam": "ഒരു പ്രൊഫഷണൽ ഇൻബോക്സ്.", "Odia": "ଗୋଟିଏ ବୃତ୍ତିଗତ ଇନବକ୍ସ।"
+    },
+    "pillar.operating-system.rotating": {
+        "English": "an operating system.", "Hindi": "एक ऑपरेटिंग सिस्टम।", "Kannada": "ಒಂದು ಆಪರೇಟಿಂಗ್ ಸಿಸ್ಟಮ್.",
+        "Tamil": "ஒரு இயக்க அமைப்பு.", "Telugu": "ఒక ఆపరేటింగ్ సిస్టమ్.", "Marathi": "एक ऑपरेटिंग सिस्टम.",
+        "Bengali": "একটি অপারেটিং সিস্টেম।", "Gujarati": "એક ઓપરેટિંગ સિસ્ટમ.", "Punjabi": "ਇੱਕ ਆਪਰੇਟਿੰਗ ਸਿਸਟਮ।",
+        "Malayalam": "ഒരു ഓപ്പറേറ്റിംഗ് സിസ്റ്റം.", "Odia": "ଗୋଟିଏ ଅପରେଟିଂ ସିଷ୍ଟମ୍।"
+    },
+
+    // Quote
+    "quote.lakshmi.body": {
+        "English": "“I knew what to teach but couldn't write it in English reports. Now I just speak in Kannada, and it creates the plan for me.”",
+        "Hindi": "“मुझे पता था क्या पढ़ाना है पर अंग्रेज़ी रिपोर्ट नहीं लिख पाती थी। अब मैं बस कन्नड़ में बोलती हूँ, और यह मेरे लिए योजना बना देता है।”",
+        "Kannada": "“ನಾನು ಏನು ಕಲಿಸಬೇಕೆಂದು ತಿಳಿದಿತ್ತು ಆದರೆ ಇಂಗ್ಲಿಷ್ ವರದಿಗಳಲ್ಲಿ ಬರೆಯಲು ಸಾಧ್ಯವಾಗುತ್ತಿರಲಿಲ್ಲ. ಈಗ ನಾನು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡುತ್ತೇನೆ, ಮತ್ತು ಅದು ನನಗಾಗಿ ಯೋಜನೆ ರಚಿಸುತ್ತದೆ.”",
+        "Tamil": "“என்ன கற்பிக்க வேண்டும் என்று எனக்குத் தெரியும் ஆனால் ஆங்கில அறிக்கைகளில் எழுத முடியவில்லை. இப்போது நான் கன்னடத்தில் பேசுகிறேன், அது எனக்காக திட்டத்தை உருவாக்குகிறது.”",
+        "Telugu": "“ఏం బోధించాలో నాకు తెలుసు కానీ ఇంగ్లీషు నివేదికలలో రాయలేకపోయాను. ఇప్పుడు నేను కన్నడలో మాట్లాడతాను, అది నా కోసం ప్రణాళిక తయారు చేస్తుంది.”",
+        "Marathi": "“काय शिकवायचे ते मला माहीत होते पण इंग्रजी अहवालात लिहू शकत नव्हते. आता मी फक्त कन्नडमध्ये बोलते, आणि ते माझ्यासाठी योजना तयार करते.”",
+        "Bengali": "“আমি জানতাম কী পড়াতে হবে কিন্তু ইংরেজি প্রতিবেদনে লিখতে পারতাম না। এখন আমি কন্নড়ে বলি, এবং এটি আমার জন্য পরিকল্পনা তৈরি করে।”",
+        "Gujarati": "“મને શું ભણાવવું તે ખબર હતી પણ અંગ્રેજી અહેવાલોમાં લખી શકતી નહોતી. હવે હું બસ કન્નડમાં બોલું છું, અને તે મારા માટે યોજના બનાવે છે.”",
+        "Punjabi": "“ਮੈਨੂੰ ਪਤਾ ਸੀ ਕੀ ਪੜ੍ਹਾਉਣਾ ਹੈ ਪਰ ਅੰਗਰੇਜ਼ੀ ਰਿਪੋਰਟਾਂ ਵਿੱਚ ਨਹੀਂ ਲਿਖ ਸਕਦੀ ਸੀ। ਹੁਣ ਮੈਂ ਬਸ ਕੰਨੜ ਵਿੱਚ ਬੋਲਦੀ ਹਾਂ, ਅਤੇ ਇਹ ਮੇਰੇ ਲਈ ਯੋਜਨਾ ਬਣਾਉਂਦਾ ਹੈ।”",
+        "Malayalam": "“എന്ത് പഠിപ്പിക്കണമെന്ന് എനിക്കറിയാമായിരുന്നു പക്ഷേ ഇംഗ്ലീഷ് റിപ്പോർട്ടുകളിൽ എഴുതാൻ കഴിഞ്ഞില്ല. ഇപ്പോൾ ഞാൻ കന്നഡയിൽ സംസാരിക്കുന്നു, അത് എനിക്ക് വേണ്ടി പദ്ധതി സൃഷ്ടിക്കുന്നു.”",
+        "Odia": "“ମୁଁ ଜାଣିଥିଲି କ’ଣ ପଢ଼ାଇବାକୁ କିନ୍ତୁ ଇଂରାଜୀ ରିପୋର୍ଟରେ ଲେଖିପାରୁନଥିଲି। ଏବେ ମୁଁ କେବଳ କନ୍ନଡରେ କହେ, ଏବଂ ଏହା ମୋ ପାଇଁ ଯୋଜନା ତିଆରି କରେ।”"
+    },
+    "quote.lakshmi.attribution": {
+        "English": "— Lakshmi, Teacher, Raichur District",
+        "Hindi": "— लक्ष्मी, शिक्षक, रायचूर ज़िला",
+        "Kannada": "— ಲಕ್ಷ್ಮೀ, ಶಿಕ್ಷಕಿ, ರಾಯಚೂರು ಜಿಲ್ಲೆ",
+        "Tamil": "— லக்ஷ்மி, ஆசிரியை, ரைச்சூர் மாவட்டம்",
+        "Telugu": "— లక్ష్మి, ఉపాధ్యాయురాలు, రాయచూర్ జిల్లా",
+        "Marathi": "— लक्ष्मी, शिक्षिका, रायचूर जिल्हा",
+        "Bengali": "— লক্ষ্মী, শিক্ষিকা, রায়চুর জেলা",
+        "Gujarati": "— લક્ષ્મી, શિક્ષિકા, રાયચૂર જિલ્લો",
+        "Punjabi": "— ਲਕਸ਼ਮੀ, ਅਧਿਆਪਕਾ, ਰਾਏਚੂਰ ਜ਼ਿਲ੍ਹਾ",
+        "Malayalam": "— ലക്ഷ്മി, അധ്യാപിക, റായ്ച്ചൂർ ജില്ല",
+        "Odia": "— ଲକ୍ଷ୍ମୀ, ଶିକ୍ଷୟିତ୍ରୀ, ରାୟଚୂର ଜିଲ୍ଲା"
+    },
+
+    // Footer
+    "footer.tagline": {
+        "English": "The Operating System for Teaching in India. A product of SARGVISION Intelligence.",
+        "Hindi": "भारत में शिक्षण के लिए ऑपरेटिंग सिस्टम। SARGVISION Intelligence का एक उत्पाद।",
+        "Kannada": "ಭಾರತದಲ್ಲಿ ಬೋಧನೆಗಾಗಿ ಆಪರೇಟಿಂಗ್ ಸಿಸ್ಟಮ್. SARGVISION Intelligence ನ ಉತ್ಪನ್ನ.",
+        "Tamil": "இந்தியாவில் கற்பித்தலுக்கான இயக்க அமைப்பு. SARGVISION Intelligence இன் தயாரிப்பு.",
+        "Telugu": "భారతదేశంలో బోధనకు ఆపరేటింగ్ సిస్టమ్. SARGVISION Intelligence ఉత్పత్తి.",
+        "Marathi": "भारतात शिक्षणासाठीचे ऑपरेटिंग सिस्टम. SARGVISION Intelligence चे एक उत्पादन.",
+        "Bengali": "ভারতে শিক্ষাদানের জন্য অপারেটিং সিস্টেম। SARGVISION Intelligence এর একটি পণ্য।",
+        "Gujarati": "ભારતમાં શિક્ષણ માટેનું ઓપરેટિંગ સિસ્ટમ. SARGVISION Intelligence નું ઉત્પાદન.",
+        "Punjabi": "ਭਾਰਤ ਵਿੱਚ ਸਿਖਾਉਣ ਲਈ ਆਪਰੇਟਿੰਗ ਸਿਸਟਮ। SARGVISION Intelligence ਦਾ ਇੱਕ ਉਤਪਾਦ।",
+        "Malayalam": "ഇന്ത്യയിൽ പഠിപ്പിക്കലിനുള്ള ഓപ്പറേറ്റിംഗ് സിസ്റ്റം. SARGVISION Intelligence ന്റെ ഉൽപ്പന്നം.",
+        "Odia": "ଭାରତରେ ଶିକ୍ଷାଦାନ ପାଇଁ ଅପରେଟିଂ ସିଷ୍ଟମ୍। SARGVISION Intelligence ର ଏକ ଉତ୍ପାଦ।"
+    },
+    // "Community", "Privacy", "Terms", "Contact" already exist higher in
+    // this file (lines 33 / 289 / earlier / 1196). Reusing those — do not
+    // re-add or TypeScript will reject duplicate object keys.
+    "Made in Bharat 🇮🇳": {
+        "English": "Made in Bharat 🇮🇳", "Hindi": "भारत में बना 🇮🇳", "Kannada": "ಭಾರತದಲ್ಲಿ ತಯಾರಿಸಲಾಗಿದೆ 🇮🇳",
+        "Tamil": "பாரதத்தில் தயாரிக்கப்பட்டது 🇮🇳", "Telugu": "భారత్‌లో తయారు 🇮🇳", "Marathi": "भारतात बनवले 🇮🇳",
+        "Bengali": "ভারতে তৈরি 🇮🇳", "Gujarati": "ભારતમાં બનાવેલ 🇮🇳", "Punjabi": "ਭਾਰਤ ਵਿੱਚ ਬਣਾਇਆ 🇮🇳",
+        "Malayalam": "ഭാരതത്തിൽ നിർമിച്ചത് 🇮🇳", "Odia": "ଭାରତରେ ନିର୍ମିତ 🇮🇳"
+    },
+    "footer.copyright": {
+        "English": "© {year} SARGVISION Intelligence Pvt. Ltd. All rights reserved.",
+        "Hindi": "© {year} SARGVISION Intelligence Pvt. Ltd. सर्वाधिकार सुरक्षित।",
+        "Kannada": "© {year} SARGVISION Intelligence Pvt. Ltd. ಎಲ್ಲಾ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ.",
+        "Tamil": "© {year} SARGVISION Intelligence Pvt. Ltd. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
+        "Telugu": "© {year} SARGVISION Intelligence Pvt. Ltd. అన్ని హక్కులు రిజర్వ్డ్.",
+        "Marathi": "© {year} SARGVISION Intelligence Pvt. Ltd. सर्व हक्क राखीव.",
+        "Bengali": "© {year} SARGVISION Intelligence Pvt. Ltd. সমস্ত অধিকার সংরক্ষিত।",
+        "Gujarati": "© {year} SARGVISION Intelligence Pvt. Ltd. તમામ અધિકાર સુરક્ષિત.",
+        "Punjabi": "© {year} SARGVISION Intelligence Pvt. Ltd. ਸਾਰੇ ਹੱਕ ਰਾਖਵੇਂ।",
+        "Malayalam": "© {year} SARGVISION Intelligence Pvt. Ltd. എല്ലാ അവകാശങ്ങളും സംരക്ഷിതം.",
+        "Odia": "© {year} SARGVISION Intelligence Pvt. Ltd. ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ।"
+    },
+    "footer.byline": {
+        "English": "SahayakAI is a product of SARGVISION Intelligence.",
+        "Hindi": "SahayakAI, SARGVISION Intelligence का उत्पाद है।",
+        "Kannada": "SahayakAI ಎಂಬುದು SARGVISION Intelligence ನ ಉತ್ಪನ್ನವಾಗಿದೆ.",
+        "Tamil": "SahayakAI என்பது SARGVISION Intelligence இன் தயாரிப்பு.",
+        "Telugu": "SahayakAI అనేది SARGVISION Intelligence ఉత్పత్తి.",
+        "Marathi": "SahayakAI हे SARGVISION Intelligence चे एक उत्पादन आहे.",
+        "Bengali": "SahayakAI হলো SARGVISION Intelligence এর একটি পণ্য।",
+        "Gujarati": "SahayakAI એ SARGVISION Intelligence નું ઉત્પાદન છે.",
+        "Punjabi": "SahayakAI, SARGVISION Intelligence ਦਾ ਇੱਕ ਉਤਪਾਦ ਹੈ।",
+        "Malayalam": "SahayakAI എന്നത് SARGVISION Intelligence ന്റെ ഒരു ഉൽപ്പന്നമാണ്.",
+        "Odia": "SahayakAI ହେଉଛି SARGVISION Intelligence ର ଏକ ଉତ୍ପାଦ।"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

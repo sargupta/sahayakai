@@ -2,12 +2,14 @@
 
 import { motion } from "motion/react";
 import { pillars } from "./pillar-data";
+import { useLanguage } from "@/context/language-context";
 
 type Props = {
   titleIndex: number;
 };
 
 export function LandingPillarStrip({ titleIndex }: Props) {
+  const { t } = useLanguage();
   return (
     <section id="product" className="relative z-10 px-6 sm:px-12 pb-16 flex justify-center scroll-mt-24">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 max-w-[880px] w-full">
@@ -50,14 +52,14 @@ export function LandingPillarStrip({ titleIndex }: Props) {
                   active ? "text-white" : "text-foreground"
                 }`}
               >
-                {pillar.name}
+                {t(`pillar.${pillar.id}.name`)}
               </div>
               <div
                 className={`text-[10px] leading-[1.4] ${
                   active ? "text-white/85" : "text-neutral-500"
                 }`}
               >
-                {pillar.description}
+                {t(`pillar.${pillar.id}.desc`)}
               </div>
             </motion.div>
           );
