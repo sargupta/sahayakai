@@ -175,7 +175,7 @@ gate "feature_flags doc has parentCallSidecar* fields" check_feature_flags
 
 # ── Gate 9: Firestore TTL applied ───────────────────────────────────────
 check_ttl() {
-  for cgroup in agent_sessions calls; do
+  for cgroup in agent_sessions shadow_calls; do
     state=$(gcloud firestore fields ttl describe expireAt \
       --collection-group="$cgroup" \
       --database='(default)' \
@@ -184,7 +184,7 @@ check_ttl() {
     [[ "$state" == "ACTIVE" ]] || return 1
   done
 }
-gate "Firestore TTL is ACTIVE on agent_sessions + calls" check_ttl
+gate "Firestore TTL is ACTIVE on agent_sessions + shadow_calls" check_ttl
 
 # ── Gate 10: auto-abort function deployed ───────────────────────────────
 check_auto_abort_deployed() {

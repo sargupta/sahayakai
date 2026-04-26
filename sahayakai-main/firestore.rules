@@ -168,9 +168,16 @@ service cloud.firestore {
     }
 
     // --- System Config ---
-    // Feature flags, rollout config. Readable by authenticated users.
+    // Round-2 audit P0 SYSCONF-1 fix (30-agent review, group D5):
+    // operator state (rollout flags, kill-switch, sidecar mode) MUST
+    // NOT be readable by every signed-in teacher — leaks the rollout
+    // strategy, model toggles, and percent-bucket state to clients.
+    //
+    // Split: doc IDs starting with `public_` are client-readable
+    // (e.g. `public_maintenance_banner` for the user-visible banner);
+    // everything else (including `feature_flags`) is Admin-SDK-only.
     match /system_config/{docId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && docId.matches('^public_.*');
       allow write: if false;
     }
 
@@ -196,10 +203,17 @@ service cloud.firestore {
     // Shadow-mode parity capture: { genkit_reply, sidecar_reply, ... }
     // Written by the Next.js dispatcher fire-and-forget; read by the
     // shadow-diff aggregator Cloud Function for the rolling LaBSE mean.
-    // TTL via `agent_shadow_diffs/{date}/calls/{id}.expireAt` (14d).
+    // TTL via `agent_shadow_diffs/{date}/shadow_calls/{id}.expireAt` (14d).
+    //
+    // Round-2 audit P0 TTL-2 fix (30-agent review, group D5):
+    // subcollection renamed from `calls` → `shadow_calls`. Firestore
+    // TTL is collection-group scoped; with the generic `calls` name,
+    // any future top-level or nested `calls` subcollection in the
+    // project would silently inherit the 14-day TTL. `shadow_calls`
+    // is unique and reserves the name.
     match /agent_shadow_diffs/{dateDoc} {
       allow read, write: if false;
-      match /calls/{callId} {
+      match /shadow_calls/{callId} {
         allow read, write: if false;
       }
     }

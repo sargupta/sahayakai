@@ -66,7 +66,11 @@ apply_ttl() {
 }
 
 apply_ttl agent_sessions expireAt
-apply_ttl calls expireAt   # `calls` is the leaf collection-group under agent_shadow_diffs/{date}
+# Round-2 audit P0 TTL-2: `shadow_calls` (was `calls`) is the leaf
+# collection-group under agent_shadow_diffs/{date}. The generic name
+# `calls` would silently inherit 14d TTL for any future unrelated
+# `calls` collection in the project; `shadow_calls` is unique.
+apply_ttl shadow_calls expireAt
 apply_ttl agent_auto_abort_seen expireAt   # auto-abort incident-id dedupe sentinel (Wave 2 fix 2)
 
 if [[ "$INCLUDE_VOICE" == "1" ]]; then

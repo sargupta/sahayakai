@@ -185,7 +185,7 @@ def _iter_recent_samples(db: Any, *, lookback_days: int, limit: int) -> Iterable
 
     for day in days:
         date_str = day.isoformat()
-        calls_ref = root.document(date_str).collection("calls")
+        calls_ref = root.document(date_str).collection("shadow_calls")
         # Newest-first within a day; capturedAt indexed by Firestore
         # automatically when set as the order field.
         query = calls_ref.order_by(

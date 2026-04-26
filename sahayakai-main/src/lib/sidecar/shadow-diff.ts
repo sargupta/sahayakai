@@ -5,7 +5,7 @@
  * sidecar in parallel, returns the Genkit reply to Twilio, and writes a
  * paired (genkit, sidecar) sample to Firestore at:
  *
- *   agent_shadow_diffs/{YYYY-MM-DD}/calls/{callSid}__{turnNumber:04d}
+ *   agent_shadow_diffs/{YYYY-MM-DD}/shadow_calls/{callSid}__{turnNumber:04d}
  *
  * The offline parity comparator (`sahayakai-agents/scripts/compare_parity.py`,
  * once wired) scores these pairs with IndicSBERT cosine + Gemini-2.5-Pro
@@ -83,7 +83,7 @@ export async function writeShadowDiff(sample: ShadowDiffSample): Promise<void> {
     await db
       .collection(COLLECTION_ROOT)
       .doc(dayDoc)
-      .collection('calls')
+      .collection('shadow_calls')
       .doc(docId(sample.callSid, sample.turnNumber))
       .set({
         callSid: sample.callSid,
