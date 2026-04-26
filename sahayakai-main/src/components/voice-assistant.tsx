@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MicrophoneInput } from "@/components/microphone-input";
@@ -175,6 +175,14 @@ function ActionCard({ action, onNavigate }: { action: VidyaAction; onNavigate: (
 
 export function VoiceAssistant({ context }: VoiceAssistantProps) {
     const router = useRouter();
+    // Page-aware context (2026-04-26 fix): VIDYA was suggesting quiz
+    // generation even when the teacher was on /teacher-training. Root cause:
+    // currentScreenContext.path was being passed the JSON-stringified page
+    // STATE (e.g. "advice JSON"), not the actual route. The API + cache key
+    // also expects a real path. Now we send BOTH: the real pathname for
+    // intent routing + cache key, and the page state as `pageData` so the
+    // assistant can ground responses in what's currently on screen.
+    const pathname = usePathname() ?? "";
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -273,7 +281,11 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                 body: JSON.stringify({
                     message: text,
                     chatHistory,
-                    currentScreenContext: { path: context },
+                    // Send REAL pathname for routing + cache key, plus the
+                    // optional page state (e.g. lesson plan output JSON) as
+                    // pageData so VIDYA can reference what's on screen
+                    // without conflating it with the route.
+                    currentScreenContext: { path: pathname, pageData: context },
                     // Always send the resolved language — never null — so the
                     // assistant route can mandate action.params.language on
                     // every tool call without guessing from text.
