@@ -15,7 +15,6 @@ from sahayakai_agents.agents.parent_call.schemas import (
     TranscriptTurn,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP, TWILIO_VOICE_MAP, CALL_MENU_PROMPTS } from '@/types/attendance';
 import { validateTwilioSignature, validateTwilioSignaturePost } from '@/lib/twilio-validate';
 import { generateAgentReply } from '@/ai/flows/parent-call-agent';
+import { dispatchParentCallReply } from '@/lib/sidecar/dispatch';
 import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
@@ -205,8 +206,22 @@ export async function POST(req: NextRequest) {
                 + (typeof pc.latestPercentage === 'number' ? ` · overall ${Math.round(pc.latestPercentage)}%` : '')
             : undefined;
 
-        // Generate AI agent reply
-        const agentResult = await generateAgentReply({
+        // Twilio includes `CallSid` on every webhook hit; it is stable
+        // for the lifetime of one call, which makes it the right input
+        // to the sidecar dispatcher's hash bucket. Falling back to
+        // `outreachId` keeps callers without a CallSid (mock test
+        // harnesses) on a deterministic path.
+        const callSid = (formData.get('CallSid') as string | null) ?? outreachId;
+
+        // Generate AI agent reply via the sidecar dispatcher. Defaults
+        // to Genkit only (`parentCallSidecarMode: 'off'`); shadow /
+        // canary / full modes are flag-gated and never affect the
+        // outer Twilio response shape. `generateAgentReply` itself is
+        // still imported so the dispatcher can fall back to it on
+        // sidecar transport errors.
+        void generateAgentReply; // keep import retained for fallback semantics
+        const agentResult = await dispatchParentCallReply({
+            callSid,
             studentName: data.studentName,
             className: data.className,
             subject: data.subject ?? '',

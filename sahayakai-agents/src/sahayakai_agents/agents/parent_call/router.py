@@ -11,7 +11,8 @@ returns HTTP 502 so the Next.js circuit breaker falls back to Genkit.
 Wrong output to a real parent is worse than no output.
 
 Review trace:
-- P0 #4 shared Handlebars prompt via pystache.
+- P0 #4 shared Handlebars prompt via pybars3 (was pystache; see
+  P0 PROMPT-1 fix in `agent.py` for the migration rationale).
 - P0 #5 / #8 post-response guard + turn cap.
 - P1 #11 `run_resiliently` on every model call, max 7s total budget.
 - P1 #14 `AgentReplyCore` / `CallSummaryCore` are the model's contract;
@@ -22,6 +23,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from fastapi import APIRouter
@@ -71,20 +73,28 @@ async def _call_gemini_structured(
     model: str,
     prompt: str,
     response_schema: type,
-):
+) -> Any:
     """One Gemini call with structured JSON output.
 
     `google-genai` is imported lazily so tests can mock without installing
     the SDK. We request strict JSON matching the Pydantic schema via
     `response_mime_type='application/json'` + `response_schema=<type>`.
+
+    Round-2 audit P0 fix: uses the OFFICIAL async surface
+    `client.aio.models.generate_content` (google-genai 1.73+). The previous
+    code called the synchronous `client.models.generate_content` from inside
+    an `async def` function, blocking the event loop and collapsing
+    effective concurrency to ~1. See
+    https://googleapis.github.io/python-genai/ \u2014 "For async operations,
+    replace `client.models` with `client.aio.models`."
     """
-    from google import genai  # type: ignore[import-untyped]
-    from google.genai import types as genai_types  # type: ignore[import-untyped]
+    from google import genai
+    from google.genai import types as genai_types
 
     client = genai.Client(api_key=api_key)
-    return client.models.generate_content(
+    return await client.aio.models.generate_content(
         model=model,
-        contents=[{"role": "user", "parts": [{"text": prompt}]}],
+        contents=prompt,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=response_schema,
@@ -93,11 +103,11 @@ async def _call_gemini_structured(
     )
 
 
-def _extract_text(result) -> str:  # type: ignore[no-untyped-def]
+def _extract_text(result: Any) -> str:
     """Pull the model's JSON text out of a google-genai response."""
     text = getattr(result, "text", None)
     if text:
-        return text
+        return str(text)
     candidates = getattr(result, "candidates", None) or []
     for cand in candidates:
         content = getattr(cand, "content", None)
@@ -105,7 +115,7 @@ def _extract_text(result) -> str:  # type: ignore[no-untyped-def]
         for part in parts:
             text = getattr(part, "text", None)
             if text:
-                return text
+                return str(text)
     raise AgentError(
         code="INTERNAL",
         message="Gemini returned empty response",
@@ -123,7 +133,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
     Flow:
       1. Load or accept transcript.
       2. Persist the parent's turn with OCC.
-      3. Render shared prompt via pystache.
+      3. Render shared prompt via pybars3 (Handlebars).
       4. Call Gemini structured, wrapped in run_resiliently.
       5. Parse into AgentReplyCore.
       6. Apply turn-cap enforcement (shouldEndCall at turn >= 6).
@@ -159,6 +169,15 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
     )
 
     # Render + call.
+    # Round-2 audit AI-3 P1 fix: do NOT append `parentSpeech` to `transcript`
+    # before rendering. The Handlebars template already renders both blocks
+    # separately:
+    #   {{#each transcript}} ... {{/each}}        \u2190 history
+    #   Parent just said: "{{parentSpeech}}"      \u2190 live utterance
+    # The previous code appended a duplicate parent turn so the model saw
+    # the live utterance twice (and on turn 1 the entire "history" was a
+    # duplicate of the live line). That confused the model's turn-count
+    # reasoning and wasted prompt tokens.
     context = build_reply_context(
         student_name=payload.studentName,
         class_name=payload.className,
@@ -168,8 +187,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
         teacher_name=payload.teacherName,
         school_name=payload.schoolName,
         parent_language=payload.parentLanguage,
-        transcript=transcript
-        + [TranscriptTurn(role="parent", text=payload.parentSpeech)],
+        transcript=transcript,
         parent_speech=payload.parentSpeech,
         turn_number=payload.turnNumber,
         performance_summary=payload.performanceSummary,

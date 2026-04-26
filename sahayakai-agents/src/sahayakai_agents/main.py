@@ -21,6 +21,7 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .agents.lesson_plan.router import router as lesson_plan_router
 from .agents.parent_call.router import router as parent_call_router
 from .auth import auth_middleware
 from .config import get_settings
@@ -172,6 +173,22 @@ async def agent_card() -> dict[str, object]:
                 ),
                 "tags": ["telephony", "summarisation"],
             },
+            {
+                "id": "lesson-plan-generate",
+                "name": "Generate a lesson plan",
+                "description": (
+                    "Writer-evaluator-reviser loop that produces a "
+                    "pedagogically robust lesson plan in any of 11 "
+                    "supported languages. Hard-fails on safety violation."
+                ),
+                "tags": ["pedagogy", "structured-output", "multilingual", "multi-agent"],
+                "examples": [
+                    (
+                        "Generate a Class 5 science lesson on photosynthesis "
+                        "in Hindi for a low-resource classroom."
+                    )
+                ],
+            },
         ],
     }
 
@@ -179,3 +196,4 @@ async def agent_card() -> dict[str, object]:
 # ---- Sub-routers -----------------------------------------------------------
 
 app.include_router(parent_call_router)
+app.include_router(lesson_plan_router)

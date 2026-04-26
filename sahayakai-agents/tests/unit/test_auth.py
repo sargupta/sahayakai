@@ -3,12 +3,14 @@ separately against Google's tokeninfo in integration.
 
 Review trace:
 - P1 #15 body integrity via X-Content-Digest.
+- Round-2 audit P1 REPLAY-1: digest now binds to X-Request-Timestamp.
 """
 from __future__ import annotations
 
 import base64
 import hashlib
 import hmac
+import time
 from typing import Any
 
 import pytest
@@ -16,7 +18,6 @@ from fastapi import Request
 
 from sahayakai_agents.auth import _verify_content_digest
 from sahayakai_agents.shared.errors import AuthenticationError
-
 
 pytestmark = pytest.mark.unit
 
@@ -32,8 +33,14 @@ def _make_request(headers: dict[str, str]) -> Request:
     return Request(scope)  # type: ignore[arg-type]
 
 
-def _digest(body: bytes, key: str = "test-signing-key") -> str:
-    raw = hmac.new(key.encode(), body, hashlib.sha256).digest()
+def _now_ms() -> str:
+    return str(int(time.time() * 1000))
+
+
+def _digest(body: bytes, timestamp: str, key: str = "test-signing-key") -> str:
+    """Round-2 audit P1 REPLAY-1: digest = HMAC(key, ts + ":" + body)."""
+    signed_input = timestamp.encode() + b":" + body
+    raw = hmac.new(key.encode(), signed_input, hashlib.sha256).digest()
     return "sha256=" + base64.b64encode(raw).decode()
 
 
@@ -58,13 +65,70 @@ class TestVerifyContentDigest:
             _verify_content_digest(req, b"{}")
 
     def test_rejects_digest_mismatch(self) -> None:
+        ts = _now_ms()
         req = _make_request(
-            {"X-Content-Digest": _digest(b'{"evil":"tampered"}')}
+            {
+                "X-Content-Digest": _digest(b'{"evil":"tampered"}', ts),
+                "X-Request-Timestamp": ts,
+            }
         )
         with pytest.raises(AuthenticationError):
             _verify_content_digest(req, b'{"good":"original"}')
 
     def test_accepts_matching_digest(self) -> None:
         body = b'{"callSid":"CAxxx","turnNumber":1}'
-        req = _make_request({"X-Content-Digest": _digest(body)})
+        ts = _now_ms()
+        req = _make_request(
+            {
+                "X-Content-Digest": _digest(body, ts),
+                "X-Request-Timestamp": ts,
+            }
+        )
         _verify_content_digest(req, body)  # should NOT raise
+
+    def test_rejects_missing_timestamp(self) -> None:
+        body = b'{"callSid":"CAxxx"}'
+        ts = _now_ms()
+        req = _make_request({"X-Content-Digest": _digest(body, ts)})
+        with pytest.raises(AuthenticationError, match="Missing X-Request-Timestamp"):
+            _verify_content_digest(req, body)
+
+    def test_rejects_non_integer_timestamp(self) -> None:
+        body = b'{"callSid":"CAxxx"}'
+        ts = _now_ms()
+        req = _make_request(
+            {
+                "X-Content-Digest": _digest(body, ts),
+                "X-Request-Timestamp": "not-a-number",
+            }
+        )
+        with pytest.raises(AuthenticationError, match="not an integer"):
+            _verify_content_digest(req, body)
+
+    def test_rejects_replayed_old_timestamp(self) -> None:
+        """Round-2 audit P1 REPLAY-1: a captured (digest, ts) tuple older
+        than 5 minutes is dropped — kills the replay attack window."""
+        body = b'{"callSid":"CAxxx"}'
+        # 10 minutes in the past — well outside the ±5min window.
+        ts = str(int(time.time() * 1000) - 10 * 60 * 1000)
+        req = _make_request(
+            {
+                "X-Content-Digest": _digest(body, ts),
+                "X-Request-Timestamp": ts,
+            }
+        )
+        with pytest.raises(AuthenticationError, match="out of range"):
+            _verify_content_digest(req, body)
+
+    def test_rejects_future_timestamp_outside_skew(self) -> None:
+        body = b'{"callSid":"CAxxx"}'
+        # 10 minutes in the future.
+        ts = str(int(time.time() * 1000) + 10 * 60 * 1000)
+        req = _make_request(
+            {
+                "X-Content-Digest": _digest(body, ts),
+                "X-Request-Timestamp": ts,
+            }
+        )
+        with pytest.raises(AuthenticationError, match="out of range"):
+            _verify_content_digest(req, body)

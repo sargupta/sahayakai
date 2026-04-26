@@ -247,10 +247,70 @@ service cloud.firestore {
     }
 
     // --- System Config ---
-    // Feature flags, rollout config. Readable by authenticated users.
+    // Round-2 audit P0 SYSCONF-1 fix (30-agent review, group D5):
+    // operator state (rollout flags, kill-switch, sidecar mode) MUST
+    // NOT be readable by every signed-in teacher — leaks the rollout
+    // strategy, model toggles, and percent-bucket state to clients.
+    //
+    // Split: doc IDs starting with `public_` are client-readable
+    // (e.g. `public_maintenance_banner` for the user-visible banner);
+    // everything else (including `feature_flags`) is Admin-SDK-only.
     match /system_config/{docId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && docId.matches('^public_.*');
       allow write: if false;
+    }
+
+    // =============================================
+    // SAHAYAKAI AGENTS — PARENT-CALL SIDECAR
+    // =============================================
+    // Round-2 audit P0 RULES-1: every collection the sidecar writes to
+    // is Admin-SDK-only. Clients NEVER read or write these — the call
+    // SID would let an attacker harvest full transcripts. Mirrors the
+    // existing `webhook_events` shape.
+
+    // Per-call session metadata + turn subcollection.
+    // Composite key `{turn_number:04d}_{role}` is the doc id under turns/.
+    // TTL applied via `agent_sessions/{callSid}.expireAt` field
+    // (24h after the call ends; see scripts/apply-firestore-ttl.sh).
+    match /agent_sessions/{callSid} {
+      allow read, write: if false;
+      match /turns/{turnId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Shadow-mode parity capture: { genkit_reply, sidecar_reply, ... }
+    // Written by the Next.js dispatcher fire-and-forget; read by the
+    // shadow-diff aggregator Cloud Function for the rolling LaBSE mean.
+    // TTL via `agent_shadow_diffs/{date}/shadow_calls/{id}.expireAt` (14d).
+    //
+    // Round-2 audit P0 TTL-2 fix (30-agent review, group D5):
+    // subcollection renamed from `calls` → `shadow_calls`. Firestore
+    // TTL is collection-group scoped; with the generic `calls` name,
+    // any future top-level or nested `calls` subcollection in the
+    // project would silently inherit the 14-day TTL. `shadow_calls`
+    // is unique and reserves the name.
+    match /agent_shadow_diffs/{dateDoc} {
+      allow read, write: if false;
+      match /shadow_calls/{callId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Phase 2 placeholder — voice session metadata (transcript, audio
+    // duration, behavioural-guard events). Voice payloads are even
+    // more sensitive than text transcripts; explicit deny here even
+    // though the default is also deny.
+    match /agent_voice_sessions/{callSid} {
+      allow read, write: if false;
+    }
+
+    // Auto-abort dedupe sentinel: one doc per incident_id, written by
+    // the auto-abort Cloud Function on first successful demote. TTL
+    // via `expireAt` (24h). Same shape as agent_sessions — Admin SDK
+    // only.
+    match /agent_auto_abort_seen/{incidentId} {
+      allow read, write: if false;
     }
 
     // =============================================

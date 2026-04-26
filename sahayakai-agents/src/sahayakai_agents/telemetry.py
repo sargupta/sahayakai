@@ -24,7 +24,7 @@ log = structlog.get_logger(__name__)
 _initialised = False
 
 
-def init_telemetry(app: "FastAPI | None" = None) -> None:
+def init_telemetry(app: FastAPI | None = None) -> None:
     """Idempotent. Called once from the FastAPI lifespan.
 
     Accepts an optional `app` so production runs auto-instrument every
