@@ -1,19 +1,14 @@
 'use server';
 
 import { getDb } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
 import { dbAdapter } from '@/lib/db/adapter';
+import { requireAuth } from '@/lib/auth-helpers';
 import { createNotification } from './notifications';
 import type { ConnectionRequest, Connection, MyConnectionData } from '@/types';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
-async function getAuthUserId(): Promise<string> {
-    const h = await headers();
-    const uid = h.get('x-user-id');
-    if (!uid) throw new Error('Unauthorized');
-    return uid;
-}
+const getAuthUserId = requireAuth;
 
 // ── Deterministic connection ID (same pattern as DMs) ─────────────────────────
 

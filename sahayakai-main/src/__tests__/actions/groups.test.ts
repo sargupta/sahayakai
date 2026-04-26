@@ -179,7 +179,7 @@ describe('ensureUserGroupsAction', () => {
             expect(result.length).toBeGreaterThan(0);
             expect(result).toContain('science_grade_8_cbse');
             expect(result).toContain('state_karnataka');
-            expect(result).toContain('education_updates');
+            expect(result).toContain('daily_briefing');
             expect(result).toContain('community_general');
         });
 
@@ -196,7 +196,7 @@ describe('ensureUserGroupsAction', () => {
             const result = await ensureUserGroupsAction();
 
             expect(result).toContain('english_grade_5_general');
-            expect(result).toContain('education_updates');
+            expect(result).toContain('daily_briefing');
             expect(result).toContain('community_general');
         });
     });
@@ -297,5 +297,42 @@ describe('ensureUserGroupsAction', () => {
             // No user doc in store
             await expect(ensureUserGroupsAction()).rejects.toThrow('User profile not found');
         });
+    });
+});
+
+// ── Phase 1 security regression: getGroupPostsAction membership check ───────
+
+import { getGroupPostsAction } from '@/app/actions/groups';
+
+describe('getGroupPostsAction — Phase 1 membership gate', () => {
+    beforeEach(() => {
+        Object.keys(store).forEach(k => delete store[k]);
+        createCalls.length = 0;
+        mockHeadersMap.set('x-user-id', 'test-uid');
+    });
+
+    it('throws Forbidden when caller is not a member of the group', async () => {
+        // No member doc exists for test-uid in the group's members subcollection
+        await expect(getGroupPostsAction('private-group-id'))
+            .rejects.toThrow(/Forbidden|Not a member/i);
+    });
+
+    it('throws Unauthorized when x-user-id header is missing', async () => {
+        mockHeadersMap.delete('x-user-id');
+        await expect(getGroupPostsAction('any-group'))
+            .rejects.toThrow('Unauthorized');
+    });
+
+    it('returns posts when caller IS a member', async () => {
+        // Seed membership
+        getCol('groups/test-group/members')['test-uid'] = { joinedAt: 'now', role: 'member' };
+        // Seed one post (the in-memory store doesn't fully model orderBy/limit but
+        // returns docs from the matched subcollection, which is enough for this gate test)
+        getCol('groups/test-group/posts')['post-1'] = {
+            authorUid: 'someone', content: 'hi', createdAt: '2026-01-01T00:00:00Z',
+        };
+
+        const posts = await getGroupPostsAction('test-group');
+        expect(Array.isArray(posts)).toBe(true);
     });
 });

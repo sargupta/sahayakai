@@ -45,7 +45,8 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
 
         setIsLoading(true);
         try {
-            await createPostAction(user.uid, data.content, 'public', data.imageUrl || undefined);
+            // Author is derived from session on the server; client no longer passes uid.
+            await createPostAction(data.content, 'public', data.imageUrl || undefined);
 
             toast({
                 title: "Post created!",

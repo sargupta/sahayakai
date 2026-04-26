@@ -31,8 +31,9 @@ export function TeacherSuggestions() {
     const loadSuggestions = async (uid: string) => {
         try {
             const [recs, following] = await Promise.all([
+                // uid is passed but server now derives from session — kept for cache key
                 getRecommendedTeachersAction(uid),
-                getFollowingIdsAction(uid)
+                getFollowingIdsAction(),
             ]);
             setSuggestions(recs);
             setFollowingIds(following);
@@ -54,7 +55,8 @@ export function TeacherSuggestions() {
         }
 
         try {
-            await followTeacherAction(userId, targetId);
+            // Server derives follower from session — only target is passed
+            await followTeacherAction(targetId);
         } catch (error) {
             // Revert on error
             loadSuggestions(userId);

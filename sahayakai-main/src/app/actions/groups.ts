@@ -1,9 +1,9 @@
 'use server';
 
 import { getDb } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
 import { dbAdapter } from '@/lib/db/adapter';
 import { logger } from '@/lib/logger';
+import { requireAuth, requireGroupMember } from '@/lib/auth-helpers';
 import type {
     Group,
     GroupPost,
@@ -15,13 +15,10 @@ import type {
 import { getGroupColor } from '@/types/community';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
+// `getAuthUserId` is kept as a local alias so call sites read naturally.
+// All new actions should call `requireAuth` directly.
 
-async function getAuthUserId(): Promise<string> {
-    const h = await headers();
-    const uid = h.get('x-user-id');
-    if (!uid) throw new Error('Unauthorized');
-    return uid;
-}
+const getAuthUserId = requireAuth;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -344,6 +341,11 @@ export async function getGroupPostsAction(
     limit = 20,
     startAfter?: string,
 ): Promise<GroupPost[]> {
+    // Authz: only members of the group may read its posts. Throws ForbiddenError
+    // if the caller is signed in but not a member, UnauthorizedError if missing
+    // the x-user-id header.
+    await requireGroupMember(groupId);
+
     const db = await getDb();
 
     let query = db
