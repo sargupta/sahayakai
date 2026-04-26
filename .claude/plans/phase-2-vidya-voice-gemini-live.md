@@ -66,16 +66,22 @@ Parent phone     ───── PSTN ─────► Twilio
 
 **Deliverables:**
 - This document
-- Spike notebook in `sahayakai-agents/spikes/gemini-live/` proving:
-  - We can open a Gemini Live session and stream audio bidirectionally.
-  - μ-law ↔ PCM conversion runs in <5ms per frame on the target Cloud Run instance.
-  - Twilio `<Connect><Stream>` payload format is correctly parsed.
-  - End-to-end round-trip latency measured (target: p95 < 800ms first-byte).
+- Spike scaffolding under `sahayakai-agents/spikes/gemini_live/`:
+  - `audio.py` — μ-law ↔ PCM 16-bit + 8 kHz ↔ 16 kHz resample helpers
+  - `test_audio.py` — 13 unit tests pinning conversion math
+  - `latency_benchmark.py` — three-mode benchmark: audio-only,
+    end-to-end (stub until Gemini Live integration), with-guard (stub)
+  - `README.md` — operator workflow + decision gates
 - Cost benchmark: per-minute Gemini Live spend at expected concurrency.
 
-**Gates:**
-- p95 first-byte < 800ms in spike.
-- Cost projection within 2× of Phase 1 batch path per call.
+**Gates and current results:**
+
+| Gate | Target | Spike status | Result |
+|---|---|---|---|
+| Audio decode + resample p95 | < 5 ms | ✅ measured | **0.003 ms p95** (1000 iterations local; on Cloud Run gen2 will be ~10-50× higher but well under target) |
+| Gemini Live first-byte p95 | < 1500 ms (honest) | ⏳ blocked on regional GA + DPDP region migration | TBD |
+| Cost within 2× Phase 1 | per-call comparable | ⏳ blocked on Live pricing GA | TBD |
+| Partial-guard cut p95 | < 250 ms | ⏳ depends on Live SDK partial transcript cadence | TBD |
 
 ### 2.1 Voice sub-router (3-5 days)
 

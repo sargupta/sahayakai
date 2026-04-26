@@ -63,7 +63,7 @@ packages = ["src/sahayakai_agents"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests", "cloud_functions"]
+testpaths = ["tests", "cloud_functions", "spikes"]
 pythonpath = ["src"]
 markers = [
   "unit: fast, no external calls",
