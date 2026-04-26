@@ -1,0 +1,38 @@
+# Cloud Monitoring alert policy: sidecar Gemini spend > 2x daily budget.
+#
+# Tracks the `aiplatform.googleapis.com/online_serving_request_count`
+# metric scoped to the sidecar service account, weighted by the
+# per-token price embedded in a custom metric written by the cost
+# rollup function. Alert fires when the projected daily total exceeds
+# 2x the configured baseline.
+#
+# Prerequisite: a custom metric `parent_call/gemini_daily_spend_usd`
+# must be written by the cost-rollup Cloud Function (separate plan).
+# The 2x baseline is configured in that function as
+# `BASELINE_DAILY_USD` and exposed via the metric label `baseline=...`.
+displayName: "parent-call sidecar — Gemini spend > 2x baseline (daily)"
+documentation:
+  content: |
+    Sidecar Gemini spend has exceeded 2x the projected daily baseline.
+    Either the prompt-cache hit ratio has collapsed (`cacheHitRatio`
+    metric in `/readyz`), the model has been changed to a more
+    expensive variant (e.g. accidental gemini-2.5-pro promotion in
+    `SAHAYAKAI_REPLY_MODEL`), or shadow-mode is running on far more
+    calls than budgeted. Auto-abort demotes one step.
+  mimeType: text/markdown
+combiner: OR
+conditions:
+  - displayName: "daily spend > 2x baseline"
+    conditionThreshold:
+      filter: |
+        metric.type = "custom.googleapis.com/parent_call/gemini_daily_spend_usd"
+      comparison: COMPARISON_GT
+      thresholdValue: 2.0  # interpreted as multiplier of baseline
+      duration: 3600s  # 1h sustained over baseline
+      aggregations:
+        - alignmentPeriod: 300s
+          perSeriesAligner: ALIGN_MEAN
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s

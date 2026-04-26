@@ -63,7 +63,7 @@ packages = ["src/sahayakai_agents"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests", "cloud_functions"]
 pythonpath = ["src"]
 markers = [
   "unit: fast, no external calls",
@@ -132,3 +132,9 @@ disable_error_code = ["call-overload", "attr-defined"]
 module = "tests.unit.fake_firestore"
 warn_unused_ignores = false
 disable_error_code = ["unused-ignore"]
+
+# Cloud function wraps unstubbed firebase-admin firestore. The
+# `@admin_firestore.transactional` decorator is the only mypy snag.
+[[tool.mypy.overrides]]
+module = "cloud_functions.auto_abort.main"
+disallow_untyped_decorators = false
