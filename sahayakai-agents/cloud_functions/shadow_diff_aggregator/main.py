@@ -123,7 +123,14 @@ def _embedding_cosine(a: str, b: str) -> float:
     """Lazy-load + cache the SentenceTransformer model. Returns 0.0
     if the model cannot be loaded (e.g. running in a stripped runtime
     that omits sentence-transformers — this should ONLY happen if
-    USE_EMBEDDINGS is wrongly set).
+    USE_EMBEDDINGS is wrongly set) or if the embedding produces a
+    non-finite value.
+
+    Round-2 audit P0 NAN-1 fix (30-agent review, group C3): NaN/Inf
+    propagation poisons the metric mean which Cloud Monitoring rejects
+    as a non-finite double, causing the entire alert pipeline to fall
+    silent. Filter here so a single bad embedding (e.g. all-zero vector
+    after tokenisation drop) cannot taint the window.
     """
     global _embedding_model
     if _embedding_model is None:
@@ -135,12 +142,27 @@ def _embedding_cosine(a: str, b: str) -> float:
         _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
     if not a or not b:
         return 0.0
-    embeddings = _embedding_model.encode([a, b], convert_to_numpy=True)
+    import math
+
     import numpy as np
 
+    embeddings = _embedding_model.encode([a, b], convert_to_numpy=True)
     va, vb = embeddings[0], embeddings[1]
     denom = float(np.linalg.norm(va) * np.linalg.norm(vb))
-    return float(np.dot(va, vb) / denom) if denom else 0.0
+    if denom == 0.0:
+        return 0.0
+    score = float(np.dot(va, vb) / denom)
+    if not math.isfinite(score):
+        # Non-finite (NaN / +Inf / -Inf) would poison the mean. Drop
+        # it as 0.0 — the bad sample becomes a pessimistic vote in
+        # the rolling mean rather than killing the whole window.
+        log.warning(
+            "shadow_rollup.non_finite_embedding_score", extra={"raw_score": score}
+        )
+        return 0.0
+    # Clip to [-1, 1] (cosine bound) so any small floating-point
+    # over-shoot from float32 precision doesn't surface as "1.0001".
+    return max(-1.0, min(1.0, score))
 
 
 # ---- Sample aggregation --------------------------------------------------
@@ -188,10 +210,31 @@ def _write_metric(value: float, sample_count: int) -> None:
     """Write the rolling mean and sample count as Cloud Monitoring
     custom metrics. Uses the synchronous client because Cloud Functions
     runtime supports it and the call latency is negligible.
+
+    Round-2 audit P0 NAN-1 fix: defence-in-depth against non-finite
+    values reaching create_time_series. Cloud Monitoring rejects
+    NaN/Inf doubles, which would surface as a 4xx that fails the
+    entire metric write — so a single bad sample silently breaks BOTH
+    the mean AND the count metric, making the alert blind. Coerce
+    NaN to 0.0 here as a final guard.
+
+    Caller is also expected to wrap this in try/except so a metric-
+    write failure (quota, IAM, transient) doesn't 500 the function.
     """
+    import math
+
     if not PROJECT_ID:
         log.warning("shadow_rollup.no_project_id")
         return
+
+    if not math.isfinite(value):
+        log.warning(
+            "shadow_rollup.non_finite_mean_coerced",
+            extra={"raw_value": value, "sample_count": sample_count},
+        )
+        value = 0.0
+    # Cosine bound clip — same defence as `_embedding_cosine`.
+    value = max(-1.0, min(1.0, value))
 
     client = monitoring_v3.MetricServiceClient()
     project_name = f"projects/{PROJECT_ID}"
@@ -218,7 +261,15 @@ def _write_metric(value: float, sample_count: int) -> None:
     )
     series_count.points = [point_count]
 
-    client.create_time_series(name=project_name, time_series=[series_mean, series_count])
+    try:
+        client.create_time_series(
+            name=project_name, time_series=[series_mean, series_count]
+        )
+    except Exception as exc:  # noqa: BLE001 — metric write must never crash the function
+        log.error(
+            "shadow_rollup.metric_write_failed",
+            extra={"error": str(exc)[:500], "value": value, "sample_count": sample_count},
+        )
 
 
 # ---- Main entrypoints ----------------------------------------------------
