@@ -469,28 +469,38 @@ export function ResourceFeed() {
       toast({ title: 'Sign in to like resources', variant: 'destructive' });
       return;
     }
+    // Capture pre-toggle state so the rollback path can revert BOTH the Set
+    // membership AND the count. The previous implementation only rolled back
+    // the Set, leaving the displayed count drifted on every failure.
+    const wasLiked = likedIds.has(resource.id);
+    const delta = wasLiked ? -1 : 1;
+
     setLikedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(resource.id)) next.delete(resource.id);
+      if (wasLiked) next.delete(resource.id);
       else next.add(resource.id);
       return next;
     });
     setResources((prev) =>
       prev.map((r) =>
-        r.id === resource.id
-          ? { ...r, likes: r.likes + (likedIds.has(resource.id) ? -1 : 1) }
-          : r,
+        r.id === resource.id ? { ...r, likes: r.likes + delta } : r,
       ),
     );
     try {
-      await likeResourceAction(resource.id, user.uid);
+      // Server now derives uid from session; second arg ignored in Phase 1.
+      await likeResourceAction(resource.id);
     } catch {
       setLikedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(resource.id)) next.delete(resource.id);
-        else next.add(resource.id);
+        if (wasLiked) next.add(resource.id);
+        else next.delete(resource.id);
         return next;
       });
+      setResources((prev) =>
+        prev.map((r) =>
+          r.id === resource.id ? { ...r, likes: r.likes - delta } : r,
+        ),
+      );
       toast({ title: 'Could not update like', variant: 'destructive' });
     }
   };
@@ -502,18 +512,15 @@ export function ResourceFeed() {
     }
     setSavedIds((prev) => new Set(prev).add(resource.id));
     try {
-      const { alreadySaved } = await saveResourceToLibraryAction(
-        {
-          id:         resource.id,
-          title:      resource.title,
-          type:       resource.type,
-          authorId:   resource.authorId,
-          language:   resource.language,
-          gradeLevel: resource.gradeLevel,
-          subject:    resource.subject,
-        },
-        user.uid,
-      );
+      const { alreadySaved } = await saveResourceToLibraryAction({
+        id:         resource.id,
+        title:      resource.title,
+        type:       resource.type,
+        authorId:   resource.authorId,
+        language:   resource.language,
+        gradeLevel: resource.gradeLevel,
+        subject:    resource.subject,
+      });
       toast({
         title: alreadySaved ? 'Already in your library' : 'Saved to your library',
         description: alreadySaved

@@ -22,8 +22,23 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: () => void; trigger?: React.ReactNode }) {
-    const [open, setOpen] = useState(false);
+interface CreatePostDialogProps {
+    onPostCreated?: () => void;
+    trigger?: React.ReactNode;
+    /** Controlled open state — pass when opening from a parent (e.g. mobile FAB). */
+    open?: boolean;
+    /** Called when the dialog requests to close (Escape, backdrop click, X button). */
+    onOpenChange?: (open: boolean) => void;
+}
+
+export function CreatePostDialog({ onPostCreated, trigger, open: controlledOpen, onOpenChange }: CreatePostDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = (v: boolean) => {
+        if (!isControlled) setInternalOpen(v);
+        onOpenChange?.(v);
+    };
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const { user } = useAuth();
@@ -45,7 +60,8 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
 
         setIsLoading(true);
         try {
-            await createPostAction(user.uid, data.content, 'public', data.imageUrl || undefined);
+            // Author is derived from session on the server; client no longer passes uid.
+            await createPostAction(data.content, 'public', data.imageUrl || undefined);
 
             toast({
                 title: "Post created!",
@@ -67,14 +83,18 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {trigger ?? (
-                    <Button className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Create Post
-                    </Button>
-                )}
-            </DialogTrigger>
+            {/* Skip the trigger entirely when fully controlled — caller is
+                responsible for toggling `open`. */}
+            {!isControlled && (
+                <DialogTrigger asChild>
+                    {trigger ?? (
+                        <Button className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Create Post
+                        </Button>
+                    )}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>{t("Create a Post")}</DialogTitle>

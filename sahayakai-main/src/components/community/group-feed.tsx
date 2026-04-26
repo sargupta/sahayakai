@@ -151,12 +151,28 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
   const handleConnect = useCallback(
     async (targetUid: string) => {
       try {
-        await sendConnectionRequestAction(targetUid);
-        setConnData((prev) => ({
-          ...prev,
-          sentRequestUids: [...prev.sentRequestUids, targetUid],
-        }));
-        toast({ title: "Connection request sent" });
+        const result = await sendConnectionRequestAction(targetUid);
+        if (result.status === 'sent') {
+          setConnData((prev) => ({
+            ...prev,
+            sentRequestUids: [...prev.sentRequestUids, targetUid],
+          }));
+          toast({ title: 'Connection request sent' });
+        } else if (result.status === 'already_pending') {
+          setConnData((prev) =>
+            prev.sentRequestUids.includes(targetUid)
+              ? prev
+              : { ...prev, sentRequestUids: [...prev.sentRequestUids, targetUid] },
+          );
+          toast({ title: 'Request already pending' });
+        } else if (result.status === 'already_connected') {
+          setConnData((prev) =>
+            prev.connectedUids.includes(targetUid)
+              ? prev
+              : { ...prev, connectedUids: [...prev.connectedUids, targetUid] },
+          );
+          toast({ title: 'Already connected' });
+        }
       } catch {
         toast({ title: "Could not send request", variant: "destructive" });
       }

@@ -1,9 +1,9 @@
 'use server';
 
 import { getDb } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
 import { dbAdapter } from '@/lib/db/adapter';
 import { logger } from '@/lib/logger';
+import { requireAuth, requireGroupMember } from '@/lib/auth-helpers';
 import type {
     Group,
     GroupPost,
@@ -15,12 +15,23 @@ import type {
 import { getGroupColor } from '@/types/community';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
+// `getAuthUserId` is kept as a local alias so call sites read naturally.
+// All new actions should call `requireAuth` directly.
 
-async function getAuthUserId(): Promise<string> {
-    const h = await headers();
-    const uid = h.get('x-user-id');
-    if (!uid) throw new Error('Unauthorized');
-    return uid;
+const getAuthUserId = requireAuth;
+
+// ── Error helpers ─────────────────────────────────────────────────────────────
+// Firestore Admin SDK throws errors with `.code` (gRPC status code) on
+// document collisions. Code 6 = ALREADY_EXISTS. We must distinguish this
+// expected race ("already a member") from real failures (quota, permission,
+// network) so the latter surface to the client instead of being silently
+// swallowed as "joined".
+function isAlreadyExistsError(err: unknown): boolean {
+    if (!err || typeof err !== 'object') return false;
+    const e = err as { code?: number | string; message?: string };
+    if (e.code === 6 || e.code === 'already-exists') return true;
+    if (typeof e.message === 'string' && /already exists/i.test(e.message)) return true;
+    return false;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -103,10 +114,17 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                 await groupRef.update({ memberCount: FieldValue.increment(1) });
                 newGroupIds.push(groupId);
                 subjectGradeAutoJoins++;
-            } catch {
-                // Already a member — skip (create fails if doc exists)
-                newGroupIds.push(groupId);
-                subjectGradeAutoJoins++;
+            } catch (err) {
+                if (isAlreadyExistsError(err)) {
+                    // Expected race — user already a member of this auto-group.
+                    newGroupIds.push(groupId);
+                    subjectGradeAutoJoins++;
+                } else {
+                    // Real failure — log and skip. Do NOT push to newGroupIds
+                    // (would create a phantom membership in the user's groupIds
+                    // array that the server-side check would later reject).
+                    logger.error('ensureUserGroups: subject-grade auto-join failed', err, 'COMMUNITY', { uid, groupId });
+                }
             }
         }
     }
@@ -160,9 +178,12 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
                 await groupRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
                 await groupRef.update({ memberCount: FieldValue.increment(1) });
                 newGroupIds.push(stateGroupId);
-            } catch {
-                // Already a member — skip (create fails if doc exists)
-                newGroupIds.push(stateGroupId);
+            } catch (err) {
+                if (isAlreadyExistsError(err)) {
+                    newGroupIds.push(stateGroupId);
+                } else {
+                    logger.error('ensureUserGroups: state auto-join failed', err, 'COMMUNITY', { uid, stateGroupId });
+                }
             }
         }
     }
@@ -192,8 +213,12 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
             await briefingRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
             await briefingRef.update({ memberCount: FieldValue.increment(1) });
             newGroupIds.push(briefingGroupId);
-        } catch {
-            newGroupIds.push(briefingGroupId);
+        } catch (err) {
+            if (isAlreadyExistsError(err)) {
+                newGroupIds.push(briefingGroupId);
+            } else {
+                logger.error('ensureUserGroups: briefing auto-join failed', err, 'COMMUNITY', { uid });
+            }
         }
     }
 
@@ -222,8 +247,12 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
             await commRef.collection('members').doc(uid).create({ joinedAt: now, role: 'member' });
             await commRef.update({ memberCount: FieldValue.increment(1) });
             newGroupIds.push(communityGroupId);
-        } catch {
-            newGroupIds.push(communityGroupId);
+        } catch (err) {
+            if (isAlreadyExistsError(err)) {
+                newGroupIds.push(communityGroupId);
+            } else {
+                logger.error('ensureUserGroups: community auto-join failed', err, 'COMMUNITY', { uid });
+            }
         }
     }
 
@@ -282,7 +311,14 @@ export async function getGroupAction(groupId: string): Promise<Group | null> {
 
 // ── 4. joinGroupAction ────────────────────────────────────────────────────────
 
-export async function joinGroupAction(groupId: string): Promise<void> {
+/**
+ * Join a group. Returns `{ joined: true }` on first join, `{ joined: false }`
+ * if the user was already a member (idempotent). Real Firestore errors
+ * (permission, quota, network) propagate to the caller — previously they
+ * were silently swallowed as "already a member" so the UI toasted "Joined"
+ * for every failure.
+ */
+export async function joinGroupAction(groupId: string): Promise<{ joined: boolean }> {
     const uid = await getAuthUserId();
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
@@ -291,22 +327,31 @@ export async function joinGroupAction(groupId: string): Promise<void> {
     const groupDoc = await groupRef.get();
     if (!groupDoc.exists) throw new Error('Group not found');
 
+    let joined = true;
     try {
         await groupRef.collection('members').doc(uid).create({
             joinedAt: new Date().toISOString(),
             role: 'member',
         });
         await groupRef.update({ memberCount: FieldValue.increment(1) });
-    } catch {
-        // Already a member — create fails if doc exists, skip
-        return;
+    } catch (err) {
+        if (isAlreadyExistsError(err)) {
+            joined = false; // expected race — user already a member
+        } else {
+            // Real failure (permission, quota, network) — propagate so the
+            // client can surface a real error instead of a misleading toast.
+            throw err;
+        }
     }
 
+    // Always reconcile the user doc — arrayUnion is idempotent and ensures
+    // the cache stays consistent even if a prior attempt left it out of sync.
     await db.collection('users').doc(uid).update({
         groupIds: FieldValue.arrayUnion(groupId),
     });
 
-    logger.info(`joinGroup: uid=${uid}, groupId=${groupId}`);
+    logger.info(`joinGroup: uid=${uid}, groupId=${groupId}, joined=${joined}`);
+    return { joined };
 }
 
 // ── 5. leaveGroupAction ──────────────────────────────────────────────────────
@@ -344,6 +389,11 @@ export async function getGroupPostsAction(
     limit = 20,
     startAfter?: string,
 ): Promise<GroupPost[]> {
+    // Authz: only members of the group may read its posts. Throws ForbiddenError
+    // if the caller is signed in but not a member, UnauthorizedError if missing
+    // the x-user-id header.
+    await requireGroupMember(groupId);
+
     const db = await getDb();
 
     let query = db

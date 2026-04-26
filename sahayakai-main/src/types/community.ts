@@ -146,6 +146,22 @@ export const SHARE_TEMPLATES: ShareTemplate[] = [
   },
 ];
 
+// Recommendation surface (sidebar "People You May Know", profile suggestions).
+// Returned by getRecommendedTeachersAction / getAllTeachersAction (sanitised).
+export interface TeacherSuggestion {
+  uid: string;
+  displayName: string;
+  photoURL?: string | null;
+  initial?: string;
+  schoolName?: string;
+  subjects?: string[];
+  gradeLevels?: string[];
+  bio?: string;
+  impactScore?: number;
+  followersCount?: number;
+  recommendationReason?: string;
+}
+
 // Group color palettes for deterministic assignment (CSS gradient strings for inline styles)
 export const GROUP_COLORS: string[] = [
   'linear-gradient(135deg, #fb923c, #f59e0b)',  // orange to amber

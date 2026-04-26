@@ -20,6 +20,7 @@ import { CommunityChat } from '@/components/community/community-chat';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
 import { ResourceFeed } from '@/components/community/resource-feed';
 import { ExploreGroups } from '@/components/community/explore-groups';
+import { CreatePostDialog } from '@/components/community/create-post-dialog';
 
 // Server actions
 import {
@@ -34,11 +35,15 @@ import {
   getMyConnectionDataAction,
   sendConnectionRequestAction,
 } from '@/app/actions/connections';
-import { getRecommendedTeachersAction } from '@/app/actions/community';
+import {
+  getRecommendedTeachersAction,
+  likeResourceAction,
+  getLikedItemIdsAction,
+} from '@/app/actions/community';
 import { updateProfileAction } from '@/app/actions/profile';
 
 // Types
-import type { Group, FeedItem } from '@/types/community';
+import type { Group, FeedItem, TeacherSuggestion } from '@/types/community';
 import type { MyConnectionData } from '@/types';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -58,7 +63,7 @@ export default function CommunityPage() {
     sentRequestUids: [],
     receivedRequests: [],
   });
-  const [teacherSuggestions, setTeacherSuggestions] = useState<any[]>([]);
+  const [teacherSuggestions, setTeacherSuggestions] = useState<TeacherSuggestion[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const [showStaffRoom, setShowStaffRoom] = useState(false);
@@ -66,7 +71,15 @@ export default function CommunityPage() {
   const [showExploreGroups, setShowExploreGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // Race guard: every refresh increments this; we discard responses whose
+  // version no longer matches when they resolve. Replaces the original
+  // last-write-wins behaviour where a slow refresh could clobber newer data.
+  const refreshVersionRef = useRef(0);
 
   // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -96,20 +109,30 @@ export default function CommunityPage() {
       // Mark community as visited (fire-and-forget — prevents future nudges)
       updateProfileAction(firebaseUser.uid, { communityIntroState: 'visited' }).catch(() => {});
 
-      // Step 2: Load all data in parallel — now that membership is settled
+      // Step 2: Load all data in parallel — now that membership is settled.
+      // The 6th call hydrates `likedPostIds` so previously-liked items render
+      // with filled hearts on the very first paint instead of empty.
       Promise.allSettled([
         getMyGroupsAction(),
         getUnifiedFeedAction(),
         getMyConnectionDataAction(),
         discoverGroupsAction(),
         getRecommendedTeachersAction(firebaseUser.uid),
+        getLikedItemIdsAction(),
       ])
         .then((results) => {
           if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
-          if (results[1].status === 'fulfilled') setFeedItems(results[1].value);
+          if (results[1].status === 'fulfilled') {
+            setFeedItems(results[1].value);
+            setHasMore(results[1].value.length >= 20); // Default page size
+          }
           if (results[2].status === 'fulfilled') setConnectionData(results[2].value);
           if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
           if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
+          if (results[5].status === 'fulfilled') {
+            const { groupPostIds, resourceIds } = results[5].value;
+            setLikedPostIds(new Set([...groupPostIds, ...resourceIds]));
+          }
 
           results.forEach((r, i) => {
             if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
@@ -130,36 +153,152 @@ export default function CommunityPage() {
 
   const handleLikePost = useCallback(
     async (groupId: string, postId: string) => {
+      // Optimistic toggle: flip both the Set membership AND the count on the
+      // matching FeedItem so the UI reflects the action immediately. Previously
+      // only the heart filled — the count stayed stale until the next refresh.
+      const wasLiked = likedPostIds.has(postId);
+      const delta = wasLiked ? -1 : 1;
+
       setLikedPostIds((prev) => {
         const next = new Set(prev);
-        if (next.has(postId)) next.delete(postId);
+        if (wasLiked) next.delete(postId);
         else next.add(postId);
         return next;
       });
+      setFeedItems((prev) =>
+        prev.map((item) =>
+          item.type === 'group_post' && item.post?.id === postId
+            ? { ...item, post: { ...item.post, likesCount: item.post.likesCount + delta } }
+            : item,
+        ),
+      );
+
       try {
-        await likeGroupPostAction(groupId, postId);
-      } catch {
+        const result = await likeGroupPostAction(groupId, postId);
+        // Reconcile with server-returned authoritative count.
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'group_post' && item.post?.id === postId
+              ? { ...item, post: { ...item.post, likesCount: result.newCount } }
+              : item,
+          ),
+        );
         setLikedPostIds((prev) => {
           const next = new Set(prev);
-          if (next.has(postId)) next.delete(postId);
-          else next.add(postId);
+          if (result.isLiked) next.add(postId);
+          else next.delete(postId);
           return next;
         });
+      } catch {
+        // Rollback both Set AND count.
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (wasLiked) next.add(postId);
+          else next.delete(postId);
+          return next;
+        });
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'group_post' && item.post?.id === postId
+              ? { ...item, post: { ...item.post, likesCount: item.post.likesCount - delta } }
+              : item,
+          ),
+        );
         toast({ title: 'Could not update like', variant: 'destructive' });
       }
     },
-    [toast],
+    [likedPostIds, toast],
+  );
+
+  const handleLikeResource = useCallback(
+    async (resourceId: string) => {
+      // Resource-share feed items use library_resources, not group posts.
+      // Previously this routed to likeGroupPostAction with an empty groupId
+      // and therefore always 404'd.
+      if (!user) {
+        toast({ title: 'Sign in to like resources', variant: 'destructive' });
+        return;
+      }
+      const wasLiked = likedPostIds.has(resourceId);
+      const delta = wasLiked ? -1 : 1;
+
+      setLikedPostIds((prev) => {
+        const next = new Set(prev);
+        if (wasLiked) next.delete(resourceId);
+        else next.add(resourceId);
+        return next;
+      });
+      setFeedItems((prev) =>
+        prev.map((item) =>
+          item.type === 'resource_share' && item.resource?.id === resourceId
+            ? { ...item, resource: { ...item.resource, likes: item.resource.likes + delta } }
+            : item,
+        ),
+      );
+
+      try {
+        const result = await likeResourceAction(resourceId);
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'resource_share' && item.resource?.id === resourceId
+              ? { ...item, resource: { ...item.resource, likes: result.newCount } }
+              : item,
+          ),
+        );
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (result.isLiked) next.add(resourceId);
+          else next.delete(resourceId);
+          return next;
+        });
+      } catch {
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (wasLiked) next.add(resourceId);
+          else next.delete(resourceId);
+          return next;
+        });
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'resource_share' && item.resource?.id === resourceId
+              ? { ...item, resource: { ...item.resource, likes: item.resource.likes - delta } }
+              : item,
+          ),
+        );
+        toast({ title: 'Could not update like', variant: 'destructive' });
+      }
+    },
+    [likedPostIds, toast, user],
   );
 
   const handleConnectTeacher = useCallback(
     async (uid: string) => {
       try {
-        await sendConnectionRequestAction(uid);
-        setConnectionData((prev) => ({
-          ...prev,
-          sentRequestUids: [...prev.sentRequestUids, uid],
-        }));
-        toast({ title: 'Connection request sent' });
+        const result = await sendConnectionRequestAction(uid);
+        // Branch UI feedback on the server's authoritative status — previously
+        // the handler always pushed to sentRequestUids and toasted "sent",
+        // even when the server reported already-connected or already-pending.
+        if (result.status === 'sent') {
+          setConnectionData((prev) => ({
+            ...prev,
+            sentRequestUids: [...prev.sentRequestUids, uid],
+          }));
+          toast({ title: 'Connection request sent' });
+        } else if (result.status === 'already_pending') {
+          setConnectionData((prev) =>
+            prev.sentRequestUids.includes(uid)
+              ? prev
+              : { ...prev, sentRequestUids: [...prev.sentRequestUids, uid] },
+          );
+          toast({ title: 'Request already pending' });
+        } else if (result.status === 'already_connected') {
+          setConnectionData((prev) =>
+            prev.connectedUids.includes(uid)
+              ? prev
+              : { ...prev, connectedUids: [...prev.connectedUids, uid] },
+          );
+          toast({ title: 'Already connected' });
+        }
       } catch {
         toast({ title: 'Could not send request', variant: 'destructive' });
       }
@@ -223,11 +362,18 @@ export default function CommunityPage() {
   }, []);
 
   const handleRefreshFeed = useCallback(async () => {
+    // Race guard: capture our version, only commit if no newer call started.
+    // Server actions in Next don't take an AbortSignal, so we can't cancel the
+    // request mid-flight — but we CAN throw away its result if it's stale.
+    const myVersion = ++refreshVersionRef.current;
     try {
       const feed = await getUnifiedFeedAction();
-      setFeedItems(feed);
+      if (myVersion === refreshVersionRef.current) {
+        setFeedItems(feed);
+        setHasMore(feed.length >= 20);
+      }
     } catch {
-      // silent
+      // silent — refresh is best-effort
     }
   }, []);
 
@@ -254,9 +400,22 @@ export default function CommunityPage() {
     };
   }, [user, handleRefreshFeed]);
 
-  const handleLoadMore = useCallback(() => {
-    // Placeholder for pagination
-  }, []);
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || feedItems.length === 0) return;
+    setLoadingMore(true);
+    try {
+      // Use the oldest item's timestamp as the cursor — getUnifiedFeedAction's
+      // signature already supports `(limit, startAfterTimestamp)`.
+      const lastTimestamp = feedItems[feedItems.length - 1].timestamp;
+      const more = await getUnifiedFeedAction(20, lastTimestamp);
+      setFeedItems((prev) => [...prev, ...more]);
+      setHasMore(more.length >= 20);
+    } catch (err) {
+      console.error('handleLoadMore failed', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, feedItems]);
 
   // ── Group Detail View ────────────────────────────────────────────────────
   if (activeGroup) {
@@ -437,6 +596,25 @@ export default function CommunityPage() {
         />
       </div>
 
+      {/* Cold-start empty state. Renders when the user has no groups AND no
+          feed — usually a brand-new account whose ensureUserGroupsAction
+          either ran but auto-joined nothing (rare) or is still in flight.
+          Without this, the page below renders mostly blank space. */}
+      {!loading && myGroups.length === 0 && feedItems.length === 0 && (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Users className="h-6 w-6 text-primary" />
+          </div>
+          <p className="text-sm font-bold text-foreground">Join your first group</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Groups are how you find teachers in your subject, grade, and area.
+          </p>
+          <Button onClick={handleOpenExploreGroups} className="mt-3 gap-1.5">
+            Browse groups
+          </Button>
+        </div>
+      )}
+
       {/* Main content area */}
       <div className="mt-4 flex gap-6">
         {/* Feed column */}
@@ -444,7 +622,36 @@ export default function CommunityPage() {
           <div ref={composerRef}>
             <ShareComposer
               groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
-              onPostCreated={handleRefreshFeed}
+              onPostCreated={(info) => {
+                if (info && user) {
+                  // Optimistic insertion: prepend the new post to the feed so
+                  // the user sees it immediately. The next refresh tick (or
+                  // explicit handleRefreshFeed call) reconciles to server data.
+                  const groupName = myGroups.find((g) => g.id === info.groupId)?.name ?? '';
+                  const optimisticItem: FeedItem = {
+                    id: `gp_${info.postId}`,
+                    type: 'group_post',
+                    groupId: info.groupId,
+                    groupName,
+                    timestamp: new Date().toISOString(),
+                    post: {
+                      id: info.postId,
+                      groupId: info.groupId,
+                      authorUid: user.uid,
+                      authorName: user.displayName ?? 'Teacher',
+                      authorPhotoURL: user.photoURL ?? null,
+                      content: info.content,
+                      postType: info.postType,
+                      attachments: [],
+                      likesCount: 0,
+                      commentsCount: 0,
+                      createdAt: new Date().toISOString(),
+                    },
+                  };
+                  setFeedItems((prev) => [optimisticItem, ...prev]);
+                }
+                handleRefreshFeed();
+              }}
             />
           </div>
           <UnifiedFeed
@@ -452,10 +659,11 @@ export default function CommunityPage() {
             loading={loading}
             connectionData={connectionData}
             onLikePost={handleLikePost}
+            onLikeResource={handleLikeResource}
             onConnectTeacher={handleConnectTeacher}
             onOpenGroupChat={handleOpenGroup}
             onLoadMore={handleLoadMore}
-            hasMore={false}
+            hasMore={hasMore && !selectedGroupId}
             likedPostIds={likedPostIds}
           />
 
@@ -481,22 +689,34 @@ export default function CommunityPage() {
             onPreviewGroup={handlePreviewGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
             onOpenTeacherDirectory={handleOpenTeacherDirectory}
+            onViewAllGroups={handleOpenExploreGroups}
             onConnectTeacher={handleConnectTeacher}
           />
         </div>
       </div>
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB — opens the full create-post dialog. Previously this just
+          scrolled to the (already-visible) composer above. CreatePostDialog
+          had been imported nowhere else; this revives it with proper wiring. */}
       <div className="fixed bottom-20 right-4 sm:hidden z-[70]">
         <button
-          onClick={() =>
-            composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
+          onClick={() => setShowCreateDialog(true)}
+          aria-label={t("Create a Post")}
           className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
         >
           <Plus className="h-6 w-6" />
         </button>
       </div>
+
+      {/* CreatePostDialog — controlled from the FAB. */}
+      <CreatePostDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onPostCreated={() => {
+          setShowCreateDialog(false);
+          handleRefreshFeed();
+        }}
+      />
     </div>
   );
 }

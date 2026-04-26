@@ -2,6 +2,16 @@ import '@testing-library/jest-dom';
 import 'whatwg-fetch'; // Polyfill fetch
 import React from 'react';
 
+// Polyfill TextEncoder/TextDecoder for jsdom env (Node has them globally,
+// but jsdom strips them — needed by transitive imports in some Server Action files).
+import { TextEncoder, TextDecoder } from 'util';
+if (typeof (global as any).TextEncoder === 'undefined') {
+    (global as any).TextEncoder = TextEncoder;
+}
+if (typeof (global as any).TextDecoder === 'undefined') {
+    (global as any).TextDecoder = TextDecoder;
+}
+
 // Polyfill Response, Request, Headers for Node environment
 global.Response = class Response {
     constructor(body?: any, init?: any) {

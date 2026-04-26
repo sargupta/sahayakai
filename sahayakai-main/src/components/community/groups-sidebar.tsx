@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { type Group, getGroupColor } from "@/types/community";
+import { type Group, type TeacherSuggestion, getGroupColor } from "@/types/community";
 import {
   Users,
   UserPlus,
@@ -20,12 +22,7 @@ import { formatDistanceToNow } from "date-fns";
 interface GroupsSidebarProps {
   myGroups: Group[];
   suggestedGroups: Group[];
-  teacherSuggestions: Array<{
-    uid: string;
-    displayName: string;
-    photoURL?: string;
-    recommendationReason: string;
-  }>;
+  teacherSuggestions: TeacherSuggestion[];
   connectedUids: string[];
   sentRequestUids: string[];
   onSelectGroup: (groupId: string) => void;
@@ -33,6 +30,7 @@ interface GroupsSidebarProps {
   onPreviewGroup?: (groupId: string) => void;
   onOpenStaffRoom: () => void;
   onOpenTeacherDirectory: () => void;
+  onViewAllGroups?: () => void;
   onConnectTeacher: (uid: string) => void;
 }
 
@@ -49,11 +47,18 @@ export function GroupsSidebar({
   onPreviewGroup,
   onOpenStaffRoom,
   onOpenTeacherDirectory,
+  onViewAllGroups,
   onConnectTeacher,
 }: GroupsSidebarProps) {
   const router = useRouter();
   const [joiningGroups, setJoiningGroups] = useState<Set<string>>(new Set());
-  const [joinedGroups, setJoinedGroups] = useState<Set<string>>(new Set());
+  // joinedGroups was previously a local Set that lived alongside myGroups and
+  // could drift (e.g. user leaves a group elsewhere). Derive from myGroups
+  // instead — single source of truth.
+  const joinedSet = useMemo(
+    () => new Set(myGroups.map((g) => g.id)),
+    [myGroups],
+  );
   const [connectingTeachers, setConnectingTeachers] = useState<Set<string>>(
     new Set()
   );
@@ -63,12 +68,33 @@ export function GroupsSidebar({
     : myGroups.slice(0, MY_GROUPS_COLLAPSED_LIMIT);
   const hiddenMyGroupsCount = Math.max(0, myGroups.length - MY_GROUPS_COLLAPSED_LIMIT);
 
+  // Subscribe to the most recent community_chat message to drive a real "Live"
+  // signal on the Staff Room tile. Pulse only if a message landed within the
+  // last 5 minutes — previously the green dot pulsed forever as decoration.
+  const [staffRoomLastTs, setStaffRoomLastTs] = useState<Date | null>(null);
+  useEffect(() => {
+    const q = query(collection(db, 'community_chat'), orderBy('createdAt', 'desc'), limit(1));
+    const unsub = onSnapshot(q, (snap) => {
+      const doc = snap.docs[0];
+      const ts = doc?.data()?.createdAt;
+      if (ts && typeof ts.toDate === 'function') setStaffRoomLastTs(ts.toDate());
+    }, () => {
+      // silent — rules may deny anonymous reads pre-auth; the badge will just
+      // stay unlit, which is the safe default.
+    });
+    return () => unsub();
+  }, []);
+  const staffRoomIsLive = useMemo(() => {
+    if (!staffRoomLastTs) return false;
+    return Date.now() - staffRoomLastTs.getTime() < 5 * 60 * 1000;
+  }, [staffRoomLastTs]);
+
   const handleJoinGroup = async (groupId: string) => {
     setJoiningGroups((prev) => new Set(prev).add(groupId));
     try {
       await onJoinGroup(groupId);
-      // Show "Joined!" briefly — parent will navigate into the group
-      setJoinedGroups((prev) => new Set(prev).add(groupId));
+      // Parent's myGroups refresh will flip joinedSet automatically; no need
+      // to maintain a separate local state.
     } finally {
       setJoiningGroups((prev) => {
         const next = new Set(prev);
@@ -115,7 +141,7 @@ export function GroupsSidebar({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={teacher.photoURL} />
+                      <AvatarImage src={teacher.photoURL ?? undefined} />
                       <AvatarFallback className="text-xs">
                         {teacher.displayName
                           .split(" ")
@@ -180,11 +206,22 @@ export function GroupsSidebar({
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Staff Room</p>
             <div className="flex items-center gap-1.5">
+              {/* Pulse only when a message landed in the last 5 minutes — the
+                  decorative-always pulse was misleading. */}
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                {staffRoomIsLive && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                )}
+                <span
+                  className={cn(
+                    "relative inline-flex rounded-full h-2 w-2",
+                    staffRoomIsLive ? "bg-green-500" : "bg-slate-300",
+                  )}
+                />
               </span>
-              <span className="text-xs text-slate-500">Live</span>
+              <span className="text-xs text-slate-500">
+                {staffRoomIsLive ? "Live" : "Quiet"}
+              </span>
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
@@ -235,9 +272,19 @@ export function GroupsSidebar({
       {/* Discover Groups */}
       {suggestedGroups.length > 0 && (
         <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            Discover Groups
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Discover Groups
+            </h3>
+            {onViewAllGroups && suggestedGroups.length > 5 && (
+              <button
+                onClick={onViewAllGroups}
+                className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+              >
+                View All
+              </button>
+            )}
+          </div>
           <Card className="p-4">
             <div className="space-y-3">
               {suggestedGroups.slice(0, 5).map((group) => (
@@ -258,15 +305,15 @@ export function GroupsSidebar({
                   </button>
                   <Button
                     size="sm"
-                    variant={joinedGroups.has(group.id) ? "ghost" : "outline"}
+                    variant={joinedSet.has(group.id) ? "ghost" : "outline"}
                     className={cn(
                       "shrink-0 text-xs",
-                      joinedGroups.has(group.id) && "text-emerald-600"
+                      joinedSet.has(group.id) && "text-emerald-600"
                     )}
-                    disabled={joiningGroups.has(group.id) || joinedGroups.has(group.id)}
+                    disabled={joiningGroups.has(group.id) || joinedSet.has(group.id)}
                     onClick={() => handleJoinGroup(group.id)}
                   >
-                    {joinedGroups.has(group.id)
+                    {joinedSet.has(group.id)
                       ? "Joined"
                       : joiningGroups.has(group.id)
                         ? "Joining..."
@@ -275,6 +322,14 @@ export function GroupsSidebar({
                 </div>
               ))}
             </div>
+            {onViewAllGroups && (
+              <button
+                onClick={onViewAllGroups}
+                className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                Browse all groups
+              </button>
+            )}
           </Card>
         </div>
       )}

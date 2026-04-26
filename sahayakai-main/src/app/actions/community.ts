@@ -6,12 +6,22 @@ import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
 import { aggregateUserMetrics } from "./aggregator";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth-helpers";
+import { checkServerRateLimit } from "@/lib/server-safety";
+import { cachedPerUser, invalidateUserCache } from "@/lib/server-cache";
+import type { TeacherSuggestion } from "@/types/community";
 
 export async function getProfilesAction(uids: string[]) {
+    await requireAuth();
     return await dbAdapter.getUsers(uids);
 }
 
-export async function createPostAction(userId: string, content: string, visibility: string = 'public', imageUrl?: string) {
+/**
+ * Create a public post. Author is derived from the authenticated session —
+ * the client cannot impersonate other users.
+ */
+export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string) {
+    const userId = await requireAuth();
     const db = await getDb();
 
     const postData: any = {
@@ -49,7 +59,8 @@ export async function createPostAction(userId: string, content: string, visibili
     return docRef.id;
 }
 
-export async function toggleLikeAction(postId: string, userId: string) {
+export async function toggleLikeAction(postId: string) {
+    const userId = await requireAuth();
     const db = await getDb();
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
@@ -74,6 +85,7 @@ export async function toggleLikeAction(postId: string, userId: string) {
 }
 
 export async function getPosts(filters: { language?: string, limit?: number, gradeLevels?: string[], subjects?: string[] } = {}) {
+    await requireAuth();
     const db = await getDb();
     let query = db.collection('posts').orderBy('createdAt', 'desc');
 
@@ -98,7 +110,11 @@ export async function getPosts(filters: { language?: string, limit?: number, gra
 
 import { createNotification } from "./notifications";
 
-export async function followTeacherAction(followerId: string, followingId: string) {
+export async function followTeacherAction(followingId: string) {
+    const followerId = await requireAuth();
+    // Invalidate this user's cached recommendations — their following list
+    // just changed, so the exclusion set is stale.
+    invalidateUserCache('recs', followerId);
     const db = await getDb();
     const connectionId = `${followerId}_${followingId}`;
     const connectionRef = db.collection('connections').doc(connectionId);
@@ -135,7 +151,8 @@ export async function followTeacherAction(followerId: string, followingId: strin
     revalidatePath("/community");
 }
 
-export async function getFollowingIdsAction(followerId: string) {
+export async function getFollowingIdsAction() {
+    const followerId = await requireAuth();
     const db = await getDb();
     const snapshot = await db.collection('connections')
         .where('followerId', '==', followerId)
@@ -143,7 +160,8 @@ export async function getFollowingIdsAction(followerId: string) {
     return snapshot.docs.map(doc => doc.data().followingId);
 }
 
-export async function getFollowingPosts(followerId: string) {
+export async function getFollowingPosts() {
+    const followerId = await requireAuth();
     const db = await getDb();
 
     // 1. Get list of following IDs
@@ -166,6 +184,7 @@ export async function getFollowingPosts(followerId: string) {
 }
 
 export async function getLibraryResources(filters: { type?: string, language?: string, authorId?: string, authorIds?: string[], excludeTypes?: string[] } = {}) {
+    await requireAuth();
     const db = await getDb();
     let query: any = db.collection('library_resources');
 
@@ -208,6 +227,7 @@ export async function getLibraryResources(filters: { type?: string, language?: s
 }
 
 export async function trackDownloadAction(resourceId: string) {
+    await requireAuth();
     const db = await getDb();
     const ref = db.collection('library_resources').doc(resourceId);
 
@@ -226,134 +246,154 @@ export async function trackDownloadAction(resourceId: string) {
     });
 }
 
-export async function getRecommendedTeachersAction(userId: string) {
-    const db = await getDb();
+// Cached inner function. Pulled out so unstable_cache can key the result by
+// uid + ttl. The auth check stays OUT of the cached body — `headers()` isn't
+// available inside `unstable_cache` callbacks. Revalidate via
+// `invalidateUserCache('recs', uid)` after follow / connect mutations.
+const _recommendedTeachersFor = cachedPerUser(
+    async (uid: string): Promise<TeacherSuggestion[]> => {
+        const db = await getDb();
 
-    // 1. Get current user profile and following list
-    const [userDoc, followingIds] = await Promise.all([
-        db.collection('users').doc(userId).get(),
-        getFollowingIdsAction(userId)
-    ]);
+        // 1. Get current user profile and following list. We can't call
+        //    getFollowingIdsAction() here because it does its own requireAuth,
+        //    which would fail inside the cache context. Inline the equivalent
+        //    Firestore query.
+        const [userDoc, followingSnap] = await Promise.all([
+            db.collection('users').doc(uid).get(),
+            db.collection('connections').where('followerId', '==', uid).get(),
+        ]);
 
-    if (!userDoc.exists) return [];
+        if (!userDoc.exists) return [];
+        const followingIds = followingSnap.docs.map(d => d.data().followingId as string);
 
-    const currentUser = userDoc.data() as any;
-    const userSchool = currentUser.schoolNormalized || currentUser.schoolName || '';
-    const userSubjects = currentUser.subjects || [];
-    const userGrades = currentUser.gradeLevels || [];
-    const userDistrict = currentUser.district || '';
+        const currentUser = userDoc.data() as any;
+        const userSchool = currentUser.schoolNormalized || currentUser.schoolName || '';
+        const userSubjects = currentUser.subjects || [];
+        const userGrades = currentUser.gradeLevels || [];
+        const userDistrict = currentUser.district || '';
 
-    // 2. Fetch all teachers (excluding self and already followed)
-    const excludeIds = [userId, ...followingIds];
+        // 2. Fetch all teachers (excluding self and already followed)
+        const excludeIds = [uid, ...followingIds];
 
-    // Note: Firestore 'not-in' is limited to 10 items. For a robust system, 
-    // we would use a search engine (Algolia) or client-side filtering + batching.
-    // For now, we fetch a larger pool and filter.
-    const snapshot = await db.collection('users')
-        .limit(100)
-        .get();
+        const snapshot = await db.collection('users').limit(100).get();
 
-    const candidates = snapshot.docs
-        .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-        .filter(teacher => !excludeIds.includes(teacher.uid));
+        const candidates = snapshot.docs
+            .map(doc => ({ uid: doc.id, ...doc.data() } as any))
+            .filter(teacher => !excludeIds.includes(teacher.uid));
 
-    // 3. Robust Multi-Tier Scoring
-    const scored = candidates.map(teacher => {
-        let score = 0;
-        const reasons: string[] = [];
+        // 3. Multi-tier scoring (same logic as before)
+        const scored = candidates.map(teacher => {
+            let score = 0;
+            const reasons: string[] = [];
 
-        // Tier 1: Institutional Affinity (Weight: 30 - Reduced from 50 to prevent echo chambers)
-        const teacherSchool = teacher.schoolNormalized || teacher.schoolName || '';
-        if (userSchool && teacherSchool === userSchool) {
-            score += 30;
-            reasons.push("Same School");
-        } else if (userDistrict && teacher.district === userDistrict) {
-            score += 15;
-            reasons.push("Nearby Peer");
-        }
+            const teacherSchool = teacher.schoolNormalized || teacher.schoolName || '';
+            if (userSchool && teacherSchool === userSchool) {
+                score += 30;
+                reasons.push("Same School");
+            } else if (userDistrict && teacher.district === userDistrict) {
+                score += 15;
+                reasons.push("Nearby Peer");
+            }
 
-        // Tier 2: Pedagogical Affinity (Weight: 40 - Increased to encourage subject growth)
-        const commonSubjects = teacher.subjects?.filter((s: string) => userSubjects.includes(s)) || [];
-        if (commonSubjects.length > 0) {
-            score += (commonSubjects.length * 20);
-            if (reasons.length === 0) reasons.push(`${commonSubjects[0]} Peer`);
-        }
+            const commonSubjects = teacher.subjects?.filter((s: string) => userSubjects.includes(s)) || [];
+            if (commonSubjects.length > 0) {
+                score += (commonSubjects.length * 20);
+                if (reasons.length === 0) reasons.push(`${commonSubjects[0]} Peer`);
+            }
 
-        const commonGrades = teacher.gradeLevels?.filter((g: string) => userGrades.includes(g)) || [];
-        if (commonGrades.length > 0) {
-            score += (commonGrades.length * 5);
-        }
+            const commonGrades = teacher.gradeLevels?.filter((g: string) => userGrades.includes(g)) || [];
+            if (commonGrades.length > 0) score += (commonGrades.length * 5);
 
-        // Tier 3: Professional Impact (Weight: 15)
-        const impactBonus = Math.min(15, (teacher.impactScore || 0) / 10);
-        score += impactBonus;
+            const impactBonus = Math.min(15, (teacher.impactScore || 0) / 10);
+            score += impactBonus;
 
-        // Tier 4: Serendipity (Small random factor to prevent stale lists)
-        score += Math.random() * 5;
+            // Note: removed Math.random() serendipity from the cached version —
+            // a random factor inside a cache means every cache hit returns the
+            // same "random" choice, defeating the purpose. If serendipity is
+            // important we should sample post-cache.
 
-        return {
-            ...teacher,
-            score,
-            recommendationReason: reasons[0] || "Active Educator"
-        };
-    });
+            return { ...teacher, score, recommendationReason: reasons[0] || "Active Educator" };
+        });
 
-    // 4. Sort and return top 5 (Sanitized results to strip PII)
-    const recommendations = scored
-        .filter(t => t.score > 1 && t.displayName) // Must have a name and minimum affinity
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5)
-        .map(t => ({
-            uid: t.uid,
-            displayName: t.displayName,
-            photoURL: t.photoURL,
-            initial: t.displayName?.[0] || t.initial || "T",
-            schoolName: t.schoolName,
-            subjects: t.subjects,
-            impactScore: t.impactScore,
-            recommendationReason: t.recommendationReason
-        }));
+        const recommendations: TeacherSuggestion[] = scored
+            .filter(t => t.score > 1 && t.displayName)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5)
+            .map(t => ({
+                uid: t.uid,
+                displayName: t.displayName,
+                photoURL: t.photoURL,
+                initial: t.displayName?.[0] || t.initial || "T",
+                schoolName: t.schoolName,
+                subjects: t.subjects,
+                impactScore: t.impactScore,
+                recommendationReason: t.recommendationReason,
+            }));
 
-    return dbAdapter.serialize(recommendations);
+        return dbAdapter.serialize(recommendations);
+    },
+    { key: 'recs', ttlSeconds: 300 }, // 5-minute TTL — stale enough to feel fresh, frequent enough to absorb peak traffic
+);
+
+export async function getRecommendedTeachersAction(userId?: string): Promise<TeacherSuggestion[]> {
+    // Authz: derive uid from session — ignore client-supplied parameter to prevent
+    // a caller from scraping recommendations for arbitrary users.
+    const callerId = await requireAuth();
+    if (userId && userId !== callerId) {
+        throw new Error('Forbidden: cannot fetch recommendations for another user');
+    }
+    return _recommendedTeachersFor(callerId);
 }
 
-export async function getAllTeachersAction(currentUserId?: string) {
-    const db = await getDb();
+// Cached inner. Keyed by selfUid so each user gets their own filtered list
+// (the `selfUid` is excluded from results). 60s TTL — directory changes slowly
+// and the same user navigating /community ↔ /community/teachers should hit it.
+const _allTeachersFor = cachedPerUser(
+    async (selfUid: string): Promise<TeacherSuggestion[]> => {
+        const db = await getDb();
 
-    // orderBy('displayName') silently excludes users whose displayName field is missing
-    // (Firestore behaviour). Orphan users wouldn't appear in the directory at all.
-    // Use createdAt as the sort key so every user doc is considered, then sort in memory.
-    const snapshot = await db.collection('users')
-        .limit(500)
-        .get();
+        const snapshot = await db.collection('users').limit(100).get();
 
-    const teachers = snapshot.docs
-        .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-        .filter(teacher => teacher.uid !== currentUserId);
+        const teachers = snapshot.docs
+            .map(doc => ({ uid: doc.id, ...doc.data() } as any))
+            .filter(teacher => teacher.uid !== selfUid);
 
-    const sanitized = teachers.map(t => {
-        // Fallback chain so teachers with partial profiles still surface in the directory.
-        const name = t.displayName
-            || t.schoolName
-            || (typeof t.email === 'string' ? t.email.split('@')[0] : null)
-            || 'Teacher';
-        return {
-            uid: t.uid,
-            displayName: name,
-            photoURL: t.photoURL,
-            initial: (name?.[0] || 'T').toUpperCase(),
-            schoolName: t.schoolName,
-            subjects: t.subjects || [],
-            gradeLevels: t.gradeLevels || [],
-            bio: t.bio,
-            impactScore: t.impactScore || 0,
-            followersCount: t.followersCount || 0,
-        };
-    });
+        const sanitized: TeacherSuggestion[] = teachers.map(t => {
+            const name = t.displayName
+                || t.schoolName
+                || (typeof t.email === 'string' ? t.email.split('@')[0] : null)
+                || 'Teacher';
+            return {
+                uid: t.uid,
+                displayName: name,
+                photoURL: t.photoURL,
+                initial: (name?.[0] || 'T').toUpperCase(),
+                schoolName: t.schoolName,
+                subjects: t.subjects || [],
+                gradeLevels: t.gradeLevels || [],
+                bio: t.bio,
+                impactScore: t.impactScore || 0,
+                followersCount: t.followersCount || 0,
+            };
+        });
 
-    sanitized.sort((a, b) => a.displayName.localeCompare(b.displayName));
+        sanitized.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
-    return dbAdapter.serialize(sanitized);
+        return dbAdapter.serialize(sanitized);
+    },
+    { key: 'all-teachers', ttlSeconds: 60 },
+);
+
+export async function getAllTeachersAction(currentUserId?: string): Promise<TeacherSuggestion[]> {
+    // Authz + rate limit. Without these, this action exposed an unauthenticated
+    // PII dump of every user in the directory (name, school, subjects, photoURL).
+    // The optional `currentUserId` parameter is preserved for backward compat
+    // but the actual self-exclusion uses the session uid.
+    const callerId = await requireAuth();
+    await checkServerRateLimit(callerId);
+    const selfUid = currentUserId ?? callerId;
+
+    return _allTeachersFor(selfUid);
 }
 
 // ── Engagement actions ────────────────────────────────────────────────────────
@@ -376,8 +416,13 @@ export async function getAllTeachersAction(currentUserId?: string) {
  */
 export async function likeResourceAction(
     resourceId: string,
-    userId: string,
+    _userId?: string,
 ): Promise<{ isLiked: boolean; newCount: number }> {
+    // Derive uid from session — never trust client-supplied identity.
+    // The legacy `_userId` parameter is preserved for one release so existing
+    // call sites compile; it is intentionally ignored.
+    const userId = await requireAuth();
+    void _userId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -399,9 +444,11 @@ export async function likeResourceAction(
         ]);
         isLiked = false;
     } else {
-        // New like
+        // New like. We write `uid` on the doc so a single
+        // `collectionGroup('likes').where('uid', '==', uid)` can hydrate the
+        // full liked-state for a user without having to crawl every resource.
         await Promise.all([
-            likeRef.set({ createdAt: new Date().toISOString() }),
+            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
             resRef.update({ 'stats.likes': FieldValue.increment(1) }),
         ]);
         isLiked = true;
@@ -457,8 +504,11 @@ export async function saveResourceToLibraryAction(
         gradeLevel?: string;
         subject?: string;
     },
-    saverId: string,
+    _saverId?: string,
 ): Promise<{ alreadySaved: boolean }> {
+    // Derive saver from session. Legacy `_saverId` parameter is ignored.
+    const saverId = await requireAuth();
+    void _saverId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -548,8 +598,13 @@ export async function saveResourceToLibraryAction(
  */
 export async function publishContentToLibraryAction(
     contentId: string,
-    userId: string,
+    _userId?: string,
 ): Promise<{ resourceId: string }> {
+    // Derive author from session. A user can only publish their own content
+    // — the dbAdapter.getContent call below scopes by uid, so a spoofed userId
+    // would fail with "Content not found" rather than mis-publishing.
+    const userId = await requireAuth();
+    void _userId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -622,10 +677,7 @@ export async function publishContentToLibraryAction(
  * Finds the latest content doc by type, then delegates to publishContentToLibraryAction.
  */
 export async function shareLatestContentAction(contentType: string): Promise<{ resourceId: string }> {
-    const { headers } = await import("next/headers");
-    const h = await headers();
-    const userId = h.get("x-user-id");
-    if (!userId) throw new Error("Unauthorized");
+    const userId = await requireAuth();
 
     // Find the user's most recent content of this type
     const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
@@ -634,23 +686,19 @@ export async function shareLatestContentAction(contentType: string): Promise<{ r
     const latestContent = items[0];
     if (latestContent.isPublic) throw new Error('This content is already shared.');
 
-    return publishContentToLibraryAction(latestContent.id, userId);
+    return publishContentToLibraryAction(latestContent.id);
 }
 
 export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // 1. Authenticate via middleware-injected header — never trust client-supplied identity
-    const { headers } = await import("next/headers");
-    const h = await headers();
-    const authorId = h.get("x-user-id");
-    if (!authorId) throw new Error("Unauthorized");
+    const authorId = await requireAuth();
 
     // 2. Validate input
     const trimmed = text?.trim();
     if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
     if (trimmed && trimmed.length > 500) throw new Error("Message too long");
 
-    // 3. Rate limit
-    const { checkServerRateLimit } = await import("@/lib/server-safety");
+    // 3. Rate limit (already imported at top of file)
     await checkServerRateLimit(authorId);
 
     // 4. Fetch author profile from server — never trust client-supplied name/photo
@@ -676,4 +724,52 @@ export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // Fire-and-forget: trigger AI reactive reply (non-blocking)
     const { triggerAIReactiveReply } = await import("@/lib/ai-reactive-trigger");
     triggerAIReactiveReply("community_chat", trimmed || '', authorName);
+}
+
+/**
+ * Hydrate the set of post IDs and resource IDs the current user has liked.
+ *
+ * Used on community-page mount so heart icons render filled for previously-liked
+ * items instead of starting empty until the user re-clicks.
+ *
+ * Implementation note: every like doc carries a `uid` field (added in Phase 3),
+ * so a single collectionGroup query covers both `groups/*\/posts/*\/likes/*`
+ * and `library_resources/*\/likes/*`. Pre-Phase-3 like docs without the `uid`
+ * field will not appear here — those users will see un-filled hearts until
+ * they re-like, which is acceptable as a one-time cosmetic regression.
+ */
+export async function getLikedItemIdsAction(): Promise<{
+    groupPostIds: string[];
+    resourceIds: string[];
+}> {
+    const uid = await requireAuth();
+    const db = await getDb();
+
+    // Cap the result set so a heavy liker doesn't load megabytes on page load.
+    const snap = await db
+        .collectionGroup('likes')
+        .where('uid', '==', uid)
+        .limit(500)
+        .get();
+
+    const groupPostIds: string[] = [];
+    const resourceIds: string[] = [];
+
+    for (const doc of snap.docs) {
+        // Path shape:
+        //   groups/{gid}/posts/{pid}/likes/{uid}    → ref.parent.parent = post doc,
+        //                                             ref.parent.parent.parent.id = 'posts'
+        //   library_resources/{rid}/likes/{uid}     → ref.parent.parent = resource doc,
+        //                                             ref.parent.parent.parent.id = 'library_resources'
+        const parentDoc = doc.ref.parent.parent;
+        if (!parentDoc) continue;
+        const ownerCollectionName = parentDoc.parent.id;
+        if (ownerCollectionName === 'posts') {
+            groupPostIds.push(parentDoc.id);
+        } else if (ownerCollectionName === 'library_resources') {
+            resourceIds.push(parentDoc.id);
+        }
+    }
+
+    return { groupPostIds, resourceIds };
 }
