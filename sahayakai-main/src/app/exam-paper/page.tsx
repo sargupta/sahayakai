@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useLanguage } from "@/context/language-context";
 import { getAuthToken } from "@/lib/get-auth-token";
 import {
   FileText,
@@ -88,6 +89,7 @@ const DIFFICULTY_OPTIONS = ["easy", "moderate", "hard", "mixed"] as const;
 // ── Page Component ───────────────────────────────────────────────────────
 
 export default function ExamPaperPage() {
+  const { t } = useLanguage();
   // Auth state
   const [authed, setAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -320,7 +322,7 @@ export default function ExamPaperPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="grade">Grade Level</Label>
+                <Label htmlFor="grade">{t("Grade Level")}</Label>
                 <Select value={gradeLevel} onValueChange={setGradeLevel}>
                   <SelectTrigger id="grade">
                     <SelectValue />
@@ -342,7 +344,7 @@ export default function ExamPaperPage() {
               {availableSubjects.length > 0 ? (
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger id="subject">
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder={t("Select subject")} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableSubjects.map((s) => (
@@ -356,7 +358,7 @@ export default function ExamPaperPage() {
                 <div className="space-y-2">
                   <Input
                     id="subject"
-                    placeholder="e.g. Mathematics, Science, English"
+                    placeholder={t("e.g. Mathematics, Science, English")}
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                   />
@@ -445,7 +447,7 @@ export default function ExamPaperPage() {
             ) : (
               <Input
                 id="chapters"
-                placeholder="e.g. Real Numbers, Polynomials, Triangles"
+                placeholder={t("e.g. Real Numbers, Polynomials, Triangles")}
                 value={chaptersInput}
                 onChange={(e) => setChaptersInput(e.target.value)}
               />
@@ -455,7 +457,7 @@ export default function ExamPaperPage() {
           {/* Row: Difficulty + Language */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty</Label>
+              <Label htmlFor="difficulty">{t("Difficulty")}</Label>
               <Select value={difficulty} onValueChange={setDifficulty}>
                 <SelectTrigger id="difficulty">
                   <SelectValue />
@@ -471,7 +473,7 @@ export default function ExamPaperPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
+              <Label htmlFor="language">{t("Language")}</Label>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger id="language">
                   <SelectValue />
