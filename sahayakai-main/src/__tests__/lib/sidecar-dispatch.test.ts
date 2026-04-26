@@ -360,3 +360,92 @@ describe('dispatchParentCallReply — decision plumbing', () => {
         expect(mockDecideDispatch).toHaveBeenCalledWith('CAtest1234');
     });
 });
+
+// ── Wave 5 fix 2: dispatcher robustness ─────────────────────────────────────
+
+describe('dispatchParentCallReply — robustness paths', () => {
+    it('falls back to off mode when decideParentCallDispatch rejects', async () => {
+        // Round-2 audit P0 DECIDE-1 regression: a Firestore stall must
+        // fail safe to off, never block the call.
+        mockDecideDispatch.mockRejectedValue(new Error('Firestore unreachable'));
+        mockGenerateAgentReply.mockResolvedValue(GENKIT_REPLY);
+
+        const out = await dispatchParentCallReply(BASE_INPUT);
+
+        // Verifies the fallback mode is off + reason mentions failure.
+        expect(out.decision.mode).toBe('off');
+        expect(out.decision.reason).toBe('decide_failed');
+        expect(out.source).toBe('genkit');
+        expect(out.reply).toBe(GENKIT_REPLY.reply);
+        // Sidecar never called because decision was off.
+        expect(mockCallSidecarReply).not.toHaveBeenCalled();
+    });
+
+    it('falls back to off mode when decideParentCallDispatch hangs (1.5s race)', async () => {
+        // Use real timers + fake timers to verify the timeout actually fires.
+        jest.useFakeTimers();
+        try {
+            // decideDispatch never resolves — must time out.
+            mockDecideDispatch.mockImplementation(() => new Promise(() => {}));
+            mockGenerateAgentReply.mockResolvedValue(GENKIT_REPLY);
+
+            const promise = dispatchParentCallReply(BASE_INPUT);
+            // Advance past the 1.5s ceiling.
+            await jest.advanceTimersByTimeAsync(1_600);
+
+            const out = await promise;
+            expect(out.decision.mode).toBe('off');
+            expect(out.decision.reason).toBe('decide_failed');
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('rethrows AbortError from runGenkitSafe (off mode)', async () => {
+        // Round-2 audit P0 ABORT-1 regression: AbortError on the
+        // Genkit path must propagate, not be swallowed into a phantom
+        // reply on a dead Twilio connection.
+        setMode('off');
+        const abort = new Error('aborted');
+        abort.name = 'AbortError';
+        mockGenerateAgentReply.mockRejectedValue(abort);
+
+        await expect(dispatchParentCallReply(BASE_INPUT)).rejects.toThrow('aborted');
+        await expect(dispatchParentCallReply(BASE_INPUT)).rejects.toMatchObject({
+            name: 'AbortError',
+        });
+    });
+
+    it('rethrows AbortError from runSidecarSafe (canary mode)', async () => {
+        // Round-2 audit P0 ABORT-1 regression on the sidecar path.
+        setMode('canary');
+        const abort = new Error('aborted');
+        abort.name = 'AbortError';
+        mockCallSidecarReply.mockRejectedValue(abort);
+
+        await expect(dispatchParentCallReply(BASE_INPUT)).rejects.toThrow('aborted');
+        // Critical: Genkit fallback NOT invoked on AbortError — caller
+        // already gave up, no point doing more work.
+        expect(mockGenerateAgentReply).not.toHaveBeenCalled();
+    });
+
+    it('handles 50 concurrent dispatches without mock state bleed', async () => {
+        // Smoke test the dispatcher under concurrent load. Real Cloud
+        // Run will hit this regularly. Each call should resolve with
+        // its own decision attached.
+        setMode('off');
+        mockGenerateAgentReply.mockResolvedValue(GENKIT_REPLY);
+
+        const promises = Array.from({ length: 50 }, (_, i) =>
+            dispatchParentCallReply({ ...BASE_INPUT, callSid: `CAtest${i}` }),
+        );
+        const results = await Promise.all(promises);
+
+        expect(results).toHaveLength(50);
+        for (const r of results) {
+            expect(r.source).toBe('genkit');
+            expect(r.reply).toBe(GENKIT_REPLY.reply);
+        }
+        expect(mockGenerateAgentReply).toHaveBeenCalledTimes(50);
+    });
+});
