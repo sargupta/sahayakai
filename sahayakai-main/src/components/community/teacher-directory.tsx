@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus, Search, Mic, MicOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/context/language-context";
+import { useToast } from "@/hooks/use-toast";
 import { getAllTeachersAction } from "@/app/actions/community";
 import {
     sendConnectionRequestAction,
@@ -32,6 +33,7 @@ interface TeacherConnState {
 export function TeacherDirectory() {
     const router = useRouter();
     const { t } = useLanguage();
+    const { toast } = useToast();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
     const [loading, setLoading] = useState(true);
@@ -39,6 +41,10 @@ export function TeacherDirectory() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isListening, setIsListening] = useState(false);
     const recRef = useRef<any>(null);
+    // Cancel guard: when auth flips quickly (sign-in → sign-out → sign-in), the
+    // earlier loadData() may resolve AFTER the later one, clobbering newer data.
+    // We bump this on every load attempt and discard responses whose token is stale.
+    const loadTokenRef = useRef(0);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -54,12 +60,16 @@ export function TeacherDirectory() {
     }, []);
 
     const loadData = async (uid?: string) => {
+        const myToken = ++loadTokenRef.current;
         setLoading(true);
         try {
             const [allTeachers, connData] = await Promise.all([
                 getAllTeachersAction(uid),
                 uid ? getMyConnectionDataAction() : Promise.resolve<MyConnectionData>({ connectedUids: [], sentRequestUids: [], receivedRequests: [] }),
             ]);
+            // Stale-response guard.
+            if (myToken !== loadTokenRef.current) return;
+
             setTeachers(allTeachers);
 
             // Build per-teacher state map
@@ -82,8 +92,14 @@ export function TeacherDirectory() {
             }
             setConnState(stateMap);
         } catch (error) {
+            // Surface failures — silent catches were hiding auth lapses, rate-limit
+            // hits, and Firestore quota errors as "no other teachers registered yet".
+            if (myToken === loadTokenRef.current) {
+                console.error('TeacherDirectory: loadData failed', error);
+                toast({ title: 'Could not load teachers', description: 'Pull to refresh or try again later.', variant: 'destructive' });
+            }
         } finally {
-            setLoading(false);
+            if (myToken === loadTokenRef.current) setLoading(false);
         }
     };
 
