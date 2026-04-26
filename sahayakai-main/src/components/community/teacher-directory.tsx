@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus, Search, Mic, MicOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/context/language-context";
 import { getAllTeachersAction } from "@/app/actions/community";
 import {
     sendConnectionRequestAction,
@@ -30,6 +31,7 @@ interface TeacherConnState {
 
 export function TeacherDirectory() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
     const [loading, setLoading] = useState(true);
@@ -236,7 +238,7 @@ export function TeacherDirectory() {
                         size="sm"
                         className="rounded-full px-4 h-8 text-[11px] font-bold text-muted-foreground border-border hover:border-red-200 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
                         onClick={() => handleWithdraw(teacher.uid)}
-                        title="Withdraw request"
+                        title={t("Withdraw request")}
                     >
                         <Clock className="h-3 w-3 mr-1" />
                         Pending
@@ -271,7 +273,7 @@ export function TeacherDirectory() {
                         size="sm"
                         className="rounded-full px-4 h-8 text-[11px] font-bold bg-muted text-muted-foreground hover:bg-red-50 hover:text-red-500 border border-border active:scale-95 transition-all group/conn"
                         onClick={() => handleDisconnect(teacher.uid)}
-                        title="Disconnect"
+                        title={t("Disconnect")}
                     >
                         <UserCheck className="h-3 w-3 mr-1 group-hover/conn:hidden" />
                         <UserMinus className="h-3 w-3 mr-1 hidden group-hover/conn:inline-block" />
@@ -291,7 +293,7 @@ export function TeacherDirectory() {
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
                 <Input
-                    placeholder="Search by name, school, subject…"
+                    placeholder={t("Search by name, school, subject…")}
                     className="pl-11 pr-12 h-12 bg-card border-border rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

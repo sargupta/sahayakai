@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, ArrowLeft, UserSearch, X, Info, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ import type { MyConnectionData } from '@/types';
 export default function CommunityPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const composerRef = useRef<HTMLDivElement>(null);
 
   // ── State ────────────────────────────────────────────────────────────────
@@ -385,7 +387,7 @@ export default function CommunityPage() {
         <button
           onClick={handleOpenStaffRoom}
           className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
-          aria-label="Open Staff Room — chat with every teacher"
+          aria-label={t("Open Staff Room — chat with every teacher")}
         >
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
             <MessageCircle className="h-5 w-5" />
@@ -398,7 +400,7 @@ export default function CommunityPage() {
         <button
           onClick={handleOpenTeacherDirectory}
           className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
-          aria-label="Find Teachers — search by subject or school"
+          aria-label={t("Find Teachers — search by subject or school")}
         >
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
             <UserSearch className="h-5 w-5" />
