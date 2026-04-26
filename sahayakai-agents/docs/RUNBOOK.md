@@ -154,6 +154,15 @@ cd ..
 cd sahayakai-agents
 gcloud builds submit --config=deploy/cloudbuild.yaml
 
+# 8b. Grant the Next.js runtime SA roles/run.invoker on the sidecar.
+#     This binding requires the sidecar service to exist, so it can't
+#     be done by bootstrap-track-d.sh. Without this, every TwiML hop
+#     401s from the sidecar and falls back to Genkit silently.
+bash scripts/grant-nextjs-invoker.sh \
+    --project sahayakai-b4248 --region asia-southeast1 \
+    --service sahayakai-agents-staging \
+    --invoker-sa sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+
 # 9. Hydrate the audience secret + smoke test.
 bash scripts/hydrate-audience-secret.sh \
     --service sahayakai-agents-staging \

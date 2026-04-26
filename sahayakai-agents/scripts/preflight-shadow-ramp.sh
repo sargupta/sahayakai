@@ -113,6 +113,16 @@ check_iam_invoker() {
 }
 gate "unauthenticated POST → 401 (IAM invoker enforced)" check_iam_invoker
 
+# ── Gate 4b: Next.js SA actually has run.invoker on the sidecar ──────
+check_nextjs_invoker_binding() {
+  gcloud run services get-iam-policy "${SERVICE_NAME}" \
+    --region="${REGION}" --project="${PROJECT_ID}" \
+    --format='value(bindings.role,bindings.members)' 2>/dev/null \
+    | grep -F 'roles/run.invoker' \
+    | grep -F "serviceAccount:${INVOKER_SA}" >/dev/null
+}
+gate "Next.js SA has roles/run.invoker on the sidecar" check_nextjs_invoker_binding
+
 # ── Gate 5: SAHAYAKAI_REQUEST_SIGNING_KEY ≥ 32 chars ────────────────────
 check_signing_key() {
   val=$(gcloud secrets versions access latest \
