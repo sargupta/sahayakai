@@ -192,3 +192,48 @@ def assert_all_rules(*, reply: str, parent_language: str, turn_number: int) -> N
     assert_no_forbidden_phrases(reply)
     assert_sentence_count_in_range(reply, 1, 5)
     assert_script_matches_language(reply, parent_language)
+
+
+# ---- Phase 3 §3.3 — lesson-plan behavioural guard -----------------------
+
+# Lesson plans are LONGER than parent-call replies (a full lesson is
+# 5 activities × ~200 words = ~1000 words; the prose blob can be 2000-
+# 4000 words including metadata). The sentence-count rule from
+# parent-call doesn't apply.
+LESSON_PLAN_MIN_WORDS = 200
+LESSON_PLAN_MAX_WORDS = 5000
+
+
+def assert_lesson_plan_length(plan_text: str) -> None:
+    """Round-2 audit P1 PLAN-2 fix (the 30-agent review found that the
+    `length sanity` was undefined). 200 words = "barely a lesson"; 5000
+    words = "the model has gone into a recursion loop and is filling
+    context with repeated content"."""
+    word_count = len(plan_text.split())
+    assert LESSON_PLAN_MIN_WORDS <= word_count <= LESSON_PLAN_MAX_WORDS, (
+        f"Lesson plan length out of range: {word_count} words "
+        f"(expected {LESSON_PLAN_MIN_WORDS}-{LESSON_PLAN_MAX_WORDS})"
+    )
+
+
+def assert_lesson_plan_rules(*, plan_text: str, language: str) -> None:
+    """Phase 3 §3.3: composite assertion called by the lesson-plan
+    router post-orchestration guard.
+
+    Three checks:
+    - **forbidden phrases** — same as parent-call (no AI self-references,
+      no Sahayak mentions, no synonym variants). Confusable / NFKC /
+      ZWJ hardening from Wave 3 fix 3 + Wave 4 fix 5 applies.
+    - **length sanity** — 200-5000 words. Below is suspect (incomplete);
+      above is suspect (recursion / context exhaustion).
+    - **script match** — same Unicode-range check as parent-call,
+      thresholded at 85% alpha-in-range. Lesson plans tolerate the same
+      15% code-switching as conversational replies.
+
+    The evaluator's per-axis verdicts are NOT checked here — that's the
+    router's job (`classify_verdict`). This guard is the LAST line of
+    defence against model output that slipped past the evaluator.
+    """
+    assert_no_forbidden_phrases(plan_text)
+    assert_lesson_plan_length(plan_text)
+    assert_script_matches_language(plan_text, language)
