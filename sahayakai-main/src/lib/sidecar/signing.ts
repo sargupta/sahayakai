@@ -28,24 +28,49 @@ import { getSecret } from '@/lib/secrets';
 
 const SIGNING_KEY_SECRET_NAME = 'SAHAYAKAI_REQUEST_SIGNING_KEY';
 
-/** In-process cache for the signing key. The secret value rarely changes
- *  and Secret Manager fetches add latency to every TwiML hop. Cache for
- *  the lifetime of the Cloud Run instance; rotation reboots the
- *  instance via gcloud anyway.
+/**
+ * Round-2 audit P0 ROTATION-1 fix (30-agent review, groups B3 + D4):
+ * the signing-key cache had no TTL. After
+ * `scripts/generate-signing-key.sh` rotates the secret, Cloud Run
+ * instances kept using the OLD key for HOURS until cold-restart —
+ * meanwhile sidecar verifies with the NEW key (which it re-reads on
+ * fresh requests via firebase-admin), so 100% of HMAC checks fail
+ * and the dispatcher's behavioural-error path drops every parent
+ * call to canned safe wrap-up.
+ *
+ * 5-minute TTL keeps the original cache benefit (avoid Secret Manager
+ * call on every TwiML hop) while bounding the post-rotation mismatch
+ * window. Operator workflow: rotate secret, redeploy sidecar, then
+ * within ≤5 min the Next.js cache also picks up the new value.
  */
-let cachedSigningKey: string | null = null;
+const SIGNING_KEY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  value: string;
+  loadedAt: number;
+}
+let cachedSigningKey: CacheEntry | null = null;
 
 async function getSigningKey(): Promise<string> {
-  if (cachedSigningKey) return cachedSigningKey;
+  const now = Date.now();
+  if (cachedSigningKey && now - cachedSigningKey.loadedAt < SIGNING_KEY_TTL_MS) {
+    return cachedSigningKey.value;
+  }
   const secret = await getSecret(SIGNING_KEY_SECRET_NAME);
-  if (!secret || secret.length < 32) {
+  // Defensive: trim trailing whitespace/newlines that may have leaked
+  // in from a `gcloud secrets versions add --data-file` if the input
+  // file had a trailing newline. Without trim, the digest computed
+  // here diverges from the digest the sidecar computes on its own
+  // (newline-stripped) read — silent HMAC mismatch.
+  const trimmed = (secret || '').trim();
+  if (!trimmed || trimmed.length < 32) {
     throw new Error(
       `[sidecar.signing] ${SIGNING_KEY_SECRET_NAME} must be at least 32 chars; ` +
-        `got length ${secret?.length ?? 0}`,
+        `got length ${trimmed.length}`,
     );
   }
-  cachedSigningKey = secret;
-  return secret;
+  cachedSigningKey = { value: trimmed, loadedAt: now };
+  return trimmed;
 }
 
 /**

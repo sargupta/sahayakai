@@ -123,6 +123,13 @@ const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
  * `IdTokenClient` lazily refreshes the ID token internally; caching the
  * client across requests amortises the JWT-mint cost. One client per
  * audience for the lifetime of the Cloud Run instance.
+ *
+ * Round-2 audit P0 CACHE-1 fix (30-agent review, groups B2 + C5):
+ * a rejected promise stays cached forever. If the FIRST
+ * `getIdTokenClient(audience)` rejects (transient metadata-server
+ * 500 during cold start), every subsequent caller awaits the SAME
+ * rejection until process restart. Adding `.catch()`-on-eviction so
+ * a transient failure doesn't poison the entire instance.
  */
 const tokenClientByAudience = new Map<string, Promise<IdTokenClient>>();
 
@@ -130,10 +137,23 @@ async function getTokenClient(audience: string): Promise<IdTokenClient> {
   let cached = tokenClientByAudience.get(audience);
   if (!cached) {
     const auth = new GoogleAuth();
-    cached = auth.getIdTokenClient(audience);
-    tokenClientByAudience.set(audience, cached);
+    const p = auth.getIdTokenClient(audience);
+    // Evict on rejection so the next caller can retry. Without this,
+    // a one-off cold-start 500 from the metadata server would lock
+    // the instance into "every dispatch fails for the next hour".
+    p.catch(() => tokenClientByAudience.delete(audience));
+    tokenClientByAudience.set(audience, p);
+    cached = p;
   }
   return cached;
+}
+
+/**
+ * Test-only: clear the IdToken cache. Lets unit tests simulate cold
+ * start without restarting the process.
+ */
+export function _resetTokenCacheForTest(): void {
+  tokenClientByAudience.clear();
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────
