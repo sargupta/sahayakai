@@ -4,7 +4,9 @@
 
 Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-36 commits; ~66 files; ~6,200 insertions; 119 Python tests + 47 Jest tests passing.
+52 commits; ~74 files; ~7,800 insertions; 135 Python tests + 65 Jest tests passing.
+
+**Two adversarial review passes** by 30 specialist agents (Codex/Gemini-style) closed 14 P0 + 6 P1 production bugs that the initial scaffold contained.
 
 ## Commit narrative
 
@@ -65,6 +67,48 @@ After the initial Tracks A-D landed, a second pass closed every remaining master
 | `d3271ef47` | **Test gaps closed.** 23 new Jest tests for `parent-call-guard.ts` (forbidden phrases × 7 variants, script match across Hindi/Tamil/English with code-switch tolerance, sentence-count edge cases) + 5 tests for `withTimeout` (deterministic 10s-ceiling firing under fake timers). Total Jest count goes from 19 → 47. |
 | `7f640c296` | **One-shot Track D bootstrap (P0 BOOTSTRAP-1).** New `scripts/bootstrap-track-d.sh` — idempotent gcloud orchestration that creates 4 SAs + IAM bindings + 3 secret containers + Pub/Sub topic + 2 Cloud Functions (with HTTP variants) + Cloud Scheduler cron + 6 Cloud Monitoring alert policies in one go. Each step is existence-checked so re-running on partial state resumes cleanly. |
 | `c3e8e018d` | **Runbook Track D first-time bootstrap section.** Inlines the 10-step operator workflow from "PR merged" to "ready to flip flag" using only the scripts in this PR. Each script idempotent. Operator pastes the block end-to-end. |
+
+### Adversarial review pass 1 — 14 P0 fixes (groups A-G)
+
+A 30-agent adversarial review (organized in 6 specialist groups, ran in parallel) found 14 P0 bugs that the initial scaffold contained. All fixed across 12 commits in three waves:
+
+**Wave 1 — security/credential (3 commits):**
+| commit | fix |
+|---|---|
+| `c322880f1` | Firebase API key rotation hygiene — apphosting + deploy_shadow → Secret Manager refs (G1) |
+| `0434eaf03` | Drop project-level `secretmanager.secretAccessor`; per-secret bindings only (D3) |
+| `5d9fef103` | New `grant-nextjs-invoker.sh` post-deploy script + runbook step 8b + preflight gate 4b (D3, IAM-4) |
+
+**Wave 2 — auto-abort correctness (3 commits, 5 fixes):**
+| commit | fix |
+|---|---|
+| `bb9f23e27` | **canary/0 → shadow/25 PROMOTE bug killed (LADDER-1)** — auto-abort was AMPLIFYING failed rollouts on the first alert fire. 3 regression tests. |
+| `f037a7435` | Recovery-notification skip + unknown_policy bail + incident-id dedupe (RECOVERY-1, UNKNOWN-1, DEDUPE-1). 13 new tests. |
+| `d98bbbf62` | NaN guards + try/except in metric writer (NAN-1) — single corrupted embedding used to silently break alert 04 for hours. |
+
+**Wave 3 — architectural (6 commits):**
+| commit | fix |
+|---|---|
+| `95b2ed292` | apphosting BUILD availability (`NEXT_PUBLIC_*` baked at build time) + 3 missing server secrets — apphosting deploys would have 500'd on every AI flow (APPHOSTING-1, APPHOSTING-2) |
+| `b4efba756` | system_config admin-only + `calls` → `shadow_calls` collection-group rename (SYSCONF-1, TTL-2) — leaked rollout state to all teachers + collection-group footgun |
+| `01e6b0cb0` | Behavioural guard hardening: apostrophe + synonym + NFKC + ZWJ strip + Python-TS alpha alignment (GUARD-1..4). 15 new TS tests. |
+| `cf5796224` | Signing-key 5-min TTL + IdToken cache eviction on reject (ROTATION-1, CACHE-1) — silent post-rotation breakage + cold-start poisoning |
+| `dc61737b3` | Dispatcher AbortError rethrow + decide-dispatch 1.5s timeout (ABORT-1, DECIDE-1) — phantom replies on dead connections |
+| `23ca1c082` | Shadow parity alert threshold realignment + sample-count gate (ALERT-1) — alert 04 would have fired on every clean shadow ramp before this fix |
+
+### Adversarial review pass 2 — Wave 4 P1 hardening (5 commits)
+
+After the P0 wave, a follow-up sweep on the P1 list closed 6 more issues:
+
+| commit | fix |
+|---|---|
+| `fbd69df6f` | Schema bounds + callSid Twilio pattern (SCHEMA-1, SCHEMA-2) — DoS prevention + path-injection defence |
+| `6bd2eac4c` | Prompt injection sanitization (INJECT-1) — NFKC + injection-marker strip + U+27E6/U+27E7 untrusted-input wrap on every parent + teacher-controlled field |
+| `180224059` | HMAC replay protection — `X-Request-Timestamp` header + ±5min skew check (REPLAY-1). 4 new auth tests. |
+| `a6baf7b91` | Cyrillic / Greek / fullwidth confusable folding (GUARD-5) — closes the documented gap from Wave 3 fix 3. 3 new TS tests. |
+| `935ed462f` | DPDP scaffold: consent-prologue infrastructure + `erase-parent-data.py` helper + `.claude/plans/dpdp-compliance.md` (DPDP-1, DPDP-2) — all default-off pending translations + region migration |
+
+One review finding (Wave 4 fix 2 — Twilio signature post-decode) was investigated and **deliberately not fixed** — the existing implementation is correct per Twilio's spec; the agent's concern about "decoded vs raw bytes diverge" was speculative and didn't apply to our code.
 
 ## Architecture decisions
 
