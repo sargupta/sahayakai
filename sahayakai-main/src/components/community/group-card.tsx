@@ -27,28 +27,32 @@ export function GroupCard({
   onClick,
   compact = false,
 }: GroupCardProps) {
-  const [loading, setLoading] = useState(false);
+  // Separate loading flags so a slow join can't disable the leave button on
+  // a different render and vice-versa. Previously a single `loading` flag
+  // disabled BOTH actions during either operation.
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [leaveLoading, setLeaveLoading] = useState(false);
   const color = getGroupColor(group.name);
 
   const handleJoin = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onJoin) return;
-    setLoading(true);
+    setJoinLoading(true);
     try {
       await onJoin(group.id);
     } finally {
-      setLoading(false);
+      setJoinLoading(false);
     }
   };
 
   const handleLeave = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onLeave) return;
-    setLoading(true);
+    setLeaveLoading(true);
     try {
       await onLeave(group.id);
     } finally {
-      setLoading(false);
+      setLeaveLoading(false);
     }
   };
 
@@ -106,7 +110,7 @@ export function GroupCard({
               size="sm"
               className="rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200"
               onClick={handleLeave}
-              disabled={loading}
+              disabled={leaveLoading}
             >
               <LogOut className="h-3.5 w-3.5 mr-1" />
               Leave
@@ -116,7 +120,7 @@ export function GroupCard({
               size="sm"
               className="rounded-full bg-orange-500 hover:bg-orange-600 text-white"
               onClick={handleJoin}
-              disabled={loading}
+              disabled={joinLoading}
             >
               <LogIn className="h-3.5 w-3.5 mr-1" />
               Join

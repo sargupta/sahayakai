@@ -336,3 +336,37 @@ describe('getGroupPostsAction — Phase 1 membership gate', () => {
         expect(Array.isArray(posts)).toBe(true);
     });
 });
+
+// ── Phase 2: joinGroupAction surfaces real errors instead of silently succeeding
+
+import { joinGroupAction } from '@/app/actions/groups';
+
+describe('joinGroupAction — Phase 2 error handling', () => {
+    beforeEach(() => {
+        Object.keys(store).forEach(k => delete store[k]);
+        createCalls.length = 0;
+        mockHeadersMap.set('x-user-id', 'test-uid');
+        // Seed group so the "Group not found" guard passes
+        getCol('groups')['existing-grp'] = { name: 'Test Group', memberCount: 0 };
+    });
+
+    it('returns { joined: true } when the caller becomes a new member', async () => {
+        const result = await joinGroupAction('existing-grp');
+        expect(result).toEqual({ joined: true });
+        // Member doc was created
+        expect(createCalls.find(c => c.path === 'groups/existing-grp/members' && c.docId === 'test-uid'))
+            .toBeDefined();
+    });
+
+    it('returns { joined: false } when the caller is already a member (idempotent)', async () => {
+        // Pre-seed membership
+        getCol('groups/existing-grp/members')['test-uid'] = { joinedAt: 'old', role: 'member' };
+        const result = await joinGroupAction('existing-grp');
+        expect(result).toEqual({ joined: false });
+    });
+
+    it('throws "Group not found" when the group does not exist', async () => {
+        await expect(joinGroupAction('nonexistent-grp'))
+            .rejects.toThrow('Group not found');
+    });
+});
