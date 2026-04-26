@@ -31,6 +31,12 @@ import { AuthGate } from '@/components/auth/auth-gate';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
+import { updateProfileAction } from '@/app/actions/profile';
+import { UserCircle, Upload } from 'lucide-react';
 import Link from 'next/link';
 
 const ADMIN_ROLE_LABELS: Record<string, string> = {
@@ -74,6 +80,71 @@ export default function SettingsPage() {
   const [profSaved, setProfSaved] = useState(false);
   const [profError, setProfError] = useState<string | null>(null);
   const profSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Profile photo — user-uploaded photo overrides Google account photo.
+  // Stored at Firebase Storage profile-photos/{uid}/{uuid}.{ext}
+  // and persisted to user profile's photoURL field.
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getIdToken();
+        const res = await fetch('/api/user/profile', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        const profile = data.profile ?? data;
+        if (!cancelled && typeof profile.photoURL === 'string') {
+          setPhotoUrl(profile.photoURL);
+        }
+      } catch {
+        // non-blocking — fall back to Google photo
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, getIdToken]);
+
+  const handlePhotoUpload = useCallback(async (file: File) => {
+    if (!user) return;
+    if (file.size > 4 * 1024 * 1024) { setPhotoError('Photo must be under 4MB.'); return; }
+    if (!file.type.startsWith('image/')) { setPhotoError('File must be an image (JPG, PNG, WebP).'); return; }
+    setPhotoError(null);
+    setPhotoUploading(true);
+    try {
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `profile-photos/${user.uid}/${uuidv4()}.${ext}`;
+      const storageRef = ref(storage, path);
+      const task = uploadBytesResumable(storageRef, file);
+      await new Promise<void>((resolve, reject) => {
+        task.on('state_changed', null, reject, () => resolve());
+      });
+      const url = await getDownloadURL(storageRef);
+      await updateProfileAction(user.uid, { photoURL: url });
+      setPhotoUrl(url);
+    } catch (err: any) {
+      setPhotoError(err?.message ?? 'Upload failed. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  }, [user]);
+
+  const handleRemovePhoto = useCallback(async () => {
+    if (!user) return;
+    setPhotoUploading(true);
+    try {
+      await updateProfileAction(user.uid, { photoURL: null });
+      setPhotoUrl(null);
+    } catch (err: any) {
+      setPhotoError(err?.message ?? 'Could not remove photo.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  }, [user]);
 
   const fetchConsent = useCallback(async () => {
     if (!user) return;
@@ -262,6 +333,66 @@ export default function SettingsPage() {
         <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your preferences, plan, and data</p>
       </div>
+
+      {/* ─── Profile Photo ─── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base font-headline">
+            <UserCircle className="h-5 w-5" />
+            Profile Photo
+          </CardTitle>
+          <CardDescription>
+            Your photo appears on your library, community posts, and profile.
+            By default we use your Google account photo — upload a custom one to override it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 flex-wrap">
+            <Avatar className="h-20 w-20">
+              <AvatarImage
+                src={photoUrl || user?.photoURL || ''}
+                alt={user?.displayName || 'Profile photo'}
+                referrerPolicy="no-referrer"
+              />
+              <AvatarFallback className="text-xl">
+                {(user?.displayName || 'T').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handlePhotoUpload(f);
+                  if (photoInputRef.current) photoInputRef.current.value = '';
+                }}
+              />
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={photoUploading}
+                >
+                  {photoUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+                  {photoUrl ? 'Change photo' : 'Upload photo'}
+                </Button>
+                {photoUrl && (
+                  <Button type="button" size="sm" variant="ghost" onClick={handleRemovePhoto} disabled={photoUploading}>
+                    Remove custom photo
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">JPG, PNG, or WebP. Max 4MB.</p>
+              {photoError && <p className="text-xs text-destructive">{photoError}</p>}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ─── Professional Profile ─── */}
       <Card>

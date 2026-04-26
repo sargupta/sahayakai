@@ -36,28 +36,23 @@ const translations: Record<string, Record<string, string>> = {
 export default function MyLibraryPage() {
   const { user, loading } = useAuth();
   const [language, setLanguage] = useState('en');
-  const [avatar, setAvatar] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [resourceCount, setResourceCount] = useState(0);
   const t = translations[language] || translations.en;
+
+  // Real avatar precedence (no AI generation):
+  //   1. profile.photoURL  — user-uploaded via Settings (custom)
+  //   2. user.photoURL     — Google account profile photo (default)
+  //   3. null              — ProfileCard falls back to AvatarFallback (initials)
+  // Removed (2026-04-26): /api/ai/avatar fake portrait. Per user feedback —
+  // showing a stock face labelled with the user's name is misleading.
+  const avatar = profile?.photoURL || user?.photoURL || null;
 
   useEffect(() => {
     if (user && !loading) {
       getProfileData(user.uid).then(res => {
         setProfile(res.profile);
       });
-
-      auth.currentUser?.getIdToken().then(token => {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        return fetch('/api/ai/avatar', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ name: user.displayName || 'Teacher' }),
-        });
-      }).then(res => res?.json()).then((res: { imageDataUri?: string }) => {
-        if (res?.imageDataUri) setAvatar(res.imageDataUri);
-      }).catch(console.error);
     }
   }, [user, loading]);
 
