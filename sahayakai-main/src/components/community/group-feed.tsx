@@ -12,6 +12,7 @@ import { ShareComposer } from "./share-composer";
 import { CommunityChat } from "./community-chat";
 import { FeedSkeleton } from "./feed-skeleton";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Users, MessageCircle, FileText } from "lucide-react";
 import type { MyConnectionData, ConnectionStatus } from "@/types";
@@ -28,6 +29,7 @@ const PAGE_SIZE = 20;
 export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup }: GroupFeedProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [memberState, setMemberState] = useState(isMember);
   const [joining, setJoining] = useState(false);
@@ -198,7 +200,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
               size="icon"
               className="shrink-0"
               onClick={onBack}
-              aria-label="Back"
+              aria-label={t("Back")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -326,7 +328,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
             collectionPath={`groups/${group.id}/chat`}
             groupId={group.id}
             title={`${group.name} Chat`}
-            subtitle="Group discussion"
+            subtitle={t("Group discussion")}
           />
         </Card>
       )}

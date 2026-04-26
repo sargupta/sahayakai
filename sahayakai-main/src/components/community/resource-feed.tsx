@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
+import { useLanguage } from '@/context/language-context';
 import {
   getLibraryResources,
   likeResourceAction,
@@ -383,6 +384,7 @@ const ResourceList = ({
 export function ResourceFeed() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [languageFilter, setLanguageFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -532,7 +534,7 @@ export function ResourceFeed() {
         <div className="relative flex-grow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
           <Input
-            placeholder="Search lessons, quizzes, worksheets…"
+            placeholder={t("Search lessons, quizzes, worksheets…")}
             className="pl-11 pr-12 h-12 bg-card border-border rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 shadow-soft"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}

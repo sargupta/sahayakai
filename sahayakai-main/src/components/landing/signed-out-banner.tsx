@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LogIn, X } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 const STORAGE_KEY = "sahayakai:justSignedOut";
 const AUTO_DISMISS_MS = 10_000;
@@ -20,6 +21,7 @@ const AUTO_DISMISS_MS = 10_000;
  * clears the sessionStorage flag so refreshing does not re-show the banner.
  */
 export function SignedOutBanner() {
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState<string | null>(null);
 
@@ -71,7 +73,7 @@ export function SignedOutBanner() {
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Dismiss signed-out notice"
+        aria-label={t("Dismiss signed-out notice")}
         className="text-saffron-700 hover:text-saffron-800 rounded-full p-1.5 hover:bg-saffron-100 transition-colors flex-none"
       >
         <X className="w-[15px] h-[15px]" strokeWidth={2.4} />

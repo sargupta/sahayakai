@@ -11,7 +11,7 @@ export function LandingFooter() {
           <div className="flex items-center gap-2 font-headline font-bold text-[16px] tracking-tight text-foreground">
             <img
               src="/icons/icon-192x192.png"
-              alt="SahayakAI logo"
+              alt={t("SahayakAI logo")}
               className="h-7 w-7 rounded-md object-cover"
             />
             SahayakAI

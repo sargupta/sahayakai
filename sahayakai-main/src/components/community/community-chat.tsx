@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limitToLast, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { sendChatMessageAction } from "@/app/actions/community";
 import { sendGroupChatMessageAction } from "@/app/actions/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +48,7 @@ export function CommunityChat({
     subtitle = "Live discussion with teachers across Bharat",
 }: CommunityChatProps = {}) {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -245,7 +247,7 @@ export function CommunityChat({
                             value={input}
                             onChange={(e) => { setInput(e.target.value); setError(null); }}
                             onKeyDown={handleKeyDown}
-                            placeholder="Share something with teachers across Bharat…"
+                            placeholder={t("Share something with teachers across Bharat…")}
                             className="flex-1 h-10 text-sm bg-muted/50 border-border rounded-xl focus-visible:ring-primary/30 placeholder:text-muted-foreground"
                             maxLength={500}
                             disabled={sending}

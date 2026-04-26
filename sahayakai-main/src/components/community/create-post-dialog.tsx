@@ -13,6 +13,7 @@ import { Loader2, Plus } from "lucide-react";
 import { createPostAction } from "@/app/actions/community";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 
 const formSchema = z.object({
     content: z.string().min(5, "Post needs to be at least 5 characters."),
@@ -26,6 +27,7 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const { user } = useAuth();
+    const { t } = useLanguage();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -75,7 +77,7 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Create a Post</DialogTitle>
+                    <DialogTitle>{t("Create a Post")}</DialogTitle>
                     <DialogDescription>
                         Share your classroom activities, ask questions, or just say hi!
                     </DialogDescription>
@@ -88,10 +90,10 @@ export function CreatePostDialog({ onPostCreated, trigger }: { onPostCreated?: (
                             name="content"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>What's on your mind?</FormLabel>
+                                    <FormLabel>{t("What's on your mind?")}</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="e.g. Just finished a great lesson on photosynthesis!"
+                                            placeholder={t("e.g. Just finished a great lesson on photosynthesis!")}
                                             className="resize-none min-h-[100px]"
                                             {...field}
                                         />
