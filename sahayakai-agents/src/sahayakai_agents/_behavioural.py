@@ -33,10 +33,11 @@ import unicodedata
 #
 # Inputs are NFKC-normalized BEFORE matching to catch confusable
 # Unicode variants (e.g. Cyrillic А that visually looks like Latin A).
+_AI_TARGETS = r"(?:AI|bot|chat\s*bot|assistant|language\s+model)"
 _FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bSahaa?yak(\s*\.?\s*AI)?\b", re.IGNORECASE),
-    re.compile(r"\bI\s*[''']?m\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
-    re.compile(r"\bI\s+am\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
+    re.compile(rf"\bI\s*[''']?m\s+(?:an?\s+)?{_AI_TARGETS}\b", re.IGNORECASE),
+    re.compile(rf"\bI\s+am\s+(?:an?\s+)?{_AI_TARGETS}\b", re.IGNORECASE),
     re.compile(r"\bartificial\s+intelligence\b", re.IGNORECASE),
     re.compile(r"\bvirtual\s+(?:agent|assistant|helper)\b", re.IGNORECASE),
     re.compile(r"\bautomated\s+(?:agent|caller|system)\b", re.IGNORECASE),
@@ -115,9 +116,7 @@ def _is_alpha_for_script_check(cp: int) -> bool:
     if 0x00C0 <= cp <= 0x024F:
         return True
     # Indic block (Devanagari through Sinhala)
-    if 0x0900 <= cp <= 0x0DFF:
-        return True
-    return False
+    return 0x0900 <= cp <= 0x0DFF
 
 
 def assert_script_matches_language(text: str, language: str) -> None:
