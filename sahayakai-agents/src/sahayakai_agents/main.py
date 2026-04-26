@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse
 
 from .agents.lesson_plan.router import router as lesson_plan_router
 from .agents.parent_call.router import router as parent_call_router
+from .agents.vidya.router import vidya_router
 from .auth import auth_middleware
 from .config import get_settings
 from .logging_config import configure_logging
@@ -189,6 +190,20 @@ async def agent_card() -> dict[str, object]:
                     )
                 ],
             },
+            {
+                "id": "vidya-orchestrate",
+                "name": "VIDYA Multi-Agent Orchestrator",
+                "description": (
+                    "Classifies teacher intent, extracts params, "
+                    "returns navigation action or in-line answer."
+                ),
+                "tags": ["orchestrator", "intent-classification", "multilingual"],
+                "examples": [
+                    (
+                        "Make a quiz on photosynthesis for Class 5 in Hindi."
+                    )
+                ],
+            },
         ],
     }
 
@@ -197,3 +212,4 @@ async def agent_card() -> dict[str, object]:
 
 app.include_router(parent_call_router)
 app.include_router(lesson_plan_router)
+app.include_router(vidya_router)

@@ -237,3 +237,79 @@ def assert_lesson_plan_rules(*, plan_text: str, language: str) -> None:
     assert_no_forbidden_phrases(plan_text)
     assert_lesson_plan_length(plan_text)
     assert_script_matches_language(plan_text, language)
+
+
+# ---- Phase 5 §5.3 — VIDYA orchestrator behavioural guard ----------------
+
+# VIDYA replies are short — the OmniOrb often plays them as TTS, so a
+# 200-word essay would blow the audio budget. The classifier prompt
+# instructs the model to keep responses to one or two sentences;
+# the guard caps at 250 words to allow some breathing room while
+# catching obvious runaway output.
+VIDYA_RESPONSE_MIN_WORDS = 1
+VIDYA_RESPONSE_MAX_WORDS = 250
+
+
+def assert_vidya_response_length(response_text: str) -> None:
+    """Cap VIDYA response length at the TTS budget."""
+    word_count = len(response_text.split())
+    assert VIDYA_RESPONSE_MIN_WORDS <= word_count <= VIDYA_RESPONSE_MAX_WORDS, (
+        f"VIDYA response length out of range: {word_count} words "
+        f"(expected {VIDYA_RESPONSE_MIN_WORDS}-{VIDYA_RESPONSE_MAX_WORDS})"
+    )
+
+
+def assert_vidya_action_shape(action: object | None) -> None:
+    """Validate the VidyaAction's `flow` is in `ALLOWED_FLOWS` and its
+    params are well-typed.
+
+    Skip if `action is None` — `instantAnswer` and `unknown` paths
+    legitimately have no action. We accept `object | None` so this
+    helper does not pull `agents.vidya` into module-level imports
+    (avoiding a cycle with the router that already imports this
+    helper). The `agents.vidya.agent` symbols are imported lazily.
+    """
+    if action is None:
+        return
+    # Lazy import: avoids `_behavioural` ↔ `agents.vidya` import cycle.
+    from .agents.vidya.agent import ALLOWED_FLOWS as _ALLOWED_FLOWS  # noqa: PLC0415
+
+    flow = getattr(action, "flow", None)
+    assert flow in _ALLOWED_FLOWS, (
+        f"VidyaAction.flow={flow!r} is not in ALLOWED_FLOWS"
+    )
+    action_type = getattr(action, "type", None)
+    assert action_type == "NAVIGATE_AND_FILL", (
+        f"VidyaAction.type={action_type!r} unexpected — only "
+        "'NAVIGATE_AND_FILL' is supported today"
+    )
+    params = getattr(action, "params", None)
+    assert params is not None, "VidyaAction.params must be present"
+
+
+def assert_vidya_response_rules(
+    *,
+    response_text: str,
+    language: str,
+    action: object | None,
+) -> None:
+    """Phase 5 §5.3: composite assertion called by the VIDYA router
+    post-classification guard.
+
+    Four checks:
+    - **action shape** — if an action is present, its `flow` must be in
+      `ALLOWED_FLOWS` and `type` must be `NAVIGATE_AND_FILL`.
+    - **forbidden phrases** — same hardened set as parent-call /
+      lesson-plan (no AI self-references, no Sahayak mentions, no
+      synonym variants). Confusable / NFKC / ZWJ hardening applies.
+    - **script match** — same Unicode-range check, thresholded at 85%
+      alpha-in-range. VIDYA tolerates the same 15% code-switching as
+      conversational replies.
+    - **length** — 1-250 words. Replies are short by design.
+
+    Fail-closed in the router: any assertion failure → 502.
+    """
+    assert_vidya_action_shape(action)
+    assert_no_forbidden_phrases(response_text)
+    assert_script_matches_language(response_text, language)
+    assert_vidya_response_length(response_text)
