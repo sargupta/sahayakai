@@ -6,6 +6,12 @@ runConfig:
   minInstances: 1
   memory: 1Gi
   cpu: 1
+  # Round-2 audit P0 IAM-2: explicit runtime SA so this deploy path
+  # mints ID tokens for the sahayakai-agents sidecar with the same
+  # identity as the Cloud Run path in cloud-run.yml. Without this,
+  # apphosting builds inherit the default compute SA and the sidecar
+  # invoker check rejects every request.
+  serviceAccount: sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
 
 env:
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -16,3 +22,22 @@ env:
     value: sahayakai-b4248.firebasestorage.app
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw
+
+  # ---- Sidecar wiring (Phase 1 parent-call ADK Python sidecar) -----
+  # Both NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL and SAHAYAKAI_AGENTS_AUDIENCE
+  # currently point at the same Cloud Run URL — the URL serves both as
+  # the request target and the OIDC audience claim. The
+  # `hydrate-audience-secret.sh` script in `sahayakai-agents/scripts/`
+  # rotates this secret on every deploy.
+  - variable: NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL
+    secret: SAHAYAKAI_AGENTS_AUDIENCE
+    availability:
+      - RUNTIME
+  - variable: SAHAYAKAI_AGENTS_AUDIENCE
+    secret: SAHAYAKAI_AGENTS_AUDIENCE
+    availability:
+      - RUNTIME
+  - variable: SAHAYAKAI_REQUEST_SIGNING_KEY
+    secret: SAHAYAKAI_REQUEST_SIGNING_KEY
+    availability:
+      - RUNTIME
