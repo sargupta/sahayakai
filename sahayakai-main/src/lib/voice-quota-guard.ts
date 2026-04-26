@@ -128,3 +128,60 @@ export function estimateSTTMinutesFromBytes(byteSize: number): number {
     if (!byteSize || byteSize <= 0) return 0;
     return byteSize / 180_000;
 }
+
+// ---- Soft-cap warning system (added 2026-04-26) ----
+//
+// Hard cap (used >= limit → 429) already exists. Soft cap surfaces an
+// in-product warning at 80% and 95% utilisation so a Pro/Gold teacher
+// sees the wall coming and can pace their voice usage instead of
+// hitting a hard stop mid-class. Each threshold fires once per month
+// per user (client persists "warned" state in localStorage).
+
+export type VoiceQuotaWarning = 'none' | 'warn-80' | 'warn-95';
+
+/**
+ * Returns the warning level for a given (used, limit) pair. Limit < 0
+ * (unlimited) and limit === 0 (no cloud voice on this tier) both return
+ * 'none' — there's no soft-cap concept on those tiers.
+ */
+export function getVoiceQuotaWarning(used: number, limit: number): VoiceQuotaWarning {
+    if (limit <= 0) return 'none';
+    const pct = (used / limit) * 100;
+    if (pct >= 95) return 'warn-95';
+    if (pct >= 80) return 'warn-80';
+    return 'none';
+}
+
+/**
+ * Snapshot of a user's current voice quota state. Returned in TTS / STT
+ * response bodies so the client can surface threshold warnings.
+ */
+export interface VoiceQuotaSnapshot {
+    used: number;        // minutes consumed this month (rounded to 2 decimals)
+    limit: number;       // -1 = unlimited, 0 = not on this tier, else minutes/month
+    remaining: number;   // limit - used (Infinity if unlimited)
+    warning: VoiceQuotaWarning;
+}
+
+/**
+ * Build a snapshot for inclusion in API response bodies. Cheap — re-uses
+ * the same Firestore read path as ensureVoiceQuota. Pass the AFTER-record
+ * `used` value (i.e. include the minutes you just billed) so the warning
+ * reflects post-call state, not pre-call.
+ */
+export function buildVoiceQuotaSnapshot(used: number, limit: number): VoiceQuotaSnapshot {
+    if (limit < 0) {
+        return { used: 0, limit: -1, remaining: Number.POSITIVE_INFINITY, warning: 'none' };
+    }
+    if (limit === 0) {
+        return { used: 0, limit: 0, remaining: 0, warning: 'none' };
+    }
+    const cleanUsed = Math.round(used * 100) / 100;
+    const remaining = Math.max(0, limit - cleanUsed);
+    return {
+        used: cleanUsed,
+        limit,
+        remaining,
+        warning: getVoiceQuotaWarning(cleanUsed, limit),
+    };
+}

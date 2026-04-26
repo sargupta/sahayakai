@@ -13,6 +13,7 @@ import { AuthButton } from "@/components/auth/auth-button";
 import { GlobalHooks } from "@/components/global-hooks";
 import { OmniOrb } from "@/components/omni-orb";
 import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
+import { VoiceQuotaToastListener } from "@/components/voice-quota-toast-listener";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -117,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <CommandPalette />
       <MobileBottomNav />
       <PWAInstallPrompt />
+      <VoiceQuotaToastListener />
     </>
   );
 }
