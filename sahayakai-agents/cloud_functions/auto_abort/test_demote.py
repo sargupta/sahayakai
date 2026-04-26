@@ -61,6 +61,22 @@ class TestDemoteLadder:
         # Defensive: negative percent treated as 0.
         assert main._demote("shadow", -10) == ("off", 0)
 
+    def test_canary_zero_demotes_to_off_not_shadow_25(self) -> None:
+        """Round-2 audit P0 LADDER-1 regression: previously canary/0
+        FELL THROUGH to fallback["canary"] = ("shadow", 25), PROMOTING
+        the rollout. The fix collapses any below-lowest-rung state to
+        ("off", 0) — never promotes."""
+        assert main._demote("canary", 0) == ("off", 0)
+
+    def test_canary_negative_clamped_to_off(self) -> None:
+        # Regression: canary with bad percent must not bounce up to shadow.
+        assert main._demote("canary", -5) == ("off", 0)
+
+    def test_full_zero_demotes_to_off(self) -> None:
+        # Regression: full @ 0 (operator paused full mode) → off,
+        # not canary @ 100 as the old fallback would have done.
+        assert main._demote("full", 0) == ("off", 0)
+
     def test_above_100_clamped(self) -> None:
         # Defensive: percent > 100 treated as 100.
         assert main._demote("canary", 150) == ("canary", 50)

@@ -97,8 +97,26 @@ def _get_db() -> Any:
 def _demote(mode: str, percent: int) -> tuple[str, int]:
     """Return the (next_mode, next_percent) one step down the ladder.
 
-    Falls through to the closest lower step when the current state is
-    not exactly on the ladder (e.g. operator manually set 75%).
+    Round-2 audit P0 LADDER-1 fix (30-agent review, group C1):
+    the previous fall-through "collapse to lowest rung in same mode"
+    PROMOTED `canary @ 0` (operator paused) to `shadow @ 25` because
+    no canary rung is ≤ 0. The auto-abort function MUST never promote
+    a rollout, ever — its entire job is to dampen.
+
+    New fall-through rules:
+    - direct ladder hit → demote per table
+    - off-ladder percent: collapse to the next LOWER rung in same mode
+    - if current percent is BELOW the lowest rung of the current mode
+      (operator paused), the safest move is `off / 0` — never bump
+      back up to a higher-traffic mode
+
+    Examples:
+    - `canary, 0` → `off, 0` (was: `shadow, 25`)
+    - `canary, -5` (clamped to 0) → `off, 0` (was: `shadow, 25`)
+    - `canary, 75` → `canary, 25` (closest lower rung)
+    - `shadow, 0` → `off, 0` (mapped explicitly in table)
+    - `shadow, -10` (clamped to 0) → `off, 0`
+    - `garbage, 50` → `off, 0` (unknown mode → off; defensive)
     """
     mode = mode if mode in _VALID_MODES else "off"
     percent = max(0, min(100, int(percent)))
@@ -115,14 +133,9 @@ def _demote(mode: str, percent: int) -> tuple[str, int]:
     if rungs_for_mode:
         return _DEMOTE_TABLE[(mode, rungs_for_mode[0])]
 
-    # No lower rung in same mode — drop to next-safer mode entirely.
-    fallback = {
-        "full": ("canary", 100),
-        "canary": ("shadow", 25),
-        "shadow": ("off", 0),
-        "off": ("off", 0),
-    }
-    return fallback[mode]
+    # No lower rung in same mode (e.g. canary @ 0, shadow @ 0). Demote
+    # to off — NEVER promote to a higher-traffic mode.
+    return ("off", 0)
 
 
 # ---- Alert payload parsing -----------------------------------------------
