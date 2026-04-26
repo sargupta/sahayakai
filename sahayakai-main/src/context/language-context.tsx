@@ -2338,16 +2338,21 @@ const dictionary: Record<string, Record<Language, string>> = {
     },
     // Nav labels
     "Product": {
-        "English": "Product", "Hindi": "उत्पाद", "Kannada": "ಉತ್ಪನ್ನ",
-        "Tamil": "தயாரிப்பு", "Telugu": "ఉత్పత్తి", "Marathi": "उत्पादन",
-        "Bengali": "পণ্য", "Gujarati": "ઉત્પાદન", "Punjabi": "ਉਤਪਾਦ",
-        "Malayalam": "ഉൽപ്പന്നം", "Odia": "ଉତ୍ପାଦ"
+        // "उत्पाद" / "உত்பத்தி" etc. read as FMCG (manufactured goods).
+        // Indian SaaS convention is to transliterate.
+        "English": "Product", "Hindi": "प्रोडक्ट", "Kannada": "ಪ್ರೊಡಕ್ಟ್",
+        "Tamil": "ப்ராடக்ட்", "Telugu": "ప్రొడక్ట్", "Marathi": "प्रॉडक्ट",
+        "Bengali": "প্রোডাক্ট", "Gujarati": "પ્રોડક્ટ", "Punjabi": "ਪ੍ਰੋਡਕਟ",
+        "Malayalam": "പ്രോഡക്ട്", "Odia": "ପ୍ରୋଡକ୍ଟ"
     },
     "Pricing": {
-        "English": "Pricing", "Hindi": "कीमत", "Kannada": "ಬೆಲೆ",
-        "Tamil": "விலை", "Telugu": "ధర", "Marathi": "किंमत",
-        "Bengali": "মূল্য", "Gujarati": "કિંમત", "Punjabi": "ਕੀਮਤ",
-        "Malayalam": "വില", "Odia": "ମୂଲ୍ୟ"
+        // Earlier "कीमत" / "बेले" / "విలை" read as "the cost of one item"
+        // (e.g. "tamatar ki kimat"). Wrong register for a SaaS pricing
+        // page. "मूल्य" / formal-value words used here.
+        "English": "Pricing", "Hindi": "मूल्य", "Kannada": "ಮೌಲ್ಯ",
+        "Tamil": "திட்டங்கள்", "Telugu": "ప్లాన్లు", "Marathi": "मूल्य",
+        "Bengali": "মূল্য", "Gujarati": "મૂલ્ય", "Punjabi": "ਮੁੱਲ",
+        "Malayalam": "മൂല്യം", "Odia": "ମୂଲ୍ୟ"
     },
     // Voice cloud quota soft-cap toasts (2026-04-26)
     "Voice cloud quota: 80% used": {
