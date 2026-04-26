@@ -105,6 +105,13 @@ function sidecarResponseToReply(res: SidecarReplyResponse, decision: ParentCallS
 /**
  * Run Genkit and capture an explicit `result | error` value so the
  * caller can pass either into the shadow-diff writer without throwing.
+ *
+ * Round-2 audit P0 ABORT-1 fix (30-agent review, group B1):
+ * `AbortError` (e.g. Twilio request cancelled mid-flight) used to be
+ * swallowed and turned into a phantom reply on a dead connection.
+ * Now: rethrow AbortError so the caller can short-circuit cleanly
+ * instead of writing a shadow-diff for a request the parent already
+ * hung up on.
  */
 async function runGenkitSafe(
     input: AgentReplyInput,
@@ -113,13 +120,16 @@ async function runGenkitSafe(
         const out = await generateAgentReply(input);
         return { ok: true, out };
     } catch (err) {
-        return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+        const e = err instanceof Error ? err : new Error(String(err));
+        if (e.name === 'AbortError') throw e;
+        return { ok: false, error: e };
     }
 }
 
 /**
  * Run the sidecar and capture timing + error so the same data can land
- * in shadow-diff regardless of outcome.
+ * in shadow-diff regardless of outcome. Round-2 audit P0 ABORT-1: same
+ * `AbortError` rethrow as `runGenkitSafe`.
  */
 async function runSidecarSafe(
     request: SidecarReplyRequest,
@@ -132,9 +142,11 @@ async function runSidecarSafe(
         const res = await callSidecarReply(request);
         return { ok: true, res, latencyMs: Date.now() - startedAt };
     } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        if (e.name === 'AbortError') throw e;
         return {
             ok: false,
-            error: err instanceof Error ? err : new Error(String(err)),
+            error: e,
             latencyMs: Date.now() - startedAt,
         };
     }
@@ -159,11 +171,50 @@ function logDispatch(
 }
 
 /**
+ * Round-2 audit P0 DECIDE-1 fix (30-agent review, group B1):
+ * `decideParentCallDispatch` reads Firestore. If Firestore hangs (e.g.
+ * regional outage, connection-pool exhaustion), the entire call hangs
+ * indefinitely with no signal. Bound the read with a 1.5 s race so a
+ * Firestore stall falls back to `off` mode (the safe default per
+ * `FALLBACK_CONFIG`) instead of blocking the dispatcher.
+ */
+const DECIDE_DISPATCH_TIMEOUT_MS = 1_500;
+
+async function decideDispatchWithTimeout(
+    callSid: string,
+): Promise<ParentCallSidecarDecision> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            decideParentCallDispatch(callSid),
+            new Promise<ParentCallSidecarDecision>((_, reject) => {
+                timer = setTimeout(
+                    () => reject(new Error('decideParentCallDispatch timed out')),
+                    DECIDE_DISPATCH_TIMEOUT_MS,
+                );
+            }),
+        ]);
+    } catch (err) {
+        // Fail safe: any error reading the flag → off mode.
+        console.warn(
+            JSON.stringify({
+                event: 'parent_call.dispatch.decide_failed',
+                callSid,
+                error: err instanceof Error ? err.message : String(err),
+            }),
+        );
+        return { mode: 'off', reason: 'decide_failed', bucket: 0 };
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
+}
+
+/**
  * Dispatcher entry point. Always returns a usable reply or throws — the
  * route's outer try/catch then lands the canned safe wrap-up.
  */
 export async function dispatchParentCallReply(input: DispatchInput): Promise<DispatchedReply> {
-    const decision = await decideParentCallDispatch(input.callSid);
+    const decision = await decideDispatchWithTimeout(input.callSid);
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {
