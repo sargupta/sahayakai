@@ -354,8 +354,18 @@ else
   info "  notification channel exists: ${CHANNEL_NAME}"
 fi
 
+# Round-2 audit P2 ALERT-2: alert 06 (Gemini spend) depends on a
+# cost-rollup Cloud Function that is NOT in this PR. Skip applying
+# it from the default bootstrap; operator applies manually after the
+# cost-rollup function lands.
+SKIP_POLICIES_REGEX='06_gemini_spend\.yaml$'
+
 # Apply each YAML, substituting the channel placeholder.
 for policy_file in "${ROOT_DIR}/cloud_functions/auto_abort/policy_templates/"*.yaml; do
+  if [[ "${policy_file}" =~ ${SKIP_POLICIES_REGEX} ]]; then
+    info "  skipping $(basename "${policy_file}") — depends on cost-rollup function (not in this PR)"
+    continue
+  fi
   policy_name=$(python3 -c "import yaml; print(yaml.safe_load(open('${policy_file}'))['displayName'])")
   if gcloud alpha monitoring policies list \
       --project="${PROJECT_ID}" \
