@@ -1,15 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { generateQuiz } from '@/ai/flows/quiz-generator';
 import { logger } from '@/lib/logger';
+import { validateAdmin } from '@/lib/auth-utils';
 
 /**
  * Health check endpoint for quiz generation diagnostics.
- * Tests the quiz generation pipeline without user authentication or storage.
- * 
- * Usage: GET /api/ai/quiz/health
+ * Tests the quiz generation pipeline.
+ *
+ * Wave 2 hardening: this endpoint runs an actual AI generation call. Without
+ * gating, anyone could hit `/api/ai/quiz/health` in a loop and consume our
+ * Vertex AI quota for free. Now requires admin auth (same gate as cost
+ * dashboard / log dashboard).
+ *
+ * For pure liveness without cost, use the standard `/api/health` instead.
+ *
+ * Usage: GET /api/ai/quiz/health  (admin-only)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
     const startTime = Date.now();
+
+    // Admin gate — use the same x-user-id header pattern as the rest of the app.
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+        return NextResponse.json(
+            { error: 'Unauthorized — quiz health check is admin-only' },
+            { status: 401 },
+        );
+    }
+    try {
+        await validateAdmin(userId);
+    } catch {
+        return NextResponse.json(
+            { error: 'Forbidden — admin role required' },
+            { status: 403 },
+        );
+    }
 
     try {
         // Minimal test input - bypasses user ID to skip Firestore/Storage
