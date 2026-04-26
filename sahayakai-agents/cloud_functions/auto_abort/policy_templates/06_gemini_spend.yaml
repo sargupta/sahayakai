@@ -1,0 +1,70 @@
+# Cloud Monitoring alert policy: sidecar Gemini spend ratio > 2.0 (200%).
+#
+# DRAFT — DO NOT APPLY UNTIL THE COST-ROLLUP FUNCTION LANDS.
+#
+# Round-2 audit P2 ALERT-2 fix (30-agent review, group G3): the
+# previous version had two bugs:
+#   1. Metric name `gemini_daily_spend_usd` was ambiguous — was the
+#      threshold 2.0 a multiplier or an absolute dollar amount?
+#      $2/day on a project that bills ~$50/day baseline would fire
+#      constantly on noise.
+#   2. No writer for the metric — the cost-rollup Cloud Function is
+#      tracked as a Phase 1.x follow-up. Applying this policy without
+#      the writer means the alert never fires (silent), but applying
+#      it AFTER the writer lands without checking the metric scaling
+#      means it fires on every value above 2.0 dollars.
+#
+# Renamed metric to `parent_call/gemini_daily_spend_ratio` to make the
+# semantics unambiguous: VALUE = (today's spend) / (baseline spend).
+# Threshold 2.0 = 200% = 2x baseline. Same numeric threshold, clearer
+# meaning.
+#
+# Prerequisite: cost-rollup Cloud Function MUST be deployed and
+# writing `custom.googleapis.com/parent_call/gemini_daily_spend_ratio`
+# before this policy is applied. The bootstrap script `bootstrap-track-d.sh`
+# does NOT apply this policy automatically — operator applies after
+# the cost-rollup function deploys.
+#
+# A sample-count gate is added (same pattern as alert 04) so a
+# missing-metric window doesn't fire on noise.
+displayName: "parent-call sidecar — Gemini spend ratio > 2.0 (1h sustained)"
+documentation:
+  content: |
+    Sidecar Gemini spend has exceeded 2x the projected daily baseline.
+    Either the prompt-cache hit ratio has collapsed (`cacheHitRatio`
+    metric in `/readyz`), the model has been changed to a more
+    expensive variant (e.g. accidental gemini-2.5-pro promotion in
+    `SAHAYAKAI_REPLY_MODEL`), or shadow-mode is running on far more
+    calls than budgeted. Auto-abort demotes one step.
+
+    **DEPLOY PRECONDITION**: this policy depends on the cost-rollup
+    Cloud Function writing `parent_call/gemini_daily_spend_ratio`.
+    Applying this YAML before the function exists results in an alert
+    that never fires (no writer = no metric = no condition).
+  mimeType: text/markdown
+combiner: AND  # both metric > threshold AND metric exists with samples
+conditions:
+  - displayName: "daily spend ratio > 2.0"
+    conditionThreshold:
+      filter: |
+        metric.type = "custom.googleapis.com/parent_call/gemini_daily_spend_ratio"
+      comparison: COMPARISON_GT
+      thresholdValue: 2.0
+      duration: 3600s  # 1h sustained — daily metric is slow to react
+      aggregations:
+        - alignmentPeriod: 300s
+          perSeriesAligner: ALIGN_MEAN
+  - displayName: "sample count >= 6 (== 30 min of metric writes)"
+    conditionThreshold:
+      filter: |
+        metric.type = "custom.googleapis.com/parent_call/gemini_daily_spend_ratio"
+      comparison: COMPARISON_GT
+      thresholdValue: 6
+      duration: 3600s
+      aggregations:
+        - alignmentPeriod: 300s
+          perSeriesAligner: ALIGN_COUNT
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s

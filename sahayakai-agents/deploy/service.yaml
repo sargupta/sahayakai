@@ -26,9 +26,18 @@ spec:
         autoscaling.knative.dev/maxScale: "10"
         run.googleapis.com/cpu-throttling: "false"
         run.googleapis.com/execution-environment: gen2
+        # Round-2 audit P0 BOOT-1: 100% CPU during cold start cuts the
+        # google-adk + pybars3 + sentence-transformers import time
+        # from ~3.5s to ~1.5s. Cheap; the boost only applies during
+        # the first request, not steady-state.
+        run.googleapis.com/startup-cpu-boost: "true"
     spec:
       serviceAccountName: sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
-      timeoutSeconds: 12       # Twilio webhook budget is 15s; sidecar must return well under.
+      # Round-2 audit P0 TIMEOUT-1: was 12s. Next.js client times out
+      # at 3.5s; resilience-layer max_total_backoff is 7s. Cap at 8s so
+      # any request that genuinely runs longer than the client cares
+      # about dies promptly instead of pinning the instance.
+      timeoutSeconds: 8
       containerConcurrency: 20 # Tune via load test post G10.
       containers:
         - image: ${IMAGE}
@@ -46,12 +55,15 @@ spec:
               value: sahayakai-b4248
             - name: GOOGLE_CLOUD_REGION
               value: asia-southeast1
-            # Audience is populated from the Cloud Run service's resolved
-            # URL after the first deploy. Round-2 P0-2 fix: previous
-            # `${REGION_HASH}` placeholder was never substituted; we now
-            # derive the value at boot from the K_SERVICE env var that
-            # Cloud Run sets, falling back to this explicit override if
-            # a specific custom domain is in use.
+            # Audience claim that ID-token verification compares against.
+            # Hydrated post-deploy by `scripts/hydrate-audience-secret.sh`,
+            # which writes the resolved Cloud Run URL into Secret Manager
+            # as a new version of SAHAYAKAI_AGENTS_AUDIENCE. The secret is
+            # mounted with `key: latest` so a redeploy after rotation
+            # picks up the new version automatically — but a Cloud Run
+            # secret mount does NOT auto-refresh on version add, so any
+            # rotation needs a `gcloud run services update-traffic` to
+            # take effect.
             - name: SAHAYAKAI_AGENTS_AUDIENCE
               valueFrom:
                 secretKeyRef:

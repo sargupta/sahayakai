@@ -1,0 +1,36 @@
+# Cloud Monitoring alert policy: Firestore SessionConflictError > 0.1%.
+#
+# OCC conflicts on `agent_sessions/{callSid}/turns/*` are EXPECTED on
+# Twilio retries — they are how we deduplicate. But a sustained 0.1%
+# rate means either (a) Twilio is hammering retries faster than we
+# anticipated, or (b) the composite-key contract has regressed and
+# the same turn is being written twice from different paths.
+#
+# Prerequisite: the log-based metric
+# `parent_call/session_conflict` must exist (filter on
+# jsonPayload.event="session_store.conflict").
+displayName: "parent-call sidecar — Firestore 409 rate > 0.1% (15m)"
+documentation:
+  content: |
+    SessionConflictError rate > 0.1% sustained for 15 minutes. Either
+    Twilio retry storm or composite-key OCC regression. Auto-abort
+    demotes one step. Inspect `agent_sessions/{callSid}/turns/*` for
+    same-turn duplicates before re-promoting.
+  mimeType: text/markdown
+combiner: OR
+conditions:
+  - displayName: "409 rate > 0.1%"
+    conditionThreshold:
+      filter: |
+        metric.type = "logging.googleapis.com/user/parent_call_session_conflict"
+      comparison: COMPARISON_GT
+      thresholdValue: 0.001
+      duration: 900s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s

@@ -23,7 +23,6 @@ from sahayakai_agents._behavioural import (
     count_sentences,
 )
 
-
 pytestmark = pytest.mark.behavioral
 
 
