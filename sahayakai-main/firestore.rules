@@ -175,6 +175,44 @@ service cloud.firestore {
     }
 
     // =============================================
+    // SAHAYAKAI AGENTS — PARENT-CALL SIDECAR
+    // =============================================
+    // Round-2 audit P0 RULES-1: every collection the sidecar writes to
+    // is Admin-SDK-only. Clients NEVER read or write these — the call
+    // SID would let an attacker harvest full transcripts. Mirrors the
+    // existing `webhook_events` shape.
+
+    // Per-call session metadata + turn subcollection.
+    // Composite key `{turn_number:04d}_{role}` is the doc id under turns/.
+    // TTL applied via `agent_sessions/{callSid}.expireAt` field
+    // (24h after the call ends; see scripts/apply-firestore-ttl.sh).
+    match /agent_sessions/{callSid} {
+      allow read, write: if false;
+      match /turns/{turnId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Shadow-mode parity capture: { genkit_reply, sidecar_reply, ... }
+    // Written by the Next.js dispatcher fire-and-forget; read by the
+    // shadow-diff aggregator Cloud Function for the rolling LaBSE mean.
+    // TTL via `agent_shadow_diffs/{date}/calls/{id}.expireAt` (14d).
+    match /agent_shadow_diffs/{dateDoc} {
+      allow read, write: if false;
+      match /calls/{callId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Phase 2 placeholder — voice session metadata (transcript, audio
+    // duration, behavioural-guard events). Voice payloads are even
+    // more sensitive than text transcripts; explicit deny here even
+    // though the default is also deny.
+    match /agent_voice_sessions/{callSid} {
+      allow read, write: if false;
+    }
+
+    // =============================================
     // DEFAULT DENY
     // =============================================
     // Any collection not matched above is denied by default.
