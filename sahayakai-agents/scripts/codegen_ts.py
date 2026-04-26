@@ -61,7 +61,7 @@ def _ts_literal_union(py_literal: Any, name: str) -> str:
     return f"export type {name} = {rendered};"
 
 
-def _ts_type_from_annotation(ann: Any) -> str:
+def _ts_type_from_annotation(ann: Any) -> str:  # noqa: PLR0911 — type dispatcher reads cleaner with one return per branch
     """Map a Python annotation to a TypeScript type expression.
 
     Supports: str → string, int/float → number, bool → boolean,

@@ -1,0 +1,47 @@
+# Cloud Monitoring alert policy: behavioural-guard 502 rate > 0.5%.
+#
+# The sidecar emits the structured log line
+#   "parent_call.reply.behavioural_guard_failed"
+# whenever `assert_all_rules` rejects a model output. A log-based metric
+# converts that into a counter; the policy alerts when the rate exceeds
+# 0.5% of total /v1/parent-call/reply requests over 15 minutes.
+#
+# This is the LOWEST-tolerance abort: the guard is fail-closed (we
+# already return 502 to Next.js, which falls back to the canned safe
+# wrap-up) but a rate spike means the model has drifted in a way the
+# guard catches. Stop ramping immediately.
+#
+# Prerequisite: the log-based metric "parent_call/behavioural_guard_failed"
+# must exist. Create it via:
+#   gcloud logging metrics create parent_call_behavioural_guard_failed \
+#     --description="parent-call behavioural-guard 502 events" \
+#     --log-filter='resource.type="cloud_run_revision" jsonPayload.event="parent_call.reply.behavioural_guard_failed"'
+displayName: "parent-call sidecar — behavioural-guard 502 rate > 0.5% (15m)"
+documentation:
+  content: |
+    Behavioural guard tripped on > 0.5% of replies in the last 15 minutes.
+    Either the model has drifted (forbidden phrase / wrong script / too
+    many sentences) or the prompt has been edited in a way that breaks
+    the guard contract. The auto-abort Cloud Function will demote
+    immediately. DO NOT manually re-promote without re-running the
+    parity comparator (`scripts/compare_parity.py --use-judge`) and
+    confirming pass-rate ≥ 95%.
+  mimeType: text/markdown
+combiner: OR
+conditions:
+  - displayName: "guard 502 rate > 0.5%"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        metric.type = "logging.googleapis.com/user/parent_call_behavioural_guard_failed"
+      comparison: COMPARISON_GT
+      thresholdValue: 0.005
+      duration: 900s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s

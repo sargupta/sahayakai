@@ -1,0 +1,6 @@
+firebase-admin~=6.6
+functions-framework~=3.8
+google-cloud-monitoring~=2.22
+# IndicSBERT (Tier 2). Comment out if running with USE_EMBEDDINGS=0
+# to keep cold-start under 10s.
+sentence-transformers~=3.2

@@ -13,7 +13,6 @@ from typing import Any
 import pytest
 
 from sahayakai_agents.resilience import (
-    CacheMetrics,
     classify_status,
     extract_cache_metrics,
     run_resiliently,
@@ -23,14 +22,13 @@ from sahayakai_agents.shared.errors import (
     AISafetyBlockError,
 )
 
-
 pytestmark = pytest.mark.unit
 
 
 class TestClassifyStatus:
     def test_uses_status_attribute(self) -> None:
         err = Exception("Some text")
-        setattr(err, "status", 429)
+        err.status = 429
         assert classify_status(err) == 429
 
     def test_matches_429_phrases(self) -> None:
@@ -113,7 +111,7 @@ class TestRunResiliently:
             attempts.append(key)
             if len(attempts) == 1:
                 err = Exception("429 RESOURCE_EXHAUSTED")
-                setattr(err, "status", 429)
+                err.status = 429
                 raise err
             return f"ok:{key}"
 
@@ -129,7 +127,7 @@ class TestRunResiliently:
     ) -> None:
         async def fn(_key: str) -> str:
             err = Exception("429 RESOURCE_EXHAUSTED")
-            setattr(err, "status", 429)
+            err.status = 429
             raise err
 
         with pytest.raises(AIQuotaExhaustedError) as info:
@@ -156,7 +154,7 @@ class TestRunResiliently:
 
         async def fn(_key: str) -> str:
             err = Exception("429")
-            setattr(err, "status", 429)
+            err.status = 429
             raise err
 
         budget = 1.0

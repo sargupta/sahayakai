@@ -26,8 +26,9 @@ import asyncio
 import random
 import re
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any
 
 import structlog
 
@@ -38,8 +39,6 @@ from .shared.errors import (
 )
 
 log = structlog.get_logger(__name__)
-
-T = TypeVar("T")
 
 # Status code classification mirrors classifyStatus in genkit.ts.
 # Round-2 P1-6 fix: anchor status codes with word boundaries so substrings
@@ -115,7 +114,9 @@ def extract_cache_metrics(result: Any) -> CacheMetrics | None:
                     return int(val)
         return 0
 
-    input_tokens = pick(usage, "input_tokens", "inputTokens", "prompt_token_count", "promptTokenCount")
+    input_tokens = pick(
+        usage, "input_tokens", "inputTokens", "prompt_token_count", "promptTokenCount"
+    )
     output_tokens = pick(
         usage, "output_tokens", "outputTokens", "candidates_token_count", "candidatesTokenCount"
     )
@@ -160,14 +161,17 @@ def _plan_backoff(attempt_index: int, status: int | None, pool_size: int) -> int
     - multi-key 429 → 200ms, 500ms (mostly rotate keys)
     - 401/403 → 100ms, 300ms (auth flips rarely benefit from long waits)
     """
-    if status == 429:
+    # Two-axis policy table reads more clearly than a nested ternary; keep
+    # the if/else even though ruff would prefer SIM108. The 429 branch
+    # has its own pool-size split which would obscure under chaining.
+    if status == 429:  # noqa: SIM108 — readability over ternary chain
         base = 500 if pool_size == 1 else 200
     else:
         base = 100
     return _jittered(base * (2**attempt_index))
 
 
-async def run_resiliently(
+async def run_resiliently[T](
     fn: Callable[[str], Awaitable[T]],
     key_pool: tuple[str, ...],
     *,

@@ -60,29 +60,41 @@ const InstantAnswerOutputSchema = z.object({
 export type InstantAnswerOutput = z.infer<typeof InstantAnswerOutputSchema>;
 
 export async function instantAnswer(input: InstantAnswerInput): Promise<InstantAnswerOutput> {
-  // 1. Safety Check
+  // 1. Input length cap — Wave 2: previously the prompt was unbounded, so a
+  //    long question could blow up the prompt cost or trigger the model's max
+  //    input limit with a confusing error. 4000 chars is plenty for a question.
+  if (input.question && input.question.length > 4000) {
+    throw new Error('Question too long (max 4000 characters).');
+  }
+
+  // 2. Safety Check
   const safety = validateTopicSafety(input.question);
   if (!safety.safe) throw new Error(`Safety Violation: ${safety.reason}`);
 
-  // 2. Rate Limit & User Profile Context
-  const uid = input.userId || 'anonymous_user';
+  // 3. Auth + rate limit. Wave 2: previously anonymous callers (no userId)
+  //    bypassed the rate limit entirely — a wide-open AI cost vector.
+  //    Now anonymous calls are rejected; the calling route already gates
+  //    on x-user-id, so this is a defence-in-depth layer.
+  const uid = input.userId;
+  if (!uid) {
+    throw new Error('Unauthorized: instantAnswer requires an authenticated userId');
+  }
+
+  const { checkServerRateLimit } = await import('@/lib/server-safety');
+  await checkServerRateLimit(uid);
+
   let localizedInput = { ...input };
 
-  if (uid !== 'anonymous_user') {
-    const { checkServerRateLimit } = await import('@/lib/server-safety');
-    await checkServerRateLimit(uid);
+  // Fetch user's profile for context (language, grade)
+  if (!input.language || !input.gradeLevel) {
+    const { dbAdapter } = await import('@/lib/db/adapter');
+    const profile = await dbAdapter.getUser(uid);
 
-    // Fetch user's profile for context (language, grade)
-    if (!input.language || !input.gradeLevel) {
-      const { dbAdapter } = await import('@/lib/db/adapter');
-      const profile = await dbAdapter.getUser(uid);
-
-      if (!input.language && profile?.preferredLanguage) {
-        localizedInput.language = profile.preferredLanguage;
-      }
-      if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
-        localizedInput.gradeLevel = profile.teachingGradeLevels[0];
-      }
+    if (!input.language && profile?.preferredLanguage) {
+      localizedInput.language = profile.preferredLanguage;
+    }
+    if (!input.gradeLevel && profile?.teachingGradeLevels?.length) {
+      localizedInput.gradeLevel = profile.teachingGradeLevels[0];
     }
   }
 

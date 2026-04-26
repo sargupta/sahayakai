@@ -324,31 +324,43 @@ export async function joinGroupAction(groupId: string): Promise<{ joined: boolea
     const { FieldValue } = await import('firebase-admin/firestore');
 
     const groupRef = db.collection('groups').doc(groupId);
-    const groupDoc = await groupRef.get();
-    if (!groupDoc.exists) throw new Error('Group not found');
+    const memberRef = groupRef.collection('members').doc(uid);
+    const userRef = db.collection('users').doc(uid);
 
-    let joined = true;
+    // Wave 2b: wrap member-create + memberCount-increment + user.groupIds-update
+    // in a single Firestore transaction so a partial failure can't leave the
+    // system in an inconsistent state (member doc exists but count not bumped,
+    // or vice versa, or count bumped but user.groupIds not updated). Previously
+    // these were three separate writes; if any failed, the user's "groups"
+    // listing diverged from the actual members subcollection.
+    let joined = false;
     try {
-        await groupRef.collection('members').doc(uid).create({
-            joinedAt: new Date().toISOString(),
-            role: 'member',
+        await db.runTransaction(async (t) => {
+            const [groupSnap, memberSnap] = await Promise.all([
+                t.get(groupRef),
+                t.get(memberRef),
+            ]);
+            if (!groupSnap.exists) throw new Error('Group not found');
+            if (memberSnap.exists) {
+                // Already a member — only ensure the user doc cache reflects it.
+                t.update(userRef, { groupIds: FieldValue.arrayUnion(groupId) });
+                return;
+            }
+            t.set(memberRef, { joinedAt: new Date().toISOString(), role: 'member' });
+            t.update(groupRef, { memberCount: FieldValue.increment(1) });
+            t.update(userRef, { groupIds: FieldValue.arrayUnion(groupId) });
+            joined = true;
         });
-        await groupRef.update({ memberCount: FieldValue.increment(1) });
     } catch (err) {
         if (isAlreadyExistsError(err)) {
-            joined = false; // expected race — user already a member
+            // Belt-and-braces — Firestore is unlikely to surface this from a
+            // transaction (we already checked memberSnap.exists), but if it
+            // does, treat as idempotent success.
+            joined = false;
         } else {
-            // Real failure (permission, quota, network) — propagate so the
-            // client can surface a real error instead of a misleading toast.
             throw err;
         }
     }
-
-    // Always reconcile the user doc — arrayUnion is idempotent and ensures
-    // the cache stays consistent even if a prior attempt left it out of sync.
-    await db.collection('users').doc(uid).update({
-        groupIds: FieldValue.arrayUnion(groupId),
-    });
 
     logger.info(`joinGroup: uid=${uid}, groupId=${groupId}, joined=${joined}`);
     return { joined };
@@ -363,20 +375,26 @@ export async function leaveGroupAction(groupId: string): Promise<void> {
 
     const groupRef = db.collection('groups').doc(groupId);
     const memberRef = groupRef.collection('members').doc(uid);
-    const memberDoc = await memberRef.get();
-    if (!memberDoc.exists) return; // Not a member — idempotent
+    const userRef = db.collection('users').doc(uid);
 
-    await memberRef.delete();
+    // Wave 2b: single transaction across delete-member + decrement-count +
+    // user.groupIds-remove. Previously the delete happened OUTSIDE the
+    // transaction, so a transaction-rollback could leave the member doc
+    // deleted but the count unchanged.
     await db.runTransaction(async (t) => {
-        const groupDoc = await t.get(groupRef);
-        if (!groupDoc.exists) return;
-        const current = groupDoc.data()?.memberCount ?? 0;
-        if (current > 0) {
-            t.update(groupRef, { memberCount: FieldValue.increment(-1) });
+        const [groupSnap, memberSnap] = await Promise.all([
+            t.get(groupRef),
+            t.get(memberRef),
+        ]);
+        if (!memberSnap.exists) return; // idempotent — already not a member
+        t.delete(memberRef);
+        if (groupSnap.exists) {
+            const current = groupSnap.data()?.memberCount ?? 0;
+            if (current > 0) {
+                t.update(groupRef, { memberCount: FieldValue.increment(-1) });
+            }
         }
-    });
-    await db.collection('users').doc(uid).update({
-        groupIds: FieldValue.arrayRemove(groupId),
+        t.update(userRef, { groupIds: FieldValue.arrayRemove(groupId) });
     });
 
     logger.info(`leaveGroup: uid=${uid}, groupId=${groupId}`);

@@ -7,6 +7,13 @@ import { instantAnswer } from './instant-answer';
 import { agentRouterFlow, AgentRouterInput, AgentRouterOutput } from './agent-definitions';
 
 export async function processAgentRequest(input: AgentRouterInput): Promise<AgentRouterOutput> {
+  // Wave 2: cap the input prompt at 2000 chars. The OmniOrb is the hot path
+  // for free-form user input; without a cap an attacker (or a runaway client)
+  // could stuff a giant prompt to inflate token cost on every interaction.
+  if (input.prompt && input.prompt.length > 2000) {
+    throw new Error('Prompt too long (max 2000 characters).');
+  }
+
   const {
     type: intent,
     topic: extractedTopic,

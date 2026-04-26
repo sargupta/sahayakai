@@ -1,0 +1,42 @@
+# Cloud Monitoring alert policy: sidecar 5xx rate > 2% over 15 minutes.
+#
+# Apply with:
+#   gcloud alpha monitoring policies create \
+#     --project=sahayakai-b4248 \
+#     --policy-from-file=01_error_rate.yaml
+#
+# Notification channel `${AUTO_ABORT_PUBSUB_CHANNEL}` must be a
+# Pub/Sub channel pointing at the topic the auto-abort Cloud Function
+# subscribes to. Create it via:
+#   gcloud alpha monitoring channels create \
+#     --display-name="parent-call auto-abort" \
+#     --type=pubsub \
+#     --channel-labels=topic=projects/sahayakai-b4248/topics/parent-call-auto-abort
+displayName: "parent-call sidecar — error rate > 2% (15m)"
+documentation:
+  content: |
+    Sidecar /v1/parent-call/reply 5xx rate exceeded 2% of total requests
+    over the last 15 minutes. The auto-abort Cloud Function will demote
+    `parentCallSidecarMode`/`parentCallSidecarPercent` by one step
+    automatically. Investigate before manually restoring.
+  mimeType: text/markdown
+combiner: OR
+conditions:
+  - displayName: "5xx rate > 2%"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        resource.label.service_name = monitoring.regex.full_match("sahayakai-agents.*")
+        metric.type = "run.googleapis.com/request_count"
+        metric.label.response_code_class = "5xx"
+      comparison: COMPARISON_GT
+      thresholdValue: 0.02
+      duration: 900s  # 15m
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s  # 24h

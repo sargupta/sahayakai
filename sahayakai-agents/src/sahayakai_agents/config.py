@@ -164,7 +164,8 @@ class Settings(BaseSettings):
         if errors:
             joined = "\n  - ".join(errors)
             raise RuntimeError(
-                f"sahayakai-agents refuses to boot in production due to config errors:\n  - {joined}"
+                "sahayakai-agents refuses to boot in production due to config errors:"
+                f"\n  - {joined}"
             )
 
     # Deprecated alias for the old name; keep for one release so older

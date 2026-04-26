@@ -36,6 +36,16 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
 
   const { name, userId } = input;
 
+  // Wave 2b: defence in depth. The avatar route already calls
+  // checkImageRateLimit, but if any other code path imports and invokes
+  // generateAvatar directly (e.g. an auto-generate-on-signup background job),
+  // the route gate would be bypassed. The flow itself must enforce the cap
+  // because $0.04/image makes this the most expensive surface in the app.
+  if (userId) {
+    const { checkImageRateLimit } = await import('@/lib/server-safety');
+    await checkImageRateLimit(userId);
+  }
+
   try {
     const { media } = await runResiliently(async (overrideConfig) => {
       return await ai.generate({

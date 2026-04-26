@@ -9,12 +9,16 @@ authors = [
   { name = "Abhishek Gupta", email = "abhi.ist.15@gmail.com" },
 ]
 
-# Pinned exact-or-compatible per review Round 1 decisions.
-# - google-adk ==1.0.0 (GA, pinned per parent plan §4)
-# - google-genai pinned explicitly, not left transitive (P1 #16)
+# Pinned to latest stable per Round-2 audit findings (Apr 2026).
+# - google-adk: was ==1.0.0 (31 minor versions stale, missed CVE-2026-4810).
+#   Now ~=1.31 (current 1.31.1, bi-weekly cadence).
+# - google-genai: was ==0.10.0 (which does not exist on PyPI — fictitious pin).
+#   Now >=1.73,<2.0 (current 1.73.1, Apr 14 2026 release).
+#   See https://pypi.org/project/google-genai/ and SDK reference
+#   https://googleapis.github.io/python-genai/.
 dependencies = [
-  "google-adk==1.0.0",
-  "google-genai==0.10.0",
+  "google-adk~=1.31",
+  "google-genai>=1.73,<2.0",
   "fastapi~=0.115",
   "uvicorn[standard]~=0.32",
   "pydantic~=2.9",
@@ -27,7 +31,10 @@ dependencies = [
   "opentelemetry-instrumentation-fastapi~=0.48b0",
   "opentelemetry-exporter-gcp-trace~=1.8",
   "httpx~=0.27",
-  "pystache~=0.6",
+  # Round-2 audit P0 PROMPT-1: was `pystache~=0.6` but Mustache cannot
+  # parse `{{#if x}}...{{/if}}` (Handlebars-only). pybars3 is a real
+  # Handlebars implementation that matches Genkit's Node renderer.
+  "pybars3~=0.9",
   "structlog~=24.4",
   "langdetect~=1.0",
 ]
@@ -56,7 +63,7 @@ packages = ["src/sahayakai_agents"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests", "cloud_functions", "spikes"]
 pythonpath = ["src"]
 markers = [
   "unit: fast, no external calls",
@@ -71,10 +78,63 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
-ignore = ["PLR0913"]  # many kw-args is fine for agent schemas
+ignore = [
+  "PLR0913",  # many kw-args is fine for agent schemas
+  # Pylint refactor lints that fire on intentional patterns:
+  "PLR2004",  # magic numbers — Unicode codepoint ranges and HTTP status codes
+              # are read more clearly inline than via constants
+  "PLC0415",  # local imports — used deliberately for lazy-loading SDKs
+              # (google.genai, google.adk) so test paths that don't
+              # exercise them avoid the import cost
+  "PLW0603",  # global statement — used by the process-scoped
+              # `_session_store` singleton with explicit reset semantics
+]
+# Tests are allowed style relaxations that production code is not.
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "E501",   # long lines in fixture data are easier to read unwrapped
+  "SIM108", # explicit if/else reads better than ternary in test setups
+  "SIM118", # `key in dict.keys()` is fine in test assertions
+  "UP047",  # PEP 695 generics are not yet ubiquitous in our deps
+]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 warn_unused_ignores = true
-ignore_missing_imports = true  # adk / pystache have lagging stubs
+ignore_missing_imports = true  # adk / pybars3 have lagging stubs
+
+# Per-module relaxations for files that wrap unstubbed Google SDKs.
+# Strict mode flags every untyped call into firestore / gcp-trace /
+# google.auth.id_token; downgrading those modules to non-strict keeps
+# the signal high in the rest of the codebase. Each entry pairs with
+# an SDK whose stubs are incomplete or absent on PyPI as of Apr 2026.
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.session_store"
+disallow_untyped_calls = false
+warn_return_any = false
+disable_error_code = ["return-value", "unused-ignore"]
+
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.telemetry"
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "sahayakai_agents.auth"
+disallow_untyped_calls = false
+disable_error_code = ["call-overload", "attr-defined"]
+
+# Test fakes use dynamic attribute assignment to swap real method
+# implementations — mypy flags every `# type: ignore[method-assign]` as
+# unused under strict mode because the assignment target is Any once
+# the method has been replaced. Drop the strictness for the fakes only.
+[[tool.mypy.overrides]]
+module = "tests.unit.fake_firestore"
+warn_unused_ignores = false
+disable_error_code = ["unused-ignore"]
+
+# Cloud function wraps unstubbed firebase-admin firestore. The
+# `@admin_firestore.transactional` decorator is the only mypy snag.
+[[tool.mypy.overrides]]
+module = "cloud_functions.auto_abort.main"
+disallow_untyped_decorators = false

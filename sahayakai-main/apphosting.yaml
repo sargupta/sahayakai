@@ -6,6 +6,12 @@ runConfig:
   minInstances: 1
   memory: 1Gi
   cpu: 1
+  # Round-2 audit P0 IAM-2: explicit runtime SA so this deploy path
+  # mints ID tokens for the sahayakai-agents sidecar with the same
+  # identity as the Cloud Run path in cloud-run.yml. Without this,
+  # apphosting builds inherit the default compute SA and the sidecar
+  # invoker check rejects every request.
+  serviceAccount: sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
 
 env:
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -14,5 +20,59 @@ env:
     value: sahayakai-b4248
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     value: sahayakai-b4248.firebasestorage.app
+  # Firebase web API key is by-design browser-exposed (see
+  # https://firebase.google.com/docs/projects/api-keys). Stored in
+  # Secret Manager for hygiene + rotation discipline rather than as a
+  # security secret — Firestore rules + App Check enforce real access
+  # control. Available at BUILD time so Next.js can bake it into the
+  # client bundle (NEXT_PUBLIC_*).
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # ---- Sidecar wiring (Phase 1 parent-call ADK Python sidecar) -----
+  # Both NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL and SAHAYAKAI_AGENTS_AUDIENCE
+  # currently point at the same Cloud Run URL — the URL serves both as
+  # the request target and the OIDC audience claim. The
+  # `hydrate-audience-secret.sh` script in `sahayakai-agents/scripts/`
+  # rotates this secret on every deploy.
+  #
+  # Round-2 audit P0 APPHOSTING-1 fix (30-agent review, group D2):
+  # NEXT_PUBLIC_* vars are baked into the client bundle at `next build`
+  # time. RUNTIME-only availability means the build sees `undefined`
+  # and ships a broken bundle; the runtime env then never reaches the
+  # browser. BUILD availability is required.
+  - variable: NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL
+    secret: SAHAYAKAI_AGENTS_AUDIENCE
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: SAHAYAKAI_AGENTS_AUDIENCE
+    secret: SAHAYAKAI_AGENTS_AUDIENCE
+    availability:
+      - RUNTIME
+  - variable: SAHAYAKAI_REQUEST_SIGNING_KEY
+    secret: SAHAYAKAI_REQUEST_SIGNING_KEY
+    availability:
+      - RUNTIME
+
+  # ---- Server-side secrets (apphosting-only — cloud-run.yml has these
+  # via --set-secrets line). Round-2 audit P0 APPHOSTING-2 fix: missing
+  # GOOGLE_GENAI_API_KEY here caused every AI flow to 500 on
+  # apphosting-deployed instances; same for FIREBASE_SERVICE_ACCOUNT_KEY
+  # (required by firebase-admin) and YOUTUBE_API_KEY (used by
+  # video-storyteller flow).
+  - variable: GOOGLE_GENAI_API_KEY
+    secret: GOOGLE_GENAI_API_KEY
+    availability:
+      - RUNTIME
+  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+    secret: FIREBASE_SERVICE_ACCOUNT_KEY
+    availability:
+      - RUNTIME
+  - variable: YOUTUBE_API_KEY
+    secret: YOUTUBE_API_KEY
+    availability:
+      - RUNTIME

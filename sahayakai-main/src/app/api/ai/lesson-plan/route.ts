@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { generateLessonPlan, LessonPlanInputSchema } from '@/ai/flows/lesson-plan-generator';
+import { LessonPlanInputSchema } from '@/ai/flows/lesson-plan-generator';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchLessonPlan } from '@/lib/sidecar/lesson-plan-dispatch';
 
 /**
  * @swagger
@@ -69,7 +70,11 @@ async function _handler(request: Request) {
         // rather than crashing inside Genkit's own validator as a 500.
         const body = LessonPlanInputSchema.parse(json);
 
-        const output = await generateLessonPlan({
+        // Phase 3 §3.4: dispatcher routes to Genkit (legacy) or the
+        // Python ADK sidecar based on `lessonPlanSidecarMode`. Default
+        // is "off" so existing prod traffic is unchanged. The flag is
+        // flipped per-rollout-step from the Firestore feature_flags doc.
+        const output = await dispatchLessonPlan({
             ...body,
             userId: userId,
         });
