@@ -58,6 +58,28 @@ export type ParentCallSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
  */
 export type LessonPlanSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
+/**
+ * VIDYA orchestrator sidecar dispatch mode (Phase 5).
+ *
+ * VIDYA is the multi-agent orchestrator behind the OmniOrb mic — the
+ * floating voice button mounted at the AppShell root that's available
+ * on every authenticated route. It classifies teacher utterances into
+ * one of 11 intents (9 routable flows + instantAnswer + unknown) and
+ * either returns a navigation action or an inline answer.
+ *
+ * Same four-mode contract as `ParentCallSidecarMode` /
+ * `LessonPlanSidecarMode`. Bucketing on `uid` (teacher) — VIDYA is
+ * HTTP-request-scoped and the user is authenticated.
+ *
+ * - `off`     — Genkit `agentRouterFlow` only. Default.
+ * - `shadow`  — Genkit serves; sidecar called fire-and-forget for
+ *                offline parity scoring.
+ * - `canary`  — Sidecar serves; on any sidecar error fall back to
+ *                Genkit so the teacher always gets *some* response.
+ * - `full`    — Sidecar serves; same fallbacks as `canary`.
+ */
+export type VidyaSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
+
 /** The full Firestore document shape at `system_config/feature_flags` */
 export interface FeatureFlagsConfig {
   // ── Global switches ────────────────────────────
@@ -105,6 +127,20 @@ export interface FeatureFlagsConfig {
    */
   lessonPlanSidecarPercent: number;
 
+  // ── VIDYA sidecar (Phase 5) rollout ───────────
+  /**
+   * Routing mode for the VIDYA orchestrator. See `VidyaSidecarMode`.
+   * Defaults to `off` in `FALLBACK_CONFIG` so a Firestore outage
+   * cannot route OmniOrb mic taps to an undeployed sidecar.
+   */
+  vidyaSidecarMode: VidyaSidecarMode;
+  /**
+   * 0-100: percentage of teachers routed to the sidecar in `shadow` /
+   * `canary` modes. Bucketing is on the teacher's `uid`. `full` mode
+   * treats this as 100 regardless.
+   */
+  vidyaSidecarPercent: number;
+
   /**
    * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
    * the TwiML route plays a one-sentence consent prologue BEFORE the
@@ -144,6 +180,11 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   // to an undeployed Phase-3 sidecar.
   lessonPlanSidecarMode: 'off',
   lessonPlanSidecarPercent: 0,
+  // VIDYA sidecar OFF on fallback — same safety reasoning as parent-call
+  // and lesson-plan: a Firestore outage must not redirect OmniOrb mic
+  // taps to an undeployed Phase-5 sidecar.
+  vidyaSidecarMode: 'off',
+  vidyaSidecarPercent: 0,
   // Consent prologue OFF until 11-language translations land. Operator
   // flips when ready. See `.claude/plans/dpdp-compliance.md`.
   consentNoticeEnabled: false,
@@ -421,6 +462,49 @@ export async function decideLessonPlanDispatch(
   if (bucket < percent) {
     return {
       mode: cfg.lessonPlanSidecarMode,
+      reason: `bucket_${bucket}_under_${percent}`,
+      bucket,
+    };
+  }
+  return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+}
+
+// ─── VIDYA sidecar dispatch ─────────────────────────────────────────────────
+
+export interface VidyaSidecarDecision {
+  /** Final dispatch mode for THIS teacher after percent-bucket evaluation. */
+  mode: VidyaSidecarMode;
+  /** Human-readable reason for telemetry. */
+  reason: string;
+  /** The 0-99 hash bucket on `uid`. */
+  bucket: number;
+}
+
+/**
+ * Decide whether THIS teacher's VIDYA orchestrator request routes to
+ * the sidecar.
+ *
+ * Same percent-bucket logic as `decideLessonPlanDispatch`. Bucketing
+ * on `uid` keeps the same teacher consistently on the same path so
+ * shadow-mode parity analysis sees a stable per-teacher baseline.
+ */
+export async function decideVidyaDispatch(
+  uid: string,
+): Promise<VidyaSidecarDecision> {
+  const cfg = await readConfig();
+  const bucket = userBucket(uid);
+
+  if (cfg.vidyaSidecarMode === 'off') {
+    return { mode: 'off', reason: 'flag_off', bucket };
+  }
+  if (cfg.vidyaSidecarMode === 'full') {
+    return { mode: 'full', reason: 'flag_full', bucket };
+  }
+
+  const percent = Math.max(0, Math.min(100, cfg.vidyaSidecarPercent));
+  if (bucket < percent) {
+    return {
+      mode: cfg.vidyaSidecarMode,
       reason: `bucket_${bucket}_under_${percent}`,
       bucket,
     };

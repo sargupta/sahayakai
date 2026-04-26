@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { ai } from '@/ai/genkit';
-import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
 // Keyed on: normalised_message + "::" + screen_path
 // Applied only to fresh single-turn queries (empty chat history).
-interface CacheEntry { data: any; ts: number }
+//
+// Phase 5 §5.7 wire-up: the cache stays in the route (above the dispatcher)
+// so a hit short-circuits BOTH the Genkit and sidecar paths. This keeps
+// the legacy cache contract identical while letting the dispatcher choose
+// which orchestrator brain runs on a miss.
+interface CacheEntry { data: unknown; ts: number }
 const intentCache = new Map<string, CacheEntry>();
 const L1_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -21,7 +25,7 @@ function hashKey(key: string): string {
     return crypto.createHash('md5').update(key).digest('hex');
 }
 
-function getCachedIntent(key: string): any | null {
+function getCachedIntent(key: string): unknown | null {
     const entry = intentCache.get(key);
     if (!entry) return null;
     if (Date.now() - entry.ts > L1_TTL_MS) {
@@ -31,7 +35,7 @@ function getCachedIntent(key: string): any | null {
     return entry.data;
 }
 
-function setCachedIntent(key: string, data: any): void {
+function setCachedIntent(key: string, data: unknown): void {
     // LRU-lite: evict the oldest entry when we hit 1 000 items
     if (intentCache.size >= 1000) {
         const firstKey = intentCache.keys().next().value;
@@ -42,13 +46,10 @@ function setCachedIntent(key: string, data: any): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── L2: Firestore shared cache (cross-instance, 24-hour TTL) ─────────────────
-// Collection: vidya_intent_cache/{md5(cacheKey)}
-// A cache hit here saves the full LLM round-trip (~600-2000 ms) for any teacher
-// on any server instance asking the same question within the TTL window.
 const L2_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const VIDYA_CACHE_COLLECTION = 'vidya_intent_cache';
 
-async function getFirestoreCache(hash: string): Promise<any | null> {
+async function getFirestoreCache(hash: string): Promise<unknown | null> {
     try {
         const { getDb } = await import('@/lib/firebase-admin');
         const { FieldValue } = await import('firebase-admin/firestore');
@@ -58,12 +59,10 @@ async function getFirestoreCache(hash: string): Promise<any | null> {
 
         const data = doc.data()!;
         if (data.expiresAt < Date.now()) {
-            // Expired — delete async and treat as a miss
             db.collection(VIDYA_CACHE_COLLECTION).doc(hash).delete().catch(console.warn);
             return null;
         }
 
-        // Extend TTL and increment hit counter (async, non-blocking)
         db.collection(VIDYA_CACHE_COLLECTION).doc(hash).update({
             hitCount: FieldValue.increment(1),
             expiresAt: Date.now() + L2_TTL_MS,
@@ -75,15 +74,20 @@ async function getFirestoreCache(hash: string): Promise<any | null> {
     }
 }
 
-async function setFirestoreCache(hash: string, key: string, response: any, action: any): Promise<void> {
+interface CachedAction { params?: { gradeLevel?: string; subject?: string; language?: string } }
+async function setFirestoreCache(
+    hash: string,
+    key: string,
+    response: unknown,
+    action: CachedAction | null,
+): Promise<void> {
     try {
         const { getDb } = await import('@/lib/firebase-admin');
         const db = await getDb();
         await db.collection(VIDYA_CACHE_COLLECTION).doc(hash).set({
             hash,
-            key,        // human-readable for debugging / analytics
+            key,
             response,
-            // Dimensions for analytics queries (which topics/grades are asked most)
             gradeLevel: action?.params?.gradeLevel ?? null,
             subject: action?.params?.subject ?? null,
             language: action?.params?.language ?? null,
@@ -99,13 +103,22 @@ async function setFirestoreCache(hash: string, key: string, response: any, actio
 
 async function _handler(req: Request) {
     try {
+        const userId = req.headers.get('x-user-id');
+        if (!userId) {
+            return NextResponse.json(
+                { error: 'Unauthorized: Missing User Identity' },
+                { status: 401 },
+            );
+        }
+
+        const body = await req.json();
         const {
             message,
             chatHistory = [],
             currentScreenContext = null,
             teacherProfile = null,
             detectedLanguage = null,
-        } = await req.json();
+        } = body;
 
         if (!message) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -118,124 +131,56 @@ async function _handler(req: Request) {
         const cacheHash = hashKey(cacheKey);
 
         if (isFreshQuery) {
-            // ── L1 check (in-process Map, < 0.1 ms) ──────────────────────────
             const l1Hit = getCachedIntent(cacheKey);
             if (l1Hit) return NextResponse.json(l1Hit);
 
-            // ── L2 check (Firestore, ~50-150 ms) — only on fresh queries ─────
             const l2Hit = await getFirestoreCache(cacheHash);
             if (l2Hit) {
-                setCachedIntent(cacheKey, l2Hit); // warm L1 for subsequent requests
+                setCachedIntent(cacheKey, l2Hit); // warm L1
                 return NextResponse.json(l2Hit);
             }
         }
 
-        // ── Build teacher profile context string ─────────────────────────────
-        let profileContext = '';
-        if (teacherProfile) {
-            const parts: string[] = [];
-            if (teacherProfile.preferredGrade) parts.push(`Preferred class: ${teacherProfile.preferredGrade}`);
-            if (teacherProfile.preferredSubject) parts.push(`Preferred subject: ${teacherProfile.preferredSubject}`);
-            if (teacherProfile.preferredLanguage) parts.push(`Preferred language: ${teacherProfile.preferredLanguage}`);
-            if (teacherProfile.schoolContext) parts.push(`School context: ${teacherProfile.schoolContext}`);
-            if (parts.length > 0) {
-                profileContext = `\nTeacher Profile (long-term memory):\n${parts.join('\n')}`;
-            }
-        }
-
-        // Language resolution for the assistant turn:
-        //   1. Explicit `detectedLanguage` from the client (VoiceAssistant
-        //      always sends a resolved code; omni-orb may pass null).
-        //   2. If null, fall back to the `lang` field on the most recent
-        //      user entry in chatHistory — keeps sticky language alive
-        //      across turns even when current turn has no signal (short reply).
-        //   3. If still null, soul.ts §9 precedence chain takes over (defaults to en).
-        let resolvedLanguage: string | null = detectedLanguage ?? null;
-        if (!resolvedLanguage) {
-            for (let i = chatHistory.length - 1; i >= 0; i--) {
-                const entry = chatHistory[i];
-                if (entry?.lang && typeof entry.lang === 'string') {
-                    resolvedLanguage = entry.lang;
-                    break;
-                }
-            }
-        }
-
-        const languageInstruction = resolvedLanguage
-            ? `\nResolved conversation language: "${resolvedLanguage}". You MUST respond in this language and set action.params.language to "${resolvedLanguage}" on every tool-call. Do not switch languages mid-reply unless the teacher explicitly asks.`
-            : `\nNo language signal detected yet — respond in English ("en") and set action.params.language to "en".`;
-
-        const systemPrompt = `${SAHAYAK_SOUL_PROMPT}
-
-CRITICAL CONTEXT INJECTION:
-Current User Screen path: ${currentScreenContext?.path || 'unknown'}
-Active form fields (what the teacher is currently working on): ${JSON.stringify(currentScreenContext?.uiState || {})}${profileContext}${languageInstruction}
-    `;
-
-        const { runResiliently } = await import('@/ai/genkit');
-
-        return await runResiliently(async (config) => {
-            const chatContext = chatHistory
-                .flatMap((msg: any) => {
-                    const lines: string[] = [];
-                    // Format 1: Genkit-style { role, parts }
-                    if (msg.role && msg.parts) {
-                        const text = msg.parts.map((p: any) => p.text).join('');
-                        if (text.trim()) lines.push(`${msg.role}: ${text}`);
-                    }
-                    // Format 2: VoiceAssistant { user, ai, lang? }
-                    // Prefix each turn with [lang=<code>] so the LLM can anchor
-                    // multi-turn replies to the right language even when the
-                    // current utterance is too short to re-detect.
-                    const langTag = msg.lang ? `[lang=${msg.lang}] ` : '';
-                    if (msg.user?.trim()) lines.push(`user: ${langTag}${msg.user}`);
-                    if (msg.ai?.trim()) lines.push(`ai: ${langTag}${msg.ai}`);
-                    return lines;
-                })
-                .filter(Boolean)
-                .join('\n');
-
-            const response = await ai.generate({
-                model: 'googleai/gemini-2.0-flash',
-                prompt: `System: ${systemPrompt}\n\nChat History:\n${chatContext}\n\nUser: ${message}\n\nOutput strictly the JSON response as required by the System prompt.`,
-                ...config,
-                config: {
-                    ...(config.config || {}),
-                    temperature: 0.1,
-                }
-            });
-
-            const textOutput = response.text;
-
-            let parsedResponse;
-            try {
-                const jsonMatch = textOutput.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    parsedResponse = JSON.parse(jsonMatch[0]);
-                } else {
-                    parsedResponse = JSON.parse(textOutput);
-                }
-            } catch (e) {
-                console.error("Failed to parse VIDYA JSON", textOutput);
-                return NextResponse.json(
-                    { response: "I'm sorry, my systems are currently recalibrating. Could you repeat that?", action: null },
-                    { status: 200 }
-                );
-            }
-
-            // ── Write to L1 + L2 cache (fresh queries only, async) ───────────
-            if (isFreshQuery) {
-                setCachedIntent(cacheKey, parsedResponse);
-                // L2 write is fully async — never awaited, never blocks the response
-                setFirestoreCache(cacheHash, cacheKey, parsedResponse, parsedResponse?.action);
-            }
-
-            return NextResponse.json(parsedResponse);
+        // Phase 5 §5.7 wire-up: dispatcher chooses Genkit vs sidecar
+        // based on the `vidyaSidecarMode` Firestore flag (default off).
+        // The dispatcher returns the same `{response, action}` shape the
+        // legacy route returned, plus optional sidecar telemetry that
+        // we strip before caching/responding to keep the wire shape
+        // backward-compatible.
+        const dispatched = await dispatchVidya({
+            uid: userId,
+            request: {
+                message,
+                chatHistory,
+                currentScreenContext,
+                teacherProfile,
+                detectedLanguage,
+            },
         });
 
-    } catch (error: any) {
+        const wireResponse = {
+            response: dispatched.response,
+            action: dispatched.action,
+        };
+
+        if (isFreshQuery) {
+            setCachedIntent(cacheKey, wireResponse);
+            // Async, non-blocking — never awaited.
+            void setFirestoreCache(
+                cacheHash,
+                cacheKey,
+                wireResponse,
+                dispatched.action as CachedAction | null,
+            );
+        }
+
+        return NextResponse.json(wireResponse);
+
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        // eslint-disable-next-line no-console
         console.error('[Assistant API] Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
 
