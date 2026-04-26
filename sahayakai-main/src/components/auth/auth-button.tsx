@@ -1,11 +1,8 @@
 "use client";
 
-import {
-    signInWithPopup,
-    GoogleAuthProvider,
-    signOut
-} from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/sign-in-with-google";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
@@ -38,30 +35,30 @@ export function AuthButton() {
     const { toast } = useToast();
 
     const handleSignIn = async () => {
-        const provider = new GoogleAuthProvider();
-        // Prioritize institutional accounts if possible
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
-
         try {
-            const result = await signInWithPopup(auth, provider);
+            // signInWithGoogle picks popup vs redirect by platform.
+            // On mobile/PWA/in-app browsers the page navigates away and the
+            // result is consumed in auth-context's redirect handler — that
+            // handler runs the same profile-check + onboarding redirect.
+            // On desktop the popup completes here and we run the same flow
+            // inline.
+            const result = await signInWithGoogle({
+                runProfileCheck: true,
+                source: 'auth-button',
+            });
+            if (!result) return; // mobile redirect path — page is navigating away
+
             const user = result.user;
 
-            // Prime the auth-token cookie synchronously before the first
-            // server-route call. Without this we race onIdTokenChanged and
-            // the profile-check / any server-action goes without x-user-id.
+            // Prime the auth-token cookie synchronously (popup path only)
             try {
                 const token = await user.getIdToken();
                 const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
                 document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
             } catch {
-                // Non-fatal — cookie sync hook will retry via onIdTokenChanged.
+                // onIdTokenChanged will retry.
             }
 
-            // Check if profile exists — be resilient to API errors
-            // IMPORTANT: Only redirect to onboarding on a DEFINITIVE false.
-            // A failed API call should NOT send a returning teacher to onboarding.
             let redirectToOnboarding = false;
             try {
                 const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
@@ -79,13 +76,9 @@ export function AuthButton() {
                     toast({ title: "Welcome back!", description: "You're all set!" });
                 }
             } catch {
-                // API error — don't block login with onboarding redirect
                 toast({ title: "Welcome back!", description: "Logging you in..." });
             }
 
-            // Force a server-component refresh so pages rendered while
-            // logged-out pick up the new auth state without needing a
-            // manual reload.
             if (redirectToOnboarding) {
                 router.push('/onboarding');
             } else {

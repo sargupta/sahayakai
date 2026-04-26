@@ -1,11 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
 import { syncUserAction } from '@/app/actions/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
+import { consumePendingSignIn } from '@/lib/sign-in-with-google';
 
 // Keep the auth-token cookie in sync with Firebase's token lifecycle.
 // onIdTokenChanged fires on login AND on automatic token refresh (~every 55 min),
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const router = useRouter();
 
     // Sync Firebase ID token → auth-token cookie on every token refresh
     useEffect(() => {
@@ -52,6 +55,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         });
         return () => unsubToken();
+    }, []);
+
+    // Consume pending sign-in redirect on app load. When a teacher signs in
+    // on mobile we use signInWithRedirect (popup is broken in mobile browsers
+    // and in-app webviews — it opens a new tab and the OAuth callback never
+    // returns to the original page). The redirect navigates the entire page
+    // to Google and back; on the return trip THIS hook completes the flow:
+    // syncs the auth-token cookie, runs profile-check, and routes to
+    // /onboarding for new users or returnTo for returning users.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const pending = await consumePendingSignIn();
+                if (cancelled || !pending) return;
+                const { user: signedInUser, flow } = pending;
+
+                // Sync auth-token cookie synchronously so the next server
+                // route call (profile-check) carries x-user-id.
+                try {
+                    const token = await signedInUser.getIdToken();
+                    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+                    document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+                } catch {
+                    // onIdTokenChanged will retry the cookie sync.
+                }
+
+                if (flow.runProfileCheck) {
+                    let redirectToOnboarding = false;
+                    try {
+                        const response = await fetch(`/api/auth/profile-check?uid=${signedInUser.uid}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.exists === false) {
+                                redirectToOnboarding = true;
+                            }
+                        }
+                    } catch {
+                        // API error — don't block, send to returnTo.
+                    }
+                    router.replace(redirectToOnboarding ? '/onboarding' : flow.returnTo);
+                } else {
+                    router.replace(flow.returnTo);
+                }
+            } catch (err) {
+                // Sign-in error or cancelled — leave user on the page they're
+                // already on. The auth dialog can be reopened manually.
+                console.warn('Pending sign-in could not be completed', err);
+            }
+        })();
+        return () => { cancelled = true; };
+    // Run exactly once on mount. router is stable across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

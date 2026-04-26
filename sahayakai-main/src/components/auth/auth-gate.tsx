@@ -2,8 +2,7 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-import { auth } from "@/lib/firebase";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithGoogle } from "@/lib/sign-in-with-google";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, LucideIcon } from "lucide-react";
@@ -74,10 +73,14 @@ export function AuthGate({ children, icon: Icon, title, description, signInLabel
                 </div>
                 <Button
                     onClick={async () => {
-                        const provider = new GoogleAuthProvider();
-                        provider.setCustomParameters({ prompt: "select_account" });
                         try {
-                            await signInWithPopup(auth, provider);
+                            // Picks popup vs redirect by platform.
+                            // Mobile path: page navigates away; auth-context
+                            // returns the user to the same URL after auth.
+                            await signInWithGoogle({
+                                runProfileCheck: true,
+                                source: 'auth-gate',
+                            });
                         } catch (err: any) {
                             toast({
                                 title: t("Sign-in Failed"),
