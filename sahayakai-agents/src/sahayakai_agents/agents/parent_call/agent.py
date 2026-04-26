@@ -18,7 +18,9 @@ Live, multi-tool orchestration) can plug in without reshaping this
 module. For Phase 1 the router calls Gemini directly via `google.genai`
 wrapped in `run_resiliently`, because single-turn structured output is
 simpler that way and matches the existing Genkit behaviour one-to-one.
-Both paths render the same shared Handlebars prompt through pystache.
+Both paths render the same shared Handlebars prompt through pybars3
+(switched from pystache in Round-2 audit P0 PROMPT-1 — pystache is
+Mustache-only and rejected the `{{#if}}` blocks the prompts use).
 
 Design notes:
 - `get_reply_agent_model()` / `get_summary_agent_model()` are cached per
@@ -212,9 +214,9 @@ def build_reply_context(
     turn_number: int,
     performance_summary: str | None,
 ) -> dict[str, Any]:
-    """Convert request fields into the variable shape pystache expects.
+    """Convert request fields into the variable shape pybars3 expects.
 
-    Mustache/Handlebars field names match the `reply.handlebars` template
+    Handlebars field names match the `reply.handlebars` template
     exactly. camelCase on purpose so the same template works in Node.
     """
     # Round-2 audit P1 INJECT-1 fix: every user/teacher-controlled

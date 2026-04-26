@@ -11,7 +11,8 @@ returns HTTP 502 so the Next.js circuit breaker falls back to Genkit.
 Wrong output to a real parent is worse than no output.
 
 Review trace:
-- P0 #4 shared Handlebars prompt via pystache.
+- P0 #4 shared Handlebars prompt via pybars3 (was pystache; see
+  P0 PROMPT-1 fix in `agent.py` for the migration rationale).
 - P0 #5 / #8 post-response guard + turn cap.
 - P1 #11 `run_resiliently` on every model call, max 7s total budget.
 - P1 #14 `AgentReplyCore` / `CallSummaryCore` are the model's contract;
@@ -132,7 +133,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
     Flow:
       1. Load or accept transcript.
       2. Persist the parent's turn with OCC.
-      3. Render shared prompt via pystache.
+      3. Render shared prompt via pybars3 (Handlebars).
       4. Call Gemini structured, wrapped in run_resiliently.
       5. Parse into AgentReplyCore.
       6. Apply turn-cap enforcement (shouldEndCall at turn >= 6).
