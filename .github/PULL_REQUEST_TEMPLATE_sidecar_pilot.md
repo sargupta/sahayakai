@@ -4,7 +4,7 @@
 
 Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-21 commits; 50+ files; ~3,800 insertions; 112 Python tests + 19 Jest tests passing.
+25 commits; 56+ files; ~4,500 insertions; 119 Python tests + 19 Jest tests passing.
 
 ## Commit narrative
 
@@ -44,11 +44,12 @@ Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy aut
 |---|---|
 | `1361f33f9` | `scripts/post-deploy-smoke.sh` (six-step contract verification incl. IAM + audience binding) + `scripts/hydrate-audience-secret.sh` (idempotent post-deploy `SAHAYAKAI_AGENTS_AUDIENCE` rotation with stale-version disabling) |
 
-### Track D — auto-abort safety net (1 commit)
+### Track D — auto-abort safety net + shadow-diff metric writer (2 commits)
 
 | commit | adds |
 |---|---|
 | `141cea0b8` | Cloud Function `cloud_functions/auto_abort/` — Pub/Sub trigger that demotes `parentCallSidecarMode` / `parentCallSidecarPercent` one rung down the ladder per alert. 9-rung ladder pinned by 20 unit tests. Six Cloud Monitoring alert policy YAMLs (5xx rate, p95 latency, behavioural-guard rate, shadow-diff LaBSE, Firestore 409 rate, Gemini spend) under `policy_templates/`. README documents Pub/Sub topic, IAM bindings, alert apply flow, manual-abort escape hatch, local test recipe |
+| `11e90fc7f` | Cloud Function `cloud_functions/shadow_diff_aggregator/` — HTTP trigger called by Cloud Scheduler every 5 min. Reads `agent_shadow_diffs/{date}/calls/**`, skips errored samples, computes rolling LaBSE mean over the last 500 non-error pairs, writes `custom.googleapis.com/parent_call/shadow_labse_mean` + `shadow_sample_count`. 7 unit tests pin the TF cosine math (identical-bag shortcut to avoid sqrt(2)/sqrt(2) drift). **Closes alert 04's blind spot — without this writer, the LaBSE alert never fires.** |
 
 ## Architecture decisions
 
@@ -96,11 +97,12 @@ sahayakai-agents/  (Python)
   mypy src/                                     → 16 source files, 0 errors
   mypy scripts/compare_parity.py                → 0 errors
   mypy cloud_functions/auto_abort/main.py       → 0 errors
-  pytest                                        → 112 passed (~3s)
+  pytest                                        → 119 passed (~3s)
                                                   - 49 unit
                                                   - 5 integration
                                                   - 38 behavioural (11-language matrix)
                                                   - 20 auto-abort demote (this PR)
+                                                  - 7 shadow-diff aggregator (this PR)
 
 sahayakai-main/  (TypeScript)
   tsc --noEmit          → 0 errors
@@ -128,8 +130,7 @@ This PR lands the **scaffold AND the safety net**. The 5-track rollout to 100 % 
 ## Out of scope for this PR
 
 - Actually running `gcloud builds submit` (Track C is the AUTOMATION; the deploy itself is human-gated)
-- Shadow-diff aggregation Cloud Function — the rolling LaBSE-mean metric the auto-abort key 4 keys off is written by a separate Cloud Function still TBD
-- Phase 2 voice via Gemini Live (separate plan, separate branch)
+- Phase 2 voice via Gemini Live, Phase 3 writer-evaluator-reviser, Phase 4 RAG over NCERT — three separate plans landed in `.claude/plans/phase-{2,3,4}-*.md`. Each one branches off this base.
 
 ## Risks called out
 
