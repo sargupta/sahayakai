@@ -170,6 +170,12 @@ export async function addStudentAction(classId: string, data: {
     if (countSnap.data().count >= 40) throw new Error('Maximum 40 students per class');
 
     if (!data.name.trim()) throw new Error('Student name is required');
+    if (data.name.length > 80) throw new Error('Student name too long (max 80 chars)');
+    // Wave 3: tighten roll number validation. Without isInteger, JS coerces
+    // 41.5 / 0.99 / "1abc" through to satisfy the range check.
+    if (typeof data.rollNumber !== 'number' || !Number.isInteger(data.rollNumber)) {
+        throw new Error('Roll number must be an integer');
+    }
     if (data.rollNumber < 1 || data.rollNumber > 40) throw new Error('Roll number must be 1–40');
 
     const phone = normalizeToE164(data.parentPhone);

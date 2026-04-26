@@ -201,9 +201,27 @@ describe('messages server actions', () => {
         it('sends audio message with url', async () => {
             const result = await sendMessageAction({
                 conversationId: 'conv-1', text: '', type: 'audio',
-                audioUrl: 'https://storage.example.com/voice.webm', audioDuration: 5,
+                // Wave 3 added validation requiring Firebase Storage host
+                audioUrl: 'https://firebasestorage.googleapis.com/v0/b/x/o/voice.webm',
+                audioDuration: 5,
             });
             expect(result.messageId).toBeDefined();
+        });
+
+        it('rejects audio URL from a non-Storage host (Wave 3)', async () => {
+            await expect(sendMessageAction({
+                conversationId: 'conv-1', text: '', type: 'audio',
+                audioUrl: 'https://attacker.example.com/payload.mp3',
+                audioDuration: 5,
+            })).rejects.toThrow(/Firebase Storage/i);
+        });
+
+        it('rejects audio duration outside 0-600s (Wave 3)', async () => {
+            await expect(sendMessageAction({
+                conversationId: 'conv-1', text: '', type: 'audio',
+                audioUrl: 'https://firebasestorage.googleapis.com/v0/b/x/o/voice.webm',
+                audioDuration: 9999,
+            })).rejects.toThrow(/duration/i);
         });
 
         it('rejects when conversation not found', async () => {

@@ -22,6 +22,27 @@ export async function getProfilesAction(uids: string[]) {
  */
 export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string) {
     const userId = await requireAuth();
+
+    // Wave 3: input validation. Without these caps a client could POST a
+    // 50 MB string into Firestore (rejected at storage-write time, but the
+    // server still spends bandwidth + CPU before that). imageUrl validation
+    // also prevents data:URI exploits and SSRF via attacker-chosen host.
+    if (typeof content !== 'string') throw new Error('Content must be a string');
+    if (!content.trim()) throw new Error('Content cannot be empty');
+    if (content.length > 5000) throw new Error('Content too long (max 5000 chars)');
+    if (visibility !== 'public' && visibility !== 'connections') {
+        throw new Error('Invalid visibility');
+    }
+    if (imageUrl !== undefined) {
+        if (typeof imageUrl !== 'string') throw new Error('imageUrl must be a string');
+        if (imageUrl.length > 2048) throw new Error('imageUrl too long');
+        if (!imageUrl.startsWith('https://firebasestorage.googleapis.com/') &&
+            !imageUrl.startsWith('https://storage.googleapis.com/') &&
+            !imageUrl.startsWith('https://lh3.googleusercontent.com/')) {
+            throw new Error('imageUrl must point to a trusted Storage host');
+        }
+    }
+
     const db = await getDb();
 
     const postData: any = {
