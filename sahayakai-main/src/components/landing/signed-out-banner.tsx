@@ -7,6 +7,16 @@ import { useLanguage } from "@/context/language-context";
 const STORAGE_KEY = "sahayakai:justSignedOut";
 const AUTO_DISMISS_MS = 10_000;
 
+// Wave 4: sessionStorage can throw in Safari private mode and inside iframes
+// with restricted Storage APIs. Wrap reads/writes so the banner degrades to
+// "no notice" instead of crashing the page.
+function safeStorageGet(key: string): string | null {
+    try { return window.sessionStorage.getItem(key); } catch { return null; }
+}
+function safeStorageRemove(key: string): void {
+    try { window.sessionStorage.removeItem(key); } catch { /* private mode */ }
+}
+
 /**
  * Thin banner pinned above the landing nav when a teacher has just signed out.
  *
@@ -30,7 +40,7 @@ export function SignedOutBanner() {
 
     const params = new URLSearchParams(window.location.search);
     const queryName = params.get("signedOut");
-    const storedName = window.sessionStorage.getItem(STORAGE_KEY);
+    const storedName = safeStorageGet(STORAGE_KEY);
 
     const resolvedName = queryName ?? storedName;
     if (!resolvedName) return;
@@ -40,7 +50,7 @@ export function SignedOutBanner() {
 
     const timer = window.setTimeout(() => {
       setVisible(false);
-      window.sessionStorage.removeItem(STORAGE_KEY);
+      safeStorageRemove(STORAGE_KEY);
     }, AUTO_DISMISS_MS);
 
     return () => window.clearTimeout(timer);
@@ -49,7 +59,7 @@ export function SignedOutBanner() {
   const dismiss = () => {
     setVisible(false);
     if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem(STORAGE_KEY);
+      safeStorageRemove(STORAGE_KEY);
     }
   };
 
