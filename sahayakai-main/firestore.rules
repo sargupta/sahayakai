@@ -18,6 +18,12 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Check if caller is a member of the given group (via members subcollection)
+    function isGroupMember(groupId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
     // =============================================
     // EXISTING COLLECTIONS
     // =============================================
@@ -106,6 +112,79 @@ service cloud.firestore {
       allow delete: if isSignedIn()
         && request.auth.uid in resource.data.uids;
       allow update: if false;
+    }
+
+    // =============================================
+    // COMMUNITY: GROUPS, POSTS, LIBRARY
+    // =============================================
+    // All writes flow through server actions (Admin SDK, bypassing these rules).
+    // Client reads are gated to authenticated members of the relevant group.
+
+    // --- Groups (metadata) ---
+    // Anyone signed in can read group metadata (name, description, member count) —
+    // needed for the Discover Groups surface. Only members can read posts/chat
+    // inside the group (see nested matches below). All writes go through server.
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+
+      // --- Group Posts ---
+      // Read: members only. Write: server-only (createGroupPostAction uses Admin SDK).
+      match /posts/{postId} {
+        allow read: if isGroupMember(groupId);
+        allow write: if false;
+
+        // Likes subcollection: owner-only read/write
+        match /likes/{likerId} {
+          allow read, write: if isOwner(likerId) && isGroupMember(groupId);
+        }
+      }
+
+      // --- Group Members ---
+      // Read: any member can see the membership list. Write: server-only
+      // (joinGroupAction / leaveGroupAction use Admin SDK).
+      match /members/{memberId} {
+        allow read: if isGroupMember(groupId);
+        allow write: if false;
+      }
+
+      // --- Group Chat (real-time messages) ---
+      // Read + create: members only. Update/delete: server-only.
+      match /chat/{messageId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.authorId == request.auth.uid
+          && (request.resource.data.text.size() <= 500 || request.resource.data.audioUrl is string);
+        allow update, delete: if false;
+      }
+    }
+
+    // --- Public Community Posts (top-level `posts` collection) ---
+    // The community feed reads here. Authenticated users can read; writes flow
+    // through createPostAction (Admin SDK).
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+
+      match /likes/{likerId} {
+        allow read, write: if isOwner(likerId);
+      }
+    }
+
+    // --- Community Library Resources ---
+    // Public for signed-in users (community discovery). Writes via
+    // publishContentToLibraryAction / scheduled jobs (Admin SDK).
+    match /library_resources/{resourceId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+
+      // Likes / Saves subcollections — owner-only
+      match /likes/{likerId} {
+        allow read, write: if isOwner(likerId);
+      }
+      match /saves/{saverId} {
+        allow read, write: if isOwner(saverId);
+      }
     }
 
     // =============================================

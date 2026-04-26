@@ -6,12 +6,20 @@ import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
 import { aggregateUserMetrics } from "./aggregator";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth-helpers";
+import { checkServerRateLimit } from "@/lib/server-safety";
 
 export async function getProfilesAction(uids: string[]) {
+    await requireAuth();
     return await dbAdapter.getUsers(uids);
 }
 
-export async function createPostAction(userId: string, content: string, visibility: string = 'public', imageUrl?: string) {
+/**
+ * Create a public post. Author is derived from the authenticated session —
+ * the client cannot impersonate other users.
+ */
+export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string) {
+    const userId = await requireAuth();
     const db = await getDb();
 
     const postData: any = {
@@ -49,7 +57,8 @@ export async function createPostAction(userId: string, content: string, visibili
     return docRef.id;
 }
 
-export async function toggleLikeAction(postId: string, userId: string) {
+export async function toggleLikeAction(postId: string) {
+    const userId = await requireAuth();
     const db = await getDb();
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
@@ -74,6 +83,7 @@ export async function toggleLikeAction(postId: string, userId: string) {
 }
 
 export async function getPosts(filters: { language?: string, limit?: number, gradeLevels?: string[], subjects?: string[] } = {}) {
+    await requireAuth();
     const db = await getDb();
     let query = db.collection('posts').orderBy('createdAt', 'desc');
 
@@ -98,7 +108,8 @@ export async function getPosts(filters: { language?: string, limit?: number, gra
 
 import { createNotification } from "./notifications";
 
-export async function followTeacherAction(followerId: string, followingId: string) {
+export async function followTeacherAction(followingId: string) {
+    const followerId = await requireAuth();
     const db = await getDb();
     const connectionId = `${followerId}_${followingId}`;
     const connectionRef = db.collection('connections').doc(connectionId);
@@ -135,7 +146,8 @@ export async function followTeacherAction(followerId: string, followingId: strin
     revalidatePath("/community");
 }
 
-export async function getFollowingIdsAction(followerId: string) {
+export async function getFollowingIdsAction() {
+    const followerId = await requireAuth();
     const db = await getDb();
     const snapshot = await db.collection('connections')
         .where('followerId', '==', followerId)
@@ -143,7 +155,8 @@ export async function getFollowingIdsAction(followerId: string) {
     return snapshot.docs.map(doc => doc.data().followingId);
 }
 
-export async function getFollowingPosts(followerId: string) {
+export async function getFollowingPosts() {
+    const followerId = await requireAuth();
     const db = await getDb();
 
     // 1. Get list of following IDs
@@ -166,6 +179,7 @@ export async function getFollowingPosts(followerId: string) {
 }
 
 export async function getLibraryResources(filters: { type?: string, language?: string, authorId?: string, authorIds?: string[], excludeTypes?: string[] } = {}) {
+    await requireAuth();
     const db = await getDb();
     let query: any = db.collection('library_resources');
 
@@ -208,6 +222,7 @@ export async function getLibraryResources(filters: { type?: string, language?: s
 }
 
 export async function trackDownloadAction(resourceId: string) {
+    await requireAuth();
     const db = await getDb();
     const ref = db.collection('library_resources').doc(resourceId);
 
@@ -226,13 +241,22 @@ export async function trackDownloadAction(resourceId: string) {
     });
 }
 
-export async function getRecommendedTeachersAction(userId: string) {
+export async function getRecommendedTeachersAction(userId?: string) {
+    // Authz: derive uid from session — ignore client-supplied parameter to prevent
+    // a caller from scraping recommendations for arbitrary users. The optional
+    // `userId` arg is preserved for backward-compat at call sites; it is checked
+    // against the session and rejected if it doesn't match.
+    const callerId = await requireAuth();
+    if (userId && userId !== callerId) {
+        throw new Error('Forbidden: cannot fetch recommendations for another user');
+    }
+    const subjectId = callerId;
     const db = await getDb();
 
     // 1. Get current user profile and following list
     const [userDoc, followingIds] = await Promise.all([
-        db.collection('users').doc(userId).get(),
-        getFollowingIdsAction(userId)
+        db.collection('users').doc(subjectId).get(),
+        getFollowingIdsAction()
     ]);
 
     if (!userDoc.exists) return [];
@@ -244,7 +268,7 @@ export async function getRecommendedTeachersAction(userId: string) {
     const userDistrict = currentUser.district || '';
 
     // 2. Fetch all teachers (excluding self and already followed)
-    const excludeIds = [userId, ...followingIds];
+    const excludeIds = [subjectId, ...followingIds];
 
     // Note: Firestore 'not-in' is limited to 10 items. For a robust system, 
     // we would use a search engine (Algolia) or client-side filtering + batching.
@@ -318,18 +342,27 @@ export async function getRecommendedTeachersAction(userId: string) {
 }
 
 export async function getAllTeachersAction(currentUserId?: string) {
+    // Authz + rate limit. Without these, this action exposed an unauthenticated
+    // PII dump of every user in the directory (name, school, subjects, photoURL).
+    // The optional `currentUserId` parameter is preserved for backward compat
+    // but the actual self-exclusion uses the session uid.
+    const callerId = await requireAuth();
+    await checkServerRateLimit(callerId);
+    const selfUid = currentUserId ?? callerId;
+
     const db = await getDb();
 
     // orderBy('displayName') silently excludes users whose displayName field is missing
     // (Firestore behaviour). Orphan users wouldn't appear in the directory at all.
     // Use createdAt as the sort key so every user doc is considered, then sort in memory.
+    // Limit dropped from 500 → 100 to bound the per-call response size.
     const snapshot = await db.collection('users')
-        .limit(500)
+        .limit(100)
         .get();
 
     const teachers = snapshot.docs
         .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-        .filter(teacher => teacher.uid !== currentUserId);
+        .filter(teacher => teacher.uid !== selfUid);
 
     const sanitized = teachers.map(t => {
         // Fallback chain so teachers with partial profiles still surface in the directory.
@@ -376,8 +409,13 @@ export async function getAllTeachersAction(currentUserId?: string) {
  */
 export async function likeResourceAction(
     resourceId: string,
-    userId: string,
+    _userId?: string,
 ): Promise<{ isLiked: boolean; newCount: number }> {
+    // Derive uid from session — never trust client-supplied identity.
+    // The legacy `_userId` parameter is preserved for one release so existing
+    // call sites compile; it is intentionally ignored.
+    const userId = await requireAuth();
+    void _userId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -457,8 +495,11 @@ export async function saveResourceToLibraryAction(
         gradeLevel?: string;
         subject?: string;
     },
-    saverId: string,
+    _saverId?: string,
 ): Promise<{ alreadySaved: boolean }> {
+    // Derive saver from session. Legacy `_saverId` parameter is ignored.
+    const saverId = await requireAuth();
+    void _saverId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -548,8 +589,13 @@ export async function saveResourceToLibraryAction(
  */
 export async function publishContentToLibraryAction(
     contentId: string,
-    userId: string,
+    _userId?: string,
 ): Promise<{ resourceId: string }> {
+    // Derive author from session. A user can only publish their own content
+    // — the dbAdapter.getContent call below scopes by uid, so a spoofed userId
+    // would fail with "Content not found" rather than mis-publishing.
+    const userId = await requireAuth();
+    void _userId;
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -622,10 +668,7 @@ export async function publishContentToLibraryAction(
  * Finds the latest content doc by type, then delegates to publishContentToLibraryAction.
  */
 export async function shareLatestContentAction(contentType: string): Promise<{ resourceId: string }> {
-    const { headers } = await import("next/headers");
-    const h = await headers();
-    const userId = h.get("x-user-id");
-    if (!userId) throw new Error("Unauthorized");
+    const userId = await requireAuth();
 
     // Find the user's most recent content of this type
     const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
@@ -634,23 +677,19 @@ export async function shareLatestContentAction(contentType: string): Promise<{ r
     const latestContent = items[0];
     if (latestContent.isPublic) throw new Error('This content is already shared.');
 
-    return publishContentToLibraryAction(latestContent.id, userId);
+    return publishContentToLibraryAction(latestContent.id);
 }
 
 export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // 1. Authenticate via middleware-injected header — never trust client-supplied identity
-    const { headers } = await import("next/headers");
-    const h = await headers();
-    const authorId = h.get("x-user-id");
-    if (!authorId) throw new Error("Unauthorized");
+    const authorId = await requireAuth();
 
     // 2. Validate input
     const trimmed = text?.trim();
     if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
     if (trimmed && trimmed.length > 500) throw new Error("Message too long");
 
-    // 3. Rate limit
-    const { checkServerRateLimit } = await import("@/lib/server-safety");
+    // 3. Rate limit (already imported at top of file)
     await checkServerRateLimit(authorId);
 
     // 4. Fetch author profile from server — never trust client-supplied name/photo
