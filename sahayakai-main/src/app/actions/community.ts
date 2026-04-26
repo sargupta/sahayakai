@@ -62,23 +62,28 @@ export async function createPostAction(content: string, visibility: string = 'pu
 export async function toggleLikeAction(postId: string) {
     const userId = await requireAuth();
     const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
 
     const likeDoc = await likeRef.get();
 
+    // Wave 2b: replaced read-modify-write with FieldValue.increment so two
+    // concurrent toggles can't read the same value, both write +1, and lose
+    // a count. The likeRef.get is only used to decide direction — the actual
+    // counter mutation is now atomic at the Firestore level.
     if (likeDoc.exists) {
         // Unlike
-        await likeRef.delete();
-        await postRef.update({
-            likesCount: (await postRef.get()).data()?.likesCount - 1
-        });
+        await Promise.all([
+            likeRef.delete(),
+            postRef.update({ likesCount: FieldValue.increment(-1) }),
+        ]);
     } else {
         // Like
-        await likeRef.set({ createdAt: new Date().toISOString() });
-        await postRef.update({
-            likesCount: ((await postRef.get()).data()?.likesCount || 0) + 1
-        });
+        await Promise.all([
+            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
+            postRef.update({ likesCount: FieldValue.increment(1) }),
+        ]);
     }
 
     revalidatePath("/community");

@@ -37,6 +37,9 @@ function makeMockDb() {
     const collection = (colName: string) => ({
         doc: (id: string) => ({
             id,
+            // Store path info on the ref so transaction stubs can route writes.
+            __colPath: colName,
+            __docId: id,
             get: jest.fn(async () => {
                 const data = getCol(colName)[id];
                 return { exists: !!data, data: () => data, id };
@@ -70,15 +73,33 @@ function makeMockDb() {
 
     return {
         collection,
+        // Wave 2b enhancement: transaction stubs now mirror writes into the
+        // in-memory store so existing assertions on store state still work
+        // after server actions migrated from sequential writes to transactions.
         runTransaction: jest.fn(async (fn: any) => {
             const tx = {
                 get: jest.fn(async (ref: any) => {
-                    const data = getCol('groups')[ref.id];
+                    const colPath = ref.__colPath;
+                    const data = colPath ? getCol(colPath)[ref.__docId] : undefined;
                     return { exists: !!data, data: () => data };
                 }),
-                set: jest.fn(),
-                update: jest.fn(),
-                delete: jest.fn(),
+                set: jest.fn((ref: any, data: any) => {
+                    const colPath = ref.__colPath;
+                    if (colPath) {
+                        getCol(colPath)[ref.__docId] = data;
+                        createCalls.push({ path: colPath, docId: ref.__docId, data });
+                    }
+                }),
+                update: jest.fn((ref: any, data: any) => {
+                    const colPath = ref.__colPath;
+                    if (colPath) {
+                        getCol(colPath)[ref.__docId] = { ...getCol(colPath)[ref.__docId], ...data };
+                    }
+                }),
+                delete: jest.fn((ref: any) => {
+                    const colPath = ref.__colPath;
+                    if (colPath) delete getCol(colPath)[ref.__docId];
+                }),
             };
             await fn(tx);
             return tx;

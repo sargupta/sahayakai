@@ -185,7 +185,10 @@ export async function saveToLibrary(_userId: string, type: ContentType, title: s
         return { success: true, id: contentId };
     } catch (error: any) {
         logger.error("Failed to save to library", error, 'STORAGE', { userId, type, title });
-        return { success: false, error: error.message };
+        // Wave 2b: don't leak Firebase/Storage internals to the client. The
+        // raw error.message can contain bucket names, Secret-Manager paths,
+        // or gRPC codes that are useful to an attacker.
+        return { success: false, error: 'Failed to save. Please try again.' };
     }
 }
 
@@ -267,7 +270,8 @@ export async function recordPdfDownload(_userId: string, title: string, base64Da
             return { success: true, path: filePath };
         } catch (error: any) {
             logger.error(`Failed to record PDF download`, error, 'STORAGE', { title, type });
-            return { success: false, error: error.message };
+            // Wave 2b: scrub error.message before sending to the client.
+            return { success: false, error: 'Failed to record PDF download.' };
         }
     });
 }
