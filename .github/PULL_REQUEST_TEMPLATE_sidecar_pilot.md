@@ -1,10 +1,10 @@
-# Parent-call ADK Python sidecar — pilot scaffold + Day-1 audit fixes
+# Parent-call ADK Python sidecar — pilot scaffold + Day-1 audit fixes + Tracks C/D
 
 ## Summary
 
-Lands the full Track A (Next.js integration) + Track B (sidecar polish) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
+Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-15 commits; 31 files; 2,256 insertions, 220 deletions; 92 Python tests + 19 Jest tests passing.
+21 commits; 50+ files; ~3,800 insertions; 112 Python tests + 19 Jest tests passing.
 
 ## Commit narrative
 
@@ -30,12 +30,25 @@ Lands the full Track A (Next.js integration) + Track B (sidecar polish) scaffold
 | `50daa2b7f` | A6: `record-parent-call-fixtures.ts` — records 22 fixtures across 11 languages |
 | `8d9645cbb` | Dispatcher unit test: 19 cases covering off / shadow / canary / full × {sidecar OK, transport err, behavioural err} |
 
-### Track B — sidecar polish (2 commits)
+### Track B — sidecar polish (3 commits)
 
 | commit | adds |
 |---|---|
-| `6c969169c` | Real `compare_parity.py` — `httpx.AsyncClient(ASGITransport)` replay + tier-1 TF cosine + tier-2/3 stubs |
+| `6c969169c` | Real `compare_parity.py` v1 — `httpx.AsyncClient(ASGITransport)` replay + tier-1 TF cosine + tier-2/3 stubs |
+| `6902e9725` | `compare_parity.py` v2 — tier 2 (IndicSBERT cosine via sentence-transformers) + tier 3 (Gemini-2.5-Pro LLM-as-judge over 6-axis rubric) + two-phase replay/score refactor |
 | `293807f86` | CI gates: blocking mypy + behavioural test selector + parity smoke + develop branch trigger |
+
+### Track C — deploy automation (1 commit)
+
+| commit | adds |
+|---|---|
+| `1361f33f9` | `scripts/post-deploy-smoke.sh` (six-step contract verification incl. IAM + audience binding) + `scripts/hydrate-audience-secret.sh` (idempotent post-deploy `SAHAYAKAI_AGENTS_AUDIENCE` rotation with stale-version disabling) |
+
+### Track D — auto-abort safety net (1 commit)
+
+| commit | adds |
+|---|---|
+| `141cea0b8` | Cloud Function `cloud_functions/auto_abort/` — Pub/Sub trigger that demotes `parentCallSidecarMode` / `parentCallSidecarPercent` one rung down the ladder per alert. 9-rung ladder pinned by 20 unit tests. Six Cloud Monitoring alert policy YAMLs (5xx rate, p95 latency, behavioural-guard rate, shadow-diff LaBSE, Firestore 409 rate, Gemini spend) under `policy_templates/`. README documents Pub/Sub topic, IAM bindings, alert apply flow, manual-abort escape hatch, local test recipe |
 
 ## Architecture decisions
 
@@ -59,17 +72,35 @@ The ID token authenticates the **caller** but does not bind to the body. `SAHAYA
 
 Sidecar has 8s `timeoutSeconds` on Cloud Run; Twilio gives 15s end-to-end including STT and TTS. 3.5s leaves ~5s for TTS speak budget plus the sidecar's resilient backoff. Timing out client-side prevents a slow sidecar from blowing the whole TwiML window.
 
+### Auto-abort demotion ladder
+
+| Current state           | Demotes to              |
+|-------------------------|-------------------------|
+| `full / 100%`           | `canary / 100%`         |
+| `canary / 100%`         | `canary / 50%`          |
+| `canary / 50%`          | `canary / 25%`          |
+| `canary / 25%`          | `canary / 5%`           |
+| `canary / 5%`           | `shadow / 25%`          |
+| `shadow / 25%`          | `shadow / 5%`           |
+| `shadow / 5%`           | `shadow / 1%`           |
+| `shadow / 1%`           | `off / 0%`              |
+| `off / 0%`              | `off / 0%` (no-op)      |
+
+One step per fire — never more. Pinned by `cloud_functions/auto_abort/test_demote.py` (20 tests).
+
 ## Test evidence
 
 ```
 sahayakai-agents/  (Python)
-  ruff check .          → All checks passed!
-  mypy src/             → 16 source files, 0 errors
-  mypy scripts/         → 1 source file, 0 errors
-  pytest                → 92 passed (4.79s)
-                          - 49 unit
-                          - 5 integration
-                          - 38 behavioural (11-language matrix)
+  ruff check src tests scripts cloud_functions  → All checks passed!
+  mypy src/                                     → 16 source files, 0 errors
+  mypy scripts/compare_parity.py                → 0 errors
+  mypy cloud_functions/auto_abort/main.py       → 0 errors
+  pytest                                        → 112 passed (~3s)
+                                                  - 49 unit
+                                                  - 5 integration
+                                                  - 38 behavioural (11-language matrix)
+                                                  - 20 auto-abort demote (this PR)
 
 sahayakai-main/  (TypeScript)
   tsc --noEmit          → 0 errors
@@ -79,11 +110,11 @@ sahayakai-main/  (TypeScript)
 
 ## Rollout plan (post-merge)
 
-This PR lands the **scaffold**. The 5-track rollout to 100 % traffic is documented in [`.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md`](.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md). Headlines:
+This PR lands the **scaffold AND the safety net**. The 5-track rollout to 100 % traffic is documented in [`.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md`](.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md). Headlines:
 
-1. **Pre-work (human, blocking C):** create `sahayakai-agents-runtime` SA + IAM bindings, populate `SAHAYAKAI_REQUEST_SIGNING_KEY` and `GOOGLE_GENAI_SHADOW_API_KEY` in Secret Manager, add Firestore rules + TTL for `agent_sessions/{callSid}` and `agent_shadow_diffs/{date}/calls/**`.
-2. **Track C — first deploy:** `cd sahayakai-agents && gcloud builds submit --config=deploy/cloudbuild.yaml`. Smoke test `/healthz`, `/readyz`, `/.well-known/agent.json`. Hydrate `SAHAYAKAI_AGENTS_AUDIENCE` post-deploy.
-3. **Track D — shadow ramp (7 days):** flag = `shadow@1% → 5% → 25% → 50%`, one step / 1-2 days. Auto-abort wired on 5xx rate, p95 latency, behavioural-guard rate, parity LaBSE drop, Firestore 409 rate, Gemini cost overshoot.
+1. **Pre-work (human, blocking C):** create `sahayakai-agents-runtime` SA + `sahayakai-auto-abort-runtime` SA + IAM bindings, populate `SAHAYAKAI_REQUEST_SIGNING_KEY` and `GOOGLE_GENAI_SHADOW_API_KEY` in Secret Manager, add Firestore rules + TTL for `agent_sessions/{callSid}` and `agent_shadow_diffs/{date}/calls/**`, create the `parent-call-auto-abort` Pub/Sub topic.
+2. **Track C — first deploy:** `cd sahayakai-agents && gcloud builds submit --config=deploy/cloudbuild.yaml`. Run `bash scripts/post-deploy-smoke.sh` — six checks including IAM-protected POST and audience-binding verification. Run `bash scripts/hydrate-audience-secret.sh` to write the resolved Cloud Run URL into Secret Manager. Both scripts are idempotent.
+3. **Track D — auto-abort first, then shadow ramp (7 days):** Deploy `cloud_functions/auto_abort/` BEFORE flipping the flag — apply the six policy YAMLs from `policy_templates/`, then flip `parentCallSidecarMode` to `shadow@1% → 5% → 25% → 50%`, one step / 1-2 days. Auto-abort wired on 5xx rate, p95 latency, behavioural-guard rate, parity LaBSE drop, Firestore 409 rate, Gemini cost overshoot.
 4. **Track E — canary → cutover (7 days):** `canary@5% → 25% → 50% → full`. Hold 100 % for 48h before any dead-code removal.
 
 ## Pre-merge checklist for reviewers
@@ -96,10 +127,9 @@ This PR lands the **scaffold**. The 5-track rollout to 100 % traffic is document
 
 ## Out of scope for this PR
 
-- Track C deploy (separate branch `feature/sahayakai-agents-deploy`)
-- IndicSBERT + Gemini-2.5-Pro LLM-judge tiers in `compare_parity.py` — stubs in place; wired before any Track D ramp step-up beyond 5%
+- Actually running `gcloud builds submit` (Track C is the AUTOMATION; the deploy itself is human-gated)
+- Shadow-diff aggregation Cloud Function — the rolling LaBSE-mean metric the auto-abort key 4 keys off is written by a separate Cloud Function still TBD
 - Phase 2 voice via Gemini Live (separate plan, separate branch)
-- Shadow-diff aggregation Cloud Function (Track D infrastructure)
 
 ## Risks called out
 
