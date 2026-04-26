@@ -190,6 +190,172 @@ gcloud firestore documents patch system_config/feature_flags \
 Each script is idempotent — re-running on a partially-applied state
 resumes from where it left off.
 
+## Track C — First Deploy Pre-Work
+
+The IAM and Secret Manager foundation that Track C (first sidecar
+deploy) depends on. Run this **once** before `gcloud builds submit`.
+The full execution plan items 1–3 (service accounts + roles + secrets)
+collapse to a single idempotent script.
+
+### Run
+
+```bash
+gcloud auth login            # as a user with the roles below
+gcloud config set project sahayakai-b4248
+bash sahayakai-agents/scripts/track-c-prework.sh
+```
+
+The script asks the operator for one input — the `GOOGLE_GENAI_SHADOW_API_KEY`
+value (a Gemini API key disjoint from the live pool, minted from
+[Google AI Studio](https://aistudio.google.com/apikey)). Input is hidden
+during paste. Re-running the script after a successful first run skips
+the prompt because an enabled version already exists.
+
+Required caller roles (your own user account, not the SAs being
+created):
+
+- `roles/iam.serviceAccountAdmin`
+- `roles/iam.securityAdmin`
+- `roles/secretmanager.admin`
+
+### What it does — one line per step
+
+1. **Service accounts** — creates `sahayakai-agents-runtime` (sidecar)
+   and `sahayakai-hotfix-resilience-runtime` (Next.js).
+2. **Secret containers** — creates `SAHAYAKAI_REQUEST_SIGNING_KEY`,
+   `SAHAYAKAI_AGENTS_AUDIENCE`, `GOOGLE_GENAI_SHADOW_API_KEY`. Skips
+   `GOOGLE_GENAI_API_KEY` (live key — owned by the Next.js app).
+3. **Signing key** — generates `openssl rand -base64 32` (256-bit) and
+   writes the first version, only if no enabled version exists.
+4. **Audience placeholder** — writes the literal string `pending-deploy`
+   as the first version of `SAHAYAKAI_AGENTS_AUDIENCE`. Operator
+   overwrites it via `hydrate-audience-secret.sh` after the first
+   Cloud Run deploy resolves the real URL.
+5. **Shadow Gemini key** — operator pastes once; stored as version 1.
+6. **Sidecar SA IAM** — per-secret `roles/secretmanager.secretAccessor`
+   on all four secrets, plus project-level `roles/datastore.user`,
+   `roles/cloudtrace.agent`, `roles/logging.logWriter`.
+7. **Next.js SA IAM** — `roles/secretmanager.secretAccessor` on
+   `SAHAYAKAI_REQUEST_SIGNING_KEY` only. The `roles/run.invoker`
+   binding on the sidecar service is handled separately by
+   `grant-nextjs-invoker.sh` *after* first deploy.
+8. **Verification** — prints SAs, secrets, secret versions, per-secret
+   IAM bindings, and the sidecar service IAM (empty until first deploy).
+   Each block has a `===` header.
+
+### Why each piece matters
+
+- **Two service accounts, not one.** The sidecar's `roles/run.invoker`
+  binding must enumerate the *exact* identity allowed to call it. If
+  Next.js runs as the default Compute SA, every Cloud Function in the
+  project (including unrelated workloads) would qualify. A dedicated
+  `sahayakai-hotfix-resilience-runtime` SA tightens the policy to one
+  caller.
+- **Per-secret accessor (not project-wide).** A project-level
+  `roles/secretmanager.secretAccessor` grant gives a single runtime
+  read access to **every** secret in the project — including secrets
+  belonging to unrelated services. Per-secret bindings limit the blast
+  radius of a leaked token.
+- **Disjoint shadow Gemini key.** Shadow-mode traffic doubles the
+  request volume against Gemini for the duration of the ramp. If the
+  shadow key is the same as the live key, you double-count quota and
+  the auto-abort spend alert (`> 2× projected daily budget`) trips on
+  the very first ramp step.
+- **Separate HMAC signing key.** The body-digest header
+  `X-Content-Digest: sha256=<base64>` is the wire-level integrity check
+  between Next.js and the sidecar. A separate symmetric key (not
+  reused as the Gemini key, not reused as a JWT secret) means a leak
+  on either path is detectable independently — the sidecar logs an
+  `auth.signature_mismatch` event the moment a forged request lands.
+- **Audience placeholder.** Cloud Run assigns service URLs only after
+  the first deploy. Writing `pending-deploy` lets us bind the sidecar
+  SA as accessor right now (the Cloud Run deploy will fail to fetch
+  the env var if the secret has zero versions). The operator
+  overwrites it with the real URL via `hydrate-audience-secret.sh` in
+  the next step.
+
+### Manual verification if the script fails partway
+
+Each `gcloud ... describe` is the inverse check for the corresponding
+create. Run the relevant one to see whether the resource is in place,
+then resume by re-running the script (idempotent — already-existing
+resources are skipped).
+
+```bash
+# Service accounts
+gcloud iam service-accounts describe sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
+gcloud iam service-accounts describe sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+
+# Secret containers
+gcloud secrets describe SAHAYAKAI_REQUEST_SIGNING_KEY      --project=sahayakai-b4248
+gcloud secrets describe SAHAYAKAI_AGENTS_AUDIENCE          --project=sahayakai-b4248
+gcloud secrets describe GOOGLE_GENAI_SHADOW_API_KEY        --project=sahayakai-b4248
+
+# Secret versions (look for at least one ENABLED row)
+gcloud secrets versions list SAHAYAKAI_REQUEST_SIGNING_KEY --project=sahayakai-b4248
+gcloud secrets versions list SAHAYAKAI_AGENTS_AUDIENCE     --project=sahayakai-b4248
+gcloud secrets versions list GOOGLE_GENAI_SHADOW_API_KEY   --project=sahayakai-b4248
+
+# Per-secret IAM
+gcloud secrets get-iam-policy SAHAYAKAI_REQUEST_SIGNING_KEY --project=sahayakai-b4248
+
+# Project IAM (filter to the two new SAs)
+gcloud projects get-iam-policy sahayakai-b4248 \
+  --flatten="bindings[].members" \
+  --filter="bindings.members~'(sahayakai-agents-runtime|sahayakai-hotfix-resilience-runtime)@'" \
+  --format='table(bindings.role,bindings.members)'
+```
+
+### Verifying shadow key is disjoint from live key
+
+After step 5, prove the shadow key does not collide with the live key:
+
+```bash
+diff <(gcloud secrets versions access latest --secret=GOOGLE_GENAI_API_KEY        --project=sahayakai-b4248) \
+     <(gcloud secrets versions access latest --secret=GOOGLE_GENAI_SHADOW_API_KEY --project=sahayakai-b4248)
+# Expected: a non-empty diff. An empty diff means shared keys → ABORT and re-mint.
+```
+
+### Rollback per step
+
+If you need to undo individual steps (rare — most failures are transient
+gcloud quota timeouts and a re-run resumes cleanly):
+
+```bash
+# Roll back service accounts (also drops their IAM bindings).
+gcloud iam service-accounts delete sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
+gcloud iam service-accounts delete sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+
+# Roll back a specific secret (destroys ALL versions; use only if the
+# secret was created by this script and has no other consumers).
+gcloud secrets delete SAHAYAKAI_REQUEST_SIGNING_KEY --project=sahayakai-b4248
+gcloud secrets delete SAHAYAKAI_AGENTS_AUDIENCE     --project=sahayakai-b4248
+gcloud secrets delete GOOGLE_GENAI_SHADOW_API_KEY   --project=sahayakai-b4248
+
+# Roll back a single project-level role binding.
+gcloud projects remove-iam-policy-binding sahayakai-b4248 \
+  --member=serviceAccount:sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com \
+  --role=roles/datastore.user
+
+# Roll back a single per-secret accessor binding.
+gcloud secrets remove-iam-policy-binding SAHAYAKAI_REQUEST_SIGNING_KEY \
+  --member=serviceAccount:sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com \
+  --role=roles/secretmanager.secretAccessor \
+  --project=sahayakai-b4248
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `PERMISSION_DENIED` on a `gcloud iam service-accounts create` call | Operator's user account lacks `roles/iam.serviceAccountAdmin` | Run `gcloud projects add-iam-policy-binding sahayakai-b4248 --member=user:<your-email> --role=roles/iam.serviceAccountAdmin` (requires Org admin) or escalate. |
+| `PERMISSION_DENIED` on `gcloud secrets create` | Missing `roles/secretmanager.admin` | Same pattern as above with `roles/secretmanager.admin`. |
+| `PERMISSION_DENIED` on `gcloud projects add-iam-policy-binding` | Missing `roles/iam.securityAdmin` | Same pattern. |
+| `ALREADY_EXISTS` from one of the create calls | Idempotency check missed an edge case (race with another operator, or partial state from a prior run that crashed before the script's `describe` could see the resource) | This is a script bug. File it: capture the failing command, the existing resource's `gcloud ... describe` output, and the prior-run logs. The script should never surface an `ALREADY_EXISTS` to the operator. |
+| `INVALID_ARGUMENT: ... secret data is empty` on `gcloud secrets versions add` | Operator pasted an empty string into the shadow-key prompt | Re-run the script. The explicit length check rejects pastes shorter than 30 chars before they reach `gcloud`. |
+| Shadow key prompt never appears | `GOOGLE_GENAI_SHADOW_API_KEY` already has an enabled version | Expected on re-runs. To verify the stored key, run the disjoint-key diff command above. To rotate, run `gcloud secrets versions add GOOGLE_GENAI_SHADOW_API_KEY --data-file=-` directly. |
+| `gcloud config get-value project` returns blank or wrong ID | Step 0 sanity check fires before any side effect | Run `gcloud config set project sahayakai-b4248` and re-run. |
+
 ## Related docs
 
 - Execution plan: `/Users/sargupta/.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md`
