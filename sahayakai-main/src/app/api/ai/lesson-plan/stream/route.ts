@@ -1,5 +1,5 @@
 
-import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
+import { dispatchLessonPlan } from '@/lib/sidecar/lesson-plan-dispatch';
 import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { logAIError, classifyAIError } from '@/lib/ai-error-response';
@@ -54,7 +54,10 @@ async function _handler(request: Request) {
           // --- Phase 1: Kick off generation ---
           send({ type: 'status', message: 'Generating lesson plan...' });
 
-          const output = await generateLessonPlan({
+          // Phase 3 §3.4: dispatcher routes Genkit vs sidecar based
+          // on the lessonPlanSidecarMode flag. Default "off" preserves
+          // legacy behaviour; flag is flipped per rollout step.
+          const output = await dispatchLessonPlan({
             ...body,
             userId,
           });
