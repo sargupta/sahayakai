@@ -34,11 +34,15 @@ import {
   getMyConnectionDataAction,
   sendConnectionRequestAction,
 } from '@/app/actions/connections';
-import { getRecommendedTeachersAction, likeResourceAction } from '@/app/actions/community';
+import {
+  getRecommendedTeachersAction,
+  likeResourceAction,
+  getLikedItemIdsAction,
+} from '@/app/actions/community';
 import { updateProfileAction } from '@/app/actions/profile';
 
 // Types
-import type { Group, FeedItem } from '@/types/community';
+import type { Group, FeedItem, TeacherSuggestion } from '@/types/community';
 import type { MyConnectionData } from '@/types';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -58,7 +62,7 @@ export default function CommunityPage() {
     sentRequestUids: [],
     receivedRequests: [],
   });
-  const [teacherSuggestions, setTeacherSuggestions] = useState<any[]>([]);
+  const [teacherSuggestions, setTeacherSuggestions] = useState<TeacherSuggestion[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
   const [showStaffRoom, setShowStaffRoom] = useState(false);
@@ -66,7 +70,14 @@ export default function CommunityPage() {
   const [showExploreGroups, setShowExploreGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
+
+  // Race guard: every refresh increments this; we discard responses whose
+  // version no longer matches when they resolve. Replaces the original
+  // last-write-wins behaviour where a slow refresh could clobber newer data.
+  const refreshVersionRef = useRef(0);
 
   // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -96,20 +107,30 @@ export default function CommunityPage() {
       // Mark community as visited (fire-and-forget — prevents future nudges)
       updateProfileAction(firebaseUser.uid, { communityIntroState: 'visited' }).catch(() => {});
 
-      // Step 2: Load all data in parallel — now that membership is settled
+      // Step 2: Load all data in parallel — now that membership is settled.
+      // The 6th call hydrates `likedPostIds` so previously-liked items render
+      // with filled hearts on the very first paint instead of empty.
       Promise.allSettled([
         getMyGroupsAction(),
         getUnifiedFeedAction(),
         getMyConnectionDataAction(),
         discoverGroupsAction(),
         getRecommendedTeachersAction(firebaseUser.uid),
+        getLikedItemIdsAction(),
       ])
         .then((results) => {
           if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
-          if (results[1].status === 'fulfilled') setFeedItems(results[1].value);
+          if (results[1].status === 'fulfilled') {
+            setFeedItems(results[1].value);
+            setHasMore(results[1].value.length >= 20); // Default page size
+          }
           if (results[2].status === 'fulfilled') setConnectionData(results[2].value);
           if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
           if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
+          if (results[5].status === 'fulfilled') {
+            const { groupPostIds, resourceIds } = results[5].value;
+            setLikedPostIds(new Set([...groupPostIds, ...resourceIds]));
+          }
 
           results.forEach((r, i) => {
             if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
@@ -339,11 +360,18 @@ export default function CommunityPage() {
   }, []);
 
   const handleRefreshFeed = useCallback(async () => {
+    // Race guard: capture our version, only commit if no newer call started.
+    // Server actions in Next don't take an AbortSignal, so we can't cancel the
+    // request mid-flight — but we CAN throw away its result if it's stale.
+    const myVersion = ++refreshVersionRef.current;
     try {
       const feed = await getUnifiedFeedAction();
-      setFeedItems(feed);
+      if (myVersion === refreshVersionRef.current) {
+        setFeedItems(feed);
+        setHasMore(feed.length >= 20);
+      }
     } catch {
-      // silent
+      // silent — refresh is best-effort
     }
   }, []);
 
@@ -370,9 +398,22 @@ export default function CommunityPage() {
     };
   }, [user, handleRefreshFeed]);
 
-  const handleLoadMore = useCallback(() => {
-    // Placeholder for pagination
-  }, []);
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || feedItems.length === 0) return;
+    setLoadingMore(true);
+    try {
+      // Use the oldest item's timestamp as the cursor — getUnifiedFeedAction's
+      // signature already supports `(limit, startAfterTimestamp)`.
+      const lastTimestamp = feedItems[feedItems.length - 1].timestamp;
+      const more = await getUnifiedFeedAction(20, lastTimestamp);
+      setFeedItems((prev) => [...prev, ...more]);
+      setHasMore(more.length >= 20);
+    } catch (err) {
+      console.error('handleLoadMore failed', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, feedItems]);
 
   // ── Group Detail View ────────────────────────────────────────────────────
   if (activeGroup) {
@@ -572,7 +613,7 @@ export default function CommunityPage() {
             onConnectTeacher={handleConnectTeacher}
             onOpenGroupChat={handleOpenGroup}
             onLoadMore={handleLoadMore}
-            hasMore={false}
+            hasMore={hasMore && !selectedGroupId}
             likedPostIds={likedPostIds}
           />
 

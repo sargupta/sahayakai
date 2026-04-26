@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { type Group, getGroupColor } from "@/types/community";
+import { type Group, type TeacherSuggestion, getGroupColor } from "@/types/community";
 import {
   Users,
   UserPlus,
@@ -20,12 +20,7 @@ import { formatDistanceToNow } from "date-fns";
 interface GroupsSidebarProps {
   myGroups: Group[];
   suggestedGroups: Group[];
-  teacherSuggestions: Array<{
-    uid: string;
-    displayName: string;
-    photoURL?: string;
-    recommendationReason: string;
-  }>;
+  teacherSuggestions: TeacherSuggestion[];
   connectedUids: string[];
   sentRequestUids: string[];
   onSelectGroup: (groupId: string) => void;
@@ -115,7 +110,7 @@ export function GroupsSidebar({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={teacher.photoURL} />
+                      <AvatarImage src={teacher.photoURL ?? undefined} />
                       <AvatarFallback className="text-xs">
                         {teacher.displayName
                           .split(" ")
