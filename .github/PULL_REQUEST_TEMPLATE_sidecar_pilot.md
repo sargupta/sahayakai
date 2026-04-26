@@ -4,7 +4,7 @@
 
 Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-31 commits; ~62 files; ~5,400 insertions; 119 Python tests + 19 Jest tests passing.
+32 commits; ~64 files; ~5,750 insertions; 119 Python tests + 47 Jest tests passing.
 
 ## Commit narrative
 
@@ -62,6 +62,7 @@ After the initial Tracks A-D landed, a second pass closed every remaining master
 | `fc91ee49a` | **Dual deploy paths SA (P0 IAM-2).** Both `cloud-run.yml` and `apphosting.yaml` now wire `sahayakai-hotfix-resilience-runtime@...` as the Next.js runtime SA, plus the three new secrets (signing key, audience, sidecar URL). Closes the master-plan risk that one deploy path could ship without sidecar auth wired up. |
 | `b3a4c82ba` | **Sidecar service.yaml (P0 TIMEOUT-1, BOOT-1).** `timeoutSeconds: 12` → `8` (matches resilience-layer's 7 s max-backoff). New `run.googleapis.com/startup-cpu-boost: "true"` annotation cuts cold-start import time from ~3.5 s to ~1.5 s. |
 | `7ad2041e2` | **Pre-work automation (P0 BOOT-2, SEED-1, PREFLIGHT-1).** Three new scripts: `generate-signing-key.sh` (256-bit random + Secret Manager rotation), `seed-feature-flags.sh` (creates Firestore feature_flags doc with parentCallSidecar* fields so auto-abort transactions can update it), `preflight-shadow-ramp.sh` (15-gate checklist that returns 0 only when every gate is green; each failure prints its specific remedy script). |
+| `d3271ef47` | **Test gaps closed.** 23 new Jest tests for `parent-call-guard.ts` (forbidden phrases × 7 variants, script match across Hindi/Tamil/English with code-switch tolerance, sentence-count edge cases) + 5 tests for `withTimeout` (deterministic 10s-ceiling firing under fake timers). Total Jest count goes from 19 → 47. |
 
 ## Architecture decisions
 
