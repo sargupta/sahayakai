@@ -45,7 +45,17 @@ class AgentReplyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # P0 #10: callSid is the session key root; turnNumber is the OCC token.
-    callSid: str = Field(min_length=1, max_length=128)
+    # Round-2 audit P1 SCHEMA-1 fix (30-agent review, group A6):
+    # Twilio call SIDs follow the pattern `CA[a-f0-9]{32}` exactly.
+    # Without pattern validation, a malformed SID can break the
+    # Firestore composite-key path (`{turn:04d}_{role}` under
+    # `agent_sessions/{callSid}/turns/`) — Firestore rejects doc IDs
+    # containing `/`, but accepts most other shapes silently.
+    # Tightening at the schema layer catches malformed SIDs before
+    # any side-effect lands. Test harnesses that need a different SID
+    # shape (e.g. `CAtest1234`) ARE supported because the regex is
+    # lenient on length + alphabet.
+    callSid: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
     turnNumber: int = Field(ge=1, le=12)
 
     studentName: str = Field(min_length=1, max_length=200)
@@ -110,18 +120,26 @@ class CallSummaryRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    callSid: str = Field(min_length=1, max_length=128)
-    studentName: str
-    className: str
-    subject: str
-    reason: str
-    teacherMessage: str
-    teacherName: str | None = None
-    schoolName: str | None = None
+    # Round-2 audit P1 SCHEMA-1 fix (group A6): callSid pattern
+    # consistent with AgentReplyRequest above.
+    callSid: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+    # Round-2 audit P1 SCHEMA-2 fix (group A6): bound every text
+    # field. Original schema accepted unbounded strings — a 1MB payload
+    # on `studentName` would DoS the prompt-render path (pybars3
+    # template), drive Gemini token cost up, and risk silent
+    # truncation downstream.
+    studentName: str = Field(min_length=1, max_length=200)
+    className: str = Field(min_length=1, max_length=50)
+    subject: str = Field(min_length=1, max_length=100)
+    reason: str = Field(min_length=1, max_length=2000)
+    teacherMessage: str = Field(min_length=0, max_length=4000)
+    teacherName: str | None = Field(default=None, max_length=200)
+    schoolName: str | None = Field(default=None, max_length=200)
     parentLanguage: ParentLanguage
 
-    transcript: list[TranscriptTurn] = Field(max_length=24)
-    callDurationSeconds: int | None = None
+    transcript: list[TranscriptTurn] = Field(min_length=1, max_length=24)
+    callDurationSeconds: int | None = Field(default=None, ge=0, le=3600)
 
 
 class CallSummaryResponse(BaseModel):
@@ -131,20 +149,24 @@ class CallSummaryResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    parentResponse: str
-    parentConcerns: list[str]
-    parentCommitments: list[str]
-    actionItemsForTeacher: list[str]
-    guidanceGiven: list[str]
+    # Round-2 audit P1 SCHEMA-2 fix (group A6): bound every output
+    # field. Without bounds, a model could emit a 1MB summary or a
+    # 1000-item list per axis, blowing through Firestore doc size
+    # limits + Cloud Logging quotas + the Next.js JSON parse budget.
+    parentResponse: str = Field(min_length=0, max_length=4000)
+    parentConcerns: list[str] = Field(default_factory=list, max_length=20)
+    parentCommitments: list[str] = Field(default_factory=list, max_length=20)
+    actionItemsForTeacher: list[str] = Field(default_factory=list, max_length=20)
+    guidanceGiven: list[str] = Field(default_factory=list, max_length=20)
     parentSentiment: ParentSentiment
     callQuality: CallQuality
     followUpNeeded: bool
-    followUpSuggestion: str | None = None
+    followUpSuggestion: str | None = Field(default=None, max_length=2000)
 
-    sessionId: str
-    latencyMs: int
-    modelUsed: str
-    cacheHitRatio: float | None = None
+    sessionId: str = Field(max_length=128)
+    latencyMs: int = Field(ge=0)
+    modelUsed: str = Field(max_length=200)
+    cacheHitRatio: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 # --- Error wire format ------------------------------------------------------
@@ -155,10 +177,12 @@ class WireError(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    code: str
-    message: str
-    retryAfterSeconds: int | None = None
-    traceId: str | None = None
+    # Round-2 audit P1 SCHEMA-2 fix: bound error fields too — a
+    # reflected upstream error message could be 1MB if echoed verbatim.
+    code: str = Field(max_length=64)
+    message: str = Field(max_length=2000)
+    retryAfterSeconds: int | None = Field(default=None, ge=0, le=86400)
+    traceId: str | None = Field(default=None, max_length=200)
 
 
 class WireErrorEnvelope(BaseModel):
