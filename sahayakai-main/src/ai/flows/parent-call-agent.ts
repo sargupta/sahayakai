@@ -10,6 +10,49 @@ import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { assertAllRules, BehaviouralGuardError } from '@/lib/parent-call-guard';
 
+/**
+ * Master plan risk #1 mitigation: bound the Genkit reply path to 10 s
+ * end-to-end. `runResiliently` retries with backoff on 429s and can
+ * exceed Twilio's 15 s webhook budget on a single-key pool. The
+ * sidecar dispatcher already times out at 3.5 s; if it falls back to
+ * Genkit, we need ~10 s headroom + ~2 s for TTS / canned wrap-up.
+ *
+ * Throwing `GenkitTimeoutError` lands in the TwiML route's outer
+ * try/catch which serves the canned wrap-up — better than letting
+ * Twilio time the whole call out.
+ */
+const REPLY_TIMEOUT_MS = 10_000;
+/**
+ * Summary path is post-call (no Twilio budget). Allow more headroom
+ * because summaries are richer outputs.
+ */
+const SUMMARY_TIMEOUT_MS = 30_000;
+
+export class GenkitTimeoutError extends Error {
+    readonly elapsedMs: number;
+    readonly span: string;
+    constructor(span: string, elapsedMs: number) {
+        super(`Genkit call '${span}' exceeded ${elapsedMs} ms ceiling`);
+        this.name = 'GenkitTimeoutError';
+        this.span = span;
+        this.elapsedMs = elapsedMs;
+    }
+}
+
+async function withTimeout<T>(span: string, ms: number, work: Promise<T>): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            work,
+            new Promise<never>((_resolve, reject) => {
+                timer = setTimeout(() => reject(new GenkitTimeoutError(span, ms)), ms);
+            }),
+        ]);
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
+}
+
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 const TranscriptTurnSchema = z.object({
@@ -87,7 +130,11 @@ const agentReplyPrompt = ai.definePrompt({
 });
 
 export async function generateAgentReply(input: AgentReplyInput): Promise<AgentReplyOutput> {
-    const result = await runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply');
+    const result = await withTimeout(
+        'parentCall.agentReply',
+        REPLY_TIMEOUT_MS,
+        runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply'),
+    );
     const output = result.output!;
 
     // Round-2 audit P0 BEHAV-1: post-response behavioural guard, fail-closed.
@@ -179,6 +226,10 @@ const callSummaryPrompt = ai.definePrompt({
 });
 
 export async function generateCallSummary(input: CallSummaryInput): Promise<CallSummaryOutput> {
-    const result = await runResiliently((cfg) => callSummaryPrompt(input, cfg), 'parentCall.summary');
+    const result = await withTimeout(
+        'parentCall.summary',
+        SUMMARY_TIMEOUT_MS,
+        runResiliently((cfg) => callSummaryPrompt(input, cfg), 'parentCall.summary'),
+    );
     return result.output!;
 }
