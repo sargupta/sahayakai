@@ -10,8 +10,17 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { aggregateUserMetrics } from './aggregator';
 import { revalidatePath } from 'next/cache';
 import { trackTeacherContent } from '@/lib/teacher-activity-tracker';
+import { requireAuth } from '@/lib/auth-helpers';
+import { validateAdmin } from '@/lib/auth-utils';
 
-export async function getUserContent(userId: string): Promise<BaseContent[]> {
+/**
+ * Get the caller's own content. Wave 1 dropped trust-the-client `userId`
+ * parameter — every prior caller passed `user.uid`, which an attacker could
+ * substitute for any uid to dump that user's full library.
+ */
+export async function getUserContent(_userId?: string): Promise<BaseContent[]> {
+    const userId = await requireAuth();
+    void _userId;
     try {
         const { items: content } = await dbAdapter.listContent(userId, { limit: 100 });
 
@@ -38,8 +47,13 @@ export async function getUserContent(userId: string): Promise<BaseContent[]> {
 /**
  * Context-Aware Smart Search for the Library
  * Searches user content and boosts matches based on teacher profile (Grade, Subject, Language)
+ *
+ * Wave 1: dropped trust-the-client `userId` parameter — caller could search
+ * any user's library by passing arbitrary uid.
  */
-export async function searchContentAction(userId: string, query: string): Promise<BaseContent[]> {
+export async function searchContentAction(_userId: string, query: string): Promise<BaseContent[]> {
+    const userId = await requireAuth();
+    void _userId;
     try {
         // 1. Fetch user profile for context
         const profile = await dbAdapter.getUser(userId);
@@ -88,7 +102,15 @@ export async function searchContentAction(userId: string, query: string): Promis
     }
 }
 
-export async function saveToLibrary(userId: string, type: ContentType, title: string, data: any): Promise<{ success: boolean; id?: string; error?: string }> {
+/**
+ * Save content to the caller's library.
+ *
+ * Wave 1: dropped trust-the-client `userId`. Previously a caller could write
+ * anything into anyone's library + Storage bucket by passing a different uid.
+ */
+export async function saveToLibrary(_userId: string, type: ContentType, title: string, data: any): Promise<{ success: boolean; id?: string; error?: string }> {
+    const userId = await requireAuth();
+    void _userId;
     try {
         const storage = await getStorageInstance();
         const now = new Date();
@@ -167,8 +189,16 @@ export async function saveToLibrary(userId: string, type: ContentType, title: st
     }
 }
 
-export async function recordPdfDownload(userId: string, title: string, base64Data: string, type: ContentType = 'lesson-plan'): Promise<{ success: boolean; path?: string; error?: string }> {
+/**
+ * Record a PDF download by saving the binary to Storage + a tracking doc.
+ *
+ * Wave 1: dropped trust-the-client `userId`. Same spoof attack — caller could
+ * write PDFs into anyone's Storage path.
+ */
+export async function recordPdfDownload(_userId: string, title: string, base64Data: string, type: ContentType = 'lesson-plan'): Promise<{ success: boolean; path?: string; error?: string }> {
     const Sentry = await import('@sentry/nextjs');
+    const userId = await requireAuth();
+    void _userId;
 
     return Sentry.withServerActionInstrumentation('recordPdfDownload', { recordResponse: true }, async () => {
         try {
@@ -242,7 +272,15 @@ export async function recordPdfDownload(userId: string, title: string, base64Dat
     });
 }
 
-export async function testStorageConnection(userId: string = 'user-123'): Promise<{ success: boolean; message: string }> {
+/**
+ * Diagnostic: write a tiny test file to Storage to confirm the bucket is
+ * reachable. Wave 1 gates this to admins only — the previous default
+ * `'user-123'` would write a bucket file under that constant uid path.
+ */
+export async function testStorageConnection(_userId: string = 'user-123'): Promise<{ success: boolean; message: string }> {
+    const userId = await requireAuth();
+    await validateAdmin(userId);
+    void _userId;
     try {
         const storage = await getStorageInstance();
         const bucket = storage.bucket();

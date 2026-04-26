@@ -3,6 +3,7 @@
 import { getDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { logger } from "@/lib/logger";
+import { getAuthUserIdOrNull } from "@/lib/auth-helpers";
 
 export type FeedbackData = {
     page: string;
@@ -12,6 +13,11 @@ export type FeedbackData = {
     context?: Record<string, any>;
 };
 
+/**
+ * Anonymous-friendly: marketing pages submit feedback before sign-in. When the
+ * caller IS authenticated, we stamp their uid on the doc so we can attribute
+ * later. Wave 1 only adds the uid stamp; auth is intentionally optional.
+ */
 export async function submitFeedback(data: FeedbackData) {
     try {
         const db = await getDb();
@@ -21,12 +27,20 @@ export async function submitFeedback(data: FeedbackData) {
             throw new Error("Comment is required for negative feedback.");
         }
 
+        // Cap comment length so this isn't a free-form storage abuse vector.
+        if (data.comment && data.comment.length > 2000) {
+            throw new Error("Comment too long (max 2000 chars).");
+        }
+
+        const userId = await getAuthUserIdOrNull();
+
         const feedbackRef = db.collection('feedbacks').doc();
 
         await feedbackRef.set({
             ...data,
+            // Server-stamped attribution — never trust client-supplied uid.
+            ...(userId ? { userId } : {}),
             timestamp: Timestamp.now(),
-            // In production, we'd add userId from Auth context here
         });
 
         return { success: true, id: feedbackRef.id };
