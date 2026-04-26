@@ -71,6 +71,19 @@ export interface FeatureFlagsConfig {
    */
   parentCallSidecarPercent: number;
 
+  /**
+   * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
+   * the TwiML route plays a one-sentence consent prologue BEFORE the
+   * teacher's message. DPDP Act 2023 (enforced Nov 2026) requires
+   * itemised notice before personal-data collection.
+   *
+   * Defaults to `false` in `FALLBACK_CONFIG` until all 11 languages
+   * have legally-reviewed translations. Operator flips to `true`
+   * once translations land. See `.claude/plans/dpdp-compliance.md`
+   * for the rollout plan.
+   */
+  consentNoticeEnabled: boolean;
+
   // ── Per-feature toggles ────────────────────────
   features: Record<string, FeatureToggle>;
 
@@ -92,6 +105,9 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   // baseline.
   parentCallSidecarMode: 'off',
   parentCallSidecarPercent: 0,
+  // Consent prologue OFF until 11-language translations land. Operator
+  // flips when ready. See `.claude/plans/dpdp-compliance.md`.
+  consentNoticeEnabled: false,
   features: {},
   updatedAt: '',
   updatedBy: 'fallback',
