@@ -212,6 +212,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Auto-abort dedupe sentinel: one doc per incident_id, written by
+    // the auto-abort Cloud Function on first successful demote. TTL
+    // via `expireAt` (24h). Same shape as agent_sessions — Admin SDK
+    // only.
+    match /agent_auto_abort_seen/{incidentId} {
+      allow read, write: if false;
+    }
+
     // =============================================
     // DEFAULT DENY
     // =============================================

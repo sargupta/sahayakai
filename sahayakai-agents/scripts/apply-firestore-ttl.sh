@@ -67,6 +67,7 @@ apply_ttl() {
 
 apply_ttl agent_sessions expireAt
 apply_ttl calls expireAt   # `calls` is the leaf collection-group under agent_shadow_diffs/{date}
+apply_ttl agent_auto_abort_seen expireAt   # auto-abort incident-id dedupe sentinel (Wave 2 fix 2)
 
 if [[ "$INCLUDE_VOICE" == "1" ]]; then
   apply_ttl agent_voice_sessions expireAt

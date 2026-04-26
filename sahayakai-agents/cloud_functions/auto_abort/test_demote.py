@@ -132,3 +132,83 @@ class TestPolicyExtraction:
         body = {"incident": {}}
         envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
         assert main._extract_policy_name(envelope) is None
+
+    def test_push_subscription_envelope(self) -> None:
+        # `{"message": {"data": "<b64>"}}` shape from push subscriptions.
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "policies/test"}}
+        envelope = {
+            "message": {
+                "data": base64.b64encode(json.dumps(body).encode()).decode(),
+            }
+        }
+        assert main._extract_policy_name(envelope) == "policies/test"
+
+    def test_webhook_direct_envelope(self) -> None:
+        # No `data` wrapper — body delivered directly (HTTP webhook).
+        envelope = {"incident": {"policy_name": "policies/webhook-test"}}
+        assert main._extract_policy_name(envelope) == "policies/webhook-test"
+
+
+class TestRecoveryDetection:
+    def test_recovery_state_closed_returns_true(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p", "state": "closed"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._is_recovery(envelope) is True
+
+    def test_recovery_state_resolved_returns_true(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p", "state": "resolved"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._is_recovery(envelope) is True
+
+    def test_ended_at_set_returns_true(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p", "ended_at": "2026-04-26T00:00:00Z"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._is_recovery(envelope) is True
+
+    def test_open_incident_returns_false(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p", "state": "open"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._is_recovery(envelope) is False
+
+    def test_missing_state_returns_false(self) -> None:
+        # Default: treat as fire (not recovery) so we don't accidentally
+        # skip a fire that lacks the state field.
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._is_recovery(envelope) is False
+
+
+class TestIncidentIdExtraction:
+    def test_extract_incident_id(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p", "incident_id": "0.abc-123"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._extract_incident_id(envelope) == "0.abc-123"
+
+    def test_missing_incident_id_returns_none(self) -> None:
+        import base64
+        import json
+
+        body = {"incident": {"policy_name": "p"}}
+        envelope = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        assert main._extract_incident_id(envelope) is None
