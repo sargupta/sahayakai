@@ -7,11 +7,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import {
-    signInWithPopup,
-    GoogleAuthProvider,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/sign-in-with-google";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { GoogleGIcon } from "./google-g-icon";
@@ -31,14 +27,19 @@ export function AuthDialog() {
     const router = useRouter();
 
     const handleSignIn = async () => {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-
         try {
-            const result = await signInWithPopup(auth, provider);
+            // Picks popup vs redirect by platform. On mobile/PWA/in-app
+            // browsers the page navigates away — auth-context's redirect
+            // handler completes the profile-check + onboarding redirect.
+            const result = await signInWithGoogle({
+                runProfileCheck: true,
+                source: 'auth-dialog',
+            });
+            if (!result) return; // mobile redirect path
+
             const user = result.user;
 
-            // Profile check — redirect new users to onboarding. Mirrors AuthButton.
+            // Desktop popup path — run the same profile-check inline.
             try {
                 const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
                 if (response.ok) {
