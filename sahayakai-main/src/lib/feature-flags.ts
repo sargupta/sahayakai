@@ -39,6 +39,25 @@ export interface FeatureToggle {
  */
 export type ParentCallSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
+/**
+ * Lesson-plan sidecar dispatch mode (Phase 3 — writer/evaluator/reviser).
+ *
+ * Same four modes as `ParentCallSidecarMode`. Lesson plan is a one-shot
+ * synchronous request (no Twilio call SID), so bucketing is on the
+ * teacher's `uid`. The sidecar does the 4-call writer→eval→reviser→
+ * eval-on-v2 loop server-side and returns one final plan + verdict.
+ *
+ * - `off`     — Genkit only. Default. Sidecar untouched.
+ * - `shadow`  — Genkit serves; sidecar called fire-and-forget for parity
+ *                scoring (offline analysis only, no shadow-diff write
+ *                yet — that lands in a follow-up observability PR).
+ * - `canary`  — Sidecar serves; on any sidecar error fall back to Genkit
+ *                so the teacher always gets *some* plan.
+ * - `full`    — Sidecar serves; same fallbacks as `canary` but
+ *                `lessonPlanSidecarPercent` is treated as 100.
+ */
+export type LessonPlanSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
+
 /** The full Firestore document shape at `system_config/feature_flags` */
 export interface FeatureFlagsConfig {
   // ── Global switches ────────────────────────────
@@ -70,6 +89,21 @@ export interface FeatureFlagsConfig {
    * authenticated user. `full` mode treats this as 100 regardless.
    */
   parentCallSidecarPercent: number;
+
+  // ── Lesson-plan sidecar (Phase 3) rollout ──────
+  /**
+   * Routing mode for the lesson-plan agent. See `LessonPlanSidecarMode`.
+   * Defaults to `off` in `FALLBACK_CONFIG` so a Firestore outage cannot
+   * accidentally route teacher lesson-plan requests to an undeployed
+   * sidecar.
+   */
+  lessonPlanSidecarMode: LessonPlanSidecarMode;
+  /**
+   * 0-100: percentage of teachers routed to the sidecar in `shadow` /
+   * `canary` modes. Bucketing is on the teacher's `uid`. `full` mode
+   * treats this as 100 regardless.
+   */
+  lessonPlanSidecarPercent: number;
 
   /**
    * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
@@ -105,6 +139,11 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   // baseline.
   parentCallSidecarMode: 'off',
   parentCallSidecarPercent: 0,
+  // Lesson-plan sidecar OFF on fallback — same safety reasoning as
+  // parent-call: a Firestore outage must not redirect teacher requests
+  // to an undeployed Phase-3 sidecar.
+  lessonPlanSidecarMode: 'off',
+  lessonPlanSidecarPercent: 0,
   // Consent prologue OFF until 11-language translations land. Operator
   // flips when ready. See `.claude/plans/dpdp-compliance.md`.
   consentNoticeEnabled: false,
@@ -331,6 +370,57 @@ export async function decideParentCallDispatch(
   if (bucket < percent) {
     return {
       mode: cfg.parentCallSidecarMode,
+      reason: `bucket_${bucket}_under_${percent}`,
+      bucket,
+    };
+  }
+  return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+}
+
+// ─── Lesson-plan sidecar dispatch ───────────────────────────────────────────
+
+export interface LessonPlanSidecarDecision {
+  /** Final dispatch mode for THIS teacher after percent-bucket evaluation. */
+  mode: LessonPlanSidecarMode;
+  /** Human-readable reason for telemetry. */
+  reason: string;
+  /** The 0-99 hash bucket on `uid`. */
+  bucket: number;
+}
+
+/**
+ * Decide whether THIS teacher's lesson-plan request routes to the sidecar.
+ *
+ * Logic order is identical to `decideParentCallDispatch`:
+ * 1. configured mode is `off` → off
+ * 2. configured mode is `full` → full (percent ignored)
+ * 3. configured mode is `shadow` or `canary`:
+ *    - bucket < percent → shadow / canary
+ *    - bucket >= percent → off
+ *
+ * Bucket is computed on `uid` (teacher) so the same teacher consistently
+ * lands on the same path across requests — crucial for shadow-mode
+ * parity analysis where we compare Genkit and sidecar outputs for the
+ * same teacher's requests over time.
+ */
+export async function decideLessonPlanDispatch(
+  uid: string,
+): Promise<LessonPlanSidecarDecision> {
+  const cfg = await readConfig();
+  const bucket = userBucket(uid);
+
+  if (cfg.lessonPlanSidecarMode === 'off') {
+    return { mode: 'off', reason: 'flag_off', bucket };
+  }
+  if (cfg.lessonPlanSidecarMode === 'full') {
+    return { mode: 'full', reason: 'flag_full', bucket };
+  }
+
+  // shadow or canary: percent-gated
+  const percent = Math.max(0, Math.min(100, cfg.lessonPlanSidecarPercent));
+  if (bucket < percent) {
+    return {
+      mode: cfg.lessonPlanSidecarMode,
       reason: `bucket_${bucket}_under_${percent}`,
       bucket,
     };
