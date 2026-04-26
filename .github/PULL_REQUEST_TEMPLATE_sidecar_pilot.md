@@ -4,7 +4,7 @@
 
 Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-32 commits; ~64 files; ~5,750 insertions; 119 Python tests + 47 Jest tests passing.
+36 commits; ~66 files; ~6,200 insertions; 119 Python tests + 47 Jest tests passing.
 
 ## Commit narrative
 
@@ -63,6 +63,8 @@ After the initial Tracks A-D landed, a second pass closed every remaining master
 | `b3a4c82ba` | **Sidecar service.yaml (P0 TIMEOUT-1, BOOT-1).** `timeoutSeconds: 12` → `8` (matches resilience-layer's 7 s max-backoff). New `run.googleapis.com/startup-cpu-boost: "true"` annotation cuts cold-start import time from ~3.5 s to ~1.5 s. |
 | `7ad2041e2` | **Pre-work automation (P0 BOOT-2, SEED-1, PREFLIGHT-1).** Three new scripts: `generate-signing-key.sh` (256-bit random + Secret Manager rotation), `seed-feature-flags.sh` (creates Firestore feature_flags doc with parentCallSidecar* fields so auto-abort transactions can update it), `preflight-shadow-ramp.sh` (15-gate checklist that returns 0 only when every gate is green; each failure prints its specific remedy script). |
 | `d3271ef47` | **Test gaps closed.** 23 new Jest tests for `parent-call-guard.ts` (forbidden phrases × 7 variants, script match across Hindi/Tamil/English with code-switch tolerance, sentence-count edge cases) + 5 tests for `withTimeout` (deterministic 10s-ceiling firing under fake timers). Total Jest count goes from 19 → 47. |
+| `7f640c296` | **One-shot Track D bootstrap (P0 BOOTSTRAP-1).** New `scripts/bootstrap-track-d.sh` — idempotent gcloud orchestration that creates 4 SAs + IAM bindings + 3 secret containers + Pub/Sub topic + 2 Cloud Functions (with HTTP variants) + Cloud Scheduler cron + 6 Cloud Monitoring alert policies in one go. Each step is existence-checked so re-running on partial state resumes cleanly. |
+| `c3e8e018d` | **Runbook Track D first-time bootstrap section.** Inlines the 10-step operator workflow from "PR merged" to "ready to flip flag" using only the scripts in this PR. Each script idempotent. Operator pastes the block end-to-end. |
 
 ## Architecture decisions
 
