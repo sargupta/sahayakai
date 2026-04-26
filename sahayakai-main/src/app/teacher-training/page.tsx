@@ -20,7 +20,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { SubjectSelector } from "@/components/subject-selector";
 import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { InlineMicButton } from "@/components/layout";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
@@ -268,11 +268,23 @@ function TeacherTrainingContent() {
                     name="question"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-headline text-lg">{t("Your Question or Challenge")}</FormLabel>
+                        <div className="flex items-center justify-between gap-2">
+                          <FormLabel className="font-headline text-lg">{t("Your Question or Challenge")}</FormLabel>
+                          {/* Inline mic — voice-first per Phase 2.0 spec.
+                              Appends transcript to the textarea so teachers can dictate
+                              their question instead of typing on a small phone keyboard. */}
+                          <InlineMicButton
+                            onTranscript={(text, isFinal) => {
+                              if (!isFinal) return;
+                              const current = field.value || "";
+                              field.onChange(current ? `${current} ${text}` : text);
+                            }}
+                          />
+                        </div>
                         <FormControl>
                           <div className="flex flex-col gap-4">
                             <Textarea
-                              placeholder={placeholder}
+                              placeholder={t("Type your question or challenge here…")}
                               {...field}
                               className="bg-muted/20 min-h-[120px] resize-none text-lg"
                             />
