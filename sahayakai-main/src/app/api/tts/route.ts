@@ -5,7 +5,7 @@ import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { sarvamTTS, toSarvamLangCode } from '@/lib/sarvam';
-import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes } from '@/lib/voice-quota-guard';
+import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes, buildVoiceQuotaSnapshot } from '@/lib/voice-quota-guard';
 
 // Cache the GCP access token for its full lifetime (1 hour).
 // Re-fetching on every request added 100–300 ms of latency per TTS call.
@@ -181,9 +181,15 @@ export async function POST(req: NextRequest) {
 
         // Provider call succeeded — burn voice quota minutes (fire-and-forget).
         // Cache hits above returned early and cost nothing.
-        if (uid) recordVoiceMinutes(uid, estimateTTSMinutes(cleanText.length));
+        const billedMinutes = estimateTTSMinutes(cleanText.length);
+        if (uid) recordVoiceMinutes(uid, billedMinutes);
 
-        return NextResponse.json({ audioContent });
+        // Soft-cap snapshot for the client. Quota was OK (we passed the
+        // ensureVoiceQuota gate), so 'used' here is the pre-call read PLUS
+        // the minutes we just billed. Client surfaces warning toasts.
+        const voiceQuota = buildVoiceQuotaSnapshot(quota.used + billedMinutes, quota.limit);
+
+        return NextResponse.json({ audioContent, voiceQuota });
 
     } catch (error: any) {
         if (error.message?.includes('Rate limit exceeded')) {

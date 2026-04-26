@@ -50,6 +50,49 @@ let activeSpeakResolve: (() => void) | null = null;
 const ttsCache = new Map<string, string>();
 const TTS_CACHE_MAX = 50;
 
+// ---- Voice cloud quota soft-cap warning system ----
+// The /api/tts response includes a `voiceQuota` snapshot whenever the user
+// has a finite cloud-voice limit (Pro = 300/mo, Gold = 1500/mo per teacher).
+// Browser-only voice calls (free tier, langs Sarvam doesn't cover) skip the
+// API entirely and never trigger warnings.
+//
+// We dispatch a `sahayakai:voice-quota-warning` CustomEvent on `window` so a
+// single global listener (mounted in AppShell) can surface a toast. The
+// listener persists "user X warned for threshold T this month" in localStorage
+// so the same threshold doesn't spam multiple toasts in a single session.
+
+export type VoiceQuotaWarningLevel = 'warn-80' | 'warn-95';
+
+export interface VoiceQuotaSnapshot {
+    used: number;
+    limit: number;
+    remaining: number;
+    warning: 'none' | VoiceQuotaWarningLevel;
+}
+
+export interface VoiceQuotaWarningEventDetail {
+    level: VoiceQuotaWarningLevel;
+    used: number;
+    limit: number;
+    remaining: number;
+}
+
+const VOICE_QUOTA_WARNING_EVENT = 'sahayakai:voice-quota-warning';
+
+function dispatchVoiceQuotaWarning(snapshot: VoiceQuotaSnapshot | null | undefined): void {
+    if (typeof window === 'undefined') return;
+    if (!snapshot || snapshot.warning === 'none') return;
+    const detail: VoiceQuotaWarningEventDetail = {
+        level: snapshot.warning,
+        used: snapshot.used,
+        limit: snapshot.limit,
+        remaining: snapshot.remaining,
+    };
+    window.dispatchEvent(new CustomEvent<VoiceQuotaWarningEventDetail>(VOICE_QUOTA_WARNING_EVENT, { detail }));
+}
+
+export const VOICE_QUOTA_WARNING_EVENT_NAME = VOICE_QUOTA_WARNING_EVENT;
+
 export const tts = {
     async speak(text: string, targetLang: string = 'en') {
         if (!text) return;
@@ -87,6 +130,11 @@ export const tts = {
 
                 const data = await response.json();
                 audioContent = data.audioContent;
+
+                // Surface voice-quota soft-cap warning if the server flagged one.
+                // The listener in AppShell dedups via localStorage so only the
+                // first cross of each threshold this month shows a toast.
+                dispatchVoiceQuotaWarning(data?.voiceQuota);
 
                 // Cache with eviction
                 if (ttsCache.size >= TTS_CACHE_MAX) {

@@ -2223,6 +2223,59 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "মূল্য", "Gujarati": "કિંમત", "Punjabi": "ਕੀਮਤ",
         "Malayalam": "വില", "Odia": "ମୂଲ୍ୟ"
     },
+    // Voice cloud quota soft-cap toasts (2026-04-26)
+    "Voice cloud quota: 80% used": {
+        "English": "Voice cloud quota: 80% used",
+        "Hindi": "वॉयस क्लाउड कोटा: 80% उपयोग हुआ",
+        "Kannada": "ಧ್ವನಿ ಕ್ಲೌಡ್ ಕೋಟಾ: 80% ಬಳಸಲಾಗಿದೆ",
+        "Tamil": "வாய்ஸ் கிளவுட் ஒதுக்கீடு: 80% பயன்படுத்தப்பட்டது",
+        "Telugu": "వాయిస్ క్లౌడ్ కోటా: 80% ఉపయోగించబడింది",
+        "Marathi": "वॉइस क्लाउड कोटा: 80% वापरले",
+        "Bengali": "ভয়েস ক্লাউড কোটা: 80% ব্যবহৃত",
+        "Gujarati": "વૉઇસ ક્લાઉડ કોટા: 80% વપરાયું",
+        "Punjabi": "ਵੌਇਸ ਕਲਾਉਡ ਕੋਟਾ: 80% ਵਰਤਿਆ ਗਿਆ",
+        "Malayalam": "വോയ്‌സ് ക്ലൗഡ് ക്വോട്ട: 80% ഉപയോഗിച്ചു",
+        "Odia": "ଭଏସ୍ କ୍ଲାଉଡ୍ କୋଟା: 80% ବ୍ୟବହାର କରାଯାଇଛି"
+    },
+    "You've used {used} of {limit} cloud voice minutes this month.": {
+        "English": "You've used {used} of {limit} cloud voice minutes this month.",
+        "Hindi": "आपने इस महीने {limit} में से {used} क्लाउड वॉयस मिनट उपयोग किए हैं।",
+        "Kannada": "ಈ ತಿಂಗಳು ನೀವು {limit} ರಲ್ಲಿ {used} ಕ್ಲೌಡ್ ಧ್ವನಿ ನಿಮಿಷಗಳನ್ನು ಬಳಸಿದ್ದೀರಿ.",
+        "Tamil": "இந்த மாதம் {limit} இல் {used} கிளவுட் வாய்ஸ் நிமிடங்கள் பயன்படுத்தியுள்ளீர்கள்.",
+        "Telugu": "ఈ నెలలో మీరు {limit} లో {used} క్లౌడ్ వాయిస్ నిమిషాలను ఉపయోగించారు.",
+        "Marathi": "तुम्ही या महिन्यात {limit} पैकी {used} क्लाउड वॉइस मिनिटे वापरली आहेत.",
+        "Bengali": "আপনি এই মাসে {limit} এর মধ্যে {used} ক্লাউড ভয়েস মিনিট ব্যবহার করেছেন।",
+        "Gujarati": "આ મહિને તમે {limit} માંથી {used} ક્લાઉડ વૉઇસ મિનિટનો ઉપયોગ કર્યો છે.",
+        "Punjabi": "ਤੁਸੀਂ ਇਸ ਮਹੀਨੇ {limit} ਵਿੱਚੋਂ {used} ਕਲਾਉਡ ਵੌਇਸ ਮਿੰਟ ਵਰਤੇ ਹਨ।",
+        "Malayalam": "ഈ മാസം നിങ്ങൾ {limit} ൽ {used} ക്ലൗഡ് വോയ്‌സ് മിനിറ്റുകൾ ഉപയോഗിച്ചു.",
+        "Odia": "ଆପଣ ଏହି ମାସରେ {limit} ମଧ୍ୟରୁ {used} କ୍ଲାଉଡ୍ ଭଏସ୍ ମିନିଟ୍ ବ୍ୟବହାର କରିଛନ୍ତି।"
+    },
+    "Voice cloud quota: nearly full": {
+        "English": "Voice cloud quota: nearly full",
+        "Hindi": "वॉयस क्लाउड कोटा: लगभग समाप्त",
+        "Kannada": "ಧ್ವನಿ ಕ್ಲೌಡ್ ಕೋಟಾ: ಬಹುತೇಕ ತುಂಬಿದೆ",
+        "Tamil": "வாய்ஸ் கிளவுட் ஒதுக்கீடு: கிட்டத்தட்ட நிரம்பிவிட்டது",
+        "Telugu": "వాయిస్ క్లౌడ్ కోటా: దాదాపు నిండిపోయింది",
+        "Marathi": "वॉइस क्लाउड कोटा: जवळजवळ संपले",
+        "Bengali": "ভয়েস ক্লাউড কোটা: প্রায় শেষ",
+        "Gujarati": "વૉઇસ ક્લાઉડ કોટા: લગભગ સમાપ્ત",
+        "Punjabi": "ਵੌਇਸ ਕਲਾਉਡ ਕੋਟਾ: ਲਗਭਗ ਖਤਮ",
+        "Malayalam": "വോയ്‌സ് ക്ലൗഡ് ക്വോട്ട: ഏതാണ്ട് തീരാറായി",
+        "Odia": "ଭଏସ୍ କ୍ଲାଉଡ୍ କୋଟା: ପ୍ରାୟ ସମାପ୍ତ"
+    },
+    "Only {remaining} cloud voice minutes left this month. Browser voice stays free.": {
+        "English": "Only {remaining} cloud voice minutes left this month. Browser voice stays free.",
+        "Hindi": "इस महीने केवल {remaining} क्लाउड वॉयस मिनट बचे हैं। ब्राउज़र वॉयस मुफ्त रहता है।",
+        "Kannada": "ಈ ತಿಂಗಳು ಕೇವಲ {remaining} ಕ್ಲೌಡ್ ಧ್ವನಿ ನಿಮಿಷಗಳು ಮಾತ್ರ ಉಳಿದಿವೆ. ಬ್ರೌಸರ್ ಧ್ವನಿ ಉಚಿತವಾಗಿರುತ್ತದೆ.",
+        "Tamil": "இந்த மாதம் {remaining} கிளவுட் வாய்ஸ் நிமிடங்கள் மட்டுமே மீதம். உலாவி வாய்ஸ் இலவசமாக இருக்கும்.",
+        "Telugu": "ఈ నెలలో {remaining} క్లౌడ్ వాయిస్ నిమిషాలు మాత్రమే మిగిలి ఉన్నాయి. బ్రౌజర్ వాయిస్ ఉచితంగా ఉంటుంది.",
+        "Marathi": "या महिन्यात फक्त {remaining} क्लाउड वॉइस मिनिटे शिल्लक. ब्राउझर वॉइस मोफत राहते.",
+        "Bengali": "এই মাসে শুধুমাত্র {remaining} ক্লাউড ভয়েস মিনিট বাকি। ব্রাউজার ভয়েস বিনামূল্যে থাকে।",
+        "Gujarati": "આ મહિને માત્ર {remaining} ક્લાઉડ વૉઇસ મિનિટ બાકી. બ્રાઉઝર વૉઇસ મફત રહે છે.",
+        "Punjabi": "ਇਸ ਮਹੀਨੇ ਸਿਰਫ਼ {remaining} ਕਲਾਉਡ ਵੌਇਸ ਮਿੰਟ ਬਾਕੀ ਹਨ। ਬ੍ਰਾਊਜ਼ਰ ਵੌਇਸ ਮੁਫ਼ਤ ਰਹਿੰਦਾ ਹੈ।",
+        "Malayalam": "ഈ മാസം {remaining} ക്ലൗഡ് വോയ്‌സ് മിനിറ്റുകൾ മാത്രം ബാക്കി. ബ്രൗസർ വോയ്‌സ് സൗജന്യമാണ്.",
+        "Odia": "ଏହି ମାସରେ କେବଳ {remaining} କ୍ଲାଉଡ୍ ଭଏସ୍ ମିନିଟ୍ ବାକି। ବ୍ରାଉଜର୍ ଭଏସ୍ ମାଗଣା ଅଛି।"
+    },
     // Premium enterprise differentiators (2026-04-24 pricing review)
     "Chains, government & 250+ teacher schools": {
         "English": "Chains, government & 250+ teacher schools",
