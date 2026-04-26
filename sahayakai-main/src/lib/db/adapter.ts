@@ -7,6 +7,67 @@ import { UsageTracker } from '../usage-tracker';
 const USERS_COLLECTION = 'users';
 const CONTENT_COLLECTION = 'content';
 
+/**
+ * Allowlist of UserProfile fields a CLIENT may update via updateProfileAction.
+ *
+ * Security-sensitive fields (planTier, isAdmin, role, email, uid, impactScore,
+ * followersCount, etc.) MUST NOT be in this list. They are written by
+ * dedicated server-side flows (billing webhook → planTier; admin grant →
+ * role/isAdmin; aggregator → impactScore; auth → email/uid).
+ *
+ * If a new client-editable field is added to the schema, add it here AND
+ * extend the corresponding test in src/__tests__/lib/adapter-allowlist.test.ts.
+ */
+const CLIENT_EDITABLE_USER_FIELDS = new Set<string>([
+    'displayName',
+    'photoURL',
+    'avatarUrl',
+    'bio',
+    'schoolName',
+    'schoolNormalized',
+    'subjects',
+    'gradeLevels',
+    'teachingGradeLevels',
+    'educationBoard',
+    'state',
+    'district',
+    'preferredLanguage',
+    'phone',
+    'communityIntroState',
+    'onboardingChecklistItems',
+    'onboardingComplete',
+    'consentGivenAt',
+    'consentVersion',
+    'lastLessonPlanLanguage',
+    'notificationPreferences',
+    'voicePreferences',
+    'groupsInitialized', // server marks true after auto-join, but client may force-rerun
+]);
+
+/**
+ * Strip security-sensitive keys from a client-supplied user-update payload.
+ * Logs (warn) any rejected keys so abuse attempts are visible in Cloud Logging.
+ */
+function filterUserUpdate(data: Partial<UserProfile>): Partial<UserProfile> {
+    const out: Record<string, any> = {};
+    const rejected: string[] = [];
+    for (const key of Object.keys(data)) {
+        if (CLIENT_EDITABLE_USER_FIELDS.has(key)) {
+            out[key] = (data as any)[key];
+        } else {
+            rejected.push(key);
+        }
+    }
+    if (rejected.length > 0) {
+        logger.warn(
+            'updateUser: rejected non-allowlisted fields',
+            'PROFILE_UPDATE',
+            { rejected },
+        );
+    }
+    return out as Partial<UserProfile>;
+}
+
 export const dbAdapter = {
     // --- User Profile Operations ---
 
@@ -31,13 +92,26 @@ export const dbAdapter = {
         await db.collection(USERS_COLLECTION).doc(profile.uid).set(profile, { merge: true });
     },
 
+    /**
+     * Update a user's profile. Wave 2b hardening: input is FILTERED through
+     * an explicit allowlist before write. Previously any caller could spread
+     * arbitrary keys into the user doc — including security-sensitive fields
+     * like `planTier`, `isAdmin`, `role`, `email`, `impactScore`, `groupIds`
+     * — and escalate themselves. Auth gates higher up only verified WHO could
+     * call updateUser; this filter controls WHAT they can change.
+     *
+     * Fields NOT in the allowlist (planTier, isAdmin, role, email, uid,
+     * impactScore, etc.) must be written via dedicated server-side flows that
+     * enforce business rules (billing webhook, admin grant, follow handler).
+     */
     async updateUser(uid: string, data: Partial<UserProfile>): Promise<void> {
         const db = await getDb();
         const docRef = db.collection(USERS_COLLECTION).doc(uid);
 
-        // Use set with merge: true to handle cases where the document might not exist (upsert)
+        const filtered = filterUserUpdate(data);
+
         await docRef.set({
-            ...data,
+            ...filtered,
             uid, // Ensure UID is always present
             lastLogin: FieldValue.serverTimestamp(),
         }, { merge: true });

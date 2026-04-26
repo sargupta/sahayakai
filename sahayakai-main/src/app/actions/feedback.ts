@@ -55,6 +55,7 @@ export async function submitFeedback(data: FeedbackData) {
         }
 
         logger.error("Error submitting feedback", error, 'FEEDBACK');
-        return { success: false, error: error.message };
+        // Wave 2b: don't leak Firebase error details to the client.
+        return { success: false, error: 'Could not submit feedback.' };
     }
 }
