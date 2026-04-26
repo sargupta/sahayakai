@@ -1,0 +1,94 @@
+#!/bin/bash
+# ─────────────────────────────────────────────────────────────────────────────
+# SahayakAI Pre-Commit Hook
+# Runs type checks only for the sub-projects that have staged changes.
+# Fast: skips Flutter check if no .dart files staged; skips web if no .ts/.tsx.
+#
+# Install once: bash scripts/install-hooks.sh
+# ─────────────────────────────────────────────────────────────────────────────
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+FLUTTER_CHANGED=false
+WEB_CHANGED=false
+
+# ── Detect which sub-projects have staged changes ─────────────────────────────
+while IFS= read -r file; do
+  case "$file" in
+    sahayakai_mobile/*)  FLUTTER_CHANGED=true ;;
+    sahayakai-main/*)    WEB_CHANGED=true ;;
+  esac
+done < <(git diff --cached --name-only)
+
+# ── Flutter: dart type check ──────────────────────────────────────────────────
+if $FLUTTER_CHANGED; then
+  echo ""
+  echo "━━━ Flutter analyze ─────────────────────────────────────────────────────"
+  cd "$REPO_ROOT/sahayakai_mobile"
+
+  if ! command -v flutter &>/dev/null; then
+    echo "⚠  flutter not found in PATH — skipping Flutter analysis."
+    echo "   Run: export PATH=\"\$PATH:\$HOME/flutter/bin\" and re-commit."
+  else
+    flutter analyze --no-fatal-infos --no-fatal-warnings
+    echo "✓  Flutter analyze passed"
+  fi
+
+  cd "$REPO_ROOT"
+fi
+
+# ── Web: TypeScript type check ────────────────────────────────────────────────
+if $WEB_CHANGED; then
+  echo ""
+  echo "━━━ TypeScript check ────────────────────────────────────────────────────"
+  cd "$REPO_ROOT/sahayakai-main"
+
+  if [ ! -f "node_modules/.bin/tsc" ]; then
+    echo "⚠  node_modules not found — run npm install in sahayakai-main first."
+    exit 1
+  fi
+
+  npx tsc --noEmit
+  echo "✓  TypeScript check passed"
+
+  # ── i18n source audit: block NEW hard-coded user-visible JSX strings ────
+  # Scopes to STAGED .tsx/.ts files under sahayakai-main/src so existing
+  # tech debt outside this commit doesn't block. See AGENTS.md (gate 1).
+  # Override with SKIP_I18N_AUDIT=1 for genuine brand strings.
+  if [ -x "scripts/audit-i18n-source.sh" ]; then
+    # Build the staged-file list relative to sahayakai-main (we cd'd in earlier).
+    STAGED_TSX=()
+    while IFS= read -r f; do
+      case "$f" in
+        sahayakai-main/src/*.tsx|sahayakai-main/src/*.ts|sahayakai-main/src/**/*.tsx|sahayakai-main/src/**/*.ts)
+          # Strip the "sahayakai-main/" prefix since we are inside that dir.
+          STAGED_TSX+=( "${f#sahayakai-main/}" ) ;;
+      esac
+    done < <(cd "$REPO_ROOT" && git diff --cached --name-only --diff-filter=ACMR)
+
+    if [ "${#STAGED_TSX[@]}" -gt 0 ]; then
+      echo ""
+      echo "━━━ i18n source audit (staged files only) ───────────────────────────"
+      if ! ./scripts/audit-i18n-source.sh "${STAGED_TSX[@]}" > /tmp/i18n-audit.log 2>&1; then
+        cat /tmp/i18n-audit.log
+        if [ "${SKIP_I18N_AUDIT:-0}" != "1" ]; then
+          echo ""
+          echo "✗  Hard-coded strings detected in your staged changes."
+          echo "   See AGENTS.md gate 1. To override (rare, brand strings only):"
+          echo "   SKIP_I18N_AUDIT=1 git commit ..."
+          exit 1
+        fi
+        echo "⚠  SKIP_I18N_AUDIT=1 set — proceeding anyway."
+      else
+        echo "✓  i18n source audit passed (${#STAGED_TSX[@]} file(s) checked)"
+      fi
+    fi
+  fi
+
+  cd "$REPO_ROOT"
+fi
+
+echo ""
+echo "✓  Pre-commit checks passed — committing."
+echo ""

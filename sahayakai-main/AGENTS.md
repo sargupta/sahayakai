@@ -74,3 +74,96 @@ It is a fallback. Prefer the trigger.
 - Flipping traffic to a newly built revision
 - Force-routing to an older revision (rollback)
 - Modifying the trigger config or `cloudbuild.yaml`
+
+---
+
+# Before you say "done" on a UI change — i18n gate (mandatory)
+
+Three patterns broke the landing page recently. Each has an
+enforcement script you MUST run. No exceptions.
+
+## Why this exists
+
+This file used to end above. It was added because:
+
+1. **Agents trust prior work without verifying.** A previous commit
+   said "i18n marketing dictionary now covers all 11 supported
+   languages" — but it only covered the pricing page. Subsequent
+   agents assumed the landing page was covered. It wasn't. 30+
+   landing strings stayed English in Hindi mode for weeks.
+
+2. **Agents declare done before user-visible verification.** The
+   tests for "i18n complete" used to be: tsc passes, page renders.
+   Neither catches "string is hard-coded in JSX". A user opening
+   the page in Hindi catches it instantly.
+
+3. **Parallel agents touch the same files.** Nobody owned a
+   "comprehensive landing i18n" sweep, so each agent's audit was
+   scoped to whatever they were touching. Coverage gaps survived
+   indefinitely.
+
+The scripts below close all three. Run them; do not eyeball.
+
+## Gate 1: source audit (run before commit)
+
+```bash
+./scripts/audit-i18n-source.sh
+```
+
+Heuristic regex that flags JSX text nodes ≥ 2 words and
+user-visible attributes (`placeholder`, `aria-label`, `title`,
+`alt`, `label`) that are NOT wrapped in `t(...)`. Exits 1 on any
+finding. Wired into the pre-commit hook so a commit that
+introduces a new hard-coded user-visible string is rejected at
+commit time.
+
+If the script flags an alt/aria string you genuinely want to keep
+in English (e.g. brand name in alt text), leave it but treat it
+as a deliberate decision — note the rationale in the commit
+message.
+
+## Gate 2: dictionary coverage (run before push)
+
+When you add a new `t("foo")` call:
+
+1. Open `src/context/language-context.tsx`.
+2. Add the key with values for ALL 11 languages (English, Hindi,
+   Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Punjabi,
+   Malayalam, Odia).
+3. `tsc --noEmit` — TypeScript will reject duplicate keys
+   automatically.
+
+Best-effort translations with my training data are acceptable for
+the smaller Indic languages; the alternative (English fallback)
+is what causes user-visible regressions. Mark uncertain ones with
+a `// REVIEW: {lang}` comment.
+
+## Gate 3: live audit (run after deploy + traffic flip)
+
+```bash
+./scripts/audit-i18n-live.sh
+```
+
+Fetches the live URL, downloads every JS chunk it references, and
+greps the bundle for both your new translation keys AND a sample
+of their Hindi-script values. Catches the case where you commit
++ push but the deploy raced and your code didn't actually ship.
+
+Exits 1 if any expected key/value is missing. Re-run after any
+`safe-deploy.sh` + `update-traffic --to-latest` cycle to confirm
+the new code is what users actually see.
+
+## Workflow summary
+
+```text
+edit JSX
+  → ./scripts/audit-i18n-source.sh    # gate 1 (also auto via pre-commit)
+  → add keys to language-context.tsx
+  → tsc --noEmit
+  → git commit
+  → git push origin main
+  → wait for build (or run safe-deploy.sh fallback)
+  → audit-deployments.sh + flip traffic
+  → ./scripts/audit-i18n-live.sh     # gate 3
+  → only NOW say "done"
+```
