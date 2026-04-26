@@ -335,6 +335,37 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "পরামর্শ নিন", "Gujarati": "સલાહ મેળવો", "Punjabi": "ਸਲਾਹ ਲਓ",
         "Malayalam": "ഉപദേശം നേടുക", "Odia": "ପରାମର୍ଶ ନିଅନ୍ତୁ"
     },
+    // === Exam Paper page i18n ===
+    "Grade Level": {
+        "English": "Grade Level", "Hindi": "कक्षा स्तर", "Kannada": "ತರಗತಿ ಮಟ್ಟ",
+        "Tamil": "வகுப்பு நிலை", "Telugu": "తరగతి స్థాయి", "Marathi": "इयत्ता स्तर",
+        "Bengali": "শ্রেণি স্তর", "Gujarati": "ધોરણ સ્તર", "Punjabi": "ਜਮਾਤ ਪੱਧਰ",
+        "Malayalam": "ക്ലാസ് നില", "Odia": "ଶ୍ରେଣୀ ସ୍ତର"
+    },
+    "Difficulty": {
+        "English": "Difficulty", "Hindi": "कठिनाई", "Kannada": "ಕಷ್ಟ",
+        "Tamil": "சிரமம்", "Telugu": "కష్టం", "Marathi": "अडचण",
+        "Bengali": "কাঠিন্য", "Gujarati": "મુશ્કેલી", "Punjabi": "ਮੁਸ਼ਕਲ",
+        "Malayalam": "ബുദ്ധിമുട്ട്", "Odia": "କଠିନତା"
+    },
+    "Select subject": {
+        "English": "Select subject", "Hindi": "विषय चुनें", "Kannada": "ವಿಷಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+        "Tamil": "பாடத்தைத் தேர்ந்தெடுக்கவும்", "Telugu": "విషయాన్ని ఎంచుకోండి", "Marathi": "विषय निवडा",
+        "Bengali": "বিষয় নির্বাচন করুন", "Gujarati": "વિષય પસંદ કરો", "Punjabi": "ਵਿਸ਼ਾ ਚੁਣੋ",
+        "Malayalam": "വിഷയം തിരഞ്ഞെടുക്കുക", "Odia": "ବିଷୟ ବାଛନ୍ତୁ"
+    },
+    "e.g. Mathematics, Science, English": {
+        "English": "e.g. Mathematics, Science, English", "Hindi": "उदा. गणित, विज्ञान, अंग्रेज़ी", "Kannada": "ಉದಾ. ಗಣಿತ, ವಿಜ್ಞಾನ, ಇಂಗ್ಲಿಷ್",
+        "Tamil": "எ.கா. கணிதம், அறிவியல், ஆங்கிலம்", "Telugu": "ఉదా. గణితం, సైన్స్, ఇంగ్లీష్", "Marathi": "उदा. गणित, विज्ञान, इंग्रजी",
+        "Bengali": "যেমন: গণিত, বিজ্ঞান, ইংরেজি", "Gujarati": "દા.ત. ગણિત, વિજ્ઞાન, અંગ્રેજી", "Punjabi": "ਉਦਾ. ਗਣਿਤ, ਵਿਗਿਆਨ, ਅੰਗਰੇਜ਼ੀ",
+        "Malayalam": "ഉദാ. ഗണിതം, സയൻസ്, ഇംഗ്ലീഷ്", "Odia": "ଯଥା: ଗଣିତ, ବିଜ୍ଞାନ, ଇଂରାଜୀ"
+    },
+    "e.g. Real Numbers, Polynomials, Triangles": {
+        "English": "e.g. Real Numbers, Polynomials, Triangles", "Hindi": "उदा. वास्तविक संख्याएँ, बहुपद, त्रिभुज", "Kannada": "ಉದಾ. ವಾಸ್ತವಿಕ ಸಂಖ್ಯೆಗಳು, ಬಹುಪದಿಗಳು, ತ್ರಿಕೋನಗಳು",
+        "Tamil": "எ.கா. மெய் எண்கள், பல்லுறுப்புக்கோவைகள், முக்கோணங்கள்", "Telugu": "ఉదా. వాస్తవ సంఖ్యలు, బహుపదాలు, త్రిభుజాలు", "Marathi": "उदा. वास्तविक संख्या, बहुपदी, त्रिकोण",
+        "Bengali": "যেমন: বাস্তব সংখ্যা, বহুপদী, ত্রিভুজ", "Gujarati": "દા.ત. વાસ્તવિક સંખ્યાઓ, બહુપદી, ત્રિકોણ", "Punjabi": "ਉਦਾ. ਅਸਲੀ ਸੰਖਿਆਵਾਂ, ਬਹੁਪਦੀ, ਤ੍ਰਿਭੁਜ",
+        "Malayalam": "ഉദാ. യഥാർത്ഥ സംഖ്യകൾ, ബഹുപദങ്ങൾ, ത്രികോണങ്ങൾ", "Odia": "ଯଥା: ବାସ୍ତବ ସଂଖ୍ୟା, ବହୁପଦ, ତ୍ରିଭୁଜ"
+    },
     "Getting Advice...": {
         "English": "Getting Advice...", "Hindi": "सलाह प्राप्त की जा रही है...", "Kannada": "ಸಲಹೆ ಪಡೆಯಲಾಗುತ್ತಿದೆ...",
         "Tamil": "ஆலோசனை பெறப்படுகிறது...", "Telugu": "సలహా పొందుతున్నాం...", "Marathi": "सल्ला मिळवत आहे...",
