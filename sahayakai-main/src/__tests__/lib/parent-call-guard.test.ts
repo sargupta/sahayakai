@@ -81,19 +81,30 @@ describe('assertAllRules — forbidden phrases', () => {
         ).toThrow(BehaviouralGuardError);
     });
 
-    it('does NOT catch Cyrillic look-alikes (known gap, follow-up needed)', () => {
-        // NFKC normalization is INSUFFICIENT to handle confusable
-        // homoglyphs (Cyrillic А = U+0410 vs Latin A = U+0041 are
-        // distinct codepoints, NFKC does not collapse them). A proper
-        // confusable map is required (e.g. Unicode UTS #39 skeleton
-        // algorithm or `confusable_homoglyphs` library).
-        //
-        // This test PINS the current behaviour as a TODO marker so
-        // the follow-up ticket (P1 GUARD-5) is unambiguous.
+    it('catches Cyrillic look-alikes (Wave 4 fix 5 closed GUARD-5)', () => {
+        // Wave 4 fix 5 (P1 GUARD-5): added confusable folding for
+        // Cyrillic / Greek / fullwidth Latin look-alikes. Cyrillic А
+        // (U+0410) now folds to Latin A before regex match.
         const cyrillicA = 'Hello, I am an \u0410I from school';
         expect(() =>
             assertAllRules({ reply: cyrillicA, parentLanguage: 'en', turnNumber: 1 }),
-        ).not.toThrow();
+        ).toThrow(BehaviouralGuardError);
+    });
+
+    it('catches Greek look-alikes', () => {
+        // Greek Α (U+0391) → Latin A.
+        const greekA = 'Hello, I am an \u0391I from school';
+        expect(() =>
+            assertAllRules({ reply: greekA, parentLanguage: 'en', turnNumber: 1 }),
+        ).toThrow(BehaviouralGuardError);
+    });
+
+    it('catches fullwidth look-alikes', () => {
+        // Fullwidth Ａ (U+FF21) → Latin A.
+        const fullwidthA = 'Hello, I am an \uFF21I from school';
+        expect(() =>
+            assertAllRules({ reply: fullwidthA, parentLanguage: 'en', turnNumber: 1 }),
+        ).toThrow(BehaviouralGuardError);
     });
 });
 

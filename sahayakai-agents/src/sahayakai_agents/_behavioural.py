@@ -33,6 +33,46 @@ import unicodedata
 #
 # Inputs are NFKC-normalized BEFORE matching to catch confusable
 # Unicode variants (e.g. Cyrillic А that visually looks like Latin A).
+# Round-2 audit P1 GUARD-5 fix (30-agent review, groups A3 + F6):
+# Cyrillic / Greek / common-confusable letter folding so an attacker
+# model can't bypass forbidden-phrase regex with visually-identical
+# look-alikes (Cyrillic А = U+0410 vs Latin A = U+0041).
+#
+# This is the same conceptual approach as Unicode UTS #39 skeleton
+# algorithm but pinned to the small set of confusables that appear in
+# our forbidden phrases (mostly Latin letters). Conservative — we map
+# only confusables for `[A-Za-z]` and skip the broader UTS #39 set.
+#
+# Build a translation table once; the regex match runs on the folded
+# text but the user-visible error message preserves the original
+# (so the reviewer can see the source bytes).
+_CONFUSABLE_FOLD: dict[int, str] = {
+    # Cyrillic uppercase that visually match Latin uppercase
+    0x0410: "A", 0x0412: "B", 0x0415: "E", 0x041A: "K", 0x041C: "M",
+    0x041D: "H", 0x041E: "O", 0x0420: "P", 0x0421: "C", 0x0422: "T",
+    0x0425: "X", 0x0405: "S", 0x0406: "I", 0x0408: "J",
+    # Cyrillic lowercase
+    0x0430: "a", 0x0431: "b", 0x0435: "e", 0x043A: "k", 0x043C: "m",
+    0x043D: "h", 0x043E: "o", 0x0440: "p", 0x0441: "c", 0x0442: "t",
+    0x0443: "y", 0x0445: "x", 0x0455: "s", 0x0456: "i", 0x0458: "j",
+    # Greek that visually match Latin
+    0x0391: "A", 0x0392: "B", 0x0395: "E", 0x0396: "Z", 0x0397: "H",
+    0x0399: "I", 0x039A: "K", 0x039C: "M", 0x039D: "N", 0x039F: "O",
+    0x03A1: "P", 0x03A4: "T", 0x03A5: "Y", 0x03A7: "X",
+    0x03B1: "a", 0x03B5: "e", 0x03B9: "i", 0x03BA: "k", 0x03BD: "v",
+    0x03BF: "o", 0x03C1: "p", 0x03C4: "t", 0x03C5: "y", 0x03C7: "x",
+    # Fullwidth (FF21-FF3A → A-Z, FF41-FF5A → a-z)
+    **{0xFF21 + i: chr(0x41 + i) for i in range(26)},
+    **{0xFF41 + i: chr(0x61 + i) for i in range(26)},
+}
+
+
+def _fold_confusables(text: str) -> str:
+    """Replace Cyrillic / Greek / fullwidth letters that visually match
+    Latin with their Latin equivalents. Idempotent."""
+    return text.translate(_CONFUSABLE_FOLD)
+
+
 _AI_TARGETS = r"(?:AI|bot|chat\s*bot|assistant|language\s+model)"
 _FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bSahaa?yak(\s*\.?\s*AI)?\b", re.IGNORECASE),
@@ -72,17 +112,15 @@ _LANGUAGE_UNICODE_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
 
 
 def assert_no_forbidden_phrases(text: str) -> None:
-    # Round-2 audit P0 GUARD-3 fix (group A3): NFKC-normalize before
-    # matching to collapse compatibility variants (full-width letters,
-    # ligatures), and strip Unicode invisibles (ZWJ, ZWNJ, BOM) that
-    # an attacker model could insert mid-phrase.
-    #
-    # NOTE: NFKC does NOT handle confusable homoglyphs (Cyrillic А
-    # vs Latin A are distinct codepoints). Confusable bypass is
-    # tracked as P1 GUARD-5 — needs UTS #39 skeleton or
-    # `confusable_homoglyphs` library, deferred to a follow-up.
+    # Round-2 audit P0 GUARD-3 + P1 GUARD-5 fix (group A3 + F6):
+    # 1. NFKC-normalize: collapse compatibility variants (full-width,
+    #    ligatures).
+    # 2. Strip invisibles (ZWJ, ZWNJ, BOM) that defeat naive regex.
+    # 3. Fold confusables (Cyrillic А, Greek Α, fullwidth Ａ → Latin A)
+    #    so a homoglyph attacker can't bypass the regex.
     normalized = unicodedata.normalize("NFKC", text)
     normalized = re.sub(r"[\u200b-\u200d\ufeff]", "", normalized)
+    normalized = _fold_confusables(normalized)
     for pattern in _FORBIDDEN_PATTERNS:
         hit = pattern.search(normalized)
         assert hit is None, f"Forbidden phrase matched: {hit.group(0)!r} in reply={text!r}"

@@ -18,6 +18,54 @@
  * Round-2 audit P0 BEHAV-1.
  */
 
+// Round-2 audit P1 GUARD-5 fix (30-agent review, groups A3 + F6):
+// Cyrillic / Greek / fullwidth confusable map. Same approach as the
+// Python guard's `_CONFUSABLE_FOLD` — pinned to the small set of
+// confusables for `[A-Za-z]` rather than the full UTS #39 skeleton
+// table. Byte-aligned across both runtimes.
+const CONFUSABLE_FOLD: Record<number, string> = (() => {
+    const m: Record<number, string> = {};
+    // Cyrillic uppercase
+    const cyrillicUpper: Record<number, string> = {
+        0x0410: 'A', 0x0412: 'B', 0x0415: 'E', 0x041A: 'K', 0x041C: 'M',
+        0x041D: 'H', 0x041E: 'O', 0x0420: 'P', 0x0421: 'C', 0x0422: 'T',
+        0x0425: 'X', 0x0405: 'S', 0x0406: 'I', 0x0408: 'J',
+    };
+    // Cyrillic lowercase
+    const cyrillicLower: Record<number, string> = {
+        0x0430: 'a', 0x0431: 'b', 0x0435: 'e', 0x043A: 'k', 0x043C: 'm',
+        0x043D: 'h', 0x043E: 'o', 0x0440: 'p', 0x0441: 'c', 0x0442: 't',
+        0x0443: 'y', 0x0445: 'x', 0x0455: 's', 0x0456: 'i', 0x0458: 'j',
+    };
+    // Greek
+    const greek: Record<number, string> = {
+        0x0391: 'A', 0x0392: 'B', 0x0395: 'E', 0x0396: 'Z', 0x0397: 'H',
+        0x0399: 'I', 0x039A: 'K', 0x039C: 'M', 0x039D: 'N', 0x039F: 'O',
+        0x03A1: 'P', 0x03A4: 'T', 0x03A5: 'Y', 0x03A7: 'X',
+        0x03B1: 'a', 0x03B5: 'e', 0x03B9: 'i', 0x03BA: 'k', 0x03BD: 'v',
+        0x03BF: 'o', 0x03C1: 'p', 0x03C4: 't', 0x03C5: 'y', 0x03C7: 'x',
+    };
+    Object.assign(m, cyrillicUpper, cyrillicLower, greek);
+    // Fullwidth uppercase A-Z (FF21-FF3A) → A-Z
+    for (let i = 0; i < 26; i++) m[0xFF21 + i] = String.fromCharCode(0x41 + i);
+    // Fullwidth lowercase a-z (FF41-FF5A) → a-z
+    for (let i = 0; i < 26; i++) m[0xFF41 + i] = String.fromCharCode(0x61 + i);
+    return m;
+})();
+
+function foldConfusables(text: string): string {
+    let out = '';
+    for (const ch of text) {
+        const cp = ch.codePointAt(0);
+        if (cp !== undefined && CONFUSABLE_FOLD[cp] !== undefined) {
+            out += CONFUSABLE_FOLD[cp];
+        } else {
+            out += ch;
+        }
+    }
+    return out;
+}
+
 // Round-2 audit P0 GUARD-1 fix: pattern set expanded to catch
 // apostrophe contractions, article omission, synonym variants, and
 // Hindi transliteration drift. Byte-aligned with `_behavioural.py`.
@@ -72,12 +120,12 @@ export class BehaviouralGuardError extends Error {
 }
 
 function assertNoForbiddenPhrases(text: string, parentLanguage: string): void {
-    // Round-2 audit P0 GUARD-3 fix: NFKC-normalize before matching so
-    // Cyrillic look-alikes (А = U+0410) don't bypass. Strip Unicode
-    // invisibles (ZWJ, ZWNJ, BOM) that an attacker model could insert.
-    const normalized = text
-        .normalize('NFKC')
-        .replace(/[\u200b-\u200d\ufeff]/g, '');
+    // Round-2 audit P0 GUARD-3 + P1 GUARD-5: NFKC normalize, strip
+    // invisibles (ZWJ/ZWNJ/BOM), fold confusables (Cyrillic / Greek
+    // / fullwidth Latin look-alikes). Byte-aligned with Python guard.
+    const normalized = foldConfusables(
+        text.normalize('NFKC').replace(/[\u200b-\u200d\ufeff]/g, ''),
+    );
     for (const pattern of FORBIDDEN_PATTERNS) {
         const match = normalized.match(pattern);
         if (match) {
