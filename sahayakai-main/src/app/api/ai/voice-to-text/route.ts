@@ -19,6 +19,17 @@ async function _handler(request: NextRequest) {
             return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
         }
 
+        // Wave 2: cap audio at 10 MB. STT cost scales with duration, and a
+        // 10 MB Opus file is already ~30 minutes — far longer than any
+        // legitimate teacher voice note or chat dictation.
+        const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+        if (audioFile.size > MAX_AUDIO_BYTES) {
+            return NextResponse.json(
+                { error: `Audio file too large (max ${MAX_AUDIO_BYTES / 1024 / 1024} MB).` },
+                { status: 413 },
+            );
+        }
+
         // --- Try Sarvam STT first (cheaper, purpose-built for Indian languages) ---
         try {
             logger.info('[STT] Trying Sarvam Saaras v3', 'VOICE_TO_TEXT');
