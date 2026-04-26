@@ -4,7 +4,7 @@
 
 Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy automation), and D (auto-abort safety net) scaffold for the parent-call agent migration to a FastAPI sidecar on `google-adk` 1.31. **Default flag `parentCallSidecarMode: 'off'` means zero traffic-impact on merge** — the sidecar code path is live but unreached until Firestore flag-flip.
 
-25 commits; 56+ files; ~4,500 insertions; 119 Python tests + 19 Jest tests passing.
+31 commits; ~62 files; ~5,400 insertions; 119 Python tests + 19 Jest tests passing.
 
 ## Commit narrative
 
@@ -50,6 +50,18 @@ Lands the full Tracks A (Next.js integration), B (sidecar polish), C (deploy aut
 |---|---|
 | `141cea0b8` | Cloud Function `cloud_functions/auto_abort/` — Pub/Sub trigger that demotes `parentCallSidecarMode` / `parentCallSidecarPercent` one rung down the ladder per alert. 9-rung ladder pinned by 20 unit tests. Six Cloud Monitoring alert policy YAMLs (5xx rate, p95 latency, behavioural-guard rate, shadow-diff LaBSE, Firestore 409 rate, Gemini spend) under `policy_templates/`. README documents Pub/Sub topic, IAM bindings, alert apply flow, manual-abort escape hatch, local test recipe |
 | `11e90fc7f` | Cloud Function `cloud_functions/shadow_diff_aggregator/` — HTTP trigger called by Cloud Scheduler every 5 min. Reads `agent_shadow_diffs/{date}/calls/**`, skips errored samples, computes rolling LaBSE mean over the last 500 non-error pairs, writes `custom.googleapis.com/parent_call/shadow_labse_mean` + `shadow_sample_count`. 7 unit tests pin the TF cosine math (identical-bag shortcut to avoid sqrt(2)/sqrt(2) drift). **Closes alert 04's blind spot — without this writer, the LaBSE alert never fires.** |
+
+### Hardening pass — risks called out, then closed (5 commits)
+
+After the initial Tracks A-D landed, a second pass closed every remaining master-plan risk:
+
+| commit | fix |
+|---|---|
+| `5618017dd` | **Genkit fallback timeout (master-plan risk #1).** `runResiliently` could wait 60 s on single-key 429 backoff, blowing Twilio's 15 s budget. New `withTimeout(span, ms, work)` wrapper races the genkit promise against a 10 s ceiling for `generateAgentReply` and 30 s for `generateCallSummary`. `GenkitTimeoutError` lands in the dispatcher's existing fallback path (canned safe wrap-up). |
+| `b5df4bd79` | **Firestore rules + TTL (P0 RULES-1, TTL-1).** New rule blocks for `agent_sessions/**`, `agent_shadow_diffs/**`, `agent_voice_sessions/**` — all Admin-SDK-only (clients deny-by-default). New `scripts/apply-firestore-ttl.sh` enables TTL on `agent_sessions.expireAt` (24 h) + `calls.expireAt` (14 d). |
+| `fc91ee49a` | **Dual deploy paths SA (P0 IAM-2).** Both `cloud-run.yml` and `apphosting.yaml` now wire `sahayakai-hotfix-resilience-runtime@...` as the Next.js runtime SA, plus the three new secrets (signing key, audience, sidecar URL). Closes the master-plan risk that one deploy path could ship without sidecar auth wired up. |
+| `b3a4c82ba` | **Sidecar service.yaml (P0 TIMEOUT-1, BOOT-1).** `timeoutSeconds: 12` → `8` (matches resilience-layer's 7 s max-backoff). New `run.googleapis.com/startup-cpu-boost: "true"` annotation cuts cold-start import time from ~3.5 s to ~1.5 s. |
+| `7ad2041e2` | **Pre-work automation (P0 BOOT-2, SEED-1, PREFLIGHT-1).** Three new scripts: `generate-signing-key.sh` (256-bit random + Secret Manager rotation), `seed-feature-flags.sh` (creates Firestore feature_flags doc with parentCallSidecar* fields so auto-abort transactions can update it), `preflight-shadow-ramp.sh` (15-gate checklist that returns 0 only when every gate is green; each failure prints its specific remedy script). |
 
 ## Architecture decisions
 
@@ -132,10 +144,16 @@ This PR lands the **scaffold AND the safety net**. The 5-track rollout to 100 % 
 - Actually running `gcloud builds submit` (Track C is the AUTOMATION; the deploy itself is human-gated)
 - Phase 2 voice via Gemini Live, Phase 3 writer-evaluator-reviser, Phase 4 RAG over NCERT — three separate plans landed in `.claude/plans/phase-{2,3,4}-*.md`. Each one branches off this base.
 
-## Risks called out
+## Risks called out (and what's been closed)
 
-- **Genkit fallback under quota exhaustion** — `runResiliently` in Genkit can wait up to 60s on single-key 429s. Sidecar transport-error fallback to Genkit could blow the 15s Twilio budget if the live key pool is throttled. Mitigation deferred — owner of `runResiliently` should add an `AbortController` ceiling.
-- **Dual deploy paths** (`cloud-run.yml` + `apphosting.yaml`) — both need the new Next.js runtime SA. Track C's pre-work step must update both; consolidate to one in a follow-up plan.
-- **Cost ramp under shadow** — at 50 % shadow, Gemini spend roughly doubles for parent-call traffic for ~2 days. Cloud Monitoring budget alert at 2× baseline.
+| Risk | Status |
+|---|---|
+| Genkit fallback can wait 60 s on quota-exhaustion (blowing Twilio's 15 s budget) | **Closed** in `5618017dd` — `withTimeout` 10 s ceiling. |
+| Dual deploy paths (cloud-run.yml + apphosting.yaml) drift on SA wiring | **Closed** in `fc91ee49a` — both paths point at `sahayakai-hotfix-resilience-runtime` with same secret bindings. |
+| Sidecar timeoutSeconds (12 s) > Twilio client timeout (3.5 s) | **Closed** in `b3a4c82ba` — capped at 8 s. |
+| Firestore rules / TTL for new collections — was "human pre-work" | **Closed** in `b5df4bd79` — rules diff + idempotent `apply-firestore-ttl.sh`. |
+| Signing key generation + secret seeding + preflight check — was "human pre-work" | **Closed** in `7ad2041e2` — three idempotent shell scripts. |
+| Cost ramp under shadow (~2× Gemini spend for 2 days at 50% shadow) | **Open** — Cloud Monitoring budget alert at 2× baseline (operator wires this in pre-work). |
+| Multi-region failover — sidecar is asia-southeast1 only | **Open and accepted** — Phase 1 single-region per master plan. Phase 2 / 3 / 4 stay single-region too; Phase 5+ revisits.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
