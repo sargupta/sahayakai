@@ -1,25 +1,20 @@
 """FastAPI sub-router for the VIDYA orchestrator.
 
-Phase 5 §5.3 deliverable. This is a SKELETON — the real Gemini calls
-land in Phase 5.4. Today the route:
+Phase 5 §5.4 — real Gemini calls live here. Two-stage flow:
 
-  1. Validates the request body against `VidyaRequest`.
-  2. Calls `_run_orchestrator()` — currently returns canned data
-     (`IntentClassification(type="unknown", ...)`). Real call lands
-     in Phase 5.4.
-  3. If intent == `instantAnswer`: calls `_run_instant_answer()` —
-     also canned data today.
-     Else if intent is a routable flow: builds a `VidyaAction` via
-     `classify_action()` and a polite acknowledgement string.
-     Else (`unknown` / unhandled): returns a polite fallback.
-  4. Runs `assert_vidya_response_rules` (fail-closed behavioural guard).
-  5. Wraps timing telemetry around everything.
+  1. Classifier → `IntentClassification` (one structured Gemini call)
+  2. Branch on intent:
+     - `instantAnswer` → second Gemini call (plain text) for the answer
+     - 9 routable flows → no second call; build a `VidyaAction`
+     - `unknown` / unhandled → polite fallback; no action
 
-All four code paths are wired through real plumbing so unskipping Phase
-5.4 work is mechanical: replace the canned-data lines with `await
-run_resiliently(...)` calls and the routing stays unchanged.
+Every model call goes through `run_resiliently` so the same retry +
+key-rotation + telephony-bounded backoff applies as parent-call /
+lesson-plan.
 
-See `sahayakai-main/.claude/plans/ai-agent-quality-and-migration-plan.md`.
+Cost cap: max 2 Gemini calls per request (classifier + optional
+inline answer). Same shape as the current Genkit `agentRouterFlow`,
+so net cost is unchanged.
 """
 from __future__ import annotations
 
@@ -30,12 +25,15 @@ import structlog
 from fastapi import APIRouter
 
 from ..._behavioural import assert_vidya_response_rules
-from ...shared.errors import AgentError
+from ...config import get_settings
+from ...resilience import run_resiliently
+from ...shared.errors import AgentError, AISafetyBlockError
 from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
-    UNKNOWN_INTENT,
     classify_action,
+    get_instant_answer_model,
+    get_orchestrator_model,
     render_instant_answer_prompt,
     render_orchestrator_prompt,
 )
@@ -52,100 +50,160 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-5.1.0"
+SIDECAR_VERSION = "phase-5.4.0"
 
 
-# ---- Stub helpers (Phase 5.4 will replace with real Gemini calls) -------
+# ---- Gemini call helpers (mirror lesson_plan / parent_call routers) ------
 
 
-async def _run_orchestrator(payload: VidyaRequest) -> IntentClassification:
-    """Classify intent + extract params from the teacher's utterance.
+async def _call_gemini_structured(
+    *,
+    api_key: str,
+    model: str,
+    prompt: str,
+    response_schema: type,
+) -> Any:
+    """One Gemini call with structured JSON output."""
+    from google import genai
+    from google.genai import types as genai_types
 
-    TODO Phase 5.4: replace canned response with a real Gemini call:
+    client = genai.Client(api_key=api_key)
+    return await client.aio.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=response_schema,
+            # Low temperature: intent classification is deterministic
+            # by design; matches the Genkit flow's temperature=0.1.
+            temperature=0.1,
+        ),
+    )
 
-        prompt = render_orchestrator_prompt({
-            "message": payload.message,
-            "chatHistory": [m.model_dump() for m in payload.chatHistory],
-            "currentScreenContext": payload.currentScreenContext.model_dump(),
-            "teacherProfile": payload.teacherProfile.model_dump(),
-            "detectedLanguage": payload.detectedLanguage,
-            "allowedFlows": ALLOWED_FLOWS,
-        })
-        result = await run_resiliently(
-            lambda key: _call_gemini_structured(
-                api_key=key,
-                model=get_orchestrator_model(),
-                prompt=prompt,
-                response_schema=IntentClassification,
-            ),
-            api_keys,
-            span_name="vidya.orchestrator",
-            ...,
+
+async def _call_gemini_text(
+    *,
+    api_key: str,
+    model: str,
+    prompt: str,
+) -> Any:
+    """One Gemini call returning plain text (no structured schema)."""
+    from google import genai
+    from google.genai import types as genai_types
+
+    client = genai.Client(api_key=api_key)
+    return await client.aio.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            # Slightly higher temperature for instant-answer prose so
+            # responses don't all read identically; still well below
+            # creative-writing range.
+            temperature=0.4,
+        ),
+    )
+
+
+def _extract_text(result: Any) -> str:
+    text = getattr(result, "text", None)
+    if text:
+        return str(text)
+    candidates = getattr(result, "candidates", None) or []
+    for cand in candidates:
+        content = getattr(cand, "content", None)
+        parts = getattr(content, "parts", None) or []
+        for part in parts:
+            text = getattr(part, "text", None)
+            if text:
+                return str(text)
+    raise AgentError(
+        code="INTERNAL",
+        message="Gemini returned empty response",
+        http_status=502,
+    )
+
+
+# ---- Stage 1: classifier -------------------------------------------------
+
+
+async def _run_orchestrator(
+    payload: VidyaRequest,
+    api_keys: tuple[str, ...],
+    settings: Any,
+) -> IntentClassification:
+    """Classify intent + extract params from the teacher's utterance."""
+    context = {
+        "message": payload.message,
+        "chatHistory": [m.model_dump() for m in payload.chatHistory],
+        "currentScreenContext": payload.currentScreenContext.model_dump(),
+        "teacherProfile": payload.teacherProfile.model_dump(),
+        "detectedLanguage": payload.detectedLanguage,
+        "allowedFlows": ALLOWED_FLOWS,
+    }
+    prompt = render_orchestrator_prompt(context)
+    model = get_orchestrator_model()
+
+    async def _do(api_key: str) -> Any:
+        return await _call_gemini_structured(
+            api_key=api_key,
+            model=model,
+            prompt=prompt,
+            response_schema=IntentClassification,
         )
-        return IntentClassification.model_validate_json(_extract_text(result))
 
-    For Phase 5.3 we render the prompt (so the import surface is
-    exercised + caches warm) but discard the rendered string and
-    return a hard-coded `unknown` classification. The integration
-    tests that depend on real classification are skipped accordingly.
-    """
-    # Render to keep the template + caches warm and to surface
-    # FileNotFoundError early if the prompt is missing.
-    _ = render_orchestrator_prompt(
-        {
-            "message": payload.message,
-            "chatHistory": [m.model_dump() for m in payload.chatHistory],
-            "currentScreenContext": payload.currentScreenContext.model_dump(),
-            "teacherProfile": payload.teacherProfile.model_dump(),
-            "detectedLanguage": payload.detectedLanguage,
-            "allowedFlows": ALLOWED_FLOWS,
-        }
+    result = await run_resiliently(
+        _do,
+        api_keys,
+        span_name="vidya.orchestrator",
+        max_total_backoff_seconds=settings.max_total_backoff_seconds,
     )
-    log.info("vidya.orchestrator.stub", intent="unknown")
-    return IntentClassification(
-        type=UNKNOWN_INTENT,
-        topic=None,
-        gradeLevel=None,
-        subject=None,
-        language=payload.detectedLanguage,
-    )
-
-
-async def _run_instant_answer(payload: VidyaRequest) -> str:
-    """Produce the inline answer text for an `instantAnswer` intent.
-
-    TODO Phase 5.4: replace canned response with a real Gemini call:
-
-        prompt = render_instant_answer_prompt({
-            "message": payload.message,
-            "language": payload.detectedLanguage,
-            "teacherProfile": payload.teacherProfile.model_dump(),
-        })
-        result = await run_resiliently(
-            lambda key: _call_gemini_text(
-                api_key=key,
-                model=get_instant_answer_model(),
-                prompt=prompt,
-            ),
-            api_keys,
-            span_name="vidya.instant_answer",
-            ...,
+    text = _extract_text(result)
+    try:
+        return IntentClassification.model_validate_json(text)
+    except Exception as exc:
+        log.error(
+            "vidya.orchestrator.json_parse_failed",
+            raw_excerpt=text[:200],
+            error=str(exc),
         )
-        return _extract_text(result)
-    """
-    # Render to keep the template + caches warm.
-    _ = render_instant_answer_prompt(
-        {
-            "message": payload.message,
-            "language": payload.detectedLanguage,
-            "teacherProfile": payload.teacherProfile.model_dump(),
-        }
+        raise AgentError(
+            code="INTERNAL",
+            message="Orchestrator returned text that does not match IntentClassification",
+            http_status=502,
+        ) from exc
+
+
+# ---- Stage 2: inline answer (only when intent == instantAnswer) ---------
+
+
+async def _run_instant_answer(
+    payload: VidyaRequest,
+    api_keys: tuple[str, ...],
+    settings: Any,
+) -> str:
+    """Produce the inline answer text for an `instantAnswer` intent."""
+    context = {
+        "message": payload.message,
+        "language": payload.detectedLanguage,
+        "teacherProfile": payload.teacherProfile.model_dump(),
+    }
+    prompt = render_instant_answer_prompt(context)
+    model = get_instant_answer_model()
+
+    async def _do(api_key: str) -> Any:
+        return await _call_gemini_text(
+            api_key=api_key,
+            model=model,
+            prompt=prompt,
+        )
+
+    result = await run_resiliently(
+        _do,
+        api_keys,
+        span_name="vidya.instant_answer",
+        max_total_backoff_seconds=settings.max_total_backoff_seconds,
     )
-    log.info("vidya.instant_answer.stub")
-    return (
-        "I am still warming up the answer engine. "
-        "Please ask me again in a moment."
-    )
+    return _extract_text(result)
 
 
 # ---- Endpoint ------------------------------------------------------------
@@ -165,13 +223,20 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         3. Behavioural guard on the response (fail-closed).
         4. Wrap timing telemetry.
     """
+    settings = get_settings()
     started = time.perf_counter()
+    api_keys = settings.genai_keys
 
     # Step 1: classify
     try:
-        intent = await _run_orchestrator(payload)
+        intent = await _run_orchestrator(payload, api_keys, settings)
+    except AISafetyBlockError as exc:
+        log.warning("vidya.orchestrator.safety_block", reason=str(exc))
+        raise
+    except AgentError:
+        # Already structured; let it propagate.
+        raise
     except Exception as exc:
-        # Per Phase 3 pattern: structured 502 on parse / model failures.
         log.error("vidya.orchestrator.failed", error=str(exc))
         raise AgentError(
             code="INTERNAL",
@@ -186,7 +251,14 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
     # Step 2: branch on intent
     if intent.type == INSTANT_ANSWER_INTENT:
         try:
-            response_text = await _run_instant_answer(payload)
+            response_text = await _run_instant_answer(
+                payload, api_keys, settings
+            )
+        except AISafetyBlockError as exc:
+            log.warning("vidya.instant_answer.safety_block", reason=str(exc))
+            raise
+        except AgentError:
+            raise
         except Exception as exc:
             log.error("vidya.instant_answer.failed", error=str(exc))
             raise AgentError(
@@ -231,8 +303,3 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         sidecarVersion=SIDECAR_VERSION,
         latencyMs=latency_ms,
     )
-
-
-# Keep imports anchored to this module so callers can `from .router
-# import vidya_router` without a wildcard import.
-_unused: tuple[Any, ...] = (assert_vidya_response_rules,)
