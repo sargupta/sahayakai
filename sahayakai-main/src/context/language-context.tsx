@@ -208,17 +208,20 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "ওয়ার্কশীট উইজার্ড", "Gujarati": "વર્કશીટ વિઝાર્ડ", "Punjabi": "ਵਰਕਸ਼ੀਟ ਵਿਜ਼ਾਰਡ",
         "Malayalam": "വർക്ക്‌ഷീറ്റ് വിസാർഡ്", "Odia": "ୱର୍କଶିଟ୍ ୱିଜାର୍ଡ"
     },
+    // Tool-name transliterations: Indian SaaS convention. Real teachers
+    // type "विज़ुअल एड", "कंटेंट क्रिएटर", "वर्चुअल फील्ड ट्रिप",
+    // "टीचर ट्रेनिंग" — not the dictionary-literal renderings.
     "Visual Aid Designer": {
-        "English": "Visual Aid Designer", "Hindi": "दृश्य सहायक डिज़ाइनर", "Kannada": "ದೃಶ್ಯ ಸಹಾಯ ವಿನ್ಯಾಸಕ",
-        "Tamil": "காட்சி உதவி வடிவமைப்பாளர்", "Telugu": "విజువల్ ఎయిడ్ డిజైనర్", "Marathi": "व्हिज्युअल एड डिझायनर",
+        "English": "Visual Aid Designer", "Hindi": "विज़ुअल एड डिज़ाइनर", "Kannada": "ವಿಷುಯಲ್ ಏಡ್ ಡಿಸೈನರ್",
+        "Tamil": "விஷுவல் எய்ட் டிசைனர்", "Telugu": "విజువల్ ఎయిడ్ డిజైనర్", "Marathi": "व्हिज्युअल एड डिझायनर",
         "Bengali": "ভিজ্যুয়াল এইড ডিজাইনার", "Gujarati": "વિઝ્યુઅલ એઇડ ડિઝાઇનર", "Punjabi": "ਵਿਜ਼ੁਅਲ ਏਡ ਡਿਜ਼ਾਈਨਰ",
         "Malayalam": "വിഷ്വൽ എയ്ഡ് ഡിസൈനർ", "Odia": "ଭିଜୁଆଲ୍ ଏଡ୍ ଡିଜାଇନର"
     },
     "Content Creator": {
-        "English": "Content Creator", "Hindi": "सामग्री निर्माता", "Kannada": "ವಿಷಯ ರಚನೆಕಾರ",
-        "Tamil": "உள்ளடக்க உருவாக்கி", "Telugu": "కంటెంట్ క్రియేటర్", "Marathi": "सामग्री निर्माता",
-        "Bengali": "কন্টেন্ট ক্রিয়েটর", "Gujarati": "કન્ટેન્ટ ક્રિએટર", "Punjabi": "ਸਮੱਗਰੀ ਨਿਰਮਾਤਾ",
-        "Malayalam": "ഉള്ളടക്ക നിർമ്മാതാവ്", "Odia": "ବିଷୟବସ୍ତୁ ସ୍ରଷ୍ଟା"
+        "English": "Content Creator", "Hindi": "कंटेंट क्रिएटर", "Kannada": "ಕಂಟೆಂಟ್ ಕ್ರಿಯೇಟರ್",
+        "Tamil": "கண்டென்ட் கிரியேட்டர்", "Telugu": "కంటెంట్ క్రియేటర్", "Marathi": "कंटेंट क्रिएटर",
+        "Bengali": "কন্টেন্ট ক্রিয়েটর", "Gujarati": "કન્ટેન્ટ ક્રિએટર", "Punjabi": "ਕੰਟੈਂਟ ਕ੍ਰਿਏਟਰ",
+        "Malayalam": "കണ്ടന്റ് ക്രിയേറ്റർ", "Odia": "କଣ୍ଟେଣ୍ଟ କ୍ରିଏଟର"
     },
     "Rubric Generator": {
         "English": "Rubric Generator", "Hindi": "रूब्रिक जेनरेटर", "Kannada": "ರೂಬ್ರಿಕ್ ಜನರೇಟರ್",
@@ -239,16 +242,18 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "വീഡിയോ കഥാകാരൻ", "Odia": "ଭିଡିଓ କାହାଣୀକାର"
     },
     "Virtual Field Trip": {
-        "English": "Virtual Field Trip", "Hindi": "आभासी क्षेत्र यात्रा", "Kannada": "ವಾಸ್ತವ ಕ್ಷೇತ್ರ ಪ್ರವಾಸ",
-        "Tamil": "மெய்நிகர் களப்பயணம்", "Telugu": "వర్చువల్ ఫీల్డ్ ట్రిప్", "Marathi": "व्हर्च्युअल फील्ड ट्रिप",
+        // "आभासी क्षेत्र यात्रा" reads as "virtual zone journey" — 1990s
+        // textbook style. Real teachers say "वर्चुअल फील्ड ट्रिप".
+        "English": "Virtual Field Trip", "Hindi": "वर्चुअल फील्ड ट्रिप", "Kannada": "ವರ್ಚುಯಲ್ ಫೀಲ್ಡ್ ಟ್ರಿಪ್",
+        "Tamil": "வர்ச்சுவல் ஃபீல்ட் டிரிப்", "Telugu": "వర్చువల్ ఫీల్డ్ ట్రిప్", "Marathi": "व्हर्च्युअल फील्ड ट्रिप",
         "Bengali": "ভার্চুয়াল ফিল্ড ট্রিপ", "Gujarati": "વર્ચ્યુઅલ ફિલ્ડ ટ્રિપ", "Punjabi": "ਵਰਚੁਅਲ ਫੀਲਡ ਟ੍ਰਿਪ",
         "Malayalam": "വെർച്വൽ ഫീൽഡ് ട്രിപ്പ്", "Odia": "ଭର୍ଚୁଆଲ ଫିଲ୍ଡ ଟ୍ରିପ"
     },
     "Teacher Training": {
-        "English": "Teacher Training", "Hindi": "शिक्षक प्रशिक्षण", "Kannada": "ಶಿಕ್ಷಕ ತರಬೇತಿ",
-        "Tamil": "ஆசிரியர் பயிற்சி", "Telugu": "ఉపాధ్యాయ శిక్షణ", "Marathi": "शिक्षक प्रशिक्षण",
-        "Bengali": "শিক্ষক প্রশিক্ষণ", "Gujarati": "શિક્ષક તાલીમ", "Punjabi": "ਅਧਿਆਪਕ ਸਿਖਲਾਈ",
-        "Malayalam": "അധ്യാപക പരിശീലനം", "Odia": "ଶିକ୍ଷକ ତାଲିମ"
+        "English": "Teacher Training", "Hindi": "टीचर ट्रेनिंग", "Kannada": "ಟೀಚರ್ ಟ್ರೈನಿಂಗ್",
+        "Tamil": "டீச்சர் ட்ரெய்னிங்", "Telugu": "టీచర్ ట్రైనింగ్", "Marathi": "टीचर ट्रेनिंग",
+        "Bengali": "টিচার ট্রেনিং", "Gujarati": "ટીચર ટ્રેનિંગ", "Punjabi": "ਟੀਚਰ ਟ੍ਰੇਨਿੰਗ",
+        "Malayalam": "ടീച്ചർ ട്രൈനിംഗ്", "Odia": "ଟିଚର ଟ୍ରେନିଂ"
     },
     "Instant Answer": {
         "English": "Instant Answer", "Hindi": "तुरंत उत्तर", "Kannada": "ತತ್‌ಕ್ಷಣದ ಉತ್ತರ",
