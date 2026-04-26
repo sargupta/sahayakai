@@ -10,10 +10,11 @@ import { sendGroupChatMessageAction } from "@/app/actions/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Loader2, Mic } from "lucide-react";
+import { Send, MessageCircle, Loader2, Mic, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { VoiceRecorder } from "@/components/messages/voice-recorder";
+import { useNearBottom } from "@/hooks/use-near-bottom";
 
 type ChatMessage = {
     id: string;
@@ -56,6 +57,10 @@ export function CommunityChat({
     const [loading, setLoading] = useState(true);
     const bottomRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isNearBottom = useNearBottom(scrollContainerRef, 120);
+    const [unreadFromScrollUp, setUnreadFromScrollUp] = useState(0);
+    const lastSeenLengthRef = useRef(0);
 
     // Real-time listener — limitToLast(100) gives the most recent 100 messages
     useEffect(() => {
@@ -76,10 +81,34 @@ export function CommunityChat({
         return () => unsubscribe();
     }, [collectionPath]);
 
-    // Auto-scroll on new messages
+    // Auto-scroll on new messages — but ONLY if the user is already near the
+    // bottom. Yanking them back when they're scrolled up reading history is
+    // user-hostile. Track unread count to surface a "New messages ↓" pill.
     useEffect(() => {
+        if (messages.length === 0) {
+            lastSeenLengthRef.current = 0;
+            setUnreadFromScrollUp(0);
+            return;
+        }
+        const newSinceLastEffect = messages.length - lastSeenLengthRef.current;
+        if (isNearBottom) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            setUnreadFromScrollUp(0);
+        } else if (newSinceLastEffect > 0) {
+            setUnreadFromScrollUp((c) => c + newSinceLastEffect);
+        }
+        lastSeenLengthRef.current = messages.length;
+    }, [messages, isNearBottom]);
+
+    // Reset unread when user scrolls back to bottom.
+    useEffect(() => {
+        if (isNearBottom) setUnreadFromScrollUp(0);
+    }, [isNearBottom]);
+
+    const scrollToBottom = () => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        setUnreadFromScrollUp(0);
+    };
 
     const handleSend = async (audioUrl?: string) => {
         const text = input.trim();
@@ -154,7 +183,10 @@ export function CommunityChat({
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-thin scrollbar-thumb-border">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-thin scrollbar-thumb-border relative"
+            >
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -230,6 +262,18 @@ export function CommunityChat({
                 )}
                 <div ref={bottomRef} />
             </div>
+
+            {/* "New messages" pill — appears when the user has scrolled up and
+                more messages have arrived. Click to jump to bottom. */}
+            {unreadFromScrollUp > 0 && (
+                <button
+                    onClick={scrollToBottom}
+                    className="absolute left-1/2 -translate-x-1/2 bottom-20 z-10 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-elevated hover:bg-primary/90 active:scale-95 transition-all"
+                >
+                    {unreadFromScrollUp} new message{unreadFromScrollUp !== 1 ? 's' : ''}
+                    <ArrowDown className="h-3 w-3" />
+                </button>
+            )}
 
             {/* Error banner */}
             {error && (
