@@ -22,7 +22,7 @@ Each of those is a problem an evaluator agent could detect and route back for re
 - New ADK `LlmAgent` triplet: `writer`, `evaluator`, `reviser`.
 - Sequential agent that runs `writer → evaluator → (reviser if score < gate)` for at most two evaluator passes.
 - Pedagogical rubric: 8 axes scored [0, 1] by the evaluator.
-- Cost cap: max 3 model calls per lesson plan (writer + evaluator + at most 1 reviser).
+- Cost cap: max 4 model calls per lesson plan (writer + evaluator + at most 1 reviser + 1 evaluator-on-revision). 30-agent review F2 caught the prior "max 3" — it conflicted with the §Risks/Reviser-hallucinations clause that mandates evaluating v2.
 - Behavioural guard at the end (no AI self-references, language-script match, length sanity).
 - Sidecar route `POST /v1/lesson-plan/generate` — same shape as the parent-call sidecar; wraps the existing Genkit input/output schema.
 - Feature flag `lessonPlanSidecarMode` (off / shadow / canary / full) — same dispatcher pattern as Phase 1.
@@ -54,7 +54,7 @@ Each of those is a problem an evaluator agent could detect and route back for re
                     │         ├─ takes (draft v1, fail_reasons)      │
                     │         └─► draft v2                           │
                     │                                                │
-                    │      Evaluator runs once more on v2 (optional) │
+                    │      Evaluator runs once more on v2 (mandatory)│
                     │                                                │
                     └────────────────────────────────────────────────┘
                                           │
@@ -67,9 +67,11 @@ Each of those is a problem an evaluator agent could detect and route back for re
 
 ADK Python (`google-adk` 1.31+) ships `SequentialAgent` and `LoopAgent` primitives that match this shape. The triplet itself is three `LlmAgent` instances pinned to the same model (default `gemini-2.5-flash`); the orchestrator routes between them based on the evaluator's pass-overall flag.
 
-## Pedagogical rubric (8 axes)
+## Pedagogical rubric (7 floats + 1 boolean)
 
-Pinned in `sahayakai-agents/prompts/lesson-plan/evaluator.handlebars`. Each axis returns a float in [0, 1] plus a one-line rationale:
+Pinned in `sahayakai-agents/prompts/lesson-plan/evaluator.handlebars`.
+
+**Quality axes** (7 floats, each [0, 1] + one-line rationale):
 
 1. **grade_level_alignment** — language complexity, examples, time budget appropriate to the stated grade.
 2. **objective_assessment_match** — every assessment item maps to at least one stated learning objective.
@@ -78,12 +80,17 @@ Pinned in `sahayakai-agents/prompts/lesson-plan/evaluator.handlebars`. Each axis
 5. **scaffolding_present** — moves from concrete → abstract; gives at least one worked example before independent practice.
 6. **inclusion_signals** — accommodates mixed-ability learners; offers extensions and supports.
 7. **cultural_appropriateness** — examples respect Indian context (festivals, foods, agricultural cycles when applicable).
-8. **safety** — free of harmful framing; no body-shaming, no caste/religion reinforcement.
+
+**Safety axis** (1 boolean):
+
+8. **safety** — `true` if the plan is free of harmful framing; `false` if it contains body-shaming, caste/religion reinforcement, gendered stereotyping, or any other harmful content.
+
+Round-2 audit P1 PLAN-3 fix (30-agent review group F2): safety was previously a float [0, 1] with a "must equal 1.0" gate, which is effectively boolean but ambiguous (does 0.99 hard-fail? what does 0.5 mean?). Splitting safety into a separate boolean removes the ambiguity and makes the gate logic obvious.
 
 **Gate:**
-- Overall pass requires **>= 6 axes >= 0.80** AND **safety axis = 1.0**.
-- Soft-fail (revise) requires **safety = 1.0** but score below the overall gate.
-- Hard-fail (refuse) when safety < 1.0 OR fewer than 4 axes >= 0.80 — return canned safe response, log as a behavioural event, do not surface the model's text to the teacher.
+- **Overall pass**: `safety == true` AND `>= 6 of 7 quality axes >= 0.80`.
+- **Soft-fail (revise)**: `safety == true` AND quality gate not met → reviser runs.
+- **Hard-fail (refuse)**: `safety == false` (regardless of quality scores) OR fewer than 4 of 7 quality axes >= 0.80 → return canned safe response, log as a behavioural event, do not surface the model's text to the teacher.
 
 ## Sub-phases
 
