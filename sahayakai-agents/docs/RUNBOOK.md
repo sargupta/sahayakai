@@ -103,8 +103,89 @@ Any one of these trips → flag flipped back one step automatically:
 mode) begins.** Until then, alerts route to the #sahayakai-oncall Slack
 channel as the primary notification surface.
 
+## First-time Track D bootstrap (one-shot)
+
+For the very first shadow ramp, run these in order from a workstation
+with the project-admin roles listed in each script's header. The
+bootstrap script handles everything from SAs to alert policies; the
+remaining four are the data-plane bits (TTL, signing key, fixtures,
+flag seed) that need a real input from the operator.
+
+```bash
+# 1. Firestore rules (clients deny-by-default on agent_*).
+cd sahayakai-main && firebase deploy --only firestore:rules
+cd ..
+
+# 2. One-shot Track D resource bootstrap (SAs + IAM + Pub/Sub +
+#    Cloud Functions + alert policies + scheduler).
+bash sahayakai-agents/scripts/bootstrap-track-d.sh \
+    --project sahayakai-b4248 --region asia-southeast1
+
+# 3. Firestore TTL on the new collections.
+bash sahayakai-agents/scripts/apply-firestore-ttl.sh \
+    --project sahayakai-b4248
+
+# 4. Generate + store the HMAC signing key (idempotent rotation).
+bash sahayakai-agents/scripts/generate-signing-key.sh \
+    --project sahayakai-b4248
+
+# 5. Manual: store a Gemini API key DISJOINT from the live pool as
+#    GOOGLE_GENAI_SHADOW_API_KEY:latest. The shadow-key pool is what
+#    the sidecar uses during shadow-mode traffic; sharing keys with
+#    the live pool would double-count quota.
+gcloud secrets versions add GOOGLE_GENAI_SHADOW_API_KEY \
+    --data-file=/path/to/shadow-key.txt --project=sahayakai-b4248
+
+# 6. Seed the feature_flags doc so auto-abort can update it.
+bash sahayakai-agents/scripts/seed-feature-flags.sh \
+    --project sahayakai-b4248
+
+# 7. Record the parity fixtures (~$0.05 in Gemini API spend).
+cd sahayakai-main
+GOOGLE_GENAI_API_KEY=$(gcloud secrets versions access latest \
+    --secret=GOOGLE_GENAI_API_KEY --project=sahayakai-b4248) \
+    npm run record:parent-call-fixtures
+git add ../sahayakai-agents/tests/fixtures/parent_call_turns.json
+git commit -m "test(parent-call): record 22-turn fixture set"
+git push
+cd ..
+
+# 8. Deploy the sidecar.
+cd sahayakai-agents
+gcloud builds submit --config=deploy/cloudbuild.yaml
+
+# 9. Hydrate the audience secret + smoke test.
+bash scripts/hydrate-audience-secret.sh \
+    --service sahayakai-agents-staging \
+    --region asia-southeast1 --project sahayakai-b4248
+SERVICE_URL=$(gcloud run services describe sahayakai-agents-staging \
+    --region=asia-southeast1 --project=sahayakai-b4248 \
+    --format='value(status.url)')
+bash scripts/post-deploy-smoke.sh \
+    --url "$SERVICE_URL" \
+    --invoker-sa sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com \
+    --with-impersonation
+
+# 10. Final preflight — 15 gates.
+bash scripts/preflight-shadow-ramp.sh \
+    --project sahayakai-b4248 --region asia-southeast1 \
+    --service sahayakai-agents-staging \
+    --invoker-sa sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+
+# If preflight is all-green, flip the flag:
+gcloud firestore documents patch system_config/feature_flags \
+    --project=sahayakai-b4248 \
+    --data='{"parentCallSidecarMode":"shadow","parentCallSidecarPercent":1}'
+```
+
+Each script is idempotent — re-running on a partially-applied state
+resumes from where it left off.
+
 ## Related docs
 
 - Execution plan: `/Users/sargupta/.claude/plans/prepare-a-detailed-execution-iridescent-hamming.md`
 - Architecture: `sahayakai-agents/ARCHITECTURE.md`
 - Parent migration plan (Notion, canonical): <https://www.notion.so/34c7b61acae78105ad61e80319556b7b>
+- Phase 2 (voice via Gemini Live): `.claude/plans/phase-2-vidya-voice-gemini-live.md`
+- Phase 3 (writer-evaluator-reviser for lesson plans): `.claude/plans/phase-3-writer-evaluator-reviser.md`
+- Phase 4 (RAG over NCERT + state boards): `.claude/plans/phase-4-rag-ncert-state-board.md`
