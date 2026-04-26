@@ -34,7 +34,7 @@ import {
   getMyConnectionDataAction,
   sendConnectionRequestAction,
 } from '@/app/actions/connections';
-import { getRecommendedTeachersAction } from '@/app/actions/community';
+import { getRecommendedTeachersAction, likeResourceAction } from '@/app/actions/community';
 import { updateProfileAction } from '@/app/actions/profile';
 
 // Types
@@ -130,36 +130,152 @@ export default function CommunityPage() {
 
   const handleLikePost = useCallback(
     async (groupId: string, postId: string) => {
+      // Optimistic toggle: flip both the Set membership AND the count on the
+      // matching FeedItem so the UI reflects the action immediately. Previously
+      // only the heart filled — the count stayed stale until the next refresh.
+      const wasLiked = likedPostIds.has(postId);
+      const delta = wasLiked ? -1 : 1;
+
       setLikedPostIds((prev) => {
         const next = new Set(prev);
-        if (next.has(postId)) next.delete(postId);
+        if (wasLiked) next.delete(postId);
         else next.add(postId);
         return next;
       });
+      setFeedItems((prev) =>
+        prev.map((item) =>
+          item.type === 'group_post' && item.post?.id === postId
+            ? { ...item, post: { ...item.post, likesCount: item.post.likesCount + delta } }
+            : item,
+        ),
+      );
+
       try {
-        await likeGroupPostAction(groupId, postId);
-      } catch {
+        const result = await likeGroupPostAction(groupId, postId);
+        // Reconcile with server-returned authoritative count.
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'group_post' && item.post?.id === postId
+              ? { ...item, post: { ...item.post, likesCount: result.newCount } }
+              : item,
+          ),
+        );
         setLikedPostIds((prev) => {
           const next = new Set(prev);
-          if (next.has(postId)) next.delete(postId);
-          else next.add(postId);
+          if (result.isLiked) next.add(postId);
+          else next.delete(postId);
           return next;
         });
+      } catch {
+        // Rollback both Set AND count.
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (wasLiked) next.add(postId);
+          else next.delete(postId);
+          return next;
+        });
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'group_post' && item.post?.id === postId
+              ? { ...item, post: { ...item.post, likesCount: item.post.likesCount - delta } }
+              : item,
+          ),
+        );
         toast({ title: 'Could not update like', variant: 'destructive' });
       }
     },
-    [toast],
+    [likedPostIds, toast],
+  );
+
+  const handleLikeResource = useCallback(
+    async (resourceId: string) => {
+      // Resource-share feed items use library_resources, not group posts.
+      // Previously this routed to likeGroupPostAction with an empty groupId
+      // and therefore always 404'd.
+      if (!user) {
+        toast({ title: 'Sign in to like resources', variant: 'destructive' });
+        return;
+      }
+      const wasLiked = likedPostIds.has(resourceId);
+      const delta = wasLiked ? -1 : 1;
+
+      setLikedPostIds((prev) => {
+        const next = new Set(prev);
+        if (wasLiked) next.delete(resourceId);
+        else next.add(resourceId);
+        return next;
+      });
+      setFeedItems((prev) =>
+        prev.map((item) =>
+          item.type === 'resource_share' && item.resource?.id === resourceId
+            ? { ...item, resource: { ...item.resource, likes: item.resource.likes + delta } }
+            : item,
+        ),
+      );
+
+      try {
+        const result = await likeResourceAction(resourceId);
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'resource_share' && item.resource?.id === resourceId
+              ? { ...item, resource: { ...item.resource, likes: result.newCount } }
+              : item,
+          ),
+        );
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (result.isLiked) next.add(resourceId);
+          else next.delete(resourceId);
+          return next;
+        });
+      } catch {
+        setLikedPostIds((prev) => {
+          const next = new Set(prev);
+          if (wasLiked) next.add(resourceId);
+          else next.delete(resourceId);
+          return next;
+        });
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.type === 'resource_share' && item.resource?.id === resourceId
+              ? { ...item, resource: { ...item.resource, likes: item.resource.likes - delta } }
+              : item,
+          ),
+        );
+        toast({ title: 'Could not update like', variant: 'destructive' });
+      }
+    },
+    [likedPostIds, toast, user],
   );
 
   const handleConnectTeacher = useCallback(
     async (uid: string) => {
       try {
-        await sendConnectionRequestAction(uid);
-        setConnectionData((prev) => ({
-          ...prev,
-          sentRequestUids: [...prev.sentRequestUids, uid],
-        }));
-        toast({ title: 'Connection request sent' });
+        const result = await sendConnectionRequestAction(uid);
+        // Branch UI feedback on the server's authoritative status — previously
+        // the handler always pushed to sentRequestUids and toasted "sent",
+        // even when the server reported already-connected or already-pending.
+        if (result.status === 'sent') {
+          setConnectionData((prev) => ({
+            ...prev,
+            sentRequestUids: [...prev.sentRequestUids, uid],
+          }));
+          toast({ title: 'Connection request sent' });
+        } else if (result.status === 'already_pending') {
+          setConnectionData((prev) =>
+            prev.sentRequestUids.includes(uid)
+              ? prev
+              : { ...prev, sentRequestUids: [...prev.sentRequestUids, uid] },
+          );
+          toast({ title: 'Request already pending' });
+        } else if (result.status === 'already_connected') {
+          setConnectionData((prev) =>
+            prev.connectedUids.includes(uid)
+              ? prev
+              : { ...prev, connectedUids: [...prev.connectedUids, uid] },
+          );
+          toast({ title: 'Already connected' });
+        }
       } catch {
         toast({ title: 'Could not send request', variant: 'destructive' });
       }
@@ -452,6 +568,7 @@ export default function CommunityPage() {
             loading={loading}
             connectionData={connectionData}
             onLikePost={handleLikePost}
+            onLikeResource={handleLikeResource}
             onConnectTeacher={handleConnectTeacher}
             onOpenGroupChat={handleOpenGroup}
             onLoadMore={handleLoadMore}

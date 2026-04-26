@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Check, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -23,6 +24,7 @@ export function ContextualConnect({
   onConnect,
   onDismiss,
 }: ContextualConnectProps) {
+  const { toast } = useToast();
   const [status, setStatus] = useState<"idle" | "loading" | "sent">("idle");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -38,8 +40,13 @@ export function ContextualConnect({
       await onConnect(authorUid);
       setStatus("sent");
       timerRef.current = setTimeout(() => onDismiss(), 2000);
-    } catch {
+    } catch (err) {
+      // Surface the failure — silent catches hide real bugs (auth lapses,
+      // rate-limit hits, network blips). Caller already toasts on its own
+      // failure path, but we still want the local status to revert.
+      console.error("ContextualConnect: handleConnect failed", err);
       setStatus("idle");
+      toast({ title: "Could not send request", variant: "destructive" });
     }
   };
 

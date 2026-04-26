@@ -17,6 +17,8 @@ interface UnifiedFeedProps {
   loading: boolean;
   connectionData: MyConnectionData;
   onLikePost: (groupId: string, postId: string) => void;
+  /** Liking a resource_share routes to library_resources, not group posts. */
+  onLikeResource?: (resourceId: string) => void;
   onConnectTeacher: (uid: string) => void;
   onOpenGroupChat: (groupId: string) => void;
   onLoadMore?: () => void | Promise<void>;
@@ -40,6 +42,7 @@ export function UnifiedFeed({
   loading,
   connectionData,
   onLikePost,
+  onLikeResource,
   onConnectTeacher,
   onOpenGroupChat,
   onLoadMore,
@@ -164,7 +167,11 @@ export function UnifiedFeed({
           case "resource_share": {
             if (!item.resource) return null;
             const r = item.resource;
-            // Render as a simplified post-like card
+            // Render as a simplified post-like card. The synthetic id is the
+            // resource id — likes route through onLikeResource (not onLikePost)
+            // because the underlying collection is library_resources, NOT
+            // groups/{id}/posts. Previously this routed to onLikePost with an
+            // empty groupId and silently 404'd.
             const syntheticPost: GroupPost = {
               id: r.id,
               groupId: item.groupId ?? "",
@@ -187,9 +194,7 @@ export function UnifiedFeed({
                   r.authorUid,
                   connectionData
                 )}
-                onLike={(postId: string) =>
-                  onLikePost(item.groupId ?? "", postId)
-                }
+                onLike={(resourceId: string) => onLikeResource?.(resourceId)}
                 onConnect={onConnectTeacher}
                 isLiked={likedPostIds.has(r.id)}
               />
