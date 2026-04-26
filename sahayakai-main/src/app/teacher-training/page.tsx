@@ -250,7 +250,7 @@ function TeacherTrainingContent() {
               <GraduationCap className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">Teacher Training</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t("Teacher Training")}</CardTitle>
           <CardDescription>
             <p>{descriptionLines[0]}</p>
             <p>{descriptionLines[1]}</p>
@@ -268,7 +268,7 @@ function TeacherTrainingContent() {
                     name="question"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-headline text-lg">Your Question or Challenge</FormLabel>
+                        <FormLabel className="font-headline text-lg">{t("Your Question or Challenge")}</FormLabel>
                         <FormControl>
                           <div className="flex flex-col gap-4">
                             <Textarea
@@ -284,14 +284,14 @@ function TeacherTrainingContent() {
                   />
 
                   <div className="space-y-2">
-                    <FormLabel className="font-headline">Quick Ideas</FormLabel>
+                    <FormLabel className="font-headline">{t("Quick Ideas")}</FormLabel>
                     <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="teacher-training" />
                   </div>
                 </div>
 
                 {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
                 <div className="lg:col-span-5 space-y-5 border border-border rounded-2xl p-4 md:p-5 bg-card shadow-soft h-fit">
-                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">Settings</h3>
+                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">{t("Settings")}</h3>
 
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
@@ -299,7 +299,7 @@ function TeacherTrainingContent() {
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground">Subject</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Subject")}</FormLabel>
                           <FormControl>
                             <SubjectSelector
                               onValueChange={field.onChange}
@@ -317,7 +317,7 @@ function TeacherTrainingContent() {
                       name="language"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground">Language</FormLabel>
+                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Language")}</FormLabel>
                           <FormControl>
                             <LanguageSelector
                               onValueChange={field.onChange}
@@ -336,8 +336,8 @@ function TeacherTrainingContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                       <div>
-                        <p className="font-semibold text-foreground text-sm mb-1">Pro Tip</p>
-                        <p className="text-sm text-muted-foreground">Be specific about your students' age group and the context (e.g., "Class 5 students in a rural school").</p>
+                        <p className="font-semibold text-foreground text-sm mb-1">{t("Pro Tip")}</p>
+                        <p className="text-sm text-muted-foreground">{t("Be specific about your students' age group and the context (e.g., \"Class 5 students in a rural school\").")}</p>
                       </div>
                     </div>
                   </div>
@@ -348,10 +348,10 @@ function TeacherTrainingContent() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Getting Advice...
+                    {t("Getting Advice...")}
                   </>
                 ) : (
-                  "Get Advice"
+                  t("Get Advice")
                 )}
               </Button>
               {aiUnavailableReason && (
@@ -366,7 +366,7 @@ function TeacherTrainingContent() {
         <Card className="mt-8 w-full max-w-4xl bg-muted/20 border-border shadow-xl animate-fade-in-up">
           <CardContent className="p-6 flex flex-col items-center justify-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">Thinking of some helpful advice...</p>
+            <p className="text-muted-foreground">{t("Thinking of some helpful advice...")}</p>
           </CardContent>
         </Card>
       )}
@@ -375,7 +375,7 @@ function TeacherTrainingContent() {
         <>
         <div className="my-8 flex items-center gap-3">
           <hr className="flex-1 border-border/40" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{t("Result")}</span>
           <hr className="flex-1 border-border/40" />
         </div>
         <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
