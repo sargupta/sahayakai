@@ -20,15 +20,35 @@ Imported from both:
 from __future__ import annotations
 
 import re
+import unicodedata
 
+# Round-2 audit P0 GUARD-1 fix (30-agent review, group A3): expanded
+# forbidden-phrase coverage to catch:
+# - apostrophe contractions: "I'm an AI", "I'm a bot", "I'm an assistant"
+# - article-omitted variants: "I am AI" (no `a`/`an`)
+# - spaced/joined forms: "Sahayak AI", "Sahayak.AI"
+# - more synonyms: virtual agent, automated caller, digital helper,
+#   ML model
+# - Hindi transliteration variants of Sahayak: "Sahaayak", "Sahayek"
+#
+# Inputs are NFKC-normalized BEFORE matching to catch confusable
+# Unicode variants (e.g. Cyrillic А that visually looks like Latin A).
 _FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"\bSahayak(AI)?\b", re.IGNORECASE),
-    re.compile(r"\bI\s+am\s+an?\s+AI\b", re.IGNORECASE),
-    re.compile(r"\bI\s+am\s+a\s+(bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
+    re.compile(r"\bSahaa?yak(\s*\.?\s*AI)?\b", re.IGNORECASE),
+    re.compile(r"\bI\s*[''']?m\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
+    re.compile(r"\bI\s+am\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b", re.IGNORECASE),
     re.compile(r"\bartificial\s+intelligence\b", re.IGNORECASE),
+    re.compile(r"\bvirtual\s+(?:agent|assistant|helper)\b", re.IGNORECASE),
+    re.compile(r"\bautomated\s+(?:agent|caller|system)\b", re.IGNORECASE),
+    re.compile(r"\bdigital\s+(?:agent|assistant|helper)\b", re.IGNORECASE),
+    re.compile(r"\b(?:ML|machine\s+learning)\s+model\b", re.IGNORECASE),
 )
 
-_SENTENCE_ENDERS = re.compile(r"[\.!?।॥]")
+# Round-2 audit P0 GUARD-2 fix (group A3): include `…` (U+2026
+# ellipsis) and `。` (U+3002 CJK full stop) and `፧` (U+1367 Ethiopic)
+# as sentence terminators. A model could emit a 30-clause monologue
+# with ellipsis-only separation and bypass the sentence-count cap.
+_SENTENCE_ENDERS = re.compile(r"[\.!?।॥…。]")
 
 # Expected Unicode ranges per supported parent language.
 _LANGUAGE_UNICODE_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
@@ -51,8 +71,19 @@ _LANGUAGE_UNICODE_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
 
 
 def assert_no_forbidden_phrases(text: str) -> None:
+    # Round-2 audit P0 GUARD-3 fix (group A3): NFKC-normalize before
+    # matching to collapse compatibility variants (full-width letters,
+    # ligatures), and strip Unicode invisibles (ZWJ, ZWNJ, BOM) that
+    # an attacker model could insert mid-phrase.
+    #
+    # NOTE: NFKC does NOT handle confusable homoglyphs (Cyrillic А
+    # vs Latin A are distinct codepoints). Confusable bypass is
+    # tracked as P1 GUARD-5 — needs UTS #39 skeleton or
+    # `confusable_homoglyphs` library, deferred to a follow-up.
+    normalized = unicodedata.normalize("NFKC", text)
+    normalized = re.sub(r"[\u200b-\u200d\ufeff]", "", normalized)
     for pattern in _FORBIDDEN_PATTERNS:
-        hit = pattern.search(text)
+        hit = pattern.search(normalized)
         assert hit is None, f"Forbidden phrase matched: {hit.group(0)!r} in reply={text!r}"
 
 
@@ -65,17 +96,46 @@ def assert_sentence_count_in_range(text: str, lo: int = 1, hi: int = 5) -> None:
     assert lo <= n <= hi, f"Expected {lo}-{hi} sentences, got {n} in reply={text!r}"
 
 
+def _is_alpha_for_script_check(cp: int) -> bool:
+    """Round-2 audit P0 GUARD-4 fix (group B5): align with TS guard's
+    NARROWER definition of alpha. Original Python used `str.isalpha()`
+    which counts EVERY Unicode letter (Greek, Cyrillic, CJK, Arabic).
+    The TS guard counts only ASCII A-Z/a-z + Latin-1 Supplement
+    (0x00C0-0x024F) + Indic 0x0900-0x0DFF.
+
+    A reply with Cyrillic injection had different alpha-totals across
+    runtimes — same input could pass TS and fail Python (or vice versa).
+    Aligning Python to the TS narrower set so byte-aligned drift goes
+    away.
+    """
+    # ASCII A-Z / a-z
+    if (0x0041 <= cp <= 0x005A) or (0x0061 <= cp <= 0x007A):
+        return True
+    # Latin-1 Supplement + Latin Extended-A/B
+    if 0x00C0 <= cp <= 0x024F:
+        return True
+    # Indic block (Devanagari through Sinhala)
+    if 0x0900 <= cp <= 0x0DFF:
+        return True
+    return False
+
+
 def assert_script_matches_language(text: str, language: str) -> None:
     ranges = _LANGUAGE_UNICODE_RANGES.get(language)
     if not ranges:
         return
+    # Normalize NFC so combining-mark variants (Devanagari nukta etc.)
+    # collapse to canonical codepoints inside our Unicode ranges.
+    normalized = unicodedata.normalize("NFC", text)
     in_range = 0
     alpha_total = 0
-    for ch in text:
-        if ch.isalpha() or 0x0900 <= ord(ch) <= 0x0DFF:
-            alpha_total += 1
-            if any(lo <= ord(ch) <= hi for lo, hi in ranges):
-                in_range += 1
+    for ch in normalized:
+        cp = ord(ch)
+        if not _is_alpha_for_script_check(cp):
+            continue
+        alpha_total += 1
+        if any(lo <= cp <= hi for lo, hi in ranges):
+            in_range += 1
     if alpha_total == 0:
         return
     ratio = in_range / alpha_total

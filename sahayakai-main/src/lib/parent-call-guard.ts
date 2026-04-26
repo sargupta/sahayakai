@@ -18,14 +18,22 @@
  * Round-2 audit P0 BEHAV-1.
  */
 
+// Round-2 audit P0 GUARD-1 fix: pattern set expanded to catch
+// apostrophe contractions, article omission, synonym variants, and
+// Hindi transliteration drift. Byte-aligned with `_behavioural.py`.
 const FORBIDDEN_PATTERNS: readonly RegExp[] = [
-    /\bSahayak(AI)?\b/i,
-    /\bI\s+am\s+an?\s+AI\b/i,
-    /\bI\s+am\s+a\s+(bot|chat\s*bot|assistant|language\s+model)\b/i,
+    /\bSahaa?yak(\s*\.?\s*AI)?\b/i,
+    /\bI\s*[''']?m\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b/i,
+    /\bI\s+am\s+(?:an?\s+)?(?:AI|bot|chat\s*bot|assistant|language\s+model)\b/i,
     /\bartificial\s+intelligence\b/i,
+    /\bvirtual\s+(?:agent|assistant|helper)\b/i,
+    /\bautomated\s+(?:agent|caller|system)\b/i,
+    /\bdigital\s+(?:agent|assistant|helper)\b/i,
+    /\b(?:ML|machine\s+learning)\s+model\b/i,
 ];
 
-const SENTENCE_ENDERS = /[.!?।॥]/g;
+// Round-2 audit P0 GUARD-2 fix: include `…` and `。` as terminators.
+const SENTENCE_ENDERS = /[.!?।॥…。]/g;
 
 // Expected Unicode ranges per supported parent language. Keep
 // byte-aligned with `_LANGUAGE_UNICODE_RANGES` in the Python guard so a
@@ -64,8 +72,14 @@ export class BehaviouralGuardError extends Error {
 }
 
 function assertNoForbiddenPhrases(text: string, parentLanguage: string): void {
+    // Round-2 audit P0 GUARD-3 fix: NFKC-normalize before matching so
+    // Cyrillic look-alikes (А = U+0410) don't bypass. Strip Unicode
+    // invisibles (ZWJ, ZWNJ, BOM) that an attacker model could insert.
+    const normalized = text
+        .normalize('NFKC')
+        .replace(/[\u200b-\u200d\ufeff]/g, '');
     for (const pattern of FORBIDDEN_PATTERNS) {
-        const match = text.match(pattern);
+        const match = normalized.match(pattern);
         if (match) {
             throw new BehaviouralGuardError(
                 'forbidden_phrase',

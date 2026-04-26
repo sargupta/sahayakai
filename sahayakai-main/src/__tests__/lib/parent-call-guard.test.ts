@@ -23,6 +23,22 @@ describe('assertAllRules — forbidden phrases', () => {
         'I work for SahayakAI.',
         'This is Sahayak from the school.',
         'I use artificial intelligence to help.',
+        // Wave 3 fix 3 regression: apostrophe contractions
+        "Hello, I'm an AI assistant.",
+        "I'm a bot here to help.",
+        "I'm an automated caller from the school.",
+        // Article omission
+        'I am AI helper.',
+        'I am bot from school.',
+        // Synonyms
+        'This is a virtual agent calling.',
+        'This is an automated system.',
+        'I am a digital helper.',
+        'I am a machine learning model.',
+        // Sahayak transliteration drift
+        'I am from Sahaayak.',
+        'Hello from Sahayak AI.',
+        'This is Sahayak.AI calling.',
     ])('rejects forbidden phrase: %s', (reply) => {
         expect(() =>
             assertAllRules({ reply, parentLanguage: 'en', turnNumber: 1 }),
@@ -53,6 +69,31 @@ describe('assertAllRules — forbidden phrases', () => {
                 turnNumber: 1,
             }),
         ).toThrow(BehaviouralGuardError);
+    });
+
+    it('catches ZWJ-injected bypass', () => {
+        // Zero-width joiner inside "AI" — would defeat naive regex
+        // without invisible-char strip. Wave 3 fix 3 strips
+        // U+200B-U+200D and U+FEFF before matching.
+        const zwjInjected = 'Hello, I am an A\u200dI from school';
+        expect(() =>
+            assertAllRules({ reply: zwjInjected, parentLanguage: 'en', turnNumber: 1 }),
+        ).toThrow(BehaviouralGuardError);
+    });
+
+    it('does NOT catch Cyrillic look-alikes (known gap, follow-up needed)', () => {
+        // NFKC normalization is INSUFFICIENT to handle confusable
+        // homoglyphs (Cyrillic А = U+0410 vs Latin A = U+0041 are
+        // distinct codepoints, NFKC does not collapse them). A proper
+        // confusable map is required (e.g. Unicode UTS #39 skeleton
+        // algorithm or `confusable_homoglyphs` library).
+        //
+        // This test PINS the current behaviour as a TODO marker so
+        // the follow-up ticket (P1 GUARD-5) is unambiguous.
+        const cyrillicA = 'Hello, I am an \u0410I from school';
+        expect(() =>
+            assertAllRules({ reply: cyrillicA, parentLanguage: 'en', turnNumber: 1 }),
+        ).not.toThrow();
     });
 });
 
@@ -124,6 +165,21 @@ describe('assertAllRules — sentence count', () => {
                 turnNumber: 1,
             }),
         ).not.toThrow();
+    });
+
+    it('counts ellipsis (…) as a sentence terminator (catches monologue bypass)', () => {
+        // Wave 3 fix 3 regression: previously a 30-clause ellipsis
+        // monologue would count as 1 sentence and pass. Now `…`
+        // counts as a terminator; 7 ellipsis-separated clauses
+        // exceed the 5-sentence cap.
+        const monologue = 'OK… so… I want to tell you… about your child… who has been… very good… at studies…';
+        expect(() =>
+            assertAllRules({
+                reply: monologue,
+                parentLanguage: 'en',
+                turnNumber: 1,
+            }),
+        ).toThrow(BehaviouralGuardError);
     });
 });
 
