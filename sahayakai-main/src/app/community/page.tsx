@@ -20,6 +20,7 @@ import { CommunityChat } from '@/components/community/community-chat';
 import { TeacherDirectory } from '@/components/community/teacher-directory';
 import { ResourceFeed } from '@/components/community/resource-feed';
 import { ExploreGroups } from '@/components/community/explore-groups';
+import { CreatePostDialog } from '@/components/community/create-post-dialog';
 
 // Server actions
 import {
@@ -73,6 +74,7 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Race guard: every refresh increments this; we discard responses whose
   // version no longer matches when they resolve. Replaces the original
@@ -594,6 +596,25 @@ export default function CommunityPage() {
         />
       </div>
 
+      {/* Cold-start empty state. Renders when the user has no groups AND no
+          feed — usually a brand-new account whose ensureUserGroupsAction
+          either ran but auto-joined nothing (rare) or is still in flight.
+          Without this, the page below renders mostly blank space. */}
+      {!loading && myGroups.length === 0 && feedItems.length === 0 && (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Users className="h-6 w-6 text-primary" />
+          </div>
+          <p className="text-sm font-bold text-foreground">Join your first group</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Groups are how you find teachers in your subject, grade, and area.
+          </p>
+          <Button onClick={handleOpenExploreGroups} className="mt-3 gap-1.5">
+            Browse groups
+          </Button>
+        </div>
+      )}
+
       {/* Main content area */}
       <div className="mt-4 flex gap-6">
         {/* Feed column */}
@@ -601,7 +622,36 @@ export default function CommunityPage() {
           <div ref={composerRef}>
             <ShareComposer
               groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
-              onPostCreated={handleRefreshFeed}
+              onPostCreated={(info) => {
+                if (info && user) {
+                  // Optimistic insertion: prepend the new post to the feed so
+                  // the user sees it immediately. The next refresh tick (or
+                  // explicit handleRefreshFeed call) reconciles to server data.
+                  const groupName = myGroups.find((g) => g.id === info.groupId)?.name ?? '';
+                  const optimisticItem: FeedItem = {
+                    id: `gp_${info.postId}`,
+                    type: 'group_post',
+                    groupId: info.groupId,
+                    groupName,
+                    timestamp: new Date().toISOString(),
+                    post: {
+                      id: info.postId,
+                      groupId: info.groupId,
+                      authorUid: user.uid,
+                      authorName: user.displayName ?? 'Teacher',
+                      authorPhotoURL: user.photoURL ?? null,
+                      content: info.content,
+                      postType: info.postType,
+                      attachments: [],
+                      likesCount: 0,
+                      commentsCount: 0,
+                      createdAt: new Date().toISOString(),
+                    },
+                  };
+                  setFeedItems((prev) => [optimisticItem, ...prev]);
+                }
+                handleRefreshFeed();
+              }}
             />
           </div>
           <UnifiedFeed
@@ -639,22 +689,34 @@ export default function CommunityPage() {
             onPreviewGroup={handlePreviewGroup}
             onOpenStaffRoom={handleOpenStaffRoom}
             onOpenTeacherDirectory={handleOpenTeacherDirectory}
+            onViewAllGroups={handleOpenExploreGroups}
             onConnectTeacher={handleConnectTeacher}
           />
         </div>
       </div>
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB — opens the full create-post dialog. Previously this just
+          scrolled to the (already-visible) composer above. CreatePostDialog
+          had been imported nowhere else; this revives it with proper wiring. */}
       <div className="fixed bottom-20 right-4 sm:hidden z-[70]">
         <button
-          onClick={() =>
-            composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
+          onClick={() => setShowCreateDialog(true)}
+          aria-label={t("Create a Post")}
           className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
         >
           <Plus className="h-6 w-6" />
         </button>
       </div>
+
+      {/* CreatePostDialog — controlled from the FAB. */}
+      <CreatePostDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onPostCreated={() => {
+          setShowCreateDialog(false);
+          handleRefreshFeed();
+        }}
+      />
     </div>
   );
 }

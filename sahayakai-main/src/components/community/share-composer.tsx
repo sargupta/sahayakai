@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { useClickOutside } from '@/hooks/use-click-outside';
 import { createGroupPostAction } from '@/app/actions/groups';
 import { SHARE_TEMPLATES, type PostType } from '@/types/community';
 import {
@@ -17,7 +18,6 @@ import {
   Send,
   Loader2,
   ChevronDown,
-  ImagePlus,
 } from 'lucide-react';
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -37,7 +37,12 @@ const COLOR_MAP: Record<PostType, { bg: string; border: string; activeBg: string
 interface ShareComposerProps {
   groupId?: string;
   groups?: Array<{ id: string; name: string }>;
-  onPostCreated?: () => void;
+  /**
+   * Called after the post is created. Receives the new post id and the
+   * group it landed in so the parent can do optimistic insertion before
+   * the next feed refresh.
+   */
+  onPostCreated?: (info?: { postId: string; groupId: string; postType: PostType; content: string }) => void;
 }
 
 export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerProps) {
@@ -51,6 +56,11 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
   const [submitting, setSubmitting] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const groupDropdownRef = useRef<HTMLDivElement>(null);
+  // Close the group dropdown when the user clicks outside or hits Escape.
+  // Previously the dropdown only toggled via its own button — clicking elsewhere
+  // left it open and overlapping content.
+  useClickOutside(groupDropdownRef, () => setGroupOpen(false), groupOpen);
 
   const activeTemplate = SHARE_TEMPLATES.find((t) => t.id === postType) ?? SHARE_TEMPLATES[0];
 
@@ -83,12 +93,13 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
 
     setSubmitting(true);
     try {
-      await createGroupPostAction(targetGroup, content.trim(), postType, []);
+      const postId = await createGroupPostAction(targetGroup, content.trim(), postType, []);
+      const submittedContent = content.trim();
       setContent('');
       setPostType('share');
       setExpanded(false);
       if (!groupId) setSelectedGroupId('');
-      onPostCreated?.();
+      onPostCreated?.({ postId, groupId: targetGroup, postType, content: submittedContent });
       toast({ title: 'Posted!' });
     } catch (err) {
       toast({
@@ -141,7 +152,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
           {groupId ? (
             <span className="text-sm font-medium text-foreground">{selectedGroupName ?? 'Group'}</span>
           ) : (
-            <div className="relative">
+            <div ref={groupDropdownRef} className="relative">
               <button
                 type="button"
                 className="flex items-center gap-1 text-sm font-medium text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-muted/50 transition-colors"
@@ -204,13 +215,10 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
           className="min-h-[80px] max-h-[200px] resize-y border-border rounded-xl text-sm focus-visible:ring-primary/30"
         />
 
-        {/* Footer: add image + post */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5">
-            <ImagePlus className="h-4 w-4" />
-            <span className="text-xs">Add Image</span>
-          </Button>
-
+        {/* Footer: post action. The "Add Image" button was removed in Phase 4 —
+            it had no onClick and was pure dead UI. Image attachments will ship
+            via a follow-up ticket using the existing image-uploader.tsx pattern. */}
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
