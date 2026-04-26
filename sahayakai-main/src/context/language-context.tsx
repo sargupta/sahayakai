@@ -292,6 +292,12 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "গোপনীয়তা", "Gujarati": "ગોપનીયતા", "Punjabi": "ਪ੍ਰਾਈਵੇਸੀ",
         "Malayalam": "സ്വകാര്യത", "Odia": "ଗୋପନୀୟତା"
     },
+    "Terms": {
+        "English": "Terms", "Hindi": "शर्तें", "Kannada": "ನಿಯಮಗಳು",
+        "Tamil": "விதிமுறைகள்", "Telugu": "నిబంధనలు", "Marathi": "अटी",
+        "Bengali": "শর্তাবলী", "Gujarati": "શરતો", "Punjabi": "ਸ਼ਰਤਾਂ",
+        "Malayalam": "നിബന്ധനകൾ", "Odia": "ସର୍ତ୍ତାବଳୀ"
+    },
     // ("See all tools" already defined later — using existing entry)
     "Command palette": {
         "English": "Command palette", "Hindi": "कमांड पैलेट", "Kannada": "ಆಜ್ಞಾ ಪ್ಯಾಲೆಟ್",
