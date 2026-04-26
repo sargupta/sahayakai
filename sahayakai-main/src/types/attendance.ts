@@ -188,6 +188,21 @@ interface CallPrompts {
     didntHear: string;         // If speech timeout on first try
     noResponseGoodbye: string; // If parent doesn't speak at all
     thanks: string;            // Closing line
+    /**
+     * Round-2 audit P1 DPDP-1 (30-agent review, group G2):
+     * DPDP Act 2023 (enforced Nov 2026) requires itemised notice
+     * BEFORE personal data collection. The prologue is gated behind
+     * `consentNoticeEnabled` in the feature flags doc — defaults OFF
+     * until all 11 languages have legally-reviewed translations.
+     *
+     * Format (when added): one short sentence stating that the call
+     * is recorded, AI-processed, and stored. Parent can press 2 to
+     * end immediately if they don't consent.
+     *
+     * Currently filled in for `en-IN` only — translation gap is
+     * tracked in `.claude/plans/dpdp-compliance.md`.
+     */
+    consentPrologue?: string;
 }
 
 export const CALL_MENU_PROMPTS: Record<string, CallPrompts> = {
@@ -198,6 +213,9 @@ export const CALL_MENU_PROMPTS: Record<string, CallPrompts> = {
         didntHear:         'I\'m sorry, I could not hear you clearly. Could you please speak again?',
         noResponseGoodbye: 'It seems we could not connect. The teacher\'s message has been delivered. The school will try again if needed. Thank you. Goodbye.',
         thanks:            'Thank you for your time. We are partners in your child\'s success. Goodbye.',
+        // DPDP Act 2023 notice — gated by `consentNoticeEnabled` feature
+        // flag, default OFF until other-language translations land.
+        consentPrologue:   'This call may be recorded and processed by an AI system to help your child\'s teacher. If you do not wish to continue, please press 2 to end the call now.',
     },
     'hi-IN': {
         greeting:          'नमस्ते। यह आपके बच्चे के स्कूल से एक ज़रूरी संदेश है।',

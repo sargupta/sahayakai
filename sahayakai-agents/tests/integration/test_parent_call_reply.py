@@ -22,7 +22,6 @@ from sahayakai_agents.main import app
 
 from ..unit.fake_firestore import make_fake_session_store
 
-
 pytestmark = pytest.mark.integration
 
 
@@ -41,6 +40,8 @@ class _FakeResult:
 
 
 class _FakeModels:
+    """Sync surface — kept for any caller that still uses `client.models`."""
+
     def __init__(self, text: str) -> None:
         self._text = text
 
@@ -48,9 +49,30 @@ class _FakeModels:
         return _FakeResult(self._text)
 
 
+class _FakeAioModels:
+    """Async surface matching `client.aio.models.generate_content`.
+
+    Round-2 P0 fix landed in router.py (Apr 2026): the production code now
+    uses the official async path `client.aio.models.generate_content`. The
+    fake mirrors that surface so tests exercise the real call shape.
+    """
+
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    async def generate_content(self, **_kwargs: Any) -> _FakeResult:
+        return _FakeResult(self._text)
+
+
+class _FakeAio:
+    def __init__(self, text: str) -> None:
+        self.models = _FakeAioModels(text)
+
+
 class _FakeClient:
     def __init__(self, text: str) -> None:
         self.models = _FakeModels(text)
+        self.aio = _FakeAio(text)
 
 
 def _patch_gemini(monkeypatch: pytest.MonkeyPatch, reply_json: dict[str, Any]) -> None:
@@ -65,14 +87,21 @@ def _patch_gemini(monkeypatch: pytest.MonkeyPatch, reply_json: dict[str, Any]) -
 
     import sys
 
+    # Use SimpleNamespace so attribute access resolves the lambda directly
+    # without binding `self` as an implicit positional argument. The
+    # previous `type(...)()` wrapper made `GenerateContentConfig` a bound
+    # method and the kwargs-only lambda crashed on `self`.
+    from types import SimpleNamespace
+
+    fake_genai_types = SimpleNamespace(
+        GenerateContentConfig=lambda **kw: kw,
+    )
     fake_module = _FakeGenai()
-    fake_genai_types = type(
-        "_FakeGenaiTypes",
-        (),
-        {
-            "GenerateContentConfig": lambda **kw: kw,
-        },
-    )()
+    # The router does `from google.genai import types as genai_types`,
+    # which resolves `types` as an attribute on the parent module FIRST,
+    # then via sys.modules. Attach `types` to the fake parent so the
+    # import succeeds.
+    fake_module.types = fake_genai_types  # type: ignore[attr-defined]
     sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
     sys.modules["google.genai.types"] = fake_genai_types  # type: ignore[assignment]
 

@@ -50,18 +50,29 @@ jobs:
           docker push asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }}
 
       - name: Deploy to Cloud Run
+        env:
+          # Round-2 audit P0 IAM-2: the Next.js runtime SA is the
+          # identity allowed to invoke the sahayakai-agents sidecar.
+          # Setting it here on the deploy step replaces the legacy
+          # default Compute SA. Pre-work step in the master plan
+          # creates this SA with the required roles
+          # (run.invoker on sahayakai-agents,
+          # secretmanager.secretAccessor on SAHAYAKAI_REQUEST_SIGNING_KEY).
+          NEXT_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           gcloud run deploy sahayakai-hotfix-resilience \
-            --image asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${{ github.sha }} \
-            --project sahayakai-b4248 \
-            --region asia-southeast1 \
+            --image="asia-southeast1-docker.pkg.dev/sahayakai-b4248/sahayakai/sahayakai-hotfix-resilience:${GITHUB_SHA}" \
+            --project=sahayakai-b4248 \
+            --region=asia-southeast1 \
+            --service-account=sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com \
             --allow-unauthenticated \
-            --memory 2Gi \
-            --cpu 2 \
-            --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com,NODE_ENV=production,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
-            --min-instances 1 \
-            --max-instances 200 \
-            --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,YOUTUBE_API_KEY=YOUTUBE_API_KEY:latest"
+            --memory=2Gi \
+            --cpu=2 \
+            --min-instances=1 \
+            --max-instances=200 \
+            --set-env-vars="NEXT_PUBLIC_FIREBASE_PROJECT_ID=sahayakai-b4248,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248.firebasestorage.app,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=auth.sahayakai.com,NODE_ENV=production,NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_FIREBASE_API_KEY}" \
+            --set-secrets="GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,YOUTUBE_API_KEY=YOUTUBE_API_KEY:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAHAYAKAI_REQUEST_SIGNING_KEY:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=SAHAYAKAI_AGENTS_AUDIENCE:latest"
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}

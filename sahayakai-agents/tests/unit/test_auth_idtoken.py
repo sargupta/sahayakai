@@ -23,7 +23,6 @@ from sahayakai_agents import auth as auth_module
 from sahayakai_agents.config import get_settings
 from sahayakai_agents.shared.errors import AuthenticationError, AuthorizationError
 
-
 pytestmark = pytest.mark.unit
 
 

@@ -1,0 +1,32 @@
+# Cloud Monitoring alert policy: sidecar p95 latency > 3.5s over 15 minutes.
+#
+# 3.5s is the SAME bound the Next.js client enforces via AbortController;
+# this alert catches the case where the timeout is firing in aggregate
+# (slow sidecar) before users see degraded response times.
+displayName: "parent-call sidecar — p95 latency > 3.5s (15m)"
+documentation:
+  content: |
+    Sidecar p95 request latency exceeded 3.5s — the Next.js client
+    timeout. The auto-abort Cloud Function will demote the rollout
+    one step. Likely causes: cold-start storms, Gemini quota throttling,
+    Firestore contention.
+  mimeType: text/markdown
+combiner: OR
+conditions:
+  - displayName: "p95 > 3500ms"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        resource.label.service_name = monitoring.regex.full_match("sahayakai-agents.*")
+        metric.type = "run.googleapis.com/request_latencies"
+      comparison: COMPARISON_GT
+      thresholdValue: 3500
+      duration: 900s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_PERCENTILE_95
+          crossSeriesReducer: REDUCE_MEAN
+notificationChannels:
+  - "${AUTO_ABORT_PUBSUB_CHANNEL}"
+alertStrategy:
+  autoClose: 86400s
