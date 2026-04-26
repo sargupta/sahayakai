@@ -44,7 +44,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import firebase_admin
@@ -86,7 +86,11 @@ def _delete_shadow_diffs(
     days = [today - timedelta(days=d) for d in range(lookback_days + 1)]
     for day in days:
         date_str = day.isoformat()
-        shadow_ref = db.collection("agent_shadow_diffs").document(date_str).collection("shadow_calls")
+        shadow_ref = (
+            db.collection("agent_shadow_diffs")
+            .document(date_str)
+            .collection("shadow_calls")
+        )
         # Match all docs with the call_sid prefix.
         for snap in shadow_ref.where("callSid", "==", call_sid).stream():
             if not dry_run:
