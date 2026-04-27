@@ -51,10 +51,28 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Telugu": "నా లైబ్రరీ",
         "Marathi": "माझी लायब्ररी",
         "Bengali": "আমার লাইব্রেরি",
-        "Gujarati": "મારી લાઈબ્રેરી",
+        "Gujarati": "મારી લાઈબ્રେରી",
         "Punjabi": "ਮੇਰੀ ਲਾਇਬ੍ਰੇਰੀ",
         "Malayalam": "എന്റെ ലൈബ്രറി",
         "Odia": "ମୋର ଲାଇବ୍ରେରୀ"
+    },
+    "New Folder": {
+        "English": "New Folder", "Hindi": "नया फ़ोल्डर", "Kannada": "ಹೊಸ ಫೋಲ್ಡರ್",
+        "Tamil": "புதிய கோப்புறை", "Telugu": "కొత్త ఫోల్డర్", "Marathi": "नवीन फोल्डर",
+        "Bengali": "নতুন ফোল্ডার", "Gujarati": "નવું ફોલ્ડર", "Punjabi": "ਨਵਾਂ ਫੋਲਡਰ",
+        "Malayalam": "പുതിയ ഫോൾഡർ", "Odia": "ନୂତନ ଫୋଲଡର"
+    },
+    "Create New": {
+        "English": "Create New", "Hindi": "नया बनाएं", "Kannada": "ಹೊಸದಾಗಿ ರಚಿಸಿ",
+        "Tamil": "புதியதை உருவாக்கு", "Telugu": "కొత్తది సృష్టించు", "Marathi": "नवीन तयार करा",
+        "Bengali": "নতুন তৈরি করুন", "Gujarati": "નવું બનાવો", "Punjabi": "ਨਵਾਂ ਬਣਾਓ",
+        "Malayalam": "പുതിയത് സൃഷ്ടിക്കുക", "Odia": "ନୂତନ ତିଆରି କର"
+    },
+    "Teacher": {
+        "English": "Teacher", "Hindi": "शिक्षक", "Kannada": "ಶಿಕ್ಷಕ",
+        "Tamil": "ஆசிரியர்", "Telugu": "ఉపాధ్యాయుడు", "Marathi": "शिक्षक",
+        "Bengali": "শিক্ষক", "Gujarati": "શિક્ષક", "Punjabi": "ਅਧਿਆਪਕ",
+        "Malayalam": "അധ്യാപകൻ", "Odia": "ଶିକ୍ଷକ"
     },
     "Finish your Profile": {
         "English": "Finish your Profile",

@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
-  FolderPlus,
   Sparkles,
   Library,
 } from 'lucide-react';
@@ -15,30 +15,19 @@ import { SectionCard } from '@/components/layout';
 import { ProfileCard } from '@/components/profile-card';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
 import { getProfileData } from '@/app/actions/profile';
 import { ContentGallery } from '@/components/library/content-gallery';
 
-
-const translations: Record<string, Record<string, string>> = {
-  en: {
-    pageTitle: "My Library",
-    newFolder: "New Folder",
-    createNew: "Create New",
-  },
-  hi: {
-    pageTitle: "मेरी लाइब्रेरी",
-    newFolder: "नया फ़ोल्डर",
-    createNew: "नया बनाएं",
-  },
-  // ... (keeping other languages for structure, but simplified for now)
-};
-
 export default function MyLibraryPage() {
   const { user, loading } = useAuth();
-  const [language, setLanguage] = useState('en');
+  const router = useRouter();
+  // Use the global language context — the previous local `translations` object
+  // only had en/hi defined, leaving 9 of our 11 languages falling back to
+  // English even when the teacher had selected a different language globally.
+  const { language, setLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [resourceCount, setResourceCount] = useState(0);
-  const t = translations[language] || translations.en;
 
   // Real avatar precedence (no AI generation):
   //   1. profile.photoURL  — user-uploaded via Settings (custom)
@@ -68,8 +57,8 @@ export default function MyLibraryPage() {
     return (
       <AuthGate
         icon={Library}
-        title="Sign in to open your library"
-        description="Your saved lesson plans, quizzes, worksheets, and resources will appear here."
+        title={t("Sign in to open your library")}
+        description={t("Your saved lesson plans, quizzes, worksheets, and resources will appear here.")}
       >
         {null}
       </AuthGate>
@@ -81,7 +70,7 @@ export default function MyLibraryPage() {
   return (
     <div className="container-wide space-y-8 pb-20">
       <ProfileCard
-        name={profile?.displayName || auth.currentUser?.displayName || "Teacher"}
+        name={profile?.displayName || auth.currentUser?.displayName || t("Teacher")}
         avatarUrl={avatar}
         stats={{
           followers: profile?.followersCount || 0,
@@ -97,16 +86,19 @@ export default function MyLibraryPage() {
         <CardContent className="p-0">
           <div className="p-6 border-b border-border/40">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h1 className="type-h2 text-foreground">{t.pageTitle}</h1>
+              <h1 className="type-h2 text-foreground">{t("My Library")}</h1>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
-                <Button variant="outline" className="hidden md:flex rounded-surface-md">
-                  <FolderPlus className="mr-2 h-4 w-4" />
-                  {t.newFolder}
-                </Button>
-                <Button className="rounded-surface-md shadow-elevated transition-shadow duration-micro ease-out-quart">
+                <LanguageSelector
+                  onValueChange={(v) => { void setLanguage(v as Parameters<typeof setLanguage>[0]); }}
+                  defaultValue={language}
+                />
+                {/* "New Folder" hidden until folder feature exists — was a dead button */}
+                <Button
+                  className="rounded-surface-md shadow-elevated transition-shadow duration-micro ease-out-quart"
+                  onClick={() => router.push('/lesson-plan')}
+                >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  {t.createNew}
+                  {t("Create New")}
                 </Button>
               </div>
             </div>
