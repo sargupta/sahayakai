@@ -16,6 +16,7 @@ import {
     type SidecarWorksheetRequest,
     type SidecarWorksheetResponse,
 } from './worksheet-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in worksheet-client.ts. Phase J.2 hot-fix
@@ -153,6 +154,16 @@ function logDispatch(decision: WorksheetSidecarDecision, payload: Record<string,
 export async function dispatchWorksheet(
     input: WorksheetDispatchInput,
 ): Promise<DispatchedWorksheet> {
+    // Phase K — pre-call rate-limit gate. Lifted out of the Genkit flow
+    // so the sidecar canary/full path enforces it too. AIQuotaExhaustedError
+    // (and the legacy "Rate limit exceeded" plain Error) propagate to the
+    // route handler which maps them to 429/503.
+    // Note: validateTopicSafety is intentionally skipped — WorksheetWizardInputSchema
+    // has no `topic` field; the prompt is image+free-form which the model itself
+    // safety-filters via Genkit/Gemini's built-in policies.
+    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    await checkServerRateLimit(input.userId);
+
     const decision = await decideWorksheetDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
@@ -184,7 +195,45 @@ export async function dispatchWorksheet(
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
         logDispatch(decision, { source: 'sidecar', uid: input.userId, sidecarLatencyMs: sidecar.latencyMs });
-        return sidecarToDispatched(sidecar.res, decision);
+        const dispatched = sidecarToDispatched(sidecar.res, decision);
+        // Phase K — persist sidecar output to Storage + Firestore so it
+        // shows up in My Library, mirroring the Genkit flow's behaviour.
+        // Fail-soft: any persistence error is swallowed (the user has
+        // already received the response; persistence is a side effect).
+        // persistSidecarJSON is fail-soft internally (returns null on error,
+        // logs at WARN). Outer try/catch is belt-and-braces in case the
+        // helper itself ever throws synchronously.
+        try {
+            await persistSidecarJSON({
+                uid: input.userId,
+                collection: 'worksheets',
+                contentType: 'worksheet',
+                title: `Worksheet: ${input.prompt.substring(0, 30)}`,
+                output: {
+                    title: dispatched.title,
+                    gradeLevel: dispatched.gradeLevel,
+                    subject: dispatched.subject,
+                    learningObjectives: dispatched.learningObjectives,
+                    studentInstructions: dispatched.studentInstructions,
+                    activities: dispatched.activities,
+                    answerKey: dispatched.answerKey,
+                },
+                metadata: {
+                    gradeLevel: dispatched.gradeLevel || input.gradeLevel || 'Class 5',
+                    subject: dispatched.subject || 'General',
+                    topic: input.prompt,
+                    language: input.language || 'English',
+                },
+            });
+        } catch (persistErr) {
+            // eslint-disable-next-line no-console
+            console.warn(JSON.stringify({
+                event: 'worksheet.persist_failed',
+                uid: input.userId,
+                error: persistErr instanceof Error ? persistErr.message : String(persistErr),
+            }));
+        }
+        return dispatched;
     }
 
     const errorClass =

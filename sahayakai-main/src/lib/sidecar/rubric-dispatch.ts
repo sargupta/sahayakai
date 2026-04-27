@@ -17,6 +17,7 @@ import {
     type SidecarRubricRequest,
     type SidecarRubricResponse,
 } from './rubric-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in rubric-client.ts. Phase J.2 hot-fix (P0 #7) —
@@ -172,6 +173,16 @@ function logDispatch(
 export async function dispatchRubric(
     input: RubricDispatchInput,
 ): Promise<DispatchedRubric> {
+    // Phase K — pre-call rate-limit gate. Lifted out of the Genkit flow
+    // so the sidecar canary/full path enforces it too. AIQuotaExhaustedError
+    // (and the legacy "Rate limit exceeded" plain Error) propagate to the
+    // route handler which maps them to 429/503.
+    // Note: validateTopicSafety is intentionally skipped — RubricGeneratorInputSchema
+    // has no `topic` field; assignmentDescription is free-form and Gemini's
+    // built-in safety filters apply at generation time.
+    const { checkServerRateLimit } = await import('@/lib/server-safety');
+    await checkServerRateLimit(input.userId);
+
     const decision = await decideRubricDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
@@ -209,7 +220,43 @@ export async function dispatchRubric(
             sidecarLatencyMs: sidecar.latencyMs,
             sidecarVersion: sidecar.res.sidecarVersion,
         });
-        return sidecarToDispatched(sidecar.res, decision);
+        const dispatched = sidecarToDispatched(sidecar.res, decision);
+        // Phase K — persist sidecar output to Storage + Firestore so it
+        // shows up in My Library, mirroring the Genkit flow's behaviour.
+        // Fail-soft: any persistence error is swallowed (the user has
+        // already received the response; persistence is a side effect).
+        // persistSidecarJSON is fail-soft internally (returns null on error,
+        // logs at WARN). Outer try/catch is belt-and-braces in case the
+        // helper itself ever throws synchronously.
+        try {
+            await persistSidecarJSON({
+                uid: input.userId,
+                collection: 'rubrics',
+                contentType: 'rubric',
+                title: dispatched.title || `Rubric: ${input.assignmentDescription}`,
+                output: {
+                    title: dispatched.title,
+                    description: dispatched.description,
+                    criteria: dispatched.criteria,
+                    gradeLevel: dispatched.gradeLevel,
+                    subject: dispatched.subject,
+                },
+                metadata: {
+                    gradeLevel: dispatched.gradeLevel || input.gradeLevel || 'Class 5',
+                    subject: input.subject || dispatched.subject || 'General',
+                    topic: input.assignmentDescription,
+                    language: input.language || 'English',
+                },
+            });
+        } catch (persistErr) {
+            // eslint-disable-next-line no-console
+            console.warn(JSON.stringify({
+                event: 'rubric.persist_failed',
+                uid: input.userId,
+                error: persistErr instanceof Error ? persistErr.message : String(persistErr),
+            }));
+        }
+        return dispatched;
     }
 
     const errorClass =
