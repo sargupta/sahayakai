@@ -195,7 +195,7 @@ export default function ExamPaperPage() {
     try {
       const token = await getAuthToken();
       if (!token) {
-        setError("Session expired. Please log in again.");
+        setError(t("Session expired. Please log in again."));
         setGenerating(false);
         return;
       }
@@ -228,7 +228,7 @@ export default function ExamPaperPage() {
       const data = await res.json();
       setPaper(data.paper || data);
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.message || t("Something went wrong. Please try again."));
     } finally {
       setGenerating(false);
     }
@@ -242,7 +242,7 @@ export default function ExamPaperPage() {
     try {
       const token = await getAuthToken();
       if (!token) {
-        setError("Session expired. Please log in again.");
+        setError(t("Session expired. Please log in again."));
         return;
       }
       const res = await fetch("/api/ai/exam-paper", {
@@ -256,7 +256,7 @@ export default function ExamPaperPage() {
       if (!res.ok) throw new Error("Save failed");
       setSaved(true);
     } catch {
-      setError("Could not save. Please try again.");
+      setError(t("Could not save. Please try again."));
     } finally {
       setSaving(false);
     }
