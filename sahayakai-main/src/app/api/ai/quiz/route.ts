@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { generateQuiz } from '@/ai/flows/quiz-generator';
 import { QuizGeneratorInputSchema } from '@/ai/schemas/quiz-generator-schemas';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchQuiz } from '@/lib/sidecar/quiz-dispatch';
 
 async function _handler(request: Request) {
     let topicText = 'Unknown Topic';
@@ -18,13 +18,22 @@ async function _handler(request: Request) {
         // SECURITY: Validate input against schema
         const body = QuizGeneratorInputSchema.parse(json);
 
-        // Call the AI Flow
-        const output = await generateQuiz({
+        // Phase E.1: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_QUIZ_MODE env (default: off → Genkit only).
+        const dispatched = await dispatchQuiz({
             ...body,
-            userId: userId
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            easy: dispatched.easy,
+            medium: dispatched.medium,
+            hard: dispatched.hard,
+            id: dispatched.id,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+            topic: dispatched.topic,
+            isSaved: dispatched.isSaved,
+        });
 
     } catch (error) {
         return handleAIError(error, 'QUIZ', {
