@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, GraduationCap } from "lucide-react";
+import { Loader2, GraduationCap, Lightbulb, Mic } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
@@ -244,16 +244,18 @@ function TeacherTrainingContent() {
         {/* Clean Top Bar */}
         <div className="card-accent-bar" />
 
-        <CardHeader className="text-center">
-          <div className="flex justify-center items-center mb-4">
+        <CardHeader className="text-center pb-3 sm:pb-6 pt-4 sm:pt-6">
+          {/* Compact mobile header — icon hidden on mobile to save vertical
+              space; on desktop kept for visual anchor (UX audit #14). */}
+          <div className="hidden sm:flex justify-center items-center mb-3">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
               <GraduationCap className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="font-headline tracking-tight text-2xl sm:text-3xl">{t("Teacher Training")}</CardTitle>
+          <CardTitle className="font-headline tracking-tight text-xl sm:text-3xl">{t("AI Coach")}</CardTitle>
           <CardDescription>
             <p>{descriptionLines[0]}</p>
-            <p>{descriptionLines[1]}</p>
+            <p className="hidden sm:block">{descriptionLines[1]}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -266,33 +268,45 @@ function TeacherTrainingContent() {
                   <FormField
                     control={form.control}
                     name="question"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between gap-2">
+                    render={({ field }) => {
+                      const charCount = (field.value || "").length;
+                      const minChars = 10;
+                      const isValid = charCount >= minChars;
+                      return (
+                        <FormItem>
                           <FormLabel className="font-headline text-lg">{t("Your Question or Challenge")}</FormLabel>
-                          {/* Inline mic — voice-first per Phase 2.0 spec.
-                              Appends transcript to the textarea so teachers can dictate
-                              their question instead of typing on a small phone keyboard. */}
-                          <InlineMicButton
-                            onTranscript={(text, isFinal) => {
-                              if (!isFinal) return;
-                              const current = field.value || "";
-                              field.onChange(current ? `${current} ${text}` : text);
-                            }}
-                          />
-                        </div>
-                        <FormControl>
-                          <div className="flex flex-col gap-4">
-                            <Textarea
-                              placeholder={t("Type your question or challenge here…")}
-                              {...field}
-                              className="bg-muted/20 min-h-[120px] resize-none text-lg"
-                            />
+                          <FormControl>
+                            {/* Mic anchored INSIDE the textarea wrapper at top-right
+                                — fixes UX audit bug #4 (orphaned position).
+                                Appends transcript to whatever the teacher already typed. */}
+                            <div className="relative">
+                              <Textarea
+                                placeholder={t("Type your question or challenge here…")}
+                                {...field}
+                                className="bg-muted/20 min-h-[120px] resize-none text-lg pr-12"
+                              />
+                              <div className="absolute top-2 right-2">
+                                <InlineMicButton
+                                  onTranscript={(text, isFinal) => {
+                                    if (!isFinal) return;
+                                    const current = field.value || "";
+                                    field.onChange(current ? `${current} ${text}` : text);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </FormControl>
+                          {/* Live character counter — UX audit #11.
+                              Teacher knows the 10-char minimum before submit. */}
+                          <div className="flex items-center justify-between mt-1">
+                            <FormMessage />
+                            <span className={`text-xs font-medium ml-auto ${isValid ? "text-green-600" : "text-muted-foreground"}`}>
+                              {charCount} / {minChars} {isValid ? "✓" : t("min")}
+                            </span>
                           </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <div className="space-y-2">
@@ -305,48 +319,34 @@ function TeacherTrainingContent() {
                 <div className="lg:col-span-5 space-y-5 border border-border rounded-2xl p-4 md:p-5 bg-card shadow-soft h-fit">
                   <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">{t("Settings")}</h3>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="subject"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Subject")}</FormLabel>
-                          <FormControl>
-                            <SubjectSelector
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              language={selectedLanguage}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Language")}</FormLabel>
-                          <FormControl>
-                            <LanguageSelector
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* UX audit #1: removed "Subject" dropdown — pedagogy advice
+                      doesn't change by subject. "General" was always the default
+                      anyway. UX audit #8: clarified Language label → "Response
+                      language" so it's clear this controls VIDYA's reply, not
+                      the UI language (that's already in the header pill). */}
+                  <FormField
+                    control={form.control}
+                    name="language"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Response language")}</FormLabel>
+                        <FormControl>
+                          <LanguageSelector
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="bg-primary/5 p-4 rounded-r-lg border-l-2 border-primary/40">
                     <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
+                      {/* Bug #1: replaced malformed inline SVG with lucide
+                          Lightbulb (was throwing a console SVG path error
+                          on every page load). */}
+                      <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-foreground text-sm mb-1">{t("Pro Tip")}</p>
                         <p className="text-sm text-muted-foreground">{t("Be specific about your students' age group and the context (e.g., \"Class 5 students in a rural school\").")}</p>
@@ -356,14 +356,17 @@ function TeacherTrainingContent() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all">
+              <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all gap-2">
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                     {t("Getting Advice...")}
                   </>
                 ) : (
-                  t("Get Advice")
+                  <>
+                    <GraduationCap className="h-5 w-5" />
+                    {t("Get Advice")}
+                  </>
                 )}
               </Button>
               {aiUnavailableReason && (
