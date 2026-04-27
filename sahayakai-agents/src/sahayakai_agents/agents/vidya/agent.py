@@ -1,208 +1,102 @@
-"""ADK-style helpers for the VIDYA orchestrator.
+"""ADK supervisor builder for the VIDYA orchestrator (Phase L.1).
 
-VIDYA is a 2-stage flow:
+Constructs a real `google.adk.agents.LlmAgent` to drive the intent
+classifier through ADK's `Runner`. Replaces the previous hand-rolled
+2-stage pattern (FastAPI handler → `google.genai` direct call) with
+the canonical ADK supervisor shape.
 
-  1. **Classifier** — one Gemini call that returns an
-     `IntentClassification` (intent label + extracted params).
-  2. **Renderer** — branches on the intent:
-     - `instantAnswer` → second Gemini call to produce the inline
-       answer text.
-     - one of 9 routable flows → no second call; build a
-       `VidyaAction(type="NAVIGATE_AND_FILL", ...)` from the
-       classifier output.
-     - `unknown` → no second call; surface a polite fallback.
+What lives here NOW (Phase L.1):
+- `build_vidya_agent()` — the cached `LlmAgent` factory.
 
-Render helpers + classifier gate logic live here. The actual Gemini
-calls are wired in `router.py` — Phase 5.4 will replace the canned
-stubs with real `google.genai` invocations through `run_resiliently`.
+What used to live here, moved out:
+- Prompt loading + Handlebars rendering → `prompts.py`.
+- `classify_action`, model selectors → `gates.py`.
 
-Phase 5 §5.2 deliverable.
-See `sahayakai-main/.claude/plans/ai-agent-quality-and-migration-plan.md`.
+Backwards-compat re-exports at the bottom keep `_behavioural.py` +
+existing tests + the router happy without churning their imports.
+
+Phase L.1 deliverable. See
+`sahayakai-main/.claude/plans/ai-agent-quality-and-migration-plan.md`.
 """
 from __future__ import annotations
 
-import os
 from functools import lru_cache
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
-import pybars
-import structlog
-
-from .schemas import (
-    AllowedFlow,
-    IntentClassification,
-    VidyaAction,
-    VidyaActionParams,
+# Local re-exports keep the public surface stable for callers that
+# import from `agents.vidya.agent` (router, _behavioural, tests).
+from .gates import (
+    classify_action,
+    get_instant_answer_model,
+    get_orchestrator_model,
 )
-
-log = structlog.get_logger(__name__)
-
-
-# ---- Prompt resolution ---------------------------------------------------
-
-# `parents[4]` from this file resolves to the `sahayakai-agents/` repo
-# root, mirroring the lesson-plan agent. The directory contains the
-# shared `prompts/vidya/` Handlebars set used by both Node and Python.
-_DEFAULT_REPO_PROMPTS = (
-    Path(__file__).resolve().parents[4] / "prompts" / "vidya"
+from .prompts import (
+    ALLOWED_FLOWS,
+    INSTANT_ANSWER_INTENT,
+    UNKNOWN_INTENT,
+    load_instant_answer_prompt,
+    load_orchestrator_prompt,
+    render_instant_answer_prompt,
+    render_orchestrator_prompt,
 )
+from .schemas import IntentClassification
+
+if TYPE_CHECKING:
+    from google.adk.agents import LlmAgent
 
 
-def _resolve_prompts_dir() -> Path:
-    """`SAHAYAKAI_PROMPTS_DIR` in prod; repo layout fallback in dev."""
-    env = os.environ.get("SAHAYAKAI_PROMPTS_DIR")
-    if env:
-        return Path(env) / "vidya"
-    return _DEFAULT_REPO_PROMPTS
+# ---- ADK supervisor builder ---------------------------------------------
 
 
-def _load_prompt(filename: str) -> str:
-    path = _resolve_prompts_dir() / filename
-    if not path.exists():
-        raise FileNotFoundError(
-            f"VIDYA prompt missing: {path}. "
-            "Set SAHAYAKAI_PROMPTS_DIR to the directory containing vidya/."
-        )
-    return path.read_text(encoding="utf-8")
+@lru_cache(maxsize=1)
+def build_vidya_agent() -> LlmAgent:
+    """Build the VIDYA supervisor as an ADK `LlmAgent`.
 
+    Phase L.1 wiring:
 
-def load_orchestrator_prompt() -> str:
-    """Load the intent-classifier Handlebars template."""
-    return _load_prompt("orchestrator.handlebars")
+    - `model` is the env-overridable string from `get_orchestrator_model()`
+      (defaults to `gemini-2.0-flash` to match the Genkit production flow).
+    - `instruction` is the rendered orchestrator Handlebars template.
+      ADK's basic flow forwards this as the system instruction. Per-call
+      teacher context (message, history, screen, profile) is appended
+      via the `new_message` Content the router passes to `Runner.run_async`.
+    - `output_schema=IntentClassification` enables Gemini's structured
+      JSON output (response_schema). The router parses the JSON text
+      from the final event into `IntentClassification`.
+    - `sub_agents=[]` for now — L.2 wires the instant-answer agent as
+      an `AgentTool`. The other 9 routable flows stay outside ADK because
+      the OmniOrb dispatches `NAVIGATE_AND_FILL` actions client-side; no
+      ADK delegation is needed for them.
+    - `disallow_transfer_to_parent=True` so the supervisor never tries
+      to escalate to a non-existent parent agent.
 
+    Cached via `lru_cache(maxsize=1)` because the same `LlmAgent` is
+    safe to re-use across requests; ADK threads per-call state through
+    the `Runner` + session, not the agent itself.
 
-def load_instant_answer_prompt() -> str:
-    """Load the inline-answer Handlebars template."""
-    return _load_prompt("instant_answer.handlebars")
-
-
-# ---- pybars3 rendering ---------------------------------------------------
-
-_compiler = pybars.Compiler()
-
-
-@lru_cache(maxsize=2)
-def _compile_orchestrator_template() -> Any:
-    """Compile the orchestrator template once and cache."""
-    return _compiler.compile(load_orchestrator_prompt())
-
-
-@lru_cache(maxsize=2)
-def _compile_instant_answer_template() -> Any:
-    """Compile the instant-answer template once and cache."""
-    return _compiler.compile(load_instant_answer_prompt())
-
-
-def render_orchestrator_prompt(context: dict[str, Any]) -> str:
-    """Render the orchestrator prompt against the request context.
-
-    Expected keys:
-      - `message`: str
-      - `chatHistory`: list[dict] (already serialised, not Pydantic)
-      - `currentScreenContext`: dict with `path` and `uiState`
-      - `teacherProfile`: dict with optional grade/subject/language/school
-      - `detectedLanguage`: str | None
-      - `allowedFlows`: list[str] (the 9 routable flow names)
+    NOTE: this function imports `google.adk.agents.LlmAgent` lazily so
+    unit tests that don't exercise ADK don't pay the import cost. Once
+    Phase L.2-L.5 land, ADK is on the hot path for VIDYA + lesson-plan
+    + quiz + visual-aid, so the import cost amortises away.
     """
-    return str(_compile_orchestrator_template()(context))
+    from google.adk.agents import LlmAgent  # noqa: PLC0415 — lazy import
 
-
-def render_instant_answer_prompt(context: dict[str, Any]) -> str:
-    """Render the instant-answer prompt against the request context.
-
-    Expected keys:
-      - `message`: str — the teacher's question
-      - `language`: str | None — BCP-47 or ISO code
-      - `teacherProfile`: dict (optional grade/subject/school context)
-    """
-    return str(_compile_instant_answer_template()(context))
-
-
-# ---- Intent constants ----------------------------------------------------
-
-INSTANT_ANSWER_INTENT = "instantAnswer"
-UNKNOWN_INTENT = "unknown"
-
-# The 9 routable flows. Order matches the `AllowedFlow` Literal in
-# `schemas.py` so a static check (`len(ALLOWED_FLOWS) == 9` in tests)
-# catches drift between the two.
-ALLOWED_FLOWS: list[str] = [
-    "lesson-plan",
-    "quiz-generator",
-    "visual-aid-designer",
-    "worksheet-wizard",
-    "virtual-field-trip",
-    "teacher-training",
-    "rubric-generator",
-    "exam-paper",
-    "video-storyteller",
-]
-
-
-# ---- Action gate ---------------------------------------------------------
-
-
-def classify_action(intent: IntentClassification) -> VidyaAction | None:
-    """Convert an `IntentClassification` to a `VidyaAction` or None.
-
-    Returns:
-      - `None` for `instantAnswer` (handled inline) and `unknown`
-        (router surfaces a polite fallback).
-      - A populated `VidyaAction` for any of the 9 routable flows.
-      - `None` defensively for any other (invalid) intent string.
-        This is a fail-safe: a bad classifier output should never
-        navigate the teacher to a non-existent route.
-    """
-    if intent.type in (INSTANT_ANSWER_INTENT, UNKNOWN_INTENT):
-        return None
-    if intent.type not in ALLOWED_FLOWS:
-        # Defensive: classifier returned something we don't route.
-        log.warning("vidya.classify_action.invalid_intent", intent_type=intent.type)
-        return None
-
-    # Cast through the Literal — mypy can't narrow `intent.type` to
-    # `AllowedFlow` from a runtime `in` check, so we use the Literal
-    # type explicitly for the assignment.
-    flow: AllowedFlow = intent.type  # type: ignore[assignment]
-    return VidyaAction(
-        type="NAVIGATE_AND_FILL",
-        flow=flow,
-        params=VidyaActionParams(
-            topic=intent.topic,
-            gradeLevel=intent.gradeLevel,
-            subject=intent.subject,
-            language=intent.language,
-            ncertChapter=None,
-        ),
+    return LlmAgent(
+        name="vidya_supervisor",
+        model=get_orchestrator_model(),
+        instruction=load_orchestrator_prompt(),
+        sub_agents=[],  # L.2 will add instant-answer's AgentTool.
+        output_schema=IntentClassification,
+        disallow_transfer_to_parent=True,
     )
 
 
-# ---- Model selection -----------------------------------------------------
-
-
-@lru_cache(maxsize=1)
-def get_orchestrator_model() -> str:
-    """Default Gemini variant for the intent classifier.
-
-    VIDYA today (Genkit) uses `gemini-2.0-flash` for speed — the orb is
-    a real-time UX surface and 2.5-flash latency would feel laggy.
-    Override via `SAHAYAKAI_VIDYA_ORCHESTRATOR_MODEL` to A/B test 2.5.
-    """
-    return os.environ.get("SAHAYAKAI_VIDYA_ORCHESTRATOR_MODEL", "gemini-2.0-flash")
-
-
-@lru_cache(maxsize=1)
-def get_instant_answer_model() -> str:
-    """Default Gemini variant for inline answers.
-
-    Same speed-first reasoning as the orchestrator. Override via
-    `SAHAYAKAI_VIDYA_INSTANT_ANSWER_MODEL`.
-    """
-    return os.environ.get("SAHAYAKAI_VIDYA_INSTANT_ANSWER_MODEL", "gemini-2.0-flash")
-
-
 __all__ = [
+    # ADK supervisor builder (Phase L.1 addition).
+    "build_vidya_agent",
+    # Backwards-compat re-exports — callers should migrate to importing
+    # from `prompts.py` / `gates.py` directly, but for now the symbols
+    # stay here so tests + _behavioural keep working.
     "ALLOWED_FLOWS",
     "INSTANT_ANSWER_INTENT",
     "UNKNOWN_INTENT",

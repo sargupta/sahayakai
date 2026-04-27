@@ -1,16 +1,28 @@
 """FastAPI sub-router for the VIDYA orchestrator.
 
-Phase 5 §5.4 — real Gemini calls live here. Two-stage flow:
+Phase L.1: the classifier call now goes through ADK's `Runner` against
+the `LlmAgent` built by `build_vidya_agent()`. Wire shape, request +
+response schemas, behavioural guard, retry semantics — all unchanged.
+Only the INTERNAL call mechanism switches from a hand-rolled
+`google.genai.Client.aio.models.generate_content` to ADK's canonical
+supervisor-pattern Runner.
 
-  1. Classifier → `IntentClassification` (one structured Gemini call)
+Two-stage flow (unchanged):
+
+  1. Classifier → `IntentClassification` (one structured Gemini call
+     via ADK Runner against the cached LlmAgent).
   2. Branch on intent:
-     - `instantAnswer` → second Gemini call (plain text) for the answer
-     - 9 routable flows → no second call; build a `VidyaAction`
-     - `unknown` / unhandled → polite fallback; no action
+     - `instantAnswer` → delegate to the instant-answer ADK agent
+       (in-process import; same as Phase B.4).
+     - 9 routable flows → no second call; build a `VidyaAction`.
+     - `unknown` / unhandled → polite fallback; no action.
 
-Every model call goes through `run_resiliently` so the same retry +
-key-rotation + telephony-bounded backoff applies as parent-call /
-lesson-plan.
+Every model call still goes through `run_resiliently` so the same
+retry + key-rotation + telephony-bounded backoff applies as the
+parent-call / lesson-plan routers. The Runner is invoked inside the
+resilience callback; per-attempt the agent's `.model` is swapped to
+a `Gemini` instance pinned to the current api_key, leaving the cached
+agent template untouched between requests.
 
 Cost cap: max 2 Gemini calls per request (classifier + optional
 inline answer). Same shape as the current Genkit `agentRouterFlow`,
@@ -19,6 +31,7 @@ so net cost is unchanged.
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any
 
 import structlog
@@ -32,8 +45,8 @@ from ...shared.prompt_safety import sanitize, sanitize_optional
 from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
+    build_vidya_agent,
     classify_action,
-    get_orchestrator_model,
     render_orchestrator_prompt,
 )
 from .registry import render_capability_index
@@ -50,7 +63,7 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-g.0"
+SIDECAR_VERSION = "phase-l.1"
 
 # Per-call timeout for run_resiliently. VIDYA orchestrator is a
 # classifier-only flow; 8s mirrors the Twilio-bounded budget on the
@@ -58,75 +71,149 @@ SIDECAR_VERSION = "phase-g.0"
 # JSON output.
 _PER_CALL_TIMEOUT_S = 8.0
 
+# ADK Runner needs an app_name for the in-memory session service.
+# This is opaque to the model — it's just a session-store key prefix.
+_VIDYA_APP_NAME = "sahayakai-vidya"
 
-# ---- Gemini call helpers (mirror lesson_plan / parent_call routers) ------
+
+# ---- ADK Runner helpers -------------------------------------------------
 
 
-async def _call_gemini_structured(
-    *,
-    api_key: str,
-    model: str,
-    prompt: str,
-    response_schema: type,
-) -> Any:
-    """One Gemini call with structured JSON output."""
-    from google import genai
-    from google.genai import types as genai_types
+def _build_keyed_gemini(api_key: str) -> Any:
+    """Build a `Gemini` model wrapper pinned to a specific api_key.
 
-    client = genai.Client(api_key=api_key)
-    return await client.aio.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=response_schema,
-            # Low temperature: intent classification is deterministic
-            # by design; matches the Genkit flow's temperature=0.1.
-            temperature=0.1,
+    ADK's stock `Gemini` class lazily constructs `genai.Client()` with
+    no args, which means it picks up `GOOGLE_API_KEY` from the env at
+    first access and caches it on the instance forever. That breaks
+    the sidecar's key-pool failover (concurrent requests would race
+    on the env var, and the cached client would never rotate).
+
+    Workaround: subclass `Gemini`, pre-populate the `api_client`
+    cached_property with a `genai.Client(api_key=...)` instance built
+    from the explicit key. ADK then uses our pre-populated client for
+    every call instead of constructing one from env.
+
+    Local imports keep tests that don't exercise ADK fast — the heavy
+    `google.genai` machinery only loads on the hot path.
+    """
+    from google.adk.models.google_llm import Gemini  # noqa: PLC0415
+    from google.genai import Client  # noqa: PLC0415
+    from google.genai import types as genai_types  # noqa: PLC0415
+
+    class _KeyedGemini(Gemini):
+        """Per-call Gemini wrapper with explicit api_key."""
+
+    # The cached agent's `.model` is typed `Union[str, BaseLlm]` by
+    # ADK — but we know our cached template carries a string (see
+    # `build_vidya_agent`). Coerce so `_KeyedGemini(model=str)`
+    # type-checks cleanly.
+    template_model = build_vidya_agent().model
+    model_name = (
+        template_model
+        if isinstance(template_model, str)
+        else template_model.model
+    )
+    instance = _KeyedGemini(model=model_name)
+    # Pre-populate the api_client cached_property. cached_property
+    # writes to instance.__dict__ on first access; we just write
+    # directly so the lazy construction never fires.
+    pinned_client = Client(
+        api_key=api_key,
+        http_options=genai_types.HttpOptions(
+            headers=instance._tracking_headers(),
         ),
     )
+    object.__setattr__(
+        instance,
+        "__dict__",
+        {**instance.__dict__, "api_client": pinned_client},
+    )
+    return instance
 
 
-async def _call_gemini_text(
-    *,
-    api_key: str,
-    model: str,
-    prompt: str,
-) -> Any:
-    """One Gemini call returning plain text (no structured schema)."""
-    from google import genai
-    from google.genai import types as genai_types
+async def _run_orchestrator_via_runner(
+    *, prompt: str, api_key: str
+) -> IntentClassification:
+    """One ADK Runner invocation against the VIDYA supervisor.
 
-    client = genai.Client(api_key=api_key)
-    return await client.aio.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            # Slightly higher temperature for instant-answer prose so
-            # responses don't all read identically; still well below
-            # creative-writing range.
-            temperature=0.4,
-        ),
+    Builds a per-call `LlmAgent` by `model_copy`-ing the cached
+    template and swapping in a `Gemini` instance pinned to `api_key`.
+    The cached agent itself is never mutated — `model_copy()` returns
+    a fresh Pydantic instance.
+
+    The rendered prompt is passed as `new_message` (user content), NOT
+    as `instruction`, because:
+      - The agent's `instruction` would go through ADK's
+        `inject_session_state()` which scans for `{name}` patterns —
+        a source of accidental KeyError if our rendered output ever
+        contains a `{var}` shape.
+      - Putting it in `new_message` is the canonical way to pass
+        per-request user input through ADK; matches what the previous
+        `_call_gemini_structured` did (prompt → `contents`).
+    """
+    from google.adk.runners import InMemoryRunner  # noqa: PLC0415
+    from google.genai import types as genai_types  # noqa: PLC0415
+
+    template = build_vidya_agent()
+    agent_for_call = template.model_copy(
+        update={"model": _build_keyed_gemini(api_key)}
     )
 
+    runner = InMemoryRunner(agent=agent_for_call, app_name=_VIDYA_APP_NAME)
 
-def _extract_text(result: Any) -> str:
-    text = getattr(result, "text", None)
-    if text:
-        return str(text)
-    candidates = getattr(result, "candidates", None) or []
-    for cand in candidates:
-        content = getattr(cand, "content", None)
-        parts = getattr(content, "parts", None) or []
-        for part in parts:
-            text = getattr(part, "text", None)
-            if text:
-                return str(text)
-    raise AgentError(
-        code="INTERNAL",
-        message="Gemini returned empty response",
-        http_status=502,
+    # InMemoryRunner uses InMemorySessionService; we must create a
+    # session before run_async (no auto_create_session by default).
+    user_id = "vidya-orchestrator"
+    session_id = f"vidya-{uuid.uuid4().hex}"
+    await runner.session_service.create_session(
+        app_name=_VIDYA_APP_NAME,
+        user_id=user_id,
+        session_id=session_id,
     )
+
+    new_message = genai_types.Content(
+        role="user",
+        parts=[genai_types.Part(text=prompt)],
+    )
+
+    final_text = ""
+    async for event in runner.run_async(
+        user_id=user_id,
+        session_id=session_id,
+        new_message=new_message,
+    ):
+        # Accumulate text from final-response events. A single
+        # output_schema call typically yields one final event whose
+        # content.parts[0].text is the full JSON.
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                text = getattr(part, "text", None)
+                if text and not getattr(part, "thought", False):
+                    final_text += str(text)
+
+    if not final_text.strip():
+        raise AgentError(
+            code="INTERNAL",
+            message="Gemini returned empty response",
+            http_status=502,
+        )
+
+    try:
+        return IntentClassification.model_validate_json(final_text)
+    except Exception as exc:
+        log.error(
+            "vidya.orchestrator.json_parse_failed",
+            raw_excerpt=final_text[:200],
+            error=str(exc),
+        )
+        raise AgentError(
+            code="INTERNAL",
+            message=(
+                "Orchestrator returned text that does not match "
+                "IntentClassification"
+            ),
+            http_status=502,
+        ) from exc
 
 
 # ---- Stage 1: classifier -------------------------------------------------
@@ -138,6 +225,10 @@ async def _run_orchestrator(
     settings: Any,
 ) -> IntentClassification:
     """Classify intent + extract params from the teacher's utterance.
+
+    Phase L.1: dispatches via ADK Runner instead of a hand-rolled
+    `google.genai` call. Sanitization + key-pool failover + per-call
+    timeout semantics all unchanged.
 
     Phase J §J.3 — sanitize every user-controlled string before it
     lands in the prompt:
@@ -200,37 +291,19 @@ async def _run_orchestrator(
         "capabilityIndex": render_capability_index(),
     }
     prompt = render_orchestrator_prompt(context)
-    model = get_orchestrator_model()
 
-    async def _do(api_key: str) -> Any:
-        return await _call_gemini_structured(
-            api_key=api_key,
-            model=model,
-            prompt=prompt,
-            response_schema=IntentClassification,
+    async def _do(api_key: str) -> IntentClassification:
+        return await _run_orchestrator_via_runner(
+            prompt=prompt, api_key=api_key
         )
 
-    result = await run_resiliently(
+    return await run_resiliently(
         _do,
         api_keys,
         span_name="vidya.orchestrator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
         per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
-    text = _extract_text(result)
-    try:
-        return IntentClassification.model_validate_json(text)
-    except Exception as exc:
-        log.error(
-            "vidya.orchestrator.json_parse_failed",
-            raw_excerpt=text[:200],
-            error=str(exc),
-        )
-        raise AgentError(
-            code="INTERNAL",
-            message="Orchestrator returned text that does not match IntentClassification",
-            http_status=502,
-        ) from exc
 
 
 # ---- Stage 2: inline answer (only when intent == instantAnswer) ---------
@@ -245,9 +318,8 @@ async def _run_orchestrator(
 #   2. This is the canonical supervisor-pattern hook. VIDYA is the
 #      supervisor; instant-answer is the sub-agent. The call uses
 #      direct in-process import (no HTTP loop back through Cloud Run).
-#      In a future phase we'll switch to ADK `AgentTool` once VIDYA
-#      runs through `Runner` — for now the same shape works without
-#      that machinery.
+#      In a future phase (L.2) we'll switch to ADK `AgentTool` once
+#      VIDYA's supervisor declares instant-answer as a sub-agent.
 #
 # The fallback to the local `render_instant_answer_prompt` path is
 # kept around at module import time so the prompt-rendering smoke
