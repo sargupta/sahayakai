@@ -1,12 +1,31 @@
-"""Integration test for `POST /v1/lesson-plan/generate` — Phase 3 §3.5b.
+"""Integration test for `POST /v1/lesson-plan/generate` (Phase L.3).
 
-Exercises the full 4-call orchestration:
+Exercises the full ADK ``LoopAgent`` orchestration:
 
     writer → evaluator → (if revise) reviser → evaluator-on-v2
 
-with `google.genai.Client` mocked to return canned responses per
-call. The mock fakes whatever next response the test sets up — same
-shape as `tests/integration/test_parent_call_reply.py`.
+Phase L.3 fixture redesign: the procedural ``_run_writer`` /
+``_run_evaluator`` / ``_run_reviser`` helpers are gone — sub-agents
+now call ``_call_gemini_structured`` from inside ADK's Runner. The
+old fixture that swapped ``sys.modules["google.genai"]`` wholesale
+is incompatible with ADK (ADK's ``google_llm`` module imports
+``google.genai.errors`` at load time, breaking when the module is
+shimmed).
+
+New strategy — patch the single Gemini helper in the agent module.
+Sub-agents inside the LoopAgent end up calling the patched helper,
+which pops responses off a shared queue. Net effect on assertions
+is identical: a queue of ``[writer_json, evaluator_json, ...]``
+gets drained one entry per sub-agent.
+
+Plus an autouse ``_restore_real_google_genai`` fixture (mirrors
+``test_vidya_adk_runtime.py``) — restores ``sys.modules["google.genai"]``
+so ADK's ``InMemoryRunner`` can load ``google_llm`` without dying on
+``google.genai.errors`` imports. Other tests in the suite that pre-
+populated ``sys.modules["google.genai"]`` with a SimpleNamespace shim
+(test_instant_answer_router.py, test_voice_to_text_router.py, etc.) leak
+that pollution into our test session; the autouse fixture is what
+isolates this file from that leakage.
 
 Three scenarios:
 
@@ -21,19 +40,78 @@ Three scenarios:
 """
 from __future__ import annotations
 
+import importlib
 import json
-from types import SimpleNamespace
+import sys
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.lesson_plan import agent as lesson_plan_agent_mod
 from sahayakai_agents.main import app
 
 pytestmark = pytest.mark.integration
 
 
-# ── Fake google.genai.Client that returns canned text per call ────────────
+# ── sys.modules hygiene (mirrors test_vidya_adk_runtime.py) ──────────────
+
+
+# Sentinel for "attribute didn't exist in the original state".
+_SENTINEL: object = object()
+
+
+@pytest.fixture(autouse=True)
+def _restore_real_google_genai() -> None:
+    """Force the real google.genai modules into sys.modules for this test.
+
+    Other tests (e.g. test_instant_answer_router.py, test_voice_to_text_router.py)
+    install SimpleNamespace shims at ``sys.modules["google.genai"]`` and
+    never restore them. ADK's ``InMemoryRunner`` (used by the lesson-plan
+    LoopAgent driver) loads ``google.adk.models.google_llm`` which does
+    ``from google.genai.errors import ClientError`` at module-import time;
+    that fails against a SimpleNamespace.
+
+    Snapshots ``sys.modules["google.genai*"]`` and the ``google`` package's
+    ``.genai`` attribute, drops everything, runs the test against fresh
+    real modules, then restores EXACT pre-test state.
+    """
+    import google as _google_pkg  # noqa: PLC0415
+
+    pre_keys = {
+        key for key in sys.modules
+        if key == "google.genai" or key.startswith("google.genai.")
+    }
+    pre_state = {key: sys.modules[key] for key in pre_keys}
+    pre_genai_attr = getattr(_google_pkg, "genai", _SENTINEL)
+
+    for key in pre_keys:
+        del sys.modules[key]
+    if hasattr(_google_pkg, "genai"):
+        delattr(_google_pkg, "genai")
+
+    importlib.import_module("google.genai")
+    importlib.import_module("google.genai.errors")
+    importlib.import_module("google.genai.types")
+    try:
+        yield
+    finally:
+        post_keys = {
+            key for key in sys.modules
+            if key == "google.genai" or key.startswith("google.genai.")
+        }
+        for key in post_keys:
+            del sys.modules[key]
+        for key, value in pre_state.items():
+            sys.modules[key] = value
+        if pre_genai_attr is _SENTINEL:
+            if hasattr(_google_pkg, "genai"):
+                delattr(_google_pkg, "genai")
+        else:
+            _google_pkg.genai = pre_genai_attr  # type: ignore[attr-defined]
+
+
+# ── Fake structured-call helper ───────────────────────────────────────────
 
 
 class _FakeUsageMeta:
@@ -44,61 +122,64 @@ class _FakeUsageMeta:
 
 
 class _FakeResult:
+    """Stands in for whatever ``google.genai`` returns. The agent's
+    ``_extract_text`` reads ``.text`` first, then falls back to
+    ``.candidates``."""
+
     def __init__(self, text: str) -> None:
         self.text = text
         self.usage_metadata = _FakeUsageMeta()
         self.candidates: list[Any] = []
 
 
-class _SequencedFakeAioModels:
-    """Returns the next text from a queue. Each call to
-    `generate_content` consumes one entry. Tests set up the queue per
-    scenario."""
+class _QueueFake:
+    """Shared queue for all sub-agent Gemini calls in a test scenario.
+
+    Each writer / evaluator / reviser invocation pops one entry. Order
+    is fixed: writer → evaluator-v1 → (reviser → evaluator-v2 if the
+    test exercises the revise path).
+    """
 
     def __init__(self) -> None:
         self.queue: list[str] = []
 
-    async def generate_content(self, **_kwargs: Any) -> _FakeResult:
+    def pop(self) -> str:
         if not self.queue:
             raise AssertionError(
-                "Test fake: more generate_content calls than expected"
+                "Test fake: more generate_content calls than test queued"
             )
-        return _FakeResult(self.queue.pop(0))
-
-
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
-
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models  # also expose sync surface for parity
+        return self.queue.pop(0)
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    """Patch `google.genai` and `google.genai.types` in sys.modules.
+def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch ``_call_gemini_structured`` on the agent module.
 
-    Same pattern as `test_parent_call_reply.py`. Returns the shared
-    queue so the test can pre-load responses for each call in the
-    orchestration."""
-    models = _SequencedFakeAioModels()
+    Every sub-agent (writer / evaluator / reviser) calls this helper
+    via ``run_resiliently``. Replacing it with a queue-popping coroutine
+    keeps the real ADK Runner + LoopAgent + sub-agent BaseAgent shapes
+    in the loop while sidestepping the actual SDK.
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    The replacement returns ``_FakeResult`` which mirrors the
+    ``google.genai`` response surface that ``_extract_text`` reads.
+    """
+    fake = _QueueFake()
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
+    async def _fake_call(
+        *,
+        api_key: str,
+        model: str,
+        prompt: str,
+        response_schema: type,
+    ) -> _FakeResult:
+        return _FakeResult(fake.pop())
 
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        lesson_plan_agent_mod,
+        "_call_gemini_structured",
+        _fake_call,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -227,7 +308,7 @@ class TestLessonPlanRouter:
     def test_writer_passes_first_time(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_genai: _QueueFake,
     ) -> None:
         """Best case: writer's v1 passes the evaluator. 2 calls total."""
         fake_genai.queue = [
@@ -239,7 +320,7 @@ class TestLessonPlanRouter:
         body = res.json()
         assert "Photosynthesis" in body["title"]
         assert body["revisionsRun"] == 0
-        assert body["sidecarVersion"].startswith("phase-3")
+        assert body["sidecarVersion"].startswith("phase-")
         assert body["rubric"]["safety"] is True
         # Queue should be drained.
         assert fake_genai.queue == []
@@ -247,7 +328,7 @@ class TestLessonPlanRouter:
     def test_writer_revises_and_v2_passes(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_genai: _QueueFake,
     ) -> None:
         """Soft-fail path: v1 has 5 axes passing → revise.
         Reviser produces v2; v2 passes evaluator. 4 calls total."""
@@ -271,7 +352,7 @@ class TestLessonPlanRouter:
     def test_v1_safety_false_hard_fails(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_genai: _QueueFake,
     ) -> None:
         """Hard-fail on v1 safety=false. Reviser is NOT invoked."""
         fake_genai.queue = [
@@ -290,7 +371,7 @@ class TestLessonPlanRouter:
     def test_v2_amplified_failure_returns_v1(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_genai: _QueueFake,
     ) -> None:
         """Reviser made it WORSE: v1 was revise-soft-fail, v2 is
         hard-fail. Per the "never amplify" rule, ship v1 with v1's
@@ -319,7 +400,7 @@ class TestLessonPlanRouter:
     def test_writer_returns_malformed_json(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_genai: _QueueFake,
     ) -> None:
         """Writer's response doesn't match LessonPlanCore → 502."""
         fake_genai.queue = ["not valid json"]
