@@ -313,7 +313,7 @@ function WorksheetWizardContent() {
           console.error("Failed to load saved worksheet:", err);
           toast({
             title: translate("Load Failed"),
-            description: "Could not load the saved worksheet.",
+            description: translate("Could not load the saved worksheet."),
             variant: "destructive"
           });
         } finally {
@@ -363,7 +363,7 @@ function WorksheetWizardContent() {
       if (!res.ok) {
         if (res.status === 401) {
           openAuthModal();
-          throw new Error("Please sign in to generate worksheets");
+          throw new Error(translate("Please sign in to generate worksheets"));
         }
         const errorData = await res.json();
         if (checkResponse(res.status, errorData)) {
@@ -382,7 +382,7 @@ function WorksheetWizardContent() {
       console.error("Failed to generate worksheet:", error);
       toast({
         title: translate("Generation Failed"),
-        description: "There was an error generating the worksheet. Please try again.",
+        description: translate("There was an error generating the worksheet. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -409,12 +409,12 @@ function WorksheetWizardContent() {
     URL.revokeObjectURL(url);
   };
 
-  const handleSave = () => {
-    toast({
-      title: translate("Saved to Library"),
-      description: "Your worksheet has been saved to your personal library.",
-    });
-  };
+  // NOTE: The page-level handleSave was previously a fake placeholder that
+  // fired a toast claiming "Saved to Library" without ever persisting. The
+  // real Save UI lives inside <WorksheetDisplay /> which calls
+  // /api/content/save directly. The dead page-level handler has been
+  // removed (2026-04-27) to prevent it from being mistakenly re-wired
+  // to a button later.
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
