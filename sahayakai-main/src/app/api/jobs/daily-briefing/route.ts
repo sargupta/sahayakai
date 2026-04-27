@@ -383,28 +383,42 @@ async function curateWithGemini(articles: RawArticle[]): Promise<CuratedItem[]> 
 
 Today is ${today}.
 
-Below are ${articles.length} education articles/circulars collected from CBSE, ICSE/CISCE, and Indian news sources.
+Below are ${articles.length} education articles/circulars from CBSE, ICSE/CISCE, and Indian news sources.
 
-YOUR TASK: Select the ${CURATED_POST_COUNT} most important and relevant items for Indian school teachers and write a teacher-friendly summary for each.
+YOUR TASK: Pick the ${CURATED_POST_COUNT} most important and DIFFERENT items for Indian school teachers.
 
 SELECTION CRITERIA (in priority order):
 1. Official board circulars (CBSE/ICSE) that affect teachers directly — exam dates, syllabus changes, grading policies
-2. AI-in-education news that teachers can act on — new tools, classroom strategies, policy changes
-3. Education policy updates (NEP, state-level changes) that impact daily teaching
+2. AI-in-education news teachers can act on — new tools, classroom strategies, policy changes
+3. Education policy updates (NEP, state-level) that impact daily teaching
 4. Avoid duplicate topics — pick diverse items across categories
 
+FORMAT — STRICT. The summary becomes a single bullet line in a busy
+teacher's morning feed. Be a wire-service editor, not a marketer.
+
 FOR EACH SELECTED ITEM, produce:
-- headline: A short, clear headline (max 80 chars)
-- summary: A 2–3 sentence summary written for a teacher audience. Use simple English. Mention how it affects them or what action they should take. Be warm and encouraging.
-- sourceLabel: The publication/source name (e.g. "Times of India", "CBSE Official")
-- url: The original article URL (copy exactly from the list)
+- headline: ≤ 70 chars. No clickbait. Lead with the actor + action.
+    Good: "CBSE: Shorthand Hindi (826) capacity-building workshop"
+    Bad:  "Wonderful Opportunity for Hindi Teachers!"
+- summary: ONE sentence, ≤ 140 chars. Tell the teacher what happened
+    and (if relevant) what to do. No exclamation marks. No "let's
+    explore", "wonderful opportunity", "stay tuned", "this reminds
+    us". No salesy adjectives. Drop the emoji from this field — it
+    goes in the emoji field below.
+    Good: "Register via circular if you teach skill subject 826."
+    Bad:  "This is a wonderful opportunity! Let's explore how to..."
+- sourceLabel: Short publication name (max 25 chars). e.g. "CBSE",
+    "Times of India", "The Hindu", "Indian Express", "Jagran Josh".
+    Drop the word "Official". No "https://".
+- url: The original article URL — copy EXACTLY from the list.
 - category: One of "board_circular", "board_news", "ai_education", "education_policy"
-- emoji: A single relevant emoji (📋 for circulars, 🤖 for AI, 📚 for policy, 🎓 for exams)
+- emoji: One relevant emoji. 📋 board circulars, 🤖 AI news,
+    📚 policy, 🎓 exams, 🏫 school operations, 📊 results.
 
 ARTICLES:
 ${articleList}
 
-Respond ONLY with a valid JSON array of ${CURATED_POST_COUNT} objects. No markdown, no explanation.
+Respond ONLY with a valid JSON array of ${CURATED_POST_COUNT} objects. No markdown, no commentary.
 Example: [{"headline":"...","summary":"...","sourceLabel":"...","url":"...","category":"...","emoji":"..."}]`;
 
   try {
@@ -830,23 +844,36 @@ export async function POST(request: Request) {
     );
 
     // ── 8. Build the morning briefing post ──────────────────────────
+    // Tight wire-service format: one bullet per item, source + domain
+    // suffix. No "Good Morning Teachers", no "Stay inspired" footer —
+    // teachers scan this on commute, not at a tea ceremony. The full
+    // article URL goes into `attachments` (rendered as a linkable card)
+    // so the body doesn't carry the long ugly tracker URLs inline.
     const today = new Date().toLocaleDateString('en-IN', {
-      weekday: 'long',
+      weekday: 'short',
       day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      month: 'short',
       timeZone: 'Asia/Kolkata',
     });
 
+    const domainOf = (raw: string): string => {
+      try { return new URL(raw).hostname.replace(/^www\./, ''); }
+      catch { return ''; }
+    };
+
     const briefingContent = [
-      `Good Morning, Teachers! Here's your Daily Briefing for ${today}:\n`,
-      ...curatedItems.map((item, i) => [
-        `${item.emoji} ${i + 1}. ${item.headline}`,
-        item.summary,
-        `Source: ${item.sourceLabel}`,
-        `${item.url}`,
-      ].join('\n')),
-      `\nStay informed, stay inspired! — SahayakAI`,
+      `🗓 Daily Briefing — ${today}`,
+      ...curatedItems.map((item) => {
+        const domain = domainOf(item.url);
+        const sourceLine = domain
+          ? `   ↪ ${item.sourceLabel} · ${domain}`
+          : `   ↪ ${item.sourceLabel}`;
+        return [
+          `${item.emoji} ${item.headline}`,
+          `   ${item.summary}`,
+          sourceLine,
+        ].join('\n');
+      }),
     ].join('\n\n');
 
     const attachments = curatedItems.map(item => ({
@@ -900,14 +927,18 @@ export async function POST(request: Request) {
       if (!stateGroupSnap.exists) continue;
 
       const stateContent = [
-        `Good Morning! Here's your ${state} Education Update for ${today}:\n`,
-        ...items.map((item, i) => [
-          `${item.emoji} ${i + 1}. ${item.headline}`,
-          item.summary,
-          `Source: ${item.sourceLabel}`,
-          `${item.url}`,
-        ].join('\n')),
-        `\nStay informed! — SahayakAI`,
+        `🗓 ${state} Update — ${today}`,
+        ...items.map((item) => {
+          const domain = domainOf(item.url);
+          const sourceLine = domain
+            ? `   ↪ ${item.sourceLabel} · ${domain}`
+            : `   ↪ ${item.sourceLabel}`;
+          return [
+            `${item.emoji} ${item.headline}`,
+            `   ${item.summary}`,
+            sourceLine,
+          ].join('\n');
+        }),
       ].join('\n\n');
 
       const stateAttachments = items.map(item => ({
