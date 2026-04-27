@@ -295,7 +295,7 @@ function VisualAidContent() {
           console.error("Failed to load saved visual aid:", err);
           toast({
             title: translate("Load Failed"),
-            description: "Could not load the saved visual aid.",
+            description: translate("Could not load the saved visual aid."),
             variant: "destructive"
           });
         } finally {
@@ -352,7 +352,7 @@ function VisualAidContent() {
       if (!res.ok) {
         if (res.status === 401) {
           openAuthModal();
-          throw new Error("Please sign in to generate visual aids");
+          throw new Error(translate("Please sign in to generate visual aids"));
         }
         const errorData = await res.json();
         // Propagate the detailed error if available
@@ -367,7 +367,7 @@ function VisualAidContent() {
       console.error("Failed to generate visual aid:", error);
       toast({
         title: translate("Generation Failed"),
-        description: error.message || "There was an error generating the visual aid. Please try again.",
+        description: error.message || translate("There was an error generating the visual aid. Please try again."),
         variant: "destructive",
       });
     } finally {
