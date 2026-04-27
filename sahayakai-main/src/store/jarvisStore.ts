@@ -34,10 +34,20 @@ interface JarvisState {
     // doesn't re-populate when the teacher starts a new request.
     formSnapshots: Record<string, Record<string, any>>;
 
+    // ── Voice surface coordination (2026-04-26) ──────────────────────────
+    // Two voice surfaces exist: the global OmniOrb (floating mic, mounted
+    // in app-shell) and the page-mounted VoiceAssistant chat dialog
+    // (currently used by /teacher-training, may extend to other pages).
+    // When the dialog is open, OmniOrb hides itself to prevent the
+    // "two competing voice UIs at once" UX bug. Set by VoiceAssistant on
+    // open/close; read by OmniOrb in its render guard.
+    voiceDialogOpen: boolean;
+
     // ── Actions ───────────────────────────────────────────────────────────
     addMessage: (role: 'user' | 'model', text: string) => void;
     setScreenContext: (context: ScreenContext) => void;
     setStructuredData: (data: Record<string, any>) => void;
+    setVoiceDialogOpen: (open: boolean) => void;
     /** Merge partial profile update — never wipes the whole profile */
     updateTeacherProfile: (patch: Partial<TeacherProfile>) => void;
     /**
@@ -69,6 +79,9 @@ export const useJarvisStore = create<JarvisState>()(
             structuredData: {},
             teacherProfile: DEFAULT_PROFILE,
             formSnapshots: {},
+            voiceDialogOpen: false,
+
+            setVoiceDialogOpen: (open) => set({ voiceDialogOpen: open }),
 
             addMessage: (role, text) =>
                 set((state) => {
