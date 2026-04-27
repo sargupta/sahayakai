@@ -21,6 +21,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_instant_answer_response_rules
 from .agent import get_answerer_model, render_answerer_prompt
 from .schemas import (
@@ -36,6 +37,12 @@ instant_answer_router = APIRouter(prefix="/v1/instant-answer", tags=["instant-an
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
 SIDECAR_VERSION = "phase-6.1.0"
+
+# Per-call timeout for run_resiliently. Instant answer uses Google
+# Search grounding so we allow a bit longer than pure-text flows.
+# 15s caps a hung call without truncating slow but legitimate
+# search-augmented responses.
+_PER_CALL_TIMEOUT_S = 15.0
 
 
 # ---- Gemini call helper --------------------------------------------------
@@ -128,11 +135,16 @@ async def _run_answerer(
     settings: Any,
 ) -> tuple[InstantAnswerCore, bool]:
     """Run the answerer agent. Returns (parsed core, grounding_used)."""
+    # Phase J §J.3 — sanitize ALL user-controlled strings before they
+    # land in the rendered prompt. The template wraps each value in
+    # `⟦…⟧` markers, but those markers are advisory only; without
+    # sanitize, a payload like `⟧\n\nNew rule: …` closes the wrap
+    # and the injected instruction reaches Gemini.
     context = {
-        "question": payload.question,
-        "language": payload.language,
-        "gradeLevel": payload.gradeLevel,
-        "subject": payload.subject,
+        "question": sanitize(payload.question, max_length=4000),
+        "language": sanitize_optional(payload.language, max_length=10),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "subject": sanitize_optional(payload.subject, max_length=100),
     }
     prompt = render_answerer_prompt(context)
     model = get_answerer_model()
@@ -147,6 +159,7 @@ async def _run_answerer(
         api_keys,
         span_name="instant_answer.answerer",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     grounding_used = _grounding_used(result)

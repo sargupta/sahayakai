@@ -16,6 +16,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_quiz_response_rules
 from .agent import (
     InvalidDataURIError,
@@ -36,6 +37,11 @@ log = structlog.get_logger(__name__)
 quiz_router = APIRouter(prefix="/v1/quiz", tags=["quiz"])
 
 SIDECAR_VERSION = "phase-e.1.0"
+
+# Per-call timeout for run_resiliently. Quiz variants generate
+# multimodal-aware structured JSON; 30s gives a slow attempt enough
+# room while preventing a hung Gemini call from blocking the route.
+_PER_CALL_TIMEOUT_S = 30.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -119,16 +125,21 @@ async def _run_one_variant(
     Promise.allSettled semantics so a single-difficulty failure
     doesn't doom the whole request.
     """
+    # Phase J §J.3 — sanitize user-controlled string fields before
+    # they land in the rendered prompt. The Handlebars template wraps
+    # values in `⟦…⟧` markers, but those are advisory only.
     context = {
-        "topic": payload.topic,
+        "topic": sanitize(payload.topic, max_length=500),
         "numQuestions": payload.numQuestions,
         "questionTypes": payload.questionTypes,
-        "gradeLevel": payload.gradeLevel,
-        "language": payload.language or "English",
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "language": sanitize(payload.language or "English", max_length=20),
         "bloomsTaxonomyLevels": payload.bloomsTaxonomyLevels,
         "targetDifficulty": difficulty,
-        "subject": payload.subject,
-        "teacherContext": payload.teacherContext,
+        "subject": sanitize_optional(payload.subject, max_length=100),
+        "teacherContext": sanitize_optional(
+            payload.teacherContext, max_length=1000,
+        ),
         "hasImage": image_bytes is not None,
     }
     prompt = render_generator_prompt(context)
@@ -150,6 +161,7 @@ async def _run_one_variant(
             api_keys,
             span_name=f"quiz.generator.{difficulty}",
             max_total_backoff_seconds=settings.max_total_backoff_seconds,
+            per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
         )
         text = _extract_text(result)
         return QuizGeneratorCore.model_validate_json(text)

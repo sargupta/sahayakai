@@ -21,6 +21,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_visual_aid_response_rules
 from .agent import (
     get_image_model,
@@ -44,6 +45,10 @@ SIDECAR_VERSION = "phase-e.3.0"
 # prompts. Cap with a hard 90s timeout independent of run_resiliently's
 # budget (which is tuned for telephony-bound replies).
 _IMAGE_TIMEOUT_S = 90.0
+
+# Metadata is a small structured JSON call. 20s aligns with the other
+# text-only flows; passed through to run_resiliently as the per-call cap.
+_METADATA_TIMEOUT_S = 20.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -149,11 +154,17 @@ async def _run_image(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> tuple[bytes, str]:
-    """Run the image-generation stage. Returns (bytes, mime_type)."""
+    """Run the image-generation stage. Returns (bytes, mime_type).
+
+    Phase J §J.3 — sanitize the user-controlled image prompt before
+    rendering. Image-gen prompts are particularly vulnerable: an
+    attacker could try to push the model toward generating
+    inappropriate content via injected instructions.
+    """
     context = {
-        "prompt": payload.prompt,
-        "gradeLevel": payload.gradeLevel,
-        "language": payload.language,
+        "prompt": sanitize(payload.prompt, max_length=2000),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "language": sanitize_optional(payload.language, max_length=20),
     }
     prompt = render_image_prompt(context)
     model = get_image_model()
@@ -170,6 +181,7 @@ async def _run_image(
                 api_keys,
                 span_name="visual_aid.image",
                 max_total_backoff_seconds=settings.max_total_backoff_seconds,
+                per_call_timeout_seconds=_IMAGE_TIMEOUT_S,
             ),
             timeout=_IMAGE_TIMEOUT_S,
         )
@@ -187,10 +199,11 @@ async def _run_metadata(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> VisualAidMetadata:
+    """Phase J §J.3 — sanitize input before rendering."""
     context = {
-        "prompt": payload.prompt,
-        "gradeLevel": payload.gradeLevel,
-        "language": payload.language,
+        "prompt": sanitize(payload.prompt, max_length=2000),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "language": sanitize_optional(payload.language, max_length=20),
     }
     prompt = render_metadata_prompt(context)
     model = get_metadata_model()
@@ -208,6 +221,7 @@ async def _run_metadata(
         api_keys,
         span_name="visual_aid.metadata",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_METADATA_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

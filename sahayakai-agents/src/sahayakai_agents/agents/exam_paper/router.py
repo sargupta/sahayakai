@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_list, sanitize_optional
 from ._guard import assert_exam_paper_response_rules
 from .agent import get_generator_model, render_generator_prompt
 from .schemas import ExamPaperCore, ExamPaperRequest, ExamPaperResponse
@@ -19,6 +20,11 @@ log = structlog.get_logger(__name__)
 exam_paper_router = APIRouter(prefix="/v1/exam-paper", tags=["exam-paper"])
 
 SIDECAR_VERSION = "phase-e.2.0"
+
+# Per-call timeout for run_resiliently. Exam papers are large structured
+# outputs (multiple sections + marking scheme), so 30s gives room while
+# preventing a hung Gemini call from blocking the route.
+_PER_CALL_TIMEOUT_S = 30.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -76,18 +82,23 @@ async def _run_generator(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> ExamPaperCore:
+    # Phase J §J.3 — sanitize user-controlled strings before they
+    # land in the rendered prompt. The Handlebars template wraps
+    # values in `⟦…⟧` markers, but those are advisory only.
     context = {
-        "board": payload.board,
-        "gradeLevel": payload.gradeLevel,
-        "subject": payload.subject,
-        "chapters": payload.chapters,
+        "board": sanitize(payload.board, max_length=100),
+        "gradeLevel": sanitize(payload.gradeLevel, max_length=50),
+        "subject": sanitize(payload.subject, max_length=100),
+        "chapters": sanitize_list(payload.chapters, max_length=200),
         "duration": payload.duration,
         "maxMarks": payload.maxMarks,
-        "language": payload.language,
+        "language": sanitize(payload.language, max_length=20),
         "difficulty": payload.difficulty,
         "includeAnswerKey": payload.includeAnswerKey,
         "includeMarkingScheme": payload.includeMarkingScheme,
-        "teacherContext": payload.teacherContext,
+        "teacherContext": sanitize_optional(
+            payload.teacherContext, max_length=1000,
+        ),
     }
     prompt = render_generator_prompt(context)
     model = get_generator_model()
@@ -105,6 +116,7 @@ async def _run_generator(
         api_keys,
         span_name="exam_paper.generator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

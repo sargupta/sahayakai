@@ -21,6 +21,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize
 from ._guard import assert_avatar_response_rules
 from .agent import get_image_model, render_portrait_prompt
 from .schemas import (
@@ -88,7 +89,11 @@ async def _run_image(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> tuple[bytes, str]:
-    context = {"name": payload.name}
+    # Phase J §J.3 — sanitize the user-supplied display name. The
+    # `name` field is small (100 chars) but still flows VERBATIM into
+    # an image-generation prompt; an attacker could push the model
+    # toward inappropriate content via injected instructions.
+    context = {"name": sanitize(payload.name, max_length=100)}
     prompt = render_portrait_prompt(context)
     model = get_image_model()
 
@@ -104,6 +109,7 @@ async def _run_image(
                 api_keys,
                 span_name="avatar.generate",
                 max_total_backoff_seconds=settings.max_total_backoff_seconds,
+                per_call_timeout_seconds=_IMAGE_TIMEOUT_S,
             ),
             timeout=_IMAGE_TIMEOUT_S,
         )

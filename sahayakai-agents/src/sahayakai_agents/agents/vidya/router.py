@@ -28,6 +28,7 @@ from ..._behavioural import assert_vidya_response_rules
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
@@ -50,6 +51,12 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
 SIDECAR_VERSION = "phase-g.0"
+
+# Per-call timeout for run_resiliently. VIDYA orchestrator is a
+# classifier-only flow; 8s mirrors the Twilio-bounded budget on the
+# voice path while still leaving room for the supervisor's structured
+# JSON output.
+_PER_CALL_TIMEOUT_S = 8.0
 
 
 # ---- Gemini call helpers (mirror lesson_plan / parent_call routers) ------
@@ -130,13 +137,62 @@ async def _run_orchestrator(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> IntentClassification:
-    """Classify intent + extract params from the teacher's utterance."""
+    """Classify intent + extract params from the teacher's utterance.
+
+    Phase J §J.3 — sanitize every user-controlled string before it
+    lands in the prompt:
+      - The message itself.
+      - Each chatHistory turn's parts[*].text.
+      - currentScreenContext.path + uiState dict (keys + values).
+      - teacherProfile fields (preferredGrade, preferredSubject,
+        preferredLanguage, schoolContext).
+    """
+    sanitized_history: list[dict[str, Any]] = []
+    for m in payload.chatHistory:
+        sanitized_history.append({
+            "role": m.role,  # Literal — not user-controlled.
+            "parts": [
+                {"text": sanitize(p.text, max_length=4000)} for p in m.parts
+            ],
+        })
+    screen_context_dump = payload.currentScreenContext.model_dump()
+    sanitized_screen_context: dict[str, Any] = {
+        "path": sanitize(screen_context_dump.get("path", ""), max_length=500),
+    }
+    ui_state = screen_context_dump.get("uiState")
+    if ui_state is not None:
+        # Sanitize both keys AND values — an attacker who controls
+        # the form field name can inject just as easily as one who
+        # controls the value.
+        sanitized_screen_context["uiState"] = {
+            sanitize(k, max_length=100): sanitize(v, max_length=500)
+            for k, v in ui_state.items()
+        }
+    else:
+        sanitized_screen_context["uiState"] = None
+    profile_dump = payload.teacherProfile.model_dump()
+    sanitized_profile: dict[str, Any] = {
+        "preferredGrade": sanitize_optional(
+            profile_dump.get("preferredGrade"), max_length=50,
+        ),
+        "preferredSubject": sanitize_optional(
+            profile_dump.get("preferredSubject"), max_length=100,
+        ),
+        "preferredLanguage": sanitize_optional(
+            profile_dump.get("preferredLanguage"), max_length=10,
+        ),
+        "schoolContext": sanitize_optional(
+            profile_dump.get("schoolContext"), max_length=2000,
+        ),
+    }
     context = {
-        "message": payload.message,
-        "chatHistory": [m.model_dump() for m in payload.chatHistory],
-        "currentScreenContext": payload.currentScreenContext.model_dump(),
-        "teacherProfile": payload.teacherProfile.model_dump(),
-        "detectedLanguage": payload.detectedLanguage,
+        "message": sanitize(payload.message, max_length=2000),
+        "chatHistory": sanitized_history,
+        "currentScreenContext": sanitized_screen_context,
+        "teacherProfile": sanitized_profile,
+        "detectedLanguage": sanitize_optional(
+            payload.detectedLanguage, max_length=10,
+        ),
         "allowedFlows": ALLOWED_FLOWS,
         # Phase G — supervisor-aware capability index. Renders the
         # sub-agent registry as a bullet list so the model can pick
@@ -159,6 +215,7 @@ async def _run_orchestrator(
         api_keys,
         span_name="vidya.orchestrator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

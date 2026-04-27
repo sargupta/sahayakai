@@ -14,6 +14,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_rubric_response_rules
 from .agent import get_generator_model, render_generator_prompt
 from .schemas import (
@@ -27,6 +28,11 @@ log = structlog.get_logger(__name__)
 rubric_router = APIRouter(prefix="/v1/rubric", tags=["rubric"])
 
 SIDECAR_VERSION = "phase-d.1.0"
+
+# Per-call timeout for run_resiliently. Rubric generation produces a
+# multi-criteria structured JSON; 20s caps a hung Gemini call without
+# truncating slow but legitimate generations.
+_PER_CALL_TIMEOUT_S = 20.0
 
 
 async def _call_gemini_structured(
@@ -75,12 +81,17 @@ async def _run_generator(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> RubricGeneratorCore:
+    # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
-        "assignmentDescription": payload.assignmentDescription,
-        "gradeLevel": payload.gradeLevel,
-        "subject": payload.subject,
-        "language": payload.language or "English",
-        "teacherContext": payload.teacherContext,
+        "assignmentDescription": sanitize(
+            payload.assignmentDescription, max_length=4000,
+        ),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "subject": sanitize_optional(payload.subject, max_length=100),
+        "language": sanitize(payload.language or "English", max_length=20),
+        "teacherContext": sanitize_optional(
+            payload.teacherContext, max_length=1000,
+        ),
     }
     prompt = render_generator_prompt(context)
     model = get_generator_model()
@@ -98,6 +109,7 @@ async def _run_generator(
         api_keys,
         span_name="rubric.generator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

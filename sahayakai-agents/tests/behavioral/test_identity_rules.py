@@ -44,6 +44,44 @@ class TestForbiddenPhrases:
         with pytest.raises(AssertionError):
             assert_no_forbidden_phrases(bad)
 
+    # Phase J §J.3 — extended attack-vector coverage. P0 #5: the
+    # original confusable fold table only covered Cyrillic / Greek /
+    # fullwidth. Mathematical Alphanumeric (U+1D400+) and Cherokee
+    # bypassed the regex.
+
+    def test_mathematical_bold_letters_are_caught(self) -> None:
+        """Reply '𝐈 𝐚𝐦 𝐚𝐧 𝐀𝐈' — Mathematical Bold (U+1D400+)
+        — should trip the forbidden-phrase scan after the extended
+        fold table catches the confusables."""
+        with pytest.raises(AssertionError):
+            assert_no_forbidden_phrases(
+                "\U0001D408 \U0001D41A\U0001D426 "
+                "\U0001D41A\U0001D427 \U0001D400\U0001D408"
+            )
+
+    def test_mathematical_italic_letters_are_caught(self) -> None:
+        """Reply '𝐼 𝑎𝑚 𝑎𝑛 𝐴𝐼' — Mathematical Italic block."""
+        with pytest.raises(AssertionError):
+            assert_no_forbidden_phrases(
+                "\U0001D43C \U0001D44E\U0001D45A "
+                "\U0001D44E\U0001D45B \U0001D434\U0001D43C"
+            )
+
+    def test_cherokee_letters_are_caught(self) -> None:
+        """Reply that uses Cherokee S (U+13DA) to hide 'Sahayak AI'.
+        Cherokee letters are NOT folded by NFKC — they bypassed the
+        original fold table and only the Phase J §J.3 extension
+        catches them."""
+        with pytest.raises(AssertionError):
+            assert_no_forbidden_phrases("\u13DAahayak AI")
+
+    def test_split_letter_injection_is_caught(self) -> None:
+        """Reply 'I  a m   A I  a s s i s t a n t' — split-letter
+        injection. The compact-pattern second pass should catch this
+        after the run-detection re-glues the run."""
+        with pytest.raises(AssertionError):
+            assert_no_forbidden_phrases("I  a m   A I  a s s i s t a n t")
+
     @pytest.mark.parametrize(
         "good",
         [
