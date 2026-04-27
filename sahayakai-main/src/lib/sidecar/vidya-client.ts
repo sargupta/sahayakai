@@ -127,6 +127,14 @@ export interface SidecarVidyaResponse {
   intent: string;
   sidecarVersion: string;
   latencyMs: number;
+  /**
+   * Phase G — supervisor-aware compound-intent extension.
+   * One-sentence "next likely action" suggestion from the orchestrator,
+   * surfaced by the OmniOrb client as a clickable chip. `null` for
+   * single-step / unknown / instant-answer flows. The supervisor does
+   * NOT auto-execute — the teacher confirms.
+   */
+  followUpSuggestion?: string | null;
 }
 
 // ─── ID-token client cache ────────────────────────────────────────────────
