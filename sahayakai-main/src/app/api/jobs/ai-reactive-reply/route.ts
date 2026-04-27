@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         const { ai, runResiliently } = await import('@/ai/genkit');
         const result = await runResiliently(async (override) => {
             return ai.generate({
-                model: 'googleai/gemini-2.0-flash-lite',
+                model: 'googleai/gemini-2.0-flash',
                 system: systemPrompt,
                 prompt: userPrompt,
                 config: {
