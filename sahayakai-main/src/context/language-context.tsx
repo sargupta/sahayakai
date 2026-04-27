@@ -384,6 +384,24 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "ফলাফল", "Gujarati": "પરિણામ", "Punjabi": "ਨਤੀਜਾ",
         "Malayalam": "ഫലം", "Odia": "ଫଳାଫଳ"
     },
+    "AI Coach": {
+        "English": "AI Coach", "Hindi": "AI कोच", "Kannada": "AI ಕೋಚ್",
+        "Tamil": "AI பயிற்சியாளர்", "Telugu": "AI కోచ్", "Marathi": "AI प्रशिक्षक",
+        "Bengali": "AI কোচ", "Gujarati": "AI કોચ", "Punjabi": "AI ਕੋਚ",
+        "Malayalam": "AI കോച്ച്", "Odia": "AI କୋଚ୍"
+    },
+    "Response language": {
+        "English": "Response language", "Hindi": "उत्तर की भाषा", "Kannada": "ಪ್ರತಿಕ್ರಿಯೆ ಭಾಷೆ",
+        "Tamil": "பதில் மொழி", "Telugu": "ప్రతిస్పందన భాష", "Marathi": "उत्तराची भाषा",
+        "Bengali": "উত্তরের ভাষা", "Gujarati": "જવાબ ભાષા", "Punjabi": "ਜਵਾਬ ਦੀ ਭਾਸ਼ਾ",
+        "Malayalam": "ഉത്തര ഭാഷ", "Odia": "ଉତ୍ତର ଭାଷା"
+    },
+    "min": {
+        "English": "min", "Hindi": "न्यूनतम", "Kannada": "ಕನಿಷ್ಠ",
+        "Tamil": "குறை", "Telugu": "కనిష్ట", "Marathi": "किमान",
+        "Bengali": "ন্যূনতম", "Gujarati": "લઘુત્તમ", "Punjabi": "ਘੱਟ",
+        "Malayalam": "കുറഞ്ഞത്", "Odia": "ସର୍ବନିମ୍ନ"
+    },
     "Type your question or challenge here…": {
         "English": "Type your question or challenge here…",
         "Hindi": "अपना प्रश्न या चुनौती यहाँ टाइप करें…",
