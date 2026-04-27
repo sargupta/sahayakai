@@ -7,6 +7,7 @@ import {
     type QuizVariantsOutput,
 } from '@/ai/flows/quiz-generator';
 import type { QuizGeneratorInput } from '@/ai/schemas/quiz-generator-schemas';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarQuiz,
     QuizSidecarBehaviouralError,
@@ -17,6 +18,11 @@ import {
     type SidecarQuizResponse,
     type SidecarQuizVariant,
 } from './quiz-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in quiz-client.ts. Phase J.2 hot-fix (P0 #7) —
+// caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 45_000;
 
 export type QuizSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -32,25 +38,27 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): QuizSidecarMode {
-    const raw = (process.env.SAHAYAKAI_QUIZ_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. Reads from Firestore via
+// `getFeatureFlags()` so the auto-abort Cloud Function (which only
+// writes Firestore) can roll this agent back without a Cloud Run
+// redeploy. See feature-flags.ts and the Phase J.5 commit message.
+async function readMode(): Promise<QuizSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.quizSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_QUIZ_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    return Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.quizSidecarPercent ?? 0;
+    return Math.max(0, Math.min(100, n));
 }
 
-export function decideQuizDispatch(uid: string): QuizSidecarDecision {
-    const mode = readMode();
+export async function decideQuizDispatch(uid: string): Promise<QuizSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
 }
@@ -141,7 +149,11 @@ function genkitToDispatched(
 
 async function runGenkitSafe(input: QuizDispatchInput) {
     try {
-        const out = await generateQuiz(input);
+        const out = await withTimeout(
+            generateQuiz(input),
+            FALLBACK_TIMEOUT_MS,
+            'quiz genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -174,11 +186,15 @@ function logDispatch(decision: QuizSidecarDecision, payload: Record<string, unkn
 }
 
 export async function dispatchQuiz(input: QuizDispatchInput): Promise<DispatchedQuiz> {
-    const decision = decideQuizDispatch(input.userId);
+    const decision = await decideQuizDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateQuiz(input);
+        const out = await withTimeout(
+            generateQuiz(input),
+            FALLBACK_TIMEOUT_MS,
+            'quiz genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -224,6 +240,10 @@ export async function dispatchQuiz(input: QuizDispatchInput): Promise<Dispatched
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateQuiz(input);
+    const out = await withTimeout(
+        generateQuiz(input),
+        FALLBACK_TIMEOUT_MS,
+        'quiz genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

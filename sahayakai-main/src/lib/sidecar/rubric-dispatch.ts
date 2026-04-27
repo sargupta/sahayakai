@@ -7,6 +7,7 @@ import {
     type RubricGeneratorInput,
     type RubricGeneratorOutput,
 } from '@/ai/flows/rubric-generator';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarRubric,
     RubricSidecarBehaviouralError,
@@ -16,6 +17,11 @@ import {
     type SidecarRubricRequest,
     type SidecarRubricResponse,
 } from './rubric-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in rubric-client.ts. Phase J.2 hot-fix (P0 #7) —
+// caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 12_000;
 
 export type RubricSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -33,27 +39,25 @@ function userBucketForRubric(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): RubricSidecarMode {
-    const raw = (process.env.SAHAYAKAI_RUBRIC_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<RubricSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.rubricSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_RUBRIC_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.rubricSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideRubricDispatch(uid: string): RubricSidecarDecision {
-    const mode = readMode();
+export async function decideRubricDispatch(uid: string): Promise<RubricSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucketForRubric(uid);
 
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) {
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     }
@@ -119,7 +123,11 @@ async function runGenkitSafe(
     input: RubricGeneratorInput,
 ): Promise<{ ok: true; out: RubricGeneratorOutput } | { ok: false; error: Error }> {
     try {
-        const out = await generateRubric(input);
+        const out = await withTimeout(
+            generateRubric(input),
+            FALLBACK_TIMEOUT_MS,
+            'rubric genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -164,11 +172,15 @@ function logDispatch(
 export async function dispatchRubric(
     input: RubricDispatchInput,
 ): Promise<DispatchedRubric> {
-    const decision = decideRubricDispatch(input.userId);
+    const decision = await decideRubricDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateRubric(input);
+        const out = await withTimeout(
+            generateRubric(input),
+            FALLBACK_TIMEOUT_MS,
+            'rubric genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -219,6 +231,10 @@ export async function dispatchRubric(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateRubric(input);
+    const out = await withTimeout(
+        generateRubric(input),
+        FALLBACK_TIMEOUT_MS,
+        'rubric genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

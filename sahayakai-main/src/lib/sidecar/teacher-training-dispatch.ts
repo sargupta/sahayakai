@@ -6,6 +6,7 @@ import {
     type TeacherTrainingInput,
     type TeacherTrainingOutput,
 } from '@/ai/flows/teacher-training';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarTeacherTraining,
     TeacherTrainingSidecarBehaviouralError,
@@ -15,6 +16,11 @@ import {
     type SidecarTeacherTrainingRequest,
     type SidecarTeacherTrainingResponse,
 } from './teacher-training-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in teacher-training-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 12_000;
 
 export type TeacherTrainingSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -33,28 +39,26 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): TeacherTrainingSidecarMode {
-    const raw = (process.env.SAHAYAKAI_TEACHER_TRAINING_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<TeacherTrainingSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.teacherTrainingSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_TEACHER_TRAINING_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.teacherTrainingSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideTeacherTrainingDispatch(
+export async function decideTeacherTrainingDispatch(
     uid: string,
-): TeacherTrainingSidecarDecision {
-    const mode = readMode();
+): Promise<TeacherTrainingSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent)
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return {
@@ -124,7 +128,11 @@ async function runGenkitSafe(
     input: TeacherTrainingInput,
 ): Promise<{ ok: true; out: TeacherTrainingOutput } | { ok: false; error: Error }> {
     try {
-        const out = await getTeacherTrainingAdvice(input);
+        const out = await withTimeout(
+            getTeacherTrainingAdvice(input),
+            FALLBACK_TIMEOUT_MS,
+            'teacher-training genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -169,11 +177,15 @@ function logDispatch(
 export async function dispatchTeacherTraining(
     input: TeacherTrainingDispatchInput,
 ): Promise<DispatchedTeacherTraining> {
-    const decision = decideTeacherTrainingDispatch(input.userId);
+    const decision = await decideTeacherTrainingDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await getTeacherTrainingAdvice(input);
+        const out = await withTimeout(
+            getTeacherTrainingAdvice(input),
+            FALLBACK_TIMEOUT_MS,
+            'teacher-training genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -221,6 +233,10 @@ export async function dispatchTeacherTraining(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await getTeacherTrainingAdvice(input);
+    const out = await withTimeout(
+        getTeacherTrainingAdvice(input),
+        FALLBACK_TIMEOUT_MS,
+        'teacher-training genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

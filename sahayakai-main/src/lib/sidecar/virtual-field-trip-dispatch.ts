@@ -6,6 +6,7 @@ import {
     type VirtualFieldTripInput,
     type VirtualFieldTripOutput,
 } from '@/ai/flows/virtual-field-trip';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarVirtualFieldTrip,
     VirtualFieldTripSidecarBehaviouralError,
@@ -15,6 +16,11 @@ import {
     type SidecarVirtualFieldTripRequest,
     type SidecarVirtualFieldTripResponse,
 } from './virtual-field-trip-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in virtual-field-trip-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 15_000;
 
 export type VirtualFieldTripSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -33,28 +39,26 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): VirtualFieldTripSidecarMode {
-    const raw = (process.env.SAHAYAKAI_VIRTUAL_FIELD_TRIP_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<VirtualFieldTripSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.virtualFieldTripSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_VIRTUAL_FIELD_TRIP_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.virtualFieldTripSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideVirtualFieldTripDispatch(
+export async function decideVirtualFieldTripDispatch(
     uid: string,
-): VirtualFieldTripSidecarDecision {
-    const mode = readMode();
+): Promise<VirtualFieldTripSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent)
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return {
@@ -124,7 +128,11 @@ async function runGenkitSafe(
     input: VirtualFieldTripInput,
 ): Promise<{ ok: true; out: VirtualFieldTripOutput } | { ok: false; error: Error }> {
     try {
-        const out = await planVirtualFieldTrip(input);
+        const out = await withTimeout(
+            planVirtualFieldTrip(input),
+            FALLBACK_TIMEOUT_MS,
+            'virtual-field-trip genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -169,11 +177,15 @@ function logDispatch(
 export async function dispatchVirtualFieldTrip(
     input: VirtualFieldTripDispatchInput,
 ): Promise<DispatchedVirtualFieldTrip> {
-    const decision = decideVirtualFieldTripDispatch(input.userId);
+    const decision = await decideVirtualFieldTripDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await planVirtualFieldTrip(input);
+        const out = await withTimeout(
+            planVirtualFieldTrip(input),
+            FALLBACK_TIMEOUT_MS,
+            'virtual-field-trip genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -221,6 +233,10 @@ export async function dispatchVirtualFieldTrip(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await planVirtualFieldTrip(input);
+    const out = await withTimeout(
+        planVirtualFieldTrip(input),
+        FALLBACK_TIMEOUT_MS,
+        'virtual-field-trip genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

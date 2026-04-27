@@ -24,6 +24,7 @@ import {
     getVideoRecommendations,
 } from '@/ai/flows/video-storyteller';
 import type { VideoStorytellerInput } from '@/ai/schemas/video-storyteller';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarVideoStoryteller,
     VideoStorytellerSidecarBehaviouralError,
@@ -33,6 +34,11 @@ import {
     type SidecarVideoStorytellerRequest,
     type SidecarVideoStorytellerResponse,
 } from './video-storyteller-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in video-storyteller-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 15_000;
 
 export type VideoStorytellerSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -52,28 +58,26 @@ function userBucket(uid: string | undefined): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): VideoStorytellerSidecarMode {
-    const raw = (process.env.SAHAYAKAI_VIDEO_STORYTELLER_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<VideoStorytellerSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.videoStorytellerSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_VIDEO_STORYTELLER_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.videoStorytellerSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideVideoStorytellerDispatch(
+export async function decideVideoStorytellerDispatch(
     uid: string | undefined,
-): VideoStorytellerSidecarDecision {
-    const mode = readMode();
+): Promise<VideoStorytellerSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent)
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return {
@@ -168,7 +172,11 @@ function mergedToDispatched(
 
 async function runGenkitSafe(input: VideoStorytellerDispatchInput) {
     try {
-        const out = await getVideoRecommendations(input);
+        const out = await withTimeout(
+            getVideoRecommendations(input),
+            FALLBACK_TIMEOUT_MS,
+            'video-storyteller genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -208,11 +216,15 @@ function logDispatch(
 export async function dispatchVideoStoryteller(
     input: VideoStorytellerDispatchInput,
 ): Promise<DispatchedVideoStoryteller> {
-    const decision = decideVideoStorytellerDispatch(input.userId);
+    const decision = await decideVideoStorytellerDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await getVideoRecommendations(input);
+        const out = await withTimeout(
+            getVideoRecommendations(input),
+            FALLBACK_TIMEOUT_MS,
+            'video-storyteller genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }

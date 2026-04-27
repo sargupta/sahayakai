@@ -25,6 +25,7 @@ import {
     type InstantAnswerInput,
     type InstantAnswerOutput,
 } from '@/ai/flows/instant-answer';
+import { getFeatureFlags } from '@/lib/feature-flags';
 
 import {
     callSidecarInstantAnswer,
@@ -35,26 +36,22 @@ import {
     type SidecarInstantAnswerRequest,
     type SidecarInstantAnswerResponse,
 } from './instant-answer-client';
+import { withTimeout } from './with-timeout';
 
-// ─── Self-contained dispatch decision (no feature-flags dependency) ────────
+// Mirrors `TIMEOUT_MS` in instant-answer-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 10_000;
+
+// ─── Firestore-backed dispatch decision (Phase J.5 migration) ──────────────
 //
-// The instant-answer flag intentionally lives ONLY in this file rather
-// than `feature-flags.ts` to keep the central feature-flag module
-// minimal — Phase B added six new fields across three agents and the
-// shared module is hot-reloaded across many request paths. New flags
-// belong in their own dispatcher file by default; we only promote to
-// `feature-flags.ts` if multiple call sites need to read the same flag.
-//
-// Operator flow:
-//   1. set env var SAHAYAKAI_INSTANT_ANSWER_MODE to one of
-//      'off' | 'shadow' | 'canary' | 'full' (default: 'off')
-//   2. set SAHAYAKAI_INSTANT_ANSWER_PERCENT to 0-100 for shadow/canary
-//      (default: 0; ignored in 'full' mode)
-//
-// We use env vars here rather than Firestore flags because instant-answer
-// is one of the lowest-risk migrations and flipping requires only a
-// Cloud Run revision push (existing CI/CD), not a Firestore document
-// edit. If we need real-time flips later we promote to feature-flags.ts.
+// Forensic audit P0 #3: this dispatcher previously read
+// `SAHAYAKAI_INSTANT_ANSWER_MODE` / `_PERCENT` from process.env. The
+// auto-abort Cloud Function only writes Firestore, so an env-flagged
+// agent could not be rolled back by the same flip that demotes the
+// other 14 sidecar flags. The agent now reads from
+// `system_config/feature_flags.instantAnswerSidecarMode/Percent` via
+// `getFeatureFlags()`, sharing the 5-min in-memory cache with the
+// other Firestore-backed flags.
 
 export type InstantAnswerSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -72,24 +69,21 @@ function userBucketForInstantAnswer(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): InstantAnswerSidecarMode {
-    const raw = (process.env.SAHAYAKAI_INSTANT_ANSWER_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+async function readMode(): Promise<InstantAnswerSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.instantAnswerSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_INSTANT_ANSWER_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.instantAnswerSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideInstantAnswerDispatch(
+export async function decideInstantAnswerDispatch(
     uid: string,
-): InstantAnswerSidecarDecision {
-    const mode = readMode();
+): Promise<InstantAnswerSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucketForInstantAnswer(uid);
 
     if (mode === 'off') {
@@ -98,7 +92,7 @@ export function decideInstantAnswerDispatch(
     if (mode === 'full') {
         return { mode: 'full', reason: 'flag_full', bucket };
     }
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) {
         return {
             mode,
@@ -182,7 +176,11 @@ async function runGenkitSafe(
     input: InstantAnswerInput,
 ): Promise<{ ok: true; out: InstantAnswerOutput } | { ok: false; error: Error }> {
     try {
-        const out = await instantAnswer(input);
+        const out = await withTimeout(
+            instantAnswer(input),
+            FALLBACK_TIMEOUT_MS,
+            'instant-answer genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -224,10 +222,11 @@ function logDispatch(
     );
 }
 
-// `decideInstantAnswerDispatch` reads env vars synchronously — no
-// network or Firestore call to time out, no async race needed. This
-// is one of the explicit benefits of keeping the flag in env vs
-// Firestore (operator-flip is slower but no live failure mode).
+// Phase J.5 — `decideInstantAnswerDispatch` is async (Firestore-backed).
+// `getFeatureFlags()` has its own 5-min in-memory cache and falls back
+// to safe defaults on read failure, so it never throws or blocks the
+// route. The first read on a cold lambda costs one Firestore RTT
+// (~30ms); subsequent reads are O(1) until cache expiry.
 
 /**
  * Dispatcher entry point. Returns a usable answer or throws — the
@@ -237,12 +236,16 @@ function logDispatch(
 export async function dispatchInstantAnswer(
     input: InstantAnswerDispatchInput,
 ): Promise<DispatchedInstantAnswer> {
-    const decision = decideInstantAnswerDispatch(input.userId);
+    const decision = await decideInstantAnswerDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {
-        const out = await instantAnswer(input);
+        const out = await withTimeout(
+            instantAnswer(input),
+            FALLBACK_TIMEOUT_MS,
+            'instant-answer genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -303,6 +306,10 @@ export async function dispatchInstantAnswer(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await instantAnswer(input);
+    const out = await withTimeout(
+        instantAnswer(input),
+        FALLBACK_TIMEOUT_MS,
+        'instant-answer genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

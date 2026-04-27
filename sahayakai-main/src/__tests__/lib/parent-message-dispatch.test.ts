@@ -1,5 +1,9 @@
 /**
  * Unit tests for the parent-message sidecar dispatcher (Phase C §C.5).
+ *
+ * Phase J.5 — the dispatcher now reads `parentMessageSidecarMode/Percent`
+ * from Firestore via `getFeatureFlags()`. Tests mock that module and
+ * stage the values per branch.
  */
 
 import type {
@@ -7,6 +11,10 @@ import type {
     ParentMessageOutput,
 } from '@/ai/flows/parent-message-generator';
 import type { ParentMessageSidecarMode } from '@/lib/sidecar/parent-message-dispatch';
+
+jest.mock('@/lib/feature-flags', () => ({
+    getFeatureFlags: jest.fn(),
+}));
 
 jest.mock('@/ai/flows/parent-message-generator', () => ({
     generateParentMessage: jest.fn(),
@@ -55,6 +63,7 @@ jest.mock('@/lib/sidecar/parent-message-client', () => {
 });
 
 import { generateParentMessage } from '@/ai/flows/parent-message-generator';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import { dispatchParentMessage } from '@/lib/sidecar/parent-message-dispatch';
 import {
     callSidecarParentMessage,
@@ -66,6 +75,7 @@ import {
 
 const mockGenkit = generateParentMessage as jest.MockedFunction<typeof generateParentMessage>;
 const mockSidecar = callSidecarParentMessage as jest.MockedFunction<typeof callSidecarParentMessage>;
+const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
 
 const BASE_INPUT: ParentMessageInput & { userId: string } = {
     studentName: 'Arav',
@@ -93,21 +103,24 @@ const SIDECAR_OUTPUT: SidecarParentMessageResponse = {
 };
 
 function setMode(mode: ParentMessageSidecarMode, percent = 100): void {
-    process.env.SAHAYAKAI_PARENT_MESSAGE_MODE = mode;
-    process.env.SAHAYAKAI_PARENT_MESSAGE_PERCENT = String(percent);
+    mockGetFlags.mockResolvedValue({
+        parentMessageSidecarMode: mode,
+        parentMessageSidecarPercent: percent,
+    } as Awaited<ReturnType<typeof getFeatureFlags>>);
 }
 
 beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
-    delete process.env.SAHAYAKAI_PARENT_MESSAGE_MODE;
-    delete process.env.SAHAYAKAI_PARENT_MESSAGE_PERCENT;
+    // Default: every read sees `off / 0` unless a test overrides.
+    mockGetFlags.mockResolvedValue({
+        parentMessageSidecarMode: 'off',
+        parentMessageSidecarPercent: 0,
+    } as Awaited<ReturnType<typeof getFeatureFlags>>);
 });
 
 afterEach(() => {
     jest.restoreAllMocks();
-    delete process.env.SAHAYAKAI_PARENT_MESSAGE_MODE;
-    delete process.env.SAHAYAKAI_PARENT_MESSAGE_PERCENT;
 });
 
 describe('dispatchParentMessage — off mode', () => {
@@ -223,8 +236,11 @@ describe('dispatchParentMessage — full mode + percent gating', () => {
         expect(out.decision.reason).toMatch(/^bucket_\d+_over_0$/);
     });
 
-    it('invalid mode env → off', async () => {
-        process.env.SAHAYAKAI_PARENT_MESSAGE_MODE = 'gibberish';
+    it('missing Firestore mode → off', async () => {
+        // Simulate a Firestore doc with no parentMessageSidecarMode field.
+        mockGetFlags.mockResolvedValue(
+            {} as Awaited<ReturnType<typeof getFeatureFlags>>,
+        );
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchParentMessage(BASE_INPUT);

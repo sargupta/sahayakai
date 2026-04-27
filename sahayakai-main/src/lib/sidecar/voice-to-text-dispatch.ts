@@ -20,6 +20,7 @@ import {
     voiceToText,
     type VoiceToTextOutput,
 } from '@/ai/flows/voice-to-text';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarVoiceToText,
     VoiceToTextSidecarBehaviouralError,
@@ -29,6 +30,13 @@ import {
     type SidecarVoiceToTextRequest,
     type SidecarVoiceToTextResponse,
 } from './voice-to-text-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in voice-to-text-client.ts so the Genkit fallback
+// gets the same overall budget as the sidecar path. Phase J.2 hot-fix
+// (forensic finding P0 #7) — closes the ~670s zombie path where a
+// hung Genkit fallback could block long after the sidecar returned.
+const FALLBACK_TIMEOUT_MS = 70_000;
 
 export type VoiceToTextSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -47,28 +55,26 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): VoiceToTextSidecarMode {
-    const raw = (process.env.SAHAYAKAI_VOICE_TO_TEXT_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<VoiceToTextSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.voiceToTextSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_VOICE_TO_TEXT_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.voiceToTextSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideVoiceToTextDispatch(
+export async function decideVoiceToTextDispatch(
     uid: string,
-): VoiceToTextSidecarDecision {
-    const mode = readMode();
+): Promise<VoiceToTextSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent)
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return {
@@ -132,7 +138,11 @@ function genkitToDispatched(
 
 async function runGenkitSafe(input: VoiceToTextDispatchInput) {
     try {
-        const out = await voiceToText({ audioDataUri: input.audioDataUri });
+        const out = await withTimeout(
+            voiceToText({ audioDataUri: input.audioDataUri }),
+            FALLBACK_TIMEOUT_MS,
+            'voice-to-text genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -172,11 +182,15 @@ function logDispatch(
 export async function dispatchVoiceToText(
     input: VoiceToTextDispatchInput,
 ): Promise<DispatchedVoiceToText> {
-    const decision = decideVoiceToTextDispatch(input.userId);
+    const decision = await decideVoiceToTextDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await voiceToText({ audioDataUri: input.audioDataUri });
+        const out = await withTimeout(
+            voiceToText({ audioDataUri: input.audioDataUri }),
+            FALLBACK_TIMEOUT_MS,
+            'voice-to-text genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -224,6 +238,10 @@ export async function dispatchVoiceToText(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await voiceToText({ audioDataUri: input.audioDataUri });
+    const out = await withTimeout(
+        voiceToText({ audioDataUri: input.audioDataUri }),
+        FALLBACK_TIMEOUT_MS,
+        'voice-to-text genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }
