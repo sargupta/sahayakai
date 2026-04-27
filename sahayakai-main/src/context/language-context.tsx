@@ -540,6 +540,19 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "সংরক্ষণ করা যায়নি", "Gujarati": "સાચવી શક્યા નહીં", "Punjabi": "ਸੇਵ ਨਹੀਂ ਕਰ ਸਕੇ",
         "Malayalam": "സംരക്ഷിക്കാൻ കഴിഞ്ഞില്ല", "Odia": "ସଞ୍ଚୟ କରିପାରିଲୁ ନାହିଁ"
     },
+    "For your": {
+        "English": "For your", "Hindi": "आपके", "Kannada": "ನಿಮ್ಮ",
+        "Tamil": "உங்கள்", "Telugu": "మీ", "Marathi": "तुमच्या",
+        "Bengali": "আপনার", "Gujarati": "તમારા", "Punjabi": "ਤੁਹਾਡੇ",
+        "Malayalam": "നിങ്ങളുടെ", "Odia": "ଆପଣଙ୍କ"
+    },
+    // ("students" key already exists later in the file at line ~1542 — reusing.)
+    "Personalised": {
+        "English": "Personalised", "Hindi": "व्यक्तिगत", "Kannada": "ವೈಯಕ್ತಿಕ",
+        "Tamil": "தனிப்பயனாக்கப்பட்டது", "Telugu": "వ్యక్తిగతీకృతం", "Marathi": "वैयक्तिकृत",
+        "Bengali": "ব্যক্তিগতকৃত", "Gujarati": "વ્યક્તિગત", "Punjabi": "ਵਿਅਕਤੀਗਤ",
+        "Malayalam": "വ്യക്തിഗതമാക്കിയത്", "Odia": "ବ୍ୟକ୍ତିଗତ"
+    },
     "Type your question or challenge here…": {
         "English": "Type your question or challenge here…",
         "Hindi": "अपना प्रश्न या चुनौती यहाँ टाइप करें…",
