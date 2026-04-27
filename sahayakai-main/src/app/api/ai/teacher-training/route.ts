@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getTeacherTrainingAdvice, TeacherTrainingInputSchema } from '@/ai/flows/teacher-training';
+import { TeacherTrainingInputSchema } from '@/ai/flows/teacher-training';
 import { logger } from '@/lib/logger';
 import { logAIError, handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchTeacherTraining } from '@/lib/sidecar/teacher-training-dispatch';
 
 /**
  * @swagger
@@ -53,12 +54,19 @@ async function _handler(request: Request) {
         // when Genkit's internal schema validator throws.
         const body = TeacherTrainingInputSchema.parse(json);
 
-        const output = await getTeacherTrainingAdvice({
+        // Phase D.2: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_TEACHER_TRAINING_MODE env (default: off).
+        const dispatched = await dispatchTeacherTraining({
             ...body,
-            userId: userId,
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            introduction: dispatched.introduction,
+            advice: dispatched.advice,
+            conclusion: dispatched.conclusion,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+        });
 
     } catch (error: any) {
         // Zod schema mismatches → 400 via handleAIError (detects by name).
