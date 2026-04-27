@@ -129,12 +129,18 @@ def _grounding_used(result: Any) -> bool:
 # ---- Single-stage runner -------------------------------------------------
 
 
-async def _run_answerer(
+async def run_answerer(
     payload: InstantAnswerRequest,
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> tuple[InstantAnswerCore, bool]:
-    """Run the answerer agent. Returns (parsed core, grounding_used)."""
+    """Run the answerer agent. Returns (parsed core, grounding_used).
+
+    Phase L.2: promoted from `_run_answerer` to public so the VIDYA
+    supervisor can delegate without reaching into a private function.
+    The legacy `_run_answerer` alias below is kept for one release
+    cycle so any in-flight code paths still compile.
+    """
     # Phase J §J.3 — sanitize ALL user-controlled strings before they
     # land in the rendered prompt. The template wraps each value in
     # `⟦…⟧` markers, but those markers are advisory only; without
@@ -198,7 +204,7 @@ async def instant_answer_answer(
     api_keys = settings.genai_keys
 
     try:
-        core, grounding_used = await _run_answerer(payload, api_keys, settings)
+        core, grounding_used = await run_answerer(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("instant_answer.answerer.safety_block", reason=str(exc))
         raise
@@ -246,3 +252,17 @@ async def instant_answer_answer(
         modelUsed=get_answerer_model(),
         groundingUsed=grounding_used,
     )
+
+
+# Phase L.2 — deprecated alias. The VIDYA supervisor was reaching into
+# this module's private `_run_answerer` to delegate inline answers, a
+# layering violation that also blocked per-user observability (see
+# Phase L.2 commit). New callers MUST import `run_answerer` (public)
+# instead. This alias stays for one release cycle so any in-flight
+# branches still build, then drops.
+_run_answerer = run_answerer  # noqa: PLW0127 — deprecated alias, prefer run_answerer
+
+__all__ = [
+    "instant_answer_router",
+    "run_answerer",
+]

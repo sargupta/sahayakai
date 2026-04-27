@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 def build_vidya_agent() -> LlmAgent:
     """Build the VIDYA supervisor as an ADK `LlmAgent`.
 
-    Phase L.1 wiring:
+    Phase L.1 wiring (refined in L.2):
 
     - `model` is the env-overridable string from `get_orchestrator_model()`
       (defaults to `gemini-2.0-flash` to match the Genkit production flow).
@@ -63,10 +63,27 @@ def build_vidya_agent() -> LlmAgent:
     - `output_schema=IntentClassification` enables Gemini's structured
       JSON output (response_schema). The router parses the JSON text
       from the final event into `IntentClassification`.
-    - `sub_agents=[]` for now — L.2 wires the instant-answer agent as
-      an `AgentTool`. The other 9 routable flows stay outside ADK because
-      the OmniOrb dispatches `NAVIGATE_AND_FILL` actions client-side; no
-      ADK delegation is needed for them.
+    - `sub_agents=[]`: AutoFlow-driven sub-agent delegation is unused
+      here — the OmniOrb's other 9 routable flows are dispatched
+      client-side via `NAVIGATE_AND_FILL` actions, and the
+      instant-answer flow is invoked by the router after intent
+      classification (see point below).
+    - `tools=[]`: deliberately empty. Phase L.2's audit found that
+      ADK 1.31's basic LLM-flow (see
+      `google/adk/flows/llm_flows/basic.py:53-59` and
+      `google/adk/utils/output_schema_utils.py:can_use_output_schema_with_tools`)
+      gates `response_schema` behind `Vertex AI + Gemini 2+`. On the
+      public Gemini API path (which is where the sidecar runs today)
+      adding tools forces a fallback through `_output_schema_processor`
+      that emits `SetModelResponseTool`-shaped function calls instead
+      of raw structured JSON — incompatible with the queue-fake test
+      contract and with the existing wire shape. The instant-answer
+      `AgentTool` (built by `agents.instant_answer.agent.build_answerer_tool`)
+      stays unregistered here; the router invokes the public
+      `run_answerer()` helper explicitly when intent type is
+      `instantAnswer`. L.3+ migrations of agents that DON'T pin
+      `output_schema` (e.g. workflow-style supervisors) can register
+      the tool freely.
     - `disallow_transfer_to_parent=True` so the supervisor never tries
       to escalate to a non-existent parent agent.
 
@@ -76,8 +93,8 @@ def build_vidya_agent() -> LlmAgent:
 
     NOTE: this function imports `google.adk.agents.LlmAgent` lazily so
     unit tests that don't exercise ADK don't pay the import cost. Once
-    Phase L.2-L.5 land, ADK is on the hot path for VIDYA + lesson-plan
-    + quiz + visual-aid, so the import cost amortises away.
+    Phase L.3-L.5 land, ADK is on the hot path for lesson-plan + quiz
+    + visual-aid too, so the import cost amortises away.
     """
     from google.adk.agents import LlmAgent  # noqa: PLC0415 — lazy import
 
@@ -85,7 +102,8 @@ def build_vidya_agent() -> LlmAgent:
         name="vidya_supervisor",
         model=get_orchestrator_model(),
         instruction=load_orchestrator_prompt(),
-        sub_agents=[],  # L.2 will add instant-answer's AgentTool.
+        sub_agents=[],
+        tools=[],  # See docstring: output_schema + tools is unsafe on the Gemini API path.
         output_schema=IntentClassification,
         disallow_transfer_to_parent=True,
     )

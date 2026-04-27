@@ -246,6 +246,10 @@ _BASE_REQUEST = {
         "schoolContext": "rural government school",
     },
     "detectedLanguage": "en",
+    # Phase L.2 — userId is required on the wire so the sidecar can
+    # propagate the authenticated teacher's uid into instant-answer
+    # delegation (the previous "vidya-supervisor" placeholder is gone).
+    "userId": "teacher-uid-1",
 }
 
 
@@ -325,12 +329,22 @@ class TestVidyaRouter:
     ) -> None:
         """instantAnswer → classifier + inline-answer (2 calls total).
 
-        Phase B §B.4: VIDYA's instantAnswer path now delegates to the
-        instant-answer ADK agent which expects structured JSON output
-        from Gemini (matching `InstantAnswerCore`). The second queue
-        entry is therefore JSON, not plain text. The supervisor pulls
-        out `core.answer` and wraps it in the wire response.
+        Phase L.2: VIDYA's instantAnswer path now delegates via the
+        public `run_answerer` symbol (was: in-process import of the
+        private `_run_answerer`). The second queue entry is structured
+        JSON matching `InstantAnswerCore`. The supervisor pulls out
+        `core.answer` and wraps it in the wire response. `userId`
+        from the request is forwarded into the sub-agent's request
+        (no more `vidya-supervisor` placeholder), which the schema
+        validates against `^[A-Za-z0-9_\\-]+$`.
         """
+        # Sanity: the public symbol exists on the router module and
+        # is the one VIDYA imports lazily from inside _run_instant_answer.
+        from sahayakai_agents.agents.instant_answer.router import (  # noqa: PLC0415
+            run_answerer,
+        )
+        assert callable(run_answerer)
+
         fake_genai.queue = [
             _classify_json(intent_type="instantAnswer", language="en"),
             json.dumps({
@@ -487,3 +501,30 @@ class TestVidyaRouter:
         assert res.status_code == 200, res.text
         body = res.json()
         assert body["followUpSuggestion"] is None
+
+    def test_missing_user_id_returns_422(
+        self,
+        client: TestClient,
+        fake_genai: _QueueFake,
+    ) -> None:
+        """Phase L.2: userId is required. A request without it should
+        fail Pydantic validation before any model call fires."""
+        request = {k: v for k, v in _BASE_REQUEST.items() if k != "userId"}
+        res = client.post("/v1/vidya/orchestrate", json=request)
+        # FastAPI surfaces missing required fields as 422.
+        assert res.status_code == 422, res.text
+        # No model call should have been attempted.
+        assert fake_genai.queue == []
+
+    def test_invalid_user_id_pattern_returns_422(
+        self,
+        client: TestClient,
+        fake_genai: _QueueFake,
+    ) -> None:
+        """Phase L.2: userId pattern matches the same alphanumeric +
+        underscore + hyphen rule as every other agent. A path-injection
+        attempt (e.g. `../foo`) must be rejected at the schema layer."""
+        request = {**_BASE_REQUEST, "userId": "../path/injection"}
+        res = client.post("/v1/vidya/orchestrate", json=request)
+        assert res.status_code == 422, res.text
+        assert fake_genai.queue == []

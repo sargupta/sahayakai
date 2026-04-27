@@ -195,15 +195,35 @@ class TestBuildVidyaAgent:
             "is constructed once at import time, not per request."
         )
 
-    def test_has_no_sub_agents_yet(self) -> None:
-        """Phase L.1 wires `sub_agents=[]`. L.2 will add the
-        instant-answer `AgentTool`. If this drifts before L.2 ships,
-        update the docstring + plan reference; if it drifts AFTER L.2,
-        update this test to count the expected sub-agents."""
+    def test_has_no_sub_agents(self) -> None:
+        """`sub_agents=[]` deliberately. The OmniOrb dispatches 9
+        routable flows client-side via NAVIGATE_AND_FILL actions, and
+        the instant-answer flow is invoked by the router after intent
+        classification — neither path uses ADK's AutoFlow sub-agent
+        delegation. If a future phase introduces a real sub-agent
+        (e.g. a clarifying-question agent), update this test to count
+        the expected entries."""
         agent = _build()
         assert agent.sub_agents == [], (
-            f"Phase L.1 expects empty sub_agents. "
-            f"Got {len(agent.sub_agents)} sub_agents — has L.2 landed?"
+            f"VIDYA does not use sub_agents. "
+            f"Got {len(agent.sub_agents)} — was a sub-agent added?"
+        )
+
+    def test_has_no_tools(self) -> None:
+        """Phase L.2: `tools=[]` deliberately. ADK 1.31's basic flow
+        on the Gemini API path cannot combine `output_schema` with
+        `tools` cleanly (see `agents.vidya.agent.build_vidya_agent`
+        docstring + `agents.instant_answer.agent` module docstring).
+        Adding tools here would silently flip the structured-output
+        contract through `_output_schema_processor`, breaking the
+        queue-fake test contract and the wire shape. Pin empty so a
+        future regression is caught at unit-test time, not in
+        production."""
+        agent = _build()
+        assert agent.tools == [], (
+            f"VIDYA must not register tools while output_schema is "
+            f"set. Got {len(agent.tools)} tools — review the "
+            f"build_vidya_agent docstring before changing this."
         )
 
     def test_output_schema_is_intent_classification(self) -> None:

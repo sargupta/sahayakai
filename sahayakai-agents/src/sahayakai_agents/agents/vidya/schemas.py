@@ -154,6 +154,12 @@ class VidyaRequest(BaseModel):
     (`message`, `chatHistory`, `currentScreenContext`, `teacherProfile`,
     `detectedLanguage`). Every field is bounded so a hostile client
     can't exhaust prompt budget.
+
+    Phase L.2 — `userId` is now required. The previous `_run_answerer`
+    delegation hard-coded `userId="vidya-supervisor"` because VIDYA's
+    request had no real uid; that placeholder blocked per-user rate
+    limiting + observability. The Next.js `/api/assistant` route is
+    auth'd upstream and now forwards the verified uid here.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -165,6 +171,16 @@ class VidyaRequest(BaseModel):
     # BCP-47 like "en-IN", "hi-IN". Optional — the classifier may
     # detect language inline if the client doesn't pre-resolve.
     detectedLanguage: str | None = Field(default=None, max_length=10)
+    # Required — the authenticated teacher's uid. Same alphanumeric
+    # + underscore + hyphen pattern as every other agent's `userId`,
+    # so path-injection defences in downstream Firestore document IDs
+    # still hold. The Next.js dispatcher injects this from the
+    # `x-user-id` header that auth middleware writes.
+    userId: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9_\-]+$",
+    )
 
 
 # --- Internal classifier output ----------------------------------------

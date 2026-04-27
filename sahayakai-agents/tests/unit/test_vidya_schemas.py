@@ -33,6 +33,9 @@ def _minimal_request_kwargs() -> dict:
         "message": "Make me a lesson plan",
         "currentScreenContext": ScreenContext(path="/dashboard"),
         "teacherProfile": TeacherProfile(),
+        # Phase L.2 — userId is required so the sidecar can forward
+        # the authenticated teacher uid into instant-answer delegation.
+        "userId": "teacher-uid-1",
     }
 
 

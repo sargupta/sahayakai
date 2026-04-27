@@ -77,7 +77,10 @@ export interface VidyaDispatchInput {
     request: AssistantInput;
 }
 
-function inputToSidecarRequest(input: AssistantInput): SidecarVidyaRequest {
+function inputToSidecarRequest(
+    input: AssistantInput,
+    userId: string,
+): SidecarVidyaRequest {
     return {
         message: input.message,
         chatHistory: (input.chatHistory ?? [])
@@ -119,6 +122,10 @@ function inputToSidecarRequest(input: AssistantInput): SidecarVidyaRequest {
         },
         teacherProfile: input.teacherProfile ?? {},
         detectedLanguage: input.detectedLanguage ?? null,
+        // Phase L.2 — forward the authenticated uid so the sidecar's
+        // instant-answer delegation attributes the call to the real
+        // teacher (was hard-coded `vidya-supervisor` placeholder).
+        userId,
     };
 }
 
@@ -245,7 +252,7 @@ export async function dispatchVidya(
     input: VidyaDispatchInput,
 ): Promise<DispatchedVidyaResponse> {
     const decision = await decideDispatchWithTimeout(input.uid);
-    const sidecarRequest = inputToSidecarRequest(input.request);
+    const sidecarRequest = inputToSidecarRequest(input.request, input.uid);
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {

@@ -63,7 +63,7 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-l.1"
+SIDECAR_VERSION = "phase-l.2"
 
 # Per-call timeout for run_resiliently. VIDYA orchestrator is a
 # classifier-only flow; 8s mirrors the Twilio-bounded budget on the
@@ -316,24 +316,28 @@ async def _run_orchestrator(
 
 # ---- Stage 2: inline answer (only when intent == instantAnswer) ---------
 #
-# Phase B §B.4: VIDYA delegates `instantAnswer` to the dedicated
-# instant-answer ADK agent (introduced in Phase B.1-B.3) instead of
-# composing a one-off prompt here. Two reasons:
+# Phase L.2 — VIDYA delegates `instantAnswer` to the public
+# `run_answerer()` helper that the instant-answer router exposes. The
+# ADK supervisor pattern is preserved (instant-answer's own LlmAgent
+# is built by `build_instant_answer_agent()` and wrapped in an
+# `AgentTool` ready for L.3+ supervisors), but VIDYA does not register
+# the tool on its `LlmAgent.tools` list because its `output_schema=
+# IntentClassification` would conflict with `_output_schema_processor`
+# on the public Gemini API path (see `agents/instant_answer/agent.py`
+# module docstring for the trade-off). The router calls the public
+# helper directly.
 #
-#   1. The instant-answer agent has Google Search grounding wired —
-#      live web access for fact-style questions. The previous inline
-#      path was un-grounded.
-#   2. This is the canonical supervisor-pattern hook. VIDYA is the
-#      supervisor; instant-answer is the sub-agent. The call uses
-#      direct in-process import (no HTTP loop back through Cloud Run).
-#      In a future phase (L.2) we'll switch to ADK `AgentTool` once
-#      VIDYA's supervisor declares instant-answer as a sub-agent.
+# This replaces the Phase B.4 in-process import of the private
+# `_run_answerer`, which:
+#   1. was a layering violation (cross-module private import),
+#   2. hard-coded `userId="vidya-supervisor"` — blocking per-user
+#      rate-limiting / observability,
+#   3. lost the per-call trace span boundary an AgentTool would emit.
 #
-# The fallback to the local `render_instant_answer_prompt` path is
-# kept around at module import time so the prompt-rendering smoke
-# test still passes and the local Handlebars template is still
-# loaded (warming the lru_cache). The actual call routes through the
-# sub-agent.
+# All three are fixed below: import goes through the public
+# `run_answerer` symbol, `userId` is forwarded from the authenticated
+# request, and the structured log already names the call site
+# distinctly (`vidya.instant_answer.failed` etc.).
 
 
 async def _run_instant_answer(
@@ -348,28 +352,28 @@ async def _run_instant_answer(
     suggestion / metadata fields are dropped on this path because
     VIDYA's wire shape is text-only (the OmniOrb client speaks the
     response via TTS).
+
+    Phase L.2 — uses the public `run_answerer` symbol and propagates
+    the authenticated `payload.userId` so the sub-agent's audit trail
+    attributes the call to the real teacher (no more
+    `vidya-supervisor` placeholder).
     """
     # Lazy import to avoid a Phase 5 → Phase 6 cycle at module load.
-    from ..instant_answer.router import _run_answerer  # noqa: PLC0415
+    from ..instant_answer.router import run_answerer  # noqa: PLC0415
     from ..instant_answer.schemas import InstantAnswerRequest  # noqa: PLC0415
 
-    # The instant-answer agent's request shape needs `userId` —
-    # VIDYA's request doesn't carry one (the OmniOrb is auth'd at
-    # the dispatcher / route layer, not the sidecar). Use a stable
-    # placeholder so the schema's path-injection-defence pattern
-    # accepts the value.
     sub_request = InstantAnswerRequest(
         question=payload.message,
         language=payload.detectedLanguage,
         gradeLevel=payload.teacherProfile.preferredGrade,
         subject=payload.teacherProfile.preferredSubject,
-        userId="vidya-supervisor",
+        userId=payload.userId,
     )
 
     # The sub-agent runs through `run_resiliently` itself; we just
     # forward the api_keys + settings. Telephony backoff budget is
     # the same — instant-answer's own router call already enforces it.
-    core, _grounding_used = await _run_answerer(
+    core, _grounding_used = await run_answerer(
         sub_request, api_keys, settings,
     )
     return core.answer

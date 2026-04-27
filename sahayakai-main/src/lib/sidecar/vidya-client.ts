@@ -73,6 +73,10 @@ export class VidyaSidecarBehaviouralError extends Error {
  * `sahayakai-agents/src/sahayakai_agents/agents/vidya/schemas.py`.
  * Hand-typed for now; replaced by `dist/types.generated.ts` when the
  * codegen step lands.
+ *
+ * Phase L.2 — `userId` is required. The Python schema removed the
+ * `vidya-supervisor` placeholder when delegating to instant-answer;
+ * the dispatcher now forwards the authenticated uid through the wire.
  */
 export interface SidecarVidyaRequest {
   message: string;
@@ -91,6 +95,12 @@ export interface SidecarVidyaRequest {
     schoolContext?: string | null;
   };
   detectedLanguage?: string | null;
+  /**
+   * Authenticated teacher uid, required. Pattern matches the Python
+   * schema: alphanumeric + underscore + hyphen only — defends
+   * downstream Firestore document IDs against path-injection.
+   */
+  userId: string;
 }
 
 export type SidecarVidyaFlow =
