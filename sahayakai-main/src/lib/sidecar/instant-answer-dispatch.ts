@@ -18,6 +18,15 @@
  *              non-redundant safety pass so it's worth retrying there.
  *
  * Phase B §B.5.
+ *
+ * Phase K (forensic audit P0 #2): in canary/full mode the sidecar
+ * served the answer to the caller but the dispatcher silently dropped
+ * Cloud Storage persistence (`users/{uid}/instant-answers/`) +
+ * Firestore content metadata. The Genkit flow does both inside
+ * `instantAnswerFlow`; the sidecar process has no Firebase Admin
+ * credentials, so the dispatcher mirrors the persistence here. The
+ * pre-call rate-limit gate is also lifted to the dispatcher so a
+ * sidecar-routed call cannot bypass `checkServerRateLimit`.
  */
 
 import {
@@ -36,6 +45,7 @@ import {
     type SidecarInstantAnswerRequest,
     type SidecarInstantAnswerResponse,
 } from './instant-answer-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in instant-answer-client.ts. Phase J.2 hot-fix
@@ -271,9 +281,44 @@ export async function dispatchInstantAnswer(
     }
 
     // ── canary / full ──────────────────────────────────────────────────
+    // Phase K — pre-call rate limit gate. Genkit's `instantAnswer`
+    // calls `checkServerRateLimit` internally, but the sidecar process
+    // has no Firestore credentials and never gates. Lifting the gate
+    // to the dispatcher closes that gap. On sidecar failure the
+    // fallback Genkit path will re-run the gate (a single duplicate
+    // tick is a rare cost; the alternative is no enforcement at all).
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecar = await runSidecarSafe(sidecarRequest);
 
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore so
+        // the teacher's library mirrors the Genkit-served entries.
+        // Fail-soft inside `persistSidecarJSON`.
+        if (input.userId) {
+            const sanitized: InstantAnswerOutput = {
+                answer: sidecar.res.answer,
+                videoSuggestionUrl: sidecar.res.videoSuggestionUrl,
+                gradeLevel: sidecar.res.gradeLevel,
+                subject: sidecar.res.subject,
+            };
+            await persistSidecarJSON({
+                uid: input.userId,
+                contentType: 'instant-answer',
+                collection: 'instant-answers',
+                title: input.question,
+                output: sanitized,
+                metadata: {
+                    gradeLevel: sidecar.res.gradeLevel || input.gradeLevel || 'Class 5',
+                    subject: input.subject || sidecar.res.subject || 'General',
+                    topic: input.question,
+                    language: input.language || 'English',
+                },
+            });
+        }
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,

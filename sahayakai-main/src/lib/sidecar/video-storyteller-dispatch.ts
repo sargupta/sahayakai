@@ -19,6 +19,12 @@
  *
  * Flag default is `off`. For Phase F.1 we ship the wiring; flag flip
  * happens later with parity evidence.
+ *
+ * Phase K (forensic audit P0 #2): video-storyteller does NOT persist
+ * to a per-user library (recommendations are cached at the system
+ * level), so the sidecar dispatcher does not write Storage/Firestore.
+ * The pre-call rate-limit gate is still lifted into the dispatcher so
+ * a sidecar-routed call cannot bypass `checkServerRateLimit`.
  */
 import {
     getVideoRecommendations,
@@ -242,6 +248,17 @@ export async function dispatchVideoStoryteller(
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);
+    }
+
+    // Phase K — pre-call rate-limit gate. Video-storyteller does NOT
+    // persist a personal library entry (recommendations are cached at
+    // the system level via the Genkit cache layer), but it still
+    // costs Gemini tokens + YouTube quota in canary/full mode, so the
+    // dispatcher must gate. On sidecar failure the Genkit fallback
+    // path will gate again via its own internal rate-limit calls.
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
     }
 
     // canary / full: call sidecar AND genkit (genkit fills in

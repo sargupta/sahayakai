@@ -143,3 +143,116 @@ export async function persistSidecarJSON<T>(
         return null;
     }
 }
+
+
+export interface PersistImageInput {
+    /** Authenticated user ID. */
+    uid: string;
+    /**
+     * Storage subdir under `users/{uid}/`. e.g. `visual-aids`, `avatars`.
+     */
+    collection: string;
+    /** Firestore content `type` discriminator. */
+    contentType: ContentType;
+    /** Display title — used for the slug. */
+    title: string;
+    /**
+     * Image as a `data:image/<subtype>;base64,<body>` URI. The helper
+     * strips the prefix and writes the raw bytes.
+     */
+    imageDataUri: string;
+    /** Per-flow Firestore content-doc filter fields. */
+    metadata: {
+        gradeLevel: GradeLevel | string;
+        subject: Subject | string;
+        topic: string;
+        language: Language | string;
+    };
+    /**
+     * Optional extra fields merged into the content doc's `data`
+     * field. Used by visual-aid for `pedagogicalContext` /
+     * `discussionSpark`.
+     */
+    extraData?: Record<string, unknown>;
+}
+
+/**
+ * Persist a sidecar-produced image to Storage + Firestore.
+ *
+ * Strips the `data:image/<subtype>;base64,` prefix, writes raw bytes
+ * to `users/{uid}/{collection}/{ts}_{slug}.png`, and a content doc to
+ * `users/{uid}/contents/{contentId}` via `dbAdapter.saveContent`.
+ *
+ * Returns `{ contentId, storagePath }` on success, `null` on any
+ * failure (logged at WARN level). Fail-soft — see file header.
+ */
+export async function persistSidecarImage(
+    input: PersistImageInput,
+): Promise<PersistJSONResult | null> {
+    try {
+        const { v4: uuidv4 } = await import('uuid');
+        const { getStorageInstance } = await import('@/lib/firebase-admin');
+        const { dbAdapter } = await import('@/lib/db/adapter');
+        const { Timestamp } = await import('firebase-admin/firestore');
+
+        const now = new Date();
+        const timestamp = formatTimestamp(now);
+        const contentId = uuidv4();
+        const slug = slugify(input.title);
+        const fileName = `${timestamp}_${slug}.png`;
+        const storagePath = `users/${input.uid}/${input.collection}/${fileName}`;
+
+        // Strip data URI prefix; preserve raw payload.
+        const base64 = input.imageDataUri.includes(',')
+            ? input.imageDataUri.split(',')[1]
+            : input.imageDataUri;
+        const buffer = Buffer.from(base64, 'base64');
+
+        const storage = await getStorageInstance();
+        const file = storage.bucket().file(storagePath);
+        await file.save(buffer, {
+            resumable: false,
+            metadata: { contentType: 'image/png' },
+        });
+
+        const dataPayload = {
+            ...(input.extraData ?? {}),
+            storageRef: storagePath,
+        };
+
+        const contentDoc: BaseContent<typeof dataPayload> = {
+            id: contentId,
+            type: input.contentType,
+            title: input.title,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            gradeLevel: input.metadata.gradeLevel as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            subject: input.metadata.subject as any,
+            topic: input.metadata.topic,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            language: input.metadata.language as any,
+            storagePath,
+            isPublic: false,
+            isDraft: false,
+            createdAt: Timestamp.fromDate(now),
+            updatedAt: Timestamp.fromDate(now),
+            data: dataPayload,
+        };
+
+        await dbAdapter.saveContent(input.uid, contentDoc);
+
+        return { contentId, storagePath };
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn(
+            `[persist] image failed for ${input.collection}/${input.uid}: ${msg}`,
+            'PERSIST',
+            {
+                uid: input.uid,
+                collection: input.collection,
+                contentType: input.contentType,
+            },
+        );
+        return null;
+    }
+}

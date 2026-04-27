@@ -21,6 +21,16 @@ jest.mock('@/ai/flows/instant-answer', () => ({
     instantAnswer: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/persist-helpers', () => ({
+    persistSidecarJSON: jest.fn(),
+    persistSidecarImage: jest.fn(),
+}));
+
+jest.mock('@/lib/server-safety', () => ({
+    checkServerRateLimit: jest.fn(),
+    checkImageRateLimit: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/instant-answer-client', () => {
     class InstantAnswerSidecarConfigError extends Error {
         constructor(message: string) {
@@ -71,6 +81,7 @@ jest.mock('@/lib/sidecar/instant-answer-client', () => {
 
 import { instantAnswer } from '@/ai/flows/instant-answer';
 import { getFeatureFlags } from '@/lib/feature-flags';
+import { checkServerRateLimit } from '@/lib/server-safety';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import {
     callSidecarInstantAnswer,
@@ -79,10 +90,13 @@ import {
     InstantAnswerSidecarTimeoutError,
     type SidecarInstantAnswerResponse,
 } from '@/lib/sidecar/instant-answer-client';
+import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
 
 const mockGenkit = instantAnswer as jest.MockedFunction<typeof instantAnswer>;
 const mockSidecar = callSidecarInstantAnswer as jest.MockedFunction<typeof callSidecarInstantAnswer>;
 const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
+const mockPersist = persistSidecarJSON as jest.MockedFunction<typeof persistSidecarJSON>;
+const mockGate = checkServerRateLimit as jest.MockedFunction<typeof checkServerRateLimit>;
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -133,6 +147,11 @@ beforeEach(() => {
         instantAnswerSidecarMode: 'off',
         instantAnswerSidecarPercent: 0,
     } as Awaited<ReturnType<typeof getFeatureFlags>>);
+    mockPersist.mockResolvedValue({
+        storagePath: 'users/teacher-uid-1/instant-answers/test.json',
+        contentId: 'test-id',
+    });
+    mockGate.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -321,5 +340,94 @@ describe('dispatchInstantAnswer — Firestore dispatch decision (Phase J.5)', ()
         const out = await dispatchInstantAnswer(BASE_INPUT);
         expect(out.decision.mode).toBe('off');
         expect(out.decision.reason).toBe('flag_off');
+    });
+});
+
+// ── Phase K — pre-call rate-limit gate + Storage/Firestore persist ─────────
+
+describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
+    it('runs the rate-limit gate BEFORE the sidecar call in canary mode', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const order: string[] = [];
+        mockGate.mockImplementation(async () => {
+            order.push('gate');
+        });
+        mockSidecar.mockImplementation(async () => {
+            order.push('sidecar');
+            return SIDECAR_OUTPUT;
+        });
+
+        await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(order).toEqual(['gate', 'sidecar']);
+        expect(mockGate).toHaveBeenCalledWith(BASE_INPUT.userId);
+    });
+
+    it('persists sidecar answer JSON when canary serves it', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(mockPersist).toHaveBeenCalledTimes(1);
+        const call = mockPersist.mock.calls[0][0];
+        expect(call.contentType).toBe('instant-answer');
+        expect(call.collection).toBe('instant-answers');
+        expect(call.uid).toBe(BASE_INPUT.userId);
+        expect(call.title).toBe(BASE_INPUT.question);
+        // Payload should hold the sanitised answer fields.
+        expect(call.output).toMatchObject({
+            answer: SIDECAR_OUTPUT.answer,
+            videoSuggestionUrl: SIDECAR_OUTPUT.videoSuggestionUrl,
+        });
+    });
+
+    it('does not persist on the off-path Genkit response', async () => {
+        // Genkit flow handles its own persistence; dispatcher must
+        // NOT duplicate it.
+        setMode('off');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(mockPersist).not.toHaveBeenCalled();
+        expect(mockGate).not.toHaveBeenCalled();
+    });
+
+    it('does not persist when sidecar fails and falls back to Genkit', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new InstantAnswerSidecarTimeoutError(10_000),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        await dispatchInstantAnswer(BASE_INPUT);
+
+        // The fallback Genkit flow handles persistence itself.
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('still returns sidecar response when persistence fails (fail-soft)', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue(null);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.answer).toBe(SIDECAR_OUTPUT.answer);
+    });
+
+    it('blocks sidecar call when rate limit gate throws', async () => {
+        setMode('canary');
+        mockGate.mockRejectedValue(new Error('Rate limit exceeded. Please wait 5 minutes.'));
+
+        await expect(dispatchInstantAnswer(BASE_INPUT)).rejects.toThrow(
+            /Rate limit exceeded/,
+        );
+        expect(mockSidecar).not.toHaveBeenCalled();
+        expect(mockPersist).not.toHaveBeenCalled();
     });
 });

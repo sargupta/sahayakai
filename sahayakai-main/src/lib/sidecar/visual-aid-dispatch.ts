@@ -1,5 +1,18 @@
 /**
  * Visual aid designer dispatcher (Phase E.3).
+ *
+ * Phase K (forensic audit P0 #2): in canary/full mode the sidecar
+ * served the image to the caller but the dispatcher silently dropped
+ * Cloud Storage persistence (image bytes) and Firestore metadata
+ * (`users/{uid}/content`). The Genkit flow does both inside
+ * `visualAidFlow`; the sidecar process has no Firebase Admin
+ * credentials, so the dispatcher must mirror the persistence here.
+ *
+ * Phase K also lifts `checkImageRateLimit` to the dispatcher so that a
+ * sidecar-routed image-gen call cannot bypass the daily image cap.
+ * Genkit's `generateVisualAid` already calls `checkImageRateLimit`
+ * internally, so the gate runs there in `off`/`shadow`/`fallback`
+ * paths and here in `canary`/`full` paths — never both.
  */
 import {
     generateVisualAid,
@@ -16,6 +29,7 @@ import {
     type SidecarVisualAidRequest,
     type SidecarVisualAidResponse,
 } from './visual-aid-client';
+import { persistSidecarImage } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in visual-aid-client.ts. Phase J.2 hot-fix
@@ -182,8 +196,43 @@ export async function dispatchVisualAid(
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
+    // Phase K — image rate-limit gate. Visual-aid is $0.04/call so we
+    // MUST decrement the daily quota before the sidecar runs (otherwise
+    // a sidecar-routed user has no enforcement). Failures inside
+    // `checkImageRateLimit` are non-fatal (it fails open on
+    // infrastructure errors) but a real "limit reached" error bubbles
+    // up and the route lands a 429.
+    if (input.userId) {
+        const { checkImageRateLimit } = await import('@/lib/server-safety');
+        await checkImageRateLimit(input.userId);
+    }
+
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore so
+        // the teacher's library mirrors what the Genkit flow would have
+        // written. Fail-soft inside `persistSidecarImage` so a Storage
+        // hiccup does not drop a good image.
+        if (input.userId) {
+            await persistSidecarImage({
+                uid: input.userId,
+                contentType: 'visual-aid',
+                collection: 'visual-aids',
+                title: input.prompt,
+                imageDataUri: sidecar.res.imageDataUri,
+                metadata: {
+                    gradeLevel: input.gradeLevel || 'Class 5',
+                    subject: sidecar.res.subject || 'Science',
+                    topic: input.prompt,
+                    language: input.language || 'English',
+                },
+                extraData: {
+                    pedagogicalContext: sidecar.res.pedagogicalContext,
+                    discussionSpark: sidecar.res.discussionSpark,
+                    subject: sidecar.res.subject,
+                },
+            });
+        }
         logDispatch(decision, { source: 'sidecar', uid: input.userId, sidecarLatencyMs: sidecar.latencyMs });
         return sidecarToDispatched(sidecar.res, decision);
     }

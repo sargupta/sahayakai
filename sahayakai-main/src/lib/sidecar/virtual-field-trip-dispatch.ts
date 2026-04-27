@@ -1,5 +1,14 @@
 /**
  * Virtual field-trip dispatcher (Phase D.3).
+ *
+ * Phase K (forensic audit P0 #2): in canary/full mode the sidecar
+ * served the trip to the caller but the dispatcher silently dropped
+ * Cloud Storage persistence (`users/{uid}/virtual-field-trips/`) +
+ * Firestore content metadata. The Genkit flow does both inside
+ * `virtualFieldTripFlow`; the sidecar process has no Firebase Admin
+ * credentials, so the dispatcher mirrors the persistence here. The
+ * pre-call rate-limit gate is also lifted so a sidecar-routed call
+ * cannot bypass `checkServerRateLimit`.
  */
 import {
     planVirtualFieldTrip,
@@ -16,6 +25,7 @@ import {
     type SidecarVirtualFieldTripRequest,
     type SidecarVirtualFieldTripResponse,
 } from './virtual-field-trip-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in virtual-field-trip-client.ts. Phase J.2 hot-fix
@@ -205,8 +215,40 @@ export async function dispatchVirtualFieldTrip(
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
+    // Phase K — pre-call rate limit gate. The Genkit
+    // `planVirtualFieldTrip` does NOT gate today (it relies on
+    // upstream API-route gating); but for parity with other Phase K
+    // dispatchers and to close the canary/full path against any
+    // route-level gap, the dispatcher gates explicitly here.
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore.
+        if (input.userId) {
+            const payload: VirtualFieldTripOutput = {
+                title: sidecar.res.title,
+                stops: sidecar.res.stops,
+                gradeLevel: sidecar.res.gradeLevel,
+                subject: sidecar.res.subject,
+            };
+            await persistSidecarJSON({
+                uid: input.userId,
+                contentType: 'virtual-field-trip',
+                collection: 'virtual-field-trips',
+                title: sidecar.res.title || `Trip: ${input.topic}`,
+                output: payload,
+                metadata: {
+                    gradeLevel: sidecar.res.gradeLevel || input.gradeLevel || 'Class 5',
+                    subject: sidecar.res.subject || 'Geography',
+                    topic: input.topic,
+                    language: input.language || 'English',
+                },
+            });
+        }
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,

@@ -7,6 +7,13 @@
  * writer only) can roll this agent back without a Cloud Run redeploy.
  *
  * Phase C §C.5; Phase J.5 — flag-plane consolidation.
+ *
+ * Phase K (forensic audit P0 #2): parent-message output is not stored
+ * in a per-user library (it is sent over SMS and the message body
+ * itself is captured by the Twilio outbound record), so the
+ * dispatcher does NOT persist Storage/Firestore. The pre-call
+ * rate-limit gate is lifted to the dispatcher so a sidecar-routed
+ * call cannot bypass `checkServerRateLimit`.
  */
 
 import {
@@ -238,6 +245,17 @@ export async function dispatchParentMessage(
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);
+    }
+
+    // Phase K — pre-call rate-limit gate. Parent messages are
+    // SMS-bound and not saved to the user's per-personal library, so
+    // the dispatcher does not persist anything. The Genkit
+    // `generateParentMessage` flow does not gate today (the API route
+    // does), but the route is bypassed when the sidecar serves; this
+    // gate closes that gap on the canary/full path.
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
     }
 
     // canary / full
