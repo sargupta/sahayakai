@@ -26,6 +26,7 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { saveToLibrary } from "@/app/actions/content";
 
 
 const translations: Record<string, Record<string, string>> = {
@@ -221,6 +222,11 @@ function InstantAnswerContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Save-to-Library state — added 2026-04-27 alongside fix for the
+  // previously-broken handleSave() which only fired a toast and never
+  // actually persisted the answer.
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedToLib, setSavedToLib] = useState(false);
   const { toast } = useToast();
   const { t: translate } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
@@ -361,11 +367,44 @@ function InstantAnswerContent() {
     // form.trigger("question"); // Removed to prevent premature validation messaging
   };
 
-  const handleSave = () => {
-    toast({
-      title: translate("Saved to Library"),
-      description: "Your answer has been saved to your personal library.",
-    });
+  const handleSave = async () => {
+    if (!answer || !auth.currentUser) return;
+    if (savedToLib) return; // already saved — prevent duplicate writes
+    setIsSaving(true);
+    try {
+      // Title = the question, capped at 80 chars (matches teacher-training pattern)
+      const title = (answer.question || form.getValues("question")).slice(0, 80);
+      const result = await saveToLibrary(
+        auth.currentUser.uid,
+        "instant-answer",
+        title,
+        {
+          answer: answer.answer,
+          videoSuggestionUrl: answer.videoSuggestionUrl,
+          // Preserve form context so a re-open shows the same params
+          language: form.getValues("language"),
+          gradeLevel: form.getValues("gradeLevel"),
+          subject: form.getValues("subject"),
+        },
+      );
+      if (result.success) {
+        setSavedToLib(true);
+        toast({
+          title: translate("Saved to Library"),
+          description: translate("Your answer has been saved to your personal library."),
+        });
+      } else {
+        throw new Error(result.error || "Save failed");
+      }
+    } catch (err: any) {
+      toast({
+        title: translate("Could not save"),
+        description: err?.message ?? "",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -503,9 +542,18 @@ function InstantAnswerContent() {
                 <CardTitle className="font-headline text-2xl">{t.answerTitle}</CardTitle>
                 <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                {t.saveButton}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving || savedToLib}
+              >
+                {isSaving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {savedToLib ? translate("Saved to Library") : t.saveButton}
               </Button>
             </div>
           </CardHeader>

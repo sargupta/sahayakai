@@ -1461,6 +1461,19 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "ലൈബ്രറിയിൽ സംരക്ഷിച്ചു",
         "Odia": "ଲାଇବ୍ରେରୀରେ ସଞ୍ଚିତ"
     },
+    "Your answer has been saved to your personal library.": {
+        "English": "Your answer has been saved to your personal library.",
+        "Hindi": "आपका उत्तर आपकी निजी लाइब्रेरी में सहेज लिया गया है।",
+        "Kannada": "ನಿಮ್ಮ ಉತ್ತರವನ್ನು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಲೈಬ್ರರಿಗೆ ಉಳಿಸಲಾಗಿದೆ.",
+        "Tamil": "உங்கள் பதில் உங்கள் தனிப்பட்ட நூலகத்தில் சேமிக்கப்பட்டுள்ளது.",
+        "Telugu": "మీ సమాధానం మీ వ్యక్తిగత లైబ్రరీలో సేవ్ చేయబడింది.",
+        "Marathi": "तुमचे उत्तर तुमच्या वैयक्तिक लायब्ररीत जतन केले आहे.",
+        "Bengali": "আপনার উত্তর আপনার ব্যক্তিগত লাইব্রেরিতে সংরক্ষিত হয়েছে।",
+        "Gujarati": "તમારો જવાબ તમારી વ્યક્તિગત લાઇબ્રેરીમાં સાચવ્યો છે.",
+        "Punjabi": "ਤੁਹਾਡਾ ਜਵਾਬ ਤੁਹਾਡੀ ਨਿੱਜੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ ਹੈ।",
+        "Malayalam": "നിങ്ങളുടെ ഉത്തരം നിങ്ങളുടെ വ്യക്തിഗത ലൈബ്രറിയിൽ സംരക്ഷിച്ചു.",
+        "Odia": "ଆପଣଙ୍କ ଉତ୍ତର ଆପଣଙ୍କ ବ୍ୟକ୍ତିଗତ ଲାଇବ୍ରେରୀରେ ସଞ୍ଚିତ ହୋଇଛି।"
+    },
     "Built for teachers across Bharat. Sign in to save your work and access all tools.": {
         "English": "Built for teachers across Bharat. Sign in to save your work and access all tools.",
         "Hindi": "पूरे भारत के शिक्षकों के लिए बनाया गया। अपना काम सहेजने और सभी टूल्स का उपयोग करने के लिए साइन इन करें।",
