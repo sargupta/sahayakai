@@ -25,6 +25,8 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { saveToLibrary } from "@/app/actions/content";
+import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Removed (audit 2026-04-27): VoiceAssistant import. The global OmniOrb
 // (mounted in app-shell) already provides voice + chat for every page.
 // Mounting both here created the "two voice surfaces" UX bug.
@@ -101,11 +103,31 @@ const PRO_TIP_KEYS = [
 function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [savingToLib, setSavingToLib] = useState(false);
+  const [savedToLib, setSavedToLib] = useState(false);
+  const [lastQuestion, setLastQuestion] = useState<string | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
-  const { clearFormSnapshot } = useJarvisStore();
+  const { clearFormSnapshot, teacherProfile } = useJarvisStore();
   const proTipKey = PRO_TIP_KEYS[new Date().getDate() % PRO_TIP_KEYS.length];
+
+  // UX audit #13: load last question on mount so teacher can pick up
+  // where they left off. Only show if it's recent (within 7 days).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tt-last-question");
+      if (!raw) return;
+      const { q, ts } = JSON.parse(raw);
+      const ageMs = Date.now() - (ts ?? 0);
+      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+      if (q && typeof q === "string" && ageMs < SEVEN_DAYS) {
+        setLastQuestion(q);
+      }
+    } catch {
+      // ignore parse errors / localStorage unavailable
+    }
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -223,6 +245,17 @@ function TeacherTrainingContent() {
       const result = await res.json();
       setAdvice(result);
       clearFormSnapshot("teacher-training");
+      // UX audit #13: persist last question so a returning teacher can
+      // pick up where they left off. Stored client-side only — no PII
+      // crosses to the server beyond the existing API call.
+      try {
+        localStorage.setItem(
+          "tt-last-question",
+          JSON.stringify({ q: values.question, ts: Date.now() }),
+        );
+      } catch {
+        // localStorage may be unavailable (private mode, restricted webview)
+      }
     } catch (error) {
       console.error("Failed to get advice:", error);
       toast({
@@ -252,6 +285,41 @@ function TeacherTrainingContent() {
     form.trigger("question");
   };
 
+  const handleResumeLast = () => {
+    if (!lastQuestion) return;
+    form.setValue("question", lastQuestion);
+    form.trigger("question");
+    setLastQuestion(null); // hide the pill once used
+  };
+
+  const handleSaveToLibrary = async () => {
+    if (!advice || !auth.currentUser) return;
+    setSavingToLib(true);
+    try {
+      const title = form.getValues("question").slice(0, 80);
+      const result = await saveToLibrary(
+        auth.currentUser.uid,
+        "teacher-training",
+        title,
+        advice,
+      );
+      if (result.success) {
+        setSavedToLib(true);
+        toast({ title: t("Saved to your library") });
+      } else {
+        throw new Error(result.error || "Save failed");
+      }
+    } catch (err: any) {
+      toast({
+        title: t("Could not save"),
+        description: err?.message ?? "",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingToLib(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
@@ -279,6 +347,46 @@ function TeacherTrainingContent() {
 
                 {/* LEFT COLUMN: Main Content (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
+                  {/* UX audit #13: previous question affordance — appears
+                      only if a question was asked in the last 7 days. */}
+                  {lastQuestion && (
+                    <button
+                      type="button"
+                      onClick={handleResumeLast}
+                      className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+                    >
+                      <History className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wide">{t("Continue your last question")}</p>
+                        <p className="text-sm text-foreground line-clamp-1">{lastQuestion}</p>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* UX audit #4: example Q&A card — shows first-time visitors
+                      what kind of advice to expect. Builds trust without
+                      demanding upfront commitment. */}
+                  {!advice && !isLoading && (
+                    <details className="rounded-xl border border-border/60 bg-muted/20 group">
+                      <summary className="flex items-center gap-2 p-3 cursor-pointer text-sm font-semibold text-foreground list-none">
+                        <MessageCircleQuestion className="w-4 h-4 text-primary" />
+                        {t("See an example answer")}
+                        <span className="ml-auto text-xs text-muted-foreground group-open:hidden">{t("Tap to expand")}</span>
+                      </summary>
+                      <div className="px-4 pb-4 space-y-2 text-sm">
+                        <p className="font-medium text-foreground">
+                          {t("Q: How do I keep Class 5 students engaged during a 45-minute lesson?")}
+                        </p>
+                        <p className="text-muted-foreground italic">
+                          {t("VIDYA: Break the lesson into three 15-minute chunks…")}
+                          <span className="ml-1 inline-block px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide">
+                            {t("Pedagogy: Spaced repetition")}
+                          </span>
+                        </p>
+                      </div>
+                    </details>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="question"
@@ -408,7 +516,27 @@ function TeacherTrainingContent() {
           <hr className="flex-1 border-border/40" />
         </div>
         <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
-        <ShareToCommunityCTA contentType="teacher-training" className="mt-3" />
+        {/* UX audit #7: save advice to library so the teacher can find it
+            again later (separate from sharing publicly to community). */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSaveToLibrary}
+            disabled={savingToLib || savedToLib}
+            className="gap-2"
+          >
+            {savedToLib ? (
+              <><Save className="h-4 w-4 text-green-600" />{t("Saved to library")}</>
+            ) : savingToLib ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />{t("Saving…")}</>
+            ) : (
+              <><Save className="h-4 w-4" />{t("Save to library")}</>
+            )}
+          </Button>
+          <ShareToCommunityCTA contentType="teacher-training" />
+        </div>
         </>
       )}
 
