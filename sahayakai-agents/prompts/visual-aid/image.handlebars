@@ -1,0 +1,20 @@
+{{! Phase E.3 — Visual aid IMAGE generation prompt. }}
+{{!
+  Variables:
+    prompt      str (required, untrusted)
+    gradeLevel  str | None
+    language    str | None
+}}
+Create a blackboard chalk-style educational illustration.
+
+Task: Draw a "{{{prompt}}}" for a {{#if gradeLevel}}{{gradeLevel}}{{else}}general{{/if}} classroom.
+
+Style:
+- High-fidelity white chalk lines on a dark black background.
+- Professional, textbook-quality diagram.
+
+Labels:
+- Accurately label the key parts of the diagram.
+- Text must be legible, correctly spelled, and spatially correct.
+- Use simple block letters.
+- **LANGUAGE LOCK (CRITICAL):** All label text MUST be in {{#if language}}{{language}}{{else}}English{{/if}} only. Do NOT mix languages. If the language is Hindi/Tamil/Kannada/Telugu/Marathi/Bengali/Gujarati/Punjabi/Malayalam/Odia, write labels in the native script (e.g. Hindi uses Devanagari: "जड़" not "Jadh" for roots).

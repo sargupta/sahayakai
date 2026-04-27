@@ -3,7 +3,8 @@
 export const maxDuration = 120;
 
 import { NextResponse } from 'next/server';
-import { generateVisualAid, VisualAidInputSchema } from '@/ai/flows/visual-aid-designer';
+import { VisualAidInputSchema } from '@/ai/flows/visual-aid-designer';
+import { dispatchVisualAid } from '@/lib/sidecar/visual-aid-dispatch';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
@@ -56,14 +57,21 @@ async function _handler(request: Request) {
 
         const body = VisualAidInputSchema.parse(json);
 
-        // NOTE: checkImageRateLimit is called INSIDE generateVisualAid after
-        // the image is confirmed, so failed/timed-out generations don't consume quota.
-        const output = await generateVisualAid({
+        // Phase E.3: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_VISUAL_AID_MODE env (default: off → Genkit only).
+        // checkImageRateLimit lives inside the Genkit flow's
+        // generateVisualAid so failed/timed-out generations don't
+        // consume quota — preserved when dispatcher falls back.
+        const dispatched = await dispatchVisualAid({
             ...body,
-            userId: userId,
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            imageDataUri: dispatched.imageDataUri,
+            pedagogicalContext: dispatched.pedagogicalContext,
+            discussionSpark: dispatched.discussionSpark,
+            subject: dispatched.subject,
+        });
 
     } catch (error: any) {
         // Zod schema errors → 400 with structured issues (matches other routes).

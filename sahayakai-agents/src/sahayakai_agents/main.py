@@ -21,16 +21,17 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .agents.exam_paper.router import exam_paper_router
 from .agents.instant_answer.router import instant_answer_router
 from .agents.lesson_plan.router import router as lesson_plan_router
 from .agents.parent_call.router import router as parent_call_router
-from .agents.exam_paper.router import exam_paper_router
 from .agents.parent_message.router import parent_message_router
 from .agents.quiz.router import quiz_router
 from .agents.rubric.router import rubric_router
 from .agents.teacher_training.router import teacher_training_router
 from .agents.vidya.router import vidya_router
 from .agents.virtual_field_trip.router import virtual_field_trip_router
+from .agents.visual_aid.router import visual_aid_router
 from .agents.worksheet.router import worksheet_router
 from .auth import auth_middleware
 from .config import get_settings
@@ -229,3 +230,4 @@ app.include_router(virtual_field_trip_router)
 app.include_router(worksheet_router)
 app.include_router(quiz_router)
 app.include_router(exam_paper_router)
+app.include_router(visual_aid_router)
