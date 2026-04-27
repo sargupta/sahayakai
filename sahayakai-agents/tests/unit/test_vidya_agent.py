@@ -37,6 +37,7 @@ def _intent(
     gradeLevel: str | None = None,
     subject: str | None = None,
     language: str | None = None,
+    followUpSuggestion: str | None = None,
 ) -> IntentClassification:
     return IntentClassification(
         type=type,
@@ -44,6 +45,7 @@ def _intent(
         gradeLevel=gradeLevel,
         subject=subject,
         language=language,
+        followUpSuggestion=followUpSuggestion,
     )
 
 

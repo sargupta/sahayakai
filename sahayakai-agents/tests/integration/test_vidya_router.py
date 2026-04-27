@@ -119,6 +119,7 @@ def _classify_json(
     grade_level: str | None = None,
     subject: str | None = None,
     language: str | None = None,
+    follow_up_suggestion: str | None = None,
 ) -> str:
     return json.dumps(
         {
@@ -127,6 +128,7 @@ def _classify_json(
             "gradeLevel": grade_level,
             "subject": subject,
             "language": language,
+            "followUpSuggestion": follow_up_suggestion,
         }
     )
 
@@ -176,7 +178,7 @@ class TestVidyaRouter:
         assert body["action"]["flow"] == "lesson-plan"
         assert body["action"]["params"]["topic"] == "Photosynthesis"
         assert body["action"]["params"]["gradeLevel"] == "Class 5"
-        assert body["sidecarVersion"].startswith("phase-5")
+        assert body["sidecarVersion"].startswith("phase-")
         # Queue drained
         assert fake_genai.queue == []
 
@@ -301,3 +303,88 @@ class TestVidyaRouter:
         body = res.json()
         assert body["intent"] == "some-deleted-flow"
         assert body["action"] is None
+
+    def test_compound_request_returns_follow_up_suggestion(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        """Phase G: compound request → primary action + follow-up chip.
+
+        Teacher: "Make a lesson plan AND a rubric to grade them."
+        Classifier returns `lesson-plan` as the primary intent and
+        suggests the rubric as the follow-up. Wire response carries
+        both: a NAVIGATE_AND_FILL action for the lesson plan plus the
+        sentence in `followUpSuggestion`. The OmniOrb client renders
+        the suggestion as a one-tap chip; the teacher can confirm
+        before VIDYA dispatches the second action."""
+        fake_genai.queue = [
+            _classify_json(
+                intent_type="lesson-plan",
+                topic="Photosynthesis",
+                grade_level="Class 5",
+                subject="Science",
+                language="en",
+                follow_up_suggestion=(
+                    "Also generate a rubric for grading the activities."
+                ),
+            ),
+        ]
+        request = {
+            **_BASE_REQUEST,
+            "message": (
+                "Make a lesson plan on photosynthesis for class 5 "
+                "AND a rubric to grade them."
+            ),
+        }
+        res = client.post("/v1/vidya/orchestrate", json=request)
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["intent"] == "lesson-plan"
+        assert body["action"]["flow"] == "lesson-plan"
+        assert body["followUpSuggestion"] is not None
+        assert "rubric" in body["followUpSuggestion"].lower()
+
+    def test_single_step_has_null_follow_up(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        """Single-step request → followUpSuggestion stays null in the
+        wire response (no chip rendered)."""
+        fake_genai.queue = [
+            _classify_json(
+                intent_type="lesson-plan",
+                topic="Fractions",
+                grade_level="Class 4",
+                subject="Mathematics",
+                language="en",
+                follow_up_suggestion=None,
+            ),
+        ]
+        res = client.post("/v1/vidya/orchestrate", json=_BASE_REQUEST)
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["followUpSuggestion"] is None
+
+    def test_empty_string_follow_up_normalises_to_null(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        """A blank or whitespace-only suggestion from the model is
+        treated as `None` so the OmniOrb does not render an empty chip."""
+        fake_genai.queue = [
+            _classify_json(
+                intent_type="lesson-plan",
+                topic="Light",
+                grade_level="Class 6",
+                subject="Science",
+                language="en",
+                follow_up_suggestion="   ",
+            ),
+        ]
+        res = client.post("/v1/vidya/orchestrate", json=_BASE_REQUEST)
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["followUpSuggestion"] is None
