@@ -46,6 +46,11 @@ export function OmniOrb() {
         mergeTeacherProfile,
     } = useJarvisStore();
 
+    // 2026-04-26: hide OmniOrb when the page-mounted VoiceAssistant chat
+    // dialog is open. Prevents two voice surfaces (floating mic + chat
+    // dialog with its own mic) from competing for the teacher's attention.
+    const voiceDialogOpen = useJarvisStore(s => s.voiceDialogOpen);
+
     const [orbPos, setOrbPos] = useState({ x: 0, y: 0 });
     const [isClient, setIsClient] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -348,6 +353,10 @@ export function OmniOrb() {
     // ── Exclude Orb from specific pages ─────────────────────────────────
     const excludedPages = ["/onboarding", "/"];
     if (excludedPages.includes(pathname)) return null;
+
+    // 2026-04-26: hide when the page-mounted VoiceAssistant chat dialog
+    // is open. Prevents two simultaneous voice surfaces (UX bug).
+    if (voiceDialogOpen) return null;
 
     return (
         <div

@@ -194,6 +194,15 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
     // for the last-resort fallback when neither STT nor script detection
     // yields a language for the current turn.
     const teacherProfile = useJarvisStore(s => s.teacherProfile);
+    const setVoiceDialogOpen = useJarvisStore(s => s.setVoiceDialogOpen);
+
+    // Coordinate with OmniOrb — when this dialog is open, OmniOrb hides
+    // itself to prevent two simultaneous voice surfaces (UX bug from
+    // 2026-04-26 screenshot review).
+    useEffect(() => {
+        setVoiceDialogOpen(isOpen);
+        return () => setVoiceDialogOpen(false);
+    }, [isOpen, setVoiceDialogOpen]);
 
     // Session-sticky language. Null until the first turn resolves a language.
     // Resets on: new conversation (resetSession), page reload (in-memory state
