@@ -276,6 +276,31 @@ export async function trackDownloadAction(resourceId: string) {
 // uid + ttl. The auth check stays OUT of the cached body — `headers()` isn't
 // available inside `unstable_cache` callbacks. Revalidate via
 // `invalidateUserCache('recs', uid)` after follow / connect mutations.
+/**
+ * Returns true if this user doc should NEVER appear in production-facing
+ * teacher discovery surfaces (People You May Know, Find Teachers, etc).
+ *
+ * Catches:
+ *  - Dev / QA / impersonation accounts that leaked into the prod users
+ *    collection. We were showing "Dev Principal (impersonat..." in
+ *    sarguptaw's recommendations. Fix is name-pattern based because we
+ *    don't have an explicit isDevAccount flag yet.
+ *  - Anyone whose own profile says they don't want to be discovered
+ *    (when we eventually wire that flag).
+ *
+ * AI personas are deliberately NOT excluded — they ARE the seed
+ * community and the whole point is that they show up as discoverable
+ * teachers until enough real teachers join.
+ */
+function isHiddenFromDiscovery(teacher: { uid?: string; displayName?: string }): boolean {
+    const name = (teacher.displayName ?? '').toLowerCase();
+    if (!name) return false;
+    // Conservative deny-list: substring match catches "Dev Principal",
+    // "Dev Test User", "QA Account", "test impersonation", etc. without
+    // false-positiving on real names like "Devansh" (which has no space).
+    return /\b(dev|qa|test|impersonat|sample|dummy|placeholder)\b/i.test(name);
+}
+
 const _recommendedTeachersFor = cachedPerUser(
     async (uid: string): Promise<TeacherSuggestion[]> => {
         const db = await getDb();
@@ -305,7 +330,8 @@ const _recommendedTeachersFor = cachedPerUser(
 
         const candidates = snapshot.docs
             .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-            .filter(teacher => !excludeIds.includes(teacher.uid));
+            .filter(teacher => !excludeIds.includes(teacher.uid))
+            .filter(teacher => !isHiddenFromDiscovery(teacher));
 
         // 3. Multi-tier scoring (same logic as before)
         const scored = candidates.map(teacher => {
@@ -382,7 +408,8 @@ const _allTeachersFor = cachedPerUser(
 
         const teachers = snapshot.docs
             .map(doc => ({ uid: doc.id, ...doc.data() } as any))
-            .filter(teacher => teacher.uid !== selfUid);
+            .filter(teacher => teacher.uid !== selfUid)
+            .filter(teacher => !isHiddenFromDiscovery(teacher));
 
         const sanitized: TeacherSuggestion[] = teachers.map(t => {
             const name = t.displayName
