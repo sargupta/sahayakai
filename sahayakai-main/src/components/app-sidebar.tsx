@@ -152,14 +152,30 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>{t("Create")}</SidebarGroupLabel>
           <SidebarMenu>
-            <FeatureSpotlight
-              id={SPOTLIGHT_IDS.SIDEBAR_LESSON_PLAN}
-              message="Start here! Create your first lesson plan"
-              seenSpotlights={spotlightsSeen}
-              onDismiss={handleSpotlightDismiss}
-              position="right"
-              delay={1000}
-            >
+            {/* Bug #5 (audit 2026-04-27): FeatureSpotlight was rendering its
+                pulse-ring around Lesson Plan for unauthenticated visitors too,
+                creating the "two active items" visual conflict. Now gated to
+                authenticated NEW users only — established users + signed-out
+                visitors get the plain item with only the real isActive style. */}
+            {sidebarUserId && isNewUser ? (
+              <FeatureSpotlight
+                id={SPOTLIGHT_IDS.SIDEBAR_LESSON_PLAN}
+                message="Start here! Create your first lesson plan"
+                seenSpotlights={spotlightsSeen}
+                onDismiss={handleSpotlightDismiss}
+                position="right"
+                delay={1000}
+              >
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip={t("Lesson Plan")}>
+                    <Link href="/lesson-plan" onClick={() => handleNavClick('/lesson-plan')}>
+                      <CalendarDays />
+                      <span>{t("Lesson Plan")}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </FeatureSpotlight>
+            ) : (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip={t("Lesson Plan")}>
                   <Link href="/lesson-plan" onClick={() => handleNavClick('/lesson-plan')}>
@@ -168,7 +184,7 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </FeatureSpotlight>
+            )}
             {canShowAdvanced && (
               <>
                 <SidebarMenuItem>

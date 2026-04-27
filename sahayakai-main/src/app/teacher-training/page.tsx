@@ -21,10 +21,13 @@ import { SubjectSelector } from "@/components/subject-selector";
 import { TeacherTrainingDisplay } from "@/components/teacher-training-display";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { InlineMicButton } from "@/components/layout";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-import { VoiceAssistant } from "@/components/voice-assistant";
+// Removed (audit 2026-04-27): VoiceAssistant import. The global OmniOrb
+// (mounted in app-shell) already provides voice + chat for every page.
+// Mounting both here created the "two voice surfaces" UX bug.
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
@@ -85,6 +88,16 @@ const placeholderTranslations: Record<string, string> = {
   kn: "ಉದಾ., 'ನನ್ನ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಕೂಗದೆ ಸುಮ್ಮನಿರಿಸುವುದು ಹೇಗೆ?'",
 };
 
+// UX audit #5: rotate through 4 useful pro tips so the sidebar tip
+// isn't static across visits. Index advances daily based on date so
+// the same tip stays for a session but changes day-to-day.
+const PRO_TIP_KEYS = [
+  "Be specific about your students' age group and the context (e.g., \"Class 5 students in a rural school\").",
+  "Mention what you have already tried — VIDYA can suggest the next step instead of repeating the basics.",
+  "Ask follow-up questions. Each answer can be refined: \"That worked, but what about students who still don't engage?\"",
+  "Share what subject or chapter you are teaching — advice is sharper when the context is concrete.",
+] as const;
+
 function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +105,7 @@ function TeacherTrainingContent() {
   const { t } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
+  const proTipKey = PRO_TIP_KEYS[new Date().getDate() % PRO_TIP_KEYS.length];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -349,7 +363,7 @@ function TeacherTrainingContent() {
                       <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-foreground text-sm mb-1">{t("Pro Tip")}</p>
-                        <p className="text-sm text-muted-foreground">{t("Be specific about your students' age group and the context (e.g., \"Class 5 students in a rural school\").")}</p>
+                        <p className="text-sm text-muted-foreground">{t(proTipKey)}</p>
                       </div>
                     </div>
                   </div>
@@ -398,10 +412,6 @@ function TeacherTrainingContent() {
         </>
       )}
 
-      {/* Floating Assistant (Safe Mode) */}
-      <VoiceAssistant
-        context={advice ? JSON.stringify(advice) : "No advice yet."}
-      />
     </div>
   );
 }
@@ -409,7 +419,17 @@ function TeacherTrainingContent() {
 export default function TeacherTrainingPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
-      <TeacherTrainingContent />
+      {/* Bug #6 (audit 2026-04-27): the form was rendering for unauthenticated
+          visitors but Get Advice would fail at the API layer. Wrap in AuthGate
+          so signed-out teachers get a clean sign-in prompt instead of filling
+          a form that silently breaks. */}
+      <AuthGate
+        icon={GraduationCap}
+        title="Sign in to ask the AI Coach"
+        description="Get advice grounded in pedagogical principles — sign in to ask anything about teaching."
+      >
+        <TeacherTrainingContent />
+      </AuthGate>
     </Suspense>
   );
 }
