@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateAvatar } from '@/ai/flows/avatar-generator';
+import { dispatchAvatar } from '@/lib/sidecar/avatar-generator-dispatch';
 import { checkImageRateLimit } from '@/lib/server-safety';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
@@ -13,8 +13,14 @@ async function _handler(request: NextRequest) {
         }
         const body = await request.json();
         await checkImageRateLimit(userId);
-        const output = await generateAvatar({ ...body, userId });
-        return NextResponse.json(output);
+        // Phase F.2: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_AVATAR_MODE env (default: off → Genkit only).
+        // Sidecar generates only the image; Storage write happens in
+        // the dispatcher when sidecar is the source.
+        const dispatched = await dispatchAvatar({ ...body, userId });
+        return NextResponse.json({
+            imageDataUri: dispatched.imageDataUri,
+        });
     } catch (error) {
         logAIError(error, 'AVATAR', { message: 'Avatar generation API failed' });
         const message = error instanceof Error ? error.message : String(error);
