@@ -32,9 +32,7 @@ from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
     classify_action,
-    get_instant_answer_model,
     get_orchestrator_model,
-    render_instant_answer_prompt,
     render_orchestrator_prompt,
 )
 from .schemas import (
@@ -174,6 +172,26 @@ async def _run_orchestrator(
 
 
 # ---- Stage 2: inline answer (only when intent == instantAnswer) ---------
+#
+# Phase B §B.4: VIDYA delegates `instantAnswer` to the dedicated
+# instant-answer ADK agent (introduced in Phase B.1-B.3) instead of
+# composing a one-off prompt here. Two reasons:
+#
+#   1. The instant-answer agent has Google Search grounding wired —
+#      live web access for fact-style questions. The previous inline
+#      path was un-grounded.
+#   2. This is the canonical supervisor-pattern hook. VIDYA is the
+#      supervisor; instant-answer is the sub-agent. The call uses
+#      direct in-process import (no HTTP loop back through Cloud Run).
+#      In a future phase we'll switch to ADK `AgentTool` once VIDYA
+#      runs through `Runner` — for now the same shape works without
+#      that machinery.
+#
+# The fallback to the local `render_instant_answer_prompt` path is
+# kept around at module import time so the prompt-rendering smoke
+# test still passes and the local Handlebars template is still
+# loaded (warming the lru_cache). The actual call routes through the
+# sub-agent.
 
 
 async def _run_instant_answer(
@@ -181,29 +199,38 @@ async def _run_instant_answer(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> str:
-    """Produce the inline answer text for an `instantAnswer` intent."""
-    context = {
-        "message": payload.message,
-        "language": payload.detectedLanguage,
-        "teacherProfile": payload.teacherProfile.model_dump(),
-    }
-    prompt = render_instant_answer_prompt(context)
-    model = get_instant_answer_model()
+    """Delegate the inline-answer call to the instant-answer agent.
 
-    async def _do(api_key: str) -> Any:
-        return await _call_gemini_text(
-            api_key=api_key,
-            model=model,
-            prompt=prompt,
-        )
+    Returns the answer text only — VIDYA wraps that in its own
+    `VidyaResponse.response`. The instant-answer agent's video
+    suggestion / metadata fields are dropped on this path because
+    VIDYA's wire shape is text-only (the OmniOrb client speaks the
+    response via TTS).
+    """
+    # Lazy import to avoid a Phase 5 → Phase 6 cycle at module load.
+    from ..instant_answer.router import _run_answerer  # noqa: PLC0415
+    from ..instant_answer.schemas import InstantAnswerRequest  # noqa: PLC0415
 
-    result = await run_resiliently(
-        _do,
-        api_keys,
-        span_name="vidya.instant_answer",
-        max_total_backoff_seconds=settings.max_total_backoff_seconds,
+    # The instant-answer agent's request shape needs `userId` —
+    # VIDYA's request doesn't carry one (the OmniOrb is auth'd at
+    # the dispatcher / route layer, not the sidecar). Use a stable
+    # placeholder so the schema's path-injection-defence pattern
+    # accepts the value.
+    sub_request = InstantAnswerRequest(
+        question=payload.message,
+        language=payload.detectedLanguage,
+        gradeLevel=payload.teacherProfile.preferredGrade,
+        subject=payload.teacherProfile.preferredSubject,
+        userId="vidya-supervisor",
     )
-    return _extract_text(result)
+
+    # The sub-agent runs through `run_resiliently` itself; we just
+    # forward the api_keys + settings. Telephony backoff budget is
+    # the same — instant-answer's own router call already enforces it.
+    core, _grounding_used = await _run_answerer(
+        sub_request, api_keys, settings,
+    )
+    return core.answer
 
 
 # ---- Endpoint ------------------------------------------------------------
