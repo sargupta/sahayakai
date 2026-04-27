@@ -1,24 +1,30 @@
 /**
- * Video storyteller dispatcher (Phase F.1).
+ * Video storyteller dispatcher (Phase F.1, refined Phase M.1).
  *
- * The Genkit `getVideoRecommendations` orchestrates: cache check, parallel
- * RSS + AI fetch, YouTube search, deterministic local ranking, curated
- * fallback merge, cache write. The sidecar replaces ONLY the AI call
- * (categories + personalizedMessage).
+ * The Genkit `getVideoRecommendations` originally orchestrated: cache
+ * check, parallel RSS + AI fetch, YouTube search, deterministic local
+ * ranking, curated fallback merge, cache write. The sidecar replaces
+ * ONLY the AI call (categories + personalizedMessage).
  *
  * Modes:
- * - `off`     : pure passthrough to Genkit `getVideoRecommendations`.
+ * - `off`     : pure passthrough to Genkit `getVideoRecommendations`
+ *               (one Gemini call inside).
  * - `shadow`  : run Genkit; in parallel call sidecar; return Genkit;
- *               log diff for offline parity scoring.
+ *               log diff for offline parity scoring (one Gemini +
+ *               one sidecar call — only Genkit's output is used).
  * - `canary`/
- *   `full`   : call sidecar for AI (categories + personalizedMessage);
- *               then call Genkit `getVideoRecommendations` to fill in
- *               `categorizedVideos`; merge so the response uses
- *               sidecar's `categories` + `personalizedMessage` and
- *               Genkit's `categorizedVideos` + cache metadata.
+ *   `full`   : call sidecar for AI (categories + personalizedMessage)
+ *               and `getVideoCategorySearchResults` for the YouTube
+ *               half. The YouTube half is local + RSS + YouTube Data
+ *               API only — NO Gemini call.
  *
- * Flag default is `off`. For Phase F.1 we ship the wiring; flag flip
- * happens later with parity evidence.
+ * Phase M.1 forensic fix (P0 #8): canary/full previously ran BOTH
+ * sidecar AND `getVideoRecommendations` in parallel. Sidecar produced
+ * categories+message; Genkit produced categorizedVideos but ALSO
+ * wasted a Gemini call producing categories+message we discarded.
+ * This was a permanent +100% AI spend at any rollout %. The split
+ * exposes the two halves so the AI half runs exactly ONCE per
+ * dispatched request, regardless of mode or sidecar success.
  *
  * Phase K (forensic audit P0 #2): video-storyteller does NOT persist
  * to a per-user library (recommendations are cached at the system
@@ -27,9 +33,13 @@
  * a sidecar-routed call cannot bypass `checkServerRateLimit`.
  */
 import {
+    getVideoCategorySearchResults,
     getVideoRecommendations,
 } from '@/ai/flows/video-storyteller';
-import type { VideoStorytellerInput } from '@/ai/schemas/video-storyteller';
+import type {
+    VideoStorytellerInput,
+    VideoStorytellerOutput,
+} from '@/ai/schemas/video-storyteller';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarVideoStoryteller,
@@ -155,17 +165,31 @@ function genkitToDispatched(
     };
 }
 
+/**
+ * Merges sidecar AI result with the videos-only result from
+ * `getVideoCategorySearchResults`. NOTE Phase M.1: the second arg used
+ * to be the full `getVideoRecommendations` output (which contained its
+ * own redundant `categories` + `personalizedMessage` fields built by a
+ * second Gemini call). It is now the YouTube-only shape, so we never
+ * accidentally surface Genkit's discarded category data.
+ *
+ * The signature accepts a loose `Record<string, any>` because both
+ * the cache-hit path and the live-fetch path of
+ * `getVideoCategorySearchResults` return slightly different shapes
+ * (cache-hit also has profileHash, expiresAt, etc.) — we read only
+ * the fields we care about.
+ */
 function mergedToDispatched(
     sidecar: SidecarVideoStorytellerResponse,
-    genkitOut: Record<string, any>,
+    videosOnly: Record<string, any>,
     decision: VideoStorytellerSidecarDecision,
 ): DispatchedVideoStoryteller {
     return {
         categories: sidecar.categories,
         personalizedMessage: sidecar.personalizedMessage,
-        categorizedVideos: genkitOut.categorizedVideos ?? {},
-        fromCache: Boolean(genkitOut.fromCache),
-        latencyScore: Number(genkitOut.latencyScore ?? 0),
+        categorizedVideos: videosOnly.categorizedVideos ?? {},
+        fromCache: Boolean(videosOnly.fromCache),
+        latencyScore: Number(videosOnly.latencyScore ?? 0),
         source: 'sidecar+genkit_videos',
         decision,
         sidecarTelemetry: {
@@ -182,6 +206,33 @@ async function runGenkitSafe(input: VideoStorytellerDispatchInput) {
             getVideoRecommendations(input),
             FALLBACK_TIMEOUT_MS,
             'video-storyteller genkit fallback',
+        );
+        return { ok: true as const, out };
+    } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        if (e.name === 'AbortError') throw e;
+        return { ok: false as const, error: e };
+    }
+}
+
+/**
+ * Phase M.1: YouTube-only branch used by canary/full when sidecar
+ * succeeds. Calls `getVideoCategorySearchResults` (no Gemini) to do
+ * cache check + RSS + YouTube Data API + local ranking + curated
+ * merge. Wrapped with the same timeout budget as the Genkit fallback.
+ */
+async function runVideosOnlySafe(
+    input: VideoStorytellerDispatchInput,
+    aiResult: {
+        categories: VideoStorytellerOutput['categories'];
+        personalizedMessage: string;
+    },
+) {
+    try {
+        const out = await withTimeout(
+            getVideoCategorySearchResults(input, aiResult),
+            FALLBACK_TIMEOUT_MS,
+            'video-storyteller youtube-only',
         );
         return { ok: true as const, out };
     } catch (err) {
@@ -231,7 +282,11 @@ export async function dispatchVideoStoryteller(
             FALLBACK_TIMEOUT_MS,
             'video-storyteller genkit fallback',
         );
-        logDispatch(decision, { source: 'genkit', uid: input.userId });
+        logDispatch(decision, {
+            source: 'genkit',
+            uid: input.userId,
+            aiCallsCount: 1,
+        });
         return genkitToDispatched(out, 'genkit', decision);
     }
 
@@ -240,11 +295,18 @@ export async function dispatchVideoStoryteller(
             runGenkitSafe(input),
             runSidecarSafe(sidecarRequest),
         ]);
+        // Shadow keeps both calls live (one Genkit, one sidecar) so we
+        // can score parity offline — we DO NOT count this as a single
+        // AI call: the user-facing call is Genkit (1) but the sidecar
+        // shadow is also a Gemini-equivalent. Surfacing both counts so
+        // the cost dashboard can see shadow's true overhead.
         logDispatch(decision, {
             source: 'genkit',
             uid: input.userId,
             sidecarOk: sidecar.ok,
             sidecarLatencyMs: sidecar.latencyMs,
+            aiCallsCount: 1,
+            shadowSidecarCalled: true,
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);
@@ -261,43 +323,81 @@ export async function dispatchVideoStoryteller(
         await checkServerRateLimit(input.userId);
     }
 
-    // canary / full: call sidecar AND genkit (genkit fills in
-    // categorizedVideos, since YouTube search + ranking stays in Next.js).
-    const [sidecar, genkit] = await Promise.all([
-        runSidecarSafe(sidecarRequest),
-        runGenkitSafe(input),
-    ]);
+    // Phase M.1 — canary / full now does NOT call
+    // `getVideoRecommendations` (which would invoke Gemini twice).
+    // Instead: sidecar produces categories + personalizedMessage; the
+    // YouTube-only `getVideoCategorySearchResults` produces
+    // categorizedVideos + cache metadata. Total Gemini calls: 1.
+    //
+    // We call the sidecar first; on success we then run the YouTube
+    // branch with sidecar's categories. On sidecar failure we fall
+    // back to the legacy `getVideoRecommendations` (one Gemini call
+    // inside) so the user still gets a result.
+    const sidecar = await runSidecarSafe(sidecarRequest);
 
-    if (sidecar.ok && genkit.ok) {
-        logDispatch(decision, {
-            source: 'sidecar+genkit_videos',
-            uid: input.userId,
-            sidecarLatencyMs: sidecar.latencyMs,
-        });
-        return mergedToDispatched(sidecar.res, genkit.out, decision);
+    if (sidecar.ok) {
+        const aiResult = {
+            categories: sidecar.res.categories,
+            personalizedMessage: sidecar.res.personalizedMessage,
+        };
+        const videos = await runVideosOnlySafe(input, aiResult);
+
+        if (videos.ok) {
+            logDispatch(decision, {
+                source: 'sidecar+genkit_videos',
+                uid: input.userId,
+                sidecarLatencyMs: sidecar.latencyMs,
+                aiCallsCount: 1,
+            });
+            return mergedToDispatched(sidecar.res, videos.out, decision);
+        }
+
+        // Sidecar succeeded but YouTube branch failed. Fall back to the
+        // full Genkit path so the user still gets a result. This costs
+        // one extra Gemini call (worst case), but this branch is rare
+        // (RSS + YouTube both went wrong).
+        const genkitFallback = await runGenkitSafe(input);
+        if (genkitFallback.ok) {
+            logDispatch(decision, {
+                source: 'genkit_fallback',
+                uid: input.userId,
+                sidecarErrorClass: 'youtube_branch_failed',
+                sidecarLatencyMs: sidecar.latencyMs,
+                aiCallsCount: 1,
+            });
+            return genkitToDispatched(
+                genkitFallback.out,
+                'genkit_fallback',
+                decision,
+            );
+        }
+        throw videos.error;
     }
 
-    if (!sidecar.ok && genkit.ok) {
-        const errorClass =
-            sidecar.error instanceof VideoStorytellerSidecarBehaviouralError
-                ? 'behavioural'
-                : sidecar.error instanceof VideoStorytellerSidecarTimeoutError
-                  ? 'timeout'
-                  : sidecar.error instanceof VideoStorytellerSidecarHttpError
-                    ? 'http'
-                    : sidecar.error instanceof VideoStorytellerSidecarConfigError
-                      ? 'config'
-                      : 'unknown';
+    // Sidecar failed — full Genkit fallback. ONE Gemini call inside
+    // `getVideoRecommendations`. Total Gemini calls for this request: 1.
+    const errorClass =
+        sidecar.error instanceof VideoStorytellerSidecarBehaviouralError
+            ? 'behavioural'
+            : sidecar.error instanceof VideoStorytellerSidecarTimeoutError
+              ? 'timeout'
+              : sidecar.error instanceof VideoStorytellerSidecarHttpError
+                ? 'http'
+                : sidecar.error instanceof VideoStorytellerSidecarConfigError
+                  ? 'config'
+                  : 'unknown';
+
+    const genkit = await runGenkitSafe(input);
+    if (genkit.ok) {
         logDispatch(decision, {
             source: 'genkit_fallback',
             uid: input.userId,
             sidecarErrorClass: errorClass,
             sidecarLatencyMs: sidecar.latencyMs,
+            aiCallsCount: 1,
         });
         return genkitToDispatched(genkit.out, 'genkit_fallback', decision);
     }
 
-    if (!genkit.ok) throw genkit.error;
-    // Both failed (shouldn't reach here because we throw above).
-    throw new Error('video-storyteller dispatcher: both sidecar and genkit failed');
+    throw genkit.error;
 }
