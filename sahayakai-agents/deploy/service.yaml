@@ -33,11 +33,12 @@ spec:
         run.googleapis.com/startup-cpu-boost: "true"
     spec:
       serviceAccountName: sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
-      # Round-2 audit P0 TIMEOUT-1: was 12s. Next.js client times out
-      # at 3.5s; resilience-layer max_total_backoff is 7s. Cap at 8s so
-      # any request that genuinely runs longer than the client cares
-      # about dies promptly instead of pinning the instance.
-      timeoutSeconds: 8
+      # 120 s budget covers visual-aid + avatar 90 s image generation,
+      # voice-to-text 60 s, lesson-plan multi-stage. 30 s safety margin.
+      # The dispatcher's per-call TIMEOUT_MS still bounds the
+      # user-visible deadline; this only sets the upper bound for
+      # asyncio.wait_for budgets in the routers.
+      timeoutSeconds: 120
       containerConcurrency: 20 # Tune via load test post G10.
       containers:
         - image: ${IMAGE}

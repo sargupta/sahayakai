@@ -30,6 +30,7 @@ class TestAgentCardShape:
     def test_protocol_version_is_present(self) -> None:
         card = build_agent_card(audience="https://example.run.app")
         assert card["protocolVersion"] == A2A_PROTOCOL_VERSION
+        assert card["protocolVersion"] == "0.3"
 
     def test_card_has_supervisor_name(self) -> None:
         card = build_agent_card(audience="https://example.run.app")
@@ -38,6 +39,7 @@ class TestAgentCardShape:
     def test_card_version_pinned(self) -> None:
         card = build_agent_card(audience=None)
         assert card["version"] == AGENT_CARD_VERSION
+        assert card["version"] == "0.3.0"
 
     def test_audience_falls_back_to_localhost(self) -> None:
         card = build_agent_card(audience=None)
@@ -72,6 +74,19 @@ class TestSecuritySchemes:
         assert scheme["type"] == "apiKey"
         assert scheme["in"] == "header"
         assert scheme["name"] == "X-Content-Digest"
+
+    def test_hmac_scheme_documents_per_request_nature(self) -> None:
+        card = build_agent_card(audience=None)
+        schemes = card["securitySchemes"]
+        assert isinstance(schemes, dict)
+        scheme = schemes["hmacContentDigest"]
+        # Description must clarify the digest is recomputed per
+        # request — not a static API key. Prevents external A2A
+        # consumers from caching the value as if it were a token.
+        assert "Per-request HMAC" in scheme["description"]
+        # Extended field flagging the per-request semantics. A2A 0.3
+        # allows `x-` prefixed fields for vendor-specific metadata.
+        assert scheme.get("x-hmac-body-digest") is True
 
     def test_security_requires_both_schemes(self) -> None:
         card = build_agent_card(audience=None)

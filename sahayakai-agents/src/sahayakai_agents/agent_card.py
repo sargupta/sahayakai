@@ -23,12 +23,12 @@ from typing import Any
 
 from .agents.vidya.registry import INLINE_AGENTS, SUB_AGENTS
 
-A2A_PROTOCOL_VERSION = "0.2"
+A2A_PROTOCOL_VERSION = "0.3"
 
 # Pinned semver tagged per release cut. Bumped when wire schemas
 # change. The sidecar version (router-level) is independent — it
 # tracks per-agent revisions; agent-card version tracks the FLEET.
-AGENT_CARD_VERSION = "0.2.0"
+AGENT_CARD_VERSION = "0.3.0"
 
 
 def _supervisor_skills() -> list[dict[str, Any]]:
@@ -140,12 +140,13 @@ def _security_schemes() -> dict[str, Any]:
             "type": "apiKey",
             "in": "header",
             "name": "X-Content-Digest",
+            "x-hmac-body-digest": True,
             "description": (
-                "HMAC-SHA256 of the raw request body using the shared "
-                "key in Secret Manager (`SAHAYAKAI_REQUEST_SIGNING_KEY`). "
-                "Sent as `sha256=<base64>`. Combined with "
-                "`X-Request-Timestamp` (RFC-3339) the request becomes "
-                "replay-safe within a 5-minute window."
+                "Per-request HMAC-SHA256 body digest. Computed as "
+                "`sha256=<base64(hmac(secret, timestamp + ':' + body))>`. "
+                "NOT a static API key — recomputed per request. "
+                "Send as `X-Content-Digest` header alongside "
+                "`X-Request-Timestamp` (RFC-3339 within 5-min skew window)."
             ),
         },
     }
