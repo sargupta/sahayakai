@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { generateRubric, RubricGeneratorInputSchema } from '@/ai/flows/rubric-generator';
+import { RubricGeneratorInputSchema } from '@/ai/flows/rubric-generator';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchRubric } from '@/lib/sidecar/rubric-dispatch';
 
 /**
  * @swagger
@@ -53,12 +54,19 @@ async function _handler(request: Request) {
 
         const body = RubricGeneratorInputSchema.parse(json);
 
-        const output = await generateRubric({
+        // Phase D.1: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_RUBRIC_MODE env (default: off → Genkit only).
+        const dispatched = await dispatchRubric({
             ...body,
-            userId: userId,
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            title: dispatched.title,
+            description: dispatched.description,
+            criteria: dispatched.criteria,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+        });
 
     } catch (error) {
         return handleAIError(error, 'RUBRIC', {
