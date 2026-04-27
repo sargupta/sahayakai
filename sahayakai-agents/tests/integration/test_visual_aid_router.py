@@ -1,15 +1,35 @@
-"""Integration test for visual aid router (Phase E.3)."""
+"""Integration test for visual aid router (Phase E.3 + Phase L.5).
+
+Phase L.5 fixture redesign — same strategy as L.1 vidya:
+
+The image + metadata stages now run through ADK's `Runner.run_async`
+against a `SequentialAgent`. The pre-L.5 `sys.modules["google.genai"]
+= _FakeGenai()` shim is incompatible with that machinery (ADK loads
+`google.genai.errors.ClientError` + `google.genai.types.Content` at
+import time, and replacing the whole module breaks both).
+
+New strategy — patch at one surgical point:
+
+  `_run_pipeline_via_runner` in `agents.visual_aid.router` is monkey-
+  patched to pop one entry off a shared queue and return the
+  `(image_bytes, image_mime, VisualAidMetadata)` tuple directly. This
+  bypasses ADK Runner entirely for the test, which is fine because
+  ADK Runner machinery is itself covered by ADK's own test suite +
+  the new `tests/unit/test_visual_aid_adk.py`.
+"""
 from __future__ import annotations
 
 import base64
 import json
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.visual_aid import router as visual_aid_router_mod
+from sahayakai_agents.agents.visual_aid.schemas import VisualAidMetadata
 from sahayakai_agents.main import app
+from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 
@@ -20,100 +40,87 @@ _TINY_PNG_BYTES = base64.b64decode(
 )
 
 
-class _FakeUsageMeta:
-    input_tokens = 800
-    output_tokens = 200
-    total_tokens = 1000
-    cached_content_tokens = 0
-
-
-class _FakeInlineData:
-    def __init__(self, data: bytes, mime_type: str) -> None:
-        self.data = data
-        self.mime_type = mime_type
-
-
-class _FakePart:
-    def __init__(self, *, text: str | None = None, inline_data: _FakeInlineData | None = None) -> None:
-        self.text = text
-        self.inline_data = inline_data
-
-
-class _FakeContent:
-    def __init__(self, parts: list[_FakePart]) -> None:
-        self.parts = parts
-
-
-class _FakeCandidate:
-    def __init__(self, *, parts: list[_FakePart]) -> None:
-        self.content = _FakeContent(parts)
-
-
-class _FakeImageResult:
-    def __init__(self, image_bytes: bytes, mime: str) -> None:
-        self.usage_metadata = _FakeUsageMeta()
-        self.text = None
-        self.candidates = [
-            _FakeCandidate(parts=[_FakePart(inline_data=_FakeInlineData(image_bytes, mime))]),
-        ]
-
-
-class _FakeTextResult:
-    def __init__(self, text: str) -> None:
-        self.text = text
-        self.usage_metadata = _FakeUsageMeta()
-        self.candidates: list[Any] = []
-
-
-class _SequencedFakeAioModels:
+class _QueueFake:
     """Each call returns the next item from a queue.
 
     Items can be either:
-      - `_FakeImageResult` (for image-generation calls)
-      - `_FakeTextResult` (for metadata calls)
-      - a string (interpreted as a `_FakeTextResult` for metadata)
+      - A `(image_bytes, image_mime, metadata_text_or_dict)` tuple for
+        the happy path.
+      - A `_RaiseAgentError(...)` sentinel that re-raises the configured
+        AgentError to simulate stage-level failures.
     """
 
     def __init__(self) -> None:
         self.queue: list[Any] = []
 
-    async def generate_content(self, **kwargs: Any) -> Any:
+    def pop(self) -> Any:
         if not self.queue:
-            raise AssertionError("Test fake: more calls than expected")
-        nxt = self.queue.pop(0)
-        if isinstance(nxt, str):
-            return _FakeTextResult(nxt)
-        return nxt
+            raise AssertionError(
+                "Test fake: more pipeline calls than test queued"
+            )
+        return self.queue.pop(0)
 
 
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
+class _RaiseAgentError:
+    """Sentinel — when the fake pops this, raise the configured AgentError."""
 
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models
+    def __init__(self, *, code: str, message: str, http_status: int) -> None:
+        self.code = code
+        self.message = message
+        self.http_status = http_status
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    models = _SequencedFakeAioModels()
+def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch `_run_pipeline_via_runner` to consume a queue of canned outputs.
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    Each pop should be either:
+      - `(image_bytes, image_mime, VisualAidMetadata | str | dict)`. If
+        the metadata field is a string or dict, the fake validates it
+        through `VisualAidMetadata.model_validate_json` (string) or
+        `model_validate` (dict), matching what the real Runner would
+        do via `output_schema=VisualAidMetadata`.
+      - `_RaiseAgentError(...)` — the fake raises the corresponding
+        AgentError to simulate a stage-level failure (no image data,
+        malformed metadata JSON, etc.).
+    """
+    fake = _QueueFake()
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
+    async def _fake_run_pipeline_via_runner(
+        *, image_prompt: str, metadata_prompt: str, api_key: str,
+    ) -> tuple[bytes, str, VisualAidMetadata]:
+        nxt = fake.pop()
+        if isinstance(nxt, _RaiseAgentError):
+            raise AgentError(
+                code=nxt.code,
+                message=nxt.message,
+                http_status=nxt.http_status,
+            )
+        image_bytes, image_mime, meta = nxt
+        if isinstance(meta, str):
+            try:
+                metadata = VisualAidMetadata.model_validate_json(meta)
+            except Exception as exc:
+                raise AgentError(
+                    code="INTERNAL",
+                    message=(
+                        "Metadata returned text that does not match "
+                        "VisualAidMetadata"
+                    ),
+                    http_status=502,
+                ) from exc
+        elif isinstance(meta, dict):
+            metadata = VisualAidMetadata.model_validate(meta)
+        else:
+            metadata = meta
+        return image_bytes, image_mime, metadata
 
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        visual_aid_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -142,12 +149,10 @@ class TestVisualAidRouter:
     def test_clean_visual_aid_returns_200(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        # Image first, metadata second.
-        fake_genai.queue = [
-            _FakeImageResult(_TINY_PNG_BYTES, "image/png"),
-            _good_metadata_json(),
+        fake_pipeline.queue = [
+            (_TINY_PNG_BYTES, "image/png", _good_metadata_json()),
         ]
         res = client.post("/v1/visual-aid/generate", json=_BASE_REQUEST)
         assert res.status_code == 200, res.text
@@ -155,31 +160,30 @@ class TestVisualAidRouter:
         assert body["imageDataUri"].startswith("data:image/png;base64,")
         assert "roots" in body["discussionSpark"].lower()
         assert body["subject"] == "Science"
-        assert body["sidecarVersion"].startswith("phase-e.3")
+        assert body["sidecarVersion"].startswith("phase-l")
 
     def test_image_generation_empty_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        # Image call returns no inline data.
-        empty = SimpleNamespace(
-            text=None,
-            usage_metadata=_FakeUsageMeta(),
-            candidates=[_FakeCandidate(parts=[])],
-        )
-        fake_genai.queue = [empty]
+        fake_pipeline.queue = [
+            _RaiseAgentError(
+                code="INTERNAL",
+                message="Image generation returned no inline image data",
+                http_status=502,
+            ),
+        ]
         res = client.post("/v1/visual-aid/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
 
     def test_metadata_malformed_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [
-            _FakeImageResult(_TINY_PNG_BYTES, "image/png"),
-            "not valid json",
+        fake_pipeline.queue = [
+            (_TINY_PNG_BYTES, "image/png", "not valid json"),
         ]
         res = client.post("/v1/visual-aid/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
@@ -187,12 +191,11 @@ class TestVisualAidRouter:
     def test_unsupported_image_mime_passes_guard(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         # JPEG should be accepted by the guard.
-        fake_genai.queue = [
-            _FakeImageResult(_TINY_PNG_BYTES, "image/jpeg"),
-            _good_metadata_json(),
+        fake_pipeline.queue = [
+            (_TINY_PNG_BYTES, "image/jpeg", _good_metadata_json()),
         ]
         res = client.post("/v1/visual-aid/generate", json=_BASE_REQUEST)
         assert res.status_code == 200, res.text

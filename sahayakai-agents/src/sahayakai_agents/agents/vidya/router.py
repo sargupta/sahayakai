@@ -37,6 +37,7 @@ from typing import Any
 import structlog
 from fastapi import APIRouter
 
+from ..._adk_keyed_gemini import build_keyed_gemini
 from ..._behavioural import assert_vidya_response_rules
 from ...config import get_settings
 from ...resilience import run_resiliently
@@ -90,53 +91,22 @@ _VIDYA_APP_NAME = "sahayakai-vidya"
 def _build_keyed_gemini(api_key: str) -> Any:
     """Build a `Gemini` model wrapper pinned to a specific api_key.
 
-    ADK's stock `Gemini` class lazily constructs `genai.Client()` with
-    no args, which means it picks up `GOOGLE_API_KEY` from the env at
-    first access and caches it on the instance forever. That breaks
-    the sidecar's key-pool failover (concurrent requests would race
-    on the env var, and the cached client would never rotate).
+    Phase L.5 — delegates to the shared `build_keyed_gemini` helper at
+    `sahayakai_agents._adk_keyed_gemini`. The L.5 SequentialAgent
+    migrations (visual-aid, avatar-generator, voice-to-text) need the
+    same workaround, so the implementation lives in one place.
 
-    Workaround: subclass `Gemini`, pre-populate the `api_client`
-    cached_property with a `genai.Client(api_key=...)` instance built
-    from the explicit key. ADK then uses our pre-populated client for
-    every call instead of constructing one from env.
-
-    Local imports keep tests that don't exercise ADK fast — the heavy
-    `google.genai` machinery only loads on the hot path.
+    The cached agent's `.model` is typed `Union[str, BaseLlm]` by
+    ADK — but we know our cached template carries a string (see
+    `build_vidya_agent`). Coerce so the helper sees a `str` model name.
     """
-    from google.adk.models.google_llm import Gemini  # noqa: PLC0415
-    from google.genai import Client  # noqa: PLC0415
-    from google.genai import types as genai_types  # noqa: PLC0415
-
-    class _KeyedGemini(Gemini):
-        """Per-call Gemini wrapper with explicit api_key."""
-
-    # The cached agent's `.model` is typed `Union[str, BaseLlm]` by
-    # ADK — but we know our cached template carries a string (see
-    # `build_vidya_agent`). Coerce so `_KeyedGemini(model=str)`
-    # type-checks cleanly.
     template_model = build_vidya_agent().model
     model_name = (
         template_model
         if isinstance(template_model, str)
         else template_model.model
     )
-    instance = _KeyedGemini(model=model_name)
-    # Pre-populate the api_client cached_property. cached_property
-    # writes to instance.__dict__ on first access; we just write
-    # directly so the lazy construction never fires.
-    pinned_client = Client(
-        api_key=api_key,
-        http_options=genai_types.HttpOptions(
-            headers=instance._tracking_headers(),
-        ),
-    )
-    object.__setattr__(
-        instance,
-        "__dict__",
-        {**instance.__dict__, "api_client": pinned_client},
-    )
-    return instance
+    return build_keyed_gemini(model_name=model_name, api_key=api_key)
 
 
 async def _run_orchestrator_via_runner(
