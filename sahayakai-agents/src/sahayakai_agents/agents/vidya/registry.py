@@ -138,8 +138,10 @@ SUB_AGENTS: tuple[SubAgent, ...] = (
 
 
 # Inline-capable agents — supervisor can call directly without
-# producing a NAVIGATE_AND_FILL action. Today only `instantAnswer`
-# (not in AllowedFlow because it has no destination route).
+# producing a NAVIGATE_AND_FILL action. These are TOOLS the supervisor
+# uses, not destination routes. The OmniOrb client invokes these
+# directly when needed (e.g. transcribing the mic audio before the
+# orchestrator runs).
 INLINE_AGENTS: tuple[SubAgent, ...] = (
     SubAgent(
         flow="instantAnswer",
@@ -147,6 +149,17 @@ INLINE_AGENTS: tuple[SubAgent, ...] = (
         capability=(
             "Direct factual answer with optional Google Search "
             "grounding. Use for 'what is' / 'when did' / 'why does'."
+        ),
+        requires_topic=False,
+        inline_capable=True,
+    ),
+    SubAgent(
+        flow="voice-to-text",
+        endpoint="/v1/voice-to-text/transcribe",
+        capability=(
+            "Multimodal speech-to-text for 11 Indian languages + "
+            "English. Returns cleaned transcription + ISO code. The "
+            "OmniOrb invokes this before the orchestrator on mic input."
         ),
         requires_topic=False,
         inline_capable=True,

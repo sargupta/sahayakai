@@ -35,6 +35,7 @@ from .agents.video_storyteller.router import video_storyteller_router
 from .agents.vidya.router import vidya_router
 from .agents.virtual_field_trip.router import virtual_field_trip_router
 from .agents.visual_aid.router import visual_aid_router
+from .agents.voice_to_text.router import voice_to_text_router
 from .agents.worksheet.router import worksheet_router
 from .auth import auth_middleware
 from .config import get_settings
@@ -171,3 +172,4 @@ app.include_router(exam_paper_router)
 app.include_router(visual_aid_router)
 app.include_router(video_storyteller_router)
 app.include_router(avatar_generator_router)
+app.include_router(voice_to_text_router)
