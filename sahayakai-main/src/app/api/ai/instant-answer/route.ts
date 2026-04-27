@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { instantAnswer, InstantAnswerInputSchema } from '@/ai/flows/instant-answer';
+import { InstantAnswerInputSchema } from '@/ai/flows/instant-answer';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 
 /**
  * @swagger
@@ -52,12 +53,27 @@ async function _handler(request: Request) {
 
         const body = InstantAnswerInputSchema.parse(json);
 
-        const output = await instantAnswer({
+        // Phase B §B.6: dispatcher routes Genkit vs ADK sidecar based
+        // on `SAHAYAKAI_INSTANT_ANSWER_MODE` env (default: off → Genkit
+        // only, zero traffic-impact on merge). Sidecar uses Gemini's
+        // native Google Search grounding; Genkit uses the legacy mock
+        // googleSearch tool. Sidecar dispatcher returns the same wire
+        // shape plus optional `source / decision / sidecarTelemetry`
+        // fields that we strip before responding to keep the wire shape
+        // backward-compatible.
+        const dispatched = await dispatchInstantAnswer({
             ...body,
-            userId: userId,
+            userId,
         });
 
-        return NextResponse.json(output);
+        // Strip dispatcher-only metadata; legacy clients only know
+        // `{answer, videoSuggestionUrl, gradeLevel, subject}`.
+        return NextResponse.json({
+            answer: dispatched.answer,
+            videoSuggestionUrl: dispatched.videoSuggestionUrl,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+        });
 
     } catch (error) {
         // handleAIError: schema → 400, quota → 503 + Retry-After, else 500.
