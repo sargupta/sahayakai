@@ -598,7 +598,7 @@ function QuizGeneratorContent() {
           console.error("Failed to load saved quiz:", err);
           toast({
             title: translate("Load Failed"),
-            description: "Could not load the saved quiz.",
+            description: translate("Could not load the saved quiz."),
             variant: "destructive"
           });
         } finally {
@@ -655,7 +655,7 @@ function QuizGeneratorContent() {
       if (!res.ok) {
         if (res.status === 401) {
           openAuthModal();
-          throw new Error("Please sign in to generate quizzes");
+          throw new Error(translate("Please sign in to generate quizzes"));
         }
         const errorData = await res.json();
         if (checkResponse(res.status, errorData)) {
@@ -681,7 +681,7 @@ function QuizGeneratorContent() {
       console.error("Failed to generate quiz:", error);
       toast({
         title: translate("Generation Failed"),
-        description: "There was an error generating the quiz. Please try again.",
+        description: translate("There was an error generating the quiz. Please try again."),
         variant: "destructive",
       });
     } finally {
