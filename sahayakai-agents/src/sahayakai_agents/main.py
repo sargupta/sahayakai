@@ -25,6 +25,7 @@ from .agents.instant_answer.router import instant_answer_router
 from .agents.parent_message.router import parent_message_router
 from .agents.rubric.router import rubric_router
 from .agents.teacher_training.router import teacher_training_router
+from .agents.virtual_field_trip.router import virtual_field_trip_router
 from .agents.lesson_plan.router import router as lesson_plan_router
 from .agents.parent_call.router import router as parent_call_router
 from .agents.vidya.router import vidya_router
@@ -221,3 +222,4 @@ app.include_router(instant_answer_router)
 app.include_router(parent_message_router)
 app.include_router(rubric_router)
 app.include_router(teacher_training_router)
+app.include_router(virtual_field_trip_router)
