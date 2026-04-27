@@ -416,6 +416,14 @@ export function ResourceFeed() {
   // ── Data fetching ─────────────────────────────────────────────────────────
   useEffect(() => {
     async function loadData() {
+      // getLibraryResources requires auth (community-auth.test enforces it).
+      // Anonymous visitors land on /community as a discovery teaser, so
+      // skip the call instead of firing a "Couldn't load resources" toast.
+      if (!user) {
+        setResources([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const trendingData = await getLibraryResources({

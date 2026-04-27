@@ -19,9 +19,17 @@ interface MetricBatch {
 }
 
 export async function POST(req: NextRequest) {
+    let body: MetricBatch;
     try {
-        const body: MetricBatch = await req.json();
+        body = await req.json();
+    } catch {
+        return NextResponse.json(
+            { error: 'Invalid JSON body' },
+            { status: 400 }
+        );
+    }
 
+    try {
         if (!body.metrics || !Array.isArray(body.metrics)) {
             return NextResponse.json(
                 { error: 'Invalid metrics format' },
