@@ -71,6 +71,14 @@ SIDECAR_VERSION = "phase-l.1"
 # JSON output.
 _PER_CALL_TIMEOUT_S = 8.0
 
+# Phase M.2 — tightened total backoff for VIDYA. The TS dispatcher caps
+# the request at 12s; with 8s per-call timeout + 5s total backoff the
+# Python budget tops out at 10s, leaving 2s on the TS side for network
+# + auth + headroom. Was: settings.max_total_backoff_seconds (7s
+# default), which produced p99 ≥ 10s and triggered TS false-positive
+# timeouts on the previous 8s budget.
+_MAX_TOTAL_BACKOFF_S = 5.0
+
 # ADK Runner needs an app_name for the in-memory session service.
 # This is opaque to the model — it's just a session-store key prefix.
 _VIDYA_APP_NAME = "sahayakai-vidya"
@@ -301,7 +309,7 @@ async def _run_orchestrator(
         _do,
         api_keys,
         span_name="vidya.orchestrator",
-        max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        max_total_backoff_seconds=_MAX_TOTAL_BACKOFF_S,
         per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
 
