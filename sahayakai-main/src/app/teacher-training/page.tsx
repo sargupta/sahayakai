@@ -431,6 +431,40 @@ function TeacherTrainingContent() {
                     }}
                   />
 
+                  {/* UX audit #3: personalised Quick Ideas — appears only
+                      when teacherProfile has grade + subject. Templates use
+                      the teacher's actual context so suggestions feel relevant
+                      ("for my Class 7 Math students" vs generic "students").
+                      Static <ExamplePrompts> still renders below as fallback +
+                      cross-context inspiration. */}
+                  {teacherProfile.preferredGrade && teacherProfile.preferredSubject && (
+                    <div className="space-y-2">
+                      <FormLabel className="font-headline flex items-center gap-2">
+                        {t("For your")} {teacherProfile.preferredGrade} {teacherProfile.preferredSubject} {t("students")}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wide">
+                          {t("Personalised")}
+                        </span>
+                      </FormLabel>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {[
+                          `${t("How do I keep")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("students focused for the full period?")}`,
+                          `${t("Best way to introduce a new")} ${teacherProfile.preferredSubject} ${t("chapter to")} ${teacherProfile.preferredGrade}?`,
+                          `${t("How do I assess")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("understanding without a formal test?")}`,
+                          `${t("Common")} ${teacherProfile.preferredSubject} ${t("misconceptions in")} ${teacherProfile.preferredGrade} ${t("and how to fix them?")}`,
+                        ].map((prompt, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handlePromptClick(prompt)}
+                            className="text-left text-sm p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <FormLabel className="font-headline">{t("Quick Ideas")}</FormLabel>
                     <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="teacher-training" />
