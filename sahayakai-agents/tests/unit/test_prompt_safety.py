@@ -15,8 +15,6 @@ These tests cover the five guarantees claimed in the docstring:
 """
 from __future__ import annotations
 
-import pytest
-
 from sahayakai_agents.shared.prompt_safety import (
     sanitize,
     sanitize_list,
