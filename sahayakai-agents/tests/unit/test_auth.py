@@ -16,10 +16,17 @@ from typing import Any
 import pytest
 from fastapi import Request
 
-from sahayakai_agents.auth import _verify_content_digest
+from sahayakai_agents.auth import _REPLAY_GUARD, _verify_content_digest
 from sahayakai_agents.shared.errors import AuthenticationError
 
 pytestmark = pytest.mark.unit
+
+
+@pytest.fixture(autouse=True)
+def _clear_replay_guard() -> None:
+    """Phase J.4 hot-fix: each test starts with an empty nonce store so
+    the new replay guard does not cause back-to-back tests to collide."""
+    _REPLAY_GUARD.clear()
 
 
 def _make_request(headers: dict[str, str]) -> Request:

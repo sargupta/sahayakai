@@ -37,6 +37,10 @@ dependencies = [
   "pybars3~=0.9",
   "structlog~=24.4",
   "langdetect~=1.0",
+  # Phase J.4 hot-fix (forensic P1 #19): per-process TTL cache for the
+  # HMAC replay-guard nonce store. Pure-Python, zero deps, ~5 MB worst
+  # case at 10k entries.
+  "cachetools~=5.5",
 ]
 
 [project.optional-dependencies]

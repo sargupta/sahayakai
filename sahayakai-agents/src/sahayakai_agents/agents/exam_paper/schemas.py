@@ -1,9 +1,14 @@
 """Pydantic models for exam paper generator (Phase E.2)."""
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): list[str] elements bounded.
+_McqOption = Annotated[str, StringConstraints(max_length=1000)]
+_Chapter = Annotated[str, StringConstraints(max_length=300)]
+_Instruction = Annotated[str, StringConstraints(max_length=1000)]
 
 ExamDifficulty = Literal["easy", "moderate", "hard", "mixed"]
 
@@ -16,7 +21,7 @@ class ExamPaperQuestion(BaseModel):
     number: int = Field(ge=1, le=200)
     text: str = Field(min_length=3, max_length=4000)
     marks: float = Field(ge=0, le=100)
-    options: list[str] | None = Field(default=None, max_length=10)
+    options: list[_McqOption] | None = Field(default=None, max_length=10)
     internalChoice: str | None = Field(default=None, max_length=4000)
     answerKey: str | None = Field(default=None, max_length=8000)
     markingScheme: str | None = Field(default=None, max_length=4000)
@@ -69,7 +74,7 @@ class ExamPaperRequest(BaseModel):
     board: str = Field(min_length=1, max_length=100)
     gradeLevel: str = Field(min_length=1, max_length=50)
     subject: str = Field(min_length=1, max_length=100)
-    chapters: list[str] = Field(default_factory=list, max_length=50)
+    chapters: list[_Chapter] = Field(default_factory=list, max_length=50)
     duration: int | None = Field(default=None, ge=10, le=480)
     maxMarks: int | None = Field(default=None, ge=10, le=500)
     language: str = Field(default="English", min_length=1, max_length=20)
@@ -93,7 +98,7 @@ class ExamPaperCore(BaseModel):
     gradeLevel: str = Field(min_length=1, max_length=50)
     duration: str = Field(min_length=1, max_length=50)
     maxMarks: float = Field(ge=10, le=500)
-    generalInstructions: list[str] = Field(min_length=1, max_length=20)
+    generalInstructions: list[_Instruction] = Field(min_length=1, max_length=20)
     sections: list[ExamPaperSection] = Field(min_length=1, max_length=10)
     blueprintSummary: BlueprintSummary
     pyqSources: list[PYQSource] | None = Field(default=None, max_length=50)
@@ -110,7 +115,7 @@ class ExamPaperResponse(BaseModel):
     gradeLevel: str = Field(min_length=1, max_length=50)
     duration: str = Field(min_length=1, max_length=50)
     maxMarks: float = Field(ge=10, le=500)
-    generalInstructions: list[str] = Field(min_length=1, max_length=20)
+    generalInstructions: list[_Instruction] = Field(min_length=1, max_length=20)
     sections: list[ExamPaperSection] = Field(min_length=1, max_length=10)
     blueprintSummary: BlueprintSummary
     pyqSources: list[PYQSource] | None = Field(default=None, max_length=50)

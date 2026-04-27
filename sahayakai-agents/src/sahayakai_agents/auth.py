@@ -25,12 +25,17 @@ import time
 from collections.abc import Awaitable, Callable
 
 import structlog
+from cachetools import TTLCache  # type: ignore[import-untyped]
 from fastapi import Request, Response
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 
 from .config import get_settings
-from .shared.errors import AuthenticationError, AuthorizationError
+from .shared.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    ReplayDetectedError,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -84,6 +89,22 @@ def _verify_id_token(token: str, audience: str) -> dict[str, object]:
 # than 5 minutes is silently dropped.
 _TIMESTAMP_SKEW_MS = 5 * 60 * 1000  # ±5 min
 _TIMESTAMP_HEADER = "x-request-timestamp"
+
+# Phase J.4 hot-fix (forensic P1 #19): per-process TTL cache for the
+# (timestamp_ms, digest_hex) nonce tuples. Without this, the HMAC
+# guard above only proves the request body was not tampered — it does
+# NOT prevent replay. A captured (Authorization, X-Content-Digest,
+# X-Request-Timestamp, body) tuple is valid for the full 5-min skew
+# window. 100× replay = 100× Gemini billing on a single captured POST.
+#
+# 6-min TTL = 1 minute longer than the skew window so a request still
+# in-flight when its timestamp ages out cannot be replayed at the edge.
+# 10k entries ≈ 5 MB worst case (key tuple + bool); we run at < 100 rps
+# steady state so the cache never gets close to its bound.
+_REPLAY_GUARD: TTLCache[tuple[int, str], bool] = TTLCache(
+    maxsize=10_000,
+    ttl=360,
+)
 
 
 def _verify_content_digest(request: Request, raw_body: bytes) -> None:
@@ -143,6 +164,25 @@ def _verify_content_digest(request: Request, raw_body: bytes) -> None:
     if not hmac.compare_digest(expected, computed):
         raise AuthenticationError("Body HMAC digest mismatch")
 
+    # Phase J.4 hot-fix (forensic P1 #19): nonce store. The digest is
+    # only inserted AFTER HMAC verification passes — we never let an
+    # invalid request poison the cache. The key is `(timestamp_ms,
+    # digest_hex)`, which is unique per (signing_key, body) pair: a
+    # legitimate retry of the same body sends the same MAC, so the
+    # second attempt in the same skew window is rejected. Clients that
+    # need true at-least-once retries must change either the body or
+    # the timestamp (the OmniOrb client and parent-call dispatcher
+    # already do — every retry advances `X-Request-Timestamp`).
+    digest_hex = computed.hex()
+    nonce_key = (timestamp_ms, digest_hex)
+    if nonce_key in _REPLAY_GUARD:
+        log.warning(
+            "auth.hmac.replay_detected",
+            timestamp_ms=timestamp_ms,
+        )
+        raise ReplayDetectedError("Request replay rejected")
+    _REPLAY_GUARD[nonce_key] = True
+
 
 async def authenticate_request(request: Request) -> dict[str, object]:
     """Run both gates. Returns the verified token claims on success.
@@ -192,6 +232,12 @@ async def auth_middleware(
 
     try:
         claims = await authenticate_request(request)
+    except ReplayDetectedError as exc:
+        # Phase J.4 (forensic P1 #19): distinct log path so ops can
+        # alert on replay events without conflating with stale-token
+        # failures (which are the bulk of 401 traffic).
+        log.warning("auth.replay_rejected", path=request.url.path, reason=exc.message)
+        return Response(content=exc.message, status_code=exc.http_status)
     except AuthenticationError as exc:
         log.info("auth.unauthenticated", path=request.url.path, reason=exc.message)
         return Response(content=exc.message, status_code=exc.http_status)

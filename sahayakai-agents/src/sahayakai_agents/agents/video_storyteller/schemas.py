@@ -1,7 +1,14 @@
 """Pydantic models for video storyteller agent (Phase F.1)."""
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): bound search-query strings.
+# YouTube's actual search-query cap is ~100 chars; 300 is a generous
+# ceiling for natural-language queries the model emits.
+_SearchQuery = Annotated[str, StringConstraints(max_length=300)]
 
 
 class VideoStorytellerCategories(BaseModel):
@@ -9,11 +16,11 @@ class VideoStorytellerCategories(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    pedagogy: list[str] = Field(min_length=1, max_length=10)
-    storytelling: list[str] = Field(min_length=1, max_length=10)
-    govtUpdates: list[str] = Field(min_length=1, max_length=10)
-    courses: list[str] = Field(min_length=1, max_length=10)
-    topRecommended: list[str] = Field(min_length=1, max_length=10)
+    pedagogy: list[_SearchQuery] = Field(min_length=1, max_length=10)
+    storytelling: list[_SearchQuery] = Field(min_length=1, max_length=10)
+    govtUpdates: list[_SearchQuery] = Field(min_length=1, max_length=10)
+    courses: list[_SearchQuery] = Field(min_length=1, max_length=10)
+    topRecommended: list[_SearchQuery] = Field(min_length=1, max_length=10)
 
 
 class VideoStorytellerRequest(BaseModel):

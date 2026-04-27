@@ -45,6 +45,11 @@ import {
     type SidecarLessonPlanRequest,
     type SidecarLessonPlanResponse,
 } from './lesson-plan-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 60_000;
 
 export type LessonPlanDispatchSource =
     | 'genkit'
@@ -84,6 +89,9 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
         difficultyLevel: input.difficultyLevel,
         subject: input.subject,
         teacherContext: input.teacherContext,
+        // Phase J.4 hot-fix (B3 inconsistency): forward userId on the
+        // wire so the sidecar's contract matches every other agent.
+        userId: input.userId,
     };
 }
 
@@ -136,7 +144,11 @@ async function runGenkitSafe(
     input: LessonPlanInput,
 ): Promise<{ ok: true; out: LessonPlanOutput } | { ok: false; error: Error }> {
     try {
-        const out = await generateLessonPlan(input);
+        const out = await withTimeout(
+            generateLessonPlan(input),
+            FALLBACK_TIMEOUT_MS,
+            'lesson-plan genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -221,7 +233,11 @@ export async function dispatchLessonPlan(
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {
-        const out = await generateLessonPlan(input);
+        const out = await withTimeout(
+            generateLessonPlan(input),
+            FALLBACK_TIMEOUT_MS,
+            'lesson-plan genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToLessonPlan(out, 'genkit', decision);
     }
@@ -286,6 +302,10 @@ export async function dispatchLessonPlan(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateLessonPlan(input);
+    const out = await withTimeout(
+        generateLessonPlan(input),
+        FALLBACK_TIMEOUT_MS,
+        'lesson-plan genkit fallback',
+    );
     return genkitToLessonPlan(out, 'genkit_fallback', decision);
 }
