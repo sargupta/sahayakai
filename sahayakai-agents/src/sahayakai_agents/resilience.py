@@ -9,6 +9,9 @@ telephony:
   webhook budget is ~15s; we must return — success or typed error — well
   inside that. This differs from the Next.js version (capped 60s) because
   Next.js also serves non-telephony flows.
+- **Per-call cap via `per_call_timeout_seconds`** (Phase J.2 hot-fix).
+  Caps a single attempt so a hung Gemini call does not block until the
+  SDK's ~600s default. Forensic finding P0 #6.
 - Implicit-cache metric extraction carried forward from Phase 0 design
   (`extract_cache_metrics` mirrors the TypeScript helper).
 - Fail-fast on 400 / safety-filter errors.
@@ -171,18 +174,26 @@ def _plan_backoff(attempt_index: int, status: int | None, pool_size: int) -> int
     return _jittered(base * (2**attempt_index))
 
 
-async def run_resiliently[T](
+async def run_resiliently[T](  # noqa: PLR0912, PLR0915 — single-purpose retry loop
     fn: Callable[[str], Awaitable[T]],
     key_pool: tuple[str, ...],
     *,
     span_name: str | None = None,
     max_total_backoff_seconds: float = 7.0,
+    per_call_timeout_seconds: float | None = None,
 ) -> T:
     """Execute `fn(api_key)` with key failover and telephony-bounded backoff.
 
     Raises `AIQuotaExhaustedError` when 429-exhausted; `AISafetyBlockError` on
     400 safety filter hits; `UpstreamTimeoutError` if we exceeded our total
     budget; the original exception on non-retryable errors.
+
+    The `per_call_timeout_seconds` parameter caps how long any SINGLE
+    invocation of `fn(current_key)` may run before being treated as a
+    retryable failure (so we try the next key). This closes the P0 #6
+    forensic finding where a hung Gemini call could block until the SDK's
+    ~600s default. When `None`, falls back to `max_total_backoff_seconds`
+    so a misconfigured caller still gets some upper bound.
     """
     if not key_pool:
         raise RuntimeError(
@@ -198,12 +209,60 @@ async def run_resiliently[T](
     last_error: Exception | None = None
     last_429 = False
 
+    # Default to the total backoff budget if the caller did not specify.
+    # `max_total_backoff_seconds` is gates BETWEEN attempts; this gates
+    # DURING each attempt. They are not the same thing — a single hung
+    # call can blow past the total budget without this guard.
+    effective_timeout = (
+        per_call_timeout_seconds
+        if per_call_timeout_seconds is not None
+        else max_total_backoff_seconds
+    )
+
     for i in range(max_attempts):
         current_index = (start_index + i) % pool_size
         current_key = key_pool[current_index]
+        attempt_started = time.monotonic()
 
         try:
-            result = await fn(current_key)
+            result = await asyncio.wait_for(
+                fn(current_key), timeout=effective_timeout
+            )
+        except TimeoutError as exc:
+            # Per-call timeout: log distinct event, then treat as a
+            # retryable failure (try next key) rather than a hard fail.
+            attempt_latency_ms = int(
+                (time.monotonic() - attempt_started) * 1000
+            )
+            log.info(
+                "ai_resilience.attempt_timeout",
+                span_name=span_name or "unknown",
+                key_index=current_index,
+                pool_size=pool_size,
+                attempt_number=i + 1,
+                max_attempts=max_attempts,
+                per_call_timeout_seconds=effective_timeout,
+                latency_ms=attempt_latency_ms,
+            )
+            last_error = exc
+
+            # Final attempt exhausted → fall through to UpstreamTimeoutError.
+            if i == max_attempts - 1:
+                break
+
+            # Budget check BEFORE rotating to the next key.
+            remaining = deadline - time.monotonic()
+            if remaining <= 0.15:
+                log.warning(
+                    "ai_resilience.budget_exceeded",
+                    span_name=span_name,
+                    attempt_number=i + 1,
+                    remaining_ms=int(remaining * 1000),
+                )
+                break
+
+            # No backoff sleep for timeouts — rotate keys immediately.
+            continue
         except Exception as exc:  # noqa: BLE001 — broad by design
             last_error = exc
             status = classify_status(exc)
