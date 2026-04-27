@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateParentMessage } from '@/ai/flows/parent-message-generator';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchParentMessage } from '@/lib/sidecar/parent-message-dispatch';
 
 async function _handler(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
@@ -19,8 +19,18 @@ async function _handler(req: NextRequest) {
             ? buildPerformanceSummary(body.performanceContext)
             : undefined;
 
-        const result = await generateParentMessage({ ...body, userId, performanceSummary });
-        return NextResponse.json(result);
+        // Phase C §C.6: dispatcher routes Genkit vs ADK sidecar based
+        // on `SAHAYAKAI_PARENT_MESSAGE_MODE` env (default: off).
+        const dispatched = await dispatchParentMessage({
+            ...body,
+            userId,
+            performanceSummary,
+        });
+        return NextResponse.json({
+            message: dispatched.message,
+            languageCode: dispatched.languageCode,
+            wordCount: dispatched.wordCount,
+        });
     } catch (error: any) {
         console.error('[parent-message] Error:', error);
         return NextResponse.json({ error: error.message ?? 'Failed to generate message' }, { status: 500 });
