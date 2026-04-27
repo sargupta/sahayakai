@@ -1,5 +1,10 @@
 /**
  * Quiz generator dispatcher (Phase E.1) — 3-variant + multimodal.
+ *
+ * Phase K (P0 #2): canary/full mode now mirrors the Genkit flow's
+ * pre-call gates (rate limit + topic safety) and post-call persistence
+ * (Storage + Firestore content doc). Before Phase K, sidecar-served
+ * quizzes silently bypassed the user's library and the daily rate limit.
  */
 import {
     generateQuiz,
@@ -8,6 +13,7 @@ import {
 } from '@/ai/flows/quiz-generator';
 import type { QuizGeneratorInput } from '@/ai/schemas/quiz-generator-schemas';
 import { getFeatureFlags } from '@/lib/feature-flags';
+import { validateTopicSafety } from '@/lib/safety';
 import {
     callSidecarQuiz,
     QuizSidecarBehaviouralError,
@@ -18,6 +24,7 @@ import {
     type SidecarQuizResponse,
     type SidecarQuizVariant,
 } from './quiz-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in quiz-client.ts. Phase J.2 hot-fix (P0 #7) —
@@ -119,15 +126,20 @@ function variantToGenkit(
 function sidecarToDispatched(
     res: SidecarQuizResponse,
     decision: QuizSidecarDecision,
+    contentId: string | null,
 ): DispatchedQuiz {
     return {
         easy: variantToGenkit(res.easy),
         medium: variantToGenkit(res.medium),
         hard: variantToGenkit(res.hard),
+        // Mirror the Genkit flow: when the artefact is saved to the user's
+        // library, surface the contentId + isSaved=true so the API route's
+        // response matches the off-mode shape.
+        id: contentId ?? undefined,
         topic: res.topic,
         gradeLevel: res.gradeLevel,
         subject: res.subject,
-        isSaved: false,
+        isSaved: contentId !== null,
         source: 'sidecar',
         decision,
         sidecarTelemetry: {
@@ -215,15 +227,48 @@ export async function dispatchQuiz(input: QuizDispatchInput): Promise<Dispatched
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
+    // Phase K — pre-call gates that the Genkit flow runs inside generateQuiz.
+    // When canary/full bypasses Genkit we must still enforce them or a bad
+    // actor blows through their daily quota and unsafe topics reach the
+    // sidecar.
+    const safety = validateTopicSafety(input.topic);
+    if (!safety.safe) {
+        throw new Error(`Safety Violation: ${safety.reason}`);
+    }
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore so the
+        // teacher's library shows the quiz regardless of dispatch mode.
+        const persistResult = input.userId
+            ? await persistSidecarJSON({
+                  uid: input.userId,
+                  collection: 'quizzes',
+                  contentType: 'quiz',
+                  title: input.topic || sidecar.res.topic || 'Quiz',
+                  output: sidecar.res,
+                  metadata: {
+                      gradeLevel:
+                          sidecar.res.gradeLevel || input.gradeLevel || 'Class 5',
+                      subject: sidecar.res.subject || input.subject || 'General',
+                      topic: input.topic,
+                      language: input.language || 'English',
+                  },
+              })
+            : null;
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
             variantsGenerated: sidecar.res.variantsGenerated,
+            contentId: persistResult?.contentId,
+            persisted: persistResult !== null,
         });
-        return sidecarToDispatched(sidecar.res, decision);
+        return sidecarToDispatched(sidecar.res, decision, persistResult?.contentId ?? null);
     }
 
     const errorClass =
