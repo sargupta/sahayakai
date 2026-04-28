@@ -78,7 +78,7 @@ def get_transcriber_model() -> str:
     an audio MIME type. Override via `SAHAYAKAI_VOICE_TO_TEXT_MODEL`.
     """
     return os.environ.get(
-        "SAHAYAKAI_VOICE_TO_TEXT_MODEL", "gemini-2.0-flash",
+        "SAHAYAKAI_VOICE_TO_TEXT_MODEL", "gemini-2.5-flash",
     )
 
 

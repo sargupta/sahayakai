@@ -53,7 +53,7 @@ class TestExtraForbidRejection:
                 wordCount=10,
                 sidecarVersion="phase-c",
                 latencyMs=100,
-                modelUsed="gemini-2.0-flash",
+                modelUsed="gemini-2.5-flash",
                 tokens=100,  # type: ignore[call-arg]
             )
 
@@ -177,7 +177,7 @@ class TestRoundTrip:
             wordCount=22,
             sidecarVersion="phase-c.1.0",
             latencyMs=234,
-            modelUsed="gemini-2.0-flash",
+            modelUsed="gemini-2.5-flash",
         )
         dumped = response.model_dump()
         restored = ParentMessageResponse.model_validate(dumped)

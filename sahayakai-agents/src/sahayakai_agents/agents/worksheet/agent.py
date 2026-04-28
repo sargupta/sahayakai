@@ -52,7 +52,7 @@ def render_wizard_prompt(context: dict[str, Any]) -> str:
 def get_wizard_model() -> str:
     """Default Gemini variant. Multimodal so we use 2.0-flash (which
     handles vision well) by default. Override via env."""
-    return os.environ.get("SAHAYAKAI_WORKSHEET_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_WORKSHEET_MODEL", "gemini-2.5-flash")
 
 
 # ---- Data URI parsing ----------------------------------------------------

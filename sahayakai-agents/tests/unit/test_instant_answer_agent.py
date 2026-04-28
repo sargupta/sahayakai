@@ -130,7 +130,7 @@ class TestPromptRendering:
 class TestModelSelectors:
     def test_default_is_2_0_flash(self) -> None:
         # Matches Genkit baseline for speed parity.
-        assert get_answerer_model() == "gemini-2.0-flash"
+        assert get_answerer_model() == "gemini-2.5-flash"
 
     def test_env_override(
         self, monkeypatch: pytest.MonkeyPatch

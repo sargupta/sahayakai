@@ -122,7 +122,7 @@ def get_answerer_model() -> str:
     p95 latency directly affects perceived UX. Override via
     `SAHAYAKAI_INSTANT_ANSWER_MODEL` to A/B test 2.5.
     """
-    return os.environ.get("SAHAYAKAI_INSTANT_ANSWER_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_INSTANT_ANSWER_MODEL", "gemini-2.5-flash")
 
 
 # ---- ADK construct factories (Phase L.2) ---------------------------------

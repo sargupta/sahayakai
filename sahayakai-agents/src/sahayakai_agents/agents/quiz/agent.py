@@ -91,7 +91,7 @@ def render_generator_prompt(context: dict[str, Any]) -> str:
 
 @lru_cache(maxsize=1)
 def get_generator_model() -> str:
-    return os.environ.get("SAHAYAKAI_QUIZ_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_QUIZ_MODEL", "gemini-2.5-flash")
 
 
 # ---- Optional data URI parsing ------------------------------------------

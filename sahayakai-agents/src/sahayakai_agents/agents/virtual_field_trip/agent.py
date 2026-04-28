@@ -49,7 +49,7 @@ def render_planner_prompt(context: dict[str, Any]) -> str:
 @lru_cache(maxsize=1)
 def get_planner_model() -> str:
     return os.environ.get(
-        "SAHAYAKAI_VIRTUAL_FIELD_TRIP_MODEL", "gemini-2.0-flash"
+        "SAHAYAKAI_VIRTUAL_FIELD_TRIP_MODEL", "gemini-2.5-flash"
     )
 
 
