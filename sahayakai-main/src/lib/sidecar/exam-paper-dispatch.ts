@@ -122,7 +122,10 @@ function sidecarToDispatched(
                 internalChoice: q.internalChoice ?? undefined,
                 answerKey: q.answerKey ?? undefined,
                 markingScheme: q.markingScheme ?? undefined,
-                source: q.source,
+                // Codegen marks `source` optional; the Genkit-shaped
+                // `ExamPaperOutput` requires it. Default to the same
+                // tag the Pydantic model uses when the sidecar omits it.
+                source: q.source ?? 'AI Generated',
             })),
         })),
         blueprintSummary: res.blueprintSummary,

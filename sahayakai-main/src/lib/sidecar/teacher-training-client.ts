@@ -2,6 +2,9 @@
  * HTTP client for teacher-training ADK agent (Phase D.2).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class TeacherTrainingSidecarConfigError extends Error {
@@ -44,29 +47,20 @@ export class TeacherTrainingSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarTeacherTrainingAdvicePoint {
-  strategy: string;
-  pedagogy: string;
-  explanation: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{TeacherTraining,
+// TeacherTrainingAdvicePoint,TeacherTrainingRequest,TeacherTrainingResponse}`.
+import type {
+  TeacherTrainingAdvicePoint as GenTeacherTrainingAdvicePoint,
+  TeacherTrainingRequest as GenTeacherTrainingRequest,
+  TeacherTrainingResponse as GenTeacherTrainingResponse,
+} from './types.generated';
 
-export interface SidecarTeacherTrainingRequest {
-  question: string;
-  language?: string | null;
-  subject?: string | null;
-  userId: string;
-}
-
-export interface SidecarTeacherTrainingResponse {
-  introduction: string;
-  advice: SidecarTeacherTrainingAdvicePoint[];
-  conclusion: string;
-  gradeLevel: string | null;
-  subject: string | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarTeacherTrainingAdvicePoint = GenTeacherTrainingAdvicePoint;
+export type SidecarTeacherTrainingRequest = GenTeacherTrainingRequest;
+export type SidecarTeacherTrainingResponse = GenTeacherTrainingResponse;
 
 const TIMEOUT_MS = 12_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -98,6 +92,12 @@ export interface CallSidecarTeacherTrainingOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarTeacherTraining(
@@ -129,17 +129,29 @@ export async function callSidecarTeacherTraining(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

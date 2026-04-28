@@ -3,6 +3,9 @@
  * Multimodal — wire request carries the imageDataUri.
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class WorksheetSidecarConfigError extends Error {
@@ -35,37 +38,23 @@ export class WorksheetSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarWorksheetActivity {
-  type: 'question' | 'puzzle' | 'creative_task';
-  content: string;
-  explanation: string;
-  chalkboardNote?: string;
-}
-export interface SidecarWorksheetAnswerKeyEntry {
-  activityIndex: number;
-  answer: string;
-}
-export interface SidecarWorksheetRequest {
-  imageDataUri: string;
-  prompt: string;
-  language?: string | null;
-  gradeLevel?: string | null;
-  subject?: string | null;
-  teacherContext?: string | null;
-  userId: string;
-}
-export interface SidecarWorksheetResponse {
-  title: string;
-  gradeLevel: string;
-  subject: string;
-  learningObjectives: string[];
-  studentInstructions: string;
-  activities: SidecarWorksheetActivity[];
-  answerKey: SidecarWorksheetAnswerKeyEntry[];
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{Worksheet,
+// WorksheetActivity,WorksheetAnswerKeyEntry,WorksheetRequest,
+// WorksheetResponse}`.
+import type {
+  WorksheetActivity as GenWorksheetActivity,
+  WorksheetAnswerKeyEntry as GenWorksheetAnswerKeyEntry,
+  WorksheetRequest as GenWorksheetRequest,
+  WorksheetResponse as GenWorksheetResponse,
+} from './types.generated';
+
+export type SidecarWorksheetActivity = GenWorksheetActivity;
+export type SidecarWorksheetAnswerKeyEntry = GenWorksheetAnswerKeyEntry;
+export type SidecarWorksheetRequest = GenWorksheetRequest;
+export type SidecarWorksheetResponse = GenWorksheetResponse;
 
 const TIMEOUT_MS = 25_000; // multimodal calls are slower
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -93,6 +82,12 @@ export interface CallSidecarWorksheetOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarWorksheet(
@@ -116,17 +111,29 @@ export async function callSidecarWorksheet(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

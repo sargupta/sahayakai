@@ -35,6 +35,13 @@ jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
     writeAgentShadowDiff: jest.fn(),
 }));
 
+// Phase R.2 + Phase U.delta — dispatcher resolves the App Check token
+// before calling the sidecar. Default to null in tests so we don't pull
+// the Firebase Web SDK / reCAPTCHA into jsdom.
+jest.mock('@/lib/firebase-app-check', () => ({
+    getFirebaseAppCheckToken: jest.fn().mockResolvedValue(null),
+}));
+
 jest.mock('@/lib/sidecar/vidya-client', () => {
     class VidyaSidecarConfigError extends Error {
         constructor(message: string) {
@@ -328,6 +335,75 @@ describe('dispatchVidya — full mode', () => {
 
         expect(out.source).toBe('sidecar');
         expect(mockGenkit).not.toHaveBeenCalled();
+    });
+});
+
+// ── plannedActions propagation (Phase N.1 / U.delta) ──────────────────────
+
+describe('dispatchVidya — plannedActions propagation', () => {
+    it('propagates plannedActions[] from sidecar through DispatchedVidyaResponse', async () => {
+        setMode('canary');
+        const compoundResponse: SidecarVidyaResponse = {
+            ...SIDECAR_OUTPUT,
+            plannedActions: [
+                {
+                    type: 'NAVIGATE_AND_FILL',
+                    flow: 'lesson-plan',
+                    params: {
+                        topic: 'Photosynthesis',
+                        gradeLevel: 'Class 5',
+                        subject: 'Science',
+                        language: 'en',
+                        ncertChapter: null,
+                    },
+                },
+                {
+                    type: 'NAVIGATE_AND_FILL',
+                    flow: 'rubric-generator',
+                    params: {
+                        topic: 'Photosynthesis',
+                        gradeLevel: 'Class 5',
+                        subject: 'Science',
+                        language: 'en',
+                        ncertChapter: null,
+                        dependsOn: [0],
+                    },
+                },
+            ],
+        };
+        mockSidecar.mockResolvedValue(compoundResponse);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.plannedActions).toBeDefined();
+        expect(out.plannedActions).toHaveLength(2);
+        expect(out.plannedActions?.[0]?.flow).toBe('lesson-plan');
+        expect(out.plannedActions?.[1]?.flow).toBe('rubric-generator');
+        expect(out.plannedActions?.[1]?.params.dependsOn).toEqual([0]);
+    });
+
+    it('leaves plannedActions undefined when sidecar omits the field', async () => {
+        setMode('canary');
+        // SIDECAR_OUTPUT has no plannedActions field — represents the
+        // legacy single-action / instant-answer / unknown paths.
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.plannedActions).toBeUndefined();
+    });
+
+    it('Genkit fallback path produces no plannedActions', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(new VidyaSidecarTimeoutError(8_000));
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(out.plannedActions).toBeUndefined();
     });
 });
 

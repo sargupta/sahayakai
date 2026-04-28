@@ -94,7 +94,15 @@ function sidecarToDispatched(
         subject: res.subject,
         learningObjectives: res.learningObjectives,
         studentInstructions: res.studentInstructions,
-        activities: res.activities,
+        // Codegen `chalkboardNote?: string | null`; downstream Genkit
+        // `WorksheetWizardOutput.activities[i].chalkboardNote` is
+        // `?: string` (optional, not nullable). Coerce null→undefined.
+        activities: res.activities.map((a) => ({
+            type: a.type,
+            content: a.content,
+            explanation: a.explanation,
+            chalkboardNote: a.chalkboardNote ?? undefined,
+        })),
         answerKey: res.answerKey,
         source: 'sidecar',
         decision,

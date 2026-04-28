@@ -10,6 +10,9 @@
  * Gemini-via-ADK path is the secondary fallback).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class VoiceToTextSidecarConfigError extends Error {
@@ -95,6 +98,12 @@ export interface CallSidecarVoiceToTextOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarVoiceToText(
@@ -122,17 +131,29 @@ export async function callSidecarVoiceToText(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

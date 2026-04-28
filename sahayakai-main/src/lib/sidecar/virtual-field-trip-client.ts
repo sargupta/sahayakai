@@ -2,6 +2,9 @@
  * HTTP client for virtual field-trip ADK agent (Phase D.3).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class VirtualFieldTripSidecarConfigError extends Error {
@@ -42,32 +45,20 @@ export class VirtualFieldTripSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarVirtualFieldTripStop {
-  name: string;
-  description: string;
-  educationalFact: string;
-  reflectionPrompt: string;
-  googleEarthUrl: string;
-  culturalAnalogy: string;
-  explanation: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{VirtualFieldTrip,
+// VirtualFieldTripStop,VirtualFieldTripRequest,VirtualFieldTripResponse}`.
+import type {
+  VirtualFieldTripRequest as GenVirtualFieldTripRequest,
+  VirtualFieldTripResponse as GenVirtualFieldTripResponse,
+  VirtualFieldTripStop as GenVirtualFieldTripStop,
+} from './types.generated';
 
-export interface SidecarVirtualFieldTripRequest {
-  topic: string;
-  language?: string | null;
-  gradeLevel?: string | null;
-  userId: string;
-}
-
-export interface SidecarVirtualFieldTripResponse {
-  title: string;
-  stops: SidecarVirtualFieldTripStop[];
-  gradeLevel: string;
-  subject: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarVirtualFieldTripStop = GenVirtualFieldTripStop;
+export type SidecarVirtualFieldTripRequest = GenVirtualFieldTripRequest;
+export type SidecarVirtualFieldTripResponse = GenVirtualFieldTripResponse;
 
 const TIMEOUT_MS = 15_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -99,6 +90,12 @@ export interface CallSidecarVirtualFieldTripOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarVirtualFieldTrip(
@@ -126,17 +123,29 @@ export async function callSidecarVirtualFieldTrip(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

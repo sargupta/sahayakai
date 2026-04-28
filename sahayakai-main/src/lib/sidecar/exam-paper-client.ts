@@ -2,6 +2,9 @@
  * HTTP client for exam paper generator ADK agent (Phase E.2).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class ExamPaperSidecarConfigError extends Error {
@@ -34,65 +37,27 @@ export class ExamPaperSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarExamPaperQuestion {
-  number: number;
-  text: string;
-  marks: number;
-  options?: string[] | null;
-  internalChoice?: string | null;
-  answerKey?: string | null;
-  markingScheme?: string | null;
-  source: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{ExamPaper,
+// ExamPaperQuestion,ExamPaperSection,BlueprintSummary,PYQSource,
+// ExamPaperRequest,ExamPaperResponse}`.
+import type {
+  BlueprintSummary as GenBlueprintSummary,
+  ExamPaperQuestion as GenExamPaperQuestion,
+  ExamPaperRequest as GenExamPaperRequest,
+  ExamPaperResponse as GenExamPaperResponse,
+  ExamPaperSection as GenExamPaperSection,
+  PYQSource as GenPYQSource,
+} from './types.generated';
 
-export interface SidecarExamPaperSection {
-  name: string;
-  label: string;
-  totalMarks: number;
-  questions: SidecarExamPaperQuestion[];
-}
-
-export interface SidecarBlueprintSummary {
-  chapterWise: Array<{ chapter: string; marks: number }>;
-  difficultyWise: Array<{ level: string; percentage: number }>;
-}
-
-export interface SidecarPYQSource {
-  id: string;
-  year?: number | null;
-  chapter?: string | null;
-}
-
-export interface SidecarExamPaperRequest {
-  board: string;
-  gradeLevel: string;
-  subject: string;
-  chapters: string[];
-  duration?: number | null;
-  maxMarks?: number | null;
-  language: string;
-  difficulty: 'easy' | 'moderate' | 'hard' | 'mixed';
-  includeAnswerKey: boolean;
-  includeMarkingScheme: boolean;
-  teacherContext?: string | null;
-  userId: string;
-}
-
-export interface SidecarExamPaperResponse {
-  title: string;
-  board: string;
-  subject: string;
-  gradeLevel: string;
-  duration: string;
-  maxMarks: number;
-  generalInstructions: string[];
-  sections: SidecarExamPaperSection[];
-  blueprintSummary: SidecarBlueprintSummary;
-  pyqSources: SidecarPYQSource[] | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarExamPaperQuestion = GenExamPaperQuestion;
+export type SidecarExamPaperSection = GenExamPaperSection;
+export type SidecarBlueprintSummary = GenBlueprintSummary;
+export type SidecarPYQSource = GenPYQSource;
+export type SidecarExamPaperRequest = GenExamPaperRequest;
+export type SidecarExamPaperResponse = GenExamPaperResponse;
 
 const TIMEOUT_MS = 30_000; // exam paper output is large; allow generous tail
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -120,6 +85,12 @@ export interface CallSidecarExamPaperOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarExamPaper(
@@ -143,17 +114,29 @@ export async function callSidecarExamPaper(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

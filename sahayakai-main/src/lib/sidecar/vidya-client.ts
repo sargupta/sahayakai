@@ -19,6 +19,8 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
@@ -68,97 +70,23 @@ export class VidyaSidecarBehaviouralError extends Error {
 
 // ─── Wire schemas ──────────────────────────────────────────────────────────
 
-/**
- * Mirror of `VidyaRequest` in
- * `sahayakai-agents/src/sahayakai_agents/agents/vidya/schemas.py`.
- * Hand-typed for now; replaced by `dist/types.generated.ts` when the
- * codegen step lands.
- *
- * Phase L.2 — `userId` is required. The Python schema removed the
- * `vidya-supervisor` placeholder when delegating to instant-answer;
- * the dispatcher now forwards the authenticated uid through the wire.
- */
-export interface SidecarVidyaRequest {
-  message: string;
-  chatHistory: Array<{
-    role: 'user' | 'model';
-    parts: Array<{ text: string }>;
-  }>;
-  currentScreenContext: {
-    path: string;
-    uiState: Record<string, string> | null;
-  };
-  teacherProfile: {
-    preferredGrade?: string | null;
-    preferredSubject?: string | null;
-    preferredLanguage?: string | null;
-    schoolContext?: string | null;
-  };
-  detectedLanguage?: string | null;
-  /**
-   * Authenticated teacher uid, required. Pattern matches the Python
-   * schema: alphanumeric + underscore + hyphen only — defends
-   * downstream Firestore document IDs against path-injection.
-   */
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{VidyaRequest,
+// VidyaAction,VidyaResponse,VidyaFlow}`. `SidecarVidyaFlow` stays
+// defined here since the codegen inlines the 9-flow union directly on
+// `VidyaAction.flow` (no named alias is emitted).
+import type {
+  VidyaAction as GenVidyaAction,
+  VidyaRequest as GenVidyaRequest,
+  VidyaResponse as GenVidyaResponse,
+} from './types.generated';
 
-export type SidecarVidyaFlow =
-  | 'lesson-plan'
-  | 'quiz-generator'
-  | 'visual-aid-designer'
-  | 'worksheet-wizard'
-  | 'virtual-field-trip'
-  | 'teacher-training'
-  | 'rubric-generator'
-  | 'exam-paper'
-  | 'video-storyteller';
-
-export interface SidecarVidyaAction {
-  type: 'NAVIGATE_AND_FILL';
-  flow: SidecarVidyaFlow;
-  params: {
-    topic: string | null;
-    gradeLevel: string | null;
-    subject: string | null;
-    language: string | null;
-    ncertChapter: {
-      number: number;
-      title: string;
-      learningOutcomes: string[];
-    } | null;
-    /**
-     * Phase N.1 — index pointers into the parent `plannedActions`
-     * list. Each int is the position of an EARLIER action whose
-     * output this action consumes (e.g. a rubric that grades a
-     * lesson plan at index 0 sets `dependsOn: [0]`). Bounded at 2
-     * entries by the Python schema; deeper graphs split into
-     * separate teacher-confirmed sessions. Defaults to `[]` for
-     * independent actions.
-     */
-    dependsOn?: number[];
-  };
-}
-
-export interface SidecarVidyaResponse {
-  response: string;
-  action: SidecarVidyaAction | null;
-  intent: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  /**
-   * Phase N.1 — typed planned-action queue (replaces Phase G's
-   * `followUpSuggestion: string | null`).
-   *
-   * Up to 3 ordered `VidyaAction`s the orchestrator authored for a
-   * compound request ("lesson plan AND a rubric"). The first entry
-   * mirrors the legacy `action` field for backward compat; the rest
-   * are the queue of follow-ups the OmniOrb renders as chips. Empty
-   * for unknown / instant-answer / unroutable paths. The supervisor
-   * does NOT auto-execute — every entry is teacher-confirmed.
-   */
-  plannedActions?: SidecarVidyaAction[];
-}
+export type SidecarVidyaFlow = GenVidyaAction['flow'];
+export type SidecarVidyaAction = GenVidyaAction;
+export type SidecarVidyaRequest = GenVidyaRequest;
+export type SidecarVidyaResponse = GenVidyaResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
@@ -250,6 +178,13 @@ export async function callSidecarVidya(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
   const headers: Record<string, string> = {
     ...authHeaders,
     'Content-Type': 'application/json',
@@ -257,8 +192,8 @@ export async function callSidecarVidya(
     'X-Request-Timestamp': timestamp,
     'X-Request-ID': requestId,
   };
-  if (options.appCheckToken) {
-    headers['X-Firebase-AppCheck'] = options.appCheckToken;
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
   }
 
   let res: Response;
