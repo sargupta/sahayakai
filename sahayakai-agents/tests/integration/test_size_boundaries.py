@@ -31,7 +31,6 @@ import base64
 import importlib
 import json
 import sys
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -43,7 +42,6 @@ from sahayakai_agents.agents.voice_to_text.schemas import (
     VoiceToTextCore,
 )
 from sahayakai_agents.main import app
-from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 

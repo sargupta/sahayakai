@@ -17,7 +17,6 @@ from __future__ import annotations
 import importlib
 import json
 import sys
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -32,13 +31,13 @@ from sahayakai_agents.agents.vidya.schemas import IntentClassification
 from sahayakai_agents.agents.virtual_field_trip import router as vft_router_mod
 from sahayakai_agents.main import app
 from sahayakai_agents.shared.errors import AgentError
-
 from tests.fixtures.parametrized_languages import (
     ALL_LANGUAGES,
     ISO_TO_BCP47,
     ISO_TO_PARENT_LANGUAGE_NAME,
     SAMPLE_SNIPPETS,
 )
+
 from ..unit.fake_firestore import make_fake_session_store
 
 pytestmark = pytest.mark.integration
