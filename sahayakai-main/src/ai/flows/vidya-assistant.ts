@@ -56,9 +56,47 @@ export type AssistantAction =
     | { type: 'NAVIGATE_AND_FILL'; flow: string; params?: Record<string, unknown> }
     | { type: string; [key: string]: unknown };
 
+/**
+ * Phase N.1 — typed planned-action queue mirrors the Python sidecar's
+ * `VidyaAction` (sahayakai-agents/.../vidya/schemas.py).
+ *
+ * Each entry is an ordered NAVIGATE_AND_FILL the orchestrator authored
+ * for a compound request. The first entry mirrors the legacy `action`
+ * field for backward compat; the remainder are the queue of follow-ups
+ * the OmniOrb client renders as one-tap chips. Empty / undefined for
+ * single-step / instantAnswer / unknown paths. Bounded at 3 entries
+ * (matches the sidecar wire schema and the Genkit `agentRouterFlow`).
+ */
+export interface VidyaPlannedActionParams {
+    topic?: string | null;
+    gradeLevel?: string | null;
+    subject?: string | null;
+    language?: string | null;
+    ncertChapter?: {
+        number: number;
+        title: string;
+        learningOutcomes?: string[];
+    } | null;
+    /** Index pointers (max 2) into earlier `plannedActions` entries. */
+    dependsOn?: number[];
+}
+
+export interface VidyaPlannedAction {
+    type: 'NAVIGATE_AND_FILL';
+    flow: string;
+    params: VidyaPlannedActionParams;
+}
+
 export interface AssistantOutput {
     response: string;
     action: AssistantAction | null;
+    /**
+     * Phase N.1 — typed planned-action queue. Replaces Phase G's
+     * `followUpSuggestion: string | null`. Optional for backward
+     * compat: the dispatcher's `genkitToDispatched` may still synthesise
+     * the legacy single-action shape until δ's wire migration lands.
+     */
+    plannedActions?: VidyaPlannedAction[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -124,7 +162,69 @@ function buildChatContext(history: AssistantChatHistoryEntry[] | undefined): str
 const SAFE_FALLBACK: AssistantOutput = {
     response: "I'm sorry, my systems are currently recalibrating. Could you repeat that?",
     action: null,
+    plannedActions: [],
 };
+
+/**
+ * Phase N.1 — transitional 30-day shim.
+ *
+ * Normalises the parsed JSON into the v0.4+ shape:
+ *
+ *  1. If `plannedActions` is a non-empty array → keep as-is.
+ *  2. Else if legacy `followUpSuggestion` is set AND `action` is set
+ *     → synthesise a single-action plan from `action` and log a
+ *     deprecation warn so the audit dashboard can flag the emitter.
+ *  3. Else if `action` is a NAVIGATE_AND_FILL → synthesise a
+ *     single-action plan from it (uniform iteration surface).
+ *  4. Else → empty list.
+ *
+ * Plan to remove this shim 30 days after Phase N.1 lands (forensic
+ * audit B5 + C4 closure window).
+ */
+interface LegacyVidyaShape {
+    response?: string;
+    action?: AssistantAction | null;
+    plannedActions?: VidyaPlannedAction[];
+    followUpSuggestion?: string | null;
+}
+
+function normalisePlannedActions(parsed: LegacyVidyaShape): VidyaPlannedAction[] {
+    if (Array.isArray(parsed.plannedActions) && parsed.plannedActions.length > 0) {
+        return parsed.plannedActions;
+    }
+    const action = parsed.action;
+    const isNavigate = action && action.type === 'NAVIGATE_AND_FILL';
+    if (parsed.followUpSuggestion && isNavigate) {
+        // eslint-disable-next-line no-console
+        console.warn(
+            JSON.stringify({
+                event: 'vidya_assistant.legacy_followup_suggestion',
+                message:
+                    'VIDYA model emitted legacy `followUpSuggestion` field — synthesising a 1-action plan. The shim is scheduled for removal 30 days after Phase N.1.',
+            }),
+        );
+    }
+    if (isNavigate) {
+        const navAction = action as { type: 'NAVIGATE_AND_FILL'; flow: string; params?: Record<string, unknown> };
+        const params = navAction.params ?? {};
+        return [{
+            type: 'NAVIGATE_AND_FILL',
+            flow: navAction.flow,
+            params: {
+                topic: (params.topic as string | null | undefined) ?? null,
+                gradeLevel: (params.gradeLevel as string | null | undefined) ?? null,
+                subject: (params.subject as string | null | undefined) ?? null,
+                language: (params.language as string | null | undefined) ?? null,
+                ncertChapter:
+                    (params.ncertChapter as VidyaPlannedActionParams['ncertChapter'] | undefined) ?? null,
+                dependsOn: Array.isArray(params.dependsOn)
+                    ? (params.dependsOn as number[]).slice(0, 2)
+                    : [],
+            },
+        }];
+    }
+    return [];
+}
 
 // ─── Public API ───────────────────────────────────────────────────────────
 
@@ -164,10 +264,19 @@ export async function runGenkitVidya(
 
         try {
             const jsonMatch = textOutput.match(/\{[\s\S]*\}/);
-            const parsed = jsonMatch
+            const parsed: LegacyVidyaShape = jsonMatch
                 ? JSON.parse(jsonMatch[0])
                 : JSON.parse(textOutput);
-            return parsed as AssistantOutput;
+            // Phase N.1 — normalise the legacy / new shape into the
+            // v0.4+ wire shape (`plannedActions[]` always present, even
+            // if empty). This also lets the dispatcher emit the same
+            // shape regardless of which path served (Genkit off-mode
+            // vs sidecar canary/full).
+            return {
+                response: parsed.response ?? '',
+                action: parsed.action ?? null,
+                plannedActions: normalisePlannedActions(parsed),
+            };
         } catch (err) {
             // Match the legacy route: log + return safe fallback rather
             // than 500. The OmniOrb client renders the fallback as a
