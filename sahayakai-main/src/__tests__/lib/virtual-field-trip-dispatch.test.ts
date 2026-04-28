@@ -83,6 +83,7 @@ import { getFeatureFlags } from '@/lib/feature-flags';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import {
     callSidecarVirtualFieldTrip,
+    VirtualFieldTripSidecarBehaviouralError,
     VirtualFieldTripSidecarHttpError,
     VirtualFieldTripSidecarTimeoutError,
     type SidecarVirtualFieldTripResponse,
@@ -258,6 +259,36 @@ describe('dispatchVirtualFieldTrip — canary / full', () => {
         setMode('canary');
         mockSidecar.mockRejectedValue(
             new VirtualFieldTripSidecarHttpError(503, 'unavailable'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVirtualFieldTrip(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix.
+
+    it('falls back to Genkit on sidecar 502 HTTP error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VirtualFieldTripSidecarHttpError(502, 'bad gateway'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVirtualFieldTrip(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VirtualFieldTripSidecarBehaviouralError(
+                'safety', 'Field trip violates safety rules',
+            ),
         );
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 

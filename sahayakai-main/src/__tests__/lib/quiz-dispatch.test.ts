@@ -75,6 +75,8 @@ import { getFeatureFlags } from '@/lib/feature-flags';
 import { dispatchQuiz } from '@/lib/sidecar/quiz-dispatch';
 import {
     callSidecarQuiz,
+    QuizSidecarBehaviouralError,
+    QuizSidecarHttpError,
     QuizSidecarTimeoutError,
     type SidecarQuizResponse,
 } from '@/lib/sidecar/quiz-client';
@@ -296,6 +298,34 @@ describe('dispatchQuiz — canary mode (Phase K persistence)', () => {
         // Sidecar persistence helper is NEVER called when the sidecar
         // itself failed — Genkit's own persistence handles the fallback
         // path.
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix that quiz was missing.
+
+    it('falls back to Genkit on sidecar HTTP error (no persist)', async () => {
+        setMode('canary');
+        mockCallSidecar.mockRejectedValue(
+            new QuizSidecarHttpError(503, 'unavailable'),
+        );
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchQuiz(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockCallSidecar.mockRejectedValue(
+            new QuizSidecarBehaviouralError('safety', 'Quiz violates safety rules'),
+        );
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchQuiz(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
         expect(mockPersist).not.toHaveBeenCalled();
     });
 });

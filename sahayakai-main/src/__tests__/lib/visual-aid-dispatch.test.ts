@@ -90,6 +90,7 @@ import {
 } from '@/lib/server-safety';
 import {
     callSidecarVisualAid,
+    VisualAidSidecarBehaviouralError,
     VisualAidSidecarHttpError,
     VisualAidSidecarTimeoutError,
     type SidecarVisualAidResponse,
@@ -271,6 +272,34 @@ describe('dispatchVisualAid — canary mode (sidecar serves)', () => {
     it('falls back to Genkit on sidecar HTTP error', async () => {
         setMode('canary');
         mockSidecar.mockRejectedValue(new VisualAidSidecarHttpError(503, 'unavailable'));
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVisualAid(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix.
+
+    it('falls back to Genkit on sidecar 502 HTTP error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(new VisualAidSidecarHttpError(502, 'bad gateway'));
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVisualAid(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VisualAidSidecarBehaviouralError(
+                'safety', 'Visual aid violates safety rules',
+            ),
+        );
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchVisualAid(BASE_INPUT);

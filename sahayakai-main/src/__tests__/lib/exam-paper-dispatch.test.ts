@@ -73,6 +73,8 @@ import { getFeatureFlags } from '@/lib/feature-flags';
 import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
 import {
     callSidecarExamPaper,
+    ExamPaperSidecarBehaviouralError,
+    ExamPaperSidecarHttpError,
     ExamPaperSidecarTimeoutError,
     type SidecarExamPaperResponse,
 } from '@/lib/sidecar/exam-paper-client';
@@ -210,6 +212,36 @@ describe('dispatchExamPaper — canary mode (Phase K persistence)', () => {
     it('falls back to Genkit on sidecar timeout — no persist call', async () => {
         setMode('canary');
         mockCallSidecar.mockRejectedValue(new ExamPaperSidecarTimeoutError(30_000));
+        mockGenerateExam.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchExamPaper(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix.
+
+    it('falls back to Genkit on sidecar HTTP error — no persist call', async () => {
+        setMode('canary');
+        mockCallSidecar.mockRejectedValue(
+            new ExamPaperSidecarHttpError(503, 'unavailable'),
+        );
+        mockGenerateExam.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchExamPaper(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockCallSidecar.mockRejectedValue(
+            new ExamPaperSidecarBehaviouralError(
+                'safety', 'Exam paper violates safety rules',
+            ),
+        );
         mockGenerateExam.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchExamPaper(BASE_INPUT);
