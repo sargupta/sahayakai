@@ -237,19 +237,39 @@ class _PMFakeClient:
 
 @pytest.fixture
 def fake_pm_genai(monkeypatch: pytest.MonkeyPatch) -> _PMQueueFake:
-    """Patch PM's `_call_gemini_structured` directly. Avoids the sys.modules
-    shim which breaks google.genai's internal `_transformers` imports."""
+    """Patch PM's `_run_pipeline_via_runner` directly.
+
+    Phase U.alpha: PM router now calls ADK Runner via
+    `_run_pipeline_via_runner(prompt, api_key) -> ParentMessageCore`.
+    Test fake parses the queued JSON straight into the Pydantic model.
+    """
+    from sahayakai_agents.agents.parent_message.schemas import (  # noqa: PLC0415
+        ParentMessageCore,
+    )
+    from sahayakai_agents.shared.errors import AgentError  # noqa: PLC0415
+
     models = _PMQueueFake()
 
-    async def _fake_call(
-        *, api_key: str, model: str, prompt: str, response_schema: type,
-    ) -> _FakeResult:
+    async def _fake_run_pipeline(
+        *, prompt: str, api_key: str,
+    ) -> ParentMessageCore:
         if not models.queue:
             raise AssertionError("PM fake exhausted")
-        return _FakeResult(models.queue.pop(0))
+        text = models.queue.pop(0)
+        try:
+            return ParentMessageCore.model_validate_json(text)
+        except Exception as exc:
+            raise AgentError(
+                code="INTERNAL",
+                message=(
+                    "Generator returned text that does not match "
+                    "ParentMessageCore"
+                ),
+                http_status=502,
+            ) from exc
 
     monkeypatch.setattr(
-        pm_router_mod, "_call_gemini_structured", _fake_call,
+        pm_router_mod, "_run_pipeline_via_runner", _fake_run_pipeline,
     )
     return models
 
@@ -771,22 +791,44 @@ class _VFTFakeClient:
 
 @pytest.fixture
 def fake_vft_genai(monkeypatch: pytest.MonkeyPatch) -> _VFTQueueFake:
-    """Patch the agent module's `_call_gemini_structured` helper directly.
+    """Patch the router's `_run_pipeline_via_runner` helper directly.
 
-    This avoids the `sys.modules["google.genai"] = _FakeGenai()` shim
-    pattern which blows up against ADK's eager `_transformers` import.
+    Phase U.beta — virtual-field-trip moved from a hand-rolled
+    `_call_gemini_structured` helper to the ADK Runner. The surgical
+    patch point is now `_run_pipeline_via_runner`. Each call pops the
+    next JSON string from the queue and validates it through
+    `VirtualFieldTripCore`, matching the production path's structured-
+    output parse.
     """
+    from sahayakai_agents.agents.virtual_field_trip.schemas import (
+        VirtualFieldTripCore,
+    )
+    from sahayakai_agents.shared.errors import AgentError
+
     models = _VFTQueueFake()
 
-    async def _fake_call(
-        *, api_key: str, model: str, prompt: str, response_schema: type,
-    ) -> _FakeResult:
+    async def _fake_run_pipeline_via_runner(
+        *, prompt: str, api_key: str,
+    ) -> VirtualFieldTripCore:
         if not models.queue:
             raise AssertionError("VFT fake exhausted")
-        return _FakeResult(models.queue.pop(0))
+        text = models.queue.pop(0)
+        try:
+            return VirtualFieldTripCore.model_validate_json(text)
+        except Exception as exc:
+            raise AgentError(
+                code="INTERNAL",
+                message=(
+                    "Planner returned text that does not match "
+                    "VirtualFieldTripCore"
+                ),
+                http_status=502,
+            ) from exc
 
     monkeypatch.setattr(
-        vft_router_mod, "_call_gemini_structured", _fake_call,
+        vft_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
     )
     return models
 

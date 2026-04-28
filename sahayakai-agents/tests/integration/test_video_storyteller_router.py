@@ -1,70 +1,105 @@
-"""Integration test for video storyteller router (Phase F.1)."""
+"""Integration test for video storyteller router (Phase F.1 + Phase U.beta).
+
+Phase U.beta fixture redesign — same strategy as L.1 vidya / L.5
+visual-aid:
+
+The single Gemini structured call now runs through ADK's
+`Runner.run_async` against a cached `LlmAgent`. The pre-migration
+`sys.modules["google.genai"] = _FakeGenai()` shim is incompatible with
+that machinery (ADK loads `google.genai.errors.ClientError` and
+`google.genai.types.Content` at import time, and replacing the whole
+module breaks both).
+
+New strategy — patch at one surgical point:
+
+  `_run_pipeline_via_runner` in `agents.video_storyteller.router` is
+  monkey-patched to pop one entry off a shared queue and return the
+  parsed `VideoStorytellerCore` directly. This bypasses ADK Runner
+  entirely for the test; ADK Runner machinery is itself covered by
+  ADK's own test suite + the new
+  `tests/unit/test_video_storyteller_adk.py`.
+"""
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.video_storyteller import (
+    router as vs_router_mod,
+)
+from sahayakai_agents.agents.video_storyteller.schemas import (
+    VideoStorytellerCore,
+)
 from sahayakai_agents.main import app
+from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 
 
-class _FakeUsageMeta:
-    input_tokens = 800
-    output_tokens = 800
-    total_tokens = 1600
-    cached_content_tokens = 0
+class _QueueFake:
+    """Each call returns the next item from a queue.
 
+    Items can be either:
+      - A JSON string matching `VideoStorytellerCore` (happy path).
+      - `_RaiseAgentError(...)` — re-raise the configured AgentError.
+    """
 
-class _FakeResult:
-    def __init__(self, text: str) -> None:
-        self.text = text
-        self.usage_metadata = _FakeUsageMeta()
-        self.candidates: list[Any] = []
-
-
-class _SequencedFakeAioModels:
     def __init__(self) -> None:
-        self.queue: list[str] = []
+        self.queue: list[Any] = []
 
-    async def generate_content(self, **_kwargs: Any) -> _FakeResult:
+    def pop(self) -> Any:
         if not self.queue:
-            raise AssertionError("Test fake: more calls than expected")
-        return _FakeResult(self.queue.pop(0))
+            raise AssertionError(
+                "Test fake: more pipeline calls than test queued"
+            )
+        return self.queue.pop(0)
 
 
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
+class _RaiseAgentError:
+    """Sentinel — when the fake pops this, raise the configured AgentError."""
 
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models
+    def __init__(self, *, code: str, message: str, http_status: int) -> None:
+        self.code = code
+        self.message = message
+        self.http_status = http_status
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    models = _SequencedFakeAioModels()
+def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch `_run_pipeline_via_runner` to consume a queue of canned JSON."""
+    fake = _QueueFake()
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    async def _fake_run_pipeline_via_runner(
+        *, prompt: str, api_key: str,
+    ) -> VideoStorytellerCore:
+        nxt = fake.pop()
+        if isinstance(nxt, _RaiseAgentError):
+            raise AgentError(
+                code=nxt.code,
+                message=nxt.message,
+                http_status=nxt.http_status,
+            )
+        try:
+            return VideoStorytellerCore.model_validate_json(nxt)
+        except Exception as exc:
+            raise AgentError(
+                code="INTERNAL",
+                message=(
+                    "Recommender returned text that does not match "
+                    "VideoStorytellerCore"
+                ),
+                http_status=502,
+            ) from exc
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
-
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        vs_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -135,9 +170,9 @@ class TestVideoStorytellerRouter:
     def test_clean_response_returns_200(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [_good_response_json()]
+        fake_pipeline.queue = [_good_response_json()]
         res = client.post(
             "/v1/video-storyteller/recommend-queries", json=_BASE_REQUEST,
         )
@@ -148,15 +183,15 @@ class TestVideoStorytellerRouter:
         }
         for cat in body["categories"].values():
             assert 1 <= len(cat) <= 10
-        assert body["sidecarVersion"].startswith("phase-f.1")
+        assert body["sidecarVersion"].startswith("phase-")
         assert body["latencyMs"] >= 0
 
     def test_hindi_message_passes_script_check(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [_good_response_json(language="Hindi")]
+        fake_pipeline.queue = [_good_response_json(language="Hindi")]
         req = dict(_BASE_REQUEST, language="Hindi")
         res = client.post(
             "/v1/video-storyteller/recommend-queries", json=req,
@@ -171,13 +206,13 @@ class TestVideoStorytellerRouter:
     def test_empty_category_list_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         # Pydantic schema rejects this at parse time → 502 wrapping the
         # parse error. Schema enforces min_length=1 on every category list.
         bad_body = json.loads(_good_response_json())
         bad_body["categories"]["pedagogy"] = []
-        fake_genai.queue = [json.dumps(bad_body)]
+        fake_pipeline.queue = [json.dumps(bad_body)]
         res = client.post(
             "/v1/video-storyteller/recommend-queries", json=_BASE_REQUEST,
         )
@@ -186,13 +221,13 @@ class TestVideoStorytellerRouter:
     def test_forbidden_phrase_in_message_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         bad_body = json.loads(_good_response_json())
         bad_body["personalizedMessage"] = (
             "Namaste! I am an AI assistant from SahayakAI. Here are some videos."
         )
-        fake_genai.queue = [json.dumps(bad_body)]
+        fake_pipeline.queue = [json.dumps(bad_body)]
         res = client.post(
             "/v1/video-storyteller/recommend-queries", json=_BASE_REQUEST,
         )
@@ -201,9 +236,9 @@ class TestVideoStorytellerRouter:
     def test_malformed_json_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = ["not valid json"]
+        fake_pipeline.queue = ["not valid json"]
         res = client.post(
             "/v1/video-storyteller/recommend-queries", json=_BASE_REQUEST,
         )
