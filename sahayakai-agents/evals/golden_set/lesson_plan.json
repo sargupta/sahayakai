@@ -1,0 +1,260 @@
+[
+  {
+    "id": "lp-001-en-photosynthesis-c5",
+    "input": {
+      "topic": "Photosynthesis",
+      "language": "en",
+      "gradeLevels": ["Class 5"],
+      "subject": "Science",
+      "useRuralContext": true,
+      "resourceLevel": "low",
+      "difficultyLevel": "standard",
+      "userId": "eval-user-lp-001"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000", "labse_similarity"],
+    "reference": "A Class 5 science lesson on photosynthesis. Engage by asking how plants eat without a mouth. Explore by examining leaves and the green pigment chlorophyll. Explain the equation sunlight plus water plus carbon dioxide gives glucose plus oxygen. Elaborate by connecting to local crops and the rural Indian context. Evaluate with a short quiz and a homework drawing of a plant labelled with its parts."
+  },
+  {
+    "id": "lp-002-en-fractions-c4",
+    "input": {
+      "topic": "Introduction to Fractions",
+      "language": "en",
+      "gradeLevels": ["Class 4"],
+      "subject": "Mathematics",
+      "useRuralContext": false,
+      "resourceLevel": "medium",
+      "difficultyLevel": "standard",
+      "userId": "eval-user-lp-002"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 4 mathematics lesson on fractions. Students cut a chapati or roti into halves and quarters and write the matching fractions. Activities cover identifying numerator and denominator, comparing fractions on a number line, and adding fractions with the same denominator. Assessment is a worksheet with five questions plus exit ticket."
+  },
+  {
+    "id": "lp-003-en-water-cycle-c3",
+    "input": {
+      "topic": "The Water Cycle",
+      "language": "en",
+      "gradeLevels": ["Class 3"],
+      "subject": "EVS",
+      "useRuralContext": true,
+      "resourceLevel": "low",
+      "userId": "eval-user-lp-003"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 3 EVS lesson on the water cycle. Engage by asking where rainwater goes after it falls in the village pond. Explore evaporation by leaving wet cloth in sunlight. Explain condensation, precipitation, collection. Elaborate with monsoon stories. Evaluate with a labelling worksheet."
+  },
+  {
+    "id": "lp-004-en-newton-laws-c8",
+    "input": {
+      "topic": "Newton's Laws of Motion",
+      "language": "en",
+      "gradeLevels": ["Class 8"],
+      "subject": "Physics",
+      "resourceLevel": "high",
+      "difficultyLevel": "advanced",
+      "userId": "eval-user-lp-004"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 8 physics lesson on Newton's three laws. Engage with a tablecloth pull demo. Explore inertia with marbles. Explain F equals m times a. Elaborate with rocket propulsion examples. Evaluate with a problem set."
+  },
+  {
+    "id": "lp-005-en-civics-c7",
+    "input": {
+      "topic": "Fundamental Rights",
+      "language": "en",
+      "gradeLevels": ["Class 7"],
+      "subject": "Civics",
+      "userId": "eval-user-lp-005"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 7 civics lesson on the six fundamental rights in the Indian Constitution. Activities cover right to equality, freedom, against exploitation, freedom of religion, cultural and educational, and constitutional remedies."
+  },
+  {
+    "id": "lp-006-en-shakespeare-c10",
+    "input": {
+      "topic": "Introduction to Shakespeare",
+      "language": "en",
+      "gradeLevels": ["Class 10"],
+      "subject": "English Literature",
+      "resourceLevel": "high",
+      "userId": "eval-user-lp-006"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 10 English literature lesson introducing Shakespeare. Cover historical context, common themes, and a close reading of one short sonnet."
+  },
+  {
+    "id": "lp-007-en-coding-c9",
+    "input": {
+      "topic": "Variables and Loops in Python",
+      "language": "en",
+      "gradeLevels": ["Class 9"],
+      "subject": "Computer Science",
+      "resourceLevel": "high",
+      "userId": "eval-user-lp-007"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 9 computer science lesson on Python variables and for-loops. Students write a small program that prints multiplication tables. Cover assignment, integer vs string types, and basic iteration."
+  },
+  {
+    "id": "lp-008-en-art-c2",
+    "input": {
+      "topic": "Primary Colours",
+      "language": "en",
+      "gradeLevels": ["Class 2"],
+      "subject": "Art",
+      "resourceLevel": "low",
+      "userId": "eval-user-lp-008"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 2 art lesson on primary colours. Students mix red, blue and yellow to discover orange, green and purple. Use water colours or chalk."
+  },
+  {
+    "id": "lp-009-en-environment-c6",
+    "input": {
+      "topic": "Conservation of Forests",
+      "language": "en",
+      "gradeLevels": ["Class 6"],
+      "subject": "Geography",
+      "useRuralContext": true,
+      "userId": "eval-user-lp-009"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 6 geography lesson on forest conservation. Cover deforestation causes, the Chipko movement, and local reforestation efforts in India."
+  },
+  {
+    "id": "lp-010-en-history-c8",
+    "input": {
+      "topic": "The Mughal Empire",
+      "language": "en",
+      "gradeLevels": ["Class 8"],
+      "subject": "History",
+      "userId": "eval-user-lp-010"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "A class 8 history lesson on the Mughal Empire. Cover Babur to Aurangzeb, the administrative system, and key cultural contributions."
+  },
+  {
+    "id": "lp-011-hi-photosynthesis-c5",
+    "input": {
+      "topic": "प्रकाश संश्लेषण",
+      "language": "hi",
+      "gradeLevels": ["कक्षा 5"],
+      "subject": "विज्ञान",
+      "useRuralContext": true,
+      "resourceLevel": "low",
+      "userId": "eval-user-lp-011"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "कक्षा 5 के विज्ञान के लिए प्रकाश संश्लेषण पर पाठ योजना। पौधे सूर्य के प्रकाश पानी और कार्बन डाइऑक्साइड का उपयोग करके भोजन कैसे बनाते हैं। पाँच चरणों में Engage Explore Explain Elaborate Evaluate के अनुसार।"
+  },
+  {
+    "id": "lp-012-hi-fractions-c4",
+    "input": {
+      "topic": "भिन्न का परिचय",
+      "language": "hi",
+      "gradeLevels": ["कक्षा 4"],
+      "subject": "गणित",
+      "userId": "eval-user-lp-012"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "कक्षा 4 के गणित के लिए भिन्न पर पाठ योजना। बच्चे रोटी या चपाती को आधे और चौथाई में काटकर भिन्न को समझेंगे।"
+  },
+  {
+    "id": "lp-013-hi-water-cycle-c3",
+    "input": {
+      "topic": "जल चक्र",
+      "language": "hi",
+      "gradeLevels": ["कक्षा 3"],
+      "subject": "पर्यावरण अध्ययन",
+      "useRuralContext": true,
+      "userId": "eval-user-lp-013"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "कक्षा 3 के पर्यावरण अध्ययन के लिए जल चक्र पर पाठ योजना। वाष्पीकरण संघनन वर्षा और संग्रह के चरण मानसून की कहानियों के साथ।"
+  },
+  {
+    "id": "lp-014-bn-photosynthesis-c5",
+    "input": {
+      "topic": "সালোকসংশ্লেষণ",
+      "language": "bn",
+      "gradeLevels": ["শ্রেণী 5"],
+      "subject": "বিজ্ঞান",
+      "userId": "eval-user-lp-014"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "ক্লাস 5 এর বিজ্ঞানের জন্য সালোকসংশ্লেষণ এর পাঠ পরিকল্পনা। গাছেরা কীভাবে সূর্যের আলো জল এবং কার্বন ডাই অক্সাইড ব্যবহার করে খাদ্য তৈরি করে।"
+  },
+  {
+    "id": "lp-015-bn-fractions-c4",
+    "input": {
+      "topic": "ভগ্নাংশের ভূমিকা",
+      "language": "bn",
+      "gradeLevels": ["শ্রেণী 4"],
+      "subject": "গণিত",
+      "userId": "eval-user-lp-015"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "ক্লাস 4 এর গণিতের জন্য ভগ্নাংশের পাঠ পরিকল্পনা। শিক্ষার্থীরা রুটি অর্ধেক এবং চার ভাগে কেটে ভগ্নাংশ বুঝবে।"
+  },
+  {
+    "id": "lp-016-ta-photosynthesis-c5",
+    "input": {
+      "topic": "ஒளிச்சேர்க்கை",
+      "language": "ta",
+      "gradeLevels": ["வகுப்பு 5"],
+      "subject": "அறிவியல்",
+      "userId": "eval-user-lp-016"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "வகுப்பு 5 அறிவியலுக்கான ஒளிச்சேர்க்கை பாடத் திட்டம். தாவரங்கள் எவ்வாறு சூரிய ஒளி நீர் கார்பன் டை ஆக்சைடைப் பயன்படுத்தி உணவு தயாரிக்கின்றன என்பதைப் பற்றியது."
+  },
+  {
+    "id": "lp-017-ta-fractions-c4",
+    "input": {
+      "topic": "பின்னங்களின் அறிமுகம்",
+      "language": "ta",
+      "gradeLevels": ["வகுப்பு 4"],
+      "subject": "கணிதம்",
+      "userId": "eval-user-lp-017"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "வகுப்பு 4 கணிதத்திற்கான பின்னங்கள் பாடத் திட்டம். மாணவர்கள் சப்பாத்தியை அரை மற்றும் கால் பகுதிகளாக வெட்டி பின்னங்களைப் புரிந்துகொள்வார்கள்."
+  },
+  {
+    "id": "lp-018-mr-water-cycle-c3",
+    "input": {
+      "topic": "जल चक्र",
+      "language": "mr",
+      "gradeLevels": ["वर्ग 3"],
+      "subject": "पर्यावरण अभ्यास",
+      "useRuralContext": true,
+      "userId": "eval-user-lp-018"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "वर्ग 3 च्या पर्यावरण अभ्यासासाठी जल चक्र वर पाठ योजना. बाष्पीभवन घनीभवन पर्जन्य आणि संग्रह च्या पायऱ्या."
+  },
+  {
+    "id": "lp-019-gu-fractions-c4",
+    "input": {
+      "topic": "અપૂર્ણાંકોનો પરિચય",
+      "language": "gu",
+      "gradeLevels": ["ધોરણ 4"],
+      "subject": "ગણિત",
+      "userId": "eval-user-lp-019"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "ધોરણ 4 ના ગણિત માટે અપૂર્ણાંકો પર પાઠ યોજના. વિદ્યાર્થીઓ રોટલીને અડધા અને ચોથા ભાગમાં કાપીને અપૂર્ણાંક સમજશે."
+  },
+  {
+    "id": "lp-020-kn-photosynthesis-c5",
+    "input": {
+      "topic": "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ",
+      "language": "kn",
+      "gradeLevels": ["ತರಗತಿ 5"],
+      "subject": "ವಿಜ್ಞಾನ",
+      "userId": "eval-user-lp-020"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 200", "max_word_count: 5000"],
+    "reference": "ತರಗತಿ 5 ರ ವಿಜ್ಞಾನಕ್ಕಾಗಿ ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ ಪಾಠ ಯೋಜನೆ. ಸಸ್ಯಗಳು ಸೂರ್ಯನ ಬೆಳಕು ನೀರು ಮತ್ತು ಇಂಗಾಲದ ಡೈಆಕ್ಸೈಡ್ ಬಳಸಿ ಆಹಾರ ತಯಾರಿಸುವ ವಿಧಾನ."
+  }
+]
