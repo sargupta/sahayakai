@@ -28,7 +28,7 @@ A2A_PROTOCOL_VERSION = "0.3"
 # Pinned semver tagged per release cut. Bumped when wire schemas
 # change. The sidecar version (router-level) is independent — it
 # tracks per-agent revisions; agent-card version tracks the FLEET.
-AGENT_CARD_VERSION = "0.3.0"
+AGENT_CARD_VERSION = "0.4.0"
 
 
 def _supervisor_skills() -> list[dict[str, Any]]:
@@ -42,7 +42,8 @@ def _supervisor_skills() -> list[dict[str, Any]]:
                 "request, extracts parameters, and either returns a "
                 "navigation action for the OmniOrb client or delegates "
                 "to one of 9 specialist sub-agents. Recognises compound "
-                "requests and emits a follow-up suggestion (Phase G)."
+                "requests and emits up to 3 typed `plannedActions` with "
+                "optional `dependsOn` indices for data flow (Phase N.1)."
             ),
             "tags": [
                 "supervisor", "orchestrator", "intent-classification",

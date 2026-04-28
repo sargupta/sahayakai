@@ -127,6 +127,16 @@ export interface SidecarVidyaAction {
       title: string;
       learningOutcomes: string[];
     } | null;
+    /**
+     * Phase N.1 — index pointers into the parent `plannedActions`
+     * list. Each int is the position of an EARLIER action whose
+     * output this action consumes (e.g. a rubric that grades a
+     * lesson plan at index 0 sets `dependsOn: [0]`). Bounded at 2
+     * entries by the Python schema; deeper graphs split into
+     * separate teacher-confirmed sessions. Defaults to `[]` for
+     * independent actions.
+     */
+    dependsOn?: number[];
   };
 }
 
@@ -137,13 +147,17 @@ export interface SidecarVidyaResponse {
   sidecarVersion: string;
   latencyMs: number;
   /**
-   * Phase G — supervisor-aware compound-intent extension.
-   * One-sentence "next likely action" suggestion from the orchestrator,
-   * surfaced by the OmniOrb client as a clickable chip. `null` for
-   * single-step / unknown / instant-answer flows. The supervisor does
-   * NOT auto-execute — the teacher confirms.
+   * Phase N.1 — typed planned-action queue (replaces Phase G's
+   * `followUpSuggestion: string | null`).
+   *
+   * Up to 3 ordered `VidyaAction`s the orchestrator authored for a
+   * compound request ("lesson plan AND a rubric"). The first entry
+   * mirrors the legacy `action` field for backward compat; the rest
+   * are the queue of follow-ups the OmniOrb renders as chips. Empty
+   * for unknown / instant-answer / unroutable paths. The supervisor
+   * does NOT auto-execute — every entry is teacher-confirmed.
    */
-  followUpSuggestion?: string | null;
+  plannedActions?: SidecarVidyaAction[];
 }
 
 // ─── ID-token client cache ────────────────────────────────────────────────

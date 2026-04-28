@@ -56,9 +56,10 @@ single-classifier flow: one structured Gemini call produces an
 emits a `VidyaAction` of type `NAVIGATE_AND_FILL` and the OmniOrb client opens
 the route and prefills the form. For `instantAnswer` it calls the inline
 sub-agent directly. Compound requests ("plan a lesson on Mughals AND a
-rubric") emit a `followUpSuggestion` string in the Phase G shape. Phase N will
-replace this with a typed `plannedActions: list[VidyaAction]` once VIDYA runs
-through an ADK `Runner`.
+rubric") now emit a typed `plannedActions: list[VidyaAction]` (max 3 entries)
+with optional `params.dependsOn: list[int]` indices for data flow between
+actions. Phase N.1 replaced the older `followUpSuggestion: str | None` prose
+chip; v0.4 of the agent card pins this wire shape.
 
 ### A2A protocol
 

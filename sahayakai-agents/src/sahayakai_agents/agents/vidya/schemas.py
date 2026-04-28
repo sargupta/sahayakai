@@ -116,6 +116,15 @@ class VidyaActionParams(BaseModel):
     All optional — the orchestrator extracts whatever it can from the
     teacher's utterance + context. Missing values fall through to the
     destination flow's own defaults.
+
+    Phase N.1 — `dependsOn` expresses data flow between actions in a
+    `plannedActions` list. Each entry is the index of an EARLIER action
+    in the same list whose output this action consumes (e.g. a rubric
+    that depends on lesson-plan output uses `dependsOn=[0]`). Bounded
+    at 2 because real compound requests rarely chain more than two
+    upstream artefacts; deeper graphs should split into separate
+    teacher-driven sessions. Always optional — empty list means the
+    action is independent.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -125,6 +134,12 @@ class VidyaActionParams(BaseModel):
     subject: str | None = Field(default=None, max_length=100)
     language: str | None = Field(default=None, max_length=10)
     ncertChapter: NcertChapterRef | None = None
+    # Phase N.1 — index pointers into the parent `plannedActions` list.
+    # Each int is the position of an earlier action whose output feeds
+    # this one (e.g. rubric `dependsOn=[0]` means "use the lesson plan
+    # at index 0"). Bounded at 2 entries — compound requests deeper
+    # than that should split into separate teacher-confirmed sessions.
+    dependsOn: list[int] = Field(default_factory=list, max_length=2)
 
 
 class VidyaAction(BaseModel):
@@ -211,15 +226,26 @@ class IntentClassification(BaseModel):
     gradeLevel: str | None = Field(max_length=50)
     subject: str | None = Field(max_length=100)
     language: str | None = Field(max_length=10)
-    # Phase G — Multi-step / supervisor extension. A short single-
-    # sentence suggestion of the next likely flow (e.g. "After this,
-    # generate a rubric to grade the activities.") that the OmniOrb
-    # client renders as a clickable follow-up. Always optional —
-    # populated only for compound requests ("...and then make a
-    # rubric") or when the model has high confidence about the
-    # natural next step. Same google-genai issue #699 workaround as
-    # the other optional fields: no default value.
-    followUpSuggestion: str | None = Field(max_length=300)
+    # Phase N.1 — typed planned-action list (replaces Phase G's
+    # `followUpSuggestion: str | None`, which was a 300-char prose blob
+    # the OmniOrb rendered as a chip).
+    #
+    # 2026 supervisor literature (LangGraph, AutoGen, Anthropic's own
+    # tool-use shape) converged on `actions: list[Action]` with
+    # optional `dependsOn` for data flow. The single-string suggestion
+    # was a "suggestion box," not a workflow — the client could not
+    # programmatically execute it, only render it.
+    #
+    # Each entry is a real `VidyaAction` the supervisor authored after
+    # parsing the teacher's compound request. The router's mapping
+    # logic treats `plannedActions[0]` as the primary action (kept on
+    # the legacy `VidyaResponse.action` field for backward compat) and
+    # the rest as the queue of follow-ups. Cap at 3 — beyond that
+    # teacher-confirmed sessions handle the depth (matches the
+    # `dependsOn` cap of 2 on `VidyaActionParams`).
+    plannedActions: list[VidyaAction] = Field(
+        default_factory=list, max_length=3,
+    )
 
 
 # --- Wire response ------------------------------------------------------
@@ -240,9 +266,20 @@ class VidyaResponse(BaseModel):
     intent: str = Field(min_length=1, max_length=64)
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)
-    # Phase G — Multi-step / supervisor extension. Surfaces the
-    # follow-up suggestion the orchestrator emitted (if any). The
-    # OmniOrb client renders this as a clickable chip ("Also generate
-    # a rubric") that the teacher can opt into. None for single-step
-    # / unknown / instant-answer flows that have no natural next step.
-    followUpSuggestion: str | None = None
+    # Phase N.1 — typed planned-action queue (replaces Phase G's
+    # `followUpSuggestion: str | None`).
+    #
+    # When the orchestrator parses a compound request ("lesson plan AND
+    # a rubric"), it emits up to 3 `VidyaAction`s. The router copies
+    # `plannedActions[0]` onto the legacy `action` field for backward
+    # compat with clients still on the v0.3 wire shape; the full list
+    # ships in this field. Empty for single-step / unknown / instant-
+    # answer paths.
+    #
+    # The OmniOrb client iterates the list and renders each entry as a
+    # one-tap chip the teacher can opt into. The supervisor still does
+    # NOT execute follow-ups automatically — every entry is a teacher-
+    # confirmed dispatch.
+    plannedActions: list[VidyaAction] = Field(
+        default_factory=list, max_length=3,
+    )
