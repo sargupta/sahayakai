@@ -196,6 +196,13 @@ export interface CallSidecarLessonPlanOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2: Firebase App Check token forwarded from the browser.
+   * Set as `X-Firebase-AppCheck` header. When undefined / null the
+   * header is omitted; the sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK`
+   * flag decides whether that's a 401 or accepted (rollout mode).
+   */
+  appCheckToken?: string | null;
 }
 
 /**
@@ -219,6 +226,8 @@ export async function callSidecarLessonPlan(
 
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/lesson-plan/generate`;
   const rawBody = JSON.stringify(request);
+  // Phase R.2: signRequest produces the HMAC + timestamp. App Check
+  // (if provided by the caller) is attached as a third header below.
   const { timestamp, digest } = await signRequest(rawBody);
 
   const tokenClient = await getTokenClient(audience);
@@ -231,17 +240,22 @@ export async function callSidecarLessonPlan(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (options.appCheckToken) {
+    headers['X-Firebase-AppCheck'] = options.appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });
