@@ -34,6 +34,7 @@ from .agents.rubric.router import rubric_router
 from .agents.teacher_training.router import teacher_training_router
 from .agents.video_storyteller.router import video_storyteller_router
 from .agents.vidya.router import vidya_router
+from .agents.vidya_voice.router import vidya_voice_router
 from .agents.virtual_field_trip.router import virtual_field_trip_router
 from .agents.visual_aid.router import visual_aid_router
 from .agents.voice_to_text.router import voice_to_text_router
@@ -210,3 +211,6 @@ app.include_router(visual_aid_router)
 app.include_router(video_storyteller_router)
 app.include_router(avatar_generator_router)
 app.include_router(voice_to_text_router)
+# Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
+# `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
+app.include_router(vidya_voice_router)
