@@ -2,7 +2,7 @@
  * HTTP client for virtual field-trip ADK agent (Phase D.3).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 export class VirtualFieldTripSidecarConfigError extends Error {
   constructor(message: string) {
@@ -94,6 +94,11 @@ export function _resetVirtualFieldTripTokenCacheForTest(): void {
 export interface CallSidecarVirtualFieldTripOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarVirtualFieldTrip(
@@ -116,6 +121,7 @@ export async function callSidecarVirtualFieldTrip(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -129,6 +135,7 @@ export async function callSidecarVirtualFieldTrip(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

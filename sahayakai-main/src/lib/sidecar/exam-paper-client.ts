@@ -2,7 +2,7 @@
  * HTTP client for exam paper generator ADK agent (Phase E.2).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 export class ExamPaperSidecarConfigError extends Error {
   constructor(message: string) { super(message); this.name = 'ExamPaperSidecarConfigError'; }
@@ -115,6 +115,11 @@ export function _resetExamPaperTokenCacheForTest(): void { tokenClientByAudience
 export interface CallSidecarExamPaperOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarExamPaper(
@@ -133,6 +138,7 @@ export async function callSidecarExamPaper(
   const authHeaders = await tokenClient.getRequestHeaders();
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -146,6 +152,7 @@ export async function callSidecarExamPaper(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

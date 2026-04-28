@@ -8,7 +8,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_list, sanitize_optional
 from ._guard import assert_exam_paper_response_rules
@@ -81,7 +81,7 @@ async def _run_generator(
     payload: ExamPaperRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> ExamPaperCore:
+) -> tuple[ExamPaperCore, Any]:
     # Phase J §J.3 — sanitize user-controlled strings before they
     # land in the rendered prompt. The Handlebars template wraps
     # values in `⟦…⟧` markers, but those are advisory only.
@@ -120,7 +120,7 @@ async def _run_generator(
     )
     text = _extract_text(result)
     try:
-        return ExamPaperCore.model_validate_json(text)
+        return ExamPaperCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "exam_paper.generator.json_parse_failed",
@@ -141,7 +141,7 @@ async def exam_paper_generate(payload: ExamPaperRequest) -> ExamPaperResponse:
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_generator(payload, api_keys, settings)
+        core, raw_result = await _run_generator(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("exam_paper.safety_block", reason=str(exc))
         raise
@@ -172,6 +172,7 @@ async def exam_paper_generate(payload: ExamPaperRequest) -> ExamPaperResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
     log.info(
         "exam_paper.generated",
         latency_ms=latency_ms,
@@ -179,6 +180,10 @@ async def exam_paper_generate(payload: ExamPaperRequest) -> ExamPaperResponse:
         grade=payload.gradeLevel,
         subject=payload.subject,
         sections=len(core.sections),
+        model_used=get_generator_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
     )
     return ExamPaperResponse(
         title=core.title,

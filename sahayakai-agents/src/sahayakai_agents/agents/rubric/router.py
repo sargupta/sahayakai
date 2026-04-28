@@ -12,7 +12,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_rubric_response_rules
@@ -80,7 +80,14 @@ async def _run_generator(
     payload: RubricGeneratorRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> RubricGeneratorCore:
+) -> tuple[RubricGeneratorCore, Any]:
+    """Run the generator and return `(parsed_core, raw_result)`.
+
+    The raw result is bubbled up so the route handler can call
+    `extract_cache_metrics(result)` and stamp tokens onto the
+    `rubric.generated` log line — forensic fix P1 #18 (telemetry
+    split-brain).
+    """
     # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
         "assignmentDescription": sanitize(
@@ -113,7 +120,7 @@ async def _run_generator(
     )
     text = _extract_text(result)
     try:
-        return RubricGeneratorCore.model_validate_json(text)
+        return RubricGeneratorCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "rubric.generator.json_parse_failed",
@@ -136,7 +143,7 @@ async def rubric_generate(
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_generator(payload, api_keys, settings)
+        core, raw_result = await _run_generator(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("rubric.generator.safety_block", reason=str(exc))
         raise
@@ -167,11 +174,16 @@ async def rubric_generate(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
     log.info(
         "rubric.generated",
         latency_ms=latency_ms,
         language=payload.language,
         criteria_count=len(core.criteria),
+        model_used=get_generator_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
     )
     return RubricGeneratorResponse(
         title=core.title,

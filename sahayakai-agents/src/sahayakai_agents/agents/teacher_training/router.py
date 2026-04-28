@@ -8,7 +8,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_teacher_training_response_rules
@@ -88,7 +88,7 @@ async def _run_advisor(
     payload: TeacherTrainingRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> TeacherTrainingCore:
+) -> tuple[TeacherTrainingCore, Any]:
     # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
         "question": sanitize(payload.question, max_length=4000),
@@ -115,7 +115,7 @@ async def _run_advisor(
     )
     text = _extract_text(result)
     try:
-        return TeacherTrainingCore.model_validate_json(text)
+        return TeacherTrainingCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "teacher_training.advisor.json_parse_failed",
@@ -140,7 +140,7 @@ async def teacher_training_advise(
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_advisor(payload, api_keys, settings)
+        core, raw_result = await _run_advisor(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("teacher_training.advisor.safety_block", reason=str(exc))
         raise
@@ -170,6 +170,21 @@ async def teacher_training_advise(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
+    # Forensic fix P1 #18 — per-router event with model_used + tokens
+    # so cost-per-user attribution joins via `request_id` (set in the
+    # request_id middleware).
+    log.info(
+        "teacher_training.generated",
+        latency_ms=latency_ms,
+        language=payload.language,
+        subject=payload.subject,
+        advice_count=len(core.advice),
+        model_used=get_advisor_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
     return TeacherTrainingResponse(
         introduction=core.introduction,
         advice=core.advice,

@@ -32,7 +32,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -163,6 +163,13 @@ export interface CallSidecarReplyOptions {
   timeoutMs?: number;
   /** Optional fetch impl for tests. Defaults to global `fetch`. */
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 — caller-supplied request id for telemetry
+   * correlation across the dispatcher and the Python sidecar. Defaults
+   * to a freshly minted hex id; pass through if you already have one
+   * (e.g. from Next.js middleware) so the whole chain shares a key.
+   */
+  requestId?: string;
 }
 
 /**
@@ -196,6 +203,7 @@ export async function callSidecarReply(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -209,6 +217,7 @@ export async function callSidecarReply(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

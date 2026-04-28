@@ -48,6 +48,7 @@ from .agent import (
     INSTANT_ANSWER_INTENT,
     build_vidya_agent,
     classify_action,
+    get_orchestrator_model,
     render_orchestrator_prompt,
 )
 from .registry import render_capability_index
@@ -345,7 +346,11 @@ async def _run_instant_answer(
     # The sub-agent runs through `run_resiliently` itself; we just
     # forward the api_keys + settings. Telephony backoff budget is
     # the same — instant-answer's own router call already enforces it.
-    core, _grounding_used = await run_answerer(
+    # Forensic fix P1 #18 — `run_answerer` now returns a 3-tuple with
+    # the raw Gemini result so the caller can extract token metrics.
+    # VIDYA's own success log will pick up the joined view via the
+    # request_id contextvar; we just discard the raw result here.
+    core, _grounding_used, _raw_result = await run_answerer(
         sub_request, api_keys, settings,
     )
     return core.answer
@@ -485,6 +490,25 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: per-router success log so the dashboard can
+    # join `vidya.generated` × `ai_resilience.attempt_succeeded` on
+    # `request_id` (set by the request_id middleware) and recover the
+    # cost-per-user attribution. Tokens are NOT extracted here because
+    # VIDYA dispatches via ADK's Runner, which doesn't surface the raw
+    # Gemini result; per-attempt token counts already live in the
+    # ai_resilience event keyed on the same `request_id`.
+    log.info(
+        "vidya.generated",
+        latency_ms=latency_ms,
+        intent=intent_label,
+        action_flow=action.flow if action is not None else None,
+        planned_count=len(planned_actions),
+        instant_answer=intent.type == INSTANT_ANSWER_INTENT,
+        model_used=get_orchestrator_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
+    )
 
     return VidyaResponse(
         response=response_text,

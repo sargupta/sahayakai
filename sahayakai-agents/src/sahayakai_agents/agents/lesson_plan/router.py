@@ -183,7 +183,7 @@ async def _run_lesson_plan_loop(
 
 
 @router.post("/generate", response_model=LessonPlanResponse)
-async def lesson_plan_generate(
+async def lesson_plan_generate(  # noqa: PLR0915 — single-purpose handler with linear flow
     payload: LessonPlanRequest,
 ) -> LessonPlanResponse:
     """Generate a lesson plan via the ADK LoopAgent.
@@ -312,6 +312,26 @@ async def lesson_plan_generate(
 
     metrics = extract_cache_metrics(None)  # writer result already consumed
     latency_ms = int((time.monotonic() - started) * 1000)
+    # Forensic fix P1 #18: per-router success log so the dashboard can
+    # join `lesson_plan.generated` × `ai_resilience.attempt_succeeded`
+    # on `request_id` (set by the request_id middleware) and recover
+    # the cost-per-user attribution. Lesson-plan dispatches up to 4
+    # Gemini calls (writer → evaluator → reviser → evaluator-on-v2)
+    # via ADK's LoopAgent; the raw per-call results aren't surfaced
+    # here so the token counts live in the matching
+    # `ai_resilience.attempt_succeeded` events.
+    log.info(
+        "lesson_plan.generated",
+        latency_ms=latency_ms,
+        revisions_run=revisions_run,
+        decision_v1=decision_v1,
+        language=final_plan.language,
+        grade_level=final_plan.gradeLevel,
+        model_used=get_writer_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
+    )
 
     return LessonPlanResponse(
         title=final_plan.title,

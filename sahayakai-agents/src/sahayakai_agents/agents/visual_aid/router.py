@@ -378,6 +378,12 @@ async def visual_aid_generate(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: stamp `model_used` on the per-router event.
+    # Token counts are NOT extracted here because the ADK SequentialAgent
+    # doesn't surface a single `result` object; per-stage tokens live in
+    # 2 separate `ai_resilience.attempt_succeeded` events that share the
+    # `request_id` set by the request_id middleware. Image generation
+    # also bills per image, not per token.
     log.info(
         "visual_aid.generated",
         latency_ms=latency_ms,
@@ -385,6 +391,10 @@ async def visual_aid_generate(
         image_mime=image_mime,
         language=payload.language,
         grade_level=payload.gradeLevel,
+        model_used=get_image_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
     )
     return VisualAidResponse(
         imageDataUri=image_data_uri,

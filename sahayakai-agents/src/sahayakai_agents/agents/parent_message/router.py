@@ -20,7 +20,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_parent_message_response_rules
@@ -105,8 +105,14 @@ async def _run_generator(
     payload: ParentMessageRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> ParentMessageCore:
-    """Run the generator agent. Returns the parsed core only."""
+) -> tuple[ParentMessageCore, Any]:
+    """Run the generator agent. Returns `(parsed_core, raw_result)`.
+
+    The raw result is bubbled up so the route handler can call
+    `extract_cache_metrics(result)` and stamp tokens onto the
+    `parent_message.generated` log line — forensic fix P1 #18
+    (telemetry split-brain).
+    """
     # Defence in depth: rewrite reasonContext from the canonical map
     # regardless of what the wire request supplied.
     canonical_reason_context = REASON_CONTEXT[payload.reason]
@@ -150,7 +156,7 @@ async def _run_generator(
     )
     text = _extract_text(result)
     try:
-        return ParentMessageCore.model_validate_json(text)
+        return ParentMessageCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "parent_message.generator.json_parse_failed",
@@ -189,7 +195,7 @@ async def parent_message_generate(
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_generator(payload, api_keys, settings)
+        core, raw_result = await _run_generator(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("parent_message.generator.safety_block", reason=str(exc))
         raise
@@ -226,12 +232,17 @@ async def parent_message_generate(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
     log.info(
         "parent_message.generated",
         latency_ms=latency_ms,
         reason=payload.reason,
         parent_language=payload.parentLanguage,
         word_count=actual_word_count,
+        model_used=get_generator_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
     )
     return ParentMessageResponse(
         message=core.message,

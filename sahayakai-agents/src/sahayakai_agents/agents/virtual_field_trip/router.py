@@ -8,7 +8,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_virtual_field_trip_response_rules
@@ -87,7 +87,7 @@ async def _run_planner(
     payload: VirtualFieldTripRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> VirtualFieldTripCore:
+) -> tuple[VirtualFieldTripCore, Any]:
     # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
         "topic": sanitize(payload.topic, max_length=300),
@@ -114,7 +114,7 @@ async def _run_planner(
     )
     text = _extract_text(result)
     try:
-        return VirtualFieldTripCore.model_validate_json(text)
+        return VirtualFieldTripCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "virtual_field_trip.planner.json_parse_failed",
@@ -139,7 +139,7 @@ async def virtual_field_trip_plan(
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_planner(payload, api_keys, settings)
+        core, raw_result = await _run_planner(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("virtual_field_trip.safety_block", reason=str(exc))
         raise
@@ -168,6 +168,20 @@ async def virtual_field_trip_plan(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
+    # Forensic fix P1 #18 — per-router event with model_used + tokens
+    # so cost-per-user attribution joins via `request_id`.
+    log.info(
+        "virtual_field_trip.generated",
+        latency_ms=latency_ms,
+        language=payload.language,
+        grade_level=payload.gradeLevel,
+        stop_count=len(core.stops),
+        model_used=get_planner_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
     return VirtualFieldTripResponse(
         title=core.title,
         stops=core.stops,

@@ -243,11 +243,20 @@ async def avatar_generate(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: stamp `model_used` on the per-router event.
+    # Avatar generation is image-only (Imagen) and does not bill per
+    # token — `tokens_*` fields stay None. The cost signal is the bare
+    # presence of an `avatar.generated` event scoped to a `request_id`;
+    # downstream attribution multiplies by the configured per-image rate.
     log.info(
         "avatar.generated",
         latency_ms=latency_ms,
         image_bytes_len=len(image_bytes),
         image_mime=image_mime,
+        model_used=get_image_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
     )
     return AvatarGeneratorResponse(
         imageDataUri=image_data_uri,
