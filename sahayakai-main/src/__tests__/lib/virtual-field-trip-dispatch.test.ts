@@ -27,6 +27,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarImage: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: jest.fn(),
     checkImageRateLimit: jest.fn(),

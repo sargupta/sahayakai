@@ -60,6 +60,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarJSON: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 const mockCheckRateLimit = jest.fn(async () => undefined);
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
@@ -75,11 +79,13 @@ import {
     type SidecarQuizResponse,
 } from '@/lib/sidecar/quiz-client';
 import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
+import { writeAgentShadowDiff } from '@/lib/sidecar/shadow-diff-writer';
 
 const mockGenerateQuiz = generateQuiz as jest.MockedFunction<typeof generateQuiz>;
 const mockCallSidecar = callSidecarQuiz as jest.MockedFunction<typeof callSidecarQuiz>;
 const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
 const mockPersist = persistSidecarJSON as jest.MockedFunction<typeof persistSidecarJSON>;
+const mockShadowDiff = writeAgentShadowDiff as jest.MockedFunction<typeof writeAgentShadowDiff>;
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -165,6 +171,42 @@ describe('dispatchQuiz — shadow mode', () => {
         expect(out.source).toBe('genkit');
         expect(mockCheckRateLimit).not.toHaveBeenCalled();
         expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase M.5 — shadow branch must persist (genkit, sidecar) pairs
+    // through the new generic helper so the offline aggregator can read
+    // them. Before M.5 the dispatcher only console.log'd the diff.
+    it('writes a (genkit, sidecar) sample to writeAgentShadowDiff on success', async () => {
+        setMode('shadow');
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        await dispatchQuiz(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('quiz');
+        expect(sample.uid).toBe(BASE_INPUT.userId);
+        expect(sample.sidecarOk).toBe(true);
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+        expect(sample.sidecar).toEqual(SIDECAR_OUTPUT);
+        expect(typeof sample.genkitLatencyMs).toBe('number');
+        expect(typeof sample.sidecarLatencyMs).toBe('number');
+    });
+
+    it('records sidecarOk=false + sidecarError when the sidecar threw', async () => {
+        setMode('shadow');
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+        mockCallSidecar.mockRejectedValue(new QuizSidecarTimeoutError(45_000));
+
+        await dispatchQuiz(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('quiz');
+        expect(sample.sidecarOk).toBe(false);
+        expect(sample.sidecar).toBeNull();
+        expect(typeof sample.sidecarError).toBe('string');
     });
 });
 

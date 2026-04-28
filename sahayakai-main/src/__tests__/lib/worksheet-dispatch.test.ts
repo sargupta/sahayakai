@@ -29,6 +29,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarJSON: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/worksheet-client', () => {
     class WorksheetSidecarConfigError extends Error {
         constructor(message: string) {

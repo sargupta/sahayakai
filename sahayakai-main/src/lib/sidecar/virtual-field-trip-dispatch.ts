@@ -26,6 +26,7 @@ import {
     type SidecarVirtualFieldTripResponse,
 } from './virtual-field-trip-client';
 import { persistSidecarJSON } from './persist-helpers';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in virtual-field-trip-client.ts. Phase J.2 hot-fix
@@ -201,15 +202,28 @@ export async function dispatchVirtualFieldTrip(
     }
 
     if (decision.mode === 'shadow') {
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input),
             runSidecarSafe(sidecarRequest),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
         logDispatch(decision, {
             source: 'genkit',
             uid: input.userId,
             sidecarOk: sidecar.ok,
             sidecarLatencyMs: sidecar.latencyMs,
+        });
+        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+        void writeAgentShadowDiff({
+            agent: 'virtual-field-trip',
+            uid: input.userId,
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);

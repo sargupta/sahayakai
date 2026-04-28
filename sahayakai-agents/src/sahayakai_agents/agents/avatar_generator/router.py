@@ -49,7 +49,18 @@ avatar_generator_router = APIRouter(
 
 SIDECAR_VERSION = "phase-l.5"
 
-_IMAGE_TIMEOUT_S = 90.0
+# Phase M.3: bumped from 90s → 120s. Forensic finding — at 90s, two
+# 30s failed attempts left only 30s for the third attempt under the
+# old 7s `max_total_backoff_seconds`. 120s gives every attempt its
+# full ceiling.
+_IMAGE_TIMEOUT_S = 120.0
+
+# Phase M.3: image-specific backoff budget. Default `run_resiliently`
+# uses telephony-bound 7s; for image agents we override to 4s so a
+# single transient retry can occur but liberal retries are off the
+# table — image cost is $0.04/call so we'd rather fail fast than
+# stack 3+ image attempts at $0.12.
+_IMAGE_MAX_TOTAL_BACKOFF_S = 4.0
 
 # ADK Runner needs an app_name for the in-memory session service.
 _AVATAR_APP_NAME = "sahayakai-avatar"
@@ -156,7 +167,6 @@ async def _run_pipeline_via_runner(
 async def _run_image(
     payload: AvatarGeneratorRequest,
     api_keys: tuple[str, ...],
-    settings: Any,
 ) -> tuple[bytes, str]:
     # Phase J §J.3 — sanitize the user-supplied display name. The
     # `name` field is small (100 chars) but still flows VERBATIM into
@@ -176,7 +186,9 @@ async def _run_image(
                 _do,
                 api_keys,
                 span_name="avatar.generate",
-                max_total_backoff_seconds=settings.max_total_backoff_seconds,
+                # Phase M.3: image agents override the global telephony
+                # backoff. See `_IMAGE_MAX_TOTAL_BACKOFF_S`.
+                max_total_backoff_seconds=_IMAGE_MAX_TOTAL_BACKOFF_S,
                 per_call_timeout_seconds=_IMAGE_TIMEOUT_S,
             ),
             timeout=_IMAGE_TIMEOUT_S,
@@ -202,7 +214,7 @@ async def avatar_generate(
 
     try:
         image_bytes, image_mime = await _run_image(
-            payload, api_keys, settings,
+            payload, api_keys,
         )
     except AISafetyBlockError as exc:
         log.warning("avatar.safety_block", reason=str(exc))

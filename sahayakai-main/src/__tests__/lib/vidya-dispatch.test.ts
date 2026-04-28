@@ -31,6 +31,10 @@ jest.mock('@/ai/flows/vidya-assistant', () => ({
     runGenkitVidya: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/vidya-client', () => {
     class VidyaSidecarConfigError extends Error {
         constructor(message: string) {
@@ -77,6 +81,7 @@ jest.mock('@/lib/sidecar/vidya-client', () => {
 import { runGenkitVidya } from '@/ai/flows/vidya-assistant';
 import { decideVidyaDispatch } from '@/lib/feature-flags';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
+import { writeAgentShadowDiff } from '@/lib/sidecar/shadow-diff-writer';
 import {
     callSidecarVidya,
     VidyaSidecarBehaviouralError,
@@ -88,6 +93,7 @@ import {
 const mockGenkit = runGenkitVidya as jest.MockedFunction<typeof runGenkitVidya>;
 const mockSidecar = callSidecarVidya as jest.MockedFunction<typeof callSidecarVidya>;
 const mockDecide = decideVidyaDispatch as jest.MockedFunction<typeof decideVidyaDispatch>;
+const mockShadowDiff = writeAgentShadowDiff as jest.MockedFunction<typeof writeAgentShadowDiff>;
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -212,6 +218,42 @@ describe('dispatchVidya — shadow mode', () => {
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
 
         await expect(dispatchVidya(BASE_INPUT)).rejects.toThrow(err);
+    });
+
+    // Phase M.5 — verify the dispatcher wires the shadow branch into the
+    // generic shadow-diff writer so the offline aggregator sees rows.
+    it('writes a (genkit, sidecar) sample to writeAgentShadowDiff on success', async () => {
+        setMode('shadow');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        await dispatchVidya(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('vidya');
+        expect(sample.uid).toBe(BASE_INPUT.uid);
+        expect(sample.sidecarOk).toBe(true);
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+        expect(sample.sidecar).toEqual(SIDECAR_OUTPUT);
+        expect(typeof sample.genkitLatencyMs).toBe('number');
+        expect(typeof sample.sidecarLatencyMs).toBe('number');
+    });
+
+    it('records sidecarOk=false + sidecarError when the sidecar threw', async () => {
+        setMode('shadow');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockRejectedValue(new VidyaSidecarTimeoutError(8_000));
+
+        await dispatchVidya(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('vidya');
+        expect(sample.sidecarOk).toBe(false);
+        expect(sample.sidecar).toBeNull();
+        expect(typeof sample.sidecarError).toBe('string');
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
     });
 });
 

@@ -25,6 +25,7 @@ import {
     type SidecarQuizVariant,
 } from './quiz-client';
 import { persistSidecarJSON } from './persist-helpers';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in quiz-client.ts. Phase J.2 hot-fix (P0 #7) —
@@ -212,16 +213,29 @@ export async function dispatchQuiz(input: QuizDispatchInput): Promise<Dispatched
     }
 
     if (decision.mode === 'shadow') {
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input),
             runSidecarSafe(sidecarRequest),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
         logDispatch(decision, {
             source: 'genkit',
             uid: input.userId,
             sidecarOk: sidecar.ok,
             sidecarLatencyMs: sidecar.latencyMs,
             sidecarVariantsGenerated: sidecar.ok ? sidecar.res.variantsGenerated : undefined,
+        });
+        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+        void writeAgentShadowDiff({
+            agent: 'quiz',
+            uid: input.userId,
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);

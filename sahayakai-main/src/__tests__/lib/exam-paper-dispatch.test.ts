@@ -58,6 +58,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarJSON: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 const mockCheckRateLimit = jest.fn(async () => undefined);
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),

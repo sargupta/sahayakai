@@ -46,6 +46,7 @@ import {
     type SidecarInstantAnswerResponse,
 } from './instant-answer-client';
 import { persistSidecarJSON } from './persist-helpers';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in instant-answer-client.ts. Phase J.2 hot-fix
