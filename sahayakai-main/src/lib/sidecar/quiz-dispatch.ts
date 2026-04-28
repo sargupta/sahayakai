@@ -130,9 +130,13 @@ function sidecarToDispatched(
     contentId: string | null,
 ): DispatchedQuiz {
     return {
-        easy: variantToGenkit(res.easy),
-        medium: variantToGenkit(res.medium),
-        hard: variantToGenkit(res.hard),
+        // Phase N.2 — `easy/medium/hard` are now optional in the
+        // generated wire schema (they were always optional in Python;
+        // hand-typed TS had them required-nullable). Coerce undefined
+        // → null so the Genkit shape stays predictable.
+        easy: variantToGenkit(res.easy ?? null),
+        medium: variantToGenkit(res.medium ?? null),
+        hard: variantToGenkit(res.hard ?? null),
         // Mirror the Genkit flow: when the artefact is saved to the user's
         // library, surface the contentId + isSaved=true so the API route's
         // response matches the off-mode shape.

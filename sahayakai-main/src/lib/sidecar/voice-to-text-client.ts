@@ -50,18 +50,18 @@ export class VoiceToTextSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarVoiceToTextRequest {
-  audioDataUri: string;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth).
+// Public surface preserved: dispatchers / tests still import
+// `Sidecar{VoiceToTextRequest,VoiceToTextResponse}` — these alias the
+// generated `VoiceToText{Request,Response}` interfaces.
+import type {
+  VoiceToTextRequest as GenVoiceToTextRequest,
+  VoiceToTextResponse as GenVoiceToTextResponse,
+} from './types.generated';
 
-export interface SidecarVoiceToTextResponse {
-  text: string;
-  language: string | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarVoiceToTextRequest = GenVoiceToTextRequest;
+export type SidecarVoiceToTextResponse = GenVoiceToTextResponse;
 
 // Speech-to-text on multi-minute audio can take ~30-45 s. Cap with
 // 60 s + small network buffer.

@@ -36,53 +36,28 @@ export class QuizSidecarBehaviouralError extends Error {
   }
 }
 
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth).
+// Public surface preserved: dispatchers / tests still import
+// `Sidecar{Quiz,QuizQuestion,QuizVariant,QuizRequest,QuizResponse}`.
+// `QuizQuestionType` / `QuizDifficulty` stay defined here since they
+// are inlined in the generated unions (codegen does not emit named
+// type aliases for inline `Literal[...]` annotations).
+import type {
+  QuizGeneratorRequest as GenQuizRequest,
+  QuizGeneratorResponse as GenQuizVariant,
+  QuizQuestion as GenQuizQuestion,
+  QuizVariantsResponse as GenQuizResponse,
+} from './types.generated';
+
 export type QuizQuestionType =
   | 'multiple_choice' | 'fill_in_the_blanks' | 'short_answer' | 'true_false';
 export type QuizDifficulty = 'easy' | 'medium' | 'hard';
 
-export interface SidecarQuizQuestion {
-  questionText: string;
-  questionType: QuizQuestionType;
-  options?: string[] | null;
-  correctAnswer: string;
-  explanation: string;
-  difficultyLevel: QuizDifficulty;
-}
-
-export interface SidecarQuizVariant {
-  title: string;
-  questions: SidecarQuizQuestion[];
-  teacherInstructions: string | null;
-  gradeLevel: string | null;
-  subject: string | null;
-}
-
-export interface SidecarQuizRequest {
-  topic: string;
-  imageDataUri?: string | null;
-  numQuestions?: number;
-  questionTypes: QuizQuestionType[];
-  gradeLevel?: string | null;
-  language?: string | null;
-  bloomsTaxonomyLevels?: string[] | null;
-  targetDifficulty?: QuizDifficulty | null;
-  subject?: string | null;
-  teacherContext?: string | null;
-  userId: string;
-}
-
-export interface SidecarQuizResponse {
-  easy: SidecarQuizVariant | null;
-  medium: SidecarQuizVariant | null;
-  hard: SidecarQuizVariant | null;
-  gradeLevel: string | null;
-  subject: string | null;
-  topic: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-  variantsGenerated: number;
-}
+export type SidecarQuizQuestion = GenQuizQuestion;
+export type SidecarQuizVariant = GenQuizVariant;
+export type SidecarQuizRequest = GenQuizRequest;
+export type SidecarQuizResponse = GenQuizResponse;
 
 const TIMEOUT_MS = 45_000; // 3 parallel calls, multimodal — large budget
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
