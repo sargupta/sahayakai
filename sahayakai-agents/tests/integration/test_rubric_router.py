@@ -1,72 +1,93 @@
-"""Integration test for `POST /v1/rubric/generate` (Phase D.1)."""
+"""Integration test for `POST /v1/rubric/generate`.
+
+Phase D.1 (router) + Phase U.alpha (ADK promotion). The single Gemini
+call now goes through ADK's `Runner.run_async` against the cached
+`LlmAgent` from `build_rubric_agent()`, which makes the old
+`sys.modules["google.genai"] = _FakeGenai()` shim incompatible (ADK
+loads `google.genai.errors.ClientError` and `google.genai.types.Content`
+at import time, and replacing the whole module breaks both).
+
+New strategy — patch at one surgical point:
+
+  `_run_pipeline_via_runner` in `agents.rubric.router` is monkey-patched
+  to pop one entry off a shared queue and return the parsed
+  `RubricGeneratorCore` directly. This bypasses ADK Runner entirely for
+  the test, which is fine because ADK Runner machinery is itself covered
+  by ADK's own test suite + the new unit tests at
+  `tests/unit/test_rubric_adk.py`.
+
+Same fixture pattern as L.5 voice-to-text + L.1 vidya integration tests.
+
+Note: the `*TokenTelemetry` test classes that previously asserted
+`tokens_in/out` from the `_FakeUsageMeta` no longer apply — Phase U.alpha
+sources tokens from `ai_resilience.attempt_succeeded` events keyed on
+`request_id`, and the per-router success log emits `tokens_in/out=None`
+because Runner doesn't surface the raw model result. The `request_id`
+propagation is still asserted via the per-router `request_id` field on
+the success log line.
+"""
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.rubric import router as rubric_router_mod
+from sahayakai_agents.agents.rubric.schemas import RubricGeneratorCore
 from sahayakai_agents.main import app
+from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 
 
-class _FakeUsageMeta:
-    input_tokens = 800
-    output_tokens = 600
-    total_tokens = 1400
-    cached_content_tokens = 0
+class _QueueFake:
+    """Each call returns the next item from a queue (a JSON string)."""
 
-
-class _FakeResult:
-    def __init__(self, text: str) -> None:
-        self.text = text
-        self.usage_metadata = _FakeUsageMeta()
-        self.candidates: list[Any] = []
-
-
-class _SequencedFakeAioModels:
     def __init__(self) -> None:
         self.queue: list[str] = []
+        self.calls: list[dict[str, Any]] = []
 
-    async def generate_content(self, **_kwargs: Any) -> _FakeResult:
+    def pop(self) -> str:
         if not self.queue:
             raise AssertionError(
-                "Test fake: more generate_content calls than expected"
+                "Test fake: more pipeline calls than test queued"
             )
-        return _FakeResult(self.queue.pop(0))
-
-
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
-
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models
+        return self.queue.pop(0)
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    models = _SequencedFakeAioModels()
+def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch `_run_pipeline_via_runner` to consume a queue of canned JSON."""
+    fake = _QueueFake()
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    async def _fake_run_pipeline_via_runner(
+        *, prompt: str, api_key: str,
+    ) -> RubricGeneratorCore:
+        fake.calls.append({
+            "prompt_len": len(prompt),
+            "api_key": api_key,
+        })
+        text = fake.pop()
+        try:
+            return RubricGeneratorCore.model_validate_json(text)
+        except Exception as exc:
+            raise AgentError(
+                code="INTERNAL",
+                message=(
+                    "Generator returned text that does not match "
+                    "RubricGeneratorCore"
+                ),
+                http_status=502,
+            ) from exc
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
-
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        rubric_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -100,9 +121,9 @@ class TestRubricRouter:
     def test_clean_rubric_returns_200(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             json.dumps({
                 "title": "Renewable Energy Project Rubric",
                 "description": "Evaluates a Class 5 project on renewable energy.",
@@ -121,17 +142,17 @@ class TestRubricRouter:
         assert body["title"] == "Renewable Energy Project Rubric"
         assert len(body["criteria"]) == 3
         assert body["criteria"][0]["levels"][0]["points"] == 4
-        assert body["sidecarVersion"].startswith("phase-d")
-        assert fake_genai.queue == []
+        assert body["sidecarVersion"].startswith("phase-")
+        assert fake_pipeline.queue == []
 
     def test_inverted_levels_returns_502_via_guard(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         bad_criterion = _good_criterion("Bad Criterion")
         bad_criterion["levels"] = list(reversed(bad_criterion["levels"]))
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             json.dumps({
                 "title": "Bad Rubric",
                 "description": "A rubric with inverted levels.",
@@ -150,19 +171,19 @@ class TestRubricRouter:
     def test_malformed_json_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = ["not valid json at all"]
+        fake_pipeline.queue = ["not valid json at all"]
         res = client.post("/v1/rubric/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
 
     def test_too_few_criteria_in_response_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         # Schema requires min 3 criteria. Model returns 2 → schema parse fail.
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             json.dumps({
                 "title": "Sparse Rubric",
                 "description": "Only two criteria.",
@@ -175,29 +196,30 @@ class TestRubricRouter:
         assert res.status_code == 502, res.text
 
 
-class TestRubricTokenTelemetry:
-    """Forensic fix P1 #18 — verify the `rubric.generated` log line
-    carries token + model fields and the request_id is bound via
-    contextvars from the middleware.
+class TestRubricRequestIdPropagation:
+    """Phase U.alpha — the per-router success log no longer carries
+    `tokens_in/out` (Runner doesn't surface the raw Gemini result), but
+    the `request_id` from the middleware contextvar still flows through
+    the structured log call. Per-attempt token counts live on the
+    `ai_resilience.attempt_succeeded` events, joined by `request_id`.
+
+    This test only asserts the request_id propagation; tokens are
+    `None` by design after Phase U.alpha.
 
     Captures structlog output by inserting a `LogCapture` processor
-    BEFORE the existing renderer (preserving `merge_contextvars` so
+    before the existing renderer (preserving `merge_contextvars` so
     the request_id from the middleware reaches the captured entry).
     """
 
-    def test_generated_event_carries_tokens_and_model(
+    def test_generated_event_carries_request_id(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         import structlog
         from structlog.testing import LogCapture
 
         cap = LogCapture()
-        # Preserve the existing processor chain (contextvars merge,
-        # severity, timestamp, etc.) and replace ONLY the final
-        # renderer with the LogCapture so the captured entries still
-        # carry the bound `request_id` from the middleware.
         old_processors = list(structlog.get_config()["processors"])
         new_processors = [
             p for p in old_processors
@@ -208,7 +230,7 @@ class TestRubricTokenTelemetry:
         new_processors.append(cap)
         try:
             structlog.configure(processors=new_processors)
-            fake_genai.queue = [
+            fake_pipeline.queue = [
                 json.dumps({
                     "title": "Test Rubric",
                     "description": "A test rubric for telemetry.",
@@ -236,29 +258,62 @@ class TestRubricTokenTelemetry:
             f"{[e.get('event') for e in cap.entries]}"
         )
         entry = entries[0]
-        # P.2 — token + cache + model fields stamped on the per-router
-        # success event (matches `_FakeUsageMeta` above: input=800,
-        # output=600, cached=0).
-        assert entry["tokens_in"] == 800
-        assert entry["tokens_out"] == 600
-        assert entry["tokens_cached"] == 0
+        # Phase U.alpha — Runner doesn't surface raw Gemini result, so
+        # tokens are None. Per-attempt counts live on the matching
+        # `ai_resilience.attempt_succeeded` events, joined by request_id.
+        assert entry["tokens_in"] is None
+        assert entry["tokens_out"] is None
+        assert entry["tokens_cached"] is None
         assert entry["model_used"], "model_used must be a non-empty string"
-        # P.1 — request_id contextvar bound by the middleware flowed
-        # through to the router's structured log call.
+        # request_id contextvar bound by the middleware flowed through
+        # to the router's structured log call.
         assert entry["request_id"] == "rid-rubric-telemetry-1"
 
 
-class TestParentMessageTokenTelemetry:
+class TestParentMessageRequestIdPropagation:
     """Second-router smoke check that the same telemetry pattern is
-    wired the same way — guards against drift between routers."""
+    wired the same way — guards against drift between routers.
 
-    def test_parent_message_generated_carries_tokens(
+    Note: this test was previously named TestParentMessageTokenTelemetry
+    and asserted token values. Phase U.alpha removes raw-result token
+    extraction (Runner doesn't surface it), so the test now only checks
+    request_id propagation.
+    """
+
+    def test_parent_message_generated_carries_request_id(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         import structlog
         from structlog.testing import LogCapture
+
+        # Patch parent_message's pipeline runner the same way the rubric
+        # fake_pipeline fixture does. Inline because this test class is
+        # the only consumer and the fake's shape is trivial.
+        from sahayakai_agents.agents.parent_message import (  # noqa: PLC0415
+            router as pm_router_mod,
+        )
+        from sahayakai_agents.agents.parent_message.schemas import (  # noqa: PLC0415
+            ParentMessageCore,
+        )
+
+        async def _fake_pm_pipeline(
+            *, prompt: str, api_key: str,
+        ) -> ParentMessageCore:
+            return ParentMessageCore.model_validate_json(json.dumps({
+                "message": (
+                    "Dear Parent, this is a notification regarding your "
+                    "child Aman who was absent today. Please ensure "
+                    "attendance. Thanks."
+                ),
+                "languageCode": "en-IN",
+                "wordCount": 24,
+            }))
+
+        monkeypatch.setattr(
+            pm_router_mod, "_run_pipeline_via_runner", _fake_pm_pipeline,
+        )
 
         cap = LogCapture()
         old_processors = list(structlog.get_config()["processors"])
@@ -271,24 +326,12 @@ class TestParentMessageTokenTelemetry:
         new_processors.append(cap)
         try:
             structlog.configure(processors=new_processors)
-            fake_genai.queue = [
-                json.dumps({
-                    "message": (
-                        "Dear Parent, this is a notification regarding "
-                        "your child Aman who was absent today. Please "
-                        "ensure attendance. Thanks."
-                    ),
-                    "languageCode": "en-IN",
-                    "wordCount": 24,
-                })
-            ]
             res = client.post(
                 "/v1/parent-message/generate",
                 json={
                     "studentName": "Aman",
                     "className": "Class 5",
                     "subject": "Mathematics",
-                    # Schema requires Literal enums; use canonical values.
                     "reason": "consecutive_absences",
                     "parentLanguage": "English",
                     "consecutiveAbsentDays": 1,
@@ -306,8 +349,9 @@ class TestParentMessageTokenTelemetry:
         ]
         assert len(entries) == 1, [e.get("event") for e in cap.entries]
         entry = entries[0]
-        assert entry["tokens_in"] == 800
-        assert entry["tokens_out"] == 600
-        assert entry["tokens_cached"] == 0
+        # Phase U.alpha — tokens go to None, request_id still flows.
+        assert entry["tokens_in"] is None
+        assert entry["tokens_out"] is None
+        assert entry["tokens_cached"] is None
         assert entry["model_used"]
         assert entry["request_id"] == "rid-pm-telemetry-1"

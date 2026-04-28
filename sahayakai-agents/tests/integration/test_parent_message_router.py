@@ -1,75 +1,89 @@
-"""Integration test for `POST /v1/parent-message/generate` — Phase C §C.3.
+"""Integration test for `POST /v1/parent-message/generate`.
 
-Same queue-fake `google.genai.Client` pattern as the other integration tests.
+Phase C §C.3 (router) + Phase U.alpha (ADK promotion). The single Gemini
+call now goes through ADK's `Runner.run_async` against the cached
+`LlmAgent` from `build_parent_message_agent()`, which makes the old
+`sys.modules["google.genai"] = _FakeGenai()` shim incompatible (ADK
+loads `google.genai.errors.ClientError` and `google.genai.types.Content`
+at import time, and replacing the whole module breaks both).
+
+New strategy — patch at one surgical point:
+
+  `_run_pipeline_via_runner` in `agents.parent_message.router` is
+  monkey-patched to pop one entry off a shared queue and return the
+  parsed `ParentMessageCore` directly. This bypasses ADK Runner entirely
+  for the test, which is fine because ADK Runner machinery is itself
+  covered by ADK's own test suite + the new unit tests at
+  `tests/unit/test_parent_message_adk.py`.
+
+Same fixture pattern as L.5 voice-to-text + L.1 vidya integration tests.
 """
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.parent_message import router as pm_router_mod
+from sahayakai_agents.agents.parent_message.schemas import ParentMessageCore
 from sahayakai_agents.main import app
+from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 
 
-class _FakeUsageMeta:
-    input_tokens = 800
-    output_tokens = 200
-    total_tokens = 1000
-    cached_content_tokens = 0
+class _QueueFake:
+    """Each call returns the next item from a queue (a JSON string).
 
+    The fake also records call metadata for tests that need to assert
+    the prompt passed through the runner boundary.
+    """
 
-class _FakeResult:
-    def __init__(self, text: str) -> None:
-        self.text = text
-        self.usage_metadata = _FakeUsageMeta()
-        self.candidates: list[Any] = []
-
-
-class _SequencedFakeAioModels:
     def __init__(self) -> None:
         self.queue: list[str] = []
+        self.calls: list[dict[str, Any]] = []
 
-    async def generate_content(self, **_kwargs: Any) -> _FakeResult:
+    def pop(self) -> str:
         if not self.queue:
             raise AssertionError(
-                "Test fake: more generate_content calls than expected"
+                "Test fake: more pipeline calls than test queued"
             )
-        return _FakeResult(self.queue.pop(0))
-
-
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
-
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models
+        return self.queue.pop(0)
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    models = _SequencedFakeAioModels()
+def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch `_run_pipeline_via_runner` to consume a queue of canned JSON."""
+    fake = _QueueFake()
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    async def _fake_run_pipeline_via_runner(
+        *, prompt: str, api_key: str,
+    ) -> ParentMessageCore:
+        fake.calls.append({
+            "prompt_len": len(prompt),
+            "api_key": api_key,
+        })
+        text = fake.pop()
+        try:
+            return ParentMessageCore.model_validate_json(text)
+        except Exception as exc:
+            raise AgentError(
+                code="INTERNAL",
+                message=(
+                    "Generator returned text that does not match "
+                    "ParentMessageCore"
+                ),
+                http_status=502,
+            ) from exc
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
-
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        pm_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -110,9 +124,9 @@ class TestParentMessageRouter:
     def test_english_message_returns_200(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             _generator_json(
                 message=(
                     "Dear parent, I am writing about your child Arav. He "
@@ -131,18 +145,18 @@ class TestParentMessageRouter:
         # languageCode is server-overwritten from the hardcoded map.
         assert body["languageCode"] == "en-IN"
         assert body["wordCount"] >= 30
-        assert body["sidecarVersion"].startswith("phase-c")
-        assert fake_genai.queue == []
+        assert body["sidecarVersion"].startswith("phase-")
+        assert fake_pipeline.queue == []
 
     def test_hindi_message_returns_200_with_overwritten_language_code(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         request = {**_BASE_REQUEST, "parentLanguage": "Hindi"}
         # Model returns a junk languageCode; the router should overwrite
         # it from the hardcoded map regardless.
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             _generator_json(
                 message=(
                     "नमस्ते। आपके बच्चे आरव की पिछले चार दिनों से "
@@ -159,22 +173,22 @@ class TestParentMessageRouter:
         # Server overwrote the model's hallucinated code.
         assert body["languageCode"] == "hi-IN"
         assert "आरव" in body["message"]
-        assert fake_genai.queue == []
+        assert fake_pipeline.queue == []
 
     def test_malformed_json_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = ["not valid json at all"]
+        fake_pipeline.queue = ["not valid json at all"]
         res = client.post("/v1/parent-message/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
-        assert fake_genai.queue == []
+        assert fake_pipeline.queue == []
 
     def test_too_short_message_returns_502_via_guard(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         # Schema accepts ≥10 chars + ≥1 word. Behavioural guard
         # rejects <30 words. Build a message that passes schema but
@@ -183,7 +197,7 @@ class TestParentMessageRouter:
             "Dear parent. Arav was absent. We are worried. Please call. "
             "Thanks. Goodbye."
         )
-        fake_genai.queue = [
+        fake_pipeline.queue = [
             _generator_json(message=short, language_code="en-IN")
         ]
         res = client.post("/v1/parent-message/generate", json=_BASE_REQUEST)
@@ -192,10 +206,10 @@ class TestParentMessageRouter:
     def test_invalid_reason_in_request_returns_422(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         request = {**_BASE_REQUEST, "reason": "made_up_reason"}
         # Schema validation rejects before any Gemini call.
         res = client.post("/v1/parent-message/generate", json=request)
         assert res.status_code == 422, res.text
-        assert fake_genai.queue == []
+        assert fake_pipeline.queue == []
