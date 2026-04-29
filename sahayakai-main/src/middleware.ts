@@ -51,7 +51,12 @@ export async function middleware(request: NextRequest) {
     // Skip static assets entirely
     if (
         pathname.startsWith('/_next') ||
-        pathname === '/favicon.ico'
+        pathname === '/favicon.ico' ||
+        // Firebase Auth helper paths reverse-proxied to *.firebaseapp.com
+        // (see next.config.ts rewrites). Don't run auth verification or
+        // attach security headers (e.g. X-Frame-Options: DENY would block
+        // the iframe the Firebase SDK loads at /__/auth/iframe).
+        pathname.startsWith('/__/')
     ) {
         return NextResponse.next();
     }
