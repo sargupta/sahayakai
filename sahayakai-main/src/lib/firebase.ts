@@ -16,7 +16,12 @@ import { getStorage } from "firebase/storage";
 // cloud-run.yml `--set-secrets` line.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sahayakai-b4248.firebaseapp.com",
+    // authDomain points at the app's own domain so the OAuth iframe loads
+    // first-party. /__/auth/* and /__/firebase/* are reverse-proxied to
+    // *.firebaseapp.com by next.config.ts. Without this, iOS Safari ITP
+    // blocks the third-party iframe and getRedirectResult() returns null,
+    // leaving signed-in users stranded on the landing page.
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sahayakai.com",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sahayakai-b4248",
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sahayakai-b4248.firebasestorage.app",
     messagingSenderId: "640589855975",
