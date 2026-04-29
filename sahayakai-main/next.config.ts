@@ -58,6 +58,24 @@ const withPWA = require('next-pwa')({
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Reverse-proxy Firebase Auth helper paths through our domain so the OAuth
+  // iframe (loaded by signInWithPopup / signInWithRedirect) is same-site with
+  // the app. Required for iPhone Safari: ITP blocks third-party iframes to
+  // *.firebaseapp.com, which made getRedirectResult() return null and left
+  // teachers stranded back on the landing page after Google sign-in.
+  // See: https://firebase.google.com/docs/auth/web/redirect-best-practices
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/:path*',
+        destination: 'https://sahayakai-b4248.firebaseapp.com/__/auth/:path*',
+      },
+      {
+        source: '/__/firebase/:path*',
+        destination: 'https://sahayakai-b4248.firebaseapp.com/__/firebase/:path*',
+      },
+    ];
+  },
   // Cache-Control headers — prevents stale deployment errors.
   // HTML pages: no-store so browsers always fetch fresh HTML with the current build ID.
   // Static chunks: immutable (content-addressed filenames change with every build).

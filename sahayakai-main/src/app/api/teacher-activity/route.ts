@@ -18,9 +18,17 @@ interface EventBatch {
 }
 
 export async function POST(req: NextRequest) {
+    let body: EventBatch;
     try {
-        const body: EventBatch = await req.json();
+        body = await req.json();
+    } catch {
+        return NextResponse.json(
+            { error: 'Invalid JSON body' },
+            { status: 400 }
+        );
+    }
 
+    try {
         if (!body.events || !Array.isArray(body.events)) {
             return NextResponse.json(
                 { error: 'Invalid events format' },
