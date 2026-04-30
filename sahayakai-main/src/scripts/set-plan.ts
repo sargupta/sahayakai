@@ -2,11 +2,11 @@
  * Admin CLI: Set a user's plan type.
  *
  * Usage:
- *   npx tsx src/scripts/set-plan.ts <uid> <plan>
+ *   npx tsx src/scripts/set-plan.ts <uid|email> <plan>
  *
  * Examples:
  *   npx tsx src/scripts/set-plan.ts abc123 pro
- *   npx tsx src/scripts/set-plan.ts abc123 free
+ *   npx tsx src/scripts/set-plan.ts user@example.com premium
  */
 
 import { initializeFirebase } from '@/lib/firebase-admin';
@@ -16,10 +16,10 @@ import { getAuth } from 'firebase-admin/auth';
 const VALID_PLANS = ['free', 'pro', 'gold', 'premium'] as const;
 
 async function main() {
-    const [uid, plan] = process.argv.slice(2);
+    const [identifier, plan] = process.argv.slice(2);
 
-    if (!uid || !plan) {
-        console.error('Usage: npx tsx src/scripts/set-plan.ts <uid> <plan>');
+    if (!identifier || !plan) {
+        console.error('Usage: npx tsx src/scripts/set-plan.ts <uid|email> <plan>');
         console.error('Plans:', VALID_PLANS.join(', '));
         process.exit(1);
     }
@@ -32,6 +32,22 @@ async function main() {
     await initializeFirebase();
     const db = getFirestore();
     const auth = getAuth();
+
+    let uid = identifier;
+    if (identifier.includes('@')) {
+        try {
+            const userRecord = await auth.getUserByEmail(identifier);
+            uid = userRecord.uid;
+            console.log(`Resolved ${identifier} → uid ${uid}`);
+        } catch (err: any) {
+            if (err?.code === 'auth/user-not-found') {
+                console.error(`No Firebase Auth user found for email: ${identifier}`);
+            } else {
+                console.error(`Failed to look up user by email:`, err?.message ?? err);
+            }
+            process.exit(1);
+        }
+    }
 
     // Update Firestore user doc
     await db.collection('users').doc(uid).update({
