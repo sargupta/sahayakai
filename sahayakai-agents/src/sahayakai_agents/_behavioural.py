@@ -91,6 +91,13 @@ _FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
 # with ellipsis-only separation and bypass the sentence-count cap.
 _SENTENCE_ENDERS = re.compile(r"[\.!?।॥…。]")
 
+# Pre-collapse 3+ ASCII dots into a single U+2026 ellipsis so the char
+# class above splits the sequence as a single ender rather than relying
+# on the strip filter to drop empty fragments. Pure normalisation: the
+# count is unchanged for current inputs but the regex semantics now
+# match the comment ("ellipsis-only separation").
+_ASCII_ELLIPSIS = re.compile(r"\.{3,}")
+
 # Expected Unicode ranges per supported parent language.
 _LANGUAGE_UNICODE_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
     "hi": ((0x0900, 0x097F),),   # Devanagari
@@ -127,7 +134,11 @@ def assert_no_forbidden_phrases(text: str) -> None:
 
 
 def count_sentences(text: str) -> int:
-    return len([s for s in _SENTENCE_ENDERS.split(text) if s.strip()])
+    # Collapse 3+ ASCII dots to a single ellipsis char first so a model
+    # cannot exploit "..." to game the regex (each dot would otherwise
+    # be a separate ender and rely on the strip filter for correctness).
+    normalized = _ASCII_ELLIPSIS.sub("…", text)
+    return len([s for s in _SENTENCE_ENDERS.split(normalized) if s.strip()])
 
 
 def assert_sentence_count_in_range(text: str, lo: int = 1, hi: int = 5) -> None:

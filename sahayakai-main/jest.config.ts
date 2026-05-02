@@ -8,6 +8,14 @@ const createJestConfig = nextJest({
 const config: Config = {
     coverageProvider: 'v8',
     testEnvironment: 'jsdom',
+    // Force jsdom to resolve the `node` exports condition (CJS) instead of
+    // the `browser` condition (ESM). Several transitive deps (jose, firebase-
+    // admin's jwks-rsa) ship browser ESM bundles that Jest's CommonJS
+    // transform can't parse. Routing through Node resolution picks the CJS
+    // variants which Jest handles natively.
+    testEnvironmentOptions: {
+        customExportConditions: ['node', 'node-addons'],
+    },
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
@@ -44,6 +52,18 @@ const config: Config = {
 
     testMatch: [
         '<rootDir>/src/__tests__/**/*.test.{ts,tsx}',
+    ],
+
+    // Avoid jest-haste-map collisions when sibling Claude worktrees exist on
+    // disk. Each worktree is a full checkout with the same `__mocks__` files,
+    // and Jest panics on duplicate manual mocks unless they're explicitly
+    // ignored.
+    modulePathIgnorePatterns: [
+        '<rootDir>/.claude/worktrees/',
+        '<rootDir>/.next/',
+    ],
+    watchPathIgnorePatterns: [
+        '<rootDir>/.claude/worktrees/',
     ],
 
     coverageThreshold: {
