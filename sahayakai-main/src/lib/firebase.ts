@@ -16,12 +16,18 @@ import { getStorage } from "firebase/storage";
 // cloud-run.yml `--set-secrets` line.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw",
-    // authDomain points at the app's own domain so the OAuth iframe loads
-    // first-party. /__/auth/* and /__/firebase/* are reverse-proxied to
-    // *.firebaseapp.com by next.config.ts. Without this, iOS Safari ITP
-    // blocks the third-party iframe and getRedirectResult() returns null,
-    // leaving signed-in users stranded on the landing page.
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sahayakai.com",
+    // authDomain is www.sahayakai.com — same eTLD+1 as the app's
+    // sahayakai.com so the OAuth iframe loads first-party for iOS Safari ITP
+    // (fixes signInWithRedirect on iPhone). The /__/auth/* paths are
+    // reverse-proxied to *.firebaseapp.com by next.config.ts; init.json is
+    // served statically from public/__/firebase/init.json.
+    //
+    // We deliberately do NOT use bare "sahayakai.com" — Firebase's
+    // identitytoolkit createAuthUri rejects it with INVALID_CONTINUE_URI
+    // because the bare domain is registered as Firebase Hosting under a
+    // different Firebase project, not sahayakai-b4248. www and auth
+    // subdomains are not blocked.
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "www.sahayakai.com",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sahayakai-b4248",
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sahayakai-b4248.firebasestorage.app",
     messagingSenderId: "640589855975",
