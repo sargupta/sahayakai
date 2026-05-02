@@ -80,6 +80,16 @@ export type LessonPlanSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
  */
 export type VidyaSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
+/**
+ * Phase J.5 — shared sidecar mode shape. Identical four-mode contract
+ * across the 12 agents migrated from env-var flag reads to Firestore
+ * (forensic audit P0 #3). Each agent has its own `<agent>SidecarMode`
+ * + `<agent>SidecarPercent` pair on the FeatureFlagsConfig doc; the
+ * dispatcher reads them via `getFeatureFlags()` so a Firestore flip
+ * propagates across all agents within one cache TTL.
+ */
+export type SidecarMode = 'off' | 'shadow' | 'canary' | 'full';
+
 /** The full Firestore document shape at `system_config/feature_flags` */
 export interface FeatureFlagsConfig {
   // ── Global switches ────────────────────────────
@@ -141,6 +151,36 @@ export interface FeatureFlagsConfig {
    */
   vidyaSidecarPercent: number;
 
+  // ── Phase J.5 — 12 dispatchers migrated from env-var flag reads ──
+  // Forensic audit P0 #3. Auto-abort Cloud Function only writes
+  // Firestore; with these on Firestore a single flag flip rolls back
+  // every agent. Each follows the same four-mode contract as the
+  // existing parent-call / lesson-plan / vidya flags.
+  quizSidecarMode: SidecarMode;
+  quizSidecarPercent: number;
+  examPaperSidecarMode: SidecarMode;
+  examPaperSidecarPercent: number;
+  visualAidSidecarMode: SidecarMode;
+  visualAidSidecarPercent: number;
+  worksheetSidecarMode: SidecarMode;
+  worksheetSidecarPercent: number;
+  rubricSidecarMode: SidecarMode;
+  rubricSidecarPercent: number;
+  teacherTrainingSidecarMode: SidecarMode;
+  teacherTrainingSidecarPercent: number;
+  virtualFieldTripSidecarMode: SidecarMode;
+  virtualFieldTripSidecarPercent: number;
+  instantAnswerSidecarMode: SidecarMode;
+  instantAnswerSidecarPercent: number;
+  parentMessageSidecarMode: SidecarMode;
+  parentMessageSidecarPercent: number;
+  videoStorytellerSidecarMode: SidecarMode;
+  videoStorytellerSidecarPercent: number;
+  avatarSidecarMode: SidecarMode;
+  avatarSidecarPercent: number;
+  voiceToTextSidecarMode: SidecarMode;
+  voiceToTextSidecarPercent: number;
+
   /**
    * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
    * the TwiML route plays a one-sentence consent prologue BEFORE the
@@ -185,6 +225,35 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   // taps to an undeployed Phase-5 sidecar.
   vidyaSidecarMode: 'off',
   vidyaSidecarPercent: 0,
+  // Phase J.5 — all 12 newly-migrated agent flags default to off / 0
+  // on Firestore-outage fallback. Same safety reasoning as the three
+  // existing sidecar flags above: a Firestore outage MUST NOT silently
+  // route real teacher requests to the sidecar. Genkit alone is the
+  // safe baseline.
+  quizSidecarMode: 'off',
+  quizSidecarPercent: 0,
+  examPaperSidecarMode: 'off',
+  examPaperSidecarPercent: 0,
+  visualAidSidecarMode: 'off',
+  visualAidSidecarPercent: 0,
+  worksheetSidecarMode: 'off',
+  worksheetSidecarPercent: 0,
+  rubricSidecarMode: 'off',
+  rubricSidecarPercent: 0,
+  teacherTrainingSidecarMode: 'off',
+  teacherTrainingSidecarPercent: 0,
+  virtualFieldTripSidecarMode: 'off',
+  virtualFieldTripSidecarPercent: 0,
+  instantAnswerSidecarMode: 'off',
+  instantAnswerSidecarPercent: 0,
+  parentMessageSidecarMode: 'off',
+  parentMessageSidecarPercent: 0,
+  videoStorytellerSidecarMode: 'off',
+  videoStorytellerSidecarPercent: 0,
+  avatarSidecarMode: 'off',
+  avatarSidecarPercent: 0,
+  voiceToTextSidecarMode: 'off',
+  voiceToTextSidecarPercent: 0,
   // Consent prologue OFF until 11-language translations land. Operator
   // flips when ready. See `.claude/plans/dpdp-compliance.md`.
   consentNoticeEnabled: false,
@@ -252,6 +321,17 @@ export async function readConfig(): Promise<FeatureFlagsConfig> {
 export function invalidateConfigCache(): void {
   cachedConfig = null;
   cacheTimestamp = 0;
+}
+
+/**
+ * Phase J.5 — alias of `readConfig()` with a name the migrated
+ * dispatchers reach for. The 12 dispatchers all read mode + percent
+ * via `getFeatureFlags()` to make the Firestore plane the canonical
+ * source: a single Firestore flip from the auto-abort Cloud Function
+ * (or operator) rolls back every sidecar agent.
+ */
+export async function getFeatureFlags(): Promise<FeatureFlagsConfig> {
+  return readConfig();
 }
 
 // ─── Flag Evaluation ────────────────────────────────────────────────────────

@@ -4,10 +4,18 @@
  * Covers off / shadow / canary / full × {ok, timeout, http, behavioural}.
  * Synthetic mocks (matches existing sidecar-dispatch / lesson-plan /
  * vidya patterns to dodge Jest's CJS-vs-pure-ESM transformer issue).
+ *
+ * Phase J.5 — the dispatcher now reads `instantAnswerSidecarMode/Percent`
+ * from Firestore via `getFeatureFlags()`. Tests mock that module and
+ * stage the values per branch.
  */
 
 import type { InstantAnswerInput, InstantAnswerOutput } from '@/ai/flows/instant-answer';
 import type { InstantAnswerSidecarMode } from '@/lib/sidecar/instant-answer-dispatch';
+
+jest.mock('@/lib/feature-flags', () => ({
+    getFeatureFlags: jest.fn(),
+}));
 
 jest.mock('@/ai/flows/instant-answer', () => ({
     instantAnswer: jest.fn(),
@@ -62,6 +70,7 @@ jest.mock('@/lib/sidecar/instant-answer-client', () => {
 });
 
 import { instantAnswer } from '@/ai/flows/instant-answer';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import {
     callSidecarInstantAnswer,
@@ -73,6 +82,7 @@ import {
 
 const mockGenkit = instantAnswer as jest.MockedFunction<typeof instantAnswer>;
 const mockSidecar = callSidecarInstantAnswer as jest.MockedFunction<typeof callSidecarInstantAnswer>;
+const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -104,25 +114,29 @@ const SIDECAR_OUTPUT: SidecarInstantAnswerResponse = {
     groundingUsed: true,
 };
 
-// The dispatcher now reads `process.env.SAHAYAKAI_INSTANT_ANSWER_MODE`
-// directly. We toggle that env var per test to drive each branch.
+// Phase J.5 — the dispatcher now reads
+// `instantAnswerSidecarMode/Percent` from Firestore via
+// `getFeatureFlags()`. We stage the mock per test to drive each branch.
 function setMode(mode: InstantAnswerSidecarMode, percent = 100): void {
-    process.env.SAHAYAKAI_INSTANT_ANSWER_MODE = mode;
-    process.env.SAHAYAKAI_INSTANT_ANSWER_PERCENT = String(percent);
+    mockGetFlags.mockResolvedValue({
+        instantAnswerSidecarMode: mode,
+        instantAnswerSidecarPercent: percent,
+    } as Awaited<ReturnType<typeof getFeatureFlags>>);
 }
 
 beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
-    delete process.env.SAHAYAKAI_INSTANT_ANSWER_MODE;
-    delete process.env.SAHAYAKAI_INSTANT_ANSWER_PERCENT;
+    // Default: every read sees `off / 0` unless a test overrides.
+    mockGetFlags.mockResolvedValue({
+        instantAnswerSidecarMode: 'off',
+        instantAnswerSidecarPercent: 0,
+    } as Awaited<ReturnType<typeof getFeatureFlags>>);
 });
 
 afterEach(() => {
     jest.restoreAllMocks();
-    delete process.env.SAHAYAKAI_INSTANT_ANSWER_MODE;
-    delete process.env.SAHAYAKAI_INSTANT_ANSWER_PERCENT;
 });
 
 // ── off ────────────────────────────────────────────────────────────────────
@@ -269,11 +283,12 @@ describe('dispatchInstantAnswer — full mode', () => {
     });
 });
 
-// ── env-var-driven decide (no decide-failure path; sync env read) ─────────
+// ── Firestore-flag-driven decide ──────────────────────────────────────────
 
-describe('dispatchInstantAnswer — env-var dispatch decision', () => {
-    it('defaults to off when env var unset', async () => {
-        // both env vars are deleted in beforeEach
+describe('dispatchInstantAnswer — Firestore dispatch decision (Phase J.5)', () => {
+    it('defaults to off when Firestore field missing', async () => {
+        // beforeEach already returns `{instantAnswerSidecarMode: 'off'}`,
+        // simulating an untouched Firestore doc.
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchInstantAnswer(BASE_INPUT);
@@ -296,8 +311,11 @@ describe('dispatchInstantAnswer — env-var dispatch decision', () => {
         expect(out.decision.reason).toMatch(/^bucket_\d+_over_0$/);
     });
 
-    it('treats invalid mode env as off', async () => {
-        process.env.SAHAYAKAI_INSTANT_ANSWER_MODE = 'gibberish';
+    it('treats missing Firestore mode as off', async () => {
+        // Simulate a Firestore doc with no instantAnswerSidecarMode field.
+        mockGetFlags.mockResolvedValue(
+            {} as Awaited<ReturnType<typeof getFeatureFlags>>,
+        );
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchInstantAnswer(BASE_INPUT);

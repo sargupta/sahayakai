@@ -43,6 +43,11 @@ import {
     type SidecarVidyaRequest,
     type SidecarVidyaResponse,
 } from './vidya-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in vidya-client.ts. Phase J.2 hot-fix (P0 #7) —
+// caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 8_000;
 
 export type VidyaDispatchSource = 'genkit' | 'sidecar' | 'genkit_fallback';
 
@@ -154,7 +159,11 @@ async function runGenkitSafe(
     input: AssistantInput,
 ): Promise<{ ok: true; out: AssistantOutput } | { ok: false; error: Error }> {
     try {
-        const out = await runGenkitVidya(input);
+        const out = await withTimeout(
+            runGenkitVidya(input),
+            FALLBACK_TIMEOUT_MS,
+            'vidya genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -240,7 +249,11 @@ export async function dispatchVidya(
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {
-        const out = await runGenkitVidya(input.request);
+        const out = await withTimeout(
+            runGenkitVidya(input.request),
+            FALLBACK_TIMEOUT_MS,
+            'vidya genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.uid });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -301,6 +314,10 @@ export async function dispatchVidya(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await runGenkitVidya(input.request);
+    const out = await withTimeout(
+        runGenkitVidya(input.request),
+        FALLBACK_TIMEOUT_MS,
+        'vidya genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

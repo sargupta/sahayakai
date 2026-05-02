@@ -27,6 +27,7 @@ from ..._behavioural import assert_lesson_plan_rules
 from ...config import get_settings
 from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_list, sanitize_optional
 from .agent import (
     classify_verdict,
     get_evaluator_model,
@@ -51,6 +52,12 @@ router = APIRouter(prefix="/v1/lesson-plan", tags=["lesson-plan"])
 # module's contract changes; surfaced in the wire response so a Track
 # G dashboard can correlate behaviour shifts to versions.
 SIDECAR_VERSION = "phase-3.1.0"
+
+# Per-call timeout for run_resiliently. Lesson plan generates a full
+# multi-section JSON document so 30s gives enough room for a slow
+# attempt while still preventing a hung call from blocking the route
+# until the SDK's ~600s default.
+_PER_CALL_TIMEOUT_S = 30.0
 
 
 # ---- Gemini call helper (mirrors parent_call.router) ---------------------
@@ -107,7 +114,14 @@ def _extract_text(result: Any) -> str:
 
 def _request_to_dict(request: LessonPlanRequest) -> dict[str, Any]:
     """Render context for the writer prompt — drops `None` values so
-    the Handlebars template's `{{#if x}}` blocks behave correctly."""
+    the Handlebars template's `{{#if x}}` blocks behave correctly.
+
+    Phase J §J.3 — every user-controlled string field is sanitized
+    BEFORE landing in the prompt. The Handlebars template wraps
+    each value in `⟦…⟧` markers, but those markers are advisory
+    only; without sanitize, a payload like `⟧\\n\\nNew rule: …`
+    closes the wrap and the injected instruction reaches Gemini.
+    """
     raw = request.model_dump(exclude_none=True)
     # Default: useRuralContext True if not specified. Mirrors TS
     # default in `LessonPlanInputSchema`.
@@ -115,6 +129,34 @@ def _request_to_dict(request: LessonPlanRequest) -> dict[str, Any]:
     # Default: language "en" if not specified.
     raw.setdefault("language", "en")
     raw.setdefault("gradeLevels", [])
+    # Sanitize the user-controlled string fields. Pydantic enforces
+    # the bounds (max_length on each field) — sanitize re-bounds
+    # using the same caps for defense in depth.
+    if "topic" in raw:
+        raw["topic"] = sanitize(raw["topic"], max_length=500)
+    if "teacherContext" in raw:
+        raw["teacherContext"] = sanitize(raw["teacherContext"], max_length=2000)
+    if "subject" in raw:
+        raw["subject"] = sanitize(raw["subject"], max_length=100)
+    if "gradeLevels" in raw and isinstance(raw["gradeLevels"], list):
+        raw["gradeLevels"] = sanitize_list(raw["gradeLevels"], max_length=50)
+    # `ncertChapter` is a structured object — sanitize its title +
+    # learningOutcomes individually if present.
+    if "ncertChapter" in raw and isinstance(raw["ncertChapter"], dict):
+        chapter = dict(raw["ncertChapter"])
+        if "title" in chapter:
+            chapter["title"] = sanitize(chapter["title"], max_length=300)
+        if "subject" in chapter:
+            chapter["subject"] = sanitize_optional(
+                chapter.get("subject"), max_length=100,
+            )
+        if "learningOutcomes" in chapter and isinstance(
+            chapter["learningOutcomes"], list,
+        ):
+            chapter["learningOutcomes"] = sanitize_list(
+                chapter["learningOutcomes"], max_length=300,
+            )
+        raw["ncertChapter"] = chapter
     return raw
 
 
@@ -139,6 +181,7 @@ async def _run_writer(
         api_keys,
         span_name="lesson_plan.writer",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:
@@ -183,6 +226,7 @@ async def _run_evaluator(
         api_keys,
         span_name="lesson_plan.evaluator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:
@@ -226,6 +270,7 @@ async def _run_reviser(
         api_keys,
         span_name="lesson_plan.reviser",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

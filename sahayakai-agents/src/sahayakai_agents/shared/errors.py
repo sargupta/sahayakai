@@ -71,6 +71,16 @@ class SessionConflictError(AgentError):
         super().__init__(code="CONFLICT", message=message, http_status=409)
 
 
+class ReplayDetectedError(AgentError):
+    """Phase J.4 hot-fix (forensic P1 #19): the same `(timestamp, digest)`
+    tuple was already accepted within the skew window. Returns 409 so the
+    caller can distinguish a replay from a tamper (401) and a session
+    conflict (409 with a different code in the body)."""
+
+    def __init__(self, message: str = "Replay detected") -> None:
+        super().__init__(code="CONFLICT", message=message, http_status=409)
+
+
 class AuthenticationError(AgentError):
     """Caller's ID token or HMAC digest rejected."""
 

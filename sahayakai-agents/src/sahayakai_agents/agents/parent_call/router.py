@@ -56,6 +56,12 @@ log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/parent-call", tags=["parent-call"])
 
+# Per-call timeout for run_resiliently. Parent-call IS the telephony
+# path: total Twilio webhook budget is ~15s and we already burn ~3s on
+# transport + Firestore. 5s caps each Gemini attempt so a hung call
+# falls over to the next key well before Twilio gives up.
+_PER_CALL_TIMEOUT_S = 5.0
+
 # Process-scoped session store. Initialised lazily so tests can swap it.
 _session_store: SessionStore | None = None
 
@@ -209,6 +215,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
             settings.genai_keys,
             span_name="parent_call.reply",
             max_total_backoff_seconds=settings.max_total_backoff_seconds,
+            per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
         )
     except AISafetyBlockError as exc:
         # Safety block: do NOT retry, do NOT surface the raw reason to the
@@ -327,6 +334,7 @@ async def parent_call_summary(payload: CallSummaryRequest) -> CallSummaryRespons
         settings.genai_keys,
         span_name="parent_call.summary",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
 
     text = _extract_text(result)

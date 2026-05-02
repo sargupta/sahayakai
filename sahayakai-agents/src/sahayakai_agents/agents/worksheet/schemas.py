@@ -7,9 +7,12 @@ image bytes to Gemini as a multimodal Part alongside the text prompt.
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): bound list[str] elements.
+_LearningObjective = Annotated[str, StringConstraints(max_length=300)]
 
 # 10 MB cap on the data URI (base64-encoded image, after URL prefix).
 # A typical 1024×768 JPEG is ~150 KB → ~200 KB base64. 10 MB ceiling
@@ -64,7 +67,7 @@ class WorksheetCore(BaseModel):
     title: str = Field(min_length=3, max_length=300)
     gradeLevel: str = Field(min_length=1, max_length=50)
     subject: str = Field(min_length=1, max_length=100)
-    learningObjectives: list[str] = Field(min_length=1, max_length=10)
+    learningObjectives: list[_LearningObjective] = Field(min_length=1, max_length=10)
     studentInstructions: str = Field(min_length=10, max_length=2000)
     activities: list[WorksheetActivity] = Field(min_length=1, max_length=20)
     answerKey: list[WorksheetAnswerKeyEntry] = Field(min_length=1, max_length=20)
@@ -78,7 +81,7 @@ class WorksheetResponse(BaseModel):
     title: str = Field(min_length=3, max_length=300)
     gradeLevel: str = Field(min_length=1, max_length=50)
     subject: str = Field(min_length=1, max_length=100)
-    learningObjectives: list[str] = Field(min_length=1, max_length=10)
+    learningObjectives: list[_LearningObjective] = Field(min_length=1, max_length=10)
     studentInstructions: str = Field(min_length=10, max_length=2000)
     activities: list[WorksheetActivity] = Field(min_length=1, max_length=20)
     answerKey: list[WorksheetAnswerKeyEntry] = Field(min_length=1, max_length=20)

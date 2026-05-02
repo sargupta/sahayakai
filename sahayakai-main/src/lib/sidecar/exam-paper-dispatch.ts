@@ -6,6 +6,7 @@ import {
     type ExamPaperInput,
     type ExamPaperOutput,
 } from '@/ai/flows/exam-paper-generator';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarExamPaper,
     ExamPaperSidecarBehaviouralError,
@@ -15,6 +16,11 @@ import {
     type SidecarExamPaperRequest,
     type SidecarExamPaperResponse,
 } from './exam-paper-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in exam-paper-client.ts. Phase J.2 hot-fix (P0
+// #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 30_000;
 
 export type ExamPaperSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -30,25 +36,24 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): ExamPaperSidecarMode {
-    const raw = (process.env.SAHAYAKAI_EXAM_PAPER_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<ExamPaperSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.examPaperSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_EXAM_PAPER_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    return Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.examPaperSidecarPercent ?? 0;
+    return Math.max(0, Math.min(100, n));
 }
 
-export function decideExamPaperDispatch(uid: string): ExamPaperSidecarDecision {
-    const mode = readMode();
+export async function decideExamPaperDispatch(uid: string): Promise<ExamPaperSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
 }
@@ -135,7 +140,11 @@ function genkitToDispatched(
 
 async function runGenkitSafe(input: ExamPaperInput) {
     try {
-        const out = await generateExamPaper(input);
+        const out = await withTimeout(
+            generateExamPaper(input),
+            FALLBACK_TIMEOUT_MS,
+            'exam-paper genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -170,11 +179,15 @@ function logDispatch(decision: ExamPaperSidecarDecision, payload: Record<string,
 export async function dispatchExamPaper(
     input: ExamPaperDispatchInput,
 ): Promise<DispatchedExamPaper> {
-    const decision = decideExamPaperDispatch(input.userId);
+    const decision = await decideExamPaperDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateExamPaper(input);
+        const out = await withTimeout(
+            generateExamPaper(input),
+            FALLBACK_TIMEOUT_MS,
+            'exam-paper genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -214,6 +227,10 @@ export async function dispatchExamPaper(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateExamPaper(input);
+    const out = await withTimeout(
+        generateExamPaper(input),
+        FALLBACK_TIMEOUT_MS,
+        'exam-paper genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

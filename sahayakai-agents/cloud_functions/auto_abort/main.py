@@ -80,6 +80,76 @@ _DEMOTE_TABLE: dict[tuple[str, int], tuple[str, int]] = {
 
 _VALID_MODES = {"off", "shadow", "canary", "full"}
 
+# Phase J.5 — flag-plane consolidation. The auto-abort function used
+# to hard-code the parent-call flag pair. Now it accepts any of the
+# 15 sidecar agents on the Firestore feature-flags doc. The mapping
+# below is the AUTHORITATIVE allow-list; only fields enumerated here
+# can be demoted, so a malformed alert payload cannot scribble on an
+# arbitrary field name.
+#
+# Each tuple: (policy_name_keywords, mode_field, percent_field)
+# `policy_name_keywords` is the set of substrings that, if any are
+# present in the alert's policy_name (lower-cased), cause the demotion
+# to target that agent's flag pair. Order matters — the most specific
+# match wins, so two-word agent keys (e.g. ("video_storyteller",))
+# come before bare ("video",) to avoid mis-targeting.
+_FLAG_FIELDS: list[tuple[tuple[str, ...], str, str]] = [
+    # The 3 pre-existing Firestore-backed agents (untouched).
+    (("parent-call", "parent_call", "parentcall"),
+        "parentCallSidecarMode", "parentCallSidecarPercent"),
+    (("lesson-plan", "lesson_plan", "lessonplan"),
+        "lessonPlanSidecarMode", "lessonPlanSidecarPercent"),
+    (("vidya",),
+        "vidyaSidecarMode", "vidyaSidecarPercent"),
+    # The 12 newly-migrated agents (Phase J.5). Two-word keys come
+    # first so that e.g. "video_storyteller" matches before bare
+    # "video" would also match.
+    (("video-storyteller", "video_storyteller", "videostoryteller"),
+        "videoStorytellerSidecarMode", "videoStorytellerSidecarPercent"),
+    (("virtual-field-trip", "virtual_field_trip", "virtualfieldtrip"),
+        "virtualFieldTripSidecarMode", "virtualFieldTripSidecarPercent"),
+    (("teacher-training", "teacher_training", "teachertraining"),
+        "teacherTrainingSidecarMode", "teacherTrainingSidecarPercent"),
+    (("parent-message", "parent_message", "parentmessage"),
+        "parentMessageSidecarMode", "parentMessageSidecarPercent"),
+    (("instant-answer", "instant_answer", "instantanswer"),
+        "instantAnswerSidecarMode", "instantAnswerSidecarPercent"),
+    (("voice-to-text", "voice_to_text", "voicetotext"),
+        "voiceToTextSidecarMode", "voiceToTextSidecarPercent"),
+    (("visual-aid", "visual_aid", "visualaid"),
+        "visualAidSidecarMode", "visualAidSidecarPercent"),
+    (("exam-paper", "exam_paper", "exampaper"),
+        "examPaperSidecarMode", "examPaperSidecarPercent"),
+    (("worksheet",),
+        "worksheetSidecarMode", "worksheetSidecarPercent"),
+    (("rubric",),
+        "rubricSidecarMode", "rubricSidecarPercent"),
+    (("quiz",),
+        "quizSidecarMode", "quizSidecarPercent"),
+    (("avatar",),
+        "avatarSidecarMode", "avatarSidecarPercent"),
+]
+
+
+def _resolve_flag_fields(policy_name: str | None) -> tuple[str, str]:
+    """Map a Cloud Monitoring policy_name to the (mode, percent) flag
+    fields it should demote.
+
+    Falls back to the parent-call pair if no keyword matches. This
+    preserves backwards compatibility for policy YAMLs created before
+    Phase J.5 (which only knew about parent-call) without silently
+    no-op'ing in production — a non-matching policy still results in
+    a parent-call demotion, audited via the structured log.
+    """
+    if not policy_name:
+        return ("parentCallSidecarMode", "parentCallSidecarPercent")
+    needle = policy_name.lower()
+    for keywords, mode_field, percent_field in _FLAG_FIELDS:
+        if any(k in needle for k in keywords):
+            return (mode_field, percent_field)
+    return ("parentCallSidecarMode", "parentCallSidecarPercent")
+
+
 log = logging.getLogger("sahayakai.auto_abort")
 log.setLevel(logging.INFO)
 
@@ -298,6 +368,9 @@ def auto_abort_pubsub(event: dict[str, Any], context: Any) -> None:
         FLAG_DOC_PATH.split("/")[1]
     )
 
+    # Phase J.5 — pick the mode + percent field for this policy's agent.
+    mode_field, percent_field = _resolve_flag_fields(policy_name)
+
     transaction = db.transaction()
 
     @admin_firestore.transactional
@@ -311,8 +384,8 @@ def auto_abort_pubsub(event: dict[str, Any], context: Any) -> None:
             return {"action": "no_op_no_doc"}
 
         data = snap.to_dict() or {}
-        current_mode = str(data.get("parentCallSidecarMode") or "off")
-        current_percent = int(data.get("parentCallSidecarPercent") or 0)
+        current_mode = str(data.get(mode_field) or "off")
+        current_percent = int(data.get(percent_field) or 0)
 
         next_mode, next_percent = _demote(current_mode, current_percent)
 
@@ -321,12 +394,14 @@ def auto_abort_pubsub(event: dict[str, Any], context: Any) -> None:
                 "auto_abort.already_at_floor",
                 extra={
                     "policy": policy_name,
+                    "modeField": mode_field,
                     "mode": current_mode,
                     "percent": current_percent,
                 },
             )
             return {
                 "action": "no_op_at_floor",
+                "modeField": mode_field,
                 "mode": current_mode,
                 "percent": current_percent,
             }
@@ -334,8 +409,8 @@ def auto_abort_pubsub(event: dict[str, Any], context: Any) -> None:
         txn.update(
             flag_ref,
             {
-                "parentCallSidecarMode": next_mode,
-                "parentCallSidecarPercent": next_percent,
+                mode_field: next_mode,
+                percent_field: next_percent,
                 "updatedAt": admin_firestore.SERVER_TIMESTAMP,
                 "updatedBy": f"auto-abort:{policy_name}",
             },
@@ -343,6 +418,8 @@ def auto_abort_pubsub(event: dict[str, Any], context: Any) -> None:
         return {
             "action": "demoted",
             "policy": policy_name,
+            "modeField": mode_field,
+            "percentField": percent_field,
             "fromMode": current_mode,
             "fromPercent": current_percent,
             "toMode": next_mode,
@@ -396,8 +473,11 @@ def auto_abort_http(request: Any) -> tuple[str, int]:
             404,
         )
     data = snap.to_dict() or {}
-    current_mode = str(data.get("parentCallSidecarMode") or "off")
-    current_percent = int(data.get("parentCallSidecarPercent") or 0)
+
+    # Phase J.5 — pick the mode + percent field for this policy's agent.
+    mode_field, percent_field = _resolve_flag_fields(policy_name)
+    current_mode = str(data.get(mode_field) or "off")
+    current_percent = int(data.get(percent_field) or 0)
     next_mode, next_percent = _demote(current_mode, current_percent)
 
     dry_run = bool(envelope.get("dry_run"))
@@ -405,8 +485,8 @@ def auto_abort_http(request: Any) -> tuple[str, int]:
     if not dry_run and (next_mode, next_percent) != (current_mode, current_percent):
         flag_ref.update(
             {
-                "parentCallSidecarMode": next_mode,
-                "parentCallSidecarPercent": next_percent,
+                mode_field: next_mode,
+                percent_field: next_percent,
                 "updatedAt": admin_firestore.SERVER_TIMESTAMP,
                 "updatedBy": f"auto-abort-http:{policy_name}",
             }
@@ -414,6 +494,8 @@ def auto_abort_http(request: Any) -> tuple[str, int]:
 
     body = {
         "policy": policy_name,
+        "modeField": mode_field,
+        "percentField": percent_field,
         "dryRun": dry_run,
         "fromMode": current_mode,
         "fromPercent": current_percent,

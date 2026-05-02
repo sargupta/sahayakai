@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_teacher_training_response_rules
 from .agent import get_advisor_model, render_advisor_prompt
 from .schemas import (
@@ -25,6 +26,11 @@ teacher_training_router = APIRouter(
 )
 
 SIDECAR_VERSION = "phase-d.2.0"
+
+# Per-call timeout for run_resiliently. Teacher-training advisor returns
+# a structured JSON with multiple sections; 20s caps a hung Gemini call
+# without truncating slow but legitimate generations.
+_PER_CALL_TIMEOUT_S = 20.0
 
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
@@ -83,10 +89,11 @@ async def _run_advisor(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> TeacherTrainingCore:
+    # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
-        "question": payload.question,
-        "language": payload.language or "English",
-        "subject": payload.subject,
+        "question": sanitize(payload.question, max_length=4000),
+        "language": sanitize(payload.language or "English", max_length=20),
+        "subject": sanitize_optional(payload.subject, max_length=100),
     }
     prompt = render_advisor_prompt(context)
     model = get_advisor_model()
@@ -104,6 +111,7 @@ async def _run_advisor(
         api_keys,
         span_name="teacher_training.advisor",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

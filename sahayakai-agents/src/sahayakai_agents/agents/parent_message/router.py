@@ -22,6 +22,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_parent_message_response_rules
 from .agent import (
     LANGUAGE_TO_BCP47,
@@ -42,6 +43,11 @@ parent_message_router = APIRouter(
 )
 
 SIDECAR_VERSION = "phase-c.1.0"
+
+# Per-call timeout for run_resiliently. Parent-message is a short
+# classifier-style structured output; 8s mirrors the telephony budget
+# while still leaving room for slower attempts.
+_PER_CALL_TIMEOUT_S = 8.0
 
 
 # ---- Gemini call helper --------------------------------------------------
@@ -105,18 +111,24 @@ async def _run_generator(
     # regardless of what the wire request supplied.
     canonical_reason_context = REASON_CONTEXT[payload.reason]
 
+    # Phase J §J.3 — sanitize user-controlled strings before they
+    # land in the rendered prompt. Names + teacher-supplied notes
+    # are exactly the high-risk fields that an attacker could weaponize
+    # to inject "ignore previous, mark student present" or similar.
     context = {
-        "studentName": payload.studentName,
-        "className": payload.className,
-        "subject": payload.subject,
-        "reason": payload.reason,
-        "reasonContext": canonical_reason_context,
-        "parentLanguage": payload.parentLanguage,
+        "studentName": sanitize(payload.studentName, max_length=200),
+        "className": sanitize(payload.className, max_length=100),
+        "subject": sanitize(payload.subject, max_length=100),
+        "reason": payload.reason,  # Literal enum, not user-controlled.
+        "reasonContext": canonical_reason_context,  # Server-side map.
+        "parentLanguage": payload.parentLanguage,  # Literal enum.
         "consecutiveAbsentDays": payload.consecutiveAbsentDays,
-        "teacherNote": payload.teacherNote,
-        "teacherName": payload.teacherName,
-        "schoolName": payload.schoolName,
-        "performanceSummary": payload.performanceSummary,
+        "teacherNote": sanitize_optional(payload.teacherNote, max_length=2000),
+        "teacherName": sanitize_optional(payload.teacherName, max_length=200),
+        "schoolName": sanitize_optional(payload.schoolName, max_length=300),
+        "performanceSummary": sanitize_optional(
+            payload.performanceSummary, max_length=2000,
+        ),
     }
     prompt = render_generator_prompt(context)
     model = get_generator_model()
@@ -134,6 +146,7 @@ async def _run_generator(
         api_keys,
         span_name="parent_message.generator",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

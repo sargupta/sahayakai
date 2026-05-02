@@ -100,6 +100,13 @@ export interface SidecarLessonPlanRequest {
   difficultyLevel?: 'remedial' | 'standard' | 'advanced';
   subject?: string;
   teacherContext?: string;
+  /**
+   * Phase J.4 hot-fix (B3 inconsistency): every other agent's
+   * `userId` is required on the wire; lesson-plan was the odd one
+   * out. The dispatcher already has it (`LessonPlanDispatchInput`
+   * declares it required) — we just forward it through.
+   */
+  userId: string;
 }
 
 export interface SidecarLessonPlanActivity {

@@ -1,11 +1,12 @@
 /**
  * Parent-message dispatcher.
  *
- * Same off / shadow / canary / full pattern as instant-answer.
- * Self-contained env-var-driven decision (avoids feature-flags.ts
- * for the same reasons documented in instant-answer-dispatch.ts).
+ * Same off / shadow / canary / full pattern as the other sidecar
+ * agents. As of Phase J.5, dispatch decisions read from Firestore
+ * via `getFeatureFlags()` so the auto-abort Cloud Function (Firestore
+ * writer only) can roll this agent back without a Cloud Run redeploy.
  *
- * Phase C §C.5.
+ * Phase C §C.5; Phase J.5 — flag-plane consolidation.
  */
 
 import {
@@ -13,6 +14,7 @@ import {
     type ParentMessageInput,
     type ParentMessageOutput,
 } from '@/ai/flows/parent-message-generator';
+import { getFeatureFlags } from '@/lib/feature-flags';
 
 import {
     callSidecarParentMessage,
@@ -23,8 +25,13 @@ import {
     type SidecarParentMessageRequest,
     type SidecarParentMessageResponse,
 } from './parent-message-client';
+import { withTimeout } from './with-timeout';
 
-// ─── Self-contained dispatch decision ──────────────────────────────────────
+// Mirrors `TIMEOUT_MS` in parent-message-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 8_000;
+
+// ─── Firestore-backed dispatch decision (Phase J.5) ────────────────────────
 
 export type ParentMessageSidecarMode =
     | 'off'
@@ -46,24 +53,21 @@ function userBucketForParentMessage(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): ParentMessageSidecarMode {
-    const raw = (process.env.SAHAYAKAI_PARENT_MESSAGE_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+async function readMode(): Promise<ParentMessageSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.parentMessageSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_PARENT_MESSAGE_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.parentMessageSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideParentMessageDispatch(
+export async function decideParentMessageDispatch(
     uid: string,
-): ParentMessageSidecarDecision {
-    const mode = readMode();
+): Promise<ParentMessageSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucketForParentMessage(uid);
 
     if (mode === 'off') {
@@ -72,7 +76,7 @@ export function decideParentMessageDispatch(
     if (mode === 'full') {
         return { mode: 'full', reason: 'flag_full', bucket };
     }
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) {
         return {
             mode,
@@ -155,7 +159,11 @@ async function runGenkitSafe(
     input: ParentMessageInput,
 ): Promise<{ ok: true; out: ParentMessageOutput } | { ok: false; error: Error }> {
     try {
-        const out = await generateParentMessage(input);
+        const out = await withTimeout(
+            generateParentMessage(input),
+            FALLBACK_TIMEOUT_MS,
+            'parent-message genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -203,11 +211,15 @@ function logDispatch(
 export async function dispatchParentMessage(
     input: ParentMessageDispatchInput,
 ): Promise<DispatchedParentMessage> {
-    const decision = decideParentMessageDispatch(input.userId);
+    const decision = await decideParentMessageDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateParentMessage(input);
+        const out = await withTimeout(
+            generateParentMessage(input),
+            FALLBACK_TIMEOUT_MS,
+            'parent-message genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -259,6 +271,10 @@ export async function dispatchParentMessage(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateParentMessage(input);
+    const out = await withTimeout(
+        generateParentMessage(input),
+        FALLBACK_TIMEOUT_MS,
+        'parent-message genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

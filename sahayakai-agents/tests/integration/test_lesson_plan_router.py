@@ -214,6 +214,9 @@ _BASE_REQUEST = {
     "gradeLevels": ["Class 5"],
     "useRuralContext": False,
     "resourceLevel": "low",
+    # Phase J.4 (B3 inconsistency fix): userId is now required on
+    # LessonPlanRequest to match every other agent's contract.
+    "userId": "teacher-uid-1",
 }
 
 

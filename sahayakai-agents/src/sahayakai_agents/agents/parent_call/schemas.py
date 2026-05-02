@@ -15,9 +15,16 @@ Review trace:
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): bound the elements of every
+# list[str] field. Without this, a 1MB string × 20 entries on
+# `parentConcerns` would clear the per-list 20-entry cap but blow
+# Firestore's 1 MB document limit (the call summary is persisted to
+# `agent_sessions/{callSid}` after every call).
+_SummaryItem = Annotated[str, StringConstraints(max_length=1000)]
 
 # The 11 languages SahayakAI actually supports. Keep in sync with the
 # SAHAYAK_SOUL_PROMPT language mapping and with the client-side language
@@ -154,10 +161,12 @@ class CallSummaryResponse(BaseModel):
     # 1000-item list per axis, blowing through Firestore doc size
     # limits + Cloud Logging quotas + the Next.js JSON parse budget.
     parentResponse: str = Field(min_length=0, max_length=4000)
-    parentConcerns: list[str] = Field(default_factory=list, max_length=20)
-    parentCommitments: list[str] = Field(default_factory=list, max_length=20)
-    actionItemsForTeacher: list[str] = Field(default_factory=list, max_length=20)
-    guidanceGiven: list[str] = Field(default_factory=list, max_length=20)
+    parentConcerns: list[_SummaryItem] = Field(default_factory=list, max_length=20)
+    parentCommitments: list[_SummaryItem] = Field(default_factory=list, max_length=20)
+    actionItemsForTeacher: list[_SummaryItem] = Field(
+        default_factory=list, max_length=20,
+    )
+    guidanceGiven: list[_SummaryItem] = Field(default_factory=list, max_length=20)
     parentSentiment: ParentSentiment
     callQuality: CallQuality
     followUpNeeded: bool

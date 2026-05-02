@@ -67,9 +67,70 @@ _CONFUSABLE_FOLD: dict[int, str] = {
 }
 
 
+# Phase J §J.3 — extend the fold table to catch:
+# - Mathematical Alphanumeric Symbols (U+1D400-1D7FF, ~1024 codepoints)
+# - Cherokee letters that look Latin (U+13A0+)
+# - Armenian visually-Latin codepoints
+#
+# Forensic audit P0 #5: reply "𝐈 𝐚𝐦 𝐚𝐧 𝐀𝐈" (Mathematical Bold)
+# bypassed the forbidden-phrase scan because the original fold table
+# only covered Cyrillic / Greek / fullwidth.
+#
+# NFKC handles most Mathematical Alphanumeric folding on its own (it
+# normalizes 𝐀 → A), so the explicit table here is defense-in-depth:
+# the NFKC pass already runs in `assert_no_forbidden_phrases`, but
+# this table runs even when callers skip NFKC.
+
+def _build_math_fold() -> dict[int, str]:
+    """Mathematical Bold/Italic/Script/Fraktur/Sans-serif/Monospace
+    forms fold to base Latin. Generated programmatically rather than
+    hand-listed — 14 blocks × 52 codepoints = 728 entries.
+
+    Each block is 26 uppercase + 26 lowercase. The actual Unicode
+    layout has small holes (reserved codepoints) but this conservative
+    mapping over-covers without harm — unmapped reserved codepoints
+    don't render in attacker payloads anyway.
+    """
+    out: dict[int, str] = {}
+    block_starts = [
+        (0x1D400, 0x41), (0x1D434, 0x41), (0x1D468, 0x41),
+        (0x1D49C, 0x41), (0x1D4D0, 0x41), (0x1D504, 0x41),
+        (0x1D538, 0x41), (0x1D56C, 0x41), (0x1D5A0, 0x41),
+        (0x1D5D4, 0x41), (0x1D608, 0x41), (0x1D63C, 0x41),
+        (0x1D670, 0x41), (0x1D6A4, 0x41),
+    ]
+    for start, base in block_starts:
+        for i in range(26):
+            out[start + i] = chr(base + i)
+            out[start + 26 + i] = chr(base + 32 + i)
+    return out
+
+
+_CONFUSABLE_FOLD.update(_build_math_fold())
+
+# Cherokee letters that look Latin (U+13A0+). Conservative set —
+# only the codepoints that visually match a Latin letter in a
+# typical font. Cherokee is NOT folded by NFKC.
+_CONFUSABLE_FOLD.update({
+    0x13A0: "A", 0x13A1: "A", 0x13A4: "I", 0x13A5: "I",
+    0x13B3: "L", 0x13C0: "O", 0x13DA: "S", 0x13E1: "T",
+    0x13E2: "T", 0x13F2: "Y", 0x13F4: "Y",
+})
+
+# Armenian visually-Latin codepoints. Conservative set:
+# Armenian capital Oh / Feh and a couple of lowercase letters.
+_CONFUSABLE_FOLD.update({
+    0x0555: "O",  # Armenian capital Oh
+    0x0556: "P",  # Armenian capital Feh — visually similar
+    0x056F: "k",  # Armenian small ken
+    0x0578: "n",  # Armenian small Voh
+})
+
+
 def _fold_confusables(text: str) -> str:
-    """Replace Cyrillic / Greek / fullwidth letters that visually match
-    Latin with their Latin equivalents. Idempotent."""
+    """Replace Cyrillic / Greek / fullwidth / Mathematical / Cherokee /
+    Armenian letters that visually match Latin with their Latin
+    equivalents. Idempotent."""
     return text.translate(_CONFUSABLE_FOLD)
 
 
@@ -84,6 +145,42 @@ _FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bdigital\s+(?:agent|assistant|helper)\b", re.IGNORECASE),
     re.compile(r"\b(?:ML|machine\s+learning)\s+model\b", re.IGNORECASE),
 )
+
+# Phase J §J.3 — compact forbidden patterns (whitespace-free) scanned
+# against the all-whitespace-stripped alias built by
+# `_glue_split_letter_runs`. These catch split-letter injection
+# attacks where the attacker breaks "I am AI" into "I  a m   A I" so
+# the standard `\s+` regex misses it.
+_COMPACT_AI_TARGETS = r"(?:AI|bot|chatbot|assistant|languagemodel)"
+_COMPACT_FORBIDDEN_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"Sahaa?yak(?:\.?AI)?", re.IGNORECASE),
+    re.compile(rf"I[''']?m(?:an?)?{_COMPACT_AI_TARGETS}", re.IGNORECASE),
+    re.compile(rf"Iam(?:an?)?{_COMPACT_AI_TARGETS}", re.IGNORECASE),
+    re.compile(r"artificialintelligence", re.IGNORECASE),
+    re.compile(r"virtual(?:agent|assistant|helper)", re.IGNORECASE),
+    re.compile(r"automated(?:agent|caller|system)", re.IGNORECASE),
+    re.compile(r"digital(?:agent|assistant|helper)", re.IGNORECASE),
+    re.compile(r"(?:ML|machinelearning)model", re.IGNORECASE),
+)
+
+
+# Detect a run of 4+ single-letter tokens separated by whitespace.
+# A normal sentence wouldn't have 4+ single-letter words in a row,
+# so this lower bound limits false positives.
+_SPLIT_LETTER_RUN_RE = re.compile(r"(?:\b\w\b[ \t]+){3,}\b\w\b")
+
+
+def _glue_split_letter_runs(text: str) -> str:
+    """Replace each run of 4+ single-letter tokens with the fully-
+    glued version (all whitespace inside the run stripped).
+
+    The result feeds into the COMPACT forbidden-phrase pattern
+    family which expects whitespace-free phrases. Original text
+    outside the run is preserved.
+    """
+    def _glue(match: re.Match[str]) -> str:
+        return re.sub(r"\s+", "", match.group(0))
+    return _SPLIT_LETTER_RUN_RE.sub(_glue, text)
 
 # Round-2 audit P0 GUARD-2 fix (group A3): include `…` (U+2026
 # ellipsis) and `。` (U+3002 CJK full stop) and `፧` (U+1367 Ethiopic)
@@ -123,14 +220,34 @@ def assert_no_forbidden_phrases(text: str) -> None:
     # 1. NFKC-normalize: collapse compatibility variants (full-width,
     #    ligatures).
     # 2. Strip invisibles (ZWJ, ZWNJ, BOM) that defeat naive regex.
-    # 3. Fold confusables (Cyrillic А, Greek Α, fullwidth Ａ → Latin A)
+    # 3. Fold confusables (Cyrillic А, Greek Α, fullwidth Ａ → Latin A,
+    #    Mathematical Bold 𝐀, Cherokee Ꭺ, Armenian Օ → Latin)
     #    so a homoglyph attacker can't bypass the regex.
+    # 4. (Phase J §J.3) Split-letter injection — ATTACKER splits forbidden
+    #    phrases into single letters with multi-space gaps so the
+    #    `\s+` regex misses. Detect 4+ single-letter token runs and
+    #    re-glue them into a whitespace-free form, then scan that form
+    #    against the COMPACT pattern family.
     normalized = unicodedata.normalize("NFKC", text)
     normalized = re.sub(r"[\u200b-\u200d\ufeff]", "", normalized)
     normalized = _fold_confusables(normalized)
+    # Standard pass — whitespace-aware patterns.
     for pattern in _FORBIDDEN_PATTERNS:
         hit = pattern.search(normalized)
-        assert hit is None, f"Forbidden phrase matched: {hit.group(0)!r} in reply={text!r}"
+        assert hit is None, (
+            f"Forbidden phrase matched: {hit.group(0)!r} in reply={text!r}"
+        )
+    # Phase J §J.3 split-letter pass: glue each run of 4+ single-
+    # letter tokens, then run the COMPACT (whitespace-free) patterns
+    # against the glued form. Catches "I  a m   A I  a s s i s t a n t".
+    glued = _glue_split_letter_runs(normalized)
+    if glued != normalized:
+        for pattern in _COMPACT_FORBIDDEN_PATTERNS:
+            hit = pattern.search(glued)
+            assert hit is None, (
+                f"Forbidden phrase matched (split-letter): {hit.group(0)!r} "
+                f"in reply={text!r}"
+            )
 
 
 def count_sentences(text: str) -> int:

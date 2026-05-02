@@ -184,6 +184,7 @@ async def _run_transcriber(
                 api_keys,
                 span_name="voice_to_text.transcriber",
                 max_total_backoff_seconds=settings.max_total_backoff_seconds,
+                per_call_timeout_seconds=_TRANSCRIPTION_TIMEOUT_S,
             ),
             timeout=_TRANSCRIPTION_TIMEOUT_S,
         )

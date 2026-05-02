@@ -13,6 +13,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_worksheet_response_rules
 from .agent import (
     InvalidDataURIError,
@@ -27,6 +28,11 @@ log = structlog.get_logger(__name__)
 worksheet_router = APIRouter(prefix="/v1/worksheet", tags=["worksheet"])
 
 SIDECAR_VERSION = "phase-d.4.0"
+
+# Per-call timeout for run_resiliently. Worksheet wizard does a
+# multimodal call (image + prompt) and emits structured JSON; 20s
+# accommodates slow attempts while preventing hung calls.
+_PER_CALL_TIMEOUT_S = 20.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -104,12 +110,16 @@ async def _run_wizard(
             http_status=400,
         ) from exc
 
+    # Phase J §J.3 — sanitize user-controlled strings before they
+    # land in the rendered prompt.
     context = {
-        "prompt": payload.prompt,
-        "language": payload.language or "English",
-        "gradeLevel": payload.gradeLevel,
-        "subject": payload.subject,
-        "teacherContext": payload.teacherContext,
+        "prompt": sanitize(payload.prompt, max_length=2000),
+        "language": sanitize(payload.language or "English", max_length=20),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
+        "subject": sanitize_optional(payload.subject, max_length=100),
+        "teacherContext": sanitize_optional(
+            payload.teacherContext, max_length=1000,
+        ),
     }
     prompt = render_wizard_prompt(context)
     model = get_wizard_model()
@@ -129,6 +139,7 @@ async def _run_wizard(
         api_keys,
         span_name="worksheet.wizard",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

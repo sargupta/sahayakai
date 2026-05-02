@@ -16,9 +16,12 @@ Phase 5 §5.1 deliverable. See
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): list[str] element bound.
+_LearningOutcome = Annotated[str, StringConstraints(max_length=300)]
 
 # --- Input pieces -------------------------------------------------------
 
@@ -102,7 +105,9 @@ class NcertChapterRef(BaseModel):
 
     number: int = Field(ge=1, le=30)
     title: str = Field(min_length=1, max_length=300)
-    learningOutcomes: list[str] = Field(default_factory=list, max_length=20)
+    learningOutcomes: list[_LearningOutcome] = Field(
+        default_factory=list, max_length=20,
+    )
 
 
 class VidyaActionParams(BaseModel):

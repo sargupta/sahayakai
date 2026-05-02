@@ -1,9 +1,13 @@
 """Pydantic models for quiz generator agent (Phase E.1)."""
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): list[str] elements bounded.
+_McqOption = Annotated[str, StringConstraints(max_length=1000)]
+_BloomsLevel = Annotated[str, StringConstraints(max_length=50)]
 
 # 10 MB cap on the optional textbook-page image data URI.
 _DATA_URI_MAX_LEN = 10 * 1024 * 1024
@@ -22,7 +26,7 @@ class QuizQuestion(BaseModel):
 
     questionText: str = Field(min_length=3, max_length=2000)
     questionType: QuizQuestionType
-    options: list[str] | None = Field(default=None, max_length=10)
+    options: list[_McqOption] | None = Field(default=None, max_length=10)
     correctAnswer: str = Field(min_length=1, max_length=2000)
     explanation: str = Field(min_length=10, max_length=3000)
     difficultyLevel: QuizDifficulty
@@ -43,7 +47,7 @@ class QuizGeneratorRequest(BaseModel):
     questionTypes: list[QuizQuestionType] = Field(min_length=1, max_length=4)
     gradeLevel: str | None = Field(default=None, max_length=50)
     language: str | None = Field(default=None, max_length=20)
-    bloomsTaxonomyLevels: list[str] | None = Field(default=None, max_length=10)
+    bloomsTaxonomyLevels: list[_BloomsLevel] | None = Field(default=None, max_length=10)
     targetDifficulty: QuizDifficulty | None = None
     subject: str | None = Field(default=None, max_length=100)
     teacherContext: str | None = Field(default=None, max_length=1000)

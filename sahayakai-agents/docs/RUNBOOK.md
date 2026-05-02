@@ -45,14 +45,62 @@ Filter by `service.name="sahayakai-agents"`.
 No redeploy. No Cloud Run change. Flips the Firestore feature flag that
 Next.js reads before dispatching to the sidecar.
 
-```
-cd sahayakai-main
-npx tsx src/scripts/update-flags.ts --parent-call-sidecar-mode off
+As of Phase J.5 (forensic audit P0 #3), ALL 15 sidecar agents read
+their dispatch mode + percent from `system_config/feature_flags`. The
+single Firestore patch below rolls every agent back to `off` in one
+write — no Cloud Run env-var redeploy required.
+
+```bash
+gcloud firestore documents patch system_config/feature_flags \
+  --project=sahayakai-b4248 \
+  --data='{
+    "parentCallSidecarMode":"off","parentCallSidecarPercent":0,
+    "lessonPlanSidecarMode":"off","lessonPlanSidecarPercent":0,
+    "vidyaSidecarMode":"off","vidyaSidecarPercent":0,
+    "quizSidecarMode":"off","quizSidecarPercent":0,
+    "examPaperSidecarMode":"off","examPaperSidecarPercent":0,
+    "visualAidSidecarMode":"off","visualAidSidecarPercent":0,
+    "worksheetSidecarMode":"off","worksheetSidecarPercent":0,
+    "rubricSidecarMode":"off","rubricSidecarPercent":0,
+    "teacherTrainingSidecarMode":"off","teacherTrainingSidecarPercent":0,
+    "virtualFieldTripSidecarMode":"off","virtualFieldTripSidecarPercent":0,
+    "instantAnswerSidecarMode":"off","instantAnswerSidecarPercent":0,
+    "parentMessageSidecarMode":"off","parentMessageSidecarPercent":0,
+    "videoStorytellerSidecarMode":"off","videoStorytellerSidecarPercent":0,
+    "avatarSidecarMode":"off","avatarSidecarPercent":0,
+    "voiceToTextSidecarMode":"off","voiceToTextSidecarPercent":0,
+    "updatedBy":"manual-abort-all"
+  }'
 ```
 
-This leaves the sidecar Cloud Run service running; Next.js simply stops
-routing to it and all parent calls go through the Genkit path. Always
-try this first. MTTR < 60 seconds.
+To roll back a single agent only (preferred — never roll back more
+than the alert demands), include only that agent's mode + percent
+fields. Examples:
+
+```bash
+# Just parent-call:
+gcloud firestore documents patch system_config/feature_flags \
+  --project=sahayakai-b4248 \
+  --data='{"parentCallSidecarMode":"off","parentCallSidecarPercent":0,"updatedBy":"manual-abort"}'
+
+# Just instant-answer:
+gcloud firestore documents patch system_config/feature_flags \
+  --project=sahayakai-b4248 \
+  --data='{"instantAnswerSidecarMode":"off","instantAnswerSidecarPercent":0,"updatedBy":"manual-abort"}'
+```
+
+Sidecar Cloud Run service stays running; Next.js simply stops routing
+to it. The dispatcher cache TTL is 5 minutes, so the flip propagates
+within that window — always try this first. MTTR < 60 seconds (plus
+cache TTL).
+
+**Phase J.5 deprecation note.** The previous `npx tsx
+src/scripts/update-flags.ts --parent-call-sidecar-mode off` and
+per-agent `gcloud run services update --update-env-vars
+SAHAYAKAI_<AGENT>_MODE=off` recipes are deprecated and no longer have
+any effect on the 12 newly-migrated agents. The Firestore plane is
+the canonical source. If you flip an env var on Cloud Run thinking
+you've rolled back, you have NOT — the dispatcher reads Firestore.
 
 ## Rollback path 2 — revision traffic revert
 

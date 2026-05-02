@@ -16,6 +16,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize
 from ._guard import assert_video_storyteller_response_rules
 from .agent import get_recommender_model, render_recommender_prompt
 from .schemas import (
@@ -31,6 +32,11 @@ video_storyteller_router = APIRouter(
 )
 
 SIDECAR_VERSION = "phase-f.1.0"
+
+# Per-call timeout for run_resiliently. Recommender returns categorised
+# search-query JSON; 20s caps a hung Gemini call without truncating
+# slow but legitimate generations.
+_PER_CALL_TIMEOUT_S = 20.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -88,13 +94,16 @@ async def _run_recommender(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> VideoStorytellerCore:
+    # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
-        "subject": payload.subject,
-        "gradeLevel": payload.gradeLevel,
-        "topic": payload.topic or "",
-        "language": payload.language or "English",
-        "state": payload.state or "",
-        "educationBoard": payload.educationBoard or "",
+        "subject": sanitize(payload.subject, max_length=100),
+        "gradeLevel": sanitize(payload.gradeLevel, max_length=50),
+        "topic": sanitize(payload.topic or "", max_length=300),
+        "language": sanitize(payload.language or "English", max_length=20),
+        "state": sanitize(payload.state or "", max_length=100),
+        "educationBoard": sanitize(
+            payload.educationBoard or "", max_length=100,
+        ),
     }
     prompt = render_recommender_prompt(context)
     model = get_recommender_model()
@@ -112,6 +121,7 @@ async def _run_recommender(
         api_keys,
         span_name="video_storyteller.recommender",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

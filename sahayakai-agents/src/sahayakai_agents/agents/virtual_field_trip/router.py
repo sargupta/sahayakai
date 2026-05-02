@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_virtual_field_trip_response_rules
 from .agent import get_planner_model, render_planner_prompt
 from .schemas import (
@@ -25,6 +26,11 @@ virtual_field_trip_router = APIRouter(
 )
 
 SIDECAR_VERSION = "phase-d.3.0"
+
+# Per-call timeout for run_resiliently. Field-trip planner returns a
+# multi-stop JSON itinerary; 20s caps a hung Gemini call without
+# truncating slow but legitimate generations.
+_PER_CALL_TIMEOUT_S = 20.0
 
 _LANGUAGE_NAME_TO_ISO: dict[str, str] = {
     "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te",
@@ -82,10 +88,11 @@ async def _run_planner(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> VirtualFieldTripCore:
+    # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
-        "topic": payload.topic,
-        "language": payload.language or "English",
-        "gradeLevel": payload.gradeLevel,
+        "topic": sanitize(payload.topic, max_length=300),
+        "language": sanitize(payload.language or "English", max_length=20),
+        "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
     }
     prompt = render_planner_prompt(context)
     model = get_planner_model()
@@ -103,6 +110,7 @@ async def _run_planner(
         api_keys,
         span_name="virtual_field_trip.planner",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
     text = _extract_text(result)
     try:

@@ -21,6 +21,7 @@ import {
     type AvatarGeneratorInput,
     type AvatarGeneratorOutput,
 } from '@/ai/flows/avatar-generator';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     AvatarSidecarBehaviouralError,
     AvatarSidecarConfigError,
@@ -30,6 +31,12 @@ import {
     type SidecarAvatarRequest,
     type SidecarAvatarResponse,
 } from './avatar-generator-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in avatar-generator-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback so a hung Gemini image call cannot
+// extend the dispatcher's tail past the sidecar's already-spent budget.
+const FALLBACK_TIMEOUT_MS = 100_000;
 
 export type AvatarSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -47,26 +54,24 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): AvatarSidecarMode {
-    const raw = (process.env.SAHAYAKAI_AVATAR_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<AvatarSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.avatarSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_AVATAR_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n)) return 0;
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.avatarSidecarPercent ?? 0;
     return Math.max(0, Math.min(100, n));
 }
 
-export function decideAvatarDispatch(uid: string): AvatarSidecarDecision {
-    const mode = readMode();
+export async function decideAvatarDispatch(uid: string): Promise<AvatarSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent)
         return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
@@ -155,7 +160,11 @@ function genkitToDispatched(
 
 async function runGenkitSafe(input: AvatarDispatchInput) {
     try {
-        const out = await generateAvatar(input);
+        const out = await withTimeout(
+            generateAvatar(input),
+            FALLBACK_TIMEOUT_MS,
+            'avatar-generator genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -195,11 +204,15 @@ function logDispatch(
 export async function dispatchAvatar(
     input: AvatarDispatchInput,
 ): Promise<DispatchedAvatar> {
-    const decision = decideAvatarDispatch(input.userId);
+    const decision = await decideAvatarDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateAvatar(input);
+        const out = await withTimeout(
+            generateAvatar(input),
+            FALLBACK_TIMEOUT_MS,
+            'avatar-generator genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -272,6 +285,10 @@ export async function dispatchAvatar(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateAvatar(input);
+    const out = await withTimeout(
+        generateAvatar(input),
+        FALLBACK_TIMEOUT_MS,
+        'avatar-generator genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

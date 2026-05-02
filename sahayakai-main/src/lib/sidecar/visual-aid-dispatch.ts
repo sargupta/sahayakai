@@ -6,6 +6,7 @@ import {
     type VisualAidInput,
     type VisualAidOutput,
 } from '@/ai/flows/visual-aid-designer';
+import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarVisualAid,
     VisualAidSidecarBehaviouralError,
@@ -15,6 +16,11 @@ import {
     type SidecarVisualAidRequest,
     type SidecarVisualAidResponse,
 } from './visual-aid-client';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in visual-aid-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 110_000;
 
 export type VisualAidSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -30,25 +36,24 @@ function userBucket(uid: string): number {
     return Math.abs(hash) % 100;
 }
 
-function readMode(): VisualAidSidecarMode {
-    const raw = (process.env.SAHAYAKAI_VISUAL_AID_MODE ?? '').toLowerCase();
-    if (raw === 'shadow' || raw === 'canary' || raw === 'full') return raw;
-    return 'off';
+// Phase J.5 — flag plane consolidation. See feature-flags.ts.
+async function readMode(): Promise<VisualAidSidecarMode> {
+    const flags = await getFeatureFlags();
+    return flags.visualAidSidecarMode ?? 'off';
 }
 
-function readPercent(): number {
-    const raw = process.env.SAHAYAKAI_VISUAL_AID_PERCENT;
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    return Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+async function readPercent(): Promise<number> {
+    const flags = await getFeatureFlags();
+    const n = flags.visualAidSidecarPercent ?? 0;
+    return Math.max(0, Math.min(100, n));
 }
 
-export function decideVisualAidDispatch(uid: string): VisualAidSidecarDecision {
-    const mode = readMode();
+export async function decideVisualAidDispatch(uid: string): Promise<VisualAidSidecarDecision> {
+    const mode = await readMode();
     const bucket = userBucket(uid);
     if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
     if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
-    const percent = readPercent();
+    const percent = await readPercent();
     if (bucket < percent) return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
     return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
 }
@@ -110,7 +115,11 @@ function genkitToDispatched(
 
 async function runGenkitSafe(input: VisualAidInput) {
     try {
-        const out = await generateVisualAid(input);
+        const out = await withTimeout(
+            generateVisualAid(input),
+            FALLBACK_TIMEOUT_MS,
+            'visual-aid genkit fallback',
+        );
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -145,11 +154,15 @@ function logDispatch(decision: VisualAidSidecarDecision, payload: Record<string,
 export async function dispatchVisualAid(
     input: VisualAidDispatchInput,
 ): Promise<DispatchedVisualAid> {
-    const decision = decideVisualAidDispatch(input.userId);
+    const decision = await decideVisualAidDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await generateVisualAid(input);
+        const out = await withTimeout(
+            generateVisualAid(input),
+            FALLBACK_TIMEOUT_MS,
+            'visual-aid genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -189,6 +202,10 @@ export async function dispatchVisualAid(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateVisualAid(input);
+    const out = await withTimeout(
+        generateVisualAid(input),
+        FALLBACK_TIMEOUT_MS,
+        'visual-aid genkit fallback',
+    );
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }
