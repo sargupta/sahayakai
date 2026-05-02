@@ -76,6 +76,18 @@ class TestSentenceCount:
         with pytest.raises(AssertionError):
             assert_sentence_count_in_range("a. b. c. d. e. f.", 1, 4)
 
+    def test_ascii_ellipsis_counts_as_one_ender(self) -> None:
+        # `...` is a single stylistic pause, not three sentence breaks.
+        # Pre-collapse to U+2026 keeps the char-class regex honest.
+        assert count_sentences("Wait... think... act.") == 3
+        assert count_sentences("No way...") == 1
+        assert count_sentences("I think... that works.") == 2
+
+    def test_unicode_ellipsis_equivalent(self) -> None:
+        # `…` (U+2026) and `...` should produce the same count.
+        assert count_sentences("a... b") == count_sentences("a… b")
+        assert count_sentences("Wait... go.") == count_sentences("Wait… go.")
+
 
 # ---- Script-correctness guard ---------------------------------------------
 
