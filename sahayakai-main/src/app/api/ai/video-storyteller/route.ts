@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getVideoRecommendations } from '@/ai/flows/video-storyteller';
+import { dispatchVideoStoryteller } from '@/lib/sidecar/video-storyteller-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 
@@ -44,12 +44,22 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
-        const output = await getVideoRecommendations({
+        // Phase F.1: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_VIDEO_STORYTELLER_MODE env (default: off → Genkit only).
+        // Sidecar replaces ONLY the AI categories+message call; YouTube
+        // ranking + curated fallback merge stays in Next.js.
+        const dispatched = await dispatchVideoStoryteller({
             ...body,
             userId
         });
 
-        return NextResponse.json(output);
+        return NextResponse.json({
+            categories: dispatched.categories,
+            personalizedMessage: dispatched.personalizedMessage,
+            categorizedVideos: dispatched.categorizedVideos,
+            fromCache: dispatched.fromCache,
+            latencyScore: dispatched.latencyScore,
+        });
     } catch (error) {
         logAIError(error, 'VIDEO_STORYTELLER', {
             message: 'Video Storyteller API Failed',
