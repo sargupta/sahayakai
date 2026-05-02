@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { voiceToTextFormData } from '@/ai/flows/voice-to-text';
+import { dispatchVoiceToText } from '@/lib/sidecar/voice-to-text-dispatch';
 import { sarvamSTT } from '@/lib/sarvam';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
@@ -45,14 +45,23 @@ async function _handler(request: NextRequest) {
             logger.warn(`[STT] Sarvam failed: ${sarvamErr instanceof Error ? sarvamErr.message : String(sarvamErr)}, falling back to Gemini`, 'VOICE_TO_TEXT');
         }
 
-        // --- Fallback: Gemini multimodal STT (via Genkit) ---
-        // Rebuild FormData because the original File object is still valid but
-        // voiceToTextFormData() expects a fresh FormData with an 'audio' key.
-        logger.info('[STT] Using Gemini fallback', 'VOICE_TO_TEXT');
-        const fallbackForm = new FormData();
-        fallbackForm.append('audio', audioFile, audioFile.name || 'recording.webm');
-        const output = await voiceToTextFormData(fallbackForm);
-        return NextResponse.json(output);
+        // --- Fallback: Gemini multimodal STT (via dispatcher → Genkit or ADK sidecar) ---
+        // Phase I: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_VOICE_TO_TEXT_MODE env (default: off → Genkit only).
+        // Build the data URI form the sidecar (and Genkit) expect.
+        logger.info('[STT] Using Gemini fallback (via dispatcher)', 'VOICE_TO_TEXT');
+        const arrayBuffer = await audioFile.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const mimeType = audioFile.type || 'audio/webm';
+        const audioDataUri = `data:${mimeType};base64,${buffer.toString('base64')}`;
+        const dispatched = await dispatchVoiceToText({
+            audioDataUri,
+            userId,
+        });
+        return NextResponse.json({
+            text: dispatched.text,
+            language: dispatched.language,
+        });
     } catch (error) {
         logAIError(error, 'VOICE_TO_TEXT', { message: 'Voice-to-text API failed' });
         const message = error instanceof Error ? error.message : String(error);

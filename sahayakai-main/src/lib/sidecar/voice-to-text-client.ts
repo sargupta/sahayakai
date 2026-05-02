@@ -1,0 +1,155 @@
+/**
+ * HTTP client for voice-to-text ADK agent (Phase I).
+ *
+ * Multimodal speech-to-text. Sends `audioDataUri` (data:<mime>;base64
+ * payload) to the sidecar, returns `{ text, language }`.
+ *
+ * Used by the voice-to-text dispatcher in `voice-to-text-dispatch.ts`
+ * after the Sarvam STT provider has been tried (Sarvam is preferred
+ * for Indian languages because it is purpose-built for them; the
+ * Gemini-via-ADK path is the secondary fallback).
+ */
+import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+import { signRequest } from './signing';
+
+export class VoiceToTextSidecarConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'VoiceToTextSidecarConfigError';
+  }
+}
+
+export class VoiceToTextSidecarTimeoutError extends Error {
+  readonly elapsedMs: number;
+  constructor(elapsedMs: number) {
+    super(`Voice-to-text sidecar request timed out after ${elapsedMs}ms`);
+    this.name = 'VoiceToTextSidecarTimeoutError';
+    this.elapsedMs = elapsedMs;
+  }
+}
+
+export class VoiceToTextSidecarHttpError extends Error {
+  readonly status: number;
+  readonly bodyExcerpt: string;
+  constructor(status: number, bodyExcerpt: string) {
+    super(`Voice-to-text sidecar returned HTTP ${status}: ${bodyExcerpt}`);
+    this.name = 'VoiceToTextSidecarHttpError';
+    this.status = status;
+    this.bodyExcerpt = bodyExcerpt;
+  }
+}
+
+export class VoiceToTextSidecarBehaviouralError extends Error {
+  readonly axisHint: string;
+  constructor(axisHint: string, details: string) {
+    super(
+      `Voice-to-text sidecar behavioural guard failed (${axisHint}): ${details}`,
+    );
+    this.name = 'VoiceToTextSidecarBehaviouralError';
+    this.axisHint = axisHint;
+  }
+}
+
+export interface SidecarVoiceToTextRequest {
+  audioDataUri: string;
+  userId: string;
+}
+
+export interface SidecarVoiceToTextResponse {
+  text: string;
+  language: string | null;
+  sidecarVersion: string;
+  latencyMs: number;
+  modelUsed: string;
+}
+
+// Speech-to-text on multi-minute audio can take ~30-45 s. Cap with
+// 60 s + small network buffer.
+const TIMEOUT_MS = 70_000;
+const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
+const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
+
+const tokenClientByAudience = new Map<string, Promise<IdTokenClient>>();
+
+async function getTokenClient(audience: string): Promise<IdTokenClient> {
+  let cached = tokenClientByAudience.get(audience);
+  if (!cached) {
+    const auth = new GoogleAuth();
+    const p = auth.getIdTokenClient(audience);
+    p.catch(() => tokenClientByAudience.delete(audience));
+    tokenClientByAudience.set(audience, p);
+    cached = p;
+  }
+  return cached;
+}
+
+export function _resetVoiceToTextTokenCacheForTest(): void {
+  tokenClientByAudience.clear();
+}
+
+export interface CallSidecarVoiceToTextOptions {
+  timeoutMs?: number;
+  fetchImpl?: typeof fetch;
+}
+
+export async function callSidecarVoiceToText(
+  request: SidecarVoiceToTextRequest,
+  options: CallSidecarVoiceToTextOptions = {},
+): Promise<SidecarVoiceToTextResponse> {
+  const baseUrl = process.env[BASE_URL_ENV];
+  const audience = process.env[AUDIENCE_ENV];
+  if (!baseUrl)
+    throw new VoiceToTextSidecarConfigError(`${BASE_URL_ENV} is not set`);
+  if (!audience)
+    throw new VoiceToTextSidecarConfigError(`${AUDIENCE_ENV} is not set`);
+
+  const url = `${baseUrl.replace(/\/+$/, '')}/v1/voice-to-text/transcribe`;
+  const rawBody = JSON.stringify(request);
+  const { timestamp, digest } = await signRequest(rawBody);
+
+  const tokenClient = await getTokenClient(audience);
+  const authHeaders = await tokenClient.getRequestHeaders();
+
+  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+
+  let res: Response;
+  try {
+    res = await fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+        'X-Content-Digest': digest,
+        'X-Request-Timestamp': timestamp,
+      },
+      body: rawBody,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new VoiceToTextSidecarTimeoutError(Date.now() - startedAt);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const excerpt = text.slice(0, 500);
+    if (res.status === 502 && /behavioural\s+guard/i.test(text)) {
+      const axisMatch = text.match(/\(([a-z_]+)\)/i);
+      throw new VoiceToTextSidecarBehaviouralError(
+        axisMatch?.[1] ?? 'unknown',
+        excerpt,
+      );
+    }
+    throw new VoiceToTextSidecarHttpError(res.status, excerpt);
+  }
+
+  return (await res.json()) as SidecarVoiceToTextResponse;
+}

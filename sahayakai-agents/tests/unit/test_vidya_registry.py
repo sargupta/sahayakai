@@ -74,3 +74,8 @@ class TestCapabilityIndexRendering:
     def test_index_includes_instant_answer(self) -> None:
         index = render_capability_index()
         assert "instantAnswer" in index
+
+    def test_index_includes_voice_to_text(self) -> None:
+        """Phase I: voice-to-text registered as an inline tool."""
+        index = render_capability_index()
+        assert "voice-to-text" in index
