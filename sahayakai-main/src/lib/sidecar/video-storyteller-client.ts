@@ -6,6 +6,9 @@
  * YouTube API fetch + ranking remains in the Next.js Genkit flow.
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class VideoStorytellerSidecarConfigError extends Error {
@@ -46,31 +49,21 @@ export class VideoStorytellerSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarVideoStorytellerCategories {
-  pedagogy: string[];
-  storytelling: string[];
-  govtUpdates: string[];
-  courses: string[];
-  topRecommended: string[];
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{VideoStoryteller,
+// VideoStorytellerCategories,VideoStorytellerRequest,
+// VideoStorytellerResponse}`.
+import type {
+  VideoStorytellerCategories as GenVideoStorytellerCategories,
+  VideoStorytellerRequest as GenVideoStorytellerRequest,
+  VideoStorytellerResponse as GenVideoStorytellerResponse,
+} from './types.generated';
 
-export interface SidecarVideoStorytellerRequest {
-  subject: string;
-  gradeLevel: string;
-  topic?: string;
-  language?: string;
-  state?: string;
-  educationBoard?: string;
-  userId: string;
-}
-
-export interface SidecarVideoStorytellerResponse {
-  categories: SidecarVideoStorytellerCategories;
-  personalizedMessage: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarVideoStorytellerCategories = GenVideoStorytellerCategories;
+export type SidecarVideoStorytellerRequest = GenVideoStorytellerRequest;
+export type SidecarVideoStorytellerResponse = GenVideoStorytellerResponse;
 
 const TIMEOUT_MS = 15_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -102,6 +95,12 @@ export interface CallSidecarVideoStorytellerOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarVideoStoryteller(
@@ -129,17 +128,29 @@ export async function callSidecarVideoStoryteller(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

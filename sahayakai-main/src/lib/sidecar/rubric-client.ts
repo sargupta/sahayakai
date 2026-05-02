@@ -3,6 +3,9 @@
  * Same pattern as parent-message-client.ts.
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class RubricSidecarConfigError extends Error {
@@ -41,37 +44,22 @@ export class RubricSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarRubricLevel {
-  name: string;
-  description: string;
-  points: number;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{Rubric,
+// RubricLevel,RubricCriterion,RubricRequest,RubricResponse}`.
+import type {
+  RubricCriterion as GenRubricCriterion,
+  RubricGeneratorRequest as GenRubricRequest,
+  RubricGeneratorResponse as GenRubricResponse,
+  RubricLevel as GenRubricLevel,
+} from './types.generated';
 
-export interface SidecarRubricCriterion {
-  name: string;
-  description: string;
-  levels: SidecarRubricLevel[];
-}
-
-export interface SidecarRubricRequest {
-  assignmentDescription: string;
-  gradeLevel?: string | null;
-  subject?: string | null;
-  language?: string | null;
-  teacherContext?: string | null;
-  userId: string;
-}
-
-export interface SidecarRubricResponse {
-  title: string;
-  description: string;
-  criteria: SidecarRubricCriterion[];
-  gradeLevel: string | null;
-  subject: string | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarRubricLevel = GenRubricLevel;
+export type SidecarRubricCriterion = GenRubricCriterion;
+export type SidecarRubricRequest = GenRubricRequest;
+export type SidecarRubricResponse = GenRubricResponse;
 
 const TIMEOUT_MS = 12_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -103,6 +91,12 @@ export interface CallSidecarRubricOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarRubric(
@@ -128,17 +122,29 @@ export async function callSidecarRubric(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

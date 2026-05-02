@@ -318,6 +318,38 @@ export interface LessonPlanResponse {
 }
 
 /**
+ * Fields the client uses to open the Live API connection.
+ *
+ * `model` and `voice` are echoed back so the client doesn't need to
+ * hardcode them — keeps server-side A/B testing decoupled from a
+ * front-end deploy.
+ *
+ * `responseModalities` is `["AUDIO"]` for the spike (mic in, audio
+ * out). Future variants might add `["AUDIO", "TEXT"]` for a
+ * captioned mode, but the spike keeps the surface minimal.
+ */
+export interface LiveSessionConfig {
+  model: string;
+  voice: string;
+  responseModalities: ('AUDIO' | 'TEXT')[];
+  languageCode?: string | null;
+}
+
+/**
+ * One tool the Live session can call inline.
+ *
+ * Each of the 9 NAVIGATE_AND_FILL flows surfaces as a separate Live
+ * tool — when the model decides the teacher wants a quiz, it emits
+ * a `quiz_generator` tool call with extracted params. The OmniOrb
+ * client maps tool calls 1:1 to the existing `VidyaAction` shape.
+ */
+export interface LiveToolDefinition {
+  name: string;
+  description: string;
+  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller';
+}
+
+/**
  * Optional NCERT chapter alignment hint passed by the client.
  */
 export interface NcertChapter {
@@ -528,6 +560,50 @@ export interface ScreenContext {
 }
 
 /**
+ * Where the teacher currently is in the app.
+ *
+ * Same shape as `vidya.schemas.ScreenContext` — mirrored locally so
+ * this package has no inbound dependency on the typed-VIDYA module.
+ * Bounded `uiState` for the same prompt-injection reason.
+ */
+export interface ScreenContextLite {
+  path: string;
+  uiState?: Record<string, string> | null;
+}
+
+/**
+ * Body for POST /v1/vidya-voice/start-session.
+ *
+ * The OmniOrb client posts this with a Firebase ID token in the
+ * Authorization header (the same auth path as /v1/vidya/orchestrate).
+ * The sidecar mints a short-lived Live API token and returns it plus
+ * the WSS URL the client should connect to directly.
+ */
+export interface SessionStartRequest {
+  teacherProfile: TeacherProfileLite;
+  currentScreenContext: ScreenContextLite;
+  detectedLanguage?: string | null;
+}
+
+/**
+ * Body for the start-session response.
+ *
+ * `sessionToken` is opaque — the client passes it as the API key on
+ * the WebSocket open. It expires after `expiresInSeconds` and is
+ * single-use for a single new session (subsequent reconnects within
+ * the session use Live's own resumption tokens).
+ */
+export interface SessionStartResponse {
+  sessionToken: string;
+  wssUrl: string;
+  expiresInSeconds: number;
+  sessionConfig: LiveSessionConfig;
+  tools: LiveToolDefinition[];
+  sidecarVersion: string;
+  spike?: boolean;
+}
+
+/**
  * One row of the recent-assessments breakdown.
  */
 export interface SubjectAssessment {
@@ -547,6 +623,21 @@ export interface SubjectAssessment {
  * bloat the prompt context window.
  */
 export interface TeacherProfile {
+  preferredGrade?: string | null;
+  preferredSubject?: string | null;
+  preferredLanguage?: string | null;
+  schoolContext?: string | null;
+}
+
+/**
+ * Subset of teacher profile injected into the Live system instruction.
+ *
+ * Mirrors `vidya.schemas.TeacherProfile` but flattened for the spike —
+ * the Live system instruction is a single string template, not a
+ * handlebars render. Bounded so a hostile schoolContext can't blow
+ * out the prompt budget on the Live session.
+ */
+export interface TeacherProfileLite {
   preferredGrade?: string | null;
   preferredSubject?: string | null;
   preferredLanguage?: string | null;
@@ -650,6 +741,15 @@ export interface VidyaAction {
  * All optional — the orchestrator extracts whatever it can from the
  * teacher's utterance + context. Missing values fall through to the
  * destination flow's own defaults.
+ *
+ * Phase N.1 — `dependsOn` expresses data flow between actions in a
+ * `plannedActions` list. Each entry is the index of an EARLIER action
+ * in the same list whose output this action consumes (e.g. a rubric
+ * that depends on lesson-plan output uses `dependsOn=[0]`). Bounded
+ * at 2 because real compound requests rarely chain more than two
+ * upstream artefacts; deeper graphs should split into separate
+ * teacher-driven sessions. Always optional — empty list means the
+ * action is independent.
  */
 export interface VidyaActionParams {
   topic?: string | null;
@@ -657,6 +757,7 @@ export interface VidyaActionParams {
   subject?: string | null;
   language?: string | null;
   ncertChapter?: NcertChapterRef | null;
+  dependsOn?: number[];
 }
 
 /**
@@ -695,7 +796,7 @@ export interface VidyaResponse {
   intent: string;
   sidecarVersion: string;
   latencyMs: number;
-  followUpSuggestion?: string | null;
+  plannedActions?: VidyaAction[];
 }
 
 /**

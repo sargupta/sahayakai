@@ -6,6 +6,9 @@
  * because the sidecar has no Firebase/Storage credentials.
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class AvatarSidecarConfigError extends Error {
@@ -44,17 +47,19 @@ export class AvatarSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarAvatarRequest {
-  name: string;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{Avatar,
+// AvatarRequest,AvatarResponse}` — these alias the generated
+// `AvatarGenerator{Request,Response}` interfaces.
+import type {
+  AvatarGeneratorRequest as GenAvatarRequest,
+  AvatarGeneratorResponse as GenAvatarResponse,
+} from './types.generated';
 
-export interface SidecarAvatarResponse {
-  imageDataUri: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarAvatarRequest = GenAvatarRequest;
+export type SidecarAvatarResponse = GenAvatarResponse;
 
 // Image generation can stall — match the visual-aid 90s budget plus a
 // small network buffer. The Next.js side already runs avatar generation
@@ -90,6 +95,12 @@ export interface CallSidecarAvatarOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarAvatar(
@@ -117,17 +128,29 @@ export async function callSidecarAvatar(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

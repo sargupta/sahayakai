@@ -15,6 +15,8 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
@@ -66,47 +68,18 @@ export class ParentMessageSidecarBehaviouralError extends Error {
 
 // ─── Wire schemas ──────────────────────────────────────────────────────────
 
-export interface SidecarParentMessageRequest {
-  studentName: string;
-  className: string;
-  subject: string;
-  reason:
-    | 'consecutive_absences'
-    | 'poor_performance'
-    | 'behavioral_concern'
-    | 'positive_feedback';
-  reasonContext?: string | null;
-  teacherNote?: string | null;
-  parentLanguage:
-    | 'English' | 'Hindi' | 'Tamil' | 'Telugu' | 'Kannada' | 'Malayalam'
-    | 'Bengali' | 'Marathi' | 'Gujarati' | 'Punjabi' | 'Odia';
-  consecutiveAbsentDays?: number | null;
-  teacherName?: string | null;
-  schoolName?: string | null;
-  performanceContext?: {
-    latestPercentage?: number | null;
-    isAtRisk?: boolean | null;
-    subjectBreakdown?: Array<{
-      subject: string;
-      name: string;
-      marksObtained: number;
-      maxMarks: number;
-      percentage: number;
-      date: string;
-    }> | null;
-  } | null;
-  performanceSummary?: string | null;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{ParentMessage,
+// ParentMessageRequest,ParentMessageResponse}`.
+import type {
+  ParentMessageRequest as GenParentMessageRequest,
+  ParentMessageResponse as GenParentMessageResponse,
+} from './types.generated';
 
-export interface SidecarParentMessageResponse {
-  message: string;
-  languageCode: string;
-  wordCount: number;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarParentMessageRequest = GenParentMessageRequest;
+export type SidecarParentMessageResponse = GenParentMessageResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
@@ -142,6 +115,12 @@ export interface CallSidecarParentMessageOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarParentMessage(
@@ -171,17 +150,29 @@ export async function callSidecarParentMessage(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

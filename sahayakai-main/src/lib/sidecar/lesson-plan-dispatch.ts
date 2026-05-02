@@ -82,9 +82,13 @@ export interface LessonPlanDispatchInput extends LessonPlanInput {
 }
 
 function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequest {
+    // `language` is typed as plain `string` upstream (Genkit
+    // `z.string().optional()`); the codegen narrows it to the BCP-47-ish
+    // 11-way union the sidecar enforces. The route normalises before
+    // reaching here, so the cast is sound.
     return {
         topic: input.topic,
-        language: input.language,
+        language: input.language as SidecarLessonPlanRequest['language'],
         gradeLevels: input.gradeLevels,
         useRuralContext: input.useRuralContext,
         ncertChapter: input.ncertChapter,
@@ -109,7 +113,10 @@ function sidecarToLessonPlan(
         subject: res.subject,
         objectives: res.objectives,
         keyVocabulary: res.keyVocabulary,
-        materials: res.materials,
+        // Codegen marks `materials` optional; the Genkit-shaped
+        // `LessonPlanOutput` requires a `string[]`. Default to an
+        // empty list when the sidecar omits it.
+        materials: res.materials ?? [],
         activities: res.activities.map((a) => ({
             phase: a.phase,
             name: a.name,
@@ -120,7 +127,9 @@ function sidecarToLessonPlan(
         })),
         assessment: res.assessment,
         homework: res.homework,
-        language: res.language,
+        // Codegen `language?: string | null`; downstream `LessonPlanOutput`
+        // is `?: string` (optional, not nullable). Coerce null→undefined.
+        language: res.language ?? undefined,
         source: 'sidecar',
         decision,
         sidecarTelemetry: {

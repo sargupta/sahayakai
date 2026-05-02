@@ -2,6 +2,9 @@
  * HTTP client for visual aid designer ADK agent (Phase E.3).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
+
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 export class VisualAidSidecarConfigError extends Error {
@@ -34,24 +37,18 @@ export class VisualAidSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarVisualAidRequest {
-  prompt: string;
-  language?: string | null;
-  gradeLevel?: string | null;
-  subject?: string | null;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{VisualAid,
+// VisualAidRequest,VisualAidResponse}`.
+import type {
+  VisualAidRequest as GenVisualAidRequest,
+  VisualAidResponse as GenVisualAidResponse,
+} from './types.generated';
 
-export interface SidecarVisualAidResponse {
-  imageDataUri: string;
-  pedagogicalContext: string;
-  discussionSpark: string;
-  subject: string;
-  sidecarVersion: string;
-  latencyMs: number;
-  imageModelUsed: string;
-  metadataModelUsed: string;
-}
+export type SidecarVisualAidRequest = GenVisualAidRequest;
+export type SidecarVisualAidResponse = GenVisualAidResponse;
 
 const TIMEOUT_MS = 110_000;  // 90s sidecar image timeout + 20s headroom for the metadata call + transport
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
@@ -79,6 +76,12 @@ export interface CallSidecarVisualAidOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token. When
+   * `undefined` the client auto-fetches via `getFirebaseAppCheckToken()`
+   * (returns null on server / SSR). When `null` the header is omitted.
+   */
+  appCheckToken?: string | null;
 }
 
 export async function callSidecarVisualAid(
@@ -102,17 +105,29 @@ export async function callSidecarVisualAid(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

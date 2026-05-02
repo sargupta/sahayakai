@@ -21,6 +21,8 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
 import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
@@ -73,36 +75,18 @@ export class InstantAnswerSidecarBehaviouralError extends Error {
 
 // ─── Wire schemas ──────────────────────────────────────────────────────────
 
-/**
- * Mirror of `InstantAnswerRequest` in
- * `sahayakai-agents/src/sahayakai_agents/agents/instant_answer/schemas.py`.
- * Hand-typed for now; replaced by `dist/types.generated.ts` when the
- * codegen step lands.
- */
-export interface SidecarInstantAnswerRequest {
-  question: string;
-  language?: string | null;
-  gradeLevel?: string | null;
-  subject?: string | null;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{InstantAnswer,
+// InstantAnswerRequest,InstantAnswerResponse}`.
+import type {
+  InstantAnswerRequest as GenInstantAnswerRequest,
+  InstantAnswerResponse as GenInstantAnswerResponse,
+} from './types.generated';
 
-/**
- * Mirror of `InstantAnswerResponse` in the Python sidecar. Includes
- * the additive telemetry (sidecarVersion, latencyMs, modelUsed,
- * groundingUsed) so dashboards can break answer-quality down by
- * grounded vs un-grounded.
- */
-export interface SidecarInstantAnswerResponse {
-  answer: string;
-  videoSuggestionUrl: string | null;
-  gradeLevel: string | null;
-  subject: string | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-  groundingUsed: boolean;
-}
+export type SidecarInstantAnswerRequest = GenInstantAnswerRequest;
+export type SidecarInstantAnswerResponse = GenInstantAnswerResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
@@ -149,6 +133,14 @@ export interface CallSidecarInstantAnswerOptions {
    * correlation. Defaults to a freshly minted hex id.
    */
   requestId?: string;
+  /**
+   * Phase R.2 + Phase U.delta: Firebase App Check token forwarded from
+   * the browser. Set as `X-Firebase-AppCheck` header. When `undefined`
+   * the client auto-fetches via `getFirebaseAppCheckToken()` (returns
+   * null on server / SSR). When `null` the header is omitted. The
+   * sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK` flag governs enforcement.
+   */
+  appCheckToken?: string | null;
 }
 
 /**
@@ -188,17 +180,29 @@ export async function callSidecarInstantAnswer(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
 
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
+
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-        'X-Request-ID': requestId,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });
