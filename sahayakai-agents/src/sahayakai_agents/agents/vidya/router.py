@@ -35,6 +35,7 @@ from .agent import (
     get_orchestrator_model,
     render_orchestrator_prompt,
 )
+from .registry import render_capability_index
 from .schemas import (
     IntentClassification,
     VidyaAction,
@@ -48,7 +49,7 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-5.4.0"
+SIDECAR_VERSION = "phase-g.0"
 
 
 # ---- Gemini call helpers (mirror lesson_plan / parent_call routers) ------
@@ -137,6 +138,10 @@ async def _run_orchestrator(
         "teacherProfile": payload.teacherProfile.model_dump(),
         "detectedLanguage": payload.detectedLanguage,
         "allowedFlows": ALLOWED_FLOWS,
+        # Phase G — supervisor-aware capability index. Renders the
+        # sub-agent registry as a bullet list so the model can pick
+        # the right primary flow on a compound request.
+        "capabilityIndex": render_capability_index(),
     }
     prompt = render_orchestrator_prompt(context)
     model = get_orchestrator_model()
@@ -323,10 +328,20 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Phase G — propagate any compound follow-up suggestion the
+    # orchestrator emitted. None for single-step / unknown / instant-
+    # answer paths where there's no natural next step.
+    follow_up: str | None = None
+    if intent.followUpSuggestion is not None:
+        candidate = intent.followUpSuggestion.strip()
+        if candidate:
+            follow_up = candidate
+
     return VidyaResponse(
         response=response_text,
         action=action,
         intent=intent_label,
         sidecarVersion=SIDECAR_VERSION,
         latencyMs=latency_ms,
+        followUpSuggestion=follow_up,
     )

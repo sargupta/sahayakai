@@ -190,6 +190,15 @@ class IntentClassification(BaseModel):
     gradeLevel: str | None = Field(max_length=50)
     subject: str | None = Field(max_length=100)
     language: str | None = Field(max_length=10)
+    # Phase G — Multi-step / supervisor extension. A short single-
+    # sentence suggestion of the next likely flow (e.g. "After this,
+    # generate a rubric to grade the activities.") that the OmniOrb
+    # client renders as a clickable follow-up. Always optional —
+    # populated only for compound requests ("...and then make a
+    # rubric") or when the model has high confidence about the
+    # natural next step. Same google-genai issue #699 workaround as
+    # the other optional fields: no default value.
+    followUpSuggestion: str | None = Field(max_length=300)
 
 
 # --- Wire response ------------------------------------------------------
@@ -210,3 +219,9 @@ class VidyaResponse(BaseModel):
     intent: str = Field(min_length=1, max_length=64)
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)
+    # Phase G — Multi-step / supervisor extension. Surfaces the
+    # follow-up suggestion the orchestrator emitted (if any). The
+    # OmniOrb client renders this as a clickable chip ("Also generate
+    # a rubric") that the teacher can opt into. None for single-step
+    # / unknown / instant-answer flows that have no natural next step.
+    followUpSuggestion: str | None = None

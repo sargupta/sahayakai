@@ -21,6 +21,7 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .agent_card import build_agent_card
 from .agents.avatar_generator.router import avatar_generator_router
 from .agents.exam_paper.router import exam_paper_router
 from .agents.instant_answer.router import instant_answer_router
@@ -144,79 +145,14 @@ async def readyz() -> dict[str, object]:
 async def agent_card() -> dict[str, object]:
     """Publish an A2A-compatible agent card.
 
-    Keep this MINIMAL until we commit to A2A-full. The card is consumed by
-    future router or orchestrator agents that might want to dispatch tasks
-    to us. The shape follows A2A v0 agent-card convention.
+    Phase H — addresses audit P0 #66 (`protocolVersion`) and P0 #67
+    (`securitySchemes` + `security`). Skill list is now driven by the
+    VIDYA sub-agent registry so adding a sub-agent automatically
+    updates the card. Builder lives in `agent_card.py` for
+    testability — see `tests/unit/test_agent_card.py`.
     """
     settings = get_settings()
-    return {
-        "name": "sahayakai-parent-call-agent",
-        "description": (
-            "Multi-turn phone conversation with a parent about their child, "
-            "delivered in the parent's home language with a warm, Bharat-first tone."
-        ),
-        "version": "0.1.0-scaffold",
-        "url": settings.audience or "http://localhost:8080",
-        "defaultInputModes": ["text/plain", "application/json"],
-        "defaultOutputModes": ["application/json"],
-        "capabilities": {
-            "streaming": False,
-            "pushNotifications": False,
-            "stateTransitionHistory": True,
-        },
-        "skills": [
-            {
-                "id": "parent-call-reply",
-                "name": "Reply to parent",
-                "description": (
-                    "Given call context and what the parent just said, "
-                    "produce the next agent utterance and a shouldEndCall signal."
-                ),
-                "tags": ["telephony", "multi-turn", "multilingual"],
-                "examples": [
-                    "Parent said 'He has not been doing homework' — respond warmly in Hindi."
-                ],
-            },
-            {
-                "id": "parent-call-summary",
-                "name": "Summarise completed call",
-                "description": (
-                    "Given a full transcript, produce structured summary in English."
-                ),
-                "tags": ["telephony", "summarisation"],
-            },
-            {
-                "id": "lesson-plan-generate",
-                "name": "Generate a lesson plan",
-                "description": (
-                    "Writer-evaluator-reviser loop that produces a "
-                    "pedagogically robust lesson plan in any of 11 "
-                    "supported languages. Hard-fails on safety violation."
-                ),
-                "tags": ["pedagogy", "structured-output", "multilingual", "multi-agent"],
-                "examples": [
-                    (
-                        "Generate a Class 5 science lesson on photosynthesis "
-                        "in Hindi for a low-resource classroom."
-                    )
-                ],
-            },
-            {
-                "id": "vidya-orchestrate",
-                "name": "VIDYA Multi-Agent Orchestrator",
-                "description": (
-                    "Classifies teacher intent, extracts params, "
-                    "returns navigation action or in-line answer."
-                ),
-                "tags": ["orchestrator", "intent-classification", "multilingual"],
-                "examples": [
-                    (
-                        "Make a quiz on photosynthesis for Class 5 in Hindi."
-                    )
-                ],
-            },
-        ],
-    }
+    return build_agent_card(audience=settings.audience)
 
 
 # ---- Sub-routers -----------------------------------------------------------

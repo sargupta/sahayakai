@@ -104,6 +104,7 @@ class TestExtraForbidRejection:
                 gradeLevel=None,
                 subject=None,
                 language=None,
+                followUpSuggestion=None,
                 confidence=0.9,  # type: ignore[call-arg]
             )
 
