@@ -7,15 +7,14 @@
  *
  * 1. Mints a Google ID token scoped to `SAHAYAKAI_AGENTS_AUDIENCE`.
  * 2. HMAC-signs the body with `SAHAYAKAI_REQUEST_SIGNING_KEY`.
- * 3. Bounds the request to 8 s via `AbortController`.
+ * 3. Bounds the request to 12 s via `AbortController`.
  *
- * 8 s timeout sits between parent-call's 3.5 s (voice-bound, hard
- * deadline) and lesson-plan's 60 s (non-realtime). VIDYA is voice-bound
- * because the OmniOrb plays the response via TTS, but the orchestrator
- * itself is just 1-2 Gemini calls; 8 s gives ~6 s headroom on top of
- * the typical 1-2 s classifier latency.
+ * 12s budget = 5s sidecar backoff + 4s p99 classifier + 1.5s network +
+ * 1.5s headroom. Was 8s; bumped per Phase M.2 forensic audit (p99
+ * latency exceeded 8s on canary cohort, triggering false-positive
+ * timeouts and 2× genkit fallback cost).
  *
- * Phase 5 §5.7.
+ * Phase 5 §5.7; bumped Phase M.2.
  */
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
@@ -74,6 +73,10 @@ export class VidyaSidecarBehaviouralError extends Error {
  * `sahayakai-agents/src/sahayakai_agents/agents/vidya/schemas.py`.
  * Hand-typed for now; replaced by `dist/types.generated.ts` when the
  * codegen step lands.
+ *
+ * Phase L.2 — `userId` is required. The Python schema removed the
+ * `vidya-supervisor` placeholder when delegating to instant-answer;
+ * the dispatcher now forwards the authenticated uid through the wire.
  */
 export interface SidecarVidyaRequest {
   message: string;
@@ -92,6 +95,12 @@ export interface SidecarVidyaRequest {
     schoolContext?: string | null;
   };
   detectedLanguage?: string | null;
+  /**
+   * Authenticated teacher uid, required. Pattern matches the Python
+   * schema: alphanumeric + underscore + hyphen only — defends
+   * downstream Firestore document IDs against path-injection.
+   */
+  userId: string;
 }
 
 export type SidecarVidyaFlow =
@@ -139,7 +148,7 @@ export interface SidecarVidyaResponse {
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
-const TIMEOUT_MS = 8_000;
+const TIMEOUT_MS = 12_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 

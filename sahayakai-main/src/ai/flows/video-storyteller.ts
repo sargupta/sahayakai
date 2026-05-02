@@ -5,6 +5,7 @@ import {
     VideoStorytellerInputSchema,
     VideoStorytellerOutputSchema,
     type VideoStorytellerInput,
+    type VideoStorytellerOutput,
     type VideoCandidate,
 } from '@/ai/schemas/video-storyteller';
 
@@ -387,20 +388,25 @@ function rankVideosLocal(
 }
 
 /**
- * Multi-tier video recommendation orchestrator.
- * 
- * "LATENCY BLITZ" OPTIMIZED VERSION:
- * 1. Parallel retrieval (AI + RSS in one Promise.all)
- * 2. Deterministic Local Ranking (Eliminates 2-5s LLM latency)
- * 3. Structured Logging of total duration
+ * Resolves profile-derived defaults for subject / gradeLevel / language /
+ * state / educationBoard. Both `getVideoAICategories` and
+ * `getVideoCategorySearchResults` need the SAME enriched inputs (otherwise
+ * the AI call could see a different language than the YouTube ranking
+ * uses), so this is factored out and applied at the start of each path.
+ *
+ * Phase M.1: split out so AI-only and YouTube-only paths stay aligned
+ * without duplicating profile-fetch logic.
  */
-export async function getVideoRecommendations(input: VideoStorytellerInput): Promise<Record<string, any>> {
-    const { getCachedVideos, setCachedVideos } = await import('@/lib/youtube-video-cache');
-    const { mergeCuratedVideos } = await import('@/lib/curated-videos');
+async function enrichInputWithProfile(
+    input: VideoStorytellerInput,
+): Promise<{
+    subject: string;
+    gradeLevel: string;
+    language: string | undefined;
+    state: string | undefined;
+    educationBoard: string | undefined;
+}> {
     const { dbAdapter } = await import('@/lib/db/adapter');
-    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
-
-    const startTime = Date.now();
 
     let subject = input.subject;
     let gradeLevel = input.gradeLevel;
@@ -408,7 +414,6 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     let state = input.state;
     let educationBoard = input.educationBoard;
 
-    // 1. Enrich with profile data if available
     if (input.userId && (!subject || !gradeLevel)) {
         try {
             const profile = await dbAdapter.getUser(input.userId);
@@ -424,33 +429,106 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         }
     }
 
-    subject = subject || 'General';
-    gradeLevel = gradeLevel || 'Class 5';
+    return {
+        subject: subject || 'General',
+        gradeLevel: gradeLevel || 'Class 5',
+        language,
+        state,
+        educationBoard,
+    };
+}
 
-    // 2. [Tier 1] Firestore semantic cache check
-    let cachedResult = await getCachedVideos(subject, gradeLevel);
+/**
+ * Phase M.1 split — AI-only part of video recommendations.
+ *
+ * Generates 5 categories of YouTube search-query strings + a personalised
+ * teacher message via Gemini. Mirrors the old in-process call to
+ * `videoStorytellerFlow` but is exported standalone so the dispatcher
+ * can skip this work entirely when sidecar mode handles it.
+ *
+ * The function does NOT touch YouTube, RSS, the Firestore cache, or the
+ * curated-videos fallback. Cost: one Gemini call (~$0.0003).
+ */
+export async function getVideoAICategories(
+    input: VideoStorytellerInput,
+): Promise<{
+    categories: VideoStorytellerOutput['categories'];
+    personalizedMessage: string;
+}> {
+    const enriched = await enrichInputWithProfile(input);
+    const aiResult = await videoStorytellerFlow({
+        ...input,
+        subject: enriched.subject,
+        gradeLevel: enriched.gradeLevel,
+        language: enriched.language,
+    });
+    return {
+        categories: aiResult.categories,
+        personalizedMessage: aiResult.personalizedMessage,
+    };
+}
+
+/**
+ * Phase M.1 split — YouTube-only part of video recommendations.
+ *
+ * Takes precomputed AI categories (from sidecar OR from
+ * `getVideoAICategories`) and produces ranked + curated video lists.
+ * NO Gemini calls in this path. The cost is YouTube Data API quota +
+ * RSS fetch latency, which is essentially free at our scale.
+ *
+ * If `aiResult` is null (AI part failed), falls back to a default
+ * hardcoded personalised message — preserving the existing behaviour
+ * of `getVideoRecommendations` when its `Promise.allSettled` saw the
+ * AI half reject.
+ */
+export async function getVideoCategorySearchResults(
+    input: VideoStorytellerInput,
+    aiResult:
+        | {
+              categories: VideoStorytellerOutput['categories'];
+              personalizedMessage: string;
+          }
+        | null,
+): Promise<Record<string, any>> {
+    const { getCachedVideos, setCachedVideos } = await import('@/lib/youtube-video-cache');
+    const { mergeCuratedVideos } = await import('@/lib/curated-videos');
+    const { StructuredLogger } = await import('@/lib/logger/structured-logger');
+
+    const startTime = Date.now();
+
+    const enriched = await enrichInputWithProfile(input);
+    const { subject, gradeLevel, language, state, educationBoard } = enriched;
+
+    // 1. [Tier 1] Firestore semantic cache check. The cache entry holds
+    // categorizedVideos + personalizedMessage but NOT categories — the
+    // upstream sidecar / Genkit categories are recomputed each request.
+    // We fold the supplied aiResult.categories (if any) on top of the
+    // cache result so the response shape is stable for downstream
+    // consumers that read `categories`.
+    const cachedResult = await getCachedVideos(subject, gradeLevel);
     if (cachedResult) {
         StructuredLogger.info('Video Storyteller served from cache', {
             metadata: { subject, gradeLevel },
-            duration: Date.now() - startTime
+            duration: Date.now() - startTime,
         });
         return {
             ...cachedResult,
+            categories: aiResult?.categories ?? {},
             fromCache: true,
-            latencyScore: Date.now() - startTime
+            latencyScore: Date.now() - startTime,
         };
     }
 
-    // 3. [Tier 2] Parallel Retrieval Phase (LATENCY BLITZ)
-    const [aiOutput, rssVideos] = await Promise.allSettled([
-        videoStorytellerFlow({ ...input, subject, gradeLevel, language }),
-        fetchRSSVideosForTeacher(subject, language || 'English', state),
-    ]);
+    // 2. RSS fetch (no AI; runs in parallel with the optional YouTube
+    // Search layer below).
+    const rssResult = await fetchRSSVideosForTeacher(subject, language || 'English', state).catch(
+        (e) => {
+            console.warn('[Storyteller] RSS fetch failed, continuing without:', e);
+            return {} as Record<string, any[]>;
+        },
+    );
 
-    const aiResult = aiOutput.status === 'fulfilled' ? aiOutput.value : null;
-    const rssResult = rssVideos.status === 'fulfilled' ? rssVideos.value : {};
-
-    // YouTube Search Layer (if AI queries exist)
+    // 3. YouTube Search Layer (if precomputed AI queries exist)
     let searchVideos: Record<string, any[]> = {};
     if (aiResult?.categories) {
         try {
@@ -462,11 +540,12 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     }
 
     // Aggregate into a flat unique pool
-    let flatRSS = Object.values(rssResult).flat();
+    const flatRSS = Object.values(rssResult).flat();
     let flatSearch = Object.values(searchVideos).flat();
 
-    // EMERGENCY SEARCH: If a specific topic was requested but we have no candidates, 
-    // trigger a direct fallback search to ensure users see results for specific queries (e.g. Chola empire)
+    // EMERGENCY SEARCH: If a specific topic was requested but we have no
+    // candidates, trigger a direct fallback search to ensure users see
+    // results for specific queries (e.g. Chola empire). NOT a Gemini call.
     if (flatSearch.length === 0 && input.topic) {
         try {
             const { getCategorizedVideos } = await import('@/lib/youtube');
@@ -484,16 +563,25 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     }
 
     const candidatePoolMap = new Map<string, VideoCandidate>();
-    [...flatSearch, ...flatRSS].forEach(v => {
+    [...flatSearch, ...flatRSS].forEach((v) => {
         if (!candidatePoolMap.has(v.id)) candidatePoolMap.set(v.id, v);
     });
 
     const candidates = Array.from(candidatePoolMap.values());
 
-    // 4. [Tier 3] Deterministic Local Ranking (Eliminates 2nd LLM call)
-    const rankedVideos = rankVideosLocal(subject, gradeLevel, candidates, input.topic, language, state, educationBoard);
+    // 4. [Tier 3] Deterministic Local Ranking (no LLM)
+    const rankedVideos = rankVideosLocal(
+        subject,
+        gradeLevel,
+        candidates,
+        input.topic,
+        language,
+        state,
+        educationBoard,
+    );
 
-    const personalizedMessage = aiResult?.personalizedMessage ||
+    const personalizedMessage =
+        aiResult?.personalizedMessage ||
         `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
 
     // 5. Build final result with curated fallback for empty categories
@@ -503,7 +591,7 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
     const duration = Date.now() - startTime;
     StructuredLogger.info('Video Storyteller curation complete', {
         metadata: { subject, gradeLevel, candidates: candidates.length },
-        duration
+        duration,
     });
 
     void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
@@ -513,8 +601,31 @@ export async function getVideoRecommendations(input: VideoStorytellerInput): Pro
         personalizedMessage,
         categorizedVideos: finalVideos,
         fromCache: false,
-        latencyScore: duration
+        latencyScore: duration,
     };
+}
+
+/**
+ * Multi-tier video recommendation orchestrator.
+ *
+ * Phase M.1: now a thin adapter that calls the AI part and the
+ * YouTube part in sequence. Existing callers (the dispatcher's `off`
+ * mode + the `genkit_fallback` path) keep their behaviour: ONE Gemini
+ * call per request. Internally:
+ *   - `getVideoAICategories`            → 1 Gemini call
+ *   - `getVideoCategorySearchResults`   → 0 Gemini calls
+ *
+ * The dispatcher in canary/full mode now skips this adapter entirely
+ * and calls the two halves separately (sidecar replaces the AI half).
+ */
+export async function getVideoRecommendations(
+    input: VideoStorytellerInput,
+): Promise<Record<string, any>> {
+    const aiResult = await getVideoAICategories(input).catch((e) => {
+        console.warn('[Storyteller] AI categories failed (non-fatal):', e);
+        return null;
+    });
+    return getVideoCategorySearchResults(input, aiResult);
 }
 
 /**

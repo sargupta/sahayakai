@@ -1,14 +1,34 @@
-"""Integration test for avatar generator router (Phase F.2)."""
+"""Integration test for avatar generator router (Phase F.2 + Phase L.5).
+
+Phase L.5 fixture redesign — same strategy as L.1 vidya:
+
+The single image stage now runs through ADK's `Runner.run_async` against
+a degenerate `SequentialAgent` of 1 sub-agent. The pre-L.5
+`sys.modules["google.genai"] = _FakeGenai()` shim is incompatible with
+that machinery (ADK loads `google.genai.errors.ClientError` and
+`google.genai.types.Content` at import time, and replacing the whole
+module breaks both).
+
+New strategy — patch at one surgical point:
+
+  `_run_pipeline_via_runner` in `agents.avatar_generator.router` is
+  monkey-patched to pop one entry off a shared queue and return the
+  `(image_bytes, image_mime)` tuple directly. This bypasses ADK Runner
+  entirely for the test, which is fine because ADK Runner machinery is
+  itself covered by ADK's own test suite + the new unit tests at
+  `tests/unit/test_avatar_adk.py`.
+"""
 from __future__ import annotations
 
 import base64
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from sahayakai_agents.agents.avatar_generator import router as avatar_router_mod
 from sahayakai_agents.main import app
+from sahayakai_agents.shared.errors import AgentError
 
 pytestmark = pytest.mark.integration
 
@@ -19,91 +39,58 @@ _TINY_PNG_BYTES = base64.b64decode(
 )
 
 
-class _FakeUsageMeta:
-    input_tokens = 200
-    output_tokens = 0
-    total_tokens = 200
-    cached_content_tokens = 0
+class _QueueFake:
+    """Each call returns the next item from a queue.
 
+    Items can be either:
+      - `(image_bytes, image_mime)` — happy path.
+      - `_RaiseAgentError(...)` — re-raise the configured AgentError.
+    """
 
-class _FakeInlineData:
-    def __init__(self, data: bytes, mime_type: str) -> None:
-        self.data = data
-        self.mime_type = mime_type
-
-
-class _FakePart:
-    def __init__(
-        self,
-        *,
-        text: str | None = None,
-        inline_data: _FakeInlineData | None = None,
-    ) -> None:
-        self.text = text
-        self.inline_data = inline_data
-
-
-class _FakeContent:
-    def __init__(self, parts: list[_FakePart]) -> None:
-        self.parts = parts
-
-
-class _FakeCandidate:
-    def __init__(self, *, parts: list[_FakePart]) -> None:
-        self.content = _FakeContent(parts)
-
-
-class _FakeImageResult:
-    def __init__(self, image_bytes: bytes, mime: str) -> None:
-        self.usage_metadata = _FakeUsageMeta()
-        self.text = None
-        self.candidates = [
-            _FakeCandidate(
-                parts=[
-                    _FakePart(inline_data=_FakeInlineData(image_bytes, mime)),
-                ],
-            ),
-        ]
-
-
-class _SequencedFakeAioModels:
     def __init__(self) -> None:
         self.queue: list[Any] = []
 
-    async def generate_content(self, **_kwargs: Any) -> Any:
+    def pop(self) -> Any:
         if not self.queue:
-            raise AssertionError("Test fake: more calls than expected")
+            raise AssertionError(
+                "Test fake: more pipeline calls than test queued"
+            )
         return self.queue.pop(0)
 
 
-class _FakeAio:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.models = models
+class _RaiseAgentError:
+    """Sentinel — when the fake pops this, raise the configured AgentError."""
 
-
-class _FakeClient:
-    def __init__(self, models: _SequencedFakeAioModels) -> None:
-        self.aio = _FakeAio(models)
-        self.models = models
+    def __init__(self, *, code: str, message: str, http_status: int) -> None:
+        self.code = code
+        self.message = message
+        self.http_status = http_status
 
 
 @pytest.fixture
-def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
-    models = _SequencedFakeAioModels()
+def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
+    """Patch `_run_pipeline_via_runner` to consume a queue of canned outputs."""
+    fake = _QueueFake()
 
-    class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
-            return _FakeClient(models)
+    async def _fake_run_pipeline_via_runner(
+        *, portrait_prompt: str, api_key: str,
+    ) -> tuple[bytes, str]:
+        nxt = fake.pop()
+        if isinstance(nxt, _RaiseAgentError):
+            raise AgentError(
+                code=nxt.code,
+                message=nxt.message,
+                http_status=nxt.http_status,
+            )
+        image_bytes, image_mime = nxt
+        return image_bytes, image_mime
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
-    fake_module = _FakeGenai()
-    fake_module.types = fake_types  # type: ignore[attr-defined]
-
-    import sys
-
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
-    return models
+    monkeypatch.setattr(
+        avatar_router_mod,
+        "_run_pipeline_via_runner",
+        _fake_run_pipeline_via_runner,
+    )
+    return fake
 
 
 @pytest.fixture
@@ -121,22 +108,22 @@ class TestAvatarGeneratorRouter:
     def test_clean_avatar_returns_200(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [_FakeImageResult(_TINY_PNG_BYTES, "image/png")]
+        fake_pipeline.queue = [(_TINY_PNG_BYTES, "image/png")]
         res = client.post("/v1/avatar-generator/generate", json=_BASE_REQUEST)
         assert res.status_code == 200, res.text
         body = res.json()
         assert body["imageDataUri"].startswith("data:image/png;base64,")
-        assert body["sidecarVersion"].startswith("phase-f.2")
+        assert body["sidecarVersion"].startswith("phase-l")
         assert body["latencyMs"] >= 0
 
     def test_jpeg_avatar_passes_guard(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        fake_genai.queue = [_FakeImageResult(_TINY_PNG_BYTES, "image/jpeg")]
+        fake_pipeline.queue = [(_TINY_PNG_BYTES, "image/jpeg")]
         res = client.post("/v1/avatar-generator/generate", json=_BASE_REQUEST)
         assert res.status_code == 200, res.text
         body = res.json()
@@ -145,21 +132,22 @@ class TestAvatarGeneratorRouter:
     def test_no_inline_data_returns_502(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
-        empty = SimpleNamespace(
-            text=None,
-            usage_metadata=_FakeUsageMeta(),
-            candidates=[_FakeCandidate(parts=[])],
-        )
-        fake_genai.queue = [empty]
+        fake_pipeline.queue = [
+            _RaiseAgentError(
+                code="INTERNAL",
+                message="Avatar generation returned no inline image data",
+                http_status=502,
+            ),
+        ]
         res = client.post("/v1/avatar-generator/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
 
     def test_invalid_userid_returns_422(
         self,
         client: TestClient,
-        fake_genai: _SequencedFakeAioModels,
+        fake_pipeline: _QueueFake,
     ) -> None:
         # Pydantic schema rejects userIds outside [A-Za-z0-9_\-].
         bad_req = dict(_BASE_REQUEST, userId="not/valid")
