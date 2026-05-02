@@ -39,7 +39,9 @@ class TestAgentCardShape:
     def test_card_version_pinned(self) -> None:
         card = build_agent_card(audience=None)
         assert card["version"] == AGENT_CARD_VERSION
-        assert card["version"] == "0.3.0"
+        # Phase N.1 — bumped from 0.3.0 because the wire schema changed
+        # (`followUpSuggestion: str | None` → `plannedActions: list[VidyaAction]`).
+        assert card["version"] == "0.4.0"
 
     def test_audience_falls_back_to_localhost(self) -> None:
         card = build_agent_card(audience=None)

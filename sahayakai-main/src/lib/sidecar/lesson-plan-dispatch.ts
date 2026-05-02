@@ -47,6 +47,7 @@ import {
     type SidecarLessonPlanResponse,
 } from './lesson-plan-client';
 import { persistSidecarJSON } from './persist-helpers';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
@@ -247,10 +248,12 @@ export async function dispatchLessonPlan(
     // ── shadow ─────────────────────────────────────────────────────────
     if (decision.mode === 'shadow') {
         const sidecarReq = toSidecarRequest(input);
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input),
             runSidecarSafe(sidecarReq),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
 
         // Log both outcomes so offline parity scoring can be assembled
         // from log queries until the shadow-diff collection lands.
@@ -261,6 +264,18 @@ export async function dispatchLessonPlan(
             sidecarLatencyMs: sidecar.latencyMs,
             sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
             sidecarRevisionsRun: sidecar.ok ? sidecar.res.revisionsRun : undefined,
+        });
+
+        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+        void writeAgentShadowDiff({
+            agent: 'lesson-plan',
+            uid: input.userId,
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
 
         if (!genkit.ok) throw genkit.error;

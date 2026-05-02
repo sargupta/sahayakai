@@ -218,7 +218,7 @@ def _classify_json(
     grade_level: str | None = None,
     subject: str | None = None,
     language: str | None = None,
-    follow_up_suggestion: str | None = None,
+    planned_actions: list[dict] | None = None,
 ) -> str:
     return json.dumps(
         {
@@ -227,9 +227,33 @@ def _classify_json(
             "gradeLevel": grade_level,
             "subject": subject,
             "language": language,
-            "followUpSuggestion": follow_up_suggestion,
+            "plannedActions": planned_actions or [],
         }
     )
+
+
+def _action_json(
+    *,
+    flow: str,
+    topic: str | None = None,
+    grade_level: str | None = None,
+    subject: str | None = None,
+    language: str | None = None,
+    depends_on: list[int] | None = None,
+) -> dict:
+    """Helper: build a `VidyaAction`-shaped dict for `plannedActions`."""
+    return {
+        "type": "NAVIGATE_AND_FILL",
+        "flow": flow,
+        "params": {
+            "topic": topic,
+            "gradeLevel": grade_level,
+            "subject": subject,
+            "language": language,
+            "ncertChapter": None,
+            "dependsOn": depends_on or [],
+        },
+    }
 
 
 _BASE_REQUEST = {
@@ -417,20 +441,31 @@ class TestVidyaRouter:
         assert body["intent"] == "some-deleted-flow"
         assert body["action"] is None
 
-    def test_compound_request_returns_follow_up_suggestion(
+    def test_compound_request_returns_planned_actions(
         self,
         client: TestClient,
         fake_genai: _QueueFake,
     ) -> None:
-        """Phase G: compound request → primary action + follow-up chip.
+        """Phase N.1: compound request → primary action + typed
+        `plannedActions` list.
 
         Teacher: "Make a lesson plan AND a rubric to grade them."
         Classifier returns `lesson-plan` as the primary intent and
-        suggests the rubric as the follow-up. Wire response carries
-        both: a NAVIGATE_AND_FILL action for the lesson plan plus the
-        sentence in `followUpSuggestion`. The OmniOrb client renders
-        the suggestion as a one-tap chip; the teacher can confirm
-        before VIDYA dispatches the second action."""
+        emits TWO `VidyaAction`s in `plannedActions`: lesson-plan
+        first, rubric-generator second with `dependsOn: [0]`. The wire
+        response carries:
+          - `action`: the lesson-plan (legacy single-action surface,
+            kept for backward compat with v0.3 clients).
+          - `plannedActions`: BOTH actions, in order. v0.4+ clients
+            iterate this list and render chips for entries beyond
+            the primary.
+
+        Replaces the Phase G `followUpSuggestion: str | None` shape:
+        2026 supervisor literature (LangGraph, AutoGen, Anthropic)
+        converged on typed `actions: list[Action]` because a prose
+        suggestion is a "suggestion box," not a workflow — clients
+        cannot programmatically execute it. See
+        `agents/vidya/schemas.py` Phase N.1 docstring."""
         fake_genai.queue = [
             _classify_json(
                 intent_type="lesson-plan",
@@ -438,9 +473,23 @@ class TestVidyaRouter:
                 grade_level="Class 5",
                 subject="Science",
                 language="en",
-                follow_up_suggestion=(
-                    "Also generate a rubric for grading the activities."
-                ),
+                planned_actions=[
+                    _action_json(
+                        flow="lesson-plan",
+                        topic="Photosynthesis",
+                        grade_level="Class 5",
+                        subject="Science",
+                        language="en",
+                    ),
+                    _action_json(
+                        flow="rubric-generator",
+                        topic="Photosynthesis",
+                        grade_level="Class 5",
+                        subject="Science",
+                        language="en",
+                        depends_on=[0],
+                    ),
+                ],
             ),
         ]
         request = {
@@ -454,17 +503,25 @@ class TestVidyaRouter:
         assert res.status_code == 200, res.text
         body = res.json()
         assert body["intent"] == "lesson-plan"
+        # Legacy `action` mirrors the first planned entry.
         assert body["action"]["flow"] == "lesson-plan"
-        assert body["followUpSuggestion"] is not None
-        assert "rubric" in body["followUpSuggestion"].lower()
+        # New typed list carries the full plan (length 2).
+        assert len(body["plannedActions"]) == 2
+        assert body["plannedActions"][0]["flow"] == "lesson-plan"
+        assert body["plannedActions"][1]["flow"] == "rubric-generator"
+        # `dependsOn` expresses data flow: rubric depends on lesson-plan.
+        assert body["plannedActions"][1]["params"]["dependsOn"] == [0]
 
-    def test_single_step_has_null_follow_up(
+    def test_single_step_planned_actions_has_one_entry(
         self,
         client: TestClient,
         fake_genai: _QueueFake,
     ) -> None:
-        """Single-step request → followUpSuggestion stays null in the
-        wire response (no chip rendered)."""
+        """Phase N.1: single-step request → orchestrator emits
+        `plannedActions: []`. Router falls back to the legacy
+        single-action path (`classify_action(intent)`) and packages
+        that one action as a length-1 list so v0.4+ clients have a
+        uniform iteration surface."""
         fake_genai.queue = [
             _classify_json(
                 intent_type="lesson-plan",
@@ -472,35 +529,34 @@ class TestVidyaRouter:
                 grade_level="Class 4",
                 subject="Mathematics",
                 language="en",
-                follow_up_suggestion=None,
+                planned_actions=[],
             ),
         ]
         res = client.post("/v1/vidya/orchestrate", json=_BASE_REQUEST)
         assert res.status_code == 200, res.text
         body = res.json()
-        assert body["followUpSuggestion"] is None
+        assert body["action"]["flow"] == "lesson-plan"
+        assert len(body["plannedActions"]) == 1
+        assert body["plannedActions"][0]["flow"] == "lesson-plan"
 
-    def test_empty_string_follow_up_normalises_to_null(
+    def test_unknown_intent_has_empty_planned_actions(
         self,
         client: TestClient,
         fake_genai: _QueueFake,
     ) -> None:
-        """A blank or whitespace-only suggestion from the model is
-        treated as `None` so the OmniOrb does not render an empty chip."""
+        """Unknown / unroutable paths emit `plannedActions: []` —
+        nothing to dispatch, no chips to render."""
         fake_genai.queue = [
-            _classify_json(
-                intent_type="lesson-plan",
-                topic="Light",
-                grade_level="Class 6",
-                subject="Science",
-                language="en",
-                follow_up_suggestion="   ",
-            ),
+            _classify_json(intent_type="unknown"),
         ]
-        res = client.post("/v1/vidya/orchestrate", json=_BASE_REQUEST)
+        request = {
+            **_BASE_REQUEST,
+            "message": "asdfghjkl random gibberish",
+        }
+        res = client.post("/v1/vidya/orchestrate", json=request)
         assert res.status_code == 200, res.text
         body = res.json()
-        assert body["followUpSuggestion"] is None
+        assert body["plannedActions"] == []
 
     def test_missing_user_id_returns_422(
         self,

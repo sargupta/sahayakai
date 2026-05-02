@@ -37,7 +37,7 @@ def _intent(
     gradeLevel: str | None = None,
     subject: str | None = None,
     language: str | None = None,
-    followUpSuggestion: str | None = None,
+    plannedActions: list | None = None,
 ) -> IntentClassification:
     return IntentClassification(
         type=type,
@@ -45,7 +45,7 @@ def _intent(
         gradeLevel=gradeLevel,
         subject=subject,
         language=language,
-        followUpSuggestion=followUpSuggestion,
+        plannedActions=plannedActions or [],
     )
 
 
@@ -198,7 +198,7 @@ class TestModelSelectors:
     def test_orchestrator_default_is_2_0_flash(self) -> None:
         # VIDYA today (Genkit) uses gemini-2.0-flash for speed —
         # the orb is a real-time UX surface.
-        assert get_orchestrator_model() == "gemini-2.0-flash"
+        assert get_orchestrator_model() == "gemini-2.5-flash"
 
     def test_instant_answer_default_is_2_0_flash(self) -> None:
-        assert get_instant_answer_model() == "gemini-2.0-flash"
+        assert get_instant_answer_model() == "gemini-2.5-flash"

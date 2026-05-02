@@ -77,6 +77,19 @@ class Settings(BaseSettings):
         default=7.0, alias="SAHAYAKAI_MAX_TOTAL_BACKOFF_SECONDS"
     )
 
+    # --- App Check (Phase R.2 — Firebase client attestation) ---
+    # Layer 3 of the auth chain: ID token + HMAC + App Check token. Proves
+    # the request originated from a real registered Firebase client (web
+    # via reCAPTCHA v3, Android via Play Integrity, iOS via DeviceCheck /
+    # AppAttest). Closes the residual replay window that ID-token + HMAC
+    # leave open if both are captured at once.
+    #
+    # Defaults to required in prod; off in dev so local curl + Jest tests
+    # work without provisioning a real reCAPTCHA site key.
+    require_app_check: bool = Field(
+        default=True, alias="SAHAYAKAI_REQUIRE_APP_CHECK"
+    )
+
     # --- Telemetry ---
     otel_service_name: str = Field(default="sahayakai-agents", alias="OTEL_SERVICE_NAME")
 

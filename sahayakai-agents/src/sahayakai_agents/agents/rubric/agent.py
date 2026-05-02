@@ -62,7 +62,7 @@ def get_generator_model() -> str:
     is structured + bounded so 2.0-flash handles it well; override
     via `SAHAYAKAI_RUBRIC_MODEL` for A/B.
     """
-    return os.environ.get("SAHAYAKAI_RUBRIC_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_RUBRIC_MODEL", "gemini-2.5-flash")
 
 
 __all__ = [

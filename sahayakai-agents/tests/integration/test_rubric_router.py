@@ -173,3 +173,141 @@ class TestRubricRouter:
         ]
         res = client.post("/v1/rubric/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
+
+
+class TestRubricTokenTelemetry:
+    """Forensic fix P1 #18 — verify the `rubric.generated` log line
+    carries token + model fields and the request_id is bound via
+    contextvars from the middleware.
+
+    Captures structlog output by inserting a `LogCapture` processor
+    BEFORE the existing renderer (preserving `merge_contextvars` so
+    the request_id from the middleware reaches the captured entry).
+    """
+
+    def test_generated_event_carries_tokens_and_model(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        import structlog
+        from structlog.testing import LogCapture
+
+        cap = LogCapture()
+        # Preserve the existing processor chain (contextvars merge,
+        # severity, timestamp, etc.) and replace ONLY the final
+        # renderer with the LogCapture so the captured entries still
+        # carry the bound `request_id` from the middleware.
+        old_processors = list(structlog.get_config()["processors"])
+        new_processors = [
+            p for p in old_processors
+            if not isinstance(
+                p, structlog.processors.JSONRenderer | structlog.dev.ConsoleRenderer
+            )
+        ]
+        new_processors.append(cap)
+        try:
+            structlog.configure(processors=new_processors)
+            fake_genai.queue = [
+                json.dumps({
+                    "title": "Test Rubric",
+                    "description": "A test rubric for telemetry.",
+                    "criteria": [
+                        _good_criterion("C1"),
+                        _good_criterion("C2"),
+                        _good_criterion("C3"),
+                    ],
+                    "gradeLevel": "Class 5",
+                    "subject": "Science",
+                })
+            ]
+            res = client.post(
+                "/v1/rubric/generate",
+                json=_BASE_REQUEST,
+                headers={"X-Request-ID": "rid-rubric-telemetry-1"},
+            )
+        finally:
+            structlog.configure(processors=old_processors)
+
+        assert res.status_code == 200, res.text
+        entries = [e for e in cap.entries if e.get("event") == "rubric.generated"]
+        assert len(entries) == 1, (
+            f"expected one rubric.generated event, got {len(entries)}: "
+            f"{[e.get('event') for e in cap.entries]}"
+        )
+        entry = entries[0]
+        # P.2 — token + cache + model fields stamped on the per-router
+        # success event (matches `_FakeUsageMeta` above: input=800,
+        # output=600, cached=0).
+        assert entry["tokens_in"] == 800
+        assert entry["tokens_out"] == 600
+        assert entry["tokens_cached"] == 0
+        assert entry["model_used"], "model_used must be a non-empty string"
+        # P.1 — request_id contextvar bound by the middleware flowed
+        # through to the router's structured log call.
+        assert entry["request_id"] == "rid-rubric-telemetry-1"
+
+
+class TestParentMessageTokenTelemetry:
+    """Second-router smoke check that the same telemetry pattern is
+    wired the same way — guards against drift between routers."""
+
+    def test_parent_message_generated_carries_tokens(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        import structlog
+        from structlog.testing import LogCapture
+
+        cap = LogCapture()
+        old_processors = list(structlog.get_config()["processors"])
+        new_processors = [
+            p for p in old_processors
+            if not isinstance(
+                p, structlog.processors.JSONRenderer | structlog.dev.ConsoleRenderer
+            )
+        ]
+        new_processors.append(cap)
+        try:
+            structlog.configure(processors=new_processors)
+            fake_genai.queue = [
+                json.dumps({
+                    "message": (
+                        "Dear Parent, this is a notification regarding "
+                        "your child Aman who was absent today. Please "
+                        "ensure attendance. Thanks."
+                    ),
+                    "languageCode": "en-IN",
+                    "wordCount": 24,
+                })
+            ]
+            res = client.post(
+                "/v1/parent-message/generate",
+                json={
+                    "studentName": "Aman",
+                    "className": "Class 5",
+                    "subject": "Mathematics",
+                    # Schema requires Literal enums; use canonical values.
+                    "reason": "consecutive_absences",
+                    "parentLanguage": "English",
+                    "consecutiveAbsentDays": 1,
+                    "userId": "teacher-uid-1",
+                },
+                headers={"X-Request-ID": "rid-pm-telemetry-1"},
+            )
+        finally:
+            structlog.configure(processors=old_processors)
+
+        assert res.status_code == 200, res.text
+        entries = [
+            e for e in cap.entries
+            if e.get("event") == "parent_message.generated"
+        ]
+        assert len(entries) == 1, [e.get("event") for e in cap.entries]
+        entry = entries[0]
+        assert entry["tokens_in"] == 800
+        assert entry["tokens_out"] == 600
+        assert entry["tokens_cached"] == 0
+        assert entry["model_used"]
+        assert entry["request_id"] == "rid-pm-telemetry-1"

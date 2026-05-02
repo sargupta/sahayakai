@@ -135,7 +135,7 @@ class TestRoundTrip:
             subject="Science",
             sidecarVersion="phase-d.1.0",
             latencyMs=300,
-            modelUsed="gemini-2.0-flash",
+            modelUsed="gemini-2.5-flash",
         )
         dumped = response.model_dump()
         restored = RubricGeneratorResponse.model_validate(dumped)

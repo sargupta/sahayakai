@@ -29,6 +29,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarJSON: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/rubric-client', () => {
     class RubricSidecarConfigError extends Error {
         constructor(message: string) {
@@ -78,6 +82,8 @@ import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
 import { dispatchRubric } from '@/lib/sidecar/rubric-dispatch';
 import {
     callSidecarRubric,
+    RubricSidecarBehaviouralError,
+    RubricSidecarHttpError,
     RubricSidecarTimeoutError,
     type SidecarRubricResponse,
 } from '@/lib/sidecar/rubric-client';
@@ -252,6 +258,49 @@ describe('dispatchRubric — sidecar failure does not persist', () => {
         const out = await dispatchRubric(BASE_INPUT);
 
         expect(out.source).toBe('genkit');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix.
+
+    it('falls back to Genkit on sidecar HTTP error — no persist call', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new RubricSidecarHttpError(503, 'unavailable'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchRubric(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar 502 HTTP error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new RubricSidecarHttpError(502, 'bad gateway'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchRubric(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new RubricSidecarBehaviouralError(
+                'safety', 'Rubric violates safety rules',
+            ),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchRubric(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
         expect(mockPersist).not.toHaveBeenCalled();
     });
 });

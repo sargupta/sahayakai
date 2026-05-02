@@ -15,6 +15,7 @@ Review trace:
 """
 from __future__ import annotations
 
+import uuid
 from contextlib import asynccontextmanager
 
 import structlog
@@ -33,6 +34,7 @@ from .agents.rubric.router import rubric_router
 from .agents.teacher_training.router import teacher_training_router
 from .agents.video_storyteller.router import video_storyteller_router
 from .agents.vidya.router import vidya_router
+from .agents.vidya_voice.router import vidya_voice_router
 from .agents.virtual_field_trip.router import virtual_field_trip_router
 from .agents.visual_aid.router import visual_aid_router
 from .agents.voice_to_text.router import voice_to_text_router
@@ -80,12 +82,48 @@ app = FastAPI(
 
 
 # ---- Middleware ------------------------------------------------------------
+#
+# FastAPI registers `@app.middleware("http")` in REVERSE order: the most
+# recently decorated function wraps the earlier ones, so it runs FIRST on
+# the way in. We want request_id to be bound BEFORE the auth middleware
+# runs so every log line (including auth-failure logs and the auth
+# middleware's own structlog calls) inherits the request_id via
+# `merge_contextvars`. That means the request_id middleware must be
+# decorated AFTER `_auth_mw` in source order — yes, it's counter-
+# intuitive. The trade-off: an unauthenticated request still gets a
+# request_id stamped on its failure-response header, which is the
+# correct behaviour for client-side correlation. The contextvars are
+# `clear_contextvars()`-reset at the start of every request so state
+# from a previous request can never leak forward.
 
 
 @app.middleware("http")
 async def _auth_mw(request: Request, call_next):  # type: ignore[no-untyped-def]
     """Wraps auth_middleware so FastAPI can register it as HTTP middleware."""
     return await auth_middleware(request, call_next)
+
+
+@app.middleware("http")
+async def _request_id_mw(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """Bind a `request_id` contextvar for every request.
+
+    Forensic finding P1 #18 — telemetry split-brain. Tokens lived in
+    `ai_resilience.attempt_succeeded` events; latency lived in
+    `*.generated` router events. There was no shared key joining them,
+    so cost-per-user attribution was guesswork. This middleware mints
+    (or honours, if the caller supplies `X-Request-ID`) a request id
+    and binds it via structlog contextvars; every log line emitted
+    during the request — auth, resilience, router, behavioural guard —
+    inherits it via `merge_contextvars` (see `logging_config.py`).
+    The id is also echoed back on the response so clients can quote it
+    in bug reports.
+    """
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=request_id)
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 # ---- Error handling --------------------------------------------------------
@@ -173,3 +211,6 @@ app.include_router(visual_aid_router)
 app.include_router(video_storyteller_router)
 app.include_router(avatar_generator_router)
 app.include_router(voice_to_text_router)
+# Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
+# `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
+app.include_router(vidya_voice_router)

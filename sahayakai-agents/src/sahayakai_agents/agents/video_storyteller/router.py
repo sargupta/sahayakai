@@ -14,7 +14,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize
 from ._guard import assert_video_storyteller_response_rules
@@ -93,7 +93,7 @@ async def _run_recommender(
     payload: VideoStorytellerRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> VideoStorytellerCore:
+) -> tuple[VideoStorytellerCore, Any]:
     # Phase J §J.3 — sanitize user-controlled strings before render.
     context = {
         "subject": sanitize(payload.subject, max_length=100),
@@ -125,7 +125,7 @@ async def _run_recommender(
     )
     text = _extract_text(result)
     try:
-        return VideoStorytellerCore.model_validate_json(text)
+        return VideoStorytellerCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "video_storyteller.recommender.json_parse_failed",
@@ -153,7 +153,7 @@ async def video_storyteller_recommend(
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_recommender(payload, api_keys, settings)
+        core, raw_result = await _run_recommender(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("video_storyteller.safety_block", reason=str(exc))
         raise
@@ -186,6 +186,7 @@ async def video_storyteller_recommend(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
     log.info(
         "video_storyteller.generated",
         latency_ms=latency_ms,
@@ -201,6 +202,10 @@ async def video_storyteller_recommend(
             "courses": len(core.categories.courses),
             "topRecommended": len(core.categories.topRecommended),
         },
+        model_used=get_recommender_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
     )
     return VideoStorytellerResponse(
         categories=core.categories,

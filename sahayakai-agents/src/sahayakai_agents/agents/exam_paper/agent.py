@@ -51,7 +51,7 @@ def get_generator_model() -> str:
     """Default Gemini variant. Exam paper output is large + structured;
     2.0-flash handles it but 2.5 may produce better blueprints. Override
     via env to A/B."""
-    return os.environ.get("SAHAYAKAI_EXAM_PAPER_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_EXAM_PAPER_MODEL", "gemini-2.5-flash")
 
 
 __all__ = [

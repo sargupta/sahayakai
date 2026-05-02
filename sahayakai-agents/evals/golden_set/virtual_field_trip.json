@@ -1,0 +1,112 @@
+[
+  {
+    "id": "vft-001-en-sundarbans",
+    "input": {
+      "topic": "Mangrove forests of the Sundarbans",
+      "language": "en",
+      "gradeLevel": "Class 6",
+      "userId": "eval-user-vft-001"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000", "labse_similarity"],
+    "reference": "A virtual field trip to the Sundarbans mangrove forests. Stops include the river delta, the Bengal tiger habitat, the Sundari tree groves, and a fishing village. Each stop discusses ecology, wildlife, and the human-environment relationship in this UNESCO World Heritage region of West Bengal."
+  },
+  {
+    "id": "vft-002-en-taj-mahal",
+    "input": {
+      "topic": "The Taj Mahal and its history",
+      "language": "en",
+      "gradeLevel": "Class 7",
+      "userId": "eval-user-vft-002"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000", "labse_similarity"],
+    "reference": "A virtual field trip to the Taj Mahal in Agra. Stops include the main mausoleum, the Charbagh garden, the mosque and guest house, and the marble inlay workshops. Cover Mughal architecture, Shah Jahan's tribute to Mumtaz Mahal, and the white marble craftsmanship."
+  },
+  {
+    "id": "vft-003-en-himalayas",
+    "input": {
+      "topic": "The Himalayas and Mount Everest",
+      "language": "en",
+      "gradeLevel": "Class 8",
+      "userId": "eval-user-vft-003"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000", "labse_similarity"],
+    "reference": "A virtual field trip across the Himalayan range. Stops include the foothills with terraced farming, a Sherpa village, the Khumbu glacier, base camp, and the Everest summit. Cover plate tectonics, biodiversity at altitude, and mountaineering culture."
+  },
+  {
+    "id": "vft-004-en-amazon",
+    "input": {
+      "topic": "Amazon rainforest biodiversity",
+      "language": "en",
+      "gradeLevel": "Class 6",
+      "userId": "eval-user-vft-004"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "A virtual field trip into the Amazon rainforest. Stops include the canopy layer with parrots and monkeys, the understory, the forest floor, and a tributary of the Amazon river. Cover layers of the rainforest, indigenous communities, and conservation."
+  },
+  {
+    "id": "vft-005-en-egyptian-pyramids",
+    "input": {
+      "topic": "The Egyptian Pyramids of Giza",
+      "language": "en",
+      "gradeLevel": "Class 7",
+      "userId": "eval-user-vft-005"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "A virtual field trip to Giza, Egypt. Stops include the Great Pyramid of Khufu, the Sphinx, the smaller pyramids of Khafre and Menkaure, and a pharaonic burial chamber. Cover ancient Egyptian engineering, hieroglyphs, and pharaonic burial customs."
+  },
+  {
+    "id": "vft-006-hi-taj-mahal",
+    "input": {
+      "topic": "ताज महल का इतिहास",
+      "language": "hi",
+      "gradeLevel": "कक्षा 7",
+      "userId": "eval-user-vft-006"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "आगरा में ताज महल की वर्चुअल यात्रा। मुख्य मकबरा चारबाग बगीचा मस्जिद और संगमरमर की नक्काशी की कार्यशालाओं को कवर करते हैं। मुगल वास्तुकला और शाहजहाँ की मुमताज महल के लिए श्रद्धांजलि।"
+  },
+  {
+    "id": "vft-007-hi-himalayas",
+    "input": {
+      "topic": "हिमालय और माउंट एवरेस्ट",
+      "language": "hi",
+      "gradeLevel": "कक्षा 8",
+      "userId": "eval-user-vft-007"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "हिमालय पर्वत श्रृंखला की वर्चुअल यात्रा। तलहटी में खेत शेरपा गाँव खुम्बु ग्लेशियर बेस कैंप और एवरेस्ट शिखर। प्लेट टेक्टॉनिक्स ऊँचाई पर जैव विविधता और पर्वतारोहण संस्कृति।"
+  },
+  {
+    "id": "vft-008-bn-sundarbans",
+    "input": {
+      "topic": "সুন্দরবন এর ম্যানগ্রোভ অরণ্য",
+      "language": "bn",
+      "gradeLevel": "শ্রেণী 6",
+      "userId": "eval-user-vft-008"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "সুন্দরবন এর ম্যানগ্রোভ অরণ্যে ভার্চুয়াল ভ্রমণ। নদীর বদ্বীপ বাঘের আবাসস্থল সুন্দরী গাছের ঝোপ এবং মৎস্যজীবী গ্রাম। প্রতিটি স্থানে বাস্তুতন্ত্র বন্যপ্রাণী এবং মানুষের সম্পর্ক নিয়ে আলোচনা।"
+  },
+  {
+    "id": "vft-009-ta-amazon",
+    "input": {
+      "topic": "அமேசான் மழைக்காடுகள்",
+      "language": "ta",
+      "gradeLevel": "வகுப்பு 6",
+      "userId": "eval-user-vft-009"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "அமேசான் மழைக்காட்டிற்கு மெய்நிகர் பயணம். மர மேற்கூரை அடிநிலை வனத் தரை மற்றும் அமேசான் ஆற்றின் கிளை ஆறுகள். பாதுகாப்பு மற்றும் பழங்குடியின சமூகங்கள் பற்றிய தகவல்கள்."
+  },
+  {
+    "id": "vft-010-mr-himalayas",
+    "input": {
+      "topic": "हिमालय पर्वत आणि एव्हरेस्ट",
+      "language": "mr",
+      "gradeLevel": "वर्ग 8",
+      "userId": "eval-user-vft-010"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 100", "max_word_count: 4000"],
+    "reference": "हिमालय पर्वतरांगेची आभासी सहल. पायथ्याची गावे शेर्पा वस्ती खुंबू हिमनदी बेस कॅम्प आणि एव्हरेस्ट शिखर. भूगर्भशास्त्र उंचीवरील जैवविविधता आणि गिर्यारोहण संस्कृती."
+  }
+]

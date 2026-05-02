@@ -34,6 +34,7 @@ import {
     type VidyaSidecarDecision,
 } from '@/lib/feature-flags';
 
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import {
     callSidecarVidya,
     VidyaSidecarBehaviouralError,
@@ -267,10 +268,12 @@ export async function dispatchVidya(
 
     // ── shadow ─────────────────────────────────────────────────────────
     if (decision.mode === 'shadow') {
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input.request),
             runSidecarSafe(sidecarRequest),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
 
         logDispatch(decision, {
             source: 'genkit',
@@ -279,6 +282,20 @@ export async function dispatchVidya(
             sidecarLatencyMs: sidecar.latencyMs,
             sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
             sidecarIntent: sidecar.ok ? sidecar.res.intent : undefined,
+        });
+
+        // Phase M.5 — also persist the (genkit, sidecar) pair to
+        // Firestore so the offline aggregator can score parity before
+        // the canary flip. Fire-and-forget; never blocks the response.
+        void writeAgentShadowDiff({
+            agent: 'vidya',
+            uid: input.uid,
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
 
         if (!genkit.ok) throw genkit.error;

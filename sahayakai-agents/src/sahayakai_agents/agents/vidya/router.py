@@ -48,6 +48,7 @@ from .agent import (
     INSTANT_ANSWER_INTENT,
     build_vidya_agent,
     classify_action,
+    get_orchestrator_model,
     render_orchestrator_prompt,
 )
 from .registry import render_capability_index
@@ -64,7 +65,9 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-l.2"
+# Phase N.1 — bumped from `phase-l.2` because the wire schema changed
+# (`followUpSuggestion: str | None` → `plannedActions: list[VidyaAction]`).
+SIDECAR_VERSION = "phase-n.1"
 
 # Per-call timeout for run_resiliently. VIDYA orchestrator is a
 # classifier-only flow; 8s mirrors the Twilio-bounded budget on the
@@ -343,10 +346,51 @@ async def _run_instant_answer(
     # The sub-agent runs through `run_resiliently` itself; we just
     # forward the api_keys + settings. Telephony backoff budget is
     # the same — instant-answer's own router call already enforces it.
-    core, _grounding_used = await run_answerer(
+    # Forensic fix P1 #18 — `run_answerer` now returns a 3-tuple with
+    # the raw Gemini result so the caller can extract token metrics.
+    # VIDYA's own success log will pick up the joined view via the
+    # request_id contextvar; we just discard the raw result here.
+    core, _grounding_used, _raw_result = await run_answerer(
         sub_request, api_keys, settings,
     )
     return core.answer
+
+
+# ---- Routable-flow mapping (Phase N.1) ----------------------------------
+
+
+def _map_routable_flow(
+    intent: IntentClassification,
+) -> tuple[VidyaAction | None, list[VidyaAction]]:
+    """Resolve a routable intent to (primary action, plannedActions list).
+
+    Phase N.1 mapping logic. The orchestrator now emits a typed
+    `plannedActions` list (max 3) instead of a 300-char prose
+    `followUpSuggestion`. Three cases:
+
+      1. Compound request — `intent.plannedActions` is non-empty.
+         The first entry becomes the primary `action` (legacy v0.3
+         surface for backward compat); the full list ships in the
+         response's `plannedActions` field.
+
+      2. Single-step request — `intent.plannedActions` is empty but
+         `intent.type` is in `ALLOWED_FLOWS`. Build a single-action
+         list via `classify_action(intent)` so v0.4+ clients have a
+         uniform iteration surface.
+
+      3. Single-step that `classify_action` rejects (defensive: the
+         classifier hallucinated a label that PASSED the
+         `intent.type in ALLOWED_FLOWS` check above but somehow
+         tripped the gate-level Literal cast). Returns `(None, [])`.
+    """
+    action: VidyaAction | None
+    if intent.plannedActions:
+        action = intent.plannedActions[0]
+        return action, list(intent.plannedActions)
+    action = classify_action(intent)
+    if action is None:
+        return None, []
+    return action, [action]
 
 
 # ---- Endpoint ------------------------------------------------------------
@@ -390,6 +434,10 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
     response_text: str
     action: VidyaAction | None = None
     intent_label = intent.type
+    # Phase N.1 — typed planned-action list. Default to empty; populated
+    # below for routable flows when the orchestrator emitted compound
+    # actions OR when the legacy single-action path produced one.
+    planned_actions: list[VidyaAction] = []
 
     # Step 2: branch on intent
     if intent.type == INSTANT_ANSWER_INTENT:
@@ -410,7 +458,10 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
                 http_status=502,
             ) from exc
     elif intent.type in ALLOWED_FLOWS:
-        action = classify_action(intent)
+        # Phase N.1 — delegated to `_map_routable_flow`. Helper picks
+        # the typed `plannedActions` path for compound requests and
+        # falls back to `classify_action(intent)` otherwise.
+        action, planned_actions = _map_routable_flow(intent)
         response_text = (
             "Opening the right tool for you now."
             if action is not None
@@ -439,14 +490,25 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
-    # Phase G — propagate any compound follow-up suggestion the
-    # orchestrator emitted. None for single-step / unknown / instant-
-    # answer paths where there's no natural next step.
-    follow_up: str | None = None
-    if intent.followUpSuggestion is not None:
-        candidate = intent.followUpSuggestion.strip()
-        if candidate:
-            follow_up = candidate
+    # Forensic fix P1 #18: per-router success log so the dashboard can
+    # join `vidya.generated` × `ai_resilience.attempt_succeeded` on
+    # `request_id` (set by the request_id middleware) and recover the
+    # cost-per-user attribution. Tokens are NOT extracted here because
+    # VIDYA dispatches via ADK's Runner, which doesn't surface the raw
+    # Gemini result; per-attempt token counts already live in the
+    # ai_resilience event keyed on the same `request_id`.
+    log.info(
+        "vidya.generated",
+        latency_ms=latency_ms,
+        intent=intent_label,
+        action_flow=action.flow if action is not None else None,
+        planned_count=len(planned_actions),
+        instant_answer=intent.type == INSTANT_ANSWER_INTENT,
+        model_used=get_orchestrator_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
+    )
 
     return VidyaResponse(
         response=response_text,
@@ -454,5 +516,10 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         intent=intent_label,
         sidecarVersion=SIDECAR_VERSION,
         latencyMs=latency_ms,
-        followUpSuggestion=follow_up,
+        # Phase N.1 — typed planned-action queue. Empty for unknown /
+        # instant-answer / unroutable paths. For the 9 routable flows
+        # this is either the orchestrator-emitted compound plan or a
+        # single-entry list mirroring the primary `action` (so v0.4+
+        # clients have a uniform iteration surface).
+        plannedActions=planned_actions,
     )

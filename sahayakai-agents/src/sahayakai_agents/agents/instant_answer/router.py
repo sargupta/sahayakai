@@ -19,7 +19,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_instant_answer_response_rules
@@ -133,13 +133,20 @@ async def run_answerer(
     payload: InstantAnswerRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> tuple[InstantAnswerCore, bool]:
-    """Run the answerer agent. Returns (parsed core, grounding_used).
+) -> tuple[InstantAnswerCore, bool, Any]:
+    """Run the answerer agent. Returns (parsed core, grounding_used, raw_result).
 
     Phase L.2: promoted from `_run_answerer` to public so the VIDYA
     supervisor can delegate without reaching into a private function.
     The legacy `_run_answerer` alias below is kept for one release
     cycle so any in-flight code paths still compile.
+
+    Forensic fix P1 #18 (telemetry split-brain): the third tuple
+    element is the raw Gemini response so callers can call
+    `extract_cache_metrics(result)` and stamp tokens onto their own
+    success log line. Pre-existing callers that ignore the new
+    element via `core, grounding = await run_answerer(...)` would
+    break, so VIDYA's delegation site is updated in lockstep.
     """
     # Phase J §J.3 — sanitize ALL user-controlled strings before they
     # land in the rendered prompt. The template wraps each value in
@@ -170,7 +177,11 @@ async def run_answerer(
     text = _extract_text(result)
     grounding_used = _grounding_used(result)
     try:
-        return InstantAnswerCore.model_validate_json(text), grounding_used
+        return (
+            InstantAnswerCore.model_validate_json(text),
+            grounding_used,
+            result,
+        )
     except Exception as exc:
         log.error(
             "instant_answer.answerer.json_parse_failed",
@@ -204,7 +215,9 @@ async def instant_answer_answer(
     api_keys = settings.genai_keys
 
     try:
-        core, grounding_used = await run_answerer(payload, api_keys, settings)
+        core, grounding_used, raw_result = await run_answerer(
+            payload, api_keys, settings,
+        )
     except AISafetyBlockError as exc:
         log.warning("instant_answer.answerer.safety_block", reason=str(exc))
         raise
@@ -234,6 +247,7 @@ async def instant_answer_answer(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
     log.info(
         "instant_answer.answered",
         latency_ms=latency_ms,
@@ -241,6 +255,10 @@ async def instant_answer_answer(
         question_chars=len(payload.question),
         language=payload.language,
         grade_level=payload.gradeLevel,
+        model_used=get_answerer_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
     )
     return InstantAnswerResponse(
         answer=core.answer,

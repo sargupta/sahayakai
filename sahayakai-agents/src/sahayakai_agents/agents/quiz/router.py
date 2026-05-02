@@ -444,6 +444,16 @@ async def quiz_generate(payload: QuizGeneratorRequest) -> QuizVariantsResponse:
     subject = metadata_source.subject if metadata_source else None
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: stamp `model_used` on the per-router event so
+    # cost-per-user attribution joins via `request_id` (set in the
+    # request_id middleware) without needing to re-parse the upstream
+    # `ai_resilience.attempt_succeeded` lines. Token counts are NOT
+    # extracted here because the ADK ParallelAgent doesn't surface a
+    # single `result` object; per-variant tokens live in 3 separate
+    # `ai_resilience.attempt_succeeded` events that share the
+    # `request_id`. A downstream BigQuery / Looker join across
+    # router events + resilience events on `request_id` reconstructs
+    # the full picture.
     log.info(
         "quiz.generated",
         latency_ms=latency_ms,
@@ -451,6 +461,10 @@ async def quiz_generate(payload: QuizGeneratorRequest) -> QuizVariantsResponse:
         easy_ok=easy_core is not None,
         medium_ok=medium_core is not None,
         hard_ok=hard_core is not None,
+        model_used=get_generator_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
     )
     return QuizVariantsResponse(
         easy=_to_response(easy_core),

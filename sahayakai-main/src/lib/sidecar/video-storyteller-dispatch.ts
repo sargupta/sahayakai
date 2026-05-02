@@ -50,6 +50,7 @@ import {
     type SidecarVideoStorytellerRequest,
     type SidecarVideoStorytellerResponse,
 } from './video-storyteller-client';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in video-storyteller-client.ts. Phase J.2 hot-fix
@@ -291,10 +292,12 @@ export async function dispatchVideoStoryteller(
     }
 
     if (decision.mode === 'shadow') {
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input),
             runSidecarSafe(sidecarRequest),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
         // Shadow keeps both calls live (one Genkit, one sidecar) so we
         // can score parity offline — we DO NOT count this as a single
         // AI call: the user-facing call is Genkit (1) but the sidecar
@@ -307,6 +310,19 @@ export async function dispatchVideoStoryteller(
             sidecarLatencyMs: sidecar.latencyMs,
             aiCallsCount: 1,
             shadowSidecarCalled: true,
+        });
+        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+        // video-storyteller's userId is optional (anonymous recommendations
+        // are allowed); fall back to 'anon' to keep the doc-id stable.
+        void writeAgentShadowDiff({
+            agent: 'video-storyteller',
+            uid: input.userId ?? 'anon',
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);

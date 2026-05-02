@@ -32,7 +32,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -163,6 +163,20 @@ export interface CallSidecarReplyOptions {
   timeoutMs?: number;
   /** Optional fetch impl for tests. Defaults to global `fetch`. */
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 — caller-supplied request id for telemetry
+   * correlation across the dispatcher and the Python sidecar. Defaults
+   * to a freshly minted hex id; pass through if you already have one
+   * (e.g. from Next.js middleware) so the whole chain shares a key.
+   */
+  requestId?: string;
+  /**
+   * Phase R.2: Firebase App Check token forwarded from the browser.
+   * Set as `X-Firebase-AppCheck` header. When undefined / null the
+   * header is omitted; the sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK`
+   * flag decides whether that's a 401 or accepted (rollout mode).
+   */
+  appCheckToken?: string | null;
 }
 
 /**
@@ -189,6 +203,9 @@ export async function callSidecarReply(
   // Wave 4 fix 4 / P1 REPLAY-1: signRequest binds digest to a
   // per-request timestamp. The matching `X-Request-Timestamp` header
   // MUST be sent alongside the digest or the sidecar rejects.
+  // Phase R.2: App Check token is the third auth layer; getting it
+  // BEFORE signing keeps the wire ordering legible (auth → integrity
+  // → attestation) even though the order does not affect verification.
   const { timestamp, digest } = await signRequest(rawBody);
 
   const tokenClient = await getTokenClient(audience);
@@ -196,20 +213,31 @@ export async function callSidecarReply(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
+
+  // Compose the header bag. App Check is only attached when the caller
+  // actually has a token — pure-server callers (cron jobs, Twilio
+  // callbacks) pass no token and the sidecar is expected to run with
+  // `SAHAYAKAI_REQUIRE_APP_CHECK=false` for those paths.
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (options.appCheckToken) {
+    headers['X-Firebase-AppCheck'] = options.appCheckToken;
+  }
 
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

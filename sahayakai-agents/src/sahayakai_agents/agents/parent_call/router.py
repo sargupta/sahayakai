@@ -279,6 +279,20 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
 
     metrics = extract_cache_metrics(result)
     latency_ms = int((time.monotonic() - started) * 1000)
+    # Forensic fix P1 #18 — per-router event so cost-per-user attribution
+    # joins via `request_id` (set by the request_id middleware).
+    log.info(
+        "parent_call.reply.generated",
+        call_sid=payload.callSid,
+        turn_number=payload.turnNumber,
+        latency_ms=latency_ms,
+        should_end_call=core.shouldEndCall,
+        parent_language=payload.parentLanguage,
+        model_used=model,
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
 
     return AgentReplyResponse(
         reply=core.reply,
@@ -355,6 +369,18 @@ async def parent_call_summary(payload: CallSummaryRequest) -> CallSummaryRespons
 
     metrics = extract_cache_metrics(result)
     latency_ms = int((time.monotonic() - started) * 1000)
+    # Forensic fix P1 #18 — per-router event for the summary path.
+    log.info(
+        "parent_call.summary.generated",
+        call_sid=payload.callSid,
+        latency_ms=latency_ms,
+        parent_language=payload.parentLanguage,
+        call_duration_seconds=payload.callDurationSeconds,
+        model_used=model,
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
 
     return CallSummaryResponse(
         parentResponse=core.parentResponse,

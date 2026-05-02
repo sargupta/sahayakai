@@ -34,6 +34,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarImage: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: jest.fn(),
     checkImageRateLimit: jest.fn(),
@@ -89,6 +93,9 @@ import { getFeatureFlags } from '@/lib/feature-flags';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import {
     callSidecarVideoStoryteller,
+    VideoStorytellerSidecarBehaviouralError,
+    VideoStorytellerSidecarHttpError,
+    VideoStorytellerSidecarTimeoutError,
     type SidecarVideoStorytellerResponse,
 } from '@/lib/sidecar/video-storyteller-client';
 import { dispatchVideoStoryteller } from '@/lib/sidecar/video-storyteller-dispatch';
@@ -371,5 +378,50 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
             );
         expect(dispatchLog).toBeTruthy();
         expect(dispatchLog.aiCallsCount).toBe(1);
+    });
+
+    // Phase O.3 — exercise typed sidecar errors so a regression on
+    // any of the three classifications (timeout / HTTP / behavioural)
+    // is caught individually.
+
+    it('falls back to Genkit on typed sidecar timeout', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VideoStorytellerSidecarTimeoutError(20_000),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT as any);
+
+        const out = await dispatchVideoStoryteller(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockYouTubeOnly).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar 502 HTTP error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VideoStorytellerSidecarHttpError(502, 'bad gateway'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT as any);
+
+        const out = await dispatchVideoStoryteller(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockYouTubeOnly).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new VideoStorytellerSidecarBehaviouralError(
+                'safety', 'Video selections violate safety rules',
+            ),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT as any);
+
+        const out = await dispatchVideoStoryteller(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockYouTubeOnly).not.toHaveBeenCalled();
     });
 });

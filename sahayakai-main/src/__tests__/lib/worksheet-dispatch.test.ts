@@ -29,6 +29,10 @@ jest.mock('@/lib/sidecar/persist-helpers', () => ({
     persistSidecarJSON: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/worksheet-client', () => {
     class WorksheetSidecarConfigError extends Error {
         constructor(message: string) {
@@ -78,6 +82,8 @@ import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
 import { dispatchWorksheet } from '@/lib/sidecar/worksheet-dispatch';
 import {
     callSidecarWorksheet,
+    WorksheetSidecarBehaviouralError,
+    WorksheetSidecarHttpError,
     WorksheetSidecarTimeoutError,
     type SidecarWorksheetResponse,
 } from '@/lib/sidecar/worksheet-client';
@@ -247,6 +253,49 @@ describe('dispatchWorksheet — sidecar failure does not persist', () => {
         const out = await dispatchWorksheet(BASE_INPUT);
 
         expect(out.source).toBe('genkit');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    // Phase O.3 — fill the canary fallback matrix.
+
+    it('falls back to Genkit on sidecar HTTP error — no persist call', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new WorksheetSidecarHttpError(503, 'unavailable'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar 502 HTTP error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new WorksheetSidecarHttpError(502, 'bad gateway'),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Genkit on sidecar behavioural-guard error', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(
+            new WorksheetSidecarBehaviouralError(
+                'safety', 'Worksheet violates safety rules',
+            ),
+        );
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
         expect(mockPersist).not.toHaveBeenCalled();
     });
 });

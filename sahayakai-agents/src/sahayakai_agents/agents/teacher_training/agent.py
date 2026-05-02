@@ -49,7 +49,7 @@ def render_advisor_prompt(context: dict[str, Any]) -> str:
 @lru_cache(maxsize=1)
 def get_advisor_model() -> str:
     return os.environ.get(
-        "SAHAYAKAI_TEACHER_TRAINING_MODEL", "gemini-2.0-flash"
+        "SAHAYAKAI_TEACHER_TRAINING_MODEL", "gemini-2.5-flash"
     )
 
 

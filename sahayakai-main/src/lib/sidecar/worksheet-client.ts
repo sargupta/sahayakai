@@ -3,7 +3,7 @@
  * Multimodal — wire request carries the imageDataUri.
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 export class WorksheetSidecarConfigError extends Error {
   constructor(message: string) { super(message); this.name = 'WorksheetSidecarConfigError'; }
@@ -88,6 +88,11 @@ export function _resetWorksheetTokenCacheForTest(): void { tokenClientByAudience
 export interface CallSidecarWorksheetOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarWorksheet(
@@ -106,6 +111,7 @@ export async function callSidecarWorksheet(
   const authHeaders = await tokenClient.getRequestHeaders();
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -119,6 +125,7 @@ export async function callSidecarWorksheet(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

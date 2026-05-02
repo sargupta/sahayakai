@@ -46,3 +46,8 @@ service-account-*.json
 # Lockfiles we don't want in the repo yet (until we pick the package manager in G1)
 uv.lock
 poetry.lock
+
+# Eval suite (Phase R.3) — runner output is ephemeral; only the
+# `.gitkeep` is tracked. Operators commit promotion-gate baselines
+# explicitly via PR.
+evals/results/*.json

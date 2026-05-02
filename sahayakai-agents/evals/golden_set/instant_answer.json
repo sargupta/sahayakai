@@ -1,0 +1,242 @@
+[
+  {
+    "id": "ia-001-en-capital-india",
+    "input": {
+      "question": "What is the capital of India?",
+      "language": "en",
+      "gradeLevel": "Class 5",
+      "subject": "Geography",
+      "userId": "eval-user-ia-001"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "The capital of India is New Delhi. It is located in the northern part of the country and serves as the seat of the central government."
+  },
+  {
+    "id": "ia-002-en-photosynthesis",
+    "input": {
+      "question": "Explain photosynthesis to a class 5 student",
+      "language": "en",
+      "gradeLevel": "Class 5",
+      "subject": "Science",
+      "userId": "eval-user-ia-002"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 400", "labse_similarity"],
+    "reference": "Photosynthesis is how green plants make their food. They use sunlight, water from the soil, and carbon dioxide from the air. Inside their leaves, chlorophyll absorbs the sunlight and helps the plant turn these into glucose, which is sugar, and oxygen, which is released into the air."
+  },
+  {
+    "id": "ia-003-en-water-states",
+    "input": {
+      "question": "What are the three states of water?",
+      "language": "en",
+      "gradeLevel": "Class 4",
+      "subject": "Science",
+      "userId": "eval-user-ia-003"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "The three states of water are solid, liquid, and gas. Solid water is ice, liquid water is what we drink and find in rivers, and gas water is water vapour or steam."
+  },
+  {
+    "id": "ia-004-en-fractions",
+    "input": {
+      "question": "How do I add 1/2 and 1/4?",
+      "language": "en",
+      "gradeLevel": "Class 5",
+      "subject": "Mathematics",
+      "userId": "eval-user-ia-004"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "Make the denominators the same. 1/2 equals 2/4. So 1/2 plus 1/4 is 2/4 plus 1/4 which equals 3/4."
+  },
+  {
+    "id": "ia-005-en-multiplication-7",
+    "input": {
+      "question": "What is the multiplication table of 7?",
+      "language": "en",
+      "gradeLevel": "Class 3",
+      "subject": "Mathematics",
+      "userId": "eval-user-ia-005"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 400"],
+    "reference": "7 times 1 equals 7, 7 times 2 equals 14, 7 times 3 equals 21, 7 times 4 equals 28, 7 times 5 equals 35, 7 times 6 equals 42, 7 times 7 equals 49, 7 times 8 equals 56, 7 times 9 equals 63, 7 times 10 equals 70."
+  },
+  {
+    "id": "ia-006-en-solar-system",
+    "input": {
+      "question": "How many planets are in the solar system?",
+      "language": "en",
+      "gradeLevel": "Class 6",
+      "subject": "Science",
+      "userId": "eval-user-ia-006"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "There are eight planets in the solar system. They are Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. Pluto is now classified as a dwarf planet."
+  },
+  {
+    "id": "ia-007-en-grammar-affect",
+    "input": {
+      "question": "What is the difference between affect and effect?",
+      "language": "en",
+      "gradeLevel": "Class 8",
+      "subject": "English",
+      "userId": "eval-user-ia-007"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 15", "max_word_count: 300", "labse_similarity"],
+    "reference": "Affect is usually a verb that means to influence something. Effect is usually a noun that means the result. The rain affected the cricket match. The effect of the rain was a cancellation."
+  },
+  {
+    "id": "ia-008-en-history-gandhi",
+    "input": {
+      "question": "When was Mahatma Gandhi born?",
+      "language": "en",
+      "gradeLevel": "Class 7",
+      "subject": "History",
+      "userId": "eval-user-ia-008"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "Mahatma Gandhi was born on 2 October 1869 in Porbandar, Gujarat."
+  },
+  {
+    "id": "ia-009-en-civics-rights",
+    "input": {
+      "question": "What are the fundamental rights in the Indian Constitution?",
+      "language": "en",
+      "gradeLevel": "Class 7",
+      "subject": "Civics",
+      "userId": "eval-user-ia-009"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 400", "labse_similarity"],
+    "reference": "The Indian Constitution guarantees six fundamental rights: right to equality, right to freedom, right against exploitation, right to freedom of religion, cultural and educational rights, and right to constitutional remedies."
+  },
+  {
+    "id": "ia-010-en-area-rectangle",
+    "input": {
+      "question": "How do I calculate the area of a rectangle?",
+      "language": "en",
+      "gradeLevel": "Class 5",
+      "subject": "Mathematics",
+      "userId": "eval-user-ia-010"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "The area of a rectangle is length times width. If the length is 6 cm and the width is 4 cm, the area is 6 times 4 equals 24 square cm."
+  },
+  {
+    "id": "ia-011-hi-capital-india",
+    "input": {
+      "question": "भारत की राजधानी क्या है?",
+      "language": "hi",
+      "gradeLevel": "कक्षा 5",
+      "subject": "भूगोल",
+      "userId": "eval-user-ia-011"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "भारत की राजधानी नई दिल्ली है। यह देश के उत्तरी भाग में स्थित है और केंद्र सरकार का मुख्यालय है।"
+  },
+  {
+    "id": "ia-012-hi-photosynthesis",
+    "input": {
+      "question": "प्रकाश संश्लेषण क्या है?",
+      "language": "hi",
+      "gradeLevel": "कक्षा 5",
+      "subject": "विज्ञान",
+      "userId": "eval-user-ia-012"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 20", "max_word_count: 400", "labse_similarity"],
+    "reference": "प्रकाश संश्लेषण वह प्रक्रिया है जिसमें हरे पौधे सूर्य के प्रकाश पानी और कार्बन डाइऑक्साइड का उपयोग करके अपना भोजन बनाते हैं। पत्तियों में मौजूद क्लोरोफिल सूर्य के प्रकाश को अवशोषित करता है।"
+  },
+  {
+    "id": "ia-013-hi-fractions",
+    "input": {
+      "question": "1/2 और 1/4 कैसे जोड़ें?",
+      "language": "hi",
+      "gradeLevel": "कक्षा 5",
+      "subject": "गणित",
+      "userId": "eval-user-ia-013"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300"],
+    "reference": "हर को समान बनाओ। 1/2 बराबर 2/4 है। तो 1/2 जोड़ 1/4 बराबर 2/4 जोड़ 1/4 बराबर 3/4 होगा।"
+  },
+  {
+    "id": "ia-014-hi-water-states",
+    "input": {
+      "question": "पानी की तीन अवस्थाएँ क्या हैं?",
+      "language": "hi",
+      "gradeLevel": "कक्षा 4",
+      "subject": "विज्ञान",
+      "userId": "eval-user-ia-014"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "पानी की तीन अवस्थाएँ ठोस तरल और गैस हैं। ठोस पानी बर्फ है तरल पानी हम पीते हैं और गैस अवस्था में जल वाष्प होता है।"
+  },
+  {
+    "id": "ia-015-bn-capital-india",
+    "input": {
+      "question": "ভারতের রাজধানী কী?",
+      "language": "bn",
+      "gradeLevel": "শ্রেণী 5",
+      "subject": "ভূগোল",
+      "userId": "eval-user-ia-015"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "ভারতের রাজধানী নয়াদিল্লি। এটি দেশের উত্তরে অবস্থিত এবং কেন্দ্রীয় সরকারের সদর দপ্তর।"
+  },
+  {
+    "id": "ia-016-bn-photosynthesis",
+    "input": {
+      "question": "সালোকসংশ্লেষণ কী?",
+      "language": "bn",
+      "gradeLevel": "শ্রেণী 5",
+      "subject": "বিজ্ঞান",
+      "userId": "eval-user-ia-016"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 20", "max_word_count: 400", "labse_similarity"],
+    "reference": "সালোকসংশ্লেষণ হলো সবুজ গাছের সূর্যের আলো জল এবং কার্বন ডাই অক্সাইড ব্যবহার করে নিজের খাদ্য তৈরির প্রক্রিয়া। পাতার ক্লোরোফিল সূর্যের আলো শোষণ করে।"
+  },
+  {
+    "id": "ia-017-ta-capital-india",
+    "input": {
+      "question": "இந்தியாவின் தலைநகரம் என்ன?",
+      "language": "ta",
+      "gradeLevel": "வகுப்பு 5",
+      "subject": "புவியியல்",
+      "userId": "eval-user-ia-017"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "இந்தியாவின் தலைநகரம் புது தில்லி. இது நாட்டின் வடக்கில் அமைந்துள்ளது மற்றும் மத்திய அரசாங்கத்தின் தலைமையகமாக உள்ளது."
+  },
+  {
+    "id": "ia-018-ta-fractions",
+    "input": {
+      "question": "1/2 மற்றும் 1/4 ஐ எவ்வாறு சேர்ப்பது?",
+      "language": "ta",
+      "gradeLevel": "வகுப்பு 5",
+      "subject": "கணிதம்",
+      "userId": "eval-user-ia-018"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300"],
+    "reference": "பகுதியை சமமாக்கவும். 1/2 என்பது 2/4 க்கு சமம். எனவே 1/2 கூட்டல் 1/4 என்பது 2/4 கூட்டல் 1/4 சமம் 3/4."
+  },
+  {
+    "id": "ia-019-mr-water-states",
+    "input": {
+      "question": "पाण्याच्या तीन अवस्था कोणत्या आहेत?",
+      "language": "mr",
+      "gradeLevel": "वर्ग 4",
+      "subject": "विज्ञान",
+      "userId": "eval-user-ia-019"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 10", "max_word_count: 300", "labse_similarity"],
+    "reference": "पाण्याच्या तीन अवस्था घन द्रव आणि वायू आहेत. घन पाणी बर्फ आहे द्रव पाणी आपण पितो आणि वायू अवस्थेत जलबाष्प असते."
+  },
+  {
+    "id": "ia-020-gu-capital-india",
+    "input": {
+      "question": "ભારતની રાજધાની શું છે?",
+      "language": "gu",
+      "gradeLevel": "ધોરણ 5",
+      "subject": "ભૂગોળ",
+      "userId": "eval-user-ia-020"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 200", "labse_similarity"],
+    "reference": "ભારતની રાજધાની નવી દિલ્હી છે. તે દેશના ઉત્તરમાં આવેલી છે અને કેન્દ્ર સરકારનું મુખ્યાલય છે."
+  }
+]

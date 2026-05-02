@@ -11,7 +11,7 @@ import structlog
 from fastapi import APIRouter
 
 from ...config import get_settings
-from ...resilience import run_resiliently
+from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_worksheet_response_rules
@@ -99,7 +99,7 @@ async def _run_wizard(
     payload: WorksheetRequest,
     api_keys: tuple[str, ...],
     settings: Any,
-) -> WorksheetCore:
+) -> tuple[WorksheetCore, Any]:
     # Decode the data URI before any model call.
     try:
         image_mime, image_bytes = parse_data_uri(payload.imageDataUri)
@@ -143,7 +143,7 @@ async def _run_wizard(
     )
     text = _extract_text(result)
     try:
-        return WorksheetCore.model_validate_json(text)
+        return WorksheetCore.model_validate_json(text), result
     except Exception as exc:
         log.error(
             "worksheet.wizard.json_parse_failed",
@@ -164,7 +164,7 @@ async def worksheet_generate(payload: WorksheetRequest) -> WorksheetResponse:
     api_keys = settings.genai_keys
 
     try:
-        core = await _run_wizard(payload, api_keys, settings)
+        core, raw_result = await _run_wizard(payload, api_keys, settings)
     except AISafetyBlockError as exc:
         log.warning("worksheet.wizard.safety_block", reason=str(exc))
         raise
@@ -196,6 +196,21 @@ async def worksheet_generate(payload: WorksheetRequest) -> WorksheetResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    metrics = extract_cache_metrics(raw_result)
+    # Forensic fix P1 #18 — per-router event with model_used + tokens
+    # so cost-per-user attribution joins via `request_id`.
+    log.info(
+        "worksheet.generated",
+        latency_ms=latency_ms,
+        language=payload.language,
+        grade_level=payload.gradeLevel,
+        subject=payload.subject,
+        activity_count=len(core.activities),
+        model_used=get_wizard_model(),
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
     return WorksheetResponse(
         title=core.title,
         gradeLevel=core.gradeLevel,

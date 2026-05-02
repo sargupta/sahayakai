@@ -2,7 +2,7 @@
  * HTTP client for visual aid designer ADK agent (Phase E.3).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 export class VisualAidSidecarConfigError extends Error {
   constructor(message: string) { super(message); this.name = 'VisualAidSidecarConfigError'; }
@@ -74,6 +74,11 @@ export function _resetVisualAidTokenCacheForTest(): void { tokenClientByAudience
 export interface CallSidecarVisualAidOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarVisualAid(
@@ -92,6 +97,7 @@ export async function callSidecarVisualAid(
   const authHeaders = await tokenClient.getRequestHeaders();
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -105,6 +111,7 @@ export async function callSidecarVisualAid(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

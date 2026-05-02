@@ -83,7 +83,7 @@ def get_orchestrator_model() -> str:
     a real-time UX surface and 2.5-flash latency would feel laggy.
     Override via `SAHAYAKAI_VIDYA_ORCHESTRATOR_MODEL` to A/B test 2.5.
     """
-    return os.environ.get("SAHAYAKAI_VIDYA_ORCHESTRATOR_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_VIDYA_ORCHESTRATOR_MODEL", "gemini-2.5-flash")
 
 
 @lru_cache(maxsize=1)
@@ -93,7 +93,7 @@ def get_instant_answer_model() -> str:
     Same speed-first reasoning as the orchestrator. Override via
     `SAHAYAKAI_VIDYA_INSTANT_ANSWER_MODEL`.
     """
-    return os.environ.get("SAHAYAKAI_VIDYA_INSTANT_ANSWER_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_VIDYA_INSTANT_ANSWER_MODEL", "gemini-2.5-flash")
 
 
 __all__ = [

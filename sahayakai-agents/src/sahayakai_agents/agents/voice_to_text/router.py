@@ -316,11 +316,20 @@ async def voice_to_text_transcribe(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: stamp `model_used` on the per-router event.
+    # Voice-to-text runs through ADK's Runner so the per-stage Gemini
+    # `result` object isn't reachable here without re-walking the
+    # event stream; tokens come from `ai_resilience.attempt_succeeded`
+    # joined on `request_id` (set by the request_id middleware).
     log.info(
         "voice_to_text.transcribed",
         latency_ms=latency_ms,
         text_chars=len(core.text),
         language=core.language,
+        model_used=get_transcriber_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
     )
     return VoiceToTextResponse(
         text=core.text,

@@ -1,0 +1,175 @@
+[
+  {
+    "id": "pc-001-en-greeting",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000001",
+      "turnNumber": 1,
+      "studentName": "Aarav Sharma",
+      "className": "Class 5",
+      "subject": "Mathematics",
+      "reason": "Please attend the parent-teacher meeting on Friday",
+      "teacherMessage": "Reminder about the upcoming PTM",
+      "teacherName": "Mrs. Patel",
+      "schoolName": "Greenwood School",
+      "parentLanguage": "en",
+      "parentSpeech": "Hello, who is this?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100", "labse_similarity"],
+    "reference": "Namaste, I am calling from Greenwood School about Aarav. I would like to remind you about the parent-teacher meeting on Friday."
+  },
+  {
+    "id": "pc-002-hi-greeting",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000002",
+      "turnNumber": 1,
+      "studentName": "रोहित यादव",
+      "className": "कक्षा 6",
+      "subject": "विज्ञान",
+      "reason": "लगातार 3 दिन की अनुपस्थिति के बारे में",
+      "teacherMessage": "कृपया बच्चे की उपस्थिति सुनिश्चित करें",
+      "teacherName": "श्रीमती शर्मा",
+      "schoolName": "विद्या मंदिर",
+      "parentLanguage": "hi",
+      "parentSpeech": "नमस्ते कौन बोल रहा है?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "नमस्ते, मैं विद्या मंदिर स्कूल से रोहित के बारे में बात करना चाहती हूँ। बच्चा पिछले तीन दिन से अनुपस्थित है।"
+  },
+  {
+    "id": "pc-003-en-performance-followup",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000003",
+      "turnNumber": 2,
+      "studentName": "Priya Singh",
+      "className": "Class 7",
+      "subject": "English",
+      "reason": "Recent low marks in the unit test",
+      "teacherMessage": "Discuss support plan",
+      "parentLanguage": "en",
+      "parentSpeech": "Hi, yes I am Priya's father. What happened?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "Thank you for picking up. Priya scored lower than usual on her recent English unit test, and we want to put a support plan in place together."
+  },
+  {
+    "id": "pc-004-hi-positive",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000004",
+      "turnNumber": 1,
+      "studentName": "अनन्या पटेल",
+      "className": "कक्षा 4",
+      "subject": "गणित",
+      "reason": "अनन्या ने गणित प्रतियोगिता में पहला स्थान पाया",
+      "teacherMessage": "बधाई और प्रोत्साहन",
+      "teacherName": "श्री राठौर",
+      "schoolName": "नवभारत स्कूल",
+      "parentLanguage": "hi",
+      "parentSpeech": "नमस्ते, बताइए?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "नमस्ते, मैं नवभारत स्कूल से बात कर रहा हूँ। आपकी बेटी अनन्या ने गणित प्रतियोगिता में पहला स्थान प्राप्त किया है। बधाई हो।"
+  },
+  {
+    "id": "pc-005-bn-attendance",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000005",
+      "turnNumber": 1,
+      "studentName": "সৌরভ দত্ত",
+      "className": "শ্রেণী 5",
+      "subject": "বিজ্ঞান",
+      "reason": "তিন দিনের অনুপস্থিতির বিষয়ে",
+      "teacherMessage": "ছেলেকে স্কুলে পাঠাতে অনুরোধ",
+      "teacherName": "মিসেস বসু",
+      "schoolName": "বিদ্যাসাগর স্কুল",
+      "parentLanguage": "bn",
+      "parentSpeech": "নমস্কার, কে বলছেন?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "নমস্কার, আমি বিদ্যাসাগর স্কুল থেকে সৌরভের বিষয়ে কথা বলতে চাইছি। সে গত তিন দিন স্কুলে আসেনি।"
+  },
+  {
+    "id": "pc-006-ta-behavior",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000006",
+      "turnNumber": 1,
+      "studentName": "கார்த்திக் கணேசன்",
+      "className": "வகுப்பு 6",
+      "subject": "சமூகவியல்",
+      "reason": "வகுப்பறையில் கவனக் குறைவு",
+      "teacherMessage": "வீட்டில் கவனம் தேவை",
+      "teacherName": "திருமதி ராஜேஷ்வரி",
+      "schoolName": "சரஸ்வதி பள்ளி",
+      "parentLanguage": "ta",
+      "parentSpeech": "வணக்கம், யார் பேசுகிறீர்கள்?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "வணக்கம், நான் சரஸ்வதி பள்ளியிலிருந்து கார்த்திக் பற்றி பேச அழைத்துள்ளேன். அவன் வகுப்பறையில் கவனம் செலுத்துவதில் சிரமப்படுகிறான்."
+  },
+  {
+    "id": "pc-007-en-busy-parent",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000007",
+      "turnNumber": 2,
+      "studentName": "Maya Reddy",
+      "className": "Class 8",
+      "subject": "Physics",
+      "reason": "Upcoming science fair",
+      "teacherMessage": "Encourage participation",
+      "parentLanguage": "en",
+      "parentSpeech": "I am driving right now, can you call back later?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "Of course, please drive safely. I will call again this evening to discuss the science fair."
+  },
+  {
+    "id": "pc-008-hi-concerned",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000008",
+      "turnNumber": 3,
+      "studentName": "विवेक मिश्रा",
+      "className": "कक्षा 9",
+      "subject": "गणित",
+      "reason": "अंक कम आये हैं",
+      "teacherMessage": "अतिरिक्त सहायता की पेशकश",
+      "performanceSummary": "गणित में 35 प्रतिशत",
+      "parentLanguage": "hi",
+      "parentSpeech": "क्या मेरे बेटे के अंक बहुत कम आये हैं?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "जी हाँ, विवेक के गणित में 35 प्रतिशत अंक आये हैं। हम अतिरिक्त कक्षाओं की मदद से उन्हें सुधारने में मदद कर सकते हैं।"
+  },
+  {
+    "id": "pc-009-mr-greeting",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000009",
+      "turnNumber": 1,
+      "studentName": "श्रेया देशमुख",
+      "className": "वर्ग 5",
+      "subject": "मराठी",
+      "reason": "उपस्थिती बद्दल चर्चा",
+      "teacherMessage": "नियमित उपस्थिती सुनिश्चित करावी",
+      "teacherName": "श्रीमती जोशी",
+      "schoolName": "ज्ञानप्रबोधिनी",
+      "parentLanguage": "mr",
+      "parentSpeech": "नमस्कार, कोण बोलतंय?"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 100"],
+    "reference": "नमस्कार, मी ज्ञानप्रबोधिनी शाळेतून श्रेया बद्दल बोलत आहे. तिच्या उपस्थिती बद्दल काही चर्चा करायची आहे."
+  },
+  {
+    "id": "pc-010-en-end-of-call",
+    "input": {
+      "callSid": "CAevaltest0000000000000000000010",
+      "turnNumber": 5,
+      "studentName": "Arjun Verma",
+      "className": "Class 6",
+      "subject": "Hindi",
+      "reason": "Improvement in handwriting",
+      "teacherMessage": "Provide handwriting tips",
+      "parentLanguage": "en",
+      "parentSpeech": "Okay, thank you so much for calling. We will work on his handwriting."
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 3", "max_word_count: 100"],
+    "reference": "Thank you for your time. Please reach out anytime if you need support."
+  }
+]

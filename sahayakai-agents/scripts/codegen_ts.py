@@ -1,27 +1,48 @@
 #!/usr/bin/env python3
-"""Generate TypeScript types from the Pydantic source-of-truth schemas.
+"""Generate TypeScript types from the FastAPI OpenAPI spec.
 
-Writes `dist/types.generated.ts` for consumption by the Next.js side
-(`sahayakai-main/src/lib/sidecar/types.ts` currently holds a
-hand-written placeholder; it will import from here once both repos
-settle).
+Phase N.2 — forensic audit P1 #22 wiring fix. The original migration
+plan called for codegen but only the parent_call slice was emitted.
+That left 14 hand-typed sidecar clients drifting from the Pydantic
+source of truth (e.g. `VidyaActionParams.topic` was required nullable
+in TS but optional + nullable in Python — silent contract drift).
+
+This script:
+  1. Boots the FastAPI app and asks for `app.openapi()`.
+  2. Walks `components.schemas` deterministically (alpha-sorted).
+  3. Emits a single `types.generated.ts` covering every wire schema.
+  4. Writes to two locations:
+       - `dist/types.generated.ts` (preserves the existing CI guard)
+       - `sahayakai-main/src/lib/sidecar/types.generated.ts`
+         (so TS clients can `import { ... } from './types.generated'`).
 
 CI runs this script then `git diff --exit-code dist/types.generated.ts`.
 Drift between source and generated output fails the build.
 
-Hand-rolled emitter rather than `datamodel-codegen` because:
-- Our schema surface is small (~10 types) and stable.
-- Avoids pulling in a heavy dev dep with its own upstream churn.
-- Output shape is under our control, so we can match Next.js conventions.
+Why hand-rolled and not `datamodel-codegen`:
+  - `datamodel-codegen` does not ship a TypeScript output backend.
+  - `openapi-typescript` (npm) is a fine alternative but adds a Node
+    dep to a Python repo; we avoid the cross-stack tooling.
+  - The hand-rolled path is ~150 lines, deterministic, dep-free.
 
-Output is deterministic: key order follows the source-file declaration
-order via `__dataclass_fields__` / `model_fields`.
+Output format choices:
+  - `Optional[T]` (anyOf [T, null]) without `required` → `T?: T | null`.
+  - `Optional[T]` with `required` → `T: T | null`.
+  - Required scalar → `T: T`.
+  - `Literal[...]` → inline union of string literals.
+  - Internal FastAPI schemas (`HTTPValidationError`, `ValidationError`)
+    are skipped — they describe FastAPI's 422 envelope, not our wire
+    contracts.
+
+Determinism: schemas walked in `sorted()` order; field order follows
+OpenAPI declaration order (which Pydantic guarantees from `model_fields`).
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
-from typing import Any, get_args
+from typing import Any
 
 # Add src/ to path so running from repo root works.
 _HERE = Path(__file__).resolve().parent
@@ -29,144 +50,180 @@ _SRC = _HERE.parent / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from pydantic import BaseModel  # noqa: E402
+from sahayakai_agents.main import app  # noqa: E402
 
-from sahayakai_agents.agents.parent_call.schemas import (  # noqa: E402
-    AgentReplyRequest,
-    AgentReplyResponse,
-    CallQuality,
-    CallSummaryRequest,
-    CallSummaryResponse,
-    ParentLanguage,
-    ParentSentiment,
-    TranscriptTurn,
-    WireError,
-    WireErrorEnvelope,
+# Output paths.
+_AGENTS_DIST = _HERE.parent / "dist" / "types.generated.ts"
+# Two parents up from sahayakai-agents/scripts/ → repo root.
+_REPO_ROOT = _HERE.parent.parent
+_NEXTJS_OUT = (
+    _REPO_ROOT / "sahayakai-main" / "src" / "lib" / "sidecar" / "types.generated.ts"
 )
 
 _BANNER = (
-    "// GENERATED FROM sahayakai-agents/src/sahayakai_agents/agents/parent_call/schemas.py\n"
+    "// GENERATED FROM sahayakai-agents FastAPI OpenAPI spec.\n"
     "// DO NOT EDIT. Regenerate via `python scripts/codegen_ts.py`.\n"
     "//\n"
-    "// Source of truth: the Pydantic models in schemas.py. TypeScript types\n"
-    "// are generated from those models for consumption by the Next.js\n"
-    "// sidecar client.\n"
+    "// Source of truth: Pydantic models in sahayakai-agents/src/sahayakai_agents/\n"
+    "// agents/*/schemas.py. TypeScript interfaces are emitted from those\n"
+    "// models for consumption by the Next.js sidecar clients.\n"
+    "//\n"
+    "// Phase N.2 — Forensic audit P1 #22. The hand-typed `Sidecar*Request`\n"
+    "// and `Sidecar*Response` shapes drifted from Python (most visibly\n"
+    "// `VidyaActionParams.topic` was required nullable in TS, optional in\n"
+    "// Python). Use these generated types in new code.\n"
 )
 
+# Skip FastAPI-internal schemas — they describe FastAPI's own 422
+# validation envelope, not our wire contracts. Clients never reference
+# them.
+_SKIP_SCHEMAS: set[str] = {
+    "HTTPValidationError",
+    "ValidationError",
+}
 
-def _ts_literal_union(py_literal: Any, name: str) -> str:
-    """Emit `export type Name = 'a' | 'b' | 'c';` from a Literal[...]."""
-    values = get_args(py_literal)
-    rendered = " | ".join(f"'{v}'" for v in values)
-    return f"export type {name} = {rendered};"
 
+def _ts_type(prop: dict[str, Any]) -> str:  # noqa: PLR0911 — OpenAPI dispatcher reads cleanest with one return per branch
+    """Map an OpenAPI property fragment to a TypeScript type expression.
 
-def _ts_type_from_annotation(ann: Any) -> str:  # noqa: PLR0911 — type dispatcher reads cleaner with one return per branch
-    """Map a Python annotation to a TypeScript type expression.
-
-    Supports: str → string, int/float → number, bool → boolean,
-    Optional[T] → T | null, list[T] → T[], Literal unions → inline union,
-    nested BaseModel → reference by class name.
+    Only reads JSON Schema fields we actually use (`type`, `enum`,
+    `const`, `items`, `anyOf`, `$ref`, `additionalProperties`). Anything
+    else is `unknown`.
     """
-    origin = getattr(ann, "__origin__", None)
-    args = get_args(ann)
+    # $ref → strip the prefix, return the schema name.
+    if "$ref" in prop:
+        ref: str = prop["$ref"]
+        return ref.rsplit("/", 1)[-1]
 
-    # list[T]
-    if origin in (list, tuple):
-        inner = _ts_type_from_annotation(args[0]) if args else "unknown"
-        return f"{inner}[]"
+    # anyOf with null → Optional / nullable union.
+    if "anyOf" in prop:
+        variants = prop["anyOf"]
+        non_null = [v for v in variants if v.get("type") != "null"]
+        has_null = any(v.get("type") == "null" for v in variants)
+        if len(non_null) == 1:
+            inner = _ts_type(non_null[0])
+            return f"{inner} | null" if has_null else inner
+        # General union (rare in our schemas).
+        return " | ".join(_ts_type(v) for v in variants)
 
-    # Optional[T] is Union[T, None] → expressed as `T | null` in TS.
-    if origin is type(None):
-        return "null"
+    # const string — emit literal.
+    if "const" in prop:
+        return f"'{prop['const']}'"
 
-    # Union / T | None
-    if origin is not None and str(origin).endswith("Union") or origin is type(None):
-        non_none = [a for a in args if a is not type(None)]
-        if len(non_none) == 1:
-            return _ts_type_from_annotation(non_none[0]) + " | null"
+    # Enum → inline union of string literals. Numeric enums fall through
+    # to the type dispatch below.
+    if "enum" in prop and prop.get("type") == "string":
+        return " | ".join(f"'{v}'" for v in prop["enum"])
 
-    # Literal[...]
-    if getattr(ann, "__class__", None).__name__ == "_LiteralGenericAlias":
-        return " | ".join(f"'{v}'" for v in args)
-
-    # Pydantic models
-    if isinstance(ann, type) and issubclass(ann, BaseModel):
-        return ann.__name__
-
-    # Primitives
-    if ann is str:
+    t = prop.get("type")
+    if t == "string":
         return "string"
-    if ann in (int, float):
+    if t in {"integer", "number"}:
         return "number"
-    if ann is bool:
+    if t == "boolean":
         return "boolean"
-
-    # Fallback for PEP 604 `A | B` unions (types.UnionType at runtime).
-    from types import UnionType
-
-    if isinstance(ann, UnionType):
-        union_args = ann.__args__
-        non_none = [a for a in union_args if a is not type(None)]
-        if len(non_none) == 1 and len(union_args) > len(non_none):
-            return _ts_type_from_annotation(non_none[0]) + " | null"
-        return " | ".join(_ts_type_from_annotation(a) for a in union_args)
+    if t == "array":
+        items = prop.get("items", {})
+        inner = _ts_type(items)
+        # Wrap unions / nullables in parens before the `[]` so TS parses
+        # them as `(A | B)[]` instead of `A | (B[])`. Conservative test:
+        # any whitespace + `|` in the rendered type means we need parens.
+        if " | " in inner:
+            return f"({inner})[]"
+        return f"{inner}[]"
+    if t == "object":
+        # Pydantic emits `additionalProperties` for `dict[str, str]`.
+        ap = prop.get("additionalProperties")
+        if isinstance(ap, dict):
+            return f"Record<string, {_ts_type(ap)}>"
+        return "Record<string, unknown>"
 
     return "unknown"
 
 
-def _ts_interface(model: type[BaseModel]) -> str:
-    """Emit a TypeScript interface for a Pydantic model."""
-    lines = [f"export interface {model.__name__} {{"]
-    for field_name, field_info in model.model_fields.items():
-        ts_type = _ts_type_from_annotation(field_info.annotation)
-        optional = "?" if not field_info.is_required() else ""
-        lines.append(f"  {field_name}{optional}: {ts_type};")
+def _ts_interface(name: str, schema: dict[str, Any]) -> str:
+    """Emit `export interface Name { ... }` for an OpenAPI object schema.
+
+    A property is `?:` (optional) when the schema's `required` list does
+    not contain it. The TS type itself preserves the OpenAPI nullability
+    via `| null`.
+    """
+    properties: dict[str, Any] = schema.get("properties", {})
+    required: set[str] = set(schema.get("required", []))
+
+    description = schema.get("description")
+    lines: list[str] = []
+    if description:
+        # JSDoc-format the docstring.
+        lines.append("/**")
+        for doc_line in description.splitlines():
+            lines.append(f" * {doc_line}".rstrip())
+        lines.append(" */")
+    lines.append(f"export interface {name} {{")
+    for field_name, prop in properties.items():
+        ts_t = _ts_type(prop)
+        optional = "" if field_name in required else "?"
+        lines.append(f"  {field_name}{optional}: {ts_t};")
     lines.append("}")
     return "\n".join(lines)
 
 
-def _emit() -> str:
+def _ts_enum_alias(name: str, schema: dict[str, Any]) -> str:
+    """Emit `export type Name = 'a' | 'b';` for a top-level string enum."""
+    enum_values = schema["enum"]
+    rendered = " | ".join(f"'{v}'" for v in enum_values)
+    return f"export type {name} = {rendered};"
+
+
+def _emit(spec: dict[str, Any]) -> str:
+    schemas: dict[str, Any] = spec.get("components", {}).get("schemas", {})
+
     sections: list[str] = [_BANNER]
 
-    # Literal unions first — interfaces reference them.
-    sections.append("// ---- Enums and literal unions --------------------------------------")
-    sections.append(_ts_literal_union(ParentLanguage, "ParentLanguage"))
-    sections.append(_ts_literal_union(ParentSentiment, "ParentSentiment"))
-    sections.append(_ts_literal_union(CallQuality, "CallQuality"))
+    # Walk schemas alphabetically for determinism.
+    for name in sorted(schemas.keys()):
+        if name in _SKIP_SCHEMAS:
+            continue
+        schema = schemas[name]
+        # Top-level string enum surfaces as a named type alias.
+        if "enum" in schema and schema.get("type") == "string":
+            sections.append(_ts_enum_alias(name, schema))
+            sections.append("")
+            continue
+        # Object schema.
+        if schema.get("type") == "object" or "properties" in schema:
+            sections.append(_ts_interface(name, schema))
+            sections.append("")
+            continue
+        # Fallback: type alias from a primitive.
+        sections.append(f"export type {name} = {_ts_type(schema)};")
+        sections.append("")
 
-    sections.append("")
-    sections.append("// ---- Transcript turn -----------------------------------------------")
-    sections.append(_ts_interface(TranscriptTurn))
-
-    sections.append("")
-    sections.append("// ---- Reply (per-turn) ----------------------------------------------")
-    sections.append(_ts_interface(AgentReplyRequest))
-    sections.append("")
-    sections.append(_ts_interface(AgentReplyResponse))
-
-    sections.append("")
-    sections.append("// ---- Summary (post-call) -------------------------------------------")
-    sections.append(_ts_interface(CallSummaryRequest))
-    sections.append("")
-    sections.append(_ts_interface(CallSummaryResponse))
-
-    sections.append("")
-    sections.append("// ---- Error envelope ------------------------------------------------")
-    sections.append(_ts_interface(WireError))
-    sections.append("")
-    sections.append(_ts_interface(WireErrorEnvelope))
-    sections.append("")  # trailing newline
-
-    return "\n".join(sections)
+    return "\n".join(sections).rstrip() + "\n"
 
 
 def main() -> int:
-    output = _emit()
-    out_path = _HERE.parent / "dist" / "types.generated.ts"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(output, encoding="utf-8")
-    print(f"[codegen_ts] wrote {out_path.relative_to(_HERE.parent)} ({len(output)} bytes)")
+    spec = app.openapi()
+    output = _emit(spec)
+
+    for out_path in (_AGENTS_DIST, _NEXTJS_OUT):
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(output, encoding="utf-8")
+        try:
+            rel = out_path.relative_to(_REPO_ROOT)
+        except ValueError:
+            rel = out_path
+        print(f"[codegen_ts] wrote {rel} ({len(output)} bytes)")
+
+    # Also keep the OpenAPI spec on disk for ad-hoc inspection. CI does
+    # NOT diff this — it's a debug artefact.
+    spec_path = _HERE.parent / "dist" / "openapi.json"
+    spec_path.parent.mkdir(parents=True, exist_ok=True)
+    spec_path.write_text(
+        json.dumps(spec, indent=2, sort_keys=True), encoding="utf-8",
+    )
+    print(f"[codegen_ts] wrote {spec_path.relative_to(_REPO_ROOT)} (debug)")
+
     return 0
 
 

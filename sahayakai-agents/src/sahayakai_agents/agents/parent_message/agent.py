@@ -151,7 +151,7 @@ def get_generator_model() -> str:
     A parent message is short, deterministic, and rendered straight to
     speech / SMS — no need for the larger model.
     """
-    return os.environ.get("SAHAYAKAI_PARENT_MESSAGE_MODEL", "gemini-2.0-flash")
+    return os.environ.get("SAHAYAKAI_PARENT_MESSAGE_MODEL", "gemini-2.5-flash")
 
 
 __all__ = [

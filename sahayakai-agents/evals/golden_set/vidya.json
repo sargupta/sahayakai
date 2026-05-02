@@ -1,0 +1,395 @@
+[
+  {
+    "id": "vidya-001-en-lesson-plan",
+    "input": {
+      "message": "Make a lesson plan on photosynthesis for class 5 science",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/dashboard", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "en"},
+      "detectedLanguage": "en",
+      "userId": "eval-user-001"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 1", "max_word_count: 250", "labse_similarity"],
+    "reference": "Opening the lesson plan generator with topic photosynthesis and grade class 5."
+  },
+  {
+    "id": "vidya-002-en-quiz",
+    "input": {
+      "message": "Generate a quiz on fractions for grade 4",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/dashboard", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "en"},
+      "detectedLanguage": "en",
+      "userId": "eval-user-002"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250", "labse_similarity"],
+    "reference": "Opening the quiz generator with topic fractions and grade 4."
+  },
+  {
+    "id": "vidya-003-en-visual-aid",
+    "input": {
+      "message": "I need a visual aid for the water cycle",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-003"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the visual aid designer for the water cycle."
+  },
+  {
+    "id": "vidya-004-en-worksheet",
+    "input": {
+      "message": "Make a worksheet on multiplication tables for class 3",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-004"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the worksheet wizard with topic multiplication tables and grade 3."
+  },
+  {
+    "id": "vidya-005-en-virtual-field-trip",
+    "input": {
+      "message": "Take my class on a virtual field trip to the Sundarbans",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-005"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the virtual field trip planner for the Sundarbans."
+  },
+  {
+    "id": "vidya-006-en-teacher-training",
+    "input": {
+      "message": "I want training on inclusive classrooms",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-006"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening teacher training on inclusive classrooms."
+  },
+  {
+    "id": "vidya-007-en-rubric",
+    "input": {
+      "message": "Generate a rubric for class 7 history project",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-007"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the rubric generator for a class 7 history project."
+  },
+  {
+    "id": "vidya-008-en-exam-paper",
+    "input": {
+      "message": "Make an exam paper for class 10 maths",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-008"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the exam paper generator for class 10 maths."
+  },
+  {
+    "id": "vidya-009-en-video-storyteller",
+    "input": {
+      "message": "Tell me a story about Mahatma Gandhi for class 6",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-009"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Opening the video storyteller with topic Mahatma Gandhi for class 6."
+  },
+  {
+    "id": "vidya-010-en-instant-answer",
+    "input": {
+      "message": "What is the capital of Maharashtra?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-010"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 2", "max_word_count: 250", "labse_similarity"],
+    "reference": "The capital of Maharashtra is Mumbai."
+  },
+  {
+    "id": "vidya-011-en-instant-answer-grammar",
+    "input": {
+      "message": "What is the difference between affect and effect?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-011"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 5", "max_word_count: 250", "labse_similarity"],
+    "reference": "Affect is usually a verb meaning to influence; effect is usually a noun meaning the result."
+  },
+  {
+    "id": "vidya-012-hi-lesson-plan",
+    "input": {
+      "message": "कक्षा पाँच के लिए जल चक्र पर पाठ योजना बनाओ",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "hi"},
+      "detectedLanguage": "hi",
+      "userId": "eval-user-012"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "जल चक्र पर कक्षा पाँच की पाठ योजना के लिए लेसन प्लान जनरेटर खोला जा रहा है।"
+  },
+  {
+    "id": "vidya-013-hi-quiz",
+    "input": {
+      "message": "कक्षा 4 के लिए भिन्न पर क्विज़ बनाओ",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "hi"},
+      "detectedLanguage": "hi",
+      "userId": "eval-user-013"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "कक्षा 4 के लिए भिन्न पर क्विज़ जनरेटर खोला जा रहा है।"
+  },
+  {
+    "id": "vidya-014-hi-instant-answer",
+    "input": {
+      "message": "भारत की राजधानी क्या है?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "hi"},
+      "detectedLanguage": "hi",
+      "userId": "eval-user-014"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250", "labse_similarity"],
+    "reference": "भारत की राजधानी नई दिल्ली है।"
+  },
+  {
+    "id": "vidya-015-hi-virtual-field-trip",
+    "input": {
+      "message": "ताज महल पर वर्चुअल फील्ड ट्रिप ले चलो",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "hi"},
+      "detectedLanguage": "hi",
+      "userId": "eval-user-015"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "ताज महल पर वर्चुअल फील्ड ट्रिप प्लानर खोला जा रहा है।"
+  },
+  {
+    "id": "vidya-016-bn-lesson-plan",
+    "input": {
+      "message": "শ্রেণী ৬ এর জন্য সালোকসংশ্লেষণ এর উপর পাঠ পরিকল্পনা তৈরি করুন",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "bn"},
+      "detectedLanguage": "bn",
+      "userId": "eval-user-016"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "ক্লাস ৬ এর জন্য সালোকসংশ্লেষণ এর পাঠ পরিকল্পনা জেনারেটর খোলা হচ্ছে।"
+  },
+  {
+    "id": "vidya-017-bn-instant-answer",
+    "input": {
+      "message": "ভারতের জাতীয় ফুল কী?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "bn"},
+      "detectedLanguage": "bn",
+      "userId": "eval-user-017"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250", "labse_similarity"],
+    "reference": "ভারতের জাতীয় ফুল হলো পদ্ম।"
+  },
+  {
+    "id": "vidya-018-ta-lesson-plan",
+    "input": {
+      "message": "வகுப்பு 5 க்கான கணிதத்தில் பின்னங்கள் பற்றிய பாடத் திட்டம் உருவாக்கவும்",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "ta"},
+      "detectedLanguage": "ta",
+      "userId": "eval-user-018"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "வகுப்பு 5 க்கான பின்னங்கள் பாடத் திட்ட ஜெனரேட்டர் திறக்கப்படுகிறது."
+  },
+  {
+    "id": "vidya-019-ta-instant-answer",
+    "input": {
+      "message": "தமிழ்நாட்டின் தலைநகரம் என்ன?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "ta"},
+      "detectedLanguage": "ta",
+      "userId": "eval-user-019"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "தமிழ்நாட்டின் தலைநகரம் சென்னை."
+  },
+  {
+    "id": "vidya-020-unknown-greeting",
+    "input": {
+      "message": "Hi, how are you doing today?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-020"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Hello, I can help you with lesson plans, quizzes, worksheets and more. What would you like to do?"
+  },
+  {
+    "id": "vidya-021-unknown-philosophical",
+    "input": {
+      "message": "What is the meaning of life?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-021"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "I help with classroom tasks. Try asking about lesson plans, quizzes, or specific subjects."
+  },
+  {
+    "id": "vidya-022-en-context-switch",
+    "input": {
+      "message": "Make it for class 8 instead",
+      "chatHistory": [
+        {"role": "user", "parts": [{"text": "Make a lesson plan on Newton's laws"}]},
+        {"role": "model", "parts": [{"text": "Opening the lesson plan generator. What grade level?"}]}
+      ],
+      "currentScreenContext": {"path": "/lesson-plan", "uiState": {"topic": "Newton's laws"}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-022"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Updating the lesson plan to grade 8 with topic Newton's laws."
+  },
+  {
+    "id": "vidya-023-en-compound-request",
+    "input": {
+      "message": "I need a lesson plan and a rubric for class 5 science on plants",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {},
+      "detectedLanguage": "en",
+      "userId": "eval-user-023"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "Creating a lesson plan first, then a rubric on plants for class 5 science."
+  },
+  {
+    "id": "vidya-024-mr-lesson-plan",
+    "input": {
+      "message": "वर्ग 7 साठी मानव शरीराच्या पाचन प्रणालीवर पाठ योजना बनवा",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "mr"},
+      "detectedLanguage": "mr",
+      "userId": "eval-user-024"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "वर्ग 7 साठी पाचन प्रणालीवर पाठ योजना जनरेटर उघडत आहोत."
+  },
+  {
+    "id": "vidya-025-gu-quiz",
+    "input": {
+      "message": "ધોરણ 6 માટે પૃથ્વી પર ક્વિઝ બનાવો",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "gu"},
+      "detectedLanguage": "gu",
+      "userId": "eval-user-025"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "ધોરણ 6 માટે પૃથ્વી પર ક્વિઝ જનરેટર ખોલી રહ્યા છીએ."
+  },
+  {
+    "id": "vidya-026-kn-instant-answer",
+    "input": {
+      "message": "ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ ಯಾವುದು?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "kn"},
+      "detectedLanguage": "kn",
+      "userId": "eval-user-026"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250", "labse_similarity"],
+    "reference": "ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ ಬೆಂಗಳೂರು."
+  },
+  {
+    "id": "vidya-027-te-rubric",
+    "input": {
+      "message": "9వ తరగతి సైన్స్ ప్రాజెక్ట్ కోసం రూబ్రిక్ తయారు చేయండి",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "te"},
+      "detectedLanguage": "te",
+      "userId": "eval-user-027"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "9వ తరగతి సైన్స్ ప్రాజెక్ట్ కోసం రూబ్రిక్ జనరేటర్ తెరుస్తున్నాము."
+  },
+  {
+    "id": "vidya-028-pa-worksheet",
+    "input": {
+      "message": "ਜਮਾਤ 4 ਲਈ ਗੁਣਾ ਦੇ ਪਹਾੜੇ ਉੱਤੇ ਵਰਕਸ਼ੀਟ ਬਣਾਓ",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "pa"},
+      "detectedLanguage": "pa",
+      "userId": "eval-user-028"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "ਜਮਾਤ 4 ਲਈ ਗੁਣਾ ਦੇ ਪਹਾੜੇ ਉੱਤੇ ਵਰਕਸ਼ੀਟ ਜਨਰੇਟਰ ਖੋਲ੍ਹ ਰਹੇ ਹਾਂ."
+  },
+  {
+    "id": "vidya-029-ml-lesson-plan",
+    "input": {
+      "message": "ക്ലാസ് 6 നായി പ്രകാശസംശ്ലേഷണത്തെക്കുറിച്ച് പാഠ പദ്ധതി തയ്യാറാക്കുക",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "ml"},
+      "detectedLanguage": "ml",
+      "userId": "eval-user-029"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250"],
+    "reference": "ക്ലാസ് 6 നായി പ്രകാശസംശ്ലേഷണത്തിൽ പാഠ പദ്ധതി ജനറേറ്റർ തുറക്കുന്നു."
+  },
+  {
+    "id": "vidya-030-or-instant-answer",
+    "input": {
+      "message": "ଓଡିଶାର ରାଜଧାନୀ କଣ?",
+      "chatHistory": [],
+      "currentScreenContext": {"path": "/", "uiState": {}},
+      "teacherProfile": {"preferredLanguage": "or"},
+      "detectedLanguage": "or",
+      "userId": "eval-user-030"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "max_word_count: 250", "labse_similarity"],
+    "reference": "ଓଡିଶାର ରାଜଧାନୀ ଭୁବନେଶ୍ୱର।"
+  }
+]

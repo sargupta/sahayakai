@@ -49,7 +49,7 @@ def render_recommender_prompt(context: dict[str, Any]) -> str:
 @lru_cache(maxsize=1)
 def get_recommender_model() -> str:
     return os.environ.get(
-        "SAHAYAKAI_VIDEO_STORYTELLER_MODEL", "gemini-2.0-flash",
+        "SAHAYAKAI_VIDEO_STORYTELLER_MODEL", "gemini-2.5-flash",
     )
 
 

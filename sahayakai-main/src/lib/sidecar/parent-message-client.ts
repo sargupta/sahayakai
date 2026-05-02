@@ -15,7 +15,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -137,6 +137,11 @@ export function _resetParentMessageTokenCacheForTest(): void {
 export interface CallSidecarParentMessageOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 — caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarParentMessage(
@@ -161,6 +166,7 @@ export async function callSidecarParentMessage(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -174,6 +180,7 @@ export async function callSidecarParentMessage(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,

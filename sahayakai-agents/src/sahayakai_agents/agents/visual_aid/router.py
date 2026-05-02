@@ -54,14 +54,26 @@ visual_aid_router = APIRouter(prefix="/v1/visual-aid", tags=["visual-aid"])
 SIDECAR_VERSION = "phase-l.5"
 
 # Per the existing Genkit flow, image generation can stall on complex
-# prompts. Cap with a hard 90s timeout independent of run_resiliently's
+# prompts. Cap with a hard 120s timeout independent of run_resiliently's
 # budget (which is tuned for telephony-bound replies).
-_IMAGE_TIMEOUT_S = 90.0
+#
+# Phase M.3: bumped from 90s → 120s. Forensic finding — at 90s, two
+# 30s failed attempts left only 30s for the third attempt under the
+# old 7s `max_total_backoff_seconds`. The per-call wait_for would
+# evaporate the budget. 120s gives every attempt its full ceiling.
+_IMAGE_TIMEOUT_S = 120.0
 
 # Whole-pipeline (image + metadata) budget. Mirrors the pre-L.5
 # image-stage cap; metadata is fast (~5s) so the combined ceiling is
-# still ~90s with margin.
-_PIPELINE_TIMEOUT_S = 90.0
+# still ~120s with margin.
+_PIPELINE_TIMEOUT_S = 120.0
+
+# Phase M.3: image-specific backoff budget. Default `run_resiliently`
+# uses telephony-bound 7s; for image agents we override to 4s so a
+# single transient retry can occur but liberal retries are off the
+# table — image cost is $0.04/call so we'd rather fail fast than
+# stack 3+ image attempts at $0.12.
+_IMAGE_MAX_TOTAL_BACKOFF_S = 4.0
 
 # ADK Runner needs an app_name for the in-memory session service.
 _VISUAL_AID_APP_NAME = "sahayakai-visual-aid"
@@ -272,7 +284,6 @@ async def _run_pipeline_via_runner(
 async def _run_pipeline(
     payload: VisualAidRequest,
     api_keys: tuple[str, ...],
-    settings: Any,
 ) -> tuple[bytes, str, VisualAidMetadata]:
     """Run the SequentialAgent through `run_resiliently`.
 
@@ -302,7 +313,9 @@ async def _run_pipeline(
                 _do,
                 api_keys,
                 span_name="visual_aid.pipeline",
-                max_total_backoff_seconds=settings.max_total_backoff_seconds,
+                # Phase M.3: image agents override the global telephony
+                # backoff. See `_IMAGE_MAX_TOTAL_BACKOFF_S`.
+                max_total_backoff_seconds=_IMAGE_MAX_TOTAL_BACKOFF_S,
                 per_call_timeout_seconds=_IMAGE_TIMEOUT_S,
             ),
             timeout=_PIPELINE_TIMEOUT_S,
@@ -328,7 +341,7 @@ async def visual_aid_generate(
 
     try:
         image_bytes, image_mime, metadata = await _run_pipeline(
-            payload, api_keys, settings,
+            payload, api_keys,
         )
     except AISafetyBlockError as exc:
         log.warning("visual_aid.safety_block", reason=str(exc))
@@ -365,6 +378,12 @@ async def visual_aid_generate(
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: stamp `model_used` on the per-router event.
+    # Token counts are NOT extracted here because the ADK SequentialAgent
+    # doesn't surface a single `result` object; per-stage tokens live in
+    # 2 separate `ai_resilience.attempt_succeeded` events that share the
+    # `request_id` set by the request_id middleware. Image generation
+    # also bills per image, not per token.
     log.info(
         "visual_aid.generated",
         latency_ms=latency_ms,
@@ -372,6 +391,10 @@ async def visual_aid_generate(
         image_mime=image_mime,
         language=payload.language,
         grade_level=payload.gradeLevel,
+        model_used=get_image_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
     )
     return VisualAidResponse(
         imageDataUri=image_data_uri,

@@ -10,7 +10,7 @@
  * Gemini-via-ADK path is the secondary fallback).
  */
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
-import { signRequest } from './signing';
+import { newRequestId, signRequest } from './signing';
 
 export class VoiceToTextSidecarConfigError extends Error {
   constructor(message: string) {
@@ -50,18 +50,18 @@ export class VoiceToTextSidecarBehaviouralError extends Error {
   }
 }
 
-export interface SidecarVoiceToTextRequest {
-  audioDataUri: string;
-  userId: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth).
+// Public surface preserved: dispatchers / tests still import
+// `Sidecar{VoiceToTextRequest,VoiceToTextResponse}` — these alias the
+// generated `VoiceToText{Request,Response}` interfaces.
+import type {
+  VoiceToTextRequest as GenVoiceToTextRequest,
+  VoiceToTextResponse as GenVoiceToTextResponse,
+} from './types.generated';
 
-export interface SidecarVoiceToTextResponse {
-  text: string;
-  language: string | null;
-  sidecarVersion: string;
-  latencyMs: number;
-  modelUsed: string;
-}
+export type SidecarVoiceToTextRequest = GenVoiceToTextRequest;
+export type SidecarVoiceToTextResponse = GenVoiceToTextResponse;
 
 // Speech-to-text on multi-minute audio can take ~30-45 s. Cap with
 // 60 s + small network buffer.
@@ -90,6 +90,11 @@ export function _resetVoiceToTextTokenCacheForTest(): void {
 export interface CallSidecarVoiceToTextOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
 }
 
 export async function callSidecarVoiceToText(
@@ -112,6 +117,7 @@ export async function callSidecarVoiceToText(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
@@ -125,6 +131,7 @@ export async function callSidecarVoiceToText(
         'Content-Type': 'application/json',
         'X-Content-Digest': digest,
         'X-Request-Timestamp': timestamp,
+        'X-Request-ID': requestId,
       },
       body: rawBody,
       signal: controller.signal,
