@@ -41,9 +41,26 @@ export async function GET(request: Request) {
 
     try {
         const profile = await dbAdapter.getUser(uid);
-        // We consider profile existing if they have set their school name
+        // Bug fix (auth pipeline review, 2026-04-30):
+        // Previously this returned `exists: !!(profile && profile.schoolName)`.
+        // That conflated TWO concepts: (a) user has a profile doc, and
+        // (b) user has completed full onboarding including school name.
+        // Conflating them meant any returning teacher whose `schoolName`
+        // happened to be empty (signed up before the field existed,
+        // bailed mid-onboarding, or had it cleared by a profile edit)
+        // got bounced to /onboarding on EVERY login, never reaching the
+        // dashboard — matching the symptom the user reported in prod.
+        //
+        // Correct semantic: `exists` means "user doc is in Firestore".
+        // Onboarding-completeness is a SEPARATE check the dashboard
+        // surfaces via a banner / nudge if needed. New users (no doc
+        // at all) still land on /onboarding because `profile === null`.
         return NextResponse.json({
-            exists: !!(profile && profile.schoolName)
+            exists: !!profile,
+            // Surface onboarding completeness as a separate flag so the
+            // client can decide UX (e.g., a nudge banner) without losing
+            // navigation to the dashboard.
+            onboardingComplete: !!(profile && profile.schoolName),
         });
     } catch (error) {
         logger.error("Profile check error", error, 'AUTH', { uid });
