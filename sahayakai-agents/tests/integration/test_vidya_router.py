@@ -84,7 +84,16 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
         def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
             return _FakeClient(models)
 
-    fake_types = SimpleNamespace(GenerateContentConfig=lambda **kw: kw)
+    # Phase B §B.4: VIDYA's `instantAnswer` path delegates to the
+    # instant-answer agent which uses Gemini's Google Search grounding
+    # tool. The fake genai_types must expose `Tool` + `GoogleSearch`
+    # callables so the sub-agent's `GenerateContentConfig` instantiation
+    # doesn't fail with `AttributeError`.
+    fake_types = SimpleNamespace(
+        GenerateContentConfig=lambda **kw: kw,
+        Tool=lambda **kw: kw,
+        GoogleSearch=lambda **kw: kw,
+    )
     fake_module = _FakeGenai()
     fake_module.types = fake_types  # type: ignore[attr-defined]
 
@@ -213,13 +222,26 @@ class TestVidyaRouter:
         client: TestClient,
         fake_genai: _SequencedFakeAioModels,
     ) -> None:
-        """instantAnswer → classifier + inline-answer (2 calls total)."""
+        """instantAnswer → classifier + inline-answer (2 calls total).
+
+        Phase B §B.4: VIDYA's instantAnswer path now delegates to the
+        instant-answer ADK agent which expects structured JSON output
+        from Gemini (matching `InstantAnswerCore`). The second queue
+        entry is therefore JSON, not plain text. The supervisor pulls
+        out `core.answer` and wraps it in the wire response.
+        """
         fake_genai.queue = [
             _classify_json(intent_type="instantAnswer", language="en"),
-            (
-                "Photosynthesis is the process plants use to convert sunlight "
-                "water and carbon dioxide into glucose and oxygen."
-            ),
+            json.dumps({
+                "answer": (
+                    "Photosynthesis is the process plants use to convert "
+                    "sunlight, water, and carbon dioxide into glucose and "
+                    "oxygen. The chlorophyll in leaves captures the energy."
+                ),
+                "videoSuggestionUrl": None,
+                "gradeLevel": "Class 5",
+                "subject": "Science",
+            }),
         ]
         request = {
             **_BASE_REQUEST,

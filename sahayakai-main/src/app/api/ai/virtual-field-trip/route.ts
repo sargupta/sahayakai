@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { planVirtualFieldTrip, VirtualFieldTripInputSchema } from '@/ai/flows/virtual-field-trip';
+import { VirtualFieldTripInputSchema } from '@/ai/flows/virtual-field-trip';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchVirtualFieldTrip } from '@/lib/sidecar/virtual-field-trip-dispatch';
 
 /**
  * @swagger
@@ -53,12 +54,18 @@ async function _handler(request: Request) {
 
         const body = VirtualFieldTripInputSchema.parse(json);
 
-        const output = await planVirtualFieldTrip({
+        // Phase D.3: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_VIRTUAL_FIELD_TRIP_MODE env (default: off).
+        const dispatched = await dispatchVirtualFieldTrip({
             ...body,
-            userId: userId,
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            title: dispatched.title,
+            stops: dispatched.stops,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+        });
 
     } catch (error) {
         return handleAIError(error, 'VIRTUAL_FIELD_TRIP', {
