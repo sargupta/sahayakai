@@ -1,5 +1,14 @@
 /**
  * Exam paper generator dispatcher (Phase E.2).
+ *
+ * Phase K (P0 #2): canary/full mode now mirrors the Genkit flow's
+ * post-call persistence (Storage + Firestore content doc) and the
+ * server-side rate limiter. Before Phase K, sidecar-served exam papers
+ * silently bypassed the user's library and the daily rate limit.
+ *
+ * Note: the Genkit `generateExamPaper` does not call `validateTopicSafety`
+ * (the topic is structured: board / grade / subject / chapters), so the
+ * dispatcher only lifts the rate-limit gate, not the topic-safety gate.
  */
 import {
     generateExamPaper,
@@ -16,6 +25,7 @@ import {
     type SidecarExamPaperRequest,
     type SidecarExamPaperResponse,
 } from './exam-paper-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in exam-paper-client.ts. Phase J.2 hot-fix (P0
@@ -207,9 +217,48 @@ export async function dispatchExamPaper(
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
+    // Phase K — rate limit gate that the Genkit flow's wrapper enforces
+    // via the route-level layers. Lifted here so canary/full doesn't blow
+    // through the user's daily quota.
+    if (input.userId) {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
-        logDispatch(decision, { source: 'sidecar', uid: input.userId, sidecarLatencyMs: sidecar.latencyMs });
+        // Phase K — persist the exam paper to the user's library so it is
+        // available regardless of which AI path served the request.
+        const topicForLibrary =
+            input.chapters && input.chapters.length > 0
+                ? input.chapters.join(', ')
+                : input.subject;
+        const titleForLibrary =
+            sidecar.res.title ||
+            `${input.board} ${input.gradeLevel} ${input.subject} Exam Paper`.trim();
+        const persistResult = input.userId
+            ? await persistSidecarJSON({
+                  uid: input.userId,
+                  collection: 'exam-papers',
+                  contentType: 'exam-paper',
+                  title: titleForLibrary,
+                  output: sidecar.res,
+                  metadata: {
+                      gradeLevel:
+                          sidecar.res.gradeLevel || input.gradeLevel || 'Class 10',
+                      subject: input.subject || sidecar.res.subject || 'General',
+                      topic: topicForLibrary,
+                      language: input.language || 'English',
+                  },
+              })
+            : null;
+        logDispatch(decision, {
+            source: 'sidecar',
+            uid: input.userId,
+            sidecarLatencyMs: sidecar.latencyMs,
+            contentId: persistResult?.contentId,
+            persisted: persistResult !== null,
+        });
         return sidecarToDispatched(sidecar.res, decision);
     }
 

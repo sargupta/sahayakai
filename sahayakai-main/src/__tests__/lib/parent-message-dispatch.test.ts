@@ -20,6 +20,16 @@ jest.mock('@/ai/flows/parent-message-generator', () => ({
     generateParentMessage: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/persist-helpers', () => ({
+    persistSidecarJSON: jest.fn(),
+    persistSidecarImage: jest.fn(),
+}));
+
+jest.mock('@/lib/server-safety', () => ({
+    checkServerRateLimit: jest.fn(),
+    checkImageRateLimit: jest.fn(),
+}));
+
 jest.mock('@/lib/sidecar/parent-message-client', () => {
     class ParentMessageSidecarConfigError extends Error {
         constructor(message: string) {
@@ -64,6 +74,7 @@ jest.mock('@/lib/sidecar/parent-message-client', () => {
 
 import { generateParentMessage } from '@/ai/flows/parent-message-generator';
 import { getFeatureFlags } from '@/lib/feature-flags';
+import { checkServerRateLimit } from '@/lib/server-safety';
 import { dispatchParentMessage } from '@/lib/sidecar/parent-message-dispatch';
 import {
     callSidecarParentMessage,
@@ -72,10 +83,17 @@ import {
     ParentMessageSidecarTimeoutError,
     type SidecarParentMessageResponse,
 } from '@/lib/sidecar/parent-message-client';
+import {
+    persistSidecarJSON,
+    persistSidecarImage,
+} from '@/lib/sidecar/persist-helpers';
 
 const mockGenkit = generateParentMessage as jest.MockedFunction<typeof generateParentMessage>;
 const mockSidecar = callSidecarParentMessage as jest.MockedFunction<typeof callSidecarParentMessage>;
 const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
+const mockGate = checkServerRateLimit as jest.MockedFunction<typeof checkServerRateLimit>;
+const mockPersistJSON = persistSidecarJSON as jest.MockedFunction<typeof persistSidecarJSON>;
+const mockPersistImage = persistSidecarImage as jest.MockedFunction<typeof persistSidecarImage>;
 
 const BASE_INPUT: ParentMessageInput & { userId: string } = {
     studentName: 'Arav',
@@ -117,6 +135,7 @@ beforeEach(() => {
         parentMessageSidecarMode: 'off',
         parentMessageSidecarPercent: 0,
     } as Awaited<ReturnType<typeof getFeatureFlags>>);
+    mockGate.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -245,5 +264,59 @@ describe('dispatchParentMessage — full mode + percent gating', () => {
 
         const out = await dispatchParentMessage(BASE_INPUT);
         expect(out.decision.mode).toBe('off');
+    });
+});
+
+// ── Phase K — pre-call rate-limit gate, no per-user persist ────────────────
+
+describe('dispatchParentMessage — Phase K (gate-only, no persist)', () => {
+    it('runs the rate-limit gate BEFORE the sidecar call in canary mode', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const order: string[] = [];
+        mockGate.mockImplementation(async () => {
+            order.push('gate');
+        });
+        mockSidecar.mockImplementation(async () => {
+            order.push('sidecar');
+            return SIDECAR_OUTPUT;
+        });
+
+        await dispatchParentMessage(BASE_INPUT);
+
+        expect(order).toEqual(['gate', 'sidecar']);
+        expect(mockGate).toHaveBeenCalledWith(BASE_INPUT.userId);
+    });
+
+    it('does NOT persist to per-user library (SMS-bound, not library)', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        await dispatchParentMessage(BASE_INPUT);
+
+        expect(mockPersistJSON).not.toHaveBeenCalled();
+        expect(mockPersistImage).not.toHaveBeenCalled();
+    });
+
+    it('does not gate on the off-path Genkit response', async () => {
+        // The Genkit flow handles its own gating upstream in the route;
+        // dispatcher must NOT add an extra tick on the off path.
+        setMode('off');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        await dispatchParentMessage(BASE_INPUT);
+
+        expect(mockGate).not.toHaveBeenCalled();
+    });
+
+    it('blocks sidecar call when rate limit gate throws', async () => {
+        setMode('canary');
+        mockGate.mockRejectedValue(new Error('Rate limit exceeded. Please wait 5 minutes.'));
+
+        await expect(dispatchParentMessage(BASE_INPUT)).rejects.toThrow(
+            /Rate limit exceeded/,
+        );
+        expect(mockSidecar).not.toHaveBeenCalled();
     });
 });

@@ -36,6 +36,7 @@ import {
     type LessonPlanSidecarDecision,
 } from '@/lib/feature-flags';
 
+import { validateTopicSafety } from '@/lib/safety';
 import {
     callSidecarLessonPlan,
     LessonPlanSidecarBehaviouralError,
@@ -45,6 +46,7 @@ import {
     type SidecarLessonPlanRequest,
     type SidecarLessonPlanResponse,
 } from './lesson-plan-client';
+import { persistSidecarJSON } from './persist-helpers';
 import { withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
@@ -266,16 +268,54 @@ export async function dispatchLessonPlan(
     }
 
     // ── canary / full ──────────────────────────────────────────────────
+    // Phase K — pre-call gates that the Genkit flow runs inside
+    // generateLessonPlan. When canary/full bypasses Genkit we must still
+    // run them or unsafe topics reach the sidecar and rate limits leak.
+    const safety = validateTopicSafety(input.topic);
+    if (!safety.safe) {
+        throw new Error(`Safety Violation: ${safety.reason}`);
+    }
+    if (input.userId && input.userId !== 'anonymous_user') {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecarReq = toSidecarRequest(input);
     const sidecar = await runSidecarSafe(sidecarReq);
 
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore so the
+        // teacher's library shows the lesson plan regardless of dispatch
+        // mode.
+        const titleForLibrary =
+            sidecar.res.title || `Lesson Plan: ${input.topic}`;
+        const persistResult =
+            input.userId && input.userId !== 'anonymous_user'
+                ? await persistSidecarJSON({
+                      uid: input.userId,
+                      collection: 'lesson-plans',
+                      contentType: 'lesson-plan',
+                      title: titleForLibrary,
+                      output: sidecar.res,
+                      metadata: {
+                          gradeLevel:
+                              sidecar.res.gradeLevel ||
+                              input.gradeLevels?.[0] ||
+                              'Class 5',
+                          subject: sidecar.res.subject || 'Science',
+                          topic: input.topic,
+                          language: input.language || 'English',
+                      },
+                  })
+                : null;
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
             revisionsRun: sidecar.res.revisionsRun,
             sidecarVersion: sidecar.res.sidecarVersion,
+            contentId: persistResult?.contentId,
+            persisted: persistResult !== null,
         });
         return sidecarToLessonPlan(sidecar.res, decision);
     }
