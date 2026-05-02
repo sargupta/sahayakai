@@ -83,7 +83,21 @@ describe('GET /api/auth/profile-check', () => {
         expect(body.exists).toBe(false);
     });
 
-    it('returns { exists: false } when profile exists but schoolName is empty', async () => {
+    // Bug fix (auth pipeline review, 2026-04-30):
+    //
+    // The previous behaviour conflated "user has a profile doc" with "user
+    // completed onboarding". Returning teachers without a `schoolName`
+    // (signed up before the field existed, bailed mid-onboarding, profile
+    // edit cleared it) got bounced to /onboarding on EVERY login,
+    // never reaching the dashboard.
+    //
+    // Corrected contract:
+    //   - `exists` = "Firestore user doc is present at all"
+    //   - `onboardingComplete` = "schoolName is set" (separate UX surface)
+    //
+    // Auth-context only redirects to /onboarding when `exists === false`,
+    // so returning users now reach the dashboard regardless of schoolName.
+    it('returns { exists: true, onboardingComplete: false } when profile exists but schoolName is empty', async () => {
         mockGetUser.mockResolvedValue({
             uid: 'user-456',
             schoolName: '',
@@ -93,10 +107,11 @@ describe('GET /api/auth/profile-check', () => {
         const res = await GET(makeRequest('user-456'));
         expect(res.status).toBe(200);
         const { body } = lastJsonCall();
-        expect(body.exists).toBe(false);
+        expect(body.exists).toBe(true);
+        expect(body.onboardingComplete).toBe(false);
     });
 
-    it('returns { exists: false } when profile exists but schoolName is undefined', async () => {
+    it('returns { exists: true, onboardingComplete: false } when profile exists but schoolName is undefined', async () => {
         mockGetUser.mockResolvedValue({
             uid: 'user-789',
             email: 'teacher@example.com',
@@ -105,7 +120,22 @@ describe('GET /api/auth/profile-check', () => {
         const res = await GET(makeRequest('user-789'));
         expect(res.status).toBe(200);
         const { body } = lastJsonCall();
-        expect(body.exists).toBe(false);
+        expect(body.exists).toBe(true);
+        expect(body.onboardingComplete).toBe(false);
+    });
+
+    it('returns { exists: true, onboardingComplete: true } when profile has schoolName', async () => {
+        mockGetUser.mockResolvedValue({
+            uid: 'user-321',
+            schoolName: 'Government Primary School, Raichur',
+            email: 'teacher@example.com',
+        });
+
+        const res = await GET(makeRequest('user-321'));
+        expect(res.status).toBe(200);
+        const { body } = lastJsonCall();
+        expect(body.exists).toBe(true);
+        expect(body.onboardingComplete).toBe(true);
     });
 
     it('returns HTTP 500 when Firestore throws an error (not 200 with exists:false)', async () => {
