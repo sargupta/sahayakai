@@ -310,14 +310,26 @@ function score(genkit: CallResult, sidecar: CallResult, lang: string): PairResul
   };
 }
 
-function parseArgs(argv: string[]): { flows: string[]; langs: string[] } {
+function parseArgs(argv: string[]): { flows: string[]; langs: string[]; serial: boolean; retries: number } {
   let flows = FLOWS.map((f) => f.id);
   let langs = ALL_LANGS;
+  let serial = false;
+  let retries = parseInt(process.env.COMPARE_RETRY_MAX || '0', 10);
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--flows') flows = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
     if (argv[i] === '--langs') langs = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
+    if (argv[i] === '--serial') serial = true;
+    if (argv[i] === '--retries') retries = parseInt(argv[++i], 10);
   }
-  return { flows, langs };
+  return { flows, langs, serial, retries };
+}
+
+const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
+const SERIAL_DELAY_MS = parseInt(process.env.COMPARE_SERIAL_DELAY_MS || '2000', 10);
+const RETRY_BACKOFF_MS = parseInt(process.env.COMPARE_RETRY_BACKOFF_MS || '6000', 10);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 function buildHeaders(): Record<string, string> {
@@ -327,12 +339,37 @@ function buildHeaders(): Record<string, string> {
   return h;
 }
 
-async function runOne(flow: FlowSpec, lang: string): Promise<PairResult> {
+async function callWithRetry(
+  url: string,
+  body: Record<string, unknown>,
+  headers: Record<string, string>,
+  retries: number,
+): Promise<CallResult> {
+  let last: CallResult | null = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const r = await call(url, body, headers);
+    last = r;
+    if (r.ok) return r;
+    if (!RETRY_STATUSES.has(r.status)) return r;
+    if (attempt < retries) await sleep(RETRY_BACKOFF_MS * (attempt + 1));
+  }
+  return last as CallResult;
+}
+
+async function runOne(flow: FlowSpec, lang: string, opts: { serial: boolean; retries: number }): Promise<PairResult> {
   const headers = buildHeaders();
-  const [genkit, sidecar] = await Promise.all([
-    call(`${NEXT_BASE}/api${flow.nextPath}`, flow.genkitBody(lang), headers),
-    call(`${SIDECAR_BASE}${flow.sidecarPath}`, flow.sidecarBody(lang), headers),
-  ]);
+  let genkit: CallResult;
+  let sidecar: CallResult;
+  if (opts.serial) {
+    genkit = await callWithRetry(`${NEXT_BASE}/api${flow.nextPath}`, flow.genkitBody(lang), headers, opts.retries);
+    if (SERIAL_DELAY_MS > 0) await sleep(SERIAL_DELAY_MS);
+    sidecar = await callWithRetry(`${SIDECAR_BASE}${flow.sidecarPath}`, flow.sidecarBody(lang), headers, opts.retries);
+  } else {
+    [genkit, sidecar] = await Promise.all([
+      callWithRetry(`${NEXT_BASE}/api${flow.nextPath}`, flow.genkitBody(lang), headers, opts.retries),
+      callWithRetry(`${SIDECAR_BASE}${flow.sidecarPath}`, flow.sidecarBody(lang), headers, opts.retries),
+    ]);
+  }
   const metrics = score(genkit, sidecar, lang);
   const result: PairResult = { flow: flow.id, lang, genkit, sidecar, metrics };
   writeFileSync(join(RAW_DIR, `${flow.id}__${lang}.json`), JSON.stringify(result, null, 2));
@@ -444,11 +481,13 @@ async function main(): Promise<void> {
   console.log(`  Auth: ID_TOKEN=${ID_TOKEN ? 'set' : 'NONE'}`);
   console.log('');
 
+  if (args.serial) console.log(`  Serial mode (delay=${SERIAL_DELAY_MS}ms, retries=${args.retries})`);
+
   const results: PairResult[] = [];
   for (const flow of selected) {
     console.log(`--- ${flow.id} ---`);
     for (const lang of args.langs) {
-      const r = await runOne(flow, lang);
+      const r = await runOne(flow, lang, { serial: args.serial, retries: args.retries });
       const tag = `  ${r.flow.padEnd(20)} ${r.lang}`;
       const g = r.genkit.ok ? `genkit=${r.genkit.ms}ms` : `genkit=FAIL(${r.genkit.status || 'ERR'})`;
       const s = r.sidecar.ok ? `sidecar=${r.sidecar.ms}ms` : `sidecar=FAIL(${r.sidecar.status || 'ERR'})`;
