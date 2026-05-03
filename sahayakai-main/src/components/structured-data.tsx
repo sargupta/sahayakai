@@ -127,6 +127,23 @@ export function StructuredData() {
     },
   };
 
+  const speakableSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'SahayakAI — The Operating System for Teaching in India',
+    url: 'https://sahayakai.com',
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: [
+        'h1',
+        '[data-speakable="true"]',
+        '.answer-capsule',
+        'meta[name="description"]',
+      ],
+    },
+    inLanguage: ['en-IN', 'hi-IN'],
+  };
+
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -208,6 +225,12 @@ export function StructuredData() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(websiteSchema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(speakableSchema),
         }}
       />
       <script
