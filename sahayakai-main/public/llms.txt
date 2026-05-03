@@ -1,0 +1,79 @@
+# SahayakAI
+
+> The Operating System for Teaching in India
+
+SahayakAI is an AI-powered teaching assistant built for India's 1.01 crore (10.1 million) K-12 teachers. It is a product of SARGVISION, founded by Sarit Arora.
+
+## What SahayakAI Does
+
+SahayakAI reduces lesson preparation time by 90% (from 45 minutes to under 5 minutes). It generates curriculum-aligned lesson plans, quizzes, worksheets, rubrics, and assessments across all Indian education boards — NCERT, CBSE, ICSE, and all 28 state boards.
+
+## Key Capabilities
+
+- AI Lesson Plan Generator: Creates complete, board-aligned lesson plans in under 2 minutes
+- Quiz & Assessment Generator: Auto-generates quizzes mapped to specific chapters and learning objectives
+- Worksheet Creator: Printable, curriculum-aligned worksheets with answer keys
+- Rubric Builder: Standards-based rubrics for any subject and grade
+- Visual Aid Generator: Creates teaching visuals, diagrams, and illustrations
+- Virtual Field Trips: AI-generated immersive educational experiences
+- Video Storyteller: Creates educational video narratives
+- Parent Communication: AI-drafted parent messages in local languages
+- Voice-to-Text: Voice input for teachers who prefer speaking over typing
+- Instant Answer: Real-time curriculum doubt resolution for teachers
+- Teacher Training: Personalized professional development content
+- Attendance Management: Student attendance tracking with parent outreach
+- AI Teaching Avatar: Interactive AI teaching companion (VIDYA)
+- Exam Paper Generator: Complete exam papers with marking schemes
+- Text-to-Speech: Content narration in Indian languages
+
+## Languages Supported
+
+SahayakAI works natively (not translated) in 11 Indian languages: English, Hindi, Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Punjabi, Malayalam, and Odia.
+
+## Technical Architecture
+
+- Progressive Web App (PWA) — works offline, installable on any device
+- Voice-first interface — optimized for voice input (65% of Indian users prefer voice)
+- Low-bandwidth optimized — functional on 2G/3G networks common in rural India
+- Built on Next.js 15 with server-side rendering
+- AI powered by Google Gemini 2.0 Flash via Genkit
+- Firebase for authentication and real-time data
+- Firestore with offline persistence for seamless offline-to-online sync
+
+## Curriculum Coverage
+
+50,000+ curriculum mappings across:
+- NCERT (National Council of Educational Research and Training)
+- CBSE (Central Board of Secondary Education)
+- ICSE (Indian Certificate of Secondary Education)
+- All 28 state education boards
+- Classes 1 through 12 (K-12)
+- All major subjects
+
+## Pricing
+
+- Free Tier: 50 AI credits per month
+- Gold: Rs 149/teacher/month (500 credits)
+- Premium: Rs 349/teacher/month (2000 credits)
+- Institutional pricing available for schools, chains, and government departments
+
+## Traction
+
+- 150-teacher Karnataka pilot program
+- 78% teacher retention rate
+- 30 features in production
+- NPS score of 71+
+
+## Links
+
+- Website: https://sahayakai.com
+- About: https://sahayakai.com/about
+- For Schools: https://sahayakai.com/for-schools
+- Lesson Plans: https://sahayakai.com/lesson-plan
+- Quiz Generator: https://sahayakai.com/quiz-generator
+
+## Contact
+
+- Company: SARGVISION
+- Founder: Sarit Arora, Founder & CEO
+- Location: India
