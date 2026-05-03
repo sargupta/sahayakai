@@ -219,17 +219,20 @@ const FLOWS: FlowSpec[] = [
     id: 'worksheet',
     nextPath: '/ai/worksheet',
     sidecarPath: '/v1/worksheet/generate',
+    // Both Genkit and sidecar require imageDataUri + prompt (worksheet is
+    // image-based: teacher takes a textbook-page photo).
     genkitBody: (lang) => ({
-      topic: 'fractions',
+      imageDataUri:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=',
+      prompt: 'Generate a worksheet on fractions based on this textbook page',
       gradeLevel: 'Class 5',
       subject: 'Mathematics',
       language: lang,
       userId: `compare-${lang}`,
     }),
-    // Sidecar contract requires imageDataUri + prompt (the worksheet flow is
-    // image-based on the sidecar side: teacher takes a textbook page photo).
     sidecarBody: (lang) => ({
-      imageDataUri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=',
+      imageDataUri:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=',
       prompt: 'Generate a worksheet on fractions based on this textbook page',
       gradeLevel: 'Class 5',
       subject: 'Mathematics',

@@ -21,6 +21,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.gemini_schema import gemini_response_schema
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_instant_answer_response_rules
 from .agent import get_answerer_model, render_answerer_prompt
@@ -69,19 +70,17 @@ async def _call_gemini_grounded(
     from google.genai import types as genai_types
 
     client = genai.Client(api_key=api_key)
+    # Gemini rejects `response_mime_type='application/json'` (structured output)
+    # combined with `tools=[google_search]` — the API explicitly errors with
+    # "Tool use with a response mime type: 'application/json' is unsupported".
+    # When grounding is enabled we drop the structured-output config and
+    # parse the JSON envelope from the raw text response instead. The model
+    # is still instructed to emit JSON via the prompt template.
     return await client.aio.models.generate_content(
         model=model,
         contents=prompt,
         config=genai_types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=InstantAnswerCore,
-            # Slightly above strict deterministic for prose variety;
-            # matches Genkit flow's implicit default. Below creative
-            # range so factual answers don't drift into speculation.
             temperature=0.4,
-            # Gemini's native Google Search grounding tool. Live web
-            # access during inference — replaces the Genkit-side mock
-            # tool that returned canned results.
             tools=[
                 genai_types.Tool(
                     google_search=genai_types.GoogleSearch(),
@@ -108,6 +107,28 @@ def _extract_text(result: Any) -> str:
         message="Gemini returned empty response",
         http_status=502,
     )
+
+
+_JSON_FENCE_RE = __import__("re").compile(r"```(?:json)?\s*(\{.*?\})\s*```", __import__("re").DOTALL)
+_JSON_BARE_RE = __import__("re").compile(r"(\{[\s\S]*\})")
+
+
+def _extract_json_object(text: str) -> str:
+    """Pull the first JSON object out of a potentially-fenced model reply.
+
+    Grounding mode (Google Search) disables structured-output so the
+    response may include markdown fences, prose preamble, or trailing
+    citations. We try fenced JSON first, then any `{...}` block, falling
+    back to the raw text so the caller's error handler still produces a
+    useful diagnostic.
+    """
+    fenced = _JSON_FENCE_RE.search(text)
+    if fenced:
+        return fenced.group(1)
+    bare = _JSON_BARE_RE.search(text)
+    if bare:
+        return bare.group(1)
+    return text
 
 
 def _grounding_used(result: Any) -> bool:
@@ -176,9 +197,13 @@ async def run_answerer(
     )
     text = _extract_text(result)
     grounding_used = _grounding_used(result)
+    # Grounding mode disables Gemini's structured-output, so the response
+    # may come back wrapped in ```json fences or plain text. Extract the
+    # first JSON object before parsing.
+    text_to_parse = _extract_json_object(text)
     try:
         return (
-            InstantAnswerCore.model_validate_json(text),
+            InstantAnswerCore.model_validate_json(text_to_parse),
             grounding_used,
             result,
         )

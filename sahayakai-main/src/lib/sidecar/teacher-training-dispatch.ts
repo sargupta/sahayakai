@@ -20,9 +20,11 @@ import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in teacher-training-client.ts. Phase J.2 hot-fix
-// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 12_000;
+// Bumped from 12s — comparator runs across 11 languages showed Genkit
+// teacher-training latency p95 ~11s, with persist + post-processing
+// pushing total over the previous 12s cap. 25s leaves headroom without
+// regressing the upstream timeout discipline.
+const FALLBACK_TIMEOUT_MS = 25_000;
 
 export type TeacherTrainingSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
