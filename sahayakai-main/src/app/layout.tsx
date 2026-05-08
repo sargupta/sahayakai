@@ -7,6 +7,13 @@ import { AuthDialog } from '@/components/auth/auth-dialog';
 import { StructuredData } from '@/components/structured-data';
 import { AppShell } from './app-shell';
 
+// Cloudflare Web Analytics beacon token for sahayakai.com.
+// Public token (visible in DOM) — safe to hardcode. Used because the
+// origin is on Firebase App Hosting (not Cloudflare-proxied), so CF's
+// "Automatic setup" cannot inject the snippet at the edge — it must be
+// served from the origin HTML.
+const CF_BEACON_TOKEN = '85586945f7b24465ab08ab9d84c1f6f2';
+
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sahayakai.com'),
@@ -88,7 +95,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'INSERT_GOOGLE_SITE_VERIFICATION_CODE_HERE',
+    google: 'kBENffwEyadi863f0st5xZXRp9Qb5q_kD0RkkwMPVJ8',
   },
   alternates: {
     canonical: 'https://sahayakai.com',
@@ -124,6 +131,15 @@ export default function RootLayout({
           </AuthProvider>
           <Toaster />
         </LanguageProvider>
+        {/* Cloudflare Web Analytics — manual JS snippet install.
+            Plain <script defer> so it SSRs into the HTML (curl-visible);
+            `defer` keeps it from blocking parsing. Mirrors the exact
+            snippet Cloudflare's docs ship for non-proxied origins. */}
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={`{"token": "${CF_BEACON_TOKEN}"}`}
+        />
       </body>
     </html>
   );
