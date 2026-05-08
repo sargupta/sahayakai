@@ -65,16 +65,26 @@ const nextConfig: NextConfig = {
   // teachers stranded back on the landing page after Google sign-in.
   // See: https://firebase.google.com/docs/auth/web/redirect-best-practices
   async rewrites() {
-    return [
-      {
-        source: '/__/auth/:path*',
-        destination: 'https://sahayakai-b4248.firebaseapp.com/__/auth/:path*',
-      },
-      {
-        source: '/__/firebase/:path*',
-        destination: 'https://sahayakai-b4248.firebaseapp.com/__/firebase/:path*',
-      },
-    ];
+    return {
+      beforeFiles: [
+        // SEO: serve llms.txt, llms-full.txt, and Google verification via clean API routes
+        // (Next.js route handlers with dots in the directory name don't resolve through Firebase SSR)
+        { source: '/llms.txt', destination: '/api/seo/llms' },
+        { source: '/llms-full.txt', destination: '/api/seo/llms-full' },
+        { source: '/google8283f170c9f5e54d.html', destination: '/api/seo/google-verify' },
+      ],
+      afterFiles: [
+        // Firebase Auth reverse-proxy for same-site OAuth (iPhone Safari ITP workaround)
+        {
+          source: '/__/auth/:path*',
+          destination: 'https://sahayakai-b4248.firebaseapp.com/__/auth/:path*',
+        },
+        {
+          source: '/__/firebase/:path*',
+          destination: 'https://sahayakai-b4248.firebaseapp.com/__/firebase/:path*',
+        },
+      ],
+    };
   },
   // Cache-Control headers — prevents stale deployment errors.
   // HTML pages: no-store so browsers always fetch fresh HTML with the current build ID.
