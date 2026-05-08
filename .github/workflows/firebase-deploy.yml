@@ -37,7 +37,6 @@ jobs:
         env:
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: sahayakai-b4248
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: sahayakai-b4248.firebasestorage.app
-          # Additional public envs here
 
       - name: Deploy to Firebase
         if: github.ref == 'refs/heads/main'
@@ -50,3 +49,4 @@ jobs:
           entryPoint: sahayakai-main
         env:
           FIREBASE_CLI_PREVIEWS: hostingchannels
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
