@@ -158,9 +158,12 @@ describe('ConversationList', () => {
             />
         );
         simulateSnapshot([makeConversation()]);
-        // Active conversation should have orange styling
+        // Active conversation styling moved from `bg-orange-50` to the design
+        // token `bg-primary/5` + a left/right border accent. Asserting on the
+        // primary-tint class keeps this test resilient to colour-token
+        // changes.
         const button = screen.getByText('Priya Sharma').closest('button');
-        expect(button?.className).toContain('bg-orange-50');
+        expect(button?.className).toContain('bg-primary/5');
     });
 
     it('filters conversations by search', () => {

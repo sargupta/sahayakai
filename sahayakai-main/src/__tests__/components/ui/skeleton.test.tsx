@@ -12,7 +12,10 @@ describe('Skeleton Component', () => {
   it('should have the correct default classes for animation and style', () => {
     render(<Skeleton data-testid="skeleton" />);
     const skeletonElement = screen.getByTestId('skeleton');
-    expect(skeletonElement).toHaveClass('animate-pulse', 'rounded-md', 'bg-muted');
+    // Skeleton.tsx now uses the design-token utility `rounded-surface-sm`
+    // (8px) instead of the historical Tailwind `rounded-md`. Asserting the
+    // animation + bg classes keeps this test resilient to radius changes.
+    expect(skeletonElement).toHaveClass('animate-pulse', 'rounded-surface-sm', 'bg-muted');
   });
 
   it('should merge additional classNames', () => {

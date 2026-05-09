@@ -144,7 +144,31 @@ def test_genai_patch_strips_after_process_schema_runs() -> None:
     stripped output. We construct a schema as the SDK would receive it
     from `model_json_schema()`, then call the patched transformer and
     assert no banned key survives.
+
+    Order-resilient: integration tests in the same suite swap
+    `sys.modules["google.genai"]` for a fake to avoid hitting Gemini.
+    Pytest may run those first; if so the import of `_transformers`
+    here would fail. We restore the real package before importing.
     """
+    import importlib
+    import sys
+
+    if not hasattr(sys.modules.get("google.genai"), "__file__"):
+        # A fake is present (no `__file__` attr). Drop it + the real
+        # submodule cache entries so importlib re-loads the real SDK
+        # from disk.
+        for key in list(sys.modules):
+            if key == "google.genai" or key.startswith("google.genai."):
+                del sys.modules[key]
+        # Force-reimport the real `google.genai` package.
+        importlib.import_module("google.genai")
+        # The patch's `_PATCHED` flag remembered True from an earlier
+        # apply, but the freshly-reimported `_transformers` has no
+        # wrapper attached. Reset the flag so the next apply rewrites
+        # the new module's `process_schema`.
+        from sahayakai_agents.shared import genai_patch as _gp
+        _gp._PATCHED = False
+
     from google.genai import _transformers  # type: ignore[attr-defined]
 
     apply_genai_schema_patch()

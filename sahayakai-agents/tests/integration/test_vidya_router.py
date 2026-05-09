@@ -199,6 +199,11 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
     # `from google import genai` LAZILY (the instant-answer router).
     monkeypatch.setitem(sys.modules, "google.genai", fake_genai_module)
     monkeypatch.setitem(sys.modules, "google.genai.types", fake_types)
+    # `from google import genai` reads the `genai` attribute on the parent
+    # `google` package (not sys.modules), so we must also patch the
+    # attribute. monkeypatch restores the original on teardown.
+    import google  # noqa: PLC0415
+    monkeypatch.setattr(google, "genai", fake_genai_module, raising=False)
 
     return fake
 

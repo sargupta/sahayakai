@@ -97,6 +97,11 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
 
     sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
     sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
+    # `from google import genai` reads the `genai` attribute on the parent
+    # `google` package (not sys.modules), so we must also patch the
+    # attribute. monkeypatch restores the original on teardown.
+    import google  # noqa: PLC0415
+    monkeypatch.setattr(google, "genai", fake_module, raising=False)
     return models
 
 
