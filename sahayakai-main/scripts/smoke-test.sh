@@ -44,6 +44,33 @@ check() {
   fi
 }
 
+# POST variant — for routes that only accept POST. Sends an empty JSON body
+# and expects an auth-rejection status (typically 401) since no token is set.
+check_post() {
+  local label="$1"
+  local url="$2"
+  local expected_status="${3:-401}"
+
+  local status
+  status=$(curl -s -o /tmp/smoke_body -w "%{http_code}" \
+    --max-time 15 \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --header "User-Agent: SahayakAI-SmokeTest/1.0" \
+    --data '{}' \
+    "$url")
+
+  if [[ "$status" == "$expected_status" ]]; then
+    echo "  PASS  [$status] $label"
+  else
+    echo "  FAIL  [$status] $label  (expected $expected_status)"
+    echo "        URL: $url (POST)"
+    head -c 200 /tmp/smoke_body 2>/dev/null | tr -d '\n'
+    echo ""
+    FAIL=1
+  fi
+}
+
 # ── Health check — validates env vars are present ───────────────────────────
 echo ""
 echo "--- Health ---"
@@ -77,10 +104,11 @@ echo "--- API Routes ---"
 check "Teacher Activity"    "$BASE/api/teacher-activity"  # public — no auth needed
 check "Metrics"             "$BASE/api/metrics"            # public
 
-# ── Security — confirm /admin requires auth ──────────────────────────────────
+# ── Security — confirm /admin and AI POST routes require auth ───────────────
 echo ""
 echo "--- Security ---"
 check "Admin blocked (no auth)" "$BASE/admin/log-dashboard" "401"
+check_post "Assessment Scanner blocked (no auth)" "$BASE/api/ai/assessment-scanner" "401"
 
 # ── Summary ─────────────────────────────────────────────────────────────────
 echo ""

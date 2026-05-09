@@ -22,7 +22,8 @@ export type GatedFeature =
     | 'parent-message'
     | 'voice-to-text'   // cloud fallback only (browser SpeechRecognition is free)
     | 'exam-paper'
-    | 'assistant';       // VIDYA chat interface
+    | 'assistant'        // VIDYA chat interface
+    | 'assessment-scanner'; // AI grading of student answer sheets
 
 export interface PlanLimits {
     /** Per-feature monthly limits. -1 = unlimited. */
@@ -68,6 +69,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'voice-to-text': -1,    // browser-first, cloud fallback unlimited for now
             'exam-paper': 3,
             'assistant': -1,        // unlimited monthly, controlled by daily limit
+            'assessment-scanner': 3, // 3 free scans/month — enough to feel value
         },
         instantAnswerDailyLimit: 20,
         assistantDailyLimit: 50,
@@ -93,6 +95,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'voice-to-text': -1,
             'exam-paper': 10,
             'assistant': -1,
+            'assessment-scanner': 50, // 50/mo — single teacher, ~3 classes
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,
@@ -118,6 +121,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'voice-to-text': -1,
             'exam-paper': -1,
             'assistant': -1,
+            'assessment-scanner': 200, // 200/mo — school plan
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,
@@ -143,6 +147,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'voice-to-text': -1,
             'exam-paper': -1,
             'assistant': -1,
+            'assessment-scanner': -1, // unlimited on premium
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,

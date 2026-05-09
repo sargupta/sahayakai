@@ -79,6 +79,7 @@ const FOLDER_MAP: Record<ContentType, string> = {
   'instant-answer': 'instant_answers',
   'teacher-training': 'teacher_training',
   'exam-paper': 'exam_papers',
+  'assessment-submission': 'assessment_submissions',
 };
 
 // ---------------------------------------------------------------------------

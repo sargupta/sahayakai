@@ -32,6 +32,7 @@ import {
   Lightbulb,
   MessageCircle,
   PencilRuler,
+  ScanLine,
   Settings,
   ShieldCheck,
   Terminal,
@@ -253,6 +254,14 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/assessment-scanner')} tooltip={t("Assessment Scanner")}>
+                  <Link href="/assessment-scanner" onClick={() => handleNavClick('/assessment-scanner')}>
+                    <ScanLine />
+                    <span>{t("Assessment Scanner")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         )}
@@ -432,18 +441,18 @@ export function AppSidebar() {
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip="Mission Control">
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip={t("Mission Control")}>
                   <Link href="/admin/cost-dashboard" onClick={() => handleNavClick('/admin/cost-dashboard')}>
                     <Zap />
-                    <span>Mission Control</span>
+                    <span>{t("Mission Control")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/log-dashboard')} tooltip="Log Dashboard">
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/log-dashboard')} tooltip={t("Log Dashboard")}>
                   <Link href="/admin/log-dashboard" onClick={() => handleNavClick('/admin/log-dashboard')}>
                     <Terminal />
-                    <span>Log Dashboard</span>
+                    <span>{t("Log Dashboard")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
