@@ -43,7 +43,15 @@ from .auth import auth_middleware
 from .config import get_settings
 from .logging_config import configure_logging
 from .shared.errors import AgentError
+from .shared.genai_patch import apply_genai_schema_patch
 from .telemetry import init_telemetry
+
+# Strip `additionalProperties` from every schema we hand to Gemini. Pydantic
+# emits it from `extra="forbid"` configs but Gemini's structured-output API
+# rejects it (HTTP 400 INVALID_ARGUMENT). Applying the patch at module import
+# guarantees both direct google-genai calls AND ADK `LlmAgent.output_schema`
+# go through the cleaned schema.
+apply_genai_schema_patch()
 
 log = structlog.get_logger(__name__)
 

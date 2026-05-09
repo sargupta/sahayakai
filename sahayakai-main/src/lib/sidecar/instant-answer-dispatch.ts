@@ -49,9 +49,11 @@ import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in instant-answer-client.ts. Phase J.2 hot-fix
-// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 10_000;
+// Bumped from 10s — instant-answer uses Google Search grounding which
+// adds 2-5s of latency on top of the model call. 10s caused 500s when the
+// search tool slow-pathed. 20s is the sidecar's own per-call budget for
+// the same flow, so capping the fallback there matches.
+const FALLBACK_TIMEOUT_MS = 20_000;
 
 // ─── Firestore-backed dispatch decision (Phase J.5 migration) ──────────────
 //

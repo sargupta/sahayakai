@@ -21,9 +21,11 @@ import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in rubric-client.ts. Phase J.2 hot-fix (P0 #7) —
-// caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 12_000;
+// Bumped from 12s — the Genkit rubric flow legitimately takes 11–13s for the
+// model call alone, and persistContent adds another ~2s. The previous 12s cap
+// caused intermittent 500s ("rubric genkit fallback timed out after 12002ms")
+// even when the model returned successfully. 30s leaves p99 headroom.
+const FALLBACK_TIMEOUT_MS = 30_000;
 
 export type RubricSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 

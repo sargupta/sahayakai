@@ -97,13 +97,15 @@ async def _call_gemini_structured(
     from google import genai
     from google.genai import types as genai_types
 
+    from ...shared.gemini_schema import gemini_response_schema  # noqa: PLC0415
+
     client = genai.Client(api_key=api_key)
     return await client.aio.models.generate_content(
         model=model,
         contents=prompt,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=response_schema,
+            response_schema=gemini_response_schema(response_schema),
             temperature=0.6,
         ),
     )

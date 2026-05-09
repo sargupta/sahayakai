@@ -59,7 +59,10 @@ describe('MessagesPage', () => {
     it('renders sign-in prompt when not authenticated', () => {
         mockAuthUser = null;
         render(<MessagesPage />);
-        expect(screen.getByText(/sign in to access your messages/i)).toBeInTheDocument();
+        // Component copy is "Sign in to see your messages" — match the
+        // permanent stem ("sign in" + "messages") so future copy tweaks
+        // don't break us.
+        expect(screen.getByText(/sign in to see your messages/i)).toBeInTheDocument();
     });
 
     it('renders conversation list when authenticated', () => {

@@ -35,9 +35,11 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in parent-message-client.ts. Phase J.2 hot-fix
-// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 8_000;
+// Bumped from 8s — comparator runs showed parent-message latency p95 ~8s
+// with persist adding overhead, causing intermittent 500s on Gujarati
+// and Odia. 15s gives p99 headroom without weakening the timeout
+// discipline (sidecar's own per-call budget is 12s).
+const FALLBACK_TIMEOUT_MS = 15_000;
 
 // ─── Firestore-backed dispatch decision (Phase J.5) ────────────────────────
 

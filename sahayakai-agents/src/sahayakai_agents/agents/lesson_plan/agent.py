@@ -259,13 +259,17 @@ async def _call_gemini_structured(
     from google import genai  # noqa: PLC0415
     from google.genai import types as genai_types  # noqa: PLC0415
 
+    from ...shared.gemini_schema import gemini_response_schema  # noqa: PLC0415
+
     client = genai.Client(api_key=api_key)
     return await client.aio.models.generate_content(
         model=model,
         contents=prompt,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=response_schema,
+            # Strip `additionalProperties` (and friends) before handing the schema
+            # to Gemini — the API rejects the raw Pydantic JSON-Schema dump.
+            response_schema=gemini_response_schema(response_schema),
             # Lower temperature for structured output — lesson plans
             # are pedagogical artefacts, not creative writing.
             temperature=0.4,

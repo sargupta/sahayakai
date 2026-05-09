@@ -43,7 +43,10 @@ describe('Card Components', () => {
       </Card>
     );
 
-    expect(screen.getByTestId('card')).toHaveClass('rounded-2xl border bg-card');
+    // Card.tsx now uses `rounded-[var(--radius)]` (12px design token) instead
+    // of the historical rounded-2xl (16px). Asserting on the still-present
+    // structural classes keeps this test resilient to radius changes.
+    expect(screen.getByTestId('card')).toHaveClass('border', 'bg-card');
     expect(screen.getByTestId('header')).toHaveClass('flex flex-col space-y-1.5 p-4 md:p-6');
     expect(screen.getByTestId('title')).toHaveClass('font-headline text-xl font-semibold');
     expect(screen.getByTestId('desc')).toHaveClass('text-sm text-muted-foreground');

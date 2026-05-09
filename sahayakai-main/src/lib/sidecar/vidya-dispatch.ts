@@ -48,9 +48,11 @@ import {
 } from './vidya-client';
 import { withTimeout } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in vidya-client.ts. Phase J.2 hot-fix (P0 #7) —
-// caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 8_000;
+// Bumped from 8s — VIDYA orchestrator includes intent classification +
+// optional sub-agent delegation, often pushing total latency to 10–14s
+// for compound intents. 15s leaves p99 headroom; the supervisor's own
+// per-call budget on the sidecar is 12s.
+const FALLBACK_TIMEOUT_MS = 15_000;
 
 export type VidyaDispatchSource = 'genkit' | 'sidecar' | 'genkit_fallback';
 
