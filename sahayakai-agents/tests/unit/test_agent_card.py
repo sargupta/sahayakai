@@ -100,6 +100,44 @@ class TestSecuritySchemes:
         assert "googleIdToken" in block
         assert "hmacContentDigest" in block
 
+    # P3 polish — Phase R.2 added Firebase App Check as a third auth
+    # layer. Document it on the card so Postman / Insomnia / external
+    # A2A consumers can discover the requirement up-front.
+
+    def test_app_check_scheme_documented(self) -> None:
+        card = build_agent_card(audience=None)
+        schemes = card["securitySchemes"]
+        assert isinstance(schemes, dict)
+        assert "firebaseAppCheck" in schemes
+        scheme = schemes["firebaseAppCheck"]
+        assert scheme["type"] == "apiKey"
+        assert scheme["in"] == "header"
+        assert scheme["name"] == "X-Firebase-AppCheck"
+
+    def test_app_check_description_explains_optional_dev_mode(self) -> None:
+        card = build_agent_card(audience=None)
+        scheme = card["securitySchemes"]["firebaseAppCheck"]
+        # Description must mention the env-flag escape hatch so external
+        # callers don't waste cycles when the requirement is off.
+        assert "SAHAYAKAI_REQUIRE_APP_CHECK" in scheme["description"]
+
+    def test_hmac_description_documents_replay_protection(self) -> None:
+        card = build_agent_card(audience=None)
+        scheme = card["securitySchemes"]["hmacContentDigest"]
+        # Operators reading the card must see that replays are
+        # rejected, not silently accepted on retries.
+        assert "replay" in scheme["description"].lower()
+        assert "X-Request-Timestamp" in scheme["description"]
+        # Secret rotation guidance must be on the card so a key roll
+        # doesn't surprise external A2A consumers with sudden 401s.
+        assert "SAHAYAKAI_REQUEST_SIGNING_KEY" in scheme["description"]
+
+    def test_app_check_optional_not_in_required_block(self) -> None:
+        card = build_agent_card(audience=None)
+        block = card["security"][0]
+        # `firebaseAppCheck` is dev-flag-gated; not in the AND block.
+        assert "firebaseAppCheck" not in block
+
 
 class TestSkillCoverage:
     def test_card_includes_supervisor_skills(self) -> None:

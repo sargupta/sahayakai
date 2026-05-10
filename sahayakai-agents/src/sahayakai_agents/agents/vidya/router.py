@@ -37,7 +37,7 @@ from typing import Any
 import structlog
 from fastapi import APIRouter
 
-from ..._adk_keyed_gemini import build_keyed_gemini
+from ..._adk_keyed_gemini import build_keyed_gemini_from_template
 from ..._behavioural import assert_vidya_response_rules
 from ...config import get_settings
 from ...resilience import run_resiliently
@@ -94,22 +94,13 @@ _VIDYA_APP_NAME = "sahayakai-vidya"
 def _build_keyed_gemini(api_key: str) -> Any:
     """Build a `Gemini` model wrapper pinned to a specific api_key.
 
-    Phase L.5 — delegates to the shared `build_keyed_gemini` helper at
-    `sahayakai_agents._adk_keyed_gemini`. The L.5 SequentialAgent
-    migrations (visual-aid, avatar-generator, voice-to-text) need the
-    same workaround, so the implementation lives in one place.
-
-    The cached agent's `.model` is typed `Union[str, BaseLlm]` by
-    ADK — but we know our cached template carries a string (see
-    `build_vidya_agent`). Coerce so the helper sees a `str` model name.
+    Phase L.6 — the per-router 14-line wrapper that this used to be
+    moved into the shared helper as `build_keyed_gemini_from_template`.
+    Kept as a one-liner here so the call site below stays readable
+    (and so a `git blame` doesn't lose history for the surrounding
+    Runner orchestration code).
     """
-    template_model = build_vidya_agent().model
-    model_name = (
-        template_model
-        if isinstance(template_model, str)
-        else template_model.model
-    )
-    return build_keyed_gemini(model_name=model_name, api_key=api_key)
+    return build_keyed_gemini_from_template(build_vidya_agent, api_key)
 
 
 async def _run_orchestrator_via_runner(
