@@ -33,6 +33,9 @@ def _minimal_request_kwargs() -> dict:
         "message": "Make me a lesson plan",
         "currentScreenContext": ScreenContext(path="/dashboard"),
         "teacherProfile": TeacherProfile(),
+        # Phase L.2 — userId is required so the sidecar can forward
+        # the authenticated teacher uid into instant-answer delegation.
+        "userId": "teacher-uid-1",
     }
 
 
@@ -104,6 +107,7 @@ class TestExtraForbidRejection:
                 gradeLevel=None,
                 subject=None,
                 language=None,
+                plannedActions=[],
                 confidence=0.9,  # type: ignore[call-arg]
             )
 
@@ -196,6 +200,100 @@ class TestActionFlowEnum:
             )
 
 
+# ── plannedActions + dependsOn (Phase N.1) ───────────────────────────────
+
+
+class TestPlannedActionsBounds:
+    """`plannedActions` is bounded at max 3 entries on both
+    `IntentClassification` and `VidyaResponse`."""
+
+    def test_intent_planned_actions_default_empty(self) -> None:
+        intent = IntentClassification(
+            type="unknown",
+            topic=None,
+            gradeLevel=None,
+            subject=None,
+            language=None,
+            plannedActions=[],
+        )
+        assert intent.plannedActions == []
+
+    def test_intent_planned_actions_accepts_up_to_three(self) -> None:
+        actions = [_minimal_action() for _ in range(3)]
+        intent = IntentClassification(
+            type="lesson-plan",
+            topic=None,
+            gradeLevel=None,
+            subject=None,
+            language=None,
+            plannedActions=actions,
+        )
+        assert len(intent.plannedActions) == 3
+
+    def test_intent_planned_actions_rejects_four(self) -> None:
+        actions = [_minimal_action() for _ in range(4)]
+        with pytest.raises(ValidationError):
+            IntentClassification(
+                type="lesson-plan",
+                topic=None,
+                gradeLevel=None,
+                subject=None,
+                language=None,
+                plannedActions=actions,
+            )
+
+    def test_response_planned_actions_default_empty(self) -> None:
+        response = VidyaResponse(
+            response="ok",
+            action=None,
+            intent="unknown",
+            sidecarVersion="phase-n.1",
+            latencyMs=10,
+        )
+        assert response.plannedActions == []
+
+    def test_response_planned_actions_rejects_four(self) -> None:
+        actions = [_minimal_action() for _ in range(4)]
+        with pytest.raises(ValidationError):
+            VidyaResponse(
+                response="ok",
+                action=actions[0],
+                intent="lesson-plan",
+                sidecarVersion="phase-n.1",
+                latencyMs=10,
+                plannedActions=actions,
+            )
+
+
+class TestDependsOnBounds:
+    """`VidyaActionParams.dependsOn` expresses data flow between actions
+    in a `plannedActions` list. Bounded at max 2 entries."""
+
+    def test_depends_on_default_empty(self) -> None:
+        params = VidyaActionParams()
+        assert params.dependsOn == []
+
+    def test_depends_on_accepts_up_to_two(self) -> None:
+        params = VidyaActionParams(dependsOn=[0, 1])
+        assert params.dependsOn == [0, 1]
+
+    def test_depends_on_rejects_three(self) -> None:
+        with pytest.raises(ValidationError):
+            VidyaActionParams(dependsOn=[0, 1, 2])
+
+    def test_action_carries_depends_on_through_params(self) -> None:
+        action = VidyaAction(
+            type="NAVIGATE_AND_FILL",
+            flow="rubric-generator",
+            params=VidyaActionParams(
+                topic="Photosynthesis",
+                gradeLevel="Class 5",
+                dependsOn=[0],
+            ),
+        )
+        assert action.params.dependsOn == [0]
+
+
 # ── Round-trip through model_dump ─────────────────────────────────────────
 
 
@@ -223,3 +321,27 @@ class TestRoundTrip:
         dumped = response.model_dump()
         restored = VidyaResponse.model_validate(dumped)
         assert restored == response
+
+    def test_response_with_planned_actions_round_trips(self) -> None:
+        primary = _minimal_action()
+        followup = VidyaAction(
+            type="NAVIGATE_AND_FILL",
+            flow="rubric-generator",
+            params=VidyaActionParams(
+                topic="Photosynthesis",
+                gradeLevel="Class 5",
+                dependsOn=[0],
+            ),
+        )
+        response = VidyaResponse(
+            response="Opening lesson plan now.",
+            action=primary,
+            intent="lesson-plan",
+            sidecarVersion="phase-n.1",
+            latencyMs=812,
+            plannedActions=[primary, followup],
+        )
+        dumped = response.model_dump()
+        restored = VidyaResponse.model_validate(dumped)
+        assert restored == response
+        assert restored.plannedActions[1].params.dependsOn == [0]

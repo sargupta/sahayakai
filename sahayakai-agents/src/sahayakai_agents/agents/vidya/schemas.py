@@ -16,9 +16,12 @@ Phase 5 §5.1 deliverable. See
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): list[str] element bound.
+_LearningOutcome = Annotated[str, StringConstraints(max_length=300)]
 
 # --- Input pieces -------------------------------------------------------
 
@@ -102,7 +105,9 @@ class NcertChapterRef(BaseModel):
 
     number: int = Field(ge=1, le=30)
     title: str = Field(min_length=1, max_length=300)
-    learningOutcomes: list[str] = Field(default_factory=list, max_length=20)
+    learningOutcomes: list[_LearningOutcome] = Field(
+        default_factory=list, max_length=20,
+    )
 
 
 class VidyaActionParams(BaseModel):
@@ -111,6 +116,15 @@ class VidyaActionParams(BaseModel):
     All optional — the orchestrator extracts whatever it can from the
     teacher's utterance + context. Missing values fall through to the
     destination flow's own defaults.
+
+    Phase N.1 — `dependsOn` expresses data flow between actions in a
+    `plannedActions` list. Each entry is the index of an EARLIER action
+    in the same list whose output this action consumes (e.g. a rubric
+    that depends on lesson-plan output uses `dependsOn=[0]`). Bounded
+    at 2 because real compound requests rarely chain more than two
+    upstream artefacts; deeper graphs should split into separate
+    teacher-driven sessions. Always optional — empty list means the
+    action is independent.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -120,6 +134,12 @@ class VidyaActionParams(BaseModel):
     subject: str | None = Field(default=None, max_length=100)
     language: str | None = Field(default=None, max_length=10)
     ncertChapter: NcertChapterRef | None = None
+    # Phase N.1 — index pointers into the parent `plannedActions` list.
+    # Each int is the position of an earlier action whose output feeds
+    # this one (e.g. rubric `dependsOn=[0]` means "use the lesson plan
+    # at index 0"). Bounded at 2 entries — compound requests deeper
+    # than that should split into separate teacher-confirmed sessions.
+    dependsOn: list[int] = Field(default_factory=list, max_length=2)
 
 
 class VidyaAction(BaseModel):
@@ -149,6 +169,12 @@ class VidyaRequest(BaseModel):
     (`message`, `chatHistory`, `currentScreenContext`, `teacherProfile`,
     `detectedLanguage`). Every field is bounded so a hostile client
     can't exhaust prompt budget.
+
+    Phase L.2 — `userId` is now required. The previous `_run_answerer`
+    delegation hard-coded `userId="vidya-supervisor"` because VIDYA's
+    request had no real uid; that placeholder blocked per-user rate
+    limiting + observability. The Next.js `/api/assistant` route is
+    auth'd upstream and now forwards the verified uid here.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -160,6 +186,16 @@ class VidyaRequest(BaseModel):
     # BCP-47 like "en-IN", "hi-IN". Optional — the classifier may
     # detect language inline if the client doesn't pre-resolve.
     detectedLanguage: str | None = Field(default=None, max_length=10)
+    # Required — the authenticated teacher's uid. Same alphanumeric
+    # + underscore + hyphen pattern as every other agent's `userId`,
+    # so path-injection defences in downstream Firestore document IDs
+    # still hold. The Next.js dispatcher injects this from the
+    # `x-user-id` header that auth middleware writes.
+    userId: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9_\-]+$",
+    )
 
 
 # --- Internal classifier output ----------------------------------------
@@ -190,6 +226,26 @@ class IntentClassification(BaseModel):
     gradeLevel: str | None = Field(max_length=50)
     subject: str | None = Field(max_length=100)
     language: str | None = Field(max_length=10)
+    # Phase N.1 — typed planned-action list (replaces Phase G's
+    # `followUpSuggestion: str | None`, which was a 300-char prose blob
+    # the OmniOrb rendered as a chip).
+    #
+    # 2026 supervisor literature (LangGraph, AutoGen, Anthropic's own
+    # tool-use shape) converged on `actions: list[Action]` with
+    # optional `dependsOn` for data flow. The single-string suggestion
+    # was a "suggestion box," not a workflow — the client could not
+    # programmatically execute it, only render it.
+    #
+    # Each entry is a real `VidyaAction` the supervisor authored after
+    # parsing the teacher's compound request. The router's mapping
+    # logic treats `plannedActions[0]` as the primary action (kept on
+    # the legacy `VidyaResponse.action` field for backward compat) and
+    # the rest as the queue of follow-ups. Cap at 3 — beyond that
+    # teacher-confirmed sessions handle the depth (matches the
+    # `dependsOn` cap of 2 on `VidyaActionParams`).
+    plannedActions: list[VidyaAction] = Field(
+        default_factory=list, max_length=3,
+    )
 
 
 # --- Wire response ------------------------------------------------------
@@ -210,3 +266,20 @@ class VidyaResponse(BaseModel):
     intent: str = Field(min_length=1, max_length=64)
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)
+    # Phase N.1 — typed planned-action queue (replaces Phase G's
+    # `followUpSuggestion: str | None`).
+    #
+    # When the orchestrator parses a compound request ("lesson plan AND
+    # a rubric"), it emits up to 3 `VidyaAction`s. The router copies
+    # `plannedActions[0]` onto the legacy `action` field for backward
+    # compat with clients still on the v0.3 wire shape; the full list
+    # ships in this field. Empty for single-step / unknown / instant-
+    # answer paths.
+    #
+    # The OmniOrb client iterates the list and renders each entry as a
+    # one-tap chip the teacher can opt into. The supervisor still does
+    # NOT execute follow-ups automatically — every entry is a teacher-
+    # confirmed dispatch.
+    plannedActions: list[VidyaAction] = Field(
+        default_factory=list, max_length=3,
+    )

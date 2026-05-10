@@ -104,6 +104,13 @@ def _patch_gemini(monkeypatch: pytest.MonkeyPatch, reply_json: dict[str, Any]) -
     fake_module.types = fake_genai_types  # type: ignore[attr-defined]
     sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
     sys.modules["google.genai.types"] = fake_genai_types  # type: ignore[assignment]
+    # `from google import genai` reads the `genai` attribute on the parent
+    # `google` package — that lookup bypasses sys.modules, so we must also
+    # patch the attribute. Without this, the real SDK keeps running and the
+    # fake is silently ignored. The teardown via monkeypatch will restore
+    # the original attribute after the test.
+    import google  # noqa: PLC0415
+    monkeypatch.setattr(google, "genai", fake_module, raising=False)
 
 
 def _patch_session_store(monkeypatch: pytest.MonkeyPatch) -> None:

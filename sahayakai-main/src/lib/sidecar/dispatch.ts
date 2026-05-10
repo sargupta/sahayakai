@@ -65,6 +65,11 @@ function toSidecarRequest(input: DispatchInput): SidecarReplyRequest {
     // Filter the transcript to the role/text the sidecar contract
     // expects — the Next.js side carries timestamps that the sidecar
     // doesn't need (it persists its own `createdAt`).
+    //
+    // `parentLanguage` is typed as `string` upstream (Genkit
+    // `z.string()`); the codegen narrows it to the BCP-47-ish 11-way
+    // union the sidecar enforces. The cast is safe because the Twilio
+    // route validates the language before reaching here.
     return {
         callSid: input.callSid,
         turnNumber: input.turnNumber,
@@ -75,7 +80,7 @@ function toSidecarRequest(input: DispatchInput): SidecarReplyRequest {
         teacherMessage: input.teacherMessage,
         teacherName: input.teacherName,
         schoolName: input.schoolName,
-        parentLanguage: input.parentLanguage,
+        parentLanguage: input.parentLanguage as SidecarReplyRequest['parentLanguage'],
         transcript: input.transcript,
         parentSpeech: input.parentSpeech,
         performanceSummary: input.performanceSummary,
@@ -96,7 +101,10 @@ function sidecarResponseToReply(res: SidecarReplyResponse, decision: ParentCallS
     return {
         reply: res.reply,
         shouldEndCall: res.shouldEndCall,
-        followUpQuestion: res.followUpQuestion,
+        // Codegen's `followUpQuestion` is optional + nullable; coerce
+        // undefined to null so the dispatched shape stays bivariant
+        // with the Genkit return.
+        followUpQuestion: res.followUpQuestion ?? null,
         source: 'sidecar',
         decision,
     };

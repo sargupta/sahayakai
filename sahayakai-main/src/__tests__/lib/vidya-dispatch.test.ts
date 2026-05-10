@@ -31,6 +31,17 @@ jest.mock('@/ai/flows/vidya-assistant', () => ({
     runGenkitVidya: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
+// Phase R.2 + Phase U.delta — dispatcher resolves the App Check token
+// before calling the sidecar. Default to null in tests so we don't pull
+// the Firebase Web SDK / reCAPTCHA into jsdom.
+jest.mock('@/lib/firebase-app-check', () => ({
+    getFirebaseAppCheckToken: jest.fn().mockResolvedValue(null),
+}));
+
 jest.mock('@/lib/sidecar/vidya-client', () => {
     class VidyaSidecarConfigError extends Error {
         constructor(message: string) {
@@ -77,6 +88,7 @@ jest.mock('@/lib/sidecar/vidya-client', () => {
 import { runGenkitVidya } from '@/ai/flows/vidya-assistant';
 import { decideVidyaDispatch } from '@/lib/feature-flags';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
+import { writeAgentShadowDiff } from '@/lib/sidecar/shadow-diff-writer';
 import {
     callSidecarVidya,
     VidyaSidecarBehaviouralError,
@@ -88,6 +100,7 @@ import {
 const mockGenkit = runGenkitVidya as jest.MockedFunction<typeof runGenkitVidya>;
 const mockSidecar = callSidecarVidya as jest.MockedFunction<typeof callSidecarVidya>;
 const mockDecide = decideVidyaDispatch as jest.MockedFunction<typeof decideVidyaDispatch>;
+const mockShadowDiff = writeAgentShadowDiff as jest.MockedFunction<typeof writeAgentShadowDiff>;
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -213,6 +226,42 @@ describe('dispatchVidya — shadow mode', () => {
 
         await expect(dispatchVidya(BASE_INPUT)).rejects.toThrow(err);
     });
+
+    // Phase M.5 — verify the dispatcher wires the shadow branch into the
+    // generic shadow-diff writer so the offline aggregator sees rows.
+    it('writes a (genkit, sidecar) sample to writeAgentShadowDiff on success', async () => {
+        setMode('shadow');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        await dispatchVidya(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('vidya');
+        expect(sample.uid).toBe(BASE_INPUT.uid);
+        expect(sample.sidecarOk).toBe(true);
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+        expect(sample.sidecar).toEqual(SIDECAR_OUTPUT);
+        expect(typeof sample.genkitLatencyMs).toBe('number');
+        expect(typeof sample.sidecarLatencyMs).toBe('number');
+    });
+
+    it('records sidecarOk=false + sidecarError when the sidecar threw', async () => {
+        setMode('shadow');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockRejectedValue(new VidyaSidecarTimeoutError(8_000));
+
+        await dispatchVidya(BASE_INPUT);
+
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('vidya');
+        expect(sample.sidecarOk).toBe(false);
+        expect(sample.sidecar).toBeNull();
+        expect(typeof sample.sidecarError).toBe('string');
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+    });
 });
 
 // ── canary / full ──────────────────────────────────────────────────────────
@@ -286,6 +335,75 @@ describe('dispatchVidya — full mode', () => {
 
         expect(out.source).toBe('sidecar');
         expect(mockGenkit).not.toHaveBeenCalled();
+    });
+});
+
+// ── plannedActions propagation (Phase N.1 / U.delta) ──────────────────────
+
+describe('dispatchVidya — plannedActions propagation', () => {
+    it('propagates plannedActions[] from sidecar through DispatchedVidyaResponse', async () => {
+        setMode('canary');
+        const compoundResponse: SidecarVidyaResponse = {
+            ...SIDECAR_OUTPUT,
+            plannedActions: [
+                {
+                    type: 'NAVIGATE_AND_FILL',
+                    flow: 'lesson-plan',
+                    params: {
+                        topic: 'Photosynthesis',
+                        gradeLevel: 'Class 5',
+                        subject: 'Science',
+                        language: 'en',
+                        ncertChapter: null,
+                    },
+                },
+                {
+                    type: 'NAVIGATE_AND_FILL',
+                    flow: 'rubric-generator',
+                    params: {
+                        topic: 'Photosynthesis',
+                        gradeLevel: 'Class 5',
+                        subject: 'Science',
+                        language: 'en',
+                        ncertChapter: null,
+                        dependsOn: [0],
+                    },
+                },
+            ],
+        };
+        mockSidecar.mockResolvedValue(compoundResponse);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.plannedActions).toBeDefined();
+        expect(out.plannedActions).toHaveLength(2);
+        expect(out.plannedActions?.[0]?.flow).toBe('lesson-plan');
+        expect(out.plannedActions?.[1]?.flow).toBe('rubric-generator');
+        expect(out.plannedActions?.[1]?.params.dependsOn).toEqual([0]);
+    });
+
+    it('leaves plannedActions undefined when sidecar omits the field', async () => {
+        setMode('canary');
+        // SIDECAR_OUTPUT has no plannedActions field — represents the
+        // legacy single-action / instant-answer / unknown paths.
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.plannedActions).toBeUndefined();
+    });
+
+    it('Genkit fallback path produces no plannedActions', async () => {
+        setMode('canary');
+        mockSidecar.mockRejectedValue(new VidyaSidecarTimeoutError(8_000));
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchVidya(BASE_INPUT);
+
+        expect(out.source).toBe('genkit_fallback');
+        expect(out.plannedActions).toBeUndefined();
     });
 });
 

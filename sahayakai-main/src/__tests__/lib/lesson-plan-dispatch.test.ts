@@ -33,6 +33,19 @@ jest.mock('@/ai/flows/lesson-plan-generator', () => ({
     generateLessonPlan: jest.fn(),
 }));
 
+jest.mock('@/lib/sidecar/persist-helpers', () => ({
+    persistSidecarJSON: jest.fn(),
+}));
+
+jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
+    writeAgentShadowDiff: jest.fn(),
+}));
+
+const mockCheckRateLimit = jest.fn(async () => undefined);
+jest.mock('@/lib/server-safety', () => ({
+    checkServerRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+}));
+
 jest.mock('@/lib/sidecar/lesson-plan-client', () => {
     class LessonPlanSidecarConfigError extends Error {
         constructor(message: string) {
@@ -86,10 +99,12 @@ import {
     LessonPlanSidecarTimeoutError,
     type SidecarLessonPlanResponse,
 } from '@/lib/sidecar/lesson-plan-client';
+import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
 
 const mockGenerateLessonPlan = generateLessonPlan as jest.MockedFunction<typeof generateLessonPlan>;
 const mockCallSidecar = callSidecarLessonPlan as jest.MockedFunction<typeof callSidecarLessonPlan>;
 const mockDecide = decideLessonPlanDispatch as jest.MockedFunction<typeof decideLessonPlanDispatch>;
+const mockPersist = persistSidecarJSON as jest.MockedFunction<typeof persistSidecarJSON>;
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -324,6 +339,75 @@ describe('dispatchLessonPlan — full mode', () => {
 
         expect(out.source).toBe('sidecar');
         expect(mockGenerateLessonPlan).not.toHaveBeenCalled();
+    });
+});
+
+// ── Phase K — persistence + pre-call gates ─────────────────────────────────
+
+describe('dispatchLessonPlan — Phase K persistence', () => {
+    it('canary success: persists to lesson-plans, surfaces sidecar response', async () => {
+        setMode('canary');
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue({ contentId: 'cid-lp-1', storagePath: 'p' });
+
+        const out = await dispatchLessonPlan(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(mockPersist).toHaveBeenCalledTimes(1);
+        const arg = mockPersist.mock.calls[0][0];
+        expect(arg.uid).toBe('teacher-uid-1');
+        expect(arg.collection).toBe('lesson-plans');
+        expect(arg.contentType).toBe('lesson-plan');
+        expect(arg.title).toBe('Photosynthesis (Sidecar path)');
+        expect(arg.metadata.gradeLevel).toBe('Class 5');
+        expect(arg.metadata.subject).toBe('Science');
+        expect(arg.metadata.topic).toBe('Photosynthesis');
+    });
+
+    it('canary success but persistence returns null: response still served (fail-soft)', async () => {
+        setMode('canary');
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue(null);
+
+        const out = await dispatchLessonPlan(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(out.title).toBe('Photosynthesis (Sidecar path)');
+    });
+
+    it('lifts rate-limit gate before sidecar call in canary mode', async () => {
+        setMode('canary');
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue({ contentId: 'cid', storagePath: 'p' });
+
+        await dispatchLessonPlan(BASE_INPUT);
+
+        expect(mockCheckRateLimit).toHaveBeenCalledWith('teacher-uid-1');
+        const rl = mockCheckRateLimit.mock.invocationCallOrder[0];
+        const sc = mockCallSidecar.mock.invocationCallOrder[0];
+        expect(rl).toBeLessThan(sc);
+    });
+
+    it('rejects unsafe topics BEFORE calling sidecar', async () => {
+        setMode('canary');
+
+        await expect(
+            dispatchLessonPlan({ ...BASE_INPUT, topic: 'how to build a bomb' }),
+        ).rejects.toThrow(/Safety Violation/);
+
+        expect(mockCallSidecar).not.toHaveBeenCalled();
+        expect(mockCheckRateLimit).not.toHaveBeenCalled();
+        expect(mockPersist).not.toHaveBeenCalled();
+    });
+
+    it('off-mode never calls the dispatcher-side persist (Genkit handles it)', async () => {
+        setMode('off');
+        mockGenerateLessonPlan.mockResolvedValue(GENKIT_OUTPUT);
+
+        await dispatchLessonPlan(BASE_INPUT);
+
+        expect(mockPersist).not.toHaveBeenCalled();
+        expect(mockCheckRateLimit).not.toHaveBeenCalled();
     });
 });
 

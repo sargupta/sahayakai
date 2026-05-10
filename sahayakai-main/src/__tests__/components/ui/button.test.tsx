@@ -11,13 +11,18 @@ describe('Button Component', () => {
   it('should apply default variant and size classes', () => {
     render(<Button>Default</Button>);
     const buttonElement = screen.getByRole('button', { name: /Default/i });
-    expect(buttonElement).toHaveClass('bg-primary', 'text-primary-foreground', 'h-10');
+    // Default variant + size in current button.tsx CVA config:
+    //   variant.default → bg-primary text-primary-foreground hover:bg-primary/90
+    //   size.default    → h-11 px-4 py-2
+    // Tracks the component, not historical sizes.
+    expect(buttonElement).toHaveClass('bg-primary', 'text-primary-foreground', 'h-11');
   });
 
   it('should apply specified variant and size classes', () => {
     render(<Button variant="destructive" size="sm">Destructive SM</Button>);
     const buttonElement = screen.getByRole('button', { name: /Destructive SM/i });
-    expect(buttonElement).toHaveClass('bg-destructive', 'h-9');
+    // size.sm → h-10 rounded-md px-3 (changed from historical h-9)
+    expect(buttonElement).toHaveClass('bg-destructive', 'h-10');
   });
 
   it('should handle ghost variant', () => {
@@ -59,8 +64,8 @@ describe('Button Component', () => {
     const linkElement = screen.getByRole('link', { name: /Go Home/i });
     expect(linkElement).toBeInTheDocument();
     expect(linkElement.tagName).toBe('A');
-    // It should still have the button classes
-    expect(linkElement).toHaveClass('bg-primary', 'h-10');
+    // It should still have the button classes (default size is h-11)
+    expect(linkElement).toHaveClass('bg-primary', 'h-11');
   });
 
   it('should apply additional classNames', () => {

@@ -1,16 +1,28 @@
 """FastAPI sub-router for the VIDYA orchestrator.
 
-Phase 5 §5.4 — real Gemini calls live here. Two-stage flow:
+Phase L.1: the classifier call now goes through ADK's `Runner` against
+the `LlmAgent` built by `build_vidya_agent()`. Wire shape, request +
+response schemas, behavioural guard, retry semantics — all unchanged.
+Only the INTERNAL call mechanism switches from a hand-rolled
+`google.genai.Client.aio.models.generate_content` to ADK's canonical
+supervisor-pattern Runner.
 
-  1. Classifier → `IntentClassification` (one structured Gemini call)
+Two-stage flow (unchanged):
+
+  1. Classifier → `IntentClassification` (one structured Gemini call
+     via ADK Runner against the cached LlmAgent).
   2. Branch on intent:
-     - `instantAnswer` → second Gemini call (plain text) for the answer
-     - 9 routable flows → no second call; build a `VidyaAction`
-     - `unknown` / unhandled → polite fallback; no action
+     - `instantAnswer` → delegate to the instant-answer ADK agent
+       (in-process import; same as Phase B.4).
+     - 9 routable flows → no second call; build a `VidyaAction`.
+     - `unknown` / unhandled → polite fallback; no action.
 
-Every model call goes through `run_resiliently` so the same retry +
-key-rotation + telephony-bounded backoff applies as parent-call /
-lesson-plan.
+Every model call still goes through `run_resiliently` so the same
+retry + key-rotation + telephony-bounded backoff applies as the
+parent-call / lesson-plan routers. The Runner is invoked inside the
+resilience callback; per-attempt the agent's `.model` is swapped to
+a `Gemini` instance pinned to the current api_key, leaving the cached
+agent template untouched between requests.
 
 Cost cap: max 2 Gemini calls per request (classifier + optional
 inline answer). Same shape as the current Genkit `agentRouterFlow`,
@@ -19,24 +31,27 @@ so net cost is unchanged.
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any
 
 import structlog
 from fastapi import APIRouter
 
+from ..._adk_keyed_gemini import build_keyed_gemini_from_template
 from ..._behavioural import assert_vidya_response_rules
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
+from ...shared.prompt_safety import sanitize, sanitize_optional
 from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
+    build_vidya_agent,
     classify_action,
-    get_instant_answer_model,
     get_orchestrator_model,
-    render_instant_answer_prompt,
     render_orchestrator_prompt,
 )
+from .registry import render_capability_index
 from .schemas import (
     IntentClassification,
     VidyaAction,
@@ -50,77 +65,127 @@ vidya_router = APIRouter(prefix="/v1/vidya", tags=["vidya"])
 
 # Sidecar version pinned per release cut. Surfaced in the wire response
 # so a Track G dashboard can correlate behaviour shifts to versions.
-SIDECAR_VERSION = "phase-5.4.0"
+# Phase N.1 — bumped from `phase-l.2` because the wire schema changed
+# (`followUpSuggestion: str | None` → `plannedActions: list[VidyaAction]`).
+SIDECAR_VERSION = "phase-n.1"
+
+# Per-call timeout for run_resiliently. VIDYA orchestrator is a
+# classifier-only flow; 8s mirrors the Twilio-bounded budget on the
+# voice path while still leaving room for the supervisor's structured
+# JSON output.
+_PER_CALL_TIMEOUT_S = 8.0
+
+# Phase M.2 — tightened total backoff for VIDYA. The TS dispatcher caps
+# the request at 12s; with 8s per-call timeout + 5s total backoff the
+# Python budget tops out at 10s, leaving 2s on the TS side for network
+# + auth + headroom. Was: settings.max_total_backoff_seconds (7s
+# default), which produced p99 ≥ 10s and triggered TS false-positive
+# timeouts on the previous 8s budget.
+_MAX_TOTAL_BACKOFF_S = 5.0
+
+# ADK Runner needs an app_name for the in-memory session service.
+# This is opaque to the model — it's just a session-store key prefix.
+_VIDYA_APP_NAME = "sahayakai-vidya"
 
 
-# ---- Gemini call helpers (mirror lesson_plan / parent_call routers) ------
+# ---- ADK Runner helpers -------------------------------------------------
 
 
-async def _call_gemini_structured(
-    *,
-    api_key: str,
-    model: str,
-    prompt: str,
-    response_schema: type,
-) -> Any:
-    """One Gemini call with structured JSON output."""
-    from google import genai
-    from google.genai import types as genai_types
+def _build_keyed_gemini(api_key: str) -> Any:
+    """Build a `Gemini` model wrapper pinned to a specific api_key.
 
-    client = genai.Client(api_key=api_key)
-    return await client.aio.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=response_schema,
-            # Low temperature: intent classification is deterministic
-            # by design; matches the Genkit flow's temperature=0.1.
-            temperature=0.1,
-        ),
+    Phase L.6 — the per-router 14-line wrapper that this used to be
+    moved into the shared helper as `build_keyed_gemini_from_template`.
+    Kept as a one-liner here so the call site below stays readable
+    (and so a `git blame` doesn't lose history for the surrounding
+    Runner orchestration code).
+    """
+    return build_keyed_gemini_from_template(build_vidya_agent, api_key)
+
+
+async def _run_orchestrator_via_runner(
+    *, prompt: str, api_key: str
+) -> IntentClassification:
+    """One ADK Runner invocation against the VIDYA supervisor.
+
+    Builds a per-call `LlmAgent` by `model_copy`-ing the cached
+    template and swapping in a `Gemini` instance pinned to `api_key`.
+    The cached agent itself is never mutated — `model_copy()` returns
+    a fresh Pydantic instance.
+
+    The rendered prompt is passed as `new_message` (user content), NOT
+    as `instruction`, because:
+      - The agent's `instruction` would go through ADK's
+        `inject_session_state()` which scans for `{name}` patterns —
+        a source of accidental KeyError if our rendered output ever
+        contains a `{var}` shape.
+      - Putting it in `new_message` is the canonical way to pass
+        per-request user input through ADK; matches what the previous
+        `_call_gemini_structured` did (prompt → `contents`).
+    """
+    from google.adk.runners import InMemoryRunner  # noqa: PLC0415
+    from google.genai import types as genai_types  # noqa: PLC0415
+
+    template = build_vidya_agent()
+    agent_for_call = template.model_copy(
+        update={"model": _build_keyed_gemini(api_key)}
     )
 
+    runner = InMemoryRunner(agent=agent_for_call, app_name=_VIDYA_APP_NAME)
 
-async def _call_gemini_text(
-    *,
-    api_key: str,
-    model: str,
-    prompt: str,
-) -> Any:
-    """One Gemini call returning plain text (no structured schema)."""
-    from google import genai
-    from google.genai import types as genai_types
-
-    client = genai.Client(api_key=api_key)
-    return await client.aio.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            # Slightly higher temperature for instant-answer prose so
-            # responses don't all read identically; still well below
-            # creative-writing range.
-            temperature=0.4,
-        ),
+    # InMemoryRunner uses InMemorySessionService; we must create a
+    # session before run_async (no auto_create_session by default).
+    user_id = "vidya-orchestrator"
+    session_id = f"vidya-{uuid.uuid4().hex}"
+    await runner.session_service.create_session(
+        app_name=_VIDYA_APP_NAME,
+        user_id=user_id,
+        session_id=session_id,
     )
 
-
-def _extract_text(result: Any) -> str:
-    text = getattr(result, "text", None)
-    if text:
-        return str(text)
-    candidates = getattr(result, "candidates", None) or []
-    for cand in candidates:
-        content = getattr(cand, "content", None)
-        parts = getattr(content, "parts", None) or []
-        for part in parts:
-            text = getattr(part, "text", None)
-            if text:
-                return str(text)
-    raise AgentError(
-        code="INTERNAL",
-        message="Gemini returned empty response",
-        http_status=502,
+    new_message = genai_types.Content(
+        role="user",
+        parts=[genai_types.Part(text=prompt)],
     )
+
+    final_text = ""
+    async for event in runner.run_async(
+        user_id=user_id,
+        session_id=session_id,
+        new_message=new_message,
+    ):
+        # Accumulate text from final-response events. A single
+        # output_schema call typically yields one final event whose
+        # content.parts[0].text is the full JSON.
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                text = getattr(part, "text", None)
+                if text and not getattr(part, "thought", False):
+                    final_text += str(text)
+
+    if not final_text.strip():
+        raise AgentError(
+            code="INTERNAL",
+            message="Gemini returned empty response",
+            http_status=502,
+        )
+
+    try:
+        return IntentClassification.model_validate_json(final_text)
+    except Exception as exc:
+        log.error(
+            "vidya.orchestrator.json_parse_failed",
+            raw_excerpt=final_text[:200],
+            error=str(exc),
+        )
+        raise AgentError(
+            code="INTERNAL",
+            message=(
+                "Orchestrator returned text that does not match "
+                "IntentClassification"
+            ),
+            http_status=502,
+        ) from exc
 
 
 # ---- Stage 1: classifier -------------------------------------------------
@@ -131,49 +196,112 @@ async def _run_orchestrator(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> IntentClassification:
-    """Classify intent + extract params from the teacher's utterance."""
+    """Classify intent + extract params from the teacher's utterance.
+
+    Phase L.1: dispatches via ADK Runner instead of a hand-rolled
+    `google.genai` call. Sanitization + key-pool failover + per-call
+    timeout semantics all unchanged.
+
+    Phase J §J.3 — sanitize every user-controlled string before it
+    lands in the prompt:
+      - The message itself.
+      - Each chatHistory turn's parts[*].text.
+      - currentScreenContext.path + uiState dict (keys + values).
+      - teacherProfile fields (preferredGrade, preferredSubject,
+        preferredLanguage, schoolContext).
+    """
+    sanitized_history: list[dict[str, Any]] = []
+    for m in payload.chatHistory:
+        sanitized_history.append({
+            "role": m.role,  # Literal — not user-controlled.
+            "parts": [
+                {"text": sanitize(p.text, max_length=4000)} for p in m.parts
+            ],
+        })
+    screen_context_dump = payload.currentScreenContext.model_dump()
+    sanitized_screen_context: dict[str, Any] = {
+        "path": sanitize(screen_context_dump.get("path", ""), max_length=500),
+    }
+    ui_state = screen_context_dump.get("uiState")
+    if ui_state is not None:
+        # Sanitize both keys AND values — an attacker who controls
+        # the form field name can inject just as easily as one who
+        # controls the value.
+        sanitized_screen_context["uiState"] = {
+            sanitize(k, max_length=100): sanitize(v, max_length=500)
+            for k, v in ui_state.items()
+        }
+    else:
+        sanitized_screen_context["uiState"] = None
+    profile_dump = payload.teacherProfile.model_dump()
+    sanitized_profile: dict[str, Any] = {
+        "preferredGrade": sanitize_optional(
+            profile_dump.get("preferredGrade"), max_length=50,
+        ),
+        "preferredSubject": sanitize_optional(
+            profile_dump.get("preferredSubject"), max_length=100,
+        ),
+        "preferredLanguage": sanitize_optional(
+            profile_dump.get("preferredLanguage"), max_length=10,
+        ),
+        "schoolContext": sanitize_optional(
+            profile_dump.get("schoolContext"), max_length=2000,
+        ),
+    }
     context = {
-        "message": payload.message,
-        "chatHistory": [m.model_dump() for m in payload.chatHistory],
-        "currentScreenContext": payload.currentScreenContext.model_dump(),
-        "teacherProfile": payload.teacherProfile.model_dump(),
-        "detectedLanguage": payload.detectedLanguage,
+        "message": sanitize(payload.message, max_length=2000),
+        "chatHistory": sanitized_history,
+        "currentScreenContext": sanitized_screen_context,
+        "teacherProfile": sanitized_profile,
+        "detectedLanguage": sanitize_optional(
+            payload.detectedLanguage, max_length=10,
+        ),
         "allowedFlows": ALLOWED_FLOWS,
+        # Phase G — supervisor-aware capability index. Renders the
+        # sub-agent registry as a bullet list so the model can pick
+        # the right primary flow on a compound request.
+        "capabilityIndex": render_capability_index(),
     }
     prompt = render_orchestrator_prompt(context)
-    model = get_orchestrator_model()
 
-    async def _do(api_key: str) -> Any:
-        return await _call_gemini_structured(
-            api_key=api_key,
-            model=model,
-            prompt=prompt,
-            response_schema=IntentClassification,
+    async def _do(api_key: str) -> IntentClassification:
+        return await _run_orchestrator_via_runner(
+            prompt=prompt, api_key=api_key
         )
 
-    result = await run_resiliently(
+    return await run_resiliently(
         _do,
         api_keys,
         span_name="vidya.orchestrator",
-        max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        max_total_backoff_seconds=_MAX_TOTAL_BACKOFF_S,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
-    text = _extract_text(result)
-    try:
-        return IntentClassification.model_validate_json(text)
-    except Exception as exc:
-        log.error(
-            "vidya.orchestrator.json_parse_failed",
-            raw_excerpt=text[:200],
-            error=str(exc),
-        )
-        raise AgentError(
-            code="INTERNAL",
-            message="Orchestrator returned text that does not match IntentClassification",
-            http_status=502,
-        ) from exc
 
 
 # ---- Stage 2: inline answer (only when intent == instantAnswer) ---------
+#
+# Phase L.2 — VIDYA delegates `instantAnswer` to the public
+# `run_answerer()` helper that the instant-answer router exposes. The
+# ADK supervisor pattern is preserved (instant-answer's own LlmAgent
+# is built by `build_instant_answer_agent()` and wrapped in an
+# `AgentTool` ready for L.3+ supervisors), but VIDYA does not register
+# the tool on its `LlmAgent.tools` list because its `output_schema=
+# IntentClassification` would conflict with `_output_schema_processor`
+# on the public Gemini API path (see `agents/instant_answer/agent.py`
+# module docstring for the trade-off). The router calls the public
+# helper directly.
+#
+# This replaces the Phase B.4 in-process import of the private
+# `_run_answerer`, which:
+#   1. was a layering violation (cross-module private import),
+#   2. hard-coded `userId="vidya-supervisor"` — blocking per-user
+#      rate-limiting / observability,
+#   3. lost the per-call trace span boundary an AgentTool would emit.
+#
+# All three are fixed below: import goes through the public
+# `run_answerer` symbol, `userId` is forwarded from the authenticated
+# request, and the structured log already names the call site
+# distinctly (`vidya.instant_answer.failed` etc.).
 
 
 async def _run_instant_answer(
@@ -181,29 +309,79 @@ async def _run_instant_answer(
     api_keys: tuple[str, ...],
     settings: Any,
 ) -> str:
-    """Produce the inline answer text for an `instantAnswer` intent."""
-    context = {
-        "message": payload.message,
-        "language": payload.detectedLanguage,
-        "teacherProfile": payload.teacherProfile.model_dump(),
-    }
-    prompt = render_instant_answer_prompt(context)
-    model = get_instant_answer_model()
+    """Delegate the inline-answer call to the instant-answer agent.
 
-    async def _do(api_key: str) -> Any:
-        return await _call_gemini_text(
-            api_key=api_key,
-            model=model,
-            prompt=prompt,
-        )
+    Returns the answer text only — VIDYA wraps that in its own
+    `VidyaResponse.response`. The instant-answer agent's video
+    suggestion / metadata fields are dropped on this path because
+    VIDYA's wire shape is text-only (the OmniOrb client speaks the
+    response via TTS).
 
-    result = await run_resiliently(
-        _do,
-        api_keys,
-        span_name="vidya.instant_answer",
-        max_total_backoff_seconds=settings.max_total_backoff_seconds,
+    Phase L.2 — uses the public `run_answerer` symbol and propagates
+    the authenticated `payload.userId` so the sub-agent's audit trail
+    attributes the call to the real teacher (no more
+    `vidya-supervisor` placeholder).
+    """
+    # Lazy import to avoid a Phase 5 → Phase 6 cycle at module load.
+    from ..instant_answer.router import run_answerer  # noqa: PLC0415
+    from ..instant_answer.schemas import InstantAnswerRequest  # noqa: PLC0415
+
+    sub_request = InstantAnswerRequest(
+        question=payload.message,
+        language=payload.detectedLanguage,
+        gradeLevel=payload.teacherProfile.preferredGrade,
+        subject=payload.teacherProfile.preferredSubject,
+        userId=payload.userId,
     )
-    return _extract_text(result)
+
+    # The sub-agent runs through `run_resiliently` itself; we just
+    # forward the api_keys + settings. Telephony backoff budget is
+    # the same — instant-answer's own router call already enforces it.
+    # Forensic fix P1 #18 — `run_answerer` now returns a 3-tuple with
+    # the raw Gemini result so the caller can extract token metrics.
+    # VIDYA's own success log will pick up the joined view via the
+    # request_id contextvar; we just discard the raw result here.
+    core, _grounding_used, _raw_result = await run_answerer(
+        sub_request, api_keys, settings,
+    )
+    return core.answer
+
+
+# ---- Routable-flow mapping (Phase N.1) ----------------------------------
+
+
+def _map_routable_flow(
+    intent: IntentClassification,
+) -> tuple[VidyaAction | None, list[VidyaAction]]:
+    """Resolve a routable intent to (primary action, plannedActions list).
+
+    Phase N.1 mapping logic. The orchestrator now emits a typed
+    `plannedActions` list (max 3) instead of a 300-char prose
+    `followUpSuggestion`. Three cases:
+
+      1. Compound request — `intent.plannedActions` is non-empty.
+         The first entry becomes the primary `action` (legacy v0.3
+         surface for backward compat); the full list ships in the
+         response's `plannedActions` field.
+
+      2. Single-step request — `intent.plannedActions` is empty but
+         `intent.type` is in `ALLOWED_FLOWS`. Build a single-action
+         list via `classify_action(intent)` so v0.4+ clients have a
+         uniform iteration surface.
+
+      3. Single-step that `classify_action` rejects (defensive: the
+         classifier hallucinated a label that PASSED the
+         `intent.type in ALLOWED_FLOWS` check above but somehow
+         tripped the gate-level Literal cast). Returns `(None, [])`.
+    """
+    action: VidyaAction | None
+    if intent.plannedActions:
+        action = intent.plannedActions[0]
+        return action, list(intent.plannedActions)
+    action = classify_action(intent)
+    if action is None:
+        return None, []
+    return action, [action]
 
 
 # ---- Endpoint ------------------------------------------------------------
@@ -247,6 +425,10 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
     response_text: str
     action: VidyaAction | None = None
     intent_label = intent.type
+    # Phase N.1 — typed planned-action list. Default to empty; populated
+    # below for routable flows when the orchestrator emitted compound
+    # actions OR when the legacy single-action path produced one.
+    planned_actions: list[VidyaAction] = []
 
     # Step 2: branch on intent
     if intent.type == INSTANT_ANSWER_INTENT:
@@ -267,7 +449,10 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
                 http_status=502,
             ) from exc
     elif intent.type in ALLOWED_FLOWS:
-        action = classify_action(intent)
+        # Phase N.1 — delegated to `_map_routable_flow`. Helper picks
+        # the typed `plannedActions` path for compound requests and
+        # falls back to `classify_action(intent)` otherwise.
+        action, planned_actions = _map_routable_flow(intent)
         response_text = (
             "Opening the right tool for you now."
             if action is not None
@@ -296,10 +481,36 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
         ) from exc
 
     latency_ms = int((time.perf_counter() - started) * 1000)
+    # Forensic fix P1 #18: per-router success log so the dashboard can
+    # join `vidya.generated` × `ai_resilience.attempt_succeeded` on
+    # `request_id` (set by the request_id middleware) and recover the
+    # cost-per-user attribution. Tokens are NOT extracted here because
+    # VIDYA dispatches via ADK's Runner, which doesn't surface the raw
+    # Gemini result; per-attempt token counts already live in the
+    # ai_resilience event keyed on the same `request_id`.
+    log.info(
+        "vidya.generated",
+        latency_ms=latency_ms,
+        intent=intent_label,
+        action_flow=action.flow if action is not None else None,
+        planned_count=len(planned_actions),
+        instant_answer=intent.type == INSTANT_ANSWER_INTENT,
+        model_used=get_orchestrator_model(),
+        tokens_in=None,
+        tokens_out=None,
+        tokens_cached=None,
+    )
+
     return VidyaResponse(
         response=response_text,
         action=action,
         intent=intent_label,
         sidecarVersion=SIDECAR_VERSION,
         latencyMs=latency_ms,
+        # Phase N.1 — typed planned-action queue. Empty for unknown /
+        # instant-answer / unroutable paths. For the 9 routable flows
+        # this is either the orchestrator-emitted compound plan or a
+        # single-entry list mirroring the primary `action` (so v0.4+
+        # clients have a uniform iteration surface).
+        plannedActions=planned_actions,
     )

@@ -32,7 +32,9 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { signRequest } from './signing';
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
+import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -79,39 +81,18 @@ export class SidecarBehaviouralError extends Error {
 
 // ─── Wire schemas ──────────────────────────────────────────────────────────
 
-/**
- * Mirror of `AgentReplyRequest` in
- * `sahayakai-agents/src/sahayakai_agents/agents/parent_call/schemas.py`.
- * Hand-typed for now; replaced by `dist/types.generated.ts` once the
- * codegen step lands (Track B drift check).
- */
-export interface SidecarReplyRequest {
-  callSid: string;
-  turnNumber: number;
-  studentName: string;
-  className: string;
-  subject: string;
-  reason: string;
-  teacherMessage: string;
-  teacherName?: string;
-  schoolName?: string;
-  parentLanguage: string;
-  /** Optional — sidecar loads from Firestore by callSid when omitted. */
-  transcript?: Array<{ role: 'agent' | 'parent'; text: string }>;
-  parentSpeech: string;
-  performanceSummary?: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{ReplyRequest,
+// ReplyResponse}`.
+import type {
+  AgentReplyRequest as GenAgentReplyRequest,
+  AgentReplyResponse as GenAgentReplyResponse,
+} from './types.generated';
 
-export interface SidecarReplyResponse {
-  reply: string;
-  shouldEndCall: boolean;
-  followUpQuestion: string | null;
-  sessionId: string;
-  turnNumber: number;
-  latencyMs: number;
-  modelUsed: string;
-  cacheHitRatio: number | null;
-}
+export type SidecarReplyRequest = GenAgentReplyRequest;
+export type SidecarReplyResponse = GenAgentReplyResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
@@ -163,6 +144,20 @@ export interface CallSidecarReplyOptions {
   timeoutMs?: number;
   /** Optional fetch impl for tests. Defaults to global `fetch`. */
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 — caller-supplied request id for telemetry
+   * correlation across the dispatcher and the Python sidecar. Defaults
+   * to a freshly minted hex id; pass through if you already have one
+   * (e.g. from Next.js middleware) so the whole chain shares a key.
+   */
+  requestId?: string;
+  /**
+   * Phase R.2: Firebase App Check token forwarded from the browser.
+   * Set as `X-Firebase-AppCheck` header. When undefined / null the
+   * header is omitted; the sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK`
+   * flag decides whether that's a 401 or accepted (rollout mode).
+   */
+  appCheckToken?: string | null;
 }
 
 /**
@@ -189,6 +184,9 @@ export async function callSidecarReply(
   // Wave 4 fix 4 / P1 REPLAY-1: signRequest binds digest to a
   // per-request timestamp. The matching `X-Request-Timestamp` header
   // MUST be sent alongside the digest or the sidecar rejects.
+  // Phase R.2: App Check token is the third auth layer; getting it
+  // BEFORE signing keeps the wire ordering legible (auth → integrity
+  // → attestation) even though the order does not affect verification.
   const { timestamp, digest } = await signRequest(rawBody);
 
   const tokenClient = await getTokenClient(audience);
@@ -196,20 +194,38 @@ export async function callSidecarReply(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
+
+  // Compose the header bag. App Check is auto-fetched when the caller
+  // does not pass an explicit value — `getFirebaseAppCheckToken()`
+  // returns `null` server-side (no browser, no reCAPTCHA challenge),
+  // so pure-server callers (cron jobs, Twilio callbacks) silently
+  // omit the header. The sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK` flag
+  // governs whether a missing header is a 401 or accepted.
+  // `appCheckToken: null` opts out explicitly (e.g. tests).
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
 
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

@@ -36,6 +36,7 @@ import {
     type LessonPlanSidecarDecision,
 } from '@/lib/feature-flags';
 
+import { validateTopicSafety } from '@/lib/safety';
 import {
     callSidecarLessonPlan,
     LessonPlanSidecarBehaviouralError,
@@ -45,6 +46,13 @@ import {
     type SidecarLessonPlanRequest,
     type SidecarLessonPlanResponse,
 } from './lesson-plan-client';
+import { persistSidecarJSON } from './persist-helpers';
+import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { withTimeout } from './with-timeout';
+
+// Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
+// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
+const FALLBACK_TIMEOUT_MS = 60_000;
 
 export type LessonPlanDispatchSource =
     | 'genkit'
@@ -74,9 +82,13 @@ export interface LessonPlanDispatchInput extends LessonPlanInput {
 }
 
 function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequest {
+    // `language` is typed as plain `string` upstream (Genkit
+    // `z.string().optional()`); the codegen narrows it to the BCP-47-ish
+    // 11-way union the sidecar enforces. The route normalises before
+    // reaching here, so the cast is sound.
     return {
         topic: input.topic,
-        language: input.language,
+        language: input.language as SidecarLessonPlanRequest['language'],
         gradeLevels: input.gradeLevels,
         useRuralContext: input.useRuralContext,
         ncertChapter: input.ncertChapter,
@@ -84,6 +96,9 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
         difficultyLevel: input.difficultyLevel,
         subject: input.subject,
         teacherContext: input.teacherContext,
+        // Phase J.4 hot-fix (B3 inconsistency): forward userId on the
+        // wire so the sidecar's contract matches every other agent.
+        userId: input.userId,
     };
 }
 
@@ -98,7 +113,10 @@ function sidecarToLessonPlan(
         subject: res.subject,
         objectives: res.objectives,
         keyVocabulary: res.keyVocabulary,
-        materials: res.materials,
+        // Codegen marks `materials` optional; the Genkit-shaped
+        // `LessonPlanOutput` requires a `string[]`. Default to an
+        // empty list when the sidecar omits it.
+        materials: res.materials ?? [],
         activities: res.activities.map((a) => ({
             phase: a.phase,
             name: a.name,
@@ -109,7 +127,9 @@ function sidecarToLessonPlan(
         })),
         assessment: res.assessment,
         homework: res.homework,
-        language: res.language,
+        // Codegen `language?: string | null`; downstream `LessonPlanOutput`
+        // is `?: string` (optional, not nullable). Coerce null→undefined.
+        language: res.language ?? undefined,
         source: 'sidecar',
         decision,
         sidecarTelemetry: {
@@ -136,7 +156,11 @@ async function runGenkitSafe(
     input: LessonPlanInput,
 ): Promise<{ ok: true; out: LessonPlanOutput } | { ok: false; error: Error }> {
     try {
-        const out = await generateLessonPlan(input);
+        const out = await withTimeout(
+            generateLessonPlan(input),
+            FALLBACK_TIMEOUT_MS,
+            'lesson-plan genkit fallback',
+        );
         return { ok: true, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
@@ -221,7 +245,11 @@ export async function dispatchLessonPlan(
 
     // ── off ────────────────────────────────────────────────────────────
     if (decision.mode === 'off') {
-        const out = await generateLessonPlan(input);
+        const out = await withTimeout(
+            generateLessonPlan(input),
+            FALLBACK_TIMEOUT_MS,
+            'lesson-plan genkit fallback',
+        );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToLessonPlan(out, 'genkit', decision);
     }
@@ -229,10 +257,12 @@ export async function dispatchLessonPlan(
     // ── shadow ─────────────────────────────────────────────────────────
     if (decision.mode === 'shadow') {
         const sidecarReq = toSidecarRequest(input);
+        const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
             runGenkitSafe(input),
             runSidecarSafe(sidecarReq),
         ]);
+        const genkitLatencyMs = Date.now() - shadowStartedAt;
 
         // Log both outcomes so offline parity scoring can be assembled
         // from log queries until the shadow-diff collection lands.
@@ -245,21 +275,71 @@ export async function dispatchLessonPlan(
             sidecarRevisionsRun: sidecar.ok ? sidecar.res.revisionsRun : undefined,
         });
 
+        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+        void writeAgentShadowDiff({
+            agent: 'lesson-plan',
+            uid: input.userId,
+            genkit: genkit.ok ? genkit.out : null,
+            sidecar: sidecar.ok ? sidecar.res : null,
+            genkitLatencyMs,
+            sidecarLatencyMs: sidecar.latencyMs,
+            sidecarOk: sidecar.ok,
+            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+        });
+
         if (!genkit.ok) throw genkit.error;
         return genkitToLessonPlan(genkit.out, 'genkit', decision);
     }
 
     // ── canary / full ──────────────────────────────────────────────────
+    // Phase K — pre-call gates that the Genkit flow runs inside
+    // generateLessonPlan. When canary/full bypasses Genkit we must still
+    // run them or unsafe topics reach the sidecar and rate limits leak.
+    const safety = validateTopicSafety(input.topic);
+    if (!safety.safe) {
+        throw new Error(`Safety Violation: ${safety.reason}`);
+    }
+    if (input.userId && input.userId !== 'anonymous_user') {
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        await checkServerRateLimit(input.userId);
+    }
+
     const sidecarReq = toSidecarRequest(input);
     const sidecar = await runSidecarSafe(sidecarReq);
 
     if (sidecar.ok) {
+        // Phase K — persist sidecar output to Storage + Firestore so the
+        // teacher's library shows the lesson plan regardless of dispatch
+        // mode.
+        const titleForLibrary =
+            sidecar.res.title || `Lesson Plan: ${input.topic}`;
+        const persistResult =
+            input.userId && input.userId !== 'anonymous_user'
+                ? await persistSidecarJSON({
+                      uid: input.userId,
+                      collection: 'lesson-plans',
+                      contentType: 'lesson-plan',
+                      title: titleForLibrary,
+                      output: sidecar.res,
+                      metadata: {
+                          gradeLevel:
+                              sidecar.res.gradeLevel ||
+                              input.gradeLevels?.[0] ||
+                              'Class 5',
+                          subject: sidecar.res.subject || 'Science',
+                          topic: input.topic,
+                          language: input.language || 'English',
+                      },
+                  })
+                : null;
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
             revisionsRun: sidecar.res.revisionsRun,
             sidecarVersion: sidecar.res.sidecarVersion,
+            contentId: persistResult?.contentId,
+            persisted: persistResult !== null,
         });
         return sidecarToLessonPlan(sidecar.res, decision);
     }
@@ -286,6 +366,10 @@ export async function dispatchLessonPlan(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await generateLessonPlan(input);
+    const out = await withTimeout(
+        generateLessonPlan(input),
+        FALLBACK_TIMEOUT_MS,
+        'lesson-plan genkit fallback',
+    );
     return genkitToLessonPlan(out, 'genkit_fallback', decision);
 }

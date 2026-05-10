@@ -1,6 +1,6 @@
 """Authentication middleware.
 
-Two concerns:
+Three concerns (Phase R.2 added the App Check layer):
 
 1. **IAM invoker ID-token verification** (P1 #12). Next.js signs a Google-issued
    ID token scoped to this Cloud Run service's audience. We verify it against
@@ -12,9 +12,18 @@ Two concerns:
    recompute and reject on mismatch. Protects against man-in-the-middle tamper
    even if someone gets a valid ID token.
 
-Both gates must pass. A bearer-only auth can prove identity without proving
-integrity; a HMAC-only auth can prove integrity without proving identity.
-Together they cover both.
+3. **Firebase App Check token** (Phase R.2). Optional client attestation that
+   proves the request originated from a real registered Firebase client (web
+   via reCAPTCHA v3, Android via Play Integrity, iOS via DeviceCheck). Closes
+   the residual replay window if an attacker captures BOTH a valid ID token
+   AND a matching HMAC tuple — App Check tokens are device-bound and rotate
+   per session. Controlled by `SAHAYAKAI_REQUIRE_APP_CHECK` (default `true`
+   in prod, override `false` in dev for local testing without reCAPTCHA).
+
+All required gates must pass. A bearer-only auth proves identity without
+proving integrity; a HMAC-only auth proves integrity without proving identity;
+ID-token + HMAC still leaves a narrow capture-and-replay window that App Check
+eliminates.
 """
 from __future__ import annotations
 
@@ -25,12 +34,17 @@ import time
 from collections.abc import Awaitable, Callable
 
 import structlog
+from cachetools import TTLCache  # type: ignore[import-untyped]
 from fastapi import Request, Response
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 
 from .config import get_settings
-from .shared.errors import AuthenticationError, AuthorizationError
+from .shared.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    ReplayDetectedError,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -40,6 +54,12 @@ _PUBLIC_PATHS: frozenset[str] = frozenset({"/healthz", "/readyz", "/.well-known/
 # IAM ID-token verification is expensive (public key fetch, JWT parse, sig
 # check). Cache the Google request transport per-process; it reuses keys.
 _google_request = google_requests.Request()
+
+# Phase R.2: Firebase App Check header. The Next.js bridge attaches this
+# after `getToken(appCheck)` on the browser; the value is a Firebase-signed
+# JWT bound to the registered app + device. Header name matches Firebase's
+# server-side conventions.
+_APP_CHECK_HEADER = "x-firebase-appcheck"
 
 
 def _extract_bearer(request: Request) -> str:
@@ -84,6 +104,22 @@ def _verify_id_token(token: str, audience: str) -> dict[str, object]:
 # than 5 minutes is silently dropped.
 _TIMESTAMP_SKEW_MS = 5 * 60 * 1000  # ±5 min
 _TIMESTAMP_HEADER = "x-request-timestamp"
+
+# Phase J.4 hot-fix (forensic P1 #19): per-process TTL cache for the
+# (timestamp_ms, digest_hex) nonce tuples. Without this, the HMAC
+# guard above only proves the request body was not tampered — it does
+# NOT prevent replay. A captured (Authorization, X-Content-Digest,
+# X-Request-Timestamp, body) tuple is valid for the full 5-min skew
+# window. 100× replay = 100× Gemini billing on a single captured POST.
+#
+# 6-min TTL = 1 minute longer than the skew window so a request still
+# in-flight when its timestamp ages out cannot be replayed at the edge.
+# 10k entries ≈ 5 MB worst case (key tuple + bool); we run at < 100 rps
+# steady state so the cache never gets close to its bound.
+_REPLAY_GUARD: TTLCache[tuple[int, str], bool] = TTLCache(
+    maxsize=10_000,
+    ttl=360,
+)
 
 
 def _verify_content_digest(request: Request, raw_body: bytes) -> None:
@@ -143,9 +179,121 @@ def _verify_content_digest(request: Request, raw_body: bytes) -> None:
     if not hmac.compare_digest(expected, computed):
         raise AuthenticationError("Body HMAC digest mismatch")
 
+    # Phase J.4 hot-fix (forensic P1 #19): nonce store. The digest is
+    # only inserted AFTER HMAC verification passes — we never let an
+    # invalid request poison the cache. The key is `(timestamp_ms,
+    # digest_hex)`, which is unique per (signing_key, body) pair: a
+    # legitimate retry of the same body sends the same MAC, so the
+    # second attempt in the same skew window is rejected. Clients that
+    # need true at-least-once retries must change either the body or
+    # the timestamp (the OmniOrb client and parent-call dispatcher
+    # already do — every retry advances `X-Request-Timestamp`).
+    digest_hex = computed.hex()
+    nonce_key = (timestamp_ms, digest_hex)
+    if nonce_key in _REPLAY_GUARD:
+        log.warning(
+            "auth.hmac.replay_detected",
+            timestamp_ms=timestamp_ms,
+        )
+        raise ReplayDetectedError("Request replay rejected")
+    _REPLAY_GUARD[nonce_key] = True
+
+
+def _verify_app_check_token(request: Request, project_id: str) -> dict[str, object]:
+    """Verify the `X-Firebase-AppCheck` header (Phase R.2).
+
+    Two-tier verification strategy:
+
+    1. **Preferred**: full `firebase_admin.app_check.verify_token()` call.
+       This validates the JWT signature against Firebase's public JWKS,
+       checks `iss` (`https://firebaseappcheck.googleapis.com/<project>`),
+       `aud` (`projects/<project_number>`), and `exp`.
+    2. **Fallback (network-degraded)**: decode the JWT without signature
+       verification and at minimum confirm the `aud` claim matches our
+       project (`projects/<id>` or `projects/<number>`). This catches the
+       common case (header completely missing or pointing at a different
+       Firebase project) even if the JWKS endpoint is briefly unreachable.
+
+    Raises `AuthenticationError` if the header is missing or invalid.
+
+    Returns the decoded App Check claims dict on success — useful for
+    downstream telemetry (the `app_id` claim identifies WHICH registered
+    Firebase app made the request, e.g. web vs Android vs iOS).
+    """
+    raw = request.headers.get(_APP_CHECK_HEADER)
+    if not raw:
+        raise AuthenticationError("Missing X-Firebase-AppCheck header")
+
+    raw = raw.strip()
+    if not raw:
+        raise AuthenticationError("Empty X-Firebase-AppCheck header")
+
+    # Tier 1: full Firebase Admin SDK verification when available.
+    try:
+        from firebase_admin import app_check
+
+        claims: dict[str, object] = app_check.verify_token(raw)
+        log.debug(
+            "auth.app_check.verified",
+            app_id=str(claims.get("app_id") or ""),
+            iss=str(claims.get("iss") or ""),
+        )
+        return claims
+    except ImportError:
+        # firebase_admin not initialised in this process. Fall through to
+        # the lightweight aud-claim check below so the gate still does
+        # something useful.
+        log.warning("auth.app_check.firebase_admin_missing")
+    except Exception as exc:  # noqa: BLE001 — Firebase raises a wide tree
+        # Any verification failure (bad signature, wrong audience, expired)
+        # → reject. We log the type, never the token contents.
+        log.info(
+            "auth.app_check.verify_failed",
+            error_type=type(exc).__name__,
+            error=str(exc)[:200],
+        )
+        raise AuthenticationError(
+            f"App Check token verification failed: {type(exc).__name__}"
+        ) from exc
+
+    # Tier 2: bare-bones audience check. Only reached when firebase_admin
+    # cannot be imported (e.g. test environment).
+    parts = raw.split(".")
+    if len(parts) != 3:
+        raise AuthenticationError("App Check token is not a JWT")
+    try:
+        # Pad base64url to a multiple of 4 to avoid "Invalid padding" errors.
+        payload_b64 = parts[1] + "=" * (-len(parts[1]) % 4)
+        import json as _json
+
+        decoded = _json.loads(base64.urlsafe_b64decode(payload_b64).decode("utf-8"))
+    except (ValueError, base64.binascii.Error, UnicodeDecodeError) as exc:
+        raise AuthenticationError("App Check token payload is not valid JSON") from exc
+
+    aud = decoded.get("aud")
+    aud_list: list[str] = (
+        list(aud) if isinstance(aud, list)
+        else [aud] if isinstance(aud, str)
+        else []
+    )
+    expected_prefix = f"projects/{project_id}"
+    if not any(
+        a == expected_prefix or a.startswith(f"{expected_prefix}/") for a in aud_list
+    ):
+        raise AuthenticationError(
+            "App Check token audience does not match this project"
+        )
+
+    log.debug("auth.app_check.aud_only_verified", project=project_id)
+    # `json.loads` returns Any; narrow to dict[str, object] for the typed
+    # contract while preserving the runtime payload.
+    if not isinstance(decoded, dict):
+        raise AuthenticationError("App Check token payload is not a JSON object")
+    return dict(decoded)
+
 
 async def authenticate_request(request: Request) -> dict[str, object]:
-    """Run both gates. Returns the verified token claims on success.
+    """Run all required gates. Returns the verified token claims on success.
 
     Raises `AgentError` subclasses on failure; the FastAPI error handler maps
     them to HTTP codes.
@@ -178,6 +326,13 @@ async def authenticate_request(request: Request) -> dict[str, object]:
     raw_body = await request.body()
     _verify_content_digest(request, raw_body)
 
+    # Phase R.2: App Check (client attestation). Optional via env so dev
+    # mode + first staging deploys can skip it before reCAPTCHA is wired.
+    if settings.require_app_check:
+        app_check_claims = _verify_app_check_token(request, settings.gcp_project)
+        # Stash the originating app_id for downstream observability.
+        claims["_app_check_app_id"] = app_check_claims.get("app_id")
+
     # Cache a minimal "verified" context for the request handler.
     claims["_verified_at"] = int(time.time())
     return claims
@@ -192,6 +347,12 @@ async def auth_middleware(
 
     try:
         claims = await authenticate_request(request)
+    except ReplayDetectedError as exc:
+        # Phase J.4 (forensic P1 #19): distinct log path so ops can
+        # alert on replay events without conflating with stale-token
+        # failures (which are the bulk of 401 traffic).
+        log.warning("auth.replay_rejected", path=request.url.path, reason=exc.message)
+        return Response(content=exc.message, status_code=exc.http_status)
     except AuthenticationError as exc:
         log.info("auth.unauthenticated", path=request.url.path, reason=exc.message)
         return Response(content=exc.message, status_code=exc.http_status)

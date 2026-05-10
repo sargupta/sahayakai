@@ -4,23 +4,29 @@
  * AI flow functions are mocked — we only test the route handler logic.
  */
 
-// ── Mock AI flows ──────────────────────────────────────────────────────────
+// ── Mock dispatcher entry-points ───────────────────────────────────────────
+//
+// Phases D–U replaced direct AI-flow imports inside `/api/ai/<flow>/route.ts`
+// with `dispatch<Flow>()` from `@/lib/sidecar/<flow>-dispatch`. The route
+// handlers now never call the Genkit flow function directly — they go through
+// the dispatcher, which decides Genkit vs Sidecar based on the feature flag.
+// Tests must mock the dispatcher, not the underlying flow.
 
-const mockGenerateRubric = jest.fn();
-const mockTeacherTraining = jest.fn();
-const mockInstantAnswer = jest.fn();
-const mockGenerateWorksheet = jest.fn();
-const mockGenerateFieldTrip = jest.fn();
-const mockGenerateVideoStory = jest.fn();
-const mockGenerateParentMessage = jest.fn();
+const mockDispatchRubric = jest.fn();
+const mockDispatchTeacherTraining = jest.fn();
+const mockDispatchInstantAnswer = jest.fn();
+const mockDispatchWorksheet = jest.fn();
+const mockDispatchFieldTrip = jest.fn();
+const mockDispatchVideoStory = jest.fn();
+const mockDispatchParentMessage = jest.fn();
 
-jest.mock('@/ai/flows/rubric-generator', () => ({ generateRubric: (...args: any[]) => mockGenerateRubric(...args) }));
-jest.mock('@/ai/flows/teacher-training', () => ({ getTeacherTrainingAdvice: (...args: any[]) => mockTeacherTraining(...args) }));
-jest.mock('@/ai/flows/instant-answer', () => ({ instantAnswer: (...args: any[]) => mockInstantAnswer(...args) }));
-jest.mock('@/ai/flows/worksheet-wizard', () => ({ generateWorksheet: (...args: any[]) => mockGenerateWorksheet(...args) }));
-jest.mock('@/ai/flows/virtual-field-trip', () => ({ planVirtualFieldTrip: (...args: any[]) => mockGenerateFieldTrip(...args) }));
-jest.mock('@/ai/flows/video-storyteller', () => ({ getVideoRecommendations: (...args: any[]) => mockGenerateVideoStory(...args) }));
-jest.mock('@/ai/flows/parent-message-generator', () => ({ generateParentMessage: (...args: any[]) => mockGenerateParentMessage(...args) }));
+jest.mock('@/lib/sidecar/rubric-dispatch', () => ({ dispatchRubric: (...args: any[]) => mockDispatchRubric(...args) }));
+jest.mock('@/lib/sidecar/teacher-training-dispatch', () => ({ dispatchTeacherTraining: (...args: any[]) => mockDispatchTeacherTraining(...args) }));
+jest.mock('@/lib/sidecar/instant-answer-dispatch', () => ({ dispatchInstantAnswer: (...args: any[]) => mockDispatchInstantAnswer(...args) }));
+jest.mock('@/lib/sidecar/worksheet-dispatch', () => ({ dispatchWorksheet: (...args: any[]) => mockDispatchWorksheet(...args) }));
+jest.mock('@/lib/sidecar/virtual-field-trip-dispatch', () => ({ dispatchVirtualFieldTrip: (...args: any[]) => mockDispatchFieldTrip(...args) }));
+jest.mock('@/lib/sidecar/video-storyteller-dispatch', () => ({ dispatchVideoStoryteller: (...args: any[]) => mockDispatchVideoStory(...args) }));
+jest.mock('@/lib/sidecar/parent-message-dispatch', () => ({ dispatchParentMessage: (...args: any[]) => mockDispatchParentMessage(...args) }));
 jest.mock('@/lib/logger', () => ({ logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() } }));
 jest.mock('@/lib/utils', () => ({ logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() }, cn: jest.fn() }));
 
@@ -56,21 +62,31 @@ describe('AI Route Handlers', () => {
         });
 
         it('returns 200 on success', async () => {
-            mockGenerateRubric.mockResolvedValue({ rubric: 'test rubric' });
+            mockDispatchRubric.mockResolvedValue({
+                title: 'Test Rubric',
+                description: 'desc',
+                criteria: [],
+                gradeLevel: 'Class 5',
+                subject: 'Science',
+            });
             const res = await POST(makeRequest({ assignmentDescription: 'A grade 5 project' }));
             expect(res.status).toBe(200);
         });
 
         it('returns 500 on AI flow error', async () => {
-            mockGenerateRubric.mockRejectedValue(new Error('AI failed'));
+            mockDispatchRubric.mockRejectedValue(new Error('AI failed'));
             const res = await POST(makeRequest({ assignmentDescription: 'test' }));
             expect(res.status).toBe(500);
         });
 
         it('passes userId to AI flow', async () => {
-            mockGenerateRubric.mockResolvedValue({});
+            mockDispatchRubric.mockResolvedValue({
+                title: '',
+                description: '',
+                criteria: [],
+            });
             await POST(makeRequest({ assignmentDescription: 'test' }, 'uid-123'));
-            expect(mockGenerateRubric).toHaveBeenCalledWith(expect.objectContaining({ userId: 'uid-123' }));
+            expect(mockDispatchRubric).toHaveBeenCalledWith(expect.objectContaining({ userId: 'uid-123' }));
         });
     });
 
@@ -90,13 +106,17 @@ describe('AI Route Handlers', () => {
         });
 
         it('returns 200 on success', async () => {
-            mockTeacherTraining.mockResolvedValue({ advice: 'use groups' });
+            mockDispatchTeacherTraining.mockResolvedValue({
+                introduction: 'intro',
+                advice: [{ title: 'a', description: 'd' }],
+                conclusion: 'concl',
+            });
             const res = await POST(makeRequest({ question: 'How to manage 40 students?' }));
             expect(res.status).toBe(200);
         });
 
         it('returns 500 on error', async () => {
-            mockTeacherTraining.mockRejectedValue(new Error('fail'));
+            mockDispatchTeacherTraining.mockRejectedValue(new Error('fail'));
             const res = await POST(makeRequest({ question: 'test' }));
             expect(res.status).toBe(500);
         });
@@ -118,13 +138,18 @@ describe('AI Route Handlers', () => {
         });
 
         it('returns answer on success', async () => {
-            mockInstantAnswer.mockResolvedValue({ answer: 'Photosynthesis is...' });
+            mockDispatchInstantAnswer.mockResolvedValue({
+                answer: 'Photosynthesis is...',
+                videoSuggestionUrl: 'https://example.com',
+                gradeLevel: 'Class 5',
+                subject: 'Science',
+            });
             const res = await POST(makeRequest({ question: 'What is photosynthesis?' }));
             expect(res.status).toBe(200);
         });
 
         it('returns 500 on AI flow error', async () => {
-            mockInstantAnswer.mockRejectedValue(new Error('quota exceeded'));
+            mockDispatchInstantAnswer.mockRejectedValue(new Error('quota exceeded'));
             const res = await POST(makeRequest({ question: 'test' }));
             expect(res.status).toBe(500);
         });

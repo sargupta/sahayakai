@@ -9,6 +9,26 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles } from "lucide-react";
 import { tts } from "@/lib/tts";
+import type { VidyaAction } from "@/lib/sidecar/types.generated";
+
+// Phase N.1 + P5: when the supervisor authors >1 actions for a compound
+// intent ("make a quiz AND a worksheet on photosynthesis"), the client
+// renders one chip per action instead of auto-navigating. Teacher taps
+// each chip to dispatch its flow.
+//
+// Friendly labels by flow id — used as chip text. Falls back to
+// `action.flow` for any future flow added without a label.
+const FLOW_LABEL: Record<VidyaAction['flow'], string> = {
+    'lesson-plan': 'Lesson plan',
+    'quiz-generator': 'Quiz',
+    'visual-aid-designer': 'Visual aid',
+    'worksheet-wizard': 'Worksheet',
+    'virtual-field-trip': 'Field trip',
+    'teacher-training': 'Training',
+    'rubric-generator': 'Rubric',
+    'exam-paper': 'Exam paper',
+    'video-storyteller': 'Video',
+};
 
 // ── Authenticated fetch helper ────────────────────────────────────────────────
 // Attaches a fresh Firebase ID token to every /api/vidya/* request.
@@ -55,6 +75,10 @@ export function OmniOrb() {
     const [isClient, setIsClient] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [orbOpen, setOrbOpen] = useState(false);
+    // P5 — compound-intent chips. Populated when the supervisor returns
+    // `plannedActions[]` with >1 item. Cleared on conversational turn,
+    // chip tap, or chat-clear.
+    const [pendingActions, setPendingActions] = useState<VidyaAction[]>([]);
     // Auto-hide-on-scroll: keeps voice-first prominence on idle, gets out
     // of the way while the teacher is reading generated output. Shown again
     // on scroll-up, near top, or when the memory drawer is open.
@@ -282,7 +306,11 @@ export function OmniOrb() {
             if (!res) throw new Error("Not authenticated — please sign in to use VIDYA");
             if (!res.ok) throw new Error("Assistant failed to process request");
 
-            const { response, action } = await res.json();
+            const { response, action, plannedActions } = await res.json() as {
+                response?: string;
+                action?: VidyaAction | null;
+                plannedActions?: VidyaAction[];
+            };
 
             if (response) {
                 addMessage("model", response);
@@ -299,54 +327,98 @@ export function OmniOrb() {
                 { role: "model" as const, parts: [{ text: response ?? "" }] },
             ];
 
-            if (action && action.type === "NAVIGATE_AND_FILL") {
-                // Learn teacher preferences from agentic actions
-                const profilePatch: Record<string, string> = {};
-                if (action.params?.gradeLevel) {
-                    updateTeacherProfile({ preferredGrade: action.params.gradeLevel });
-                    profilePatch.preferredGrade = action.params.gradeLevel;
-                }
-                if (action.params?.subject) {
-                    updateTeacherProfile({ preferredSubject: action.params.subject });
-                    profilePatch.preferredSubject = action.params.subject;
-                }
-                if (action.params?.language) {
-                    updateTeacherProfile({ preferredLanguage: action.params.language });
-                    profilePatch.preferredLanguage = action.params.language;
-                }
-                // Persist profile patch to Firestore (fire-and-forget)
-                if (Object.keys(profilePatch).length > 0) syncProfilePatch(profilePatch);
+            // P5 — compound intent: 2-3 actions render as confirm-chips so
+            // the teacher taps each explicitly. Single action keeps the
+            // legacy auto-navigate behaviour to avoid extra-tap regression
+            // for the 90% one-flow case.
+            const validActions = (plannedActions ?? []).filter(
+                (a) => a && a.type === "NAVIGATE_AND_FILL",
+            );
+            const isCompound = validActions.length > 1;
 
-                // Persist session turn with the triggered action
-                syncSessionTurn(updatedMessages, { flow: action.flow, params: action.params });
-
-                // If VIDYA couldn't extract a topic (vague follow-up like "those locations"),
-                // fall back to the last user message from chatHistory as context.
-                if (!action.params.topic && !action.params.question && !action.params.prompt) {
-                    const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
-                    if (lastUserMsg) {
-                        action.params.topic = lastUserMsg.parts.map((p: { text: string }) => p.text).join("").trim();
-                    }
-                }
-
-                const queryParams = new URLSearchParams();
-                if (action.params.topic) queryParams.set("topic", action.params.topic);
-                if (action.params.question) queryParams.set("question", action.params.question);
-                if (action.params.assignmentDescription) queryParams.set("assignmentDescription", action.params.assignmentDescription);
-                if (action.params.prompt) queryParams.set("prompt", action.params.prompt);
-                if (action.params.subject) queryParams.set("subject", action.params.subject);
-                if (action.params.gradeLevel) queryParams.set("gradeLevel", action.params.gradeLevel);
-                if (action.params.language) queryParams.set("language", action.params.language);
-
-                router.push(`/${action.flow}?${queryParams.toString()}`);
+            if (isCompound) {
+                // Persist the conversation + the planned-action list (no flow
+                // dispatched yet — teacher will tap individually). Auto-open
+                // the panel so the chips are visible immediately; the panel
+                // was closed at processTranscription start to keep the orb
+                // unobtrusive.
+                syncSessionTurn(updatedMessages, null);
+                setPendingActions(validActions);
+                setOrbOpen(true);
+            } else if (action && action.type === "NAVIGATE_AND_FILL") {
+                executeAction(action, updatedMessages, transcript);
             } else {
                 // Conversational turn — persist without action metadata
                 syncSessionTurn(updatedMessages, null);
+                setPendingActions([]);
             }
         } catch (e) {
             tts.speak("I'm sorry, I encountered an issue connecting to my network. Please try again.", bcp47Lang);
         }
     };
+
+    // Single action dispatcher — extracted from the legacy single-action
+    // path so chip taps reuse the same code path. Behaviour-equivalent
+    // to the previous inline block.
+    const executeAction = useCallback((
+        action: VidyaAction,
+        updatedMessages: { role: "user" | "model"; parts: { text: string }[] }[],
+        // The original transcript triggers fall-back-to-last-user-message
+        // when params lack topic. Optional: chip taps replay the same
+        // logic from the existing chatHistory closure.
+        _originalTranscript?: string,
+    ) => {
+        // Learn teacher preferences from agentic actions
+        const profilePatch: Record<string, string> = {};
+        if (action.params?.gradeLevel) {
+            updateTeacherProfile({ preferredGrade: action.params.gradeLevel });
+            profilePatch.preferredGrade = action.params.gradeLevel;
+        }
+        if (action.params?.subject) {
+            updateTeacherProfile({ preferredSubject: action.params.subject });
+            profilePatch.preferredSubject = action.params.subject;
+        }
+        if (action.params?.language) {
+            updateTeacherProfile({ preferredLanguage: action.params.language });
+            profilePatch.preferredLanguage = action.params.language;
+        }
+        if (Object.keys(profilePatch).length > 0) syncProfilePatch(profilePatch);
+
+        // Persist session turn with the triggered action
+        syncSessionTurn(updatedMessages, { flow: action.flow, params: action.params });
+
+        // If VIDYA couldn't extract a topic (vague follow-up like "those locations"),
+        // fall back to the last user message from chatHistory as context.
+        // Cast to writable shape for the local fallback patch — `params` is
+        // bound to the supervisor's emitted object, so editing it here only
+        // affects the route hand-off below, not the persisted record above.
+        const params = action.params as Record<string, string | undefined | null>;
+        if (!params.topic && !params.question && !params.prompt) {
+            const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
+            if (lastUserMsg) {
+                params.topic = lastUserMsg.parts.map((p: { text: string }) => p.text).join("").trim();
+            }
+        }
+
+        const queryParams = new URLSearchParams();
+        if (params.topic) queryParams.set("topic", params.topic);
+        if (params.question) queryParams.set("question", params.question);
+        if (params.assignmentDescription) queryParams.set("assignmentDescription", params.assignmentDescription);
+        if (params.prompt) queryParams.set("prompt", params.prompt);
+        if (params.subject) queryParams.set("subject", params.subject);
+        if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
+        if (params.language) queryParams.set("language", params.language);
+
+        router.push(`/${action.flow}?${queryParams.toString()}`);
+    }, [chatHistory, router, updateTeacherProfile]);
+
+    // Chip tap handler — pops the action from pendingActions and dispatches.
+    // Chips render one-shot so consecutive taps cleanly chain navigations.
+    const onChipTap = useCallback((action: VidyaAction) => {
+        const updatedMessages = [...chatHistory];
+        executeAction(action, updatedMessages);
+        setPendingActions(prev => prev.filter(a => a !== action));
+    }, [chatHistory, executeAction]);
 
     if (!isClient) return null;
 
@@ -391,6 +463,8 @@ export function OmniOrb() {
                                 // Reset session so the next message starts a fresh Firestore doc
                                 currentSessionRef.current = null;
                                 sessionIsNewRef.current = true;
+                                // Drop any unconsumed compound-intent chips
+                                setPendingActions([]);
                                 setOrbOpen(false);
                             }}
                             title="Clear Context"
@@ -420,6 +494,33 @@ export function OmniOrb() {
                             ))
                         )}
                     </div>
+
+                    {/* P5 — compound-intent chips. Render only when the
+                        supervisor authored 2+ planned actions for the last
+                        turn. Tapping a chip dispatches just that flow and
+                        removes the chip; the others stay until taken or
+                        dismissed by another conversational turn. */}
+                    {pendingActions.length > 1 && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">
+                                Pick what to generate next:
+                            </p>
+                            <div className="flex flex-wrap gap-2" data-testid="planned-action-chips">
+                                {pendingActions.map((a, idx) => (
+                                    <button
+                                        key={`${a.flow}-${idx}`}
+                                        type="button"
+                                        onClick={() => onChipTap(a)}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium border border-primary/20 transition-colors"
+                                        data-testid={`planned-action-chip-${a.flow}`}
+                                    >
+                                        <Sparkles className="h-3 w-3" />
+                                        {FLOW_LABEL[a.flow] ?? a.flow}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

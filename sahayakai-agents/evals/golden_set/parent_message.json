@@ -1,0 +1,167 @@
+[
+  {
+    "id": "pm-001-en-absences",
+    "input": {
+      "studentName": "Aarav Sharma",
+      "className": "Class 5",
+      "subject": "Mathematics",
+      "reason": "consecutive_absences",
+      "consecutiveAbsentDays": 3,
+      "teacherName": "Mrs. Patel",
+      "schoolName": "Greenwood School",
+      "parentLanguage": "English",
+      "userId": "eval-user-pm-001"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 200", "labse_similarity"],
+    "reference": "Dear Parent, we noticed that Aarav has been absent from Class 5 for three consecutive days. Please let us know if everything is alright and when he can return to school. If there is anything we can do to help, please reach out. Regards, Mrs. Patel, Greenwood School."
+  },
+  {
+    "id": "pm-002-en-poor-performance",
+    "input": {
+      "studentName": "Priya Singh",
+      "className": "Class 7",
+      "subject": "English",
+      "reason": "poor_performance",
+      "teacherName": "Mr. Rao",
+      "schoolName": "Sunrise Academy",
+      "parentLanguage": "English",
+      "performanceContext": {
+        "latestPercentage": 38,
+        "isAtRisk": true,
+        "subjectBreakdown": [
+          {"subject": "English", "name": "Unit Test 2", "marksObtained": 19, "maxMarks": 50, "percentage": 38, "date": "2026-04-10"}
+        ]
+      },
+      "userId": "eval-user-pm-002"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 40", "max_word_count: 250", "labse_similarity"],
+    "reference": "Dear Parent, Priya scored 38 percent in the recent English unit test. We would like to discuss how we can support her improvement together. Please consider scheduling a brief meeting at your convenience. Regards, Mr. Rao, Sunrise Academy."
+  },
+  {
+    "id": "pm-003-en-positive-feedback",
+    "input": {
+      "studentName": "Maya Reddy",
+      "className": "Class 8",
+      "subject": "Physics",
+      "reason": "positive_feedback",
+      "teacherNote": "Maya solved a tough numerical in front of the class",
+      "teacherName": "Mr. Iyer",
+      "schoolName": "Heritage School",
+      "parentLanguage": "English",
+      "userId": "eval-user-pm-003"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 200", "labse_similarity"],
+    "reference": "Dear Parent, I wanted to share some good news. Maya solved a challenging Physics numerical in front of the class today and showed wonderful confidence. Please congratulate her on our behalf. Regards, Mr. Iyer, Heritage School."
+  },
+  {
+    "id": "pm-004-en-behavior",
+    "input": {
+      "studentName": "Karan Mehta",
+      "className": "Class 6",
+      "subject": "Social Studies",
+      "reason": "behavioral_concern",
+      "teacherNote": "Disrupting the class repeatedly",
+      "teacherName": "Mrs. Kapoor",
+      "schoolName": "Bharati School",
+      "parentLanguage": "English",
+      "userId": "eval-user-pm-004"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250"],
+    "reference": "Dear Parent, I would like to discuss Karan's recent behavior in Class 6 Social Studies. He has been finding it difficult to settle down during lessons. Please share a convenient time to talk this week. Regards, Mrs. Kapoor, Bharati School."
+  },
+  {
+    "id": "pm-005-hi-absences",
+    "input": {
+      "studentName": "रोहित यादव",
+      "className": "कक्षा 6",
+      "subject": "विज्ञान",
+      "reason": "consecutive_absences",
+      "consecutiveAbsentDays": 4,
+      "teacherName": "श्रीमती शर्मा",
+      "schoolName": "विद्या मंदिर",
+      "parentLanguage": "Hindi",
+      "userId": "eval-user-pm-005"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250", "labse_similarity"],
+    "reference": "नमस्ते, रोहित पिछले चार दिन से कक्षा 6 की कक्षा में अनुपस्थित है। कृपया बताएँ कि क्या सब कुछ ठीक है और वह कब वापस स्कूल आ सकता है। यदि किसी सहायता की आवश्यकता हो तो हमें बताइए। धन्यवाद, श्रीमती शर्मा, विद्या मंदिर।"
+  },
+  {
+    "id": "pm-006-hi-positive",
+    "input": {
+      "studentName": "अनन्या पटेल",
+      "className": "कक्षा 4",
+      "subject": "गणित",
+      "reason": "positive_feedback",
+      "teacherNote": "गणित प्रतियोगिता में पहला स्थान",
+      "teacherName": "श्री राठौर",
+      "schoolName": "नवभारत स्कूल",
+      "parentLanguage": "Hindi",
+      "userId": "eval-user-pm-006"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250", "labse_similarity"],
+    "reference": "नमस्ते, मुझे अनन्या के बारे में अच्छी खबर साझा करनी है। उन्होंने आज गणित प्रतियोगिता में पहला स्थान प्राप्त किया है। कृपया उन्हें हमारी ओर से बधाई दें। धन्यवाद, श्री राठौर, नवभारत स्कूल।"
+  },
+  {
+    "id": "pm-007-bn-absences",
+    "input": {
+      "studentName": "সৌরভ দত্ত",
+      "className": "শ্রেণী 5",
+      "subject": "বিজ্ঞান",
+      "reason": "consecutive_absences",
+      "consecutiveAbsentDays": 3,
+      "teacherName": "মিসেস বসু",
+      "schoolName": "বিদ্যাসাগর স্কুল",
+      "parentLanguage": "Bengali",
+      "userId": "eval-user-pm-007"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250", "labse_similarity"],
+    "reference": "নমস্কার, সৌরভ গত তিন দিন বিদ্যাসাগর স্কুলে অনুপস্থিত। সব ঠিক আছে কিনা জানালে ভালো হয়। সাহায্য প্রয়োজন হলে আমাদের জানান। ধন্যবাদ, মিসেস বসু।"
+  },
+  {
+    "id": "pm-008-ta-poor-performance",
+    "input": {
+      "studentName": "கார்த்திக் கணேசன்",
+      "className": "வகுப்பு 7",
+      "subject": "சமூகவியல்",
+      "reason": "poor_performance",
+      "teacherName": "திருமதி ராஜேஷ்வரி",
+      "schoolName": "சரஸ்வதி பள்ளி",
+      "parentLanguage": "Tamil",
+      "userId": "eval-user-pm-008"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250"],
+    "reference": "வணக்கம், கார்த்திக் சமீபத்திய சமூகவியல் தேர்வில் சிறப்பாக செயல்படவில்லை. அவருக்கு உதவியளிக்க நாம் ஒன்றாக ஒரு திட்டம் தயாரிக்கலாம். தயவுசெய்து வசதியான நேரத்தைத் தெரிவிக்கவும். நன்றி, திருமதி ராஜேஷ்வரி, சரஸ்வதி பள்ளி."
+  },
+  {
+    "id": "pm-009-mr-behavior",
+    "input": {
+      "studentName": "श्रेया देशमुख",
+      "className": "वर्ग 5",
+      "subject": "मराठी",
+      "reason": "behavioral_concern",
+      "teacherNote": "वर्गात बोलण्यात व्यत्यय",
+      "teacherName": "श्रीमती जोशी",
+      "schoolName": "ज्ञानप्रबोधिनी",
+      "parentLanguage": "Marathi",
+      "userId": "eval-user-pm-009"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250"],
+    "reference": "नमस्कार, श्रेया च्या वर्गातील वर्तनाबद्दल चर्चा करायची आहे. ती वर्गात बोलण्यात इतरांना व्यत्यय आणत आहे. कृपया भेटण्यासाठी सोयीस्कर वेळ कळवा. धन्यवाद, श्रीमती जोशी, ज्ञानप्रबोधिनी."
+  },
+  {
+    "id": "pm-010-gu-positive",
+    "input": {
+      "studentName": "નિહાર પટેલ",
+      "className": "ધોરણ 4",
+      "subject": "વિજ્ઞાન",
+      "reason": "positive_feedback",
+      "teacherNote": "વિજ્ઞાન મેળામાં શ્રેષ્ઠ પ્રોજેક્ટ",
+      "teacherName": "શ્રીમતી દેસાઈ",
+      "schoolName": "સરદાર સ્કૂલ",
+      "parentLanguage": "Gujarati",
+      "userId": "eval-user-pm-010"
+    },
+    "expected_output_traits": ["passes_safety", "matches_language", "min_word_count: 30", "max_word_count: 250", "labse_similarity"],
+    "reference": "નમસ્તે, મને નિહાર વિશે સારા સમાચાર કહેવાના છે. તેણે વિજ્ઞાન મેળામાં શ્રેષ્ઠ પ્રોજેક્ટનો પુરસ્કાર જીત્યો છે. કૃપા કરીને અમારી તરફથી તેને અભિનંદન આપો. આભાર, શ્રીમતી દેસાઈ, સરદાર સ્કૂલ."
+  }
+]

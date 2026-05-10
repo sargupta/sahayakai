@@ -12,8 +12,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { getClassAction, getStudentsAction } from "@/app/actions/attendance";
 import { getAuthToken } from "@/lib/get-auth-token";
 import type { ClassRecord, Student } from "@/types/attendance";
@@ -41,11 +42,11 @@ const TERM_LABELS: Record<Term, string> = {
     annual: "Annual",
 };
 
-export default function MarksEntryPage() {
+function MarksEntryContent() {
     const { classId } = useParams<{ classId: string }>();
     const router = useRouter();
     const { toast } = useToast();
-    const { user, loading: authLoading, requireAuth } = useAuth();
+    const { t } = useLanguage();
 
     const [cls, setCls] = useState<ClassRecord | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -96,14 +97,8 @@ export default function MarksEntryPage() {
     }, [classId, toast]);
 
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            requireAuth();
-            setLoading(false);
-            return;
-        }
         loadData();
-    }, [authLoading, user, loadData, requireAuth]);
+    }, [loadData]);
 
     const updateMark = (studentId: string, field: "marks" | "grade" | "remarks", value: string) => {
         setMarksMap((prev) => ({
@@ -222,10 +217,10 @@ export default function MarksEntryPage() {
                 </Button>
                 <div>
                     <h1 className="text-xl font-black text-foreground font-headline tracking-tight">
-                        Enter Marks {cls ? `\u2014 ${cls.name}` : ""}
+                        {t("Enter Marks")} {cls ? `\u2014 ${cls.name}` : ""}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        Fill in assessment details and student marks
+                        {t("Fill in assessment details and student marks")}
                     </p>
                 </div>
             </div>
@@ -234,22 +229,22 @@ export default function MarksEntryPage() {
             <div className="bg-white rounded-2xl border border-border/50 p-4 space-y-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
                     <ClipboardList className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-bold text-foreground">Assessment Details</span>
+                    <span className="text-sm font-bold text-foreground">{t("Assessment Details")}</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2">
-                        <Label htmlFor="assessment-name">Assessment Name</Label>
+                        <Label htmlFor="assessment-name">{t("Assessment Name")}</Label>
                         <Input
                             id="assessment-name"
-                            placeholder="e.g. Unit Test 1 - Algebra"
+                            placeholder={t("e.g. Unit Test 1 - Algebra")}
                             value={assessmentName}
                             onChange={(e) => setAssessmentName(e.target.value)}
                         />
                     </div>
 
                     <div>
-                        <Label>Type</Label>
+                        <Label>{t("Type")}</Label>
                         <Select
                             value={assessmentType}
                             onValueChange={(v) => setAssessmentType(v as AssessmentType)}
@@ -264,12 +259,12 @@ export default function MarksEntryPage() {
                     </div>
 
                     <div>
-                        <Label>Subject</Label>
+                        <Label>{t("Subject")}</Label>
                         <Select
                             value={subject}
                             onValueChange={(v) => setSubject(v as Subject)}
                         >
-                            <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder={t("Select subject")} /></SelectTrigger>
                             <SelectContent>
                                 {SUBJECTS.map((s) => (
                                     <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -279,7 +274,7 @@ export default function MarksEntryPage() {
                     </div>
 
                     <div>
-                        <Label htmlFor="max-marks">Max Marks</Label>
+                        <Label htmlFor="max-marks">{t("Max Marks")}</Label>
                         <Input
                             id="max-marks"
                             type="number"
@@ -290,7 +285,7 @@ export default function MarksEntryPage() {
                     </div>
 
                     <div>
-                        <Label>Term</Label>
+                        <Label>{t("Term")}</Label>
                         <Select
                             value={term}
                             onValueChange={(v) => setTerm(v as Term)}
@@ -305,7 +300,7 @@ export default function MarksEntryPage() {
                     </div>
 
                     <div>
-                        <Label htmlFor="date">Date</Label>
+                        <Label htmlFor="date">{t("Date")}</Label>
                         <Input
                             id="date"
                             type="date"
@@ -315,7 +310,7 @@ export default function MarksEntryPage() {
                     </div>
 
                     <div>
-                        <Label htmlFor="academic-year">Academic Year</Label>
+                        <Label htmlFor="academic-year">{t("Academic Year")}</Label>
                         <Input
                             id="academic-year"
                             value={academicYear}
@@ -328,8 +323,8 @@ export default function MarksEntryPage() {
             {/* Marks Grid */}
             {students.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                    <p className="text-sm font-bold text-foreground">No students in this class</p>
-                    <p className="text-xs text-muted-foreground">Add students first from the class page.</p>
+                    <p className="text-sm font-bold text-foreground">{t("No students in this class")}</p>
+                    <p className="text-xs text-muted-foreground">{t("Add students first from the class page.")}</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-2xl border border-border/50 shadow-soft overflow-hidden">
@@ -337,13 +332,13 @@ export default function MarksEntryPage() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-muted/20 border-b border-border/50">
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-12">Roll</th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[120px]">Name</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-12">{t("Roll")}</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[120px]">{t("Name")}</th>
                                     <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-24">
-                                        Marks <span className="font-normal text-muted-foreground">/{maxMarks}</span>
+                                        {t("Marks")} <span className="font-normal text-muted-foreground">/{maxMarks}</span>
                                     </th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-20">Grade</th>
-                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[140px]">Remarks</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground w-20">{t("Grade")}</th>
+                                    <th className="text-left px-3 py-2.5 text-xs font-bold text-muted-foreground min-w-[140px]">{t("Remarks")}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -374,7 +369,7 @@ export default function MarksEntryPage() {
                                             </td>
                                             <td className="px-3 py-2">
                                                 <Input
-                                                    placeholder="Optional"
+                                                    placeholder={t("Optional")}
                                                     value={entry.remarks}
                                                     onChange={(e) => updateMark(s.id, "remarks", e.target.value)}
                                                     className="h-8 text-sm"
@@ -402,10 +397,23 @@ export default function MarksEntryPage() {
                         ) : (
                             <Save className="h-4 w-4" />
                         )}
-                        {saving ? "Saving..." : "Save Marks"}
+                        {saving ? t("Saving…") : t("Save Marks")}
                     </Button>
                 </div>
             )}
         </div>
+    );
+}
+
+export default function MarksEntryPage() {
+    const { t } = useLanguage();
+    return (
+        <AuthGate
+            icon={ClipboardList}
+            title={t("Attendance")}
+            description={t("Manage classes and track daily attendance")}
+        >
+            <MarksEntryContent />
+        </AuthGate>
     );
 }

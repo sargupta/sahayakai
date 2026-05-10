@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { generateWorksheet, WorksheetWizardInputSchema } from '@/ai/flows/worksheet-wizard';
+import { WorksheetWizardInputSchema } from '@/ai/flows/worksheet-wizard';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dispatchWorksheet } from '@/lib/sidecar/worksheet-dispatch';
 
 /**
  * @swagger
@@ -60,12 +61,21 @@ async function _handler(request: Request) {
         // malformed imageDataUri with a 400 instead of crashing inside the flow.
         const body = WorksheetWizardInputSchema.parse(json);
 
-        const output = await generateWorksheet({
+        // Phase D.4: dispatcher routes Genkit vs ADK sidecar based on
+        // SAHAYAKAI_WORKSHEET_MODE env (default: off).
+        const dispatched = await dispatchWorksheet({
             ...body,
-            userId: userId,
+            userId,
         });
-
-        return NextResponse.json(output);
+        return NextResponse.json({
+            title: dispatched.title,
+            gradeLevel: dispatched.gradeLevel,
+            subject: dispatched.subject,
+            learningObjectives: dispatched.learningObjectives,
+            studentInstructions: dispatched.studentInstructions,
+            activities: dispatched.activities,
+            answerKey: dispatched.answerKey,
+        });
 
     } catch (error) {
         return handleAIError(error, 'WORKSHEET', {

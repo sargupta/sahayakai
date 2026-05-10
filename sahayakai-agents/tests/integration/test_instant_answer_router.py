@@ -97,6 +97,11 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
 
     sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
     sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
+    # `from google import genai` reads the `genai` attribute on the parent
+    # `google` package (not sys.modules), so we must also patch the
+    # attribute. monkeypatch restores the original on teardown.
+    import google  # noqa: PLC0415
+    monkeypatch.setattr(google, "genai", fake_module, raising=False)
     return models
 
 
@@ -236,3 +241,23 @@ class TestInstantAnswerRouter:
         # The behavioural guard rejects watch?v=... — fail-closed 502.
         assert res.status_code == 502, res.text
         assert fake_genai.queue == []
+
+    def test_public_run_answerer_is_callable(self) -> None:
+        """Phase L.2: `run_answerer` is the public delegation symbol
+        VIDYA imports. Pinning that the symbol exists, is async, and
+        is the one referenced via the deprecated `_run_answerer`
+        alias guards against silent renames."""
+        from sahayakai_agents.agents.instant_answer import router as ia_router  # noqa: PLC0415
+
+        assert hasattr(ia_router, "run_answerer"), (
+            "router must export `run_answerer` (public). Phase L.2 "
+            "promoted this from `_run_answerer` so VIDYA can delegate "
+            "without reaching into a private symbol."
+        )
+        # Same callable is reachable via both names during the
+        # deprecation window.
+        assert ia_router.run_answerer is ia_router._run_answerer, (
+            "The deprecated `_run_answerer` alias should still resolve "
+            "to the public `run_answerer` callable until the alias is "
+            "removed in a subsequent phase."
+        )

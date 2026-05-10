@@ -126,3 +126,21 @@ export async function computeBodyDigest(rawBody: string): Promise<string> {
 export function _resetSigningKeyCacheForTest(): void {
   cachedSigningKey = null;
 }
+
+/**
+ * Mint a per-request id used for telemetry correlation across the
+ * Next.js dispatcher and the Python sidecar.
+ *
+ * Forensic finding P1 #18 — telemetry split-brain. The Python side
+ * binds this id via structlog contextvars so every log line emitted
+ * during the request carries it; here we expose the same id to the
+ * TypeScript dispatcher so its `console.log` events can join with
+ * sidecar logs in BigQuery / Cloud Logging on a single key.
+ *
+ * Caller may supply an existing id (e.g. an upstream trace id from
+ * Next.js middleware) by passing it through; we just hex-encode 16
+ * random bytes if nothing is provided.
+ */
+export function newRequestId(): string {
+  return crypto.randomUUID().replace(/-/g, '');
+}

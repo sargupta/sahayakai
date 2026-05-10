@@ -53,7 +53,7 @@ class TestExtraForbidRejection:
                 subject=None,
                 sidecarVersion="phase-6",
                 latencyMs=10,
-                modelUsed="gemini-2.0-flash",
+                modelUsed="gemini-2.5-flash",
                 groundingUsed=True,
                 tokens=100,  # type: ignore[call-arg]
             )
@@ -142,7 +142,7 @@ class TestRoundTrip:
             subject="Science",
             sidecarVersion="phase-6.1.0",
             latencyMs=234,
-            modelUsed="gemini-2.0-flash",
+            modelUsed="gemini-2.5-flash",
             groundingUsed=True,
         )
         dumped = response.model_dump()
@@ -157,7 +157,7 @@ class TestRoundTrip:
             subject="Mathematics",
             sidecarVersion="phase-6.1.0",
             latencyMs=120,
-            modelUsed="gemini-2.0-flash",
+            modelUsed="gemini-2.5-flash",
             groundingUsed=False,
         )
         dumped = response.model_dump()

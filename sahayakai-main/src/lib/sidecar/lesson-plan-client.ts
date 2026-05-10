@@ -30,7 +30,9 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { signRequest } from './signing';
+import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+
+import { newRequestId, signRequest } from './signing';
 
 // ─── Errors ────────────────────────────────────────────────────────────────
 
@@ -79,70 +81,20 @@ export class LessonPlanSidecarBehaviouralError extends Error {
 
 // ─── Wire schemas ──────────────────────────────────────────────────────────
 
-/**
- * Mirror of `LessonPlanRequest` in
- * `sahayakai-agents/src/sahayakai_agents/agents/lesson_plan/schemas.py`.
- * Hand-typed for now; will be replaced by `dist/types.generated.ts`
- * when the codegen step lands.
- */
-export interface SidecarLessonPlanRequest {
-  topic: string;
-  language?: string;
-  gradeLevels?: string[];
-  useRuralContext?: boolean;
-  ncertChapter?: {
-    title: string;
-    number: number;
-    subject?: string;
-    learningOutcomes: string[];
-  };
-  resourceLevel?: 'low' | 'medium' | 'high';
-  difficultyLevel?: 'remedial' | 'standard' | 'advanced';
-  subject?: string;
-  teacherContext?: string;
-}
+// Phase N.2 — Forensic audit P1 #22. Wire types now imported from
+// `types.generated.ts` (regenerated from the Pydantic source of truth
+// via `sahayakai-agents/scripts/codegen_ts.py`). Public surface
+// preserved: dispatchers / tests still import `Sidecar{LessonPlan,
+// LessonPlanActivity,LessonPlanRequest,LessonPlanResponse}`.
+import type {
+  Activity as GenLessonPlanActivity,
+  LessonPlanRequest as GenLessonPlanRequest,
+  LessonPlanResponse as GenLessonPlanResponse,
+} from './types.generated';
 
-export interface SidecarLessonPlanActivity {
-  phase: 'Engage' | 'Explore' | 'Explain' | 'Elaborate' | 'Evaluate';
-  name: string;
-  description: string;
-  duration: string;
-  teacherTips: string | null;
-  understandingCheck: string | null;
-}
-
-export interface SidecarLessonPlanResponse {
-  title: string;
-  gradeLevel: string | null;
-  duration: string | null;
-  subject: string | null;
-  objectives: string[];
-  keyVocabulary: Array<{ term: string; meaning: string }> | null;
-  materials: string[];
-  activities: SidecarLessonPlanActivity[];
-  assessment: string | null;
-  homework: string | null;
-  language: string;
-
-  /** Phase 3 telemetry — number of revision passes the sidecar ran (0 or 1). */
-  revisionsRun: number;
-  /** The evaluator's verdict on the SHIPPED plan (post-revision if any). */
-  rubric: {
-    scores: {
-      grade_level_alignment: number;
-      objective_assessment_match: number;
-      resource_level_realism: number;
-      language_naturalness: number;
-      scaffolding_present: number;
-      inclusion_signals: number;
-      cultural_appropriateness: number;
-    };
-    safety: boolean;
-    rationale: string;
-    fail_reasons: string[];
-  };
-  sidecarVersion: string;
-}
+export type SidecarLessonPlanActivity = GenLessonPlanActivity;
+export type SidecarLessonPlanRequest = GenLessonPlanRequest;
+export type SidecarLessonPlanResponse = GenLessonPlanResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
@@ -184,6 +136,18 @@ export interface CallSidecarLessonPlanOptions {
   timeoutMs?: number;
   /** Optional fetch impl for tests. Defaults to global `fetch`. */
   fetchImpl?: typeof fetch;
+  /**
+   * Forensic fix P1 #18 - caller-supplied request id for telemetry
+   * correlation. Defaults to a freshly minted hex id.
+   */
+  requestId?: string;
+  /**
+   * Phase R.2: Firebase App Check token forwarded from the browser.
+   * Set as `X-Firebase-AppCheck` header. When undefined / null the
+   * header is omitted; the sidecar's `SAHAYAKAI_REQUIRE_APP_CHECK`
+   * flag decides whether that's a 401 or accepted (rollout mode).
+   */
+  appCheckToken?: string | null;
 }
 
 /**
@@ -207,6 +171,8 @@ export async function callSidecarLessonPlan(
 
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/lesson-plan/generate`;
   const rawBody = JSON.stringify(request);
+  // Phase R.2: signRequest produces the HMAC + timestamp. App Check
+  // (if provided by the caller) is attached as a third header below.
   const { timestamp, digest } = await signRequest(rawBody);
 
   const tokenClient = await getTokenClient(audience);
@@ -214,20 +180,34 @@ export async function callSidecarLessonPlan(
 
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestId = options.requestId ?? newRequestId();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
+
+  // Phase R.2 + Phase U.delta: auto-fetch App Check token when caller
+  // does not pass one. `getFirebaseAppCheckToken()` returns null on
+  // server / SSR — pure-server callers silently omit the header.
+  const appCheckToken =
+    options.appCheckToken === undefined
+      ? await getFirebaseAppCheckToken()
+      : options.appCheckToken;
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    'Content-Type': 'application/json',
+    'X-Content-Digest': digest,
+    'X-Request-Timestamp': timestamp,
+    'X-Request-ID': requestId,
+  };
+  if (appCheckToken) {
+    headers['X-Firebase-AppCheck'] = appCheckToken;
+  }
 
   let res: Response;
   try {
     res = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/json',
-        'X-Content-Digest': digest,
-        'X-Request-Timestamp': timestamp,
-      },
+      headers,
       body: rawBody,
       signal: controller.signal,
     });

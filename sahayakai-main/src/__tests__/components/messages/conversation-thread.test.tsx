@@ -26,6 +26,33 @@ jest.mock('@/app/actions/messages', () => ({
     markConversationReadAction: (...args: any[]) => mockMarkRead(...args),
 }));
 
+// ConversationThread now sends via the `useMessageOutbox` hook (offline-first
+// queue). The hook's `sendWithOutbox` enqueues into IndexedDB and only calls
+// `sendMessageAction` on a flush triggered by network-online events. In jsdom
+// no `online` event fires, so we mock the hook to call `sendMessageAction`
+// synchronously and keep the existing test assertions valid.
+jest.mock('@/hooks/use-message-outbox', () => ({
+    useMessageOutbox: (conversationId: string) => ({
+        outboxMessages: [],
+        sendWithOutbox: (params: {
+            text: string;
+            type?: 'text' | 'resource' | 'audio';
+            resource?: unknown;
+            audioUrl?: string;
+            audioDuration?: number;
+        }) => mockSendMessage({
+            conversationId,
+            text: params.text,
+            type: params.type ?? 'text',
+            resource: params.resource,
+            audioUrl: params.audioUrl,
+            audioDuration: params.audioDuration,
+        }),
+        retryMessage: jest.fn(),
+        mergeWithFirestore: (firestoreMessages: unknown[]) => firestoreMessages,
+    }),
+}));
+
 // Mock VoiceRecorder
 jest.mock('@/components/messages/voice-recorder', () => ({
     VoiceRecorder: ({ onSend, disabled }: { onSend: (url: string, dur: number) => void; disabled?: boolean }) => (

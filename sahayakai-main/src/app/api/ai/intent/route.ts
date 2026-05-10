@@ -50,17 +50,24 @@ export async function POST(request: Request) {
         promptText = prompt || 'Unknown Prompt';
 
         // 1. Determine Intent and extract params
+        const flowOutput = await agentRouterFlow({
+            prompt,
+            language,
+            userId
+        });
         const {
             type: intent,
             topic: extractedTopic,
             gradeLevel: extractedGrade,
             subject: extractedSubject,
-            language: detectedLanguage
-        } = await agentRouterFlow({
-            prompt,
-            language,
-            userId
-        });
+            language: detectedLanguage,
+            // Phase N.1 — typed planned-action queue passed through to
+            // the wire response so v0.4+ clients (OmniOrb post-δ
+            // migration) get a uniform iteration surface across both
+            // off-mode (Genkit) and canary/full (sidecar) paths. Empty
+            // for instantAnswer / unknown / unroutable single-step.
+            plannedActions = [],
+        } = flowOutput;
 
         // Use extracted topic if prompt is generic, otherwise use prompt
         const finalTopic = extractedTopic || prompt;
@@ -116,6 +123,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             type: intent,
+            plannedActions,
             result: result,
         });
 

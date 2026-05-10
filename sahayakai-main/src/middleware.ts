@@ -1,11 +1,51 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify, importX509 } from 'jose';
+import { jwtVerify, importX509, createRemoteJWKSet } from 'jose';
 
 // Firebase Project ID
 const PROJECT_ID = 'sahayakai-b4248';
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`;
 const GOOGLE_CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
+
+// Phase R.2: Firebase App Check JWKS endpoint. App Check tokens are
+// JWTs signed by Firebase's App Check service; verifying them against
+// this key set proves the request came from a registered client app.
+const APP_CHECK_JWKS_URL = 'https://firebaseappcheck.googleapis.com/v1/jwks';
+const APP_CHECK_ISSUER = `https://firebaseappcheck.googleapis.com/${PROJECT_ID}`;
+// `aud` claim format that App Check tokens carry — see
+// https://firebase.google.com/docs/app-check/custom-resource-backend#nodejs
+const APP_CHECK_AUD_PREFIXES = [
+    `projects/${PROJECT_ID}`,
+    'projects/640589855975', // project number
+];
+
+// Cache the JWKS resolver across requests (it has its own internal TTL).
+const _appCheckJwks = createRemoteJWKSet(new URL(APP_CHECK_JWKS_URL));
+
+/**
+ * Verify a Firebase App Check token. Returns the claims on success or
+ * `null` on any failure. We never throw from this function — App Check
+ * is layered on top of ID-token + sidecar HMAC; a transient JWKS fetch
+ * failure should not lock every API caller out.
+ */
+async function verifyAppCheckToken(token: string): Promise<Record<string, unknown> | null> {
+    try {
+        const { payload } = await jwtVerify(token, _appCheckJwks, {
+            issuer: APP_CHECK_ISSUER,
+        });
+        const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+        if (!aud.some((a) => typeof a === 'string' && APP_CHECK_AUD_PREFIXES.includes(a))) {
+            return null;
+        }
+        return payload as Record<string, unknown>;
+    } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.warn('[middleware] App Check verification failed:', (err as Error).message);
+        }
+        return null;
+    }
+}
 
 // Cache Google public certs — they rotate every ~6 h, so 5 h is safe.
 // Without this every API request did a live network call to Google = +50–200 ms.
@@ -85,6 +125,32 @@ export async function middleware(request: NextRequest) {
     }
 
     const requestHeaders = new Headers(request.headers);
+
+    // --- Phase R.2: Firebase App Check verification ---
+    // The browser attaches `X-Firebase-AppCheck` on outbound API calls
+    // (see `@/lib/firebase-app-check`). When the header is present we
+    // verify it; when it is absent we tolerate that for now since
+    // Firebase rolled clients in stages — the sidecar still has its own
+    // App Check gate (`SAHAYAKAI_REQUIRE_APP_CHECK`). On verification
+    // success we stash the originating Firebase app id in `x-app-check-app`
+    // so downstream API handlers can forward the original token to the
+    // sidecar via the same header without re-verifying.
+    if (process.env.APP_CHECK_REQUIRED === 'true') {
+        const appCheckHeader = request.headers.get('X-Firebase-AppCheck');
+        if (!appCheckHeader && pathname.startsWith('/api/ai/')) {
+            // Strict mode (post-rollout): every AI API call must carry an
+            // App Check token.
+            return NextResponse.json({ error: 'Missing App Check token' }, { status: 401 });
+        }
+        if (appCheckHeader) {
+            const claims = await verifyAppCheckToken(appCheckHeader);
+            if (!claims) {
+                return NextResponse.json({ error: 'Invalid App Check token' }, { status: 401 });
+            }
+            const appId = typeof claims.app_id === 'string' ? claims.app_id : '';
+            if (appId) requestHeaders.set('x-app-check-app', appId);
+        }
+    }
 
     // --- Resolve the Firebase ID token ---
     // Priority: Authorization header (API calls) → auth-token cookie (server actions / page requests)

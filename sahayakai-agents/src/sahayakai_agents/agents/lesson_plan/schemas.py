@@ -10,9 +10,18 @@ Phase 3 §3.1 deliverable.
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# Phase J.4 hot-fix (forensic P1 #20): list[str] fields bound the LIST
+# but not the ELEMENTS. A 30-element list of 5MB strings = 150 MB POST
+# body that validates cleanly. Bounds chosen per semantic meaning.
+_LearningOutcome = Annotated[str, StringConstraints(max_length=300)]
+_GradeLevelStr = Annotated[str, StringConstraints(max_length=50)]
+_Objective = Annotated[str, StringConstraints(max_length=300)]
+_Material = Annotated[str, StringConstraints(max_length=500)]
+_FailReason = Annotated[str, StringConstraints(max_length=500)]
 
 # Same 11-language set as parent-call. Lesson-plan also accepts an
 # unspecified default → English server-side; we still constrain to the
@@ -37,7 +46,9 @@ class NcertChapter(BaseModel):
     title: str = Field(min_length=1, max_length=300)
     number: int = Field(ge=1, le=30)
     subject: str | None = Field(default=None, max_length=100)
-    learningOutcomes: list[str] = Field(default_factory=list, max_length=20)
+    learningOutcomes: list[_LearningOutcome] = Field(
+        default_factory=list, max_length=20,
+    )
 
 
 # --- Request -------------------------------------------------------------
@@ -54,12 +65,16 @@ class LessonPlanRequest(BaseModel):
 
     topic: str = Field(min_length=1, max_length=500)
     language: LessonPlanLanguage | None = None
-    gradeLevels: list[str] | None = Field(default=None, max_length=12)
+    gradeLevels: list[_GradeLevelStr] | None = Field(default=None, max_length=12)
     # Image data URI for OCR / multi-modal — Phase 3 ignores it
     # server-side but accepts it on the wire so a future Phase 4
     # multi-modal extension is non-breaking.
     imageDataUri: str | None = Field(default=None, max_length=10_000_000)
-    userId: str | None = Field(default=None, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$")
+    # Phase J.4 (B3 inconsistency): every other agent's userId is
+    # required. Making LessonPlanRequest consistent. Authenticated
+    # callers always have a uid; the Next.js dispatcher injects it
+    # before forwarding to the sidecar.
+    userId: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$")
     teacherContext: str | None = Field(default=None, max_length=2000)
     useRuralContext: bool | None = None
     ncertChapter: NcertChapter | None = None
@@ -103,9 +118,9 @@ class LessonPlanCore(BaseModel):
     gradeLevel: str | None = Field(max_length=50)
     duration: str | None = Field(max_length=50)
     subject: str | None = Field(max_length=100)
-    objectives: list[str] = Field(min_length=1, max_length=15)
+    objectives: list[_Objective] = Field(min_length=1, max_length=15)
     keyVocabulary: list[KeyVocabulary] | None = Field(max_length=20)
-    materials: list[str] = Field(default_factory=list, max_length=30)
+    materials: list[_Material] = Field(default_factory=list, max_length=30)
     activities: list[Activity] = Field(min_length=1, max_length=10)
     assessment: str | None = Field(max_length=2000)
     homework: str | None = Field(max_length=2000)
@@ -145,7 +160,7 @@ class EvaluatorVerdict(BaseModel):
     scores: RubricScores
     safety: bool
     rationale: str = Field(min_length=1, max_length=2000)
-    fail_reasons: list[str] = Field(default_factory=list, max_length=10)
+    fail_reasons: list[_FailReason] = Field(default_factory=list, max_length=10)
 
 
 # --- Wire response ------------------------------------------------------
@@ -165,9 +180,9 @@ class LessonPlanResponse(BaseModel):
     gradeLevel: str | None = Field(default=None, max_length=50)
     duration: str | None = Field(default=None, max_length=50)
     subject: str | None = Field(default=None, max_length=100)
-    objectives: list[str] = Field(min_length=1, max_length=15)
+    objectives: list[_Objective] = Field(min_length=1, max_length=15)
     keyVocabulary: list[KeyVocabulary] | None = Field(default=None, max_length=20)
-    materials: list[str] = Field(default_factory=list, max_length=30)
+    materials: list[_Material] = Field(default_factory=list, max_length=30)
     activities: list[Activity] = Field(min_length=1, max_length=10)
     assessment: str | None = Field(default=None, max_length=2000)
     homework: str | None = Field(default=None, max_length=2000)

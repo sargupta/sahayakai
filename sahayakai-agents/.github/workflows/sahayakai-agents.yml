@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'sahayakai-agents/**'
+      # Phase N.2 — generated TS lives in sahayakai-main now. Trigger
+      # CI when it changes so drift is caught even on PRs that only
+      # touch the Next.js side.
+      - 'sahayakai-main/src/lib/sidecar/types.generated.ts'
   workflow_dispatch:
 
 defaults:
@@ -75,8 +79,14 @@ jobs:
         run: python scripts/codegen_ts.py
 
       - name: Fail on TypeScript codegen drift
+        # Phase N.2 — codegen now emits to two paths. Both must be
+        # up-to-date in the same commit. The agents working dir is the
+        # default, so we check from the repo root for the second path.
+        working-directory: .
         run: |
-          if ! git diff --exit-code dist/types.generated.ts; then
-            echo "::error ::dist/types.generated.ts is stale. Run scripts/codegen_ts.py locally and commit the result."
+          if ! git diff --exit-code \
+              sahayakai-agents/dist/types.generated.ts \
+              sahayakai-main/src/lib/sidecar/types.generated.ts; then
+            echo "::error ::Generated TypeScript types are stale. Run sahayakai-agents/scripts/codegen_ts.py locally and commit the result."
             exit 1
           fi

@@ -56,6 +56,12 @@ log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/parent-call", tags=["parent-call"])
 
+# Per-call timeout for run_resiliently. Parent-call IS the telephony
+# path: total Twilio webhook budget is ~15s and we already burn ~3s on
+# transport + Firestore. 5s caps each Gemini attempt so a hung call
+# falls over to the next key well before Twilio gives up.
+_PER_CALL_TIMEOUT_S = 5.0
+
 # Process-scoped session store. Initialised lazily so tests can swap it.
 _session_store: SessionStore | None = None
 
@@ -91,13 +97,15 @@ async def _call_gemini_structured(
     from google import genai
     from google.genai import types as genai_types
 
+    from ...shared.gemini_schema import gemini_response_schema  # noqa: PLC0415
+
     client = genai.Client(api_key=api_key)
     return await client.aio.models.generate_content(
         model=model,
         contents=prompt,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=response_schema,
+            response_schema=gemini_response_schema(response_schema),
             temperature=0.6,
         ),
     )
@@ -209,6 +217,7 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
             settings.genai_keys,
             span_name="parent_call.reply",
             max_total_backoff_seconds=settings.max_total_backoff_seconds,
+            per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
         )
     except AISafetyBlockError as exc:
         # Safety block: do NOT retry, do NOT surface the raw reason to the
@@ -272,6 +281,20 @@ async def parent_call_reply(payload: AgentReplyRequest) -> AgentReplyResponse:
 
     metrics = extract_cache_metrics(result)
     latency_ms = int((time.monotonic() - started) * 1000)
+    # Forensic fix P1 #18 — per-router event so cost-per-user attribution
+    # joins via `request_id` (set by the request_id middleware).
+    log.info(
+        "parent_call.reply.generated",
+        call_sid=payload.callSid,
+        turn_number=payload.turnNumber,
+        latency_ms=latency_ms,
+        should_end_call=core.shouldEndCall,
+        parent_language=payload.parentLanguage,
+        model_used=model,
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
 
     return AgentReplyResponse(
         reply=core.reply,
@@ -327,6 +350,7 @@ async def parent_call_summary(payload: CallSummaryRequest) -> CallSummaryRespons
         settings.genai_keys,
         span_name="parent_call.summary",
         max_total_backoff_seconds=settings.max_total_backoff_seconds,
+        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
     )
 
     text = _extract_text(result)
@@ -347,6 +371,18 @@ async def parent_call_summary(payload: CallSummaryRequest) -> CallSummaryRespons
 
     metrics = extract_cache_metrics(result)
     latency_ms = int((time.monotonic() - started) * 1000)
+    # Forensic fix P1 #18 — per-router event for the summary path.
+    log.info(
+        "parent_call.summary.generated",
+        call_sid=payload.callSid,
+        latency_ms=latency_ms,
+        parent_language=payload.parentLanguage,
+        call_duration_seconds=payload.callDurationSeconds,
+        model_used=model,
+        tokens_in=metrics.input_tokens if metrics else None,
+        tokens_out=metrics.output_tokens if metrics else None,
+        tokens_cached=metrics.cached_content_tokens if metrics else None,
+    )
 
     return CallSummaryResponse(
         parentResponse=core.parentResponse,
