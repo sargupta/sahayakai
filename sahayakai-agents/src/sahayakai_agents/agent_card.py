@@ -143,11 +143,44 @@ def _security_schemes() -> dict[str, Any]:
             "name": "X-Content-Digest",
             "x-hmac-body-digest": True,
             "description": (
-                "Per-request HMAC-SHA256 body digest. Computed as "
-                "`sha256=<base64(hmac(secret, timestamp + ':' + body))>`. "
-                "NOT a static API key — recomputed per request. "
-                "Send as `X-Content-Digest` header alongside "
-                "`X-Request-Timestamp` (RFC-3339 within 5-min skew window)."
+                "Per-request HMAC-SHA256 body digest binding the request body "
+                "to a timestamp. Computed by the caller as "
+                "`sha256=<base64(hmac(secret, timestamp + ':' + body))>` and "
+                "sent in `X-Content-Digest` alongside `X-Request-Timestamp` "
+                "(unix milliseconds). Both headers are required.\n\n"
+                "**Validity window:** `X-Request-Timestamp` must be within a "
+                "5-minute skew of the server clock (forward or back).\n\n"
+                "**Replay protection:** the server caches every accepted "
+                "`(timestamp, digest)` tuple in a TTL set sized for 10 000 "
+                "entries with a 6-minute TTL (one full skew window past the "
+                "freshest accepted timestamp). Replays return 409 with "
+                "`auth.hmac.replay_detected` in the structured log.\n\n"
+                "**Secret rotation:** the signing secret lives at "
+                "Secret Manager `SAHAYAKAI_REQUEST_SIGNING_KEY`. Callers and "
+                "the sidecar load it once at startup; rotation requires both "
+                "sides to redeploy. NOT a static API key — the digest is "
+                "recomputed per request, so capturing one request never "
+                "yields a long-lived credential."
+            ),
+        },
+        # P3 polish — Phase R.2 added Firebase App Check as a third
+        # auth layer. Document it on the agent card so external tooling
+        # (Postman, Insomnia, gh-agents) can discover the requirement
+        # rather than guessing from a 401 response.
+        "firebaseAppCheck": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Firebase-AppCheck",
+            "description": (
+                "Firebase App Check token attesting that the calling client "
+                "is the legitimate Sahayakai Next.js front-end (not curl, "
+                "not a stolen ID token replayed from a hostile script). "
+                "Verified server-side against the project's App Check JWKS "
+                "before the request reaches the sub-router. Optional in "
+                "dev (controlled by the `SAHAYAKAI_REQUIRE_APP_CHECK` env "
+                "flag); required once flipped on in prod. Server-side "
+                "callers (Cloud Scheduler, cron jobs) skip this header — "
+                "their Google ID token is sufficient."
             ),
         },
     }
@@ -187,6 +220,10 @@ def build_agent_card(*, audience: str | None) -> dict[str, Any]:
         # P0 #67 — securitySchemes describes HOW callers authenticate;
         # `security` says which combinations are required. Both must
         # be satisfied (single AND-block).
+        # P3 polish — `firebaseAppCheck` listed as optional (empty
+        # scope array, no AND-required entry) since the requirement is
+        # gated by `SAHAYAKAI_REQUIRE_APP_CHECK` and not enforced by
+        # default in dev.
         "securitySchemes": _security_schemes(),
         "security": [
             {

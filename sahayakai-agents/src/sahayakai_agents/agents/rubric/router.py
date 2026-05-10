@@ -20,7 +20,7 @@ from typing import Any
 import structlog
 from fastapi import APIRouter
 
-from ..._adk_keyed_gemini import build_keyed_gemini
+from ..._adk_keyed_gemini import build_keyed_gemini_from_template
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
@@ -60,18 +60,10 @@ _RUBRIC_APP_NAME = "sahayakai-rubric"
 def _build_keyed_gemini(api_key: str) -> Any:
     """Build a `Gemini` model wrapper pinned to a specific api_key.
 
-    Mirrors L.1 vidya's pattern. The cached agent's `.model` is typed
-    `Union[str, BaseLlm]` by ADK — we know our cached template carries
-    a string (see `build_rubric_agent`). Coerce so the helper sees a
-    `str` model name.
+    Phase L.6 — see `_adk_keyed_gemini.build_keyed_gemini_from_template`
+    for the shared implementation.
     """
-    template_model = build_rubric_agent().model
-    model_name = (
-        template_model
-        if isinstance(template_model, str)
-        else template_model.model
-    )
-    return build_keyed_gemini(model_name=model_name, api_key=api_key)
+    return build_keyed_gemini_from_template(build_rubric_agent, api_key)
 
 
 async def _run_pipeline_via_runner(
