@@ -3386,6 +3386,63 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "SahayakAI എന്നത് SARGVISION Intelligence ന്റെ ഒരു ഉൽപ്പന്നമാണ്.",
         "Odia": "SahayakAI ହେଉଛି SARGVISION Intelligence ର ଏକ ଉତ୍ପାଦ।"
     },
+    "Enter Marks": {
+        "English": "Enter Marks", "Hindi": "अंक दर्ज करें", "Kannada": "ಅಂಕಗಳನ್ನು ನಮೂದಿಸಿ", "Tamil": "மதிப்பெண்களை உள்ளிடவும்", "Telugu": "మార్కులు నమోదు చేయండి", "Marathi": "गुण प्रविष्ट करा", "Bengali": "নম্বর লিখুন", "Gujarati": "ગુણ દાખલ કરો", "Punjabi": "ਅੰਕ ਦਾਖਲ ਕਰੋ", "Malayalam": "മാർക്ക് നൽകുക", "Odia": "ନମ୍ବର ପ୍ରବେଶ କରନ୍ତୁ"
+    },
+    "Fill in assessment details and student marks": {
+        "English": "Fill in assessment details and student marks", "Hindi": "मूल्यांकन विवरण और छात्र अंक भरें", "Kannada": "ಮೌಲ್ಯಮಾಪನ ವಿವರಗಳು ಮತ್ತು ವಿದ್ಯಾರ್ಥಿಗಳ ಅಂಕಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ", "Tamil": "மதிப்பீட்டு விவரங்கள் மற்றும் மாணவர் மதிப்பெண்களை நிரப்பவும்", "Telugu": "మూల్యాంకన వివరాలు మరియు విద్యార్థుల మార్కులను నింపండి", "Marathi": "मूल्यमापन तपशील आणि विद्यार्थ्यांचे गुण भरा", "Bengali": "মূল্যায়নের বিবরণ এবং শিক্ষার্থীদের নম্বর পূরণ করুন", "Gujarati": "મૂલ્યાંકન વિગતો અને વિદ્યાર્થી ગુણ ભરો", "Punjabi": "ਮੁਲਾਂਕਣ ਵੇਰਵੇ ਅਤੇ ਵਿਦਿਆਰਥੀ ਅੰਕ ਭਰੋ", "Malayalam": "മൂല്യനിർണ്ണയ വിശദാംശങ്ങളും വിദ്യാർഥി മാർക്കും പൂരിപ്പിക്കുക", "Odia": "ମୂଲ୍ୟାୟନ ବିବରଣୀ ଏବଂ ଛାତ୍ର ନମ୍ବର ପୂରଣ କରନ୍ତୁ"
+    },
+    "Assessment Details": {
+        "English": "Assessment Details", "Hindi": "मूल्यांकन विवरण", "Kannada": "ಮೌಲ್ಯಮಾಪನ ವಿವರಗಳು", "Tamil": "மதிப்பீட்டு விவரங்கள்", "Telugu": "మూల్యాంకన వివరాలు", "Marathi": "मूल्यमापन तपशील", "Bengali": "মূল্যায়নের বিবরণ", "Gujarati": "મૂલ્યાંકન વિગતો", "Punjabi": "ਮੁਲਾਂਕਣ ਵੇਰਵੇ", "Malayalam": "മൂല്യനിർണ്ണയ വിശദാംശങ്ങൾ", "Odia": "ମୂଲ୍ୟାୟନ ବିବରଣୀ"
+    },
+    "Assessment Name": {
+        "English": "Assessment Name", "Hindi": "मूल्यांकन का नाम", "Kannada": "ಮೌಲ್ಯಮಾಪನದ ಹೆಸರು", "Tamil": "மதிப்பீட்டின் பெயர்", "Telugu": "మూల్యాంకన పేరు", "Marathi": "मूल्यमापनाचे नाव", "Bengali": "মূল্যায়নের নাম", "Gujarati": "મૂલ્યાંકનનું નામ", "Punjabi": "ਮੁਲਾਂਕਣ ਦਾ ਨਾਮ", "Malayalam": "മൂല്യനിർണ്ണയത്തിന്റെ പേര്", "Odia": "ମୂଲ୍ୟାୟନର ନାମ"
+    },
+    "e.g. Unit Test 1 - Algebra": {
+        "English": "e.g. Unit Test 1 - Algebra", "Hindi": "जैसे यूनिट टेस्ट 1 - बीजगणित", "Kannada": "ಉದಾ. ಯೂನಿಟ್ ಟೆಸ್ಟ್ 1 - ಬೀಜಗಣಿತ", "Tamil": "எ.கா. யூனிட் டெஸ்ட் 1 - இயற்கணிதம்", "Telugu": "ఉదా. యూనిట్ టెస్ట్ 1 - బీజగణితం", "Marathi": "उदा. युनिट टेस्ट 1 - बीजगणित", "Bengali": "যেমন ইউনিট টেস্ট ১ - বীজগণিত", "Gujarati": "દા.ત. યુનિટ ટેસ્ટ 1 - બીજગણિત", "Punjabi": "ਜਿਵੇਂ ਯੂਨਿਟ ਟੈਸਟ 1 - ਬੀਜਗਣਿਤ", "Malayalam": "ഉദാ. യൂണിറ്റ് ടെസ്റ്റ് 1 - ബീജഗണിതം", "Odia": "ଉଦାହରଣ: ୟୁନିଟ୍ ଟେଷ୍ଟ୍ 1 - ବୀଜଗଣିତ"
+    },
+    "Type": {
+        "English": "Type", "Hindi": "प्रकार", "Kannada": "ಪ್ರಕಾರ", "Tamil": "வகை", "Telugu": "రకం", "Marathi": "प्रकार", "Bengali": "ধরন", "Gujarati": "પ્રકાર", "Punjabi": "ਕਿਸਮ", "Malayalam": "തരം", "Odia": "ପ୍ରକାର"
+    },
+    "Max Marks": {
+        "English": "Max Marks", "Hindi": "अधिकतम अंक", "Kannada": "ಗರಿಷ್ಠ ಅಂಕಗಳು", "Tamil": "அதிகபட்ச மதிப்பெண்கள்", "Telugu": "గరిష్ట మార్కులు", "Marathi": "कमाल गुण", "Bengali": "সর্বোচ্চ নম্বর", "Gujarati": "મહત્તમ ગુણ", "Punjabi": "ਵੱਧ ਤੋਂ ਵੱਧ ਅੰਕ", "Malayalam": "പരമാവധി മാർക്ക്", "Odia": "ସର୍ବାଧିକ ନମ୍ବର"
+    },
+    "Term": {
+        "English": "Term", "Hindi": "सत्र", "Kannada": "ಅವಧಿ", "Tamil": "பருவம்", "Telugu": "పదం", "Marathi": "सत्र", "Bengali": "মেয়াদ", "Gujarati": "સત્ર", "Punjabi": "ਸਮਾਂ", "Malayalam": "കാലയളവ്", "Odia": "ସମୟ"
+    },
+    "Date": {
+        "English": "Date", "Hindi": "तारीख़", "Kannada": "ದಿನಾಂಕ", "Tamil": "தேதி", "Telugu": "తేదీ", "Marathi": "तारीख", "Bengali": "তারিখ", "Gujarati": "તારીખ", "Punjabi": "ਮਿਤੀ", "Malayalam": "തീയതി", "Odia": "ତାରିଖ"
+    },
+    "Academic Year": {
+        "English": "Academic Year", "Hindi": "शैक्षणिक वर्ष", "Kannada": "ಶೈಕ್ಷಣಿಕ ವರ್ಷ", "Tamil": "கல்வி ஆண்டு", "Telugu": "విద్యా సంవత్సరం", "Marathi": "शैक्षणिक वर्ष", "Bengali": "শিক্ষাবর্ষ", "Gujarati": "શૈક્ષણિક વર્ષ", "Punjabi": "ਅਕਾਦਮਿਕ ਸਾਲ", "Malayalam": "അക്കാദമിക് വർഷം", "Odia": "ଶିକ୍ଷାବର୍ଷ"
+    },
+    "No students in this class": {
+        "English": "No students in this class", "Hindi": "इस कक्षा में कोई छात्र नहीं", "Kannada": "ಈ ತರಗತಿಯಲ್ಲಿ ವಿದ್ಯಾರ್ಥಿಗಳಿಲ್ಲ", "Tamil": "இந்த வகுப்பில் மாணவர்கள் இல்லை", "Telugu": "ఈ తరగతిలో విద్యార్థులు లేరు", "Marathi": "या वर्गात कोणतेही विद्यार्थी नाहीत", "Bengali": "এই ক্লাসে কোনো শিক্ষার্থী নেই", "Gujarati": "આ વર્ગમાં કોઈ વિદ્યાર્થી નથી", "Punjabi": "ਇਸ ਜਮਾਤ ਵਿੱਚ ਕੋਈ ਵਿਦਿਆਰਥੀ ਨਹੀਂ", "Malayalam": "ഈ ക്ലാസിൽ വിദ്യാർഥികളില്ല", "Odia": "ଏହି ଶ୍ରେଣୀରେ କୌଣସି ଛାତ୍ର ନାହାନ୍ତି"
+    },
+    "Add students first from the class page.": {
+        "English": "Add students first from the class page.", "Hindi": "पहले कक्षा पृष्ठ से छात्र जोड़ें।", "Kannada": "ಮೊದಲು ತರಗತಿ ಪುಟದಿಂದ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಸೇರಿಸಿ.", "Tamil": "முதலில் வகுப்பு பக்கத்திலிருந்து மாணவர்களைச் சேர்க்கவும்.", "Telugu": "ముందుగా తరగతి పేజీ నుండి విద్యార్థులను జోడించండి.", "Marathi": "प्रथम वर्ग पृष्ठावरून विद्यार्थी जोडा.", "Bengali": "প্রথমে ক্লাস পৃষ্ঠা থেকে শিক্ষার্থী যোগ করুন।", "Gujarati": "પહેલા વર્ગ પેજ પરથી વિદ્યાર્થીઓ ઉમેરો.", "Punjabi": "ਪਹਿਲਾਂ ਜਮਾਤ ਪੰਨੇ ਤੋਂ ਵਿਦਿਆਰਥੀ ਜੋੜੋ।", "Malayalam": "ആദ്യം ക്ലാസ് പേജിൽ നിന്ന് വിദ്യാർഥികളെ ചേർക്കുക.", "Odia": "ପ୍ରଥମେ ଶ୍ରେଣୀ ପୃଷ୍ଠାରୁ ଛାତ୍ରମାନଙ୍କୁ ଯୋଡନ୍ତୁ।"
+    },
+    "Roll": {
+        "English": "Roll", "Hindi": "रोल", "Kannada": "ರೋಲ್", "Tamil": "எண்", "Telugu": "నంబర్", "Marathi": "रोल", "Bengali": "রোল", "Gujarati": "રોલ", "Punjabi": "ਰੋਲ", "Malayalam": "റോൾ", "Odia": "ରୋଲ"
+    },
+    "Name": {
+        "English": "Name", "Hindi": "नाम", "Kannada": "ಹೆಸರು", "Tamil": "பெயர்", "Telugu": "పేరు", "Marathi": "नाव", "Bengali": "নাম", "Gujarati": "નામ", "Punjabi": "ਨਾਮ", "Malayalam": "പേര്", "Odia": "ନାମ"
+    },
+    "Marks": {
+        "English": "Marks", "Hindi": "अंक", "Kannada": "ಅಂಕಗಳು", "Tamil": "மதிப்பெண்கள்", "Telugu": "మార్కులు", "Marathi": "गुण", "Bengali": "নম্বর", "Gujarati": "ગુણ", "Punjabi": "ਅੰਕ", "Malayalam": "മാർക്ക്", "Odia": "ନମ୍ବର"
+    },
+    "Grade": {
+        "English": "Grade", "Hindi": "ग्रेड", "Kannada": "ಗ್ರೇಡ್", "Tamil": "தரம்", "Telugu": "గ్రేడ్", "Marathi": "श्रेणी", "Bengali": "গ্রেড", "Gujarati": "ગ્રેડ", "Punjabi": "ਗ੍ਰੇਡ", "Malayalam": "ഗ്രേഡ്", "Odia": "ଗ୍ରେଡ୍"
+    },
+    "Remarks": {
+        "English": "Remarks", "Hindi": "टिप्पणी", "Kannada": "ಟಿಪ್ಪಣಿಗಳು", "Tamil": "குறிப்புகள்", "Telugu": "వ్యాఖ్యలు", "Marathi": "टिप्पण्या", "Bengali": "মন্তব্য", "Gujarati": "ટિપ્પણીઓ", "Punjabi": "ਟਿੱਪਣੀਆਂ", "Malayalam": "അഭിപ്രായങ്ങൾ", "Odia": "ମନ୍ତବ୍ୟ"
+    },
+    "Optional": {
+        "English": "Optional", "Hindi": "वैकल्पिक", "Kannada": "ಐಚ್ಛಿಕ", "Tamil": "விருப்பப்படி", "Telugu": "ఐచ్ఛికం", "Marathi": "ऐच्छिक", "Bengali": "ঐচ্ছিক", "Gujarati": "વૈકલ્પિક", "Punjabi": "ਵਿਕਲਪਿਕ", "Malayalam": "ഓപ്ഷണൽ", "Odia": "ବିକଳ୍ପ"
+    },
+    "Save Marks": {
+        "English": "Save Marks", "Hindi": "अंक सहेजें", "Kannada": "ಅಂಕಗಳನ್ನು ಉಳಿಸಿ", "Tamil": "மதிப்பெண்களைச் சேமி", "Telugu": "మార్కులు సేవ్ చేయండి", "Marathi": "गुण जतन करा", "Bengali": "নম্বর সংরক্ষণ করুন", "Gujarati": "ગુણ સાચવો", "Punjabi": "ਅੰਕ ਸੰਭਾਲੋ", "Malayalam": "മാർക്ക് സേവ് ചെയ്യുക", "Odia": "ନମ୍ବର ସଞ୍ଚୟ କରନ୍ତୁ"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:
