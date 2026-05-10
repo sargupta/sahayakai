@@ -158,9 +158,17 @@ async function _handler(req: Request) {
             },
         });
 
+        // P5: surface `plannedActions` to the client so OmniOrb can render
+        // confirm-chips for compound intents ("make a quiz AND a worksheet
+        // on photosynthesis"). The supervisor authors up to 3 actions; the
+        // teacher taps each chip explicitly. `action` (singular) stays
+        // populated as `plannedActions[0]` for v0.3 client compatibility —
+        // older OmniOrb builds ignore the plural field and auto-navigate
+        // on `action`.
         const wireResponse = {
             response: dispatched.response,
             action: dispatched.action,
+            plannedActions: dispatched.plannedActions,
         };
 
         if (isFreshQuery) {

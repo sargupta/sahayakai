@@ -140,8 +140,15 @@ const ROUTES: Route[] = [
         path: '/api/ai/intent',
         handler: { kind: 'json', status: 200, body: { action: 'NAVIGATE', url: '/quiz-generator?topic=photosynthesis' } },
     },
-    // voice-to-text is intentionally unmocked — the harness should SKIP
-    // because the fixture file isn't present.
+    // P6: voice-tiny.webm is now checked in, so the harness uploads the
+    // fixture and expects a 200 with `text`. Mock returns a deterministic
+    // string regardless of audio content (this exercises the multipart
+    // wiring, not the model).
+    {
+        method: 'POST',
+        path: '/api/ai/voice-to-text',
+        handler: { kind: 'json', status: 200, body: { text: 'photosynthesis is the way plants make food' } },
+    },
     {
         method: 'POST',
         path: '/api/ai/lesson-plan/stream',
@@ -220,6 +227,12 @@ function startMock(): Promise<{ server: Server; baseUrl: string }> {
         });
     });
 }
+
+// Smoke-test exercises a real shell script that spawns curl probes
+// against a local mock server — under heavy parallel jest load this
+// can briefly exceed the default 5s budget. 30s is plenty in
+// practice and prevents flaky CI failures.
+jest.setTimeout(30_000);
 
 describe('scripts/smoke-test-ai-flows.sh', () => {
     let server: Server;
@@ -312,11 +325,12 @@ describe('scripts/smoke-test-ai-flows.sh', () => {
 
         // 17 probes total.
         expect(total).toBe(17);
-        // Exactly two SKIPs against this mock: voice-to-text (no fixture)
-        // and quiz/health (admin-only without TEST_AS_ADMIN).
-        expect(skip).toBe(2);
+        // Exactly one SKIP against this mock: quiz/health (admin-only without
+        // TEST_AS_ADMIN). Since P6 the voice-to-text fixture is checked in
+        // and the probe runs successfully against the mock.
+        expect(skip).toBe(1);
         expect(fail).toBe(0);
-        expect(pass).toBe(15);
+        expect(pass).toBe(16);
 
         // Sample assertion: lesson-plan note carries the title prefix the
         // script extracted from the canned body.
