@@ -86,18 +86,58 @@ const nextConfig: NextConfig = {
       ],
     };
   },
-  // Cache-Control headers — prevents stale deployment errors.
+  // Cache-Control headers â prevents stale deployment errors.
   // HTML pages: no-store so browsers always fetch fresh HTML with the current build ID.
   // Static chunks: immutable (content-addressed filenames change with every build).
   async headers() {
     return [
+      // ââ Marketing / SEO pages â CDN-cacheable, browser-fresh ââ
+      // s-maxage lets GCLB/CDN serve cached HTML; stale-while-revalidate
+      // lets the CDN serve stale while fetching fresh in the background.
+      // max-age=0 means browsers always revalidate with the CDN.
       {
-        // All HTML pages — never cache, always get fresh build ID from server
-        source: '/((?!_next/static|_next/image|favicon\\.ico).*)',
+        source: '/blog/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/about',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/for-schools',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/pricing',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/faq',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/hi/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/bn/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/kn/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/ta/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        // All other HTML pages (app, dashboard, etc.) â never cache
+        source: '/((?!_next/static|_next/image|favicon\\.ico|blog|about|for-schools|pricing|faq|hi|bn|kn|ta).*)',
         headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
       },
       {
-        // Static JS/CSS chunks are content-addressed — safe to cache forever
+        // Static JS/CSS chunks are content-addressed â safe to cache forever
         source: '/_next/static/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
