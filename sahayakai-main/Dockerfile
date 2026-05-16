@@ -39,7 +39,10 @@ ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN npm run build
+# Next.js build of this app peaks around 2.4-3 GB; default heap is ~2 GB on
+# Cloud Build's standard machines, so the build OOMs with "Ineffective mark-
+# compacts near heap limit". Bump the V8 heap ceiling for the build step.
+RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
