@@ -54,11 +54,19 @@ function ClassDetailContent() {
             const s = await getStudentSummariesAction(classId, now.getFullYear(), now.getMonth() + 1);
             setSummaries(s);
         } catch (err: any) {
-            toast({ title: "Error loading class", description: err.message, variant: "destructive" });
+            // Server-action errors arrive as the Next.js production-redacted
+            // wrapper string. Don't surface that to the user — the real cause
+            // is logged server-side via the `instrument` wrapper.
+            console.error('[attendance] loadAll failed', err);
+            toast({
+                title: t("Could not load class"),
+                description: t("Something went wrong — please refresh and try again."),
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
-    }, [classId, toast]);
+    }, [classId, toast, t]);
 
     useEffect(() => {
         loadAll();

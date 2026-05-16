@@ -3,12 +3,29 @@
 import { getDb } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { dbAdapter } from '@/lib/db/adapter';
+import { logger } from '@/lib/logger';
 import type {
     ClassRecord, Student, DailyAttendanceRecord,
     ParentOutreach, StudentAttendanceSummary, AttendanceStatus, OutreachReason,
 } from '@/types/attendance';
 import type { Language, GradeLevel, Subject } from '@/types';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
+
+// Wrap an action so the underlying error reaches Cloud Logging before Next.js
+// redacts it. The page-level `err.message` will still be the production-wrapped
+// "Server Components render" string — but Cloud Logging now has the real cause.
+async function instrument<T>(
+    name: string,
+    ctx: Record<string, unknown>,
+    fn: () => Promise<T>,
+): Promise<T> {
+    try {
+        return await fn();
+    } catch (err) {
+        logger.error(`[attendance] ${name} failed`, err, 'ATTENDANCE', ctx);
+        throw err;
+    }
+}
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -88,16 +105,18 @@ export async function getClassesAction(): Promise<ClassRecord[]> {
 }
 
 export async function getClassAction(classId: string): Promise<ClassRecord | null> {
-    const uid = await getAuthUserId();
-    const db = await getDb();
+    return instrument('getClassAction', { classId }, async () => {
+        const uid = await getAuthUserId();
+        const db = await getDb();
 
-    const doc = await db.collection('classes').doc(classId).get();
-    if (!doc.exists) return null;
+        const doc = await db.collection('classes').doc(classId).get();
+        if (!doc.exists) return null;
 
-    const data = doc.data() as Omit<ClassRecord, 'id'>;
-    if (data.teacherUid !== uid) throw new Error('Unauthorized');
+        const data = doc.data() as Omit<ClassRecord, 'id'>;
+        if (data.teacherUid !== uid) throw new Error('Unauthorized');
 
-    return { id: doc.id, ...data };
+        return { id: doc.id, ...data };
+    });
 }
 
 export async function updateClassAction(classId: string, data: {
@@ -205,19 +224,21 @@ export async function addStudentAction(classId: string, data: {
 }
 
 export async function getStudentsAction(classId: string): Promise<Student[]> {
-    const uid = await getAuthUserId();
-    const db = await getDb();
+    return instrument('getStudentsAction', { classId }, async () => {
+        const uid = await getAuthUserId();
+        const db = await getDb();
 
-    const classDoc = await db.collection('classes').doc(classId).get();
-    if (!classDoc.exists) throw new Error('Class not found');
-    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+        const classDoc = await db.collection('classes').doc(classId).get();
+        if (!classDoc.exists) throw new Error('Class not found');
+        if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
 
-    const snap = await db.collection('classes').doc(classId)
-        .collection('students')
-        .orderBy('rollNumber', 'asc')
-        .get();
+        const snap = await db.collection('classes').doc(classId)
+            .collection('students')
+            .orderBy('rollNumber', 'asc')
+            .get();
 
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
+    });
 }
 
 export async function updateStudentAction(classId: string, studentId: string, data: {
@@ -355,62 +376,64 @@ export async function getStudentSummariesAction(
     year: number,
     month: number,
 ): Promise<StudentAttendanceSummary[]> {
-    const uid = await getAuthUserId();
-    const db = await getDb();
+    return instrument('getStudentSummariesAction', { classId, year, month }, async () => {
+        const uid = await getAuthUserId();
+        const db = await getDb();
 
-    const classDoc = await db.collection('classes').doc(classId).get();
-    if (!classDoc.exists) return [];
-    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+        const classDoc = await db.collection('classes').doc(classId).get();
+        if (!classDoc.exists) return [];
+        if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
 
-    // Query students and monthly attendance in parallel — avoids double auth round-trip
-    // of calling getStudentsAction + getMonthlyAttendanceAction (each re-checks auth).
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const nextMonth = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        // Query students and monthly attendance in parallel — avoids double auth round-trip
+        // of calling getStudentsAction + getMonthlyAttendanceAction (each re-checks auth).
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        const nextMonth = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
-    const [studentsSnap, attendanceSnap] = await Promise.all([
-        db.collection('classes').doc(classId).collection('students').orderBy('rollNumber', 'asc').get(),
-        db.collection('attendance').doc(classId).collection('records')
-            .where('date', '>=', startDate).where('date', '<', nextMonth).get(),
-    ]);
+        const [studentsSnap, attendanceSnap] = await Promise.all([
+            db.collection('classes').doc(classId).collection('students').orderBy('rollNumber', 'asc').get(),
+            db.collection('attendance').doc(classId).collection('records')
+                .where('date', '>=', startDate).where('date', '<', nextMonth).get(),
+        ]);
 
-    const students = studentsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
-    const attendanceMap: Record<string, DailyAttendanceRecord> = {};
-    attendanceSnap.docs.forEach((d) => { attendanceMap[d.id] = d.data() as DailyAttendanceRecord; });
+        const students = studentsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
+        const attendanceMap: Record<string, DailyAttendanceRecord> = {};
+        attendanceSnap.docs.forEach((d) => { attendanceMap[d.id] = d.data() as DailyAttendanceRecord; });
 
 
-    const summaries: StudentAttendanceSummary[] = students.map((student) => {
-        let presentDays = 0;
-        let absentDays = 0;
-        let lateDays = 0;
-        let consecutiveAbsences = 0;
-        let currentStreak = 0;
+        const summaries: StudentAttendanceSummary[] = students.map((student) => {
+            let presentDays = 0;
+            let absentDays = 0;
+            let lateDays = 0;
+            let consecutiveAbsences = 0;
+            let currentStreak = 0;
 
-        const sortedDates = Object.keys(attendanceMap).sort();
-        for (const date of sortedDates) {
-            const status = attendanceMap[date].records[student.id];
-            if (!status) continue;
-            if (status === 'present') { presentDays++; currentStreak = 0; }
-            else if (status === 'absent') { absentDays++; currentStreak++; consecutiveAbsences = Math.max(consecutiveAbsences, currentStreak); }
-            else if (status === 'late') { lateDays++; currentStreak = 0; }
-        }
+            const sortedDates = Object.keys(attendanceMap).sort();
+            for (const date of sortedDates) {
+                const status = attendanceMap[date].records[student.id];
+                if (!status) continue;
+                if (status === 'present') { presentDays++; currentStreak = 0; }
+                else if (status === 'absent') { absentDays++; currentStreak++; consecutiveAbsences = Math.max(consecutiveAbsences, currentStreak); }
+                else if (status === 'late') { lateDays++; currentStreak = 0; }
+            }
 
-        const totalDays = presentDays + absentDays + lateDays;
-        const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
+            const totalDays = presentDays + absentDays + lateDays;
+            const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
 
-        return {
-            studentId: student.id,
-            studentName: student.name,
-            rollNumber: student.rollNumber,
-            totalDays,
-            presentDays,
-            absentDays,
-            lateDays,
-            attendanceRate,
-            consecutiveAbsences,
-        };
+            return {
+                studentId: student.id,
+                studentName: student.name,
+                rollNumber: student.rollNumber,
+                totalDays,
+                presentDays,
+                absentDays,
+                lateDays,
+                attendanceRate,
+                consecutiveAbsences,
+            };
+        });
+
+        return dbAdapter.serialize(summaries) as StudentAttendanceSummary[];
     });
-
-    return dbAdapter.serialize(summaries) as StudentAttendanceSummary[];
 }
 
 // ── Parent Outreach ───────────────────────────────────────────────────────────
@@ -487,11 +510,13 @@ export async function getOutreachHistoryAction(
 // ── Twilio config check ───────────────────────────────────────────────────────
 
 export async function getTwilioConfigStatusAction(): Promise<{ configured: boolean }> {
-    await getAuthUserId(); // auth check
-    const configured = !!(
-        process.env.TWILIO_ACCOUNT_SID &&
-        process.env.TWILIO_AUTH_TOKEN &&
-        process.env.TWILIO_PHONE_NUMBER
-    );
-    return { configured };
+    return instrument('getTwilioConfigStatusAction', {}, async () => {
+        await getAuthUserId(); // auth check
+        const configured = !!(
+            process.env.TWILIO_ACCOUNT_SID &&
+            process.env.TWILIO_AUTH_TOKEN &&
+            process.env.TWILIO_PHONE_NUMBER
+        );
+        return { configured };
+    });
 }
