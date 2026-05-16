@@ -12,6 +12,9 @@ README.md
 docs/
 output/
 scripts/
+# openapi-spec.ts imports from scripts/api-test/route-manifest at build time —
+# keep it in the upload so `next build` can resolve the module.
+!scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/
