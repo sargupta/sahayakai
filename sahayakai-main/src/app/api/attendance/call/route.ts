@@ -74,6 +74,12 @@ export async function POST(req: NextRequest) {
         callParams.append('To', callTo);
         callParams.append('From', TWILIO_PHONE_NUMBER.trim()); // env var has occasionally been set with a trailing newline
         callParams.append('Url', twimlUrl);
+        // The initial TwiML URL must be fetched with GET — our route's GET
+        // handler delivers the greeting + teacher message + first <Gather>.
+        // Without this, Twilio defaults to POST, hits our POST branch, sees no
+        // SpeechResult and immediately plays the "didn't catch that" prompt
+        // (e.g. "क्षमा करा, मला ऐकू आले नाही" in Marathi) instead of greeting.
+        callParams.append('Method', 'GET');
         callParams.append('StatusCallback', statusCallbackUrl);
         for (const event of ['initiated', 'ringing', 'answered', 'completed']) {
             callParams.append('StatusCallbackEvent', event);
