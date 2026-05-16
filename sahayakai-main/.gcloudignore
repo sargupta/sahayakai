@@ -11,7 +11,12 @@ __pycache__/
 README.md
 docs/
 output/
-scripts/
+# Exclude scripts/* (not scripts/ itself) so we can re-include the api-test
+# subdir — gitignore syntax can't re-include from an excluded directory.
+scripts/*
+# openapi-spec.ts imports from scripts/api-test/route-manifest at build time —
+# keep it in the upload so `next build` can resolve the module.
+!scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/

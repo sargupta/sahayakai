@@ -64,6 +64,30 @@ export async function POST(req: NextRequest) {
         // Initiate Twilio call via REST API
         // Use Singapore edge for lower latency to India (asia-south1 deployment)
         const twilioAuth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+
+        // StatusCallbackEvent must be sent as REPEATED form params (one per event),
+        // not a single space-separated string — passing 'initiated ringing answered
+        // completed' as one value triggers Twilio warning 21626 "invalid
+        // statusCallbackEvents" and silently disables status callbacks, leaving the
+        // UI stuck polling because terminal call status never reaches us.
+        const callParams = new URLSearchParams();
+        callParams.append('To', callTo);
+        callParams.append('From', TWILIO_PHONE_NUMBER.trim()); // env var has occasionally been set with a trailing newline
+        callParams.append('Url', twimlUrl);
+        // The initial TwiML URL must be fetched with GET — our route's GET
+        // handler delivers the greeting + teacher message + first <Gather>.
+        // Without this, Twilio defaults to POST, hits our POST branch, sees no
+        // SpeechResult and immediately plays the "didn't catch that" prompt
+        // (e.g. "क्षमा करा, मला ऐकू आले नाही" in Marathi) instead of greeting.
+        callParams.append('Method', 'GET');
+        callParams.append('StatusCallback', statusCallbackUrl);
+        for (const event of ['initiated', 'ringing', 'answered', 'completed']) {
+            callParams.append('StatusCallbackEvent', event);
+        }
+        callParams.append('StatusCallbackMethod', 'POST');
+        callParams.append('Timeout', '30');                  // Ring for 30s before giving up
+        callParams.append('MachineDetection', 'DetectMessageEnd'); // Detect voicemail; wait for beep before playing message
+
         const twilioRes = await fetch(
             `https://api.singapore.us1.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`,
             {
@@ -72,16 +96,7 @@ export async function POST(req: NextRequest) {
                     'Authorization': `Basic ${twilioAuth}`,
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({
-                    To:                  callTo,
-                    From:                TWILIO_PHONE_NUMBER,
-                    Url:                 twimlUrl,
-                    StatusCallback:      statusCallbackUrl,
-                    StatusCallbackEvent: 'initiated ringing answered completed',
-                    StatusCallbackMethod:'POST',
-                    Timeout:             '30',            // Ring for 30s before giving up
-                    MachineDetection:    'DetectMessageEnd', // Detect voicemail; wait for beep before playing message
-                }).toString(),
+                body: callParams.toString(),
             }
         );
 

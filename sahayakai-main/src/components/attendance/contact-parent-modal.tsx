@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { ToastAction } from "@/components/ui/toast";
 import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
 import type { Student, OutreachReason, CallSummary, TranscriptTurn, PerformanceContext } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import {
     Loader2, Phone, Copy, RefreshCw, CheckCircle2,
     CalendarX2, TrendingDown, AlertTriangle, Star,
@@ -53,6 +56,8 @@ export function ContactParentModal({
 }: ContactParentModalProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
+    const router = useRouter();
 
     const [step, setStep] = useState<Step>("reason");
     const [reason, setReason] = useState<OutreachReason | null>(null);
@@ -228,13 +233,56 @@ export function ContactParentModal({
                 }),
             });
 
-            if (!res.ok) throw new Error('Failed to generate message');
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({} as Record<string, unknown>));
+                const code = typeof body.error === 'string' ? body.error : '';
+                const serverMessage = typeof body.message === 'string' ? body.message : '';
+
+                if (code === 'PLAN_UPGRADE_REQUIRED') {
+                    toast({
+                        title: 'Upgrade required',
+                        description: serverMessage || 'AI parent messaging is a Pro feature.',
+                        variant: 'destructive',
+                        action: (
+                            <ToastAction altText="View pricing" onClick={() => router.push('/pricing')}>
+                                Upgrade
+                            </ToastAction>
+                        ),
+                    });
+                    return;
+                }
+
+                if (code === 'DAILY_LIMIT_REACHED' || code === 'USAGE_LIMIT_REACHED') {
+                    toast({
+                        title: 'Usage limit reached',
+                        description: serverMessage || 'You have used your message allowance for this period.',
+                        variant: 'destructive',
+                    });
+                    return;
+                }
+
+                if (code === 'AI_SERVICE_BUSY' || res.status === 503) {
+                    toast({
+                        title: 'AI service is busy',
+                        description: serverMessage || 'Please try again in a minute.',
+                        variant: 'destructive',
+                    });
+                    return;
+                }
+
+                throw new Error(serverMessage || code || `Request failed (${res.status})`);
+            }
+
             const data = await res.json();
             setGeneratedMessage(data.message);
             setLanguageCode(data.languageCode);
             setStep("review");
         } catch (err: any) {
-            toast({ title: "Failed to generate", description: err.message, variant: "destructive" });
+            toast({
+                title: 'Could not generate message',
+                description: err?.message ?? 'Please try again in a moment.',
+                variant: 'destructive',
+            });
         } finally {
             setGenerating(false);
         }
@@ -403,7 +451,7 @@ export function ContactParentModal({
                         ) : null}
 
                         <Textarea
-                            placeholder="Add specific details (optional) — e.g., 'Absent Mon, Tue, Wed' or 'Scored 12/50 in Math test'"
+                            placeholder={t("Add specific details (optional) — e.g., 'Absent Mon, Tue, Wed' or 'Scored 12/50 in Math test'")}
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={3}
