@@ -27,11 +27,36 @@ import {
 } from './virtual-field-trip-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { withTimeout } from './with-timeout';
+import { withTimeout, WithTimeoutError } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in virtual-field-trip-client.ts. Phase J.2 hot-fix
-// (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 15_000;
+// NCERT demo hot-fix (2026-05-19): bumped from 15s to 45s after demo run
+// observed Kannada Mysore Palace itineraries completing at ~6s past the
+// 15s timeout boundary. p95 generation time ≈ 25s; 45s gives 80% headroom.
+// Env-overridable so we can tune live without a redeploy. Cap stays well
+// below the Cloud Run request timeout so the platform never wins the race.
+const VFT_TIMEOUT_MS = Number(process.env.VFT_GENKIT_TIMEOUT_MS) || 45_000;
+
+/**
+ * NCERT demo hot-fix: if `withTimeout` fires, the underlying Genkit flow
+ * `planVirtualFieldTrip` still completes its Storage + Firestore writes
+ * in the background (see `src/ai/flows/virtual-field-trip.ts` — persistence
+ * happens inside the flow). Surfacing a plain 500 hides this from the user
+ * who then re-generates and pays twice. This typed error lets the API route
+ * map it to a user-actionable response that points them at My Library.
+ */
+export class VirtualFieldTripStillGeneratingError extends Error {
+    constructor(
+        public readonly budgetMs: number,
+        public readonly elapsedMs: number,
+    ) {
+        super(
+            `Virtual field trip still generating after ${elapsedMs}ms ` +
+                `(budget ${budgetMs}ms). Underlying flow continues writing to ` +
+                `Firestore — user should check My Library.`,
+        );
+        this.name = 'VirtualFieldTripStillGeneratingError';
+    }
+}
 
 export type VirtualFieldTripSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -141,7 +166,7 @@ async function runGenkitSafe(
     try {
         const out = await withTimeout(
             planVirtualFieldTrip(input),
-            FALLBACK_TIMEOUT_MS,
+            VFT_TIMEOUT_MS,
             'virtual-field-trip genkit fallback',
         );
         return { ok: true, out };
@@ -149,6 +174,50 @@ async function runGenkitSafe(
         const e = err instanceof Error ? err : new Error(String(err));
         if (e.name === 'AbortError') throw e;
         return { ok: false, error: e };
+    }
+}
+
+/**
+ * Runs the Genkit flow under the dispatcher's timeout budget, with
+ * structured logging at both success and timeout boundaries so future
+ * tuning is data-driven. On timeout, throws the typed
+ * `VirtualFieldTripStillGeneratingError` so the API route can return a
+ * user-actionable body instead of a generic 500 — the underlying flow
+ * is still writing to Firestore.
+ */
+async function runGenkitWithBudget(
+    input: VirtualFieldTripInput,
+    source: VirtualFieldTripDispatchSource,
+): Promise<VirtualFieldTripOutput> {
+    const startedAt = Date.now();
+    try {
+        const out = await withTimeout(
+            planVirtualFieldTrip(input),
+            VFT_TIMEOUT_MS,
+            'virtual-field-trip genkit fallback',
+        );
+        // eslint-disable-next-line no-console
+        console.log('[vft.dispatch] complete', {
+            durationMs: Date.now() - startedAt,
+            source,
+            budgetMs: VFT_TIMEOUT_MS,
+        });
+        return out;
+    } catch (err) {
+        const elapsedMs = Date.now() - startedAt;
+        if (err instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[vft.dispatch] timeout', {
+                budgetMs: VFT_TIMEOUT_MS,
+                elapsedMs,
+                source,
+            });
+            throw new VirtualFieldTripStillGeneratingError(
+                VFT_TIMEOUT_MS,
+                elapsedMs,
+            );
+        }
+        throw err;
     }
 }
 
@@ -192,11 +261,7 @@ export async function dispatchVirtualFieldTrip(
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await withTimeout(
-            planVirtualFieldTrip(input),
-            FALLBACK_TIMEOUT_MS,
-            'virtual-field-trip genkit fallback',
-        );
+        const out = await runGenkitWithBudget(input, 'genkit');
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -289,10 +354,6 @@ export async function dispatchVirtualFieldTrip(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await withTimeout(
-        planVirtualFieldTrip(input),
-        FALLBACK_TIMEOUT_MS,
-        'virtual-field-trip genkit fallback',
-    );
+    const out = await runGenkitWithBudget(input, 'genkit_fallback');
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }
