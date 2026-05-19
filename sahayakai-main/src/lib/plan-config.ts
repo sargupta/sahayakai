@@ -22,6 +22,7 @@ export type GatedFeature =
     | 'parent-message'
     | 'voice-to-text'   // cloud fallback only (browser SpeechRecognition is free)
     | 'exam-paper'
+    | 'assess-assignment'  // photo-based handwritten assessment grading
     | 'assistant';       // VIDYA chat interface
 
 export interface PlanLimits {
@@ -67,6 +68,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': 0,    // not available on free
             'voice-to-text': -1,    // browser-first, cloud fallback unlimited for now
             'exam-paper': 3,
+            'assess-assignment': 5, // vision + grading is expensive; start small on free
             'assistant': -1,        // unlimited monthly, controlled by daily limit
         },
         instantAnswerDailyLimit: 20,
@@ -92,6 +94,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': 10,
+            'assess-assignment': 100,
             'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
@@ -117,6 +120,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': -1,
+            'assess-assignment': -1,
             'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
@@ -142,6 +146,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
             'parent-message': -1,
             'voice-to-text': -1,
             'exam-paper': -1,
+            'assess-assignment': -1,
             'assistant': -1,
         },
         instantAnswerDailyLimit: -1,
