@@ -62,7 +62,11 @@ export type SidecarQuizVariant = GenQuizVariant;
 export type SidecarQuizRequest = GenQuizRequest;
 export type SidecarQuizResponse = GenQuizResponse;
 
-const TIMEOUT_MS = 45_000; // 3 parallel calls, multimodal — large budget
+// NCERT demo hot-fix (2026-05-19): bumped from 45s — observed p50 was
+// 32.5s in prod; p75+ was failing because quiz runs 3 parallel variants +
+// multimodal. 60s gives headroom. Env-overridable via
+// `QUIZ_CLIENT_TIMEOUT_MS` so production can tune without a redeploy.
+const TIMEOUT_MS = Number(process.env.QUIZ_CLIENT_TIMEOUT_MS) || 60_000; // 3 parallel calls, multimodal — large budget
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 const tokenClientByAudience = new Map<string, Promise<IdTokenClient>>();

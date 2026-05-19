@@ -51,11 +51,17 @@ import {
     type SidecarVideoStorytellerResponse,
 } from './video-storyteller-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { withTimeout } from './with-timeout';
+import { WithTimeoutError, withTimeout } from './with-timeout';
 
 // Mirrors `TIMEOUT_MS` in video-storyteller-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 15_000;
+//
+// NCERT demo hot-fix (2026-05-19): bumped from 15s — observed p50 was
+// 12.6s in prod; p75+ was failing because cache miss + YouTube fetch +
+// LLM personalisation pushes the tail well past 15s. 30s leaves headroom.
+// Env-overridable via `VIDEO_STORYTELLER_FALLBACK_TIMEOUT_MS` so production
+// can tune without a redeploy.
+const FALLBACK_TIMEOUT_MS = Number(process.env.VIDEO_STORYTELLER_FALLBACK_TIMEOUT_MS) || 30_000;
 
 export type VideoStorytellerSidecarMode =
     | 'off' | 'shadow' | 'canary' | 'full';
@@ -274,6 +280,29 @@ function logDispatch(
 export async function dispatchVideoStoryteller(
     input: VideoStorytellerDispatchInput,
 ): Promise<DispatchedVideoStoryteller> {
+    // NCERT demo hot-fix (2026-05-19): wrap entire dispatch in
+    // start-time accounting so the timeout path logs a structured
+    // `[video_storyteller.dispatch] timeout` line (no silent 500s).
+    const __dispatchStartedAt = Date.now();
+    try {
+        return await _dispatchVideoStorytellerInner(input, __dispatchStartedAt);
+    } catch (err) {
+        if (err instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[video_storyteller.dispatch] timeout', {
+                budgetMs: FALLBACK_TIMEOUT_MS,
+                observedMs: Date.now() - __dispatchStartedAt,
+                label: err.label,
+            });
+        }
+        throw err;
+    }
+}
+
+async function _dispatchVideoStorytellerInner(
+    input: VideoStorytellerDispatchInput,
+    dispatchStartedAt: number,
+): Promise<DispatchedVideoStoryteller> {
     const decision = await decideVideoStorytellerDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
@@ -283,11 +312,15 @@ export async function dispatchVideoStoryteller(
             FALLBACK_TIMEOUT_MS,
             'video-storyteller genkit fallback',
         );
+        const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, {
             source: 'genkit',
             uid: input.userId,
             aiCallsCount: 1,
+            durationMs,
         });
+        // eslint-disable-next-line no-console
+        console.log('[video_storyteller.dispatch] complete', { durationMs, source: 'genkit' });
         return genkitToDispatched(out, 'genkit', decision);
     }
 
@@ -325,6 +358,11 @@ export async function dispatchVideoStoryteller(
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
+        // eslint-disable-next-line no-console
+        console.log('[video_storyteller.dispatch] complete', {
+            durationMs: Date.now() - dispatchStartedAt,
+            source: 'genkit',
+        });
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
@@ -359,11 +397,18 @@ export async function dispatchVideoStoryteller(
         const videos = await runVideosOnlySafe(input, aiResult);
 
         if (videos.ok) {
+            const durationMs = Date.now() - dispatchStartedAt;
             logDispatch(decision, {
                 source: 'sidecar+genkit_videos',
                 uid: input.userId,
                 sidecarLatencyMs: sidecar.latencyMs,
                 aiCallsCount: 1,
+                durationMs,
+            });
+            // eslint-disable-next-line no-console
+            console.log('[video_storyteller.dispatch] complete', {
+                durationMs,
+                source: 'sidecar+genkit_videos',
             });
             return mergedToDispatched(sidecar.res, videos.out, decision);
         }
@@ -374,12 +419,19 @@ export async function dispatchVideoStoryteller(
         // (RSS + YouTube both went wrong).
         const genkitFallback = await runGenkitSafe(input);
         if (genkitFallback.ok) {
+            const durationMs = Date.now() - dispatchStartedAt;
             logDispatch(decision, {
                 source: 'genkit_fallback',
                 uid: input.userId,
                 sidecarErrorClass: 'youtube_branch_failed',
                 sidecarLatencyMs: sidecar.latencyMs,
                 aiCallsCount: 1,
+                durationMs,
+            });
+            // eslint-disable-next-line no-console
+            console.log('[video_storyteller.dispatch] complete', {
+                durationMs,
+                source: 'genkit_fallback',
             });
             return genkitToDispatched(
                 genkitFallback.out,
@@ -405,12 +457,19 @@ export async function dispatchVideoStoryteller(
 
     const genkit = await runGenkitSafe(input);
     if (genkit.ok) {
+        const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, {
             source: 'genkit_fallback',
             uid: input.userId,
             sidecarErrorClass: errorClass,
             sidecarLatencyMs: sidecar.latencyMs,
             aiCallsCount: 1,
+            durationMs,
+        });
+        // eslint-disable-next-line no-console
+        console.log('[video_storyteller.dispatch] complete', {
+            durationMs,
+            source: 'genkit_fallback',
         });
         return genkitToDispatched(genkit.out, 'genkit_fallback', decision);
     }

@@ -65,7 +65,12 @@ export type SidecarVideoStorytellerCategories = GenVideoStorytellerCategories;
 export type SidecarVideoStorytellerRequest = GenVideoStorytellerRequest;
 export type SidecarVideoStorytellerResponse = GenVideoStorytellerResponse;
 
-const TIMEOUT_MS = 15_000;
+// NCERT demo hot-fix (2026-05-19): bumped from 15s — observed p50 was
+// 12.6s in prod; p75+ was failing for the same reason as the fallback
+// (cache miss + YouTube fetch + LLM categorisation tail). 30s leaves
+// headroom. Env-overridable via `VIDEO_STORYTELLER_CLIENT_TIMEOUT_MS`
+// so production can tune without a redeploy.
+const TIMEOUT_MS = Number(process.env.VIDEO_STORYTELLER_CLIENT_TIMEOUT_MS) || 30_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 

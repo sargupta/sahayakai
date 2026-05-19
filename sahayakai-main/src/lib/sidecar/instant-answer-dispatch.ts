@@ -47,13 +47,19 @@ import {
 } from './instant-answer-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { withTimeout } from './with-timeout';
+import { WithTimeoutError, withTimeout } from './with-timeout';
 
 // Bumped from 10s — instant-answer uses Google Search grounding which
 // adds 2-5s of latency on top of the model call. 10s caused 500s when the
 // search tool slow-pathed. 20s is the sidecar's own per-call budget for
 // the same flow, so capping the fallback there matches.
-const FALLBACK_TIMEOUT_MS = 20_000;
+//
+// NCERT demo hot-fix (2026-05-19): the fallback was already at 20s (safe
+// vs. p50 8.3s). Env-overridable via `INSTANT_ANSWER_CLIENT_TIMEOUT_MS`
+// (shared with the sidecar client `TIMEOUT_MS` in
+// `instant-answer-client.ts`) so production can tune both knobs in lockstep
+// without a redeploy.
+const FALLBACK_TIMEOUT_MS = Number(process.env.INSTANT_ANSWER_CLIENT_TIMEOUT_MS) || 20_000;
 
 // ─── Firestore-backed dispatch decision (Phase J.5 migration) ──────────────
 //
@@ -249,6 +255,29 @@ function logDispatch(
 export async function dispatchInstantAnswer(
     input: InstantAnswerDispatchInput,
 ): Promise<DispatchedInstantAnswer> {
+    // NCERT demo hot-fix (2026-05-19): wrap entire dispatch in
+    // start-time accounting so the timeout path logs a structured
+    // `[instant_answer.dispatch] timeout` line (no silent 500s).
+    const __dispatchStartedAt = Date.now();
+    try {
+        return await _dispatchInstantAnswerInner(input, __dispatchStartedAt);
+    } catch (err) {
+        if (err instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[instant_answer.dispatch] timeout', {
+                budgetMs: FALLBACK_TIMEOUT_MS,
+                observedMs: Date.now() - __dispatchStartedAt,
+                label: err.label,
+            });
+        }
+        throw err;
+    }
+}
+
+async function _dispatchInstantAnswerInner(
+    input: InstantAnswerDispatchInput,
+    dispatchStartedAt: number,
+): Promise<DispatchedInstantAnswer> {
     const decision = await decideInstantAnswerDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
@@ -259,7 +288,10 @@ export async function dispatchInstantAnswer(
             FALLBACK_TIMEOUT_MS,
             'instant-answer genkit fallback',
         );
-        logDispatch(decision, { source: 'genkit', uid: input.userId });
+        const durationMs = Date.now() - dispatchStartedAt;
+        logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
+        // eslint-disable-next-line no-console
+        console.log('[instant_answer.dispatch] complete', { durationMs, source: 'genkit' });
         return genkitToDispatched(out, 'genkit', decision);
     }
 
@@ -280,6 +312,11 @@ export async function dispatchInstantAnswer(
         });
 
         if (!genkit.ok) throw genkit.error;
+        // eslint-disable-next-line no-console
+        console.log('[instant_answer.dispatch] complete', {
+            durationMs: Date.now() - dispatchStartedAt,
+            source: 'genkit',
+        });
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
@@ -322,13 +359,17 @@ export async function dispatchInstantAnswer(
                 },
             });
         }
+        const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
             groundingUsed: sidecar.res.groundingUsed,
             sidecarVersion: sidecar.res.sidecarVersion,
+            durationMs,
         });
+        // eslint-disable-next-line no-console
+        console.log('[instant_answer.dispatch] complete', { durationMs, source: 'sidecar' });
         return sidecarToDispatched(sidecar.res, decision);
     }
 
@@ -359,5 +400,10 @@ export async function dispatchInstantAnswer(
         FALLBACK_TIMEOUT_MS,
         'instant-answer genkit fallback',
     );
+    // eslint-disable-next-line no-console
+    console.log('[instant_answer.dispatch] complete', {
+        durationMs: Date.now() - dispatchStartedAt,
+        source: 'genkit_fallback',
+    });
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }
