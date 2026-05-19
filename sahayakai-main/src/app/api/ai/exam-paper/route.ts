@@ -91,6 +91,15 @@ async function _handler(request: Request) {
             );
         }
 
+        // Default chapters to [] if missing/null. The Genkit schema marks
+        // `chapters` as required (z.array(z.string())) but the field
+        // description explicitly says "Empty array means cover all chapters
+        // for the subject" — so an absent body field should not 500. UI
+        // doesn't enforce a chapter pick (button stays enabled when blank).
+        if (!Array.isArray(body.chapters)) {
+            body.chapters = [];
+        }
+
         if (body.difficulty && !VALID_DIFFICULTIES.includes(body.difficulty as typeof VALID_DIFFICULTIES[number])) {
             return NextResponse.json(
                 { error: `Invalid difficulty. Must be one of: ${VALID_DIFFICULTIES.join(', ')}` },
