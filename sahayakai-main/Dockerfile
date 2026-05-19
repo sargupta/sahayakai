@@ -39,6 +39,11 @@ ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Next.js + Genkit + Sentry + PWA + regional-examples seed pushes the build
+# past the default ~1.5GB Node heap. Cloud Build OOM'd at 1869MB on
+# 2026-05-19 (build 29c25ce0). 4GB is comfortable headroom.
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 RUN npm run build
 
 # Production image, copy all the files and run next
