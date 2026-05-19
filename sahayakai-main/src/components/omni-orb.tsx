@@ -84,6 +84,8 @@ export function OmniOrb() {
         teacherProfile,
         updateTeacherProfile,
         mergeTeacherProfile,
+        clearStructuredDataIfStale,
+        markQueryCompleted,
     } = useJarvisStore();
 
     // 2026-04-26: hide OmniOrb when the page-mounted VoiceAssistant chat
@@ -118,12 +120,33 @@ export function OmniOrb() {
     const orbRef = useRef<HTMLDivElement>(null);
 
     // ── Sync URL path to store + publish live form context ───────────────
+    // 2026-05-19 (NCERT demo fix): clearing stale `structuredData` on
+    // pathname change closes a state-pollution hole — pages that do NOT
+    // call `useVidyaFormSync` (e.g. `/exam-paper`) would otherwise inherit
+    // the previous page's form fields and VIDYA would "see" them as
+    // current context. Symptom: founder said "for Class 10" on `/exam-paper`
+    // and the orb routed to `quiz-generator` with Class 7 / Science /
+    // photosynthesis from a prior `/quiz-generator` query.
     useEffect(() => {
         setIsClient(true);
-        // structuredData is read from store (set by individual pages) and passed
-        // through as uiState so VIDYA can "see" active form fields.
-        setScreenContext({ path: pathname, uiState: structuredData });
-    }, [pathname, setScreenContext, structuredData]);
+    }, []);
+
+    useEffect(() => {
+        // Pre-publish stale-clearing must run BEFORE we forward the
+        // payload to VIDYA — otherwise the first query on a page that
+        // doesn't claim ownership leaks the prior page's form fields.
+        clearStructuredDataIfStale(pathname);
+        // Pull the (possibly-just-cleared) value from the store so the
+        // screen-context publish reflects reality, not the closure's
+        // pre-clear snapshot.
+        const fresh = useJarvisStore.getState().structuredData;
+        setScreenContext({ path: pathname, uiState: fresh });
+        // eslint-disable-next-line no-console
+        console.debug('[OmniOrb] screen-context published', {
+            path: pathname,
+            uiStateKeys: Object.keys(fresh ?? {}),
+        });
+    }, [pathname, clearStructuredDataIfStale, setScreenContext, structuredData]);
 
     // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
     // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
@@ -292,8 +315,53 @@ export function OmniOrb() {
     const processTranscription = async (transcript: string, detectedLang?: string) => {
         if (!transcript) return;
 
+        // ── Per-query reset (2026-05-19, NCERT demo fix) ──────────────────
+        // Each mic press is a FRESH query. Three things to wipe so a prior
+        // intent does not bleed in:
+        //   1. `pendingActions` — compound-intent chips authored by the
+        //      previous turn. Tapping a chip later is fine; carrying them
+        //      silently into a NEW utterance is not.
+        //   2. Stale `structuredData` — published by a page the user has
+        //      since navigated away from. The navigation effect already
+        //      calls `clearStructuredDataIfStale(pathname)`, but a
+        //      lingering page-mount race could leave it set; clear again
+        //      defensively here.
+        //   3. Long-gap chat history — if the previous turn happened
+        //      >5 minutes ago, or on a DIFFERENT screen, treat this
+        //      utterance as a fresh conversation rather than a follow-up.
+        //      Otherwise VIDYA's `SAHAYAK_SOUL_PROMPT` cross-turn context
+        //      resolution rule (see `src/ai/soul.ts` line 121) inherits
+        //      gradeLevel / subject / topic / intent from the prior query.
+        setPendingActions([]);
+        clearStructuredDataIfStale(pathname);
+
+        const FRESH_QUERY_WINDOW_MS = 5 * 60 * 1000; // 5 min
+        const storeSnapshot = useJarvisStore.getState();
+        const sinceLastQuery = storeSnapshot.lastQueryAt
+            ? Date.now() - storeSnapshot.lastQueryAt
+            : Infinity;
+        const samePageAsLast = storeSnapshot.lastQueryPath === pathname;
+        const carryHistory = sinceLastQuery < FRESH_QUERY_WINDOW_MS && samePageAsLast;
+        const effectiveChatHistory = carryHistory ? chatHistory : [];
+        const effectiveStructuredData = storeSnapshot.structuredData;
+
+        // eslint-disable-next-line no-console
+        console.info('[OmniOrb] new query — staging cleared', {
+            path: pathname,
+            transcript: transcript.slice(0, 80),
+            chatHistoryCarried: carryHistory,
+            sinceLastQueryMs: sinceLastQuery === Infinity ? null : sinceLastQuery,
+            lastQueryPath: storeSnapshot.lastQueryPath,
+            structuredDataKeys: Object.keys(effectiveStructuredData ?? {}),
+        });
+
         // Start a new Firestore session on the very first message of a conversation
-        if (chatHistory.length === 0 && user) {
+        // OR when the previous query was stale (>5 min gap / different screen).
+        // Mirroring the carry-history rule keeps session boundaries aligned
+        // with intent boundaries — a fresh classifier scope gets a fresh
+        // Firestore doc too, so analytics aren't muddled by mixed intents.
+        const startingFreshSession = !carryHistory || chatHistory.length === 0;
+        if (startingFreshSession && user) {
             currentSessionRef.current = `sess_${user.uid.slice(0, 8)}_${Date.now()}`;
             sessionIsNewRef.current = true;
         }
@@ -321,9 +389,15 @@ export function OmniOrb() {
                 method: "POST",
                 body: JSON.stringify({
                     message: transcript,
-                    chatHistory,
-                    // Pass live form fields so VIDYA can "see" the screen
-                    currentScreenContext: { path: pathname, uiState: structuredData },
+                    // Send a SCOPED history — empty on a fresh-intent query
+                    // so VIDYA's cross-turn context resolution doesn't pull
+                    // gradeLevel / subject / topic from a prior query.
+                    chatHistory: effectiveChatHistory,
+                    // Pass live form fields so VIDYA can "see" the screen —
+                    // but only when they belong to the current page (the
+                    // store's `clearStructuredDataIfStale` already wiped
+                    // mismatched payloads on navigation; this is read-back).
+                    currentScreenContext: { path: pathname, uiState: effectiveStructuredData },
                     // Pass long-term teacher profile for personalised context
                     teacherProfile,
                     // Pass detected speech language so VIDYA responds in the same language
@@ -383,15 +457,33 @@ export function OmniOrb() {
                 }
             }
 
-            // Build the full updated message list for Firestore sync.
+            // ── Mark this query completed so the next mic press can decide
+            //    whether to carry chat history (same screen + <5 min) or
+            //    treat itself as a fresh intent. Must be called AFTER the
+            //    response lands so a thrown error during the fetch above
+            //    does not stamp `lastQueryAt` for a query that never made
+            //    it to the model.
+            markQueryCompleted(pathname);
+
+            // Build the message list for Firestore sync.
             // chatHistory in this closure reflects state BEFORE the addMessage()
             // calls above (Zustand state updates are batched to the next render),
             // so we build the updated list explicitly here.
-            const updatedMessages = [
-                ...chatHistory,
-                { role: "user" as const, parts: [{ text: transcript }] },
-                { role: "model" as const, parts: [{ text: response ?? "" }] },
-            ];
+            // CRITICAL: when this was a fresh-intent query (cross-page or
+            // long gap), the Firestore session was just rotated above —
+            // persist ONLY the current turn pair so analytics / replay see
+            // a session boundary that matches the classifier scope rather
+            // than smuggling the prior (unrelated) turns into a fresh doc.
+            const updatedMessages = startingFreshSession
+                ? [
+                    { role: "user" as const, parts: [{ text: transcript }] },
+                    { role: "model" as const, parts: [{ text: response ?? "" }] },
+                ]
+                : [
+                    ...chatHistory,
+                    { role: "user" as const, parts: [{ text: transcript }] },
+                    { role: "model" as const, parts: [{ text: response ?? "" }] },
+                ];
 
             // P5 — compound intent: 2-3 actions render as confirm-chips so
             // the teacher taps each explicitly. Single action keeps the
