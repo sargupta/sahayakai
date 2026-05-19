@@ -19,6 +19,7 @@ import { getStorageInstance } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { UsageTracker } from '@/lib/usage-tracker';
+import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
 
 export const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -93,6 +94,12 @@ const LessonPlanOutputSchema = z.object({
   assessment: z.string().nullable().optional().describe('A description of the summative assessment method.'),
   homework: z.string().nullable().optional().describe('A relevant follow-up activity for home.'),
   language: z.string().optional().describe('The language of the generated lesson plan.'),
+  validationWarning: z.object({
+    invalid: z.boolean(),
+    lenient: z.boolean(),
+    message: z.string(),
+    autoCorrectTo: z.object({ number: z.number(), title: z.string() }).optional(),
+  }).nullable().optional().describe('Soft NCERT chapter validation warning surfaced to the teacher. Generation still proceeds; the UI displays the warning so the teacher can correct the chapter/topic.'),
 });
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
@@ -323,6 +330,38 @@ const lessonPlanFlow = ai.defineFlow(
 
       const normalizedInput = normalizeInput(input);
 
+      // Soft NCERT chapter validation — never throws, never blocks generation.
+      // Surfaces a warning to logs + the response so UI can flag mismatched
+      // (class, subject, chapter/topic) combinations to the teacher.
+      let validationWarning: ValidationWarning | null = null;
+      try {
+        validationWarning = validateChapterForFlow({
+          gradeLevel: normalizedInput.gradeLevels,
+          subject: normalizedInput.subject ?? normalizedInput.ncertChapter?.subject,
+          chapter: normalizedInput.ncertChapter?.title ?? normalizedInput.topic,
+        });
+        if (validationWarning) {
+          StructuredLogger.warn('NCERT chapter validation flagged input', {
+            service: 'lesson-plan-flow',
+            operation: 'ncertValidation',
+            userId: normalizedInput.userId,
+            metadata: validationWarning,
+          });
+          // High-confidence auto-correct: rewrite the topic so the AI uses the
+          // canonical chapter title.
+          if (validationWarning.autoCorrectTo && validationWarning.invalid) {
+            normalizedInput.topic = validationWarning.autoCorrectTo.title;
+          }
+        }
+      } catch (validationError) {
+        // Validation must never break generation.
+        StructuredLogger.warn('NCERT chapter validation threw (non-blocking)', {
+          service: 'lesson-plan-flow',
+          operation: 'ncertValidation',
+          metadata: { error: String(validationError) },
+        });
+      }
+
       try {
         StructuredLogger.info('Starting lesson plan generation flow', {
           service: 'lesson-plan-flow',
@@ -398,6 +437,9 @@ const lessonPlanFlow = ai.defineFlow(
               }
             }
 
+            if (validationWarning) {
+              return { ...cached, validationWarning };
+            }
             return cached;
           }
         }
@@ -571,6 +613,9 @@ const lessonPlanFlow = ai.defineFlow(
           duration
         });
 
+        if (validationWarning) {
+          return { ...output, validationWarning };
+        }
         return output;
 
       } catch (flowError: any) {
