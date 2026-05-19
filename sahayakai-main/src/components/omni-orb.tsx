@@ -9,7 +9,26 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles } from "lucide-react";
 import { tts } from "@/lib/tts";
+import { useToast } from "@/hooks/use-toast";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
+
+// Known routable flow ids. Mirrors the wire enum in
+// `src/lib/sidecar/types.generated.ts` (`VidyaAction.flow`) and the
+// `FLOW_LABEL` map below. Used to guard against a model hallucinating
+// a flow name we have no page for — e.g. "lesson-plan-tutorial" or
+// "quiz" (instead of "quiz-generator"). Without this guard, the client
+// silently `router.push`es to a 404 and the teacher sees nothing happen.
+const KNOWN_FLOWS = new Set<VidyaAction['flow']>([
+    'lesson-plan',
+    'quiz-generator',
+    'visual-aid-designer',
+    'worksheet-wizard',
+    'virtual-field-trip',
+    'teacher-training',
+    'rubric-generator',
+    'exam-paper',
+    'video-storyteller',
+]);
 
 // Phase N.1 + P5: when the supervisor authors >1 actions for a compound
 // intent ("make a quiz AND a worksheet on photosynthesis"), the client
@@ -55,6 +74,7 @@ export function OmniOrb() {
     const router = useRouter();
     const pathname = usePathname();
     const { user } = useAuth();
+    const { toast } = useToast();
     const {
         chatHistory,
         addMessage,
@@ -289,6 +309,14 @@ export function OmniOrb() {
             ?? 'en-IN';
 
         try {
+            // eslint-disable-next-line no-console
+            console.log('[VIDYA OmniOrb] POST /api/assistant', {
+                transcriptLen: transcript.length,
+                detectedLang: detectedLang ?? null,
+                pathname,
+                chatHistoryLen: chatHistory.length,
+            });
+
             const res = await vidyaApiFetch("/api/assistant", {
                 method: "POST",
                 body: JSON.stringify({
@@ -304,17 +332,55 @@ export function OmniOrb() {
             });
 
             if (!res) throw new Error("Not authenticated — please sign in to use VIDYA");
-            if (!res.ok) throw new Error("Assistant failed to process request");
+            if (!res.ok) {
+                // Read the body so the toast surfaces the actual server error
+                // (auth failure, plan-limit, sidecar exhaustion, …) instead of
+                // the generic "Assistant failed" string the user saw before.
+                let serverMsg = `HTTP ${res.status}`;
+                try {
+                    const errBody = await res.json();
+                    if (errBody?.error) serverMsg = String(errBody.error);
+                } catch { /* body wasn't JSON */ }
+                throw new Error(serverMsg);
+            }
 
-            const { response, action, plannedActions } = await res.json() as {
-                response?: string;
-                action?: VidyaAction | null;
-                plannedActions?: VidyaAction[];
-            };
+            // Parse JSON in its own try so a malformed body surfaces a
+            // distinct error rather than getting confused with a network
+            // failure in the outer catch.
+            let payload: { response?: string; action?: VidyaAction | null; plannedActions?: VidyaAction[] };
+            try {
+                payload = await res.json();
+            } catch (parseErr) {
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] response JSON parse failed', parseErr);
+                throw new Error('Assistant returned malformed response');
+            }
+            const { response, action, plannedActions } = payload;
+            // eslint-disable-next-line no-console
+            console.log('[VIDYA OmniOrb] /api/assistant response', {
+                hasResponse: Boolean(response),
+                responseLen: (response ?? '').length,
+                actionType: action?.type ?? null,
+                actionFlow: (action as { flow?: string } | null)?.flow ?? null,
+                plannedCount: plannedActions?.length ?? 0,
+            });
 
             if (response) {
                 addMessage("model", response);
                 tts.speak(response, bcp47Lang);
+            } else {
+                // Empty response WITH no action is the silent-failure mode
+                // we hit on demo day before. Surface it so the teacher
+                // doesn't think the mic ate their request.
+                // eslint-disable-next-line no-console
+                console.warn('[VIDYA OmniOrb] empty response from assistant', { action, plannedActions });
+                if (!action && !(plannedActions && plannedActions.length > 0)) {
+                    toast({
+                        title: 'VIDYA had nothing to say',
+                        description: 'Try rephrasing your question.',
+                        variant: 'default',
+                    });
+                }
             }
 
             // Build the full updated message list for Firestore sync.
@@ -331,9 +397,24 @@ export function OmniOrb() {
             // the teacher taps each explicitly. Single action keeps the
             // legacy auto-navigate behaviour to avoid extra-tap regression
             // for the 90% one-flow case.
-            const validActions = (plannedActions ?? []).filter(
+            //
+            // Demo-day hardening: also drop actions whose `flow` isn't in
+            // the KNOWN_FLOWS set. A hallucinated flow (e.g. "lessonplan"
+            // or "quiz") routes to a 404 on this client and the teacher
+            // sees nothing happen — same symptom as the original silent
+            // failure. Toast the model's bad output so the demo audience
+            // sees we're catching it, not silently dropping it.
+            const allActions = (plannedActions ?? []).filter(
                 (a) => a && a.type === "NAVIGATE_AND_FILL",
             );
+            const validActions = allActions.filter((a) => KNOWN_FLOWS.has(a.flow));
+            if (allActions.length !== validActions.length) {
+                const droppedFlows = allActions
+                    .filter((a) => !KNOWN_FLOWS.has(a.flow))
+                    .map((a) => a.flow);
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] dropping unknown flow(s)', droppedFlows);
+            }
             const isCompound = validActions.length > 1;
 
             if (isCompound) {
@@ -345,15 +426,45 @@ export function OmniOrb() {
                 syncSessionTurn(updatedMessages, null);
                 setPendingActions(validActions);
                 setOrbOpen(true);
-            } else if (action && action.type === "NAVIGATE_AND_FILL") {
+            } else if (action && action.type === "NAVIGATE_AND_FILL" && KNOWN_FLOWS.has(action.flow)) {
                 executeAction(action, updatedMessages, transcript);
+            } else if (validActions.length === 1) {
+                // Sidecar/Genkit emitted a single valid planned action but the
+                // top-level `action` was missing/unknown. Auto-execute it.
+                // This closes the gap between `action` and `plannedActions[0]`
+                // when the dispatcher's backward-compat assignment misfires.
+                executeAction(validActions[0], updatedMessages, transcript);
+            } else if (action && action.type === "NAVIGATE_AND_FILL" && !KNOWN_FLOWS.has(action.flow)) {
+                // Model hallucinated a flow we don't have a page for.
+                // Don't navigate (would 404); tell the teacher.
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] action with unknown flow', action.flow);
+                toast({
+                    title: 'VIDYA picked a tool I do not recognise',
+                    description: `Flow "${action.flow}" is not available. Please rephrase your request.`,
+                    variant: 'destructive',
+                });
+                syncSessionTurn(updatedMessages, null);
+                setPendingActions([]);
             } else {
                 // Conversational turn — persist without action metadata
                 syncSessionTurn(updatedMessages, null);
                 setPendingActions([]);
             }
         } catch (e) {
+            const errMsg = e instanceof Error ? e.message : String(e);
+            // eslint-disable-next-line no-console
+            console.error('[VIDYA OmniOrb] processTranscription failed', e);
             tts.speak("I'm sorry, I encountered an issue connecting to my network. Please try again.", bcp47Lang);
+            // User-visible toast — the previous silent-failure mode meant
+            // founders saw "voice captured, nothing happens" and could not
+            // diagnose live. Now the teacher sees the actual reason on
+            // demo day instead of just hearing an apology.
+            toast({
+                title: 'VIDYA could not act on that',
+                description: errMsg.slice(0, 200),
+                variant: 'destructive',
+            });
         }
     };
 
@@ -409,8 +520,11 @@ export function OmniOrb() {
         if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
         if (params.language) queryParams.set("language", params.language);
 
-        router.push(`/${action.flow}?${queryParams.toString()}`);
-    }, [chatHistory, router, updateTeacherProfile]);
+        const targetUrl = `/${action.flow}?${queryParams.toString()}`;
+        // eslint-disable-next-line no-console
+        console.log('[VIDYA OmniOrb] navigating to', targetUrl);
+        router.push(targetUrl);
+    }, [chatHistory, router, updateTeacherProfile, syncProfilePatch, syncSessionTurn]);
 
     // Chip tap handler — pops the action from pendingActions and dispatches.
     // Chips render one-shot so consecutive taps cleanly chain navigations.
