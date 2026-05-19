@@ -304,6 +304,7 @@ function AssessAssignmentContent() {
         <AssessmentResult
           result={result}
           language={language}
+          getAuthToken={async () => (user ? await user.getIdToken() : null)}
           onTranscriptSave={(newTranscript) => {
             setResult((prev) =>
               prev
