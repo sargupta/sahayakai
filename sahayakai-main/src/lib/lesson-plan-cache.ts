@@ -11,11 +11,25 @@ interface CacheKeyParams {
   resourceLevel?: string;
   difficultyLevel?: string;
   subject?: string;
+  /**
+   * Teacher's state. Required for hyperlocal cache correctness — without
+   * it a Karnataka-flavoured "Gravity" plan would be served to a Punjab
+   * teacher (the inverse of the bug we just shipped). Field is optional
+   * for the type to stay back-compat with callers that don't pass it,
+   * but in practice the lesson flow always populates it (falls back to
+   * 'india' for unknown).
+   */
+  state?: string;
 }
 
 /**
  * Generate a deterministic cache key from lesson plan parameters.
  * Normalizes inputs to maximize cache hits (lowercase, sorted, trimmed).
+ *
+ * `state` is part of the key because hyperlocal context changes the
+ * actual lesson output (coconut tree vs sarson field). Without it,
+ * cached plans cross-pollinate across regions and break the very
+ * localisation we just added.
  */
 export function generateLessonPlanCacheKey(params: CacheKeyParams): string {
   const normalized = [
@@ -25,6 +39,7 @@ export function generateLessonPlanCacheKey(params: CacheKeyParams): string {
     (params.resourceLevel || 'low').toLowerCase(),
     (params.difficultyLevel || 'standard').toLowerCase(),
     (params.subject || '').toLowerCase().trim(),
+    (params.state || 'india').toLowerCase().trim(),
   ].join('|');
 
   return crypto.createHash('md5').update(normalized).digest('hex');
@@ -99,6 +114,7 @@ export async function setCachedLessonPlan(
         resourceLevel: params.resourceLevel || 'low',
         difficultyLevel: params.difficultyLevel || 'standard',
         subject: params.subject || '',
+        state: params.state || '',
       },
       cachedAt: new Date(),
       expiresAt: new Date(Date.now() + CACHE_TTL_HOURS * 60 * 60 * 1000),

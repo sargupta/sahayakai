@@ -9,6 +9,7 @@
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getIndianContextPrompt } from '@/lib/indian-context';
+import { renderRegionalContextBlock, getRegionalAnchors } from '@/lib/regional-examples';
 import { validateTopicSafety } from '@/lib/safety';
 import { logger } from '@/lib/logger';
 // import { checkServerRateLimit } from '@/lib/server-safety'; // Imported dynamically to avoid client bundle leak
@@ -38,6 +39,14 @@ export const LessonPlanInputSchema = z.object({
   resourceLevel: z.enum(['low', 'medium', 'high']).optional().describe('The level of resources available in the classroom. low=chalk&talk, medium=basic aids, high=tech enabled. Defaults to low.'),
   difficultyLevel: z.enum(['remedial', 'standard', 'advanced']).optional().describe('The difficulty level for the lesson content. remedial=simplified, standard=grade-level, advanced=challenging. Defaults to standard.'),
   subject: z.string().optional().describe('The academic subject area.'),
+  // Hyperlocal context — populated server-side from the teacher's profile.
+  // These are NOT user-supplied (the UI does not expose them); they are
+  // threaded in by the API route after reading the teacher doc.
+  state: z.string().optional().describe('The teacher\'s state (used to localise examples: crops, festivals, geography).'),
+  district: z.string().optional().describe('The teacher\'s district (used for finer locality references in the prompt).'),
+  schoolType: z.string().optional().describe('Type of school (government / private / chain) — currently informational; may inform resource-level inference in future.'),
+  teacherMotherTongue: z.string().optional().describe('Teacher\'s primary language preference, distinct from the output language when bilingual code-switching matters.'),
+  regionalContextBlock: z.string().optional().describe('Pre-rendered prompt block listing local crops/festivals/geography for the prompt template. Computed server-side; ignored if absent.'),
 });
 
 function normalizeInput(input: LessonPlanInput): LessonPlanInput {
@@ -164,16 +173,39 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
 
-    // Fetch user's preferred language if not provided
-    if (!input.language) {
-      const { dbAdapter } = await import('@/lib/db/adapter');
-      const profile = await dbAdapter.getUser(uid);
-      if (profile?.preferredLanguage) {
-        localizedInput.language = profile.preferredLanguage;
-      }
+    // Pull the teacher profile once and reuse for language + locality.
+    // Was previously two separate reads — collapsing them avoids an extra
+    // Firestore round trip per generation and ensures state/language are
+    // pulled from the same snapshot.
+    const { dbAdapter } = await import('@/lib/db/adapter');
+    const profile = await dbAdapter.getUser(uid).catch(() => null);
+
+    if (profile?.preferredLanguage && !input.language) {
+      localizedInput.language = profile.preferredLanguage;
     }
 
-    // Fetch teacher context for AI personalisation
+    // Hyperlocal context — populated from the same profile snapshot.
+    // Caller (API route) may also pass these explicitly (test harness,
+    // sidecar). Profile values are the fallback, never the override.
+    if (profile?.state && !localizedInput.state) {
+      localizedInput.state = profile.state;
+    }
+    if (profile?.district && !localizedInput.district) {
+      localizedInput.district = profile.district;
+    }
+    if (profile?.preferredLanguage && !localizedInput.teacherMotherTongue) {
+      localizedInput.teacherMotherTongue = profile.preferredLanguage;
+    }
+    // If teacher has subjects on profile and the call didn't specify a
+    // subject, use the first subject. This is best-effort: the lesson
+    // topic itself usually implies subject, but having it on the prompt
+    // helps maths examples skew to maths anchors (rupees) vs science
+    // anchors (crops, trees).
+    if (!localizedInput.subject && profile?.subjects?.length) {
+      localizedInput.subject = profile.subjects[0];
+    }
+
+    // Fetch teacher context (career stage) for AI personalisation
     try {
       const { getTeacherContextLine } = await import('@/lib/teacher-context');
       localizedInput.teacherContext = await getTeacherContextLine(uid);
@@ -181,6 +213,14 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
       // Non-blocking — proceed without teacher context
     }
   }
+
+  // Pre-render the regional anchor block. The flow falls back to the
+  // pan-India block when no state is available — never to a Western
+  // default — so even profile-less users get rupees + Indian context.
+  localizedInput.regionalContextBlock = renderRegionalContextBlock(
+    localizedInput.state,
+    localizedInput.subject,
+  );
 
   return lessonPlanFlow(localizedInput);
 }
@@ -227,17 +267,22 @@ You MUST organize the activities into the 5E Instructional Model:
 - **understandingCheck**: A simple focus question for the teacher to ask at the end of each phase.
 - **Assessment**: A brief description of how to assess student learning at the end of the lesson.
 
-{{#if useRuralContext}}
-**INDIAN RURAL CONTEXT - CRITICAL:**
+{{#if regionalContextBlock}}
+{{{regionalContextBlock}}}
+{{else}}
+**INDIAN CONTEXT - CRITICAL:**
 - Examples MUST be from Indian daily life (farming, seasons, local markets, festivals like Diwali, Eid, Baisakhi).
 - Use Indian currency (₹) and metrics.
 - Avoid all Western-specific references (pizza, burgers, snow-themed Christmas, miles).
 - Use names of Indian rivers, mountains, and local foods (roti, khichdi, etc.).
-- Resource Constraint (Level: {{resourceLevel}}): 
-  - **low**: Only Chalk, Blackboard, and local items (leaves, stones).
-  - **medium**: Adds chart papers, pens, basic local objects.
-  - **high**: Adds projector/internet.
 {{/if}}
+
+**Resource Constraint (Level: {{resourceLevel}}):**
+- **low**: Only Chalk, Blackboard, and local items (leaves, stones).
+- **medium**: Adds chart papers, pens, basic local objects.
+- **high**: Adds projector/internet.
+
+{{#if state}}**Teacher Locality:** {{{state}}}{{#if district}}, {{{district}}} district{{/if}}. Reference this locality explicitly at least once in the Engage and Elaborate phases (e.g. "in your village", "around {{{state}}}", "at your local mandi").{{/if}}
 
 {{#if ncertChapter}}
 **NCERT ALIGNMENT:**
