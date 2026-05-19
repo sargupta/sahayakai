@@ -41,7 +41,7 @@ export const UserProfileSchema = z.object({
 
 export const ContentTypeSchema = z.enum([
     'lesson-plan', 'quiz', 'worksheet', 'visual-aid',
-    'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper'
+    'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper', 'assessment'
 ]);
 
 export const BaseContentSchema = z.object({
