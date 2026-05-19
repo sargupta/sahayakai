@@ -93,26 +93,41 @@
 
 ---
 
-### 5:00 – 6:30 — Worksheet across three difficulty levels (FLN differentiation)
+### 5:00 – 6:30 — Assessment Scanner (the one card DIKSHA's chatbot cannot match)
+
+**Why this slot:** DIKSHA already generates lesson plans, quizzes, and question banks via its Grades 1–12 chatbot. What it does NOT do is grade student work. This segment is the clearest single demonstration of value-add over DIKSHA. The Worksheet Wizard moment is preserved in the Q&A bench as a backup if NCERT explicitly asks about differentiated content.
 
 **What he says:**
-> "ASER 2024 tells us that 55% of Class V students cannot read at Class II level. A single worksheet cannot serve the class. Watch what happens when the teacher asks for differentiation."
+> "Content generation is half the teacher's loop. The other half is grading. ASER 2024 shows that 55% of Class V students cannot read at Class II level — and the average government teacher grades 60+ student notebooks per day, by hand, often after school hours. Watch what happens when she lets the AI see the page."
 
-**What he taps:** From the same lesson plan view, taps the **Worksheet** action button (or navigates to `/worksheet-wizard` if shipping a fresh prompt).
+**What he taps:** Navigates to `/assessment-scanner` (sidebar → Assess group → Assessment Scanner).
 
-**What he speaks (Kannada, into orb):**
-> *"Idakke moodu mattagalalli worksheet madidiri — kelivara, madhya, mele matt."*
-> ("Make a worksheet for this at three levels — below grade, on grade, above grade.")
+**What he physically does (the visceral part):**
+- Picks up a printed Class 5 Mathematics worksheet with one student's handwritten answers (prepared in advance, kept on the desk — sample has 4 questions on multi-digit addition with method working shown).
+- Taps the camera icon. Phone camera opens. Takes one photo of the page.
+- Selects: Grade = Class 5, Subject = Mathematics, Language = Kannada, NCERT Chapter = "Addition and Subtraction" (auto-suggested from grade+subject dropdown).
+- Taps **Assess**.
 
-**Audience sees:** Three columns appear:
-- **Foundational (ಮೂಲ):** Picture-match. Coconut falling vs leaf falling. Tick the one that falls faster. (Pre-literate friendly.)
-- **At grade (ಮಟ್ಟ):** Fill-in-the-blank with word bank in Kannada. Two short sentence answers.
-- **Above grade (ಮೇಲ್ಮಟ್ಟ):** One open question — *"If gravity is the same, why does a feather fall slower than a stone?"* — answer in two lines.
+**Audience sees (over ~20 seconds of two-pass AI):**
+- **Pass 1 (extraction, ~10s):** The page renders side-by-side. Left: the photo. Right: a transcribed list of questions and answers — `1. 247 + 358 = 605 ✓`, `2. 1086 + 749 = 1835 ✓`, `3. 5604 + 2387 = 7891 ✗ (carry-over slip in hundreds)`, `4. [BLANK]`.
+- **Pass 2 (grading, ~10s):** Per-question scores appear. Total: 6/8. A `needsTeacherReview` flag fires on Q4 because handwriting confidence is below 0.8. The teacher note in Kannada says: *"ಚೆನ್ನಾಗಿದೆ — ಆದರೆ ಪ್ರಶ್ನೆ 3 ರಲ್ಲಿ ನೂರರ ಸ್ಥಾನದಲ್ಲಿ ಕ್ಯಾರಿ-ಓವರ್ ಬಿಟ್ಟು ಬಿಟ್ಟಿದ್ದಾಳೆ. ಒಮ್ಮೆ ಸ್ಥಾನ ಬೆಲೆ ಮತ್ತೆ ನೋಡೋಣ."* ("Good — but in Question 3 she missed the carry-over in the hundreds place. Let's look at place value once more together.")
 
-**What he says (40 sec):**
-> "Same chapter. Same teacher. Same 30 minutes. Three children at three reading levels, all engaged. This is what FLN differentiation looks like at scale. We are not asking the teacher to plan three lessons. We are asking her to print one A4 page."
+**What he says (45 sec, this is the punchline):**
+> "Twenty seconds. The teacher has not opened a single notebook. The AI has not just marked right or wrong — it has identified the *pedagogical error*, named it correctly in the language of instruction, and given the teacher one specific, actionable conversation to have with this child. Note also: the AI itself flagged Question 4 as low-confidence — it has refused to grade what it cannot read. That is the difference between an AI that helps a teacher and an AI that replaces her judgment."
 
-**Language demonstrated:** Kannada (full output).
+**Two NCERT-relevant follow-on lines:**
+> "At scale: 60 students × 4 questions × 30 seconds of teacher time saved per question = 2 hours per teacher per day returned to actual teaching. That is the policy-level number."
+>
+> "And every assessment becomes a data point. We can roll these up — student → class → school → district — into exactly the kind of VSK-style learning-outcome heatmap the Ministry has been asking for. This is not just a feature, Sir/Ma'am. This is the missing input pipe for Vidya Samiksha Kendra."
+
+**Languages demonstrated:** English narration, Kannada feedback in the AI output, English audience explanation.
+
+**Demo-day discipline:**
+- Photo MUST be taken before stage time of a clean, well-lit sample notebook page. Pre-photograph at least 2 backups in `/tmp` or device gallery in case live photo fails or app camera permission glitches.
+- Sample sheet should have: 1 perfect answer, 1 perfect answer, 1 deliberately-introduced carry-over error, 1 deliberately blank or unreadable answer. This shape produces the most teachable demo output (variety + the confidence-flag moment).
+- Stick to Mathematics + Class 5/6/7. Phase 1 explicitly caps at 1 page, Mathematics only — DO NOT attempt to grade a Hindi essay or a multi-page document.
+- If the API takes more than 25 sec total, narrate the two-pass architecture while audience waits: *"Pass one extracts what the student wrote. Pass two grades it against the NCERT chapter context. Clean failure boundaries — we never conflate OCR errors with grading errors."*
+- If the API errors mid-grade, fallback contingency F2 (lesson plan stall) applies — pivot to the saved screen recording of a prior successful scan.
 
 ---
 

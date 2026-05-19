@@ -6,6 +6,21 @@
 
 ---
 
+## ⚠️ Pre-demo discipline rules (added 2026-05-19 post final deploy)
+
+1. **Impact Dashboard — show headline 95/100, do NOT drill into dimension circles.**
+   The composite Teacher Impact Score (95) was refreshed today against your real 83 resources. The per-dimension sub-scores (activity, engagement, success, growth, community) are still stale — the production aggregator only persists the composite, not the breakdown. If audience sees the dimension drill-down, they may notice engagement=0 despite 83 resources elsewhere; that contradiction is the only Impact Dashboard risk. Stay on the 95.
+
+2. **Assessment Scanner — Mathematics + 1 page only.** Phase 1 hard-caps at one page per request and `subject === 'Mathematics'`. Do not attempt a Hindi essay, a multi-page document, or a science worksheet on stage. Pre-prepare 2 backup notebook photos in your phone gallery.
+
+3. **VIDYA voice — wait for the orb to go silent before tapping the next action.** A 3-LOC TTS-fetch abort fix is identified but kept off prod (no-major-changes rule). Behavioral workaround: do not rapid-fire mic taps or navigations while VIDYA is speaking; let each utterance finish.
+
+4. **Exam Paper — always type at least one chapter before clicking Generate.** Empty chapters now defaults to "all chapters" (Deploy #2), but the cleanest demo path still types one.
+
+5. **Lesson plan / Visual aid — do not regenerate more than 5 times in 10 minutes.** Server rate limiter is ~7 calls/10min for lesson plan, ~3/10min for visual aid. Rate-limit errors now correctly return 429 (Deploy #2), but you still don't want a "please wait 8 minutes" toast mid-demo.
+
+---
+
 ## Failure modes and recovery scripts
 
 ### F1. VIDYA voice orb doesn't transcribe
