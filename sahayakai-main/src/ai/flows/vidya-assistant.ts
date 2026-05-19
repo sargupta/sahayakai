@@ -252,38 +252,127 @@ export async function runGenkitVidya(
     return await runResiliently(async (config) => {
         const response = await ai.generate({
             model: 'googleai/gemini-2.0-flash',
-            prompt: `System: ${systemPrompt}\n\nChat History:\n${chatContext}\n\nUser: ${input.message}\n\nOutput strictly the JSON response as required by the System prompt.`,
+            prompt: `System: ${systemPrompt}\n\nChat History:\n${chatContext}\n\nUser: ${input.message}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
             ...config,
             config: {
                 ...(config.config || {}),
                 temperature: 0.1,
+                // Force JSON output so Gemini does not wrap in ```json``` fences
+                // or prepend prose. Without this, the model occasionally emits
+                // "Sure! Here is the JSON: {…}" which crashes the regex parse
+                // and lands the SAFE_FALLBACK — the silent demo failure mode.
+                responseMimeType: 'application/json',
             },
         });
 
         const textOutput = response.text;
 
         try {
-            const jsonMatch = textOutput.match(/\{[\s\S]*\}/);
-            const parsed: LegacyVidyaShape = jsonMatch
-                ? JSON.parse(jsonMatch[0])
-                : JSON.parse(textOutput);
+            const parsed = extractAndParseVidyaJson(textOutput);
             // Phase N.1 — normalise the legacy / new shape into the
             // v0.4+ wire shape (`plannedActions[]` always present, even
             // if empty). This also lets the dispatcher emit the same
             // shape regardless of which path served (Genkit off-mode
             // vs sidecar canary/full).
-            return {
+            const out: AssistantOutput = {
                 response: parsed.response ?? '',
                 action: parsed.action ?? null,
                 plannedActions: normalisePlannedActions(parsed),
             };
+            // [VIDYA Genkit] one-line structured trace so we can confirm
+            // every voice utterance produced a valid intent at the LLM
+            // boundary even when downstream navigation silently no-ops.
+            // eslint-disable-next-line no-console
+            console.log(
+                JSON.stringify({
+                    event: 'vidya.genkit.parsed',
+                    hasResponse: Boolean(out.response),
+                    responseLen: out.response.length,
+                    actionType: out.action?.type ?? null,
+                    actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
+                    plannedCount: out.plannedActions?.length ?? 0,
+                }),
+            );
+            return out;
         } catch (err) {
             // Match the legacy route: log + return safe fallback rather
             // than 500. The OmniOrb client renders the fallback as a
-            // spoken hint to retry.
+            // spoken hint to retry. Log the raw model output (truncated)
+            // so we can debug demo-day misfires from Cloud Run logs.
             // eslint-disable-next-line no-console
-            console.error('Failed to parse VIDYA JSON', textOutput, err);
+            console.error(
+                JSON.stringify({
+                    event: 'vidya.genkit.parse_failed',
+                    error: err instanceof Error ? err.message : String(err),
+                    rawOutputExcerpt: String(textOutput ?? '').slice(0, 500),
+                }),
+            );
             return SAFE_FALLBACK;
         }
     });
+}
+
+/**
+ * Robust JSON extraction for VIDYA model outputs.
+ *
+ * Gemini Flash occasionally wraps JSON in markdown code fences or
+ * prepends a short prose explanation even with `responseMimeType:
+ * 'application/json'`. The previous `match(/\{[\s\S]*\}/)` was greedy
+ * and silently mis-parsed `{ ... } extra { ... }` shapes.
+ *
+ * Strategy (in order):
+ *   1. Try direct JSON.parse first (fast path; works when JSON mode
+ *      succeeded as intended).
+ *   2. Strip Markdown code fences (```json\n...\n``` or ```\n...\n```).
+ *   3. Walk for the first balanced top-level object — handles a leading
+ *      prose preamble and a trailing prose epilogue without the greedy
+ *      regex's "match the universe between first { and last }" bug.
+ *   4. If all extraction strategies fail, throw — caller logs +
+ *      returns SAFE_FALLBACK.
+ */
+function extractAndParseVidyaJson(raw: string): LegacyVidyaShape {
+    const text = (raw ?? '').trim();
+    if (!text) throw new Error('empty model output');
+
+    // 1. Direct parse — happy path when responseMimeType is honoured.
+    try {
+        return JSON.parse(text);
+    } catch {
+        /* fall through */
+    }
+
+    // 2. Strip markdown code fences if present.
+    const fencedMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fencedMatch?.[1]) {
+        try {
+            return JSON.parse(fencedMatch[1].trim());
+        } catch {
+            /* fall through */
+        }
+    }
+
+    // 3. Balanced-brace walk — find the first JSON object even if the
+    // model prepended a prose preamble.
+    const objStart = text.indexOf('{');
+    if (objStart >= 0) {
+        let depth = 0;
+        let inString = false;
+        let escape = false;
+        for (let i = objStart; i < text.length; i++) {
+            const ch = text[i];
+            if (escape) { escape = false; continue; }
+            if (ch === '\\') { escape = true; continue; }
+            if (ch === '"') { inString = !inString; continue; }
+            if (inString) continue;
+            if (ch === '{') depth++;
+            else if (ch === '}') {
+                depth--;
+                if (depth === 0) {
+                    return JSON.parse(text.slice(objStart, i + 1));
+                }
+            }
+        }
+    }
+
+    throw new Error('no JSON object found in model output');
 }
