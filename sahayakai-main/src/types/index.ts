@@ -128,7 +128,7 @@ export const LANGUAGE_TO_ISO: Record<Language, string> = {
 };
 
 export const CONTENT_TYPES = [
-    'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper',
+    'lesson-plan', 'quiz', 'worksheet', 'visual-aid', 'rubric', 'micro-lesson', 'virtual-field-trip', 'instant-answer', 'teacher-training', 'exam-paper', 'assessment',
 ] as const;
 export type ContentType = typeof CONTENT_TYPES[number];
 
