@@ -155,9 +155,9 @@ export default function AssessmentScannerPage() {
                 <CardContent>
                     <Alert className="mb-6 border-primary/30 bg-primary/5">
                         <Info className="h-4 w-4" />
-                        <AlertTitle>{t("Phase 1 Preview")}</AlertTitle>
+                        <AlertTitle>{t("Optimized for Mathematics")}</AlertTitle>
                         <AlertDescription>
-                            {t("This is the first version. Currently supports: Mathematics, single page. Multi-page and other subjects ship in Phase 2.")}
+                            {t("Currently tuned for single-page Mathematics worksheets across Classes 1–10. Multi-subject and multi-page assessments are rolling out across teacher pilots.")}
                         </AlertDescription>
                     </Alert>
 
