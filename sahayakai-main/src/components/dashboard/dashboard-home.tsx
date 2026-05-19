@@ -13,7 +13,7 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image, RefreshCw } from "lucide-react";
+import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image, RefreshCw, ScanEye } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
@@ -361,6 +361,7 @@ export function DashboardHome() {
               <QuickActionCard title="Quiz Generator" icon={BrainCircuit} href="/quiz-generator" color="" description="Instant quizzes & worksheets." />
               <QuickActionCard title="Exam Paper" icon={FileText} href="/exam-paper" color="" description="Board-aligned papers." />
               <QuickActionCard title="Worksheet Wizard" icon={ClipboardList} href="/worksheet-wizard" color="" description="Practice worksheets." />
+              <QuickActionCard title="Assess Work" icon={ScanEye} href="/assess-assignment" color="" description="Grade handwritten work from a photo." />
               <QuickActionCard title="Visual Aid" icon={Image} href="/visual-aid-designer" color="" description="Diagrams & illustrations." />
               <QuickActionCard title="Content Creator" icon={PenTool} href="/content-creator" color="" description="Stories & visual aids." />
               <QuickActionCard title="Instant Answer" icon={Lightbulb} href="/instant-answer" color="" description="Quick answers to questions." />
@@ -397,6 +398,13 @@ export function DashboardHome() {
             href="/worksheet-wizard"
             color=""
             description="Practice worksheets."
+          />
+          <QuickActionCard
+            title="Assess Work"
+            icon={ScanEye}
+            href="/assess-assignment"
+            color=""
+            description="Grade handwritten work from a photo."
           />
           <QuickActionCard
             title="Visual Aid"
