@@ -12,6 +12,7 @@ import { LessonPlanInputSection } from "@/components/lesson-plan/lesson-plan-inp
 import { LessonPlanSidebar } from "@/components/lesson-plan/lesson-plan-sidebar";
 import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
+import { LessonPlanLoadingOverlay } from "@/components/skeletons";
 import { useLessonPlan } from "../hooks/use-lesson-plan";
 import { useNetworkAware } from "@/hooks/use-network-aware";
 
@@ -386,6 +387,17 @@ export function LessonPlanView({
                 </CardContent>
             </SectionCard>
 
+            {/* Loading state — shape-matched skeleton + rotating progress hint
+                + Cancel button. Replaces the original "spinner in button only"
+                pattern that left the page looking frozen for 20-30s during
+                generation. NCERT demo polish (2026-05-19). */}
+            {isLoading && !lessonPlan && (
+                <LessonPlanLoadingOverlay
+                    language={selectedLanguage}
+                    initialMessage={loadingMessage}
+                />
+            )}
+
             {lessonPlan && (
                 <>
                     <div className="flex items-center gap-3">
@@ -395,7 +407,7 @@ export function LessonPlanView({
                     </div>
                     <SectionCard
                         tone="muted"
-                        className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5 animate-in fade-in slide-in-from-bottom-8 duration-medium"
+                        className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5 animate-in fade-in slide-in-from-bottom-8 duration-medium indic-text"
                     >
                         <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
                     </SectionCard>

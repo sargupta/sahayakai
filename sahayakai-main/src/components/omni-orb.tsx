@@ -7,7 +7,7 @@ import { useAuth } from "@/context/auth-context";
 import { auth } from "@/lib/firebase";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
-import { Trash2, BrainCircuit, Sparkles } from "lucide-react";
+import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
@@ -593,7 +593,12 @@ export function OmniOrb() {
                             <span className="font-semibold">Your profile: </span>
                             {[teacherProfile.preferredGrade, teacherProfile.preferredSubject, teacherProfile.schoolContext]
                                 .filter(Boolean).join(" · ")}
-                            {user && <span className="ml-1 opacity-60">(synced ☁️)</span>}
+                            {user && (
+                                <Cloud
+                                    className="ml-1 inline-block h-3 w-3 opacity-60 align-middle"
+                                    aria-label="Synced to cloud"
+                                />
+                            )}
                         </div>
                     )}
 
@@ -660,9 +665,21 @@ export function OmniOrb() {
 
                 {chatHistory.length > 0 && (
                     <>
-                        <div className="absolute -inset-3 rounded-full bg-primary/30 animate-ping pointer-events-none" style={{ animationDuration: "3s" }} />
-                        <div className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse pointer-events-none" style={{ animationDuration: "2s" }} />
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md animate-bounce pointer-events-none border border-primary/20 flex items-center gap-1">
+                        {/* NCERT demo polish (2026-05-19): simplified the
+                            previous triple-animation stack (animate-ping +
+                            animate-pulse + animate-bounce) to a single ring
+                            and a static tooltip. Three concurrent infinite
+                            animations were ~12ms of per-frame compositing
+                            on low-end Android, contributing to the founder's
+                            "lagging" report. Reduced-motion users see no
+                            ring at all. */}
+                        {!reducedMotion && (
+                            <div
+                                className="absolute -inset-2 rounded-full bg-primary/25 animate-pulse pointer-events-none"
+                                style={{ animationDuration: "2.4s" }}
+                            />
+                        )}
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
                             <BrainCircuit className="h-3 w-3" />
                             Tap to reply
                         </div>

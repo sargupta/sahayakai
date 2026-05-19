@@ -523,50 +523,56 @@ export default function CommunityPage() {
 
   // ── Main Feed View ───────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
-      {/* Header — title only */}
+    <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6 px-3 sm:px-0">
+      {/* Header — title only.
+          NCERT demo polish (2026-05-19): tightened px-6 → px-4 sm:px-6 so
+          the header doesn't overflow on 360px Android viewports, and
+          forced a 1.5 line-height on the subtitle so Devanagari/Kannada
+          translations don't clip ascenders. */}
       <div className="rounded-3xl overflow-hidden bg-background border border-border shadow-soft">
-        <div className="px-6 py-5 flex items-center gap-4">
-          <div className="p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
-            <Users className="w-6 h-6 text-primary" />
+        <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           </div>
-          <div className="flex-1">
-            <h1 className="font-headline text-2xl font-bold text-foreground">
+          <div className="flex-1 min-w-0">
+            <h1 className="font-headline text-xl sm:text-2xl font-bold text-foreground leading-tight">
               Community
             </h1>
-            <p className="text-sm text-muted-foreground font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5 leading-relaxed indic-text">
               Share, learn, and grow with teachers across Bharat
             </p>
           </div>
         </div>
       </div>
 
-      {/* Primary action tiles — labeled entry points, visible at every breakpoint */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      {/* Primary action tiles — labeled entry points, visible at every breakpoint.
+          NCERT demo polish (2026-05-19): smaller padding on mobile, tighter
+          internal gap so both tiles fit on 360px without text truncation. */}
+      <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3">
         <button
           onClick={handleOpenStaffRoom}
-          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
           aria-label={t("Open Staff Room — chat with every teacher")}
         >
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
-            <MessageCircle className="h-5 w-5" />
+          <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground">Staff Room</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Open chat with every teacher</div>
+            <div className="font-semibold text-sm text-foreground leading-snug">Staff Room</div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">Open chat</div>
           </div>
         </button>
         <button
           onClick={handleOpenTeacherDirectory}
-          className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left shadow-soft active:scale-[0.98]"
+          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
           aria-label={t("Find Teachers — search by subject or school")}
         >
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
-            <UserSearch className="h-5 w-5" />
+          <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <UserSearch className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground">Find Teachers</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Search by subject or school</div>
+            <div className="font-semibold text-sm text-foreground leading-snug">Find Teachers</div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">By subject or school</div>
           </div>
         </button>
       </div>
@@ -697,12 +703,20 @@ export default function CommunityPage() {
 
       {/* Mobile FAB — opens the full create-post dialog. Previously this just
           scrolled to the (already-visible) composer above. CreatePostDialog
-          had been imported nowhere else; this revives it with proper wiring. */}
-      <div className="fixed bottom-20 right-4 sm:hidden z-[70]">
+          had been imported nowhere else; this revives it with proper wiring.
+
+          NCERT demo polish (2026-05-19): pinned to the LEFT on mobile so it
+          doesn't collide with the right-side floating OmniOrb mic, which
+          also sits at right-4 bottom on mobile. The 'safe-area-inset-bottom'
+          env() var keeps the FAB clear of the iOS home indicator. */}
+      <div
+        className="fixed left-4 sm:hidden z-[70]"
+        style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))" }}
+      >
         <button
           onClick={() => setShowCreateDialog(true)}
           aria-label={t("Create a Post")}
-          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
         >
           <Plus className="h-6 w-6" />
         </button>
