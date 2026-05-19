@@ -58,8 +58,16 @@ const VidyaActionParamsSchema = z.object({
   dependsOn: z.array(z.number().int().nonnegative()).max(2).optional(),
 });
 
+// Gemini 2.5 Flash's structured-output API rejects JSON-Schema `const`
+// past nesting depth ~5 (returns "Unknown name 'const' at ..."). The
+// VidyaActionSchema sits at depth 5+ (root.plannedActions.items.properties.type),
+// so we declare the discriminator via `z.enum([...] as const)` instead of
+// `z.literal(...)`. Single-value enum compiles to JSON-Schema `enum: ["X"]`
+// — accepted at any depth — and still narrows the TS type to the exact
+// literal 'NAVIGATE_AND_FILL' for downstream consumers (omni-orb's
+// `action.type === "NAVIGATE_AND_FILL"` guard relies on this).
 const VidyaActionSchema = z.object({
-  type: z.literal('NAVIGATE_AND_FILL'),
+  type: z.enum(['NAVIGATE_AND_FILL'] as const),
   flow: AllowedFlowEnum,
   params: VidyaActionParamsSchema,
 });
