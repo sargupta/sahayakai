@@ -1,14 +1,22 @@
 /**
  * POST /api/ai/assessment-scanner
  *
- * Run the AI grading flow on an uploaded student answer page.
+ * Run the AI grading flow on an uploaded student answer page (or up to
+ * ASSESSMENT_DEMO_PAGE_CAP pages, currently 3).
  *
- * Phase 1 hard limits:
- *   - 1 page per request (enforced here, schema allows up to 15)
- *   - subject must be Mathematics
- * These constraints lift in Phase 2 once multi-page UX + non-math prompts are
- * verified. The schema-level cap (ASSESSMENT_MAX_PAGES = 15) is the long-term
- * ceiling.
+ * Phase-2 scope:
+ *   - Pages: up to ASSESSMENT_DEMO_PAGE_CAP per request (schema ceiling is 15)
+ *   - Subjects: ASSESSMENT_SUPPORTED_SUBJECTS — Mathematics (best-in-class),
+ *     Science, EVS, Social Science (+ History / Geography / Civics), Hindi,
+ *     English, plus an "Other" catch-all.
+ *
+ * Backwards compatibility:
+ *   - `pageUrl: string` (legacy single-page) is accepted and normalised into
+ *     a one-element `pageUrls` array. New callers should send `pageUrls`.
+ *   - Phase-1 error codes (`PHASE_LIMIT` / `PHASE_1_PAGE_CAP` /
+ *     `PHASE_1_SUBJECT`) are retired in favour of clearer codes
+ *     (`PAGE_LIMIT_EXCEEDED`, `UNSUPPORTED_SUBJECT`). Old clients receive a
+ *     400 with a human-readable message either way.
  *
  * Pattern mirrors `/api/ai/quiz/route.ts`:
  *   - Auth via x-user-id header (middleware-injected)
@@ -19,14 +27,35 @@
 
 import { NextResponse } from 'next/server';
 import {
+    ASSESSMENT_DEMO_PAGE_CAP,
+    ASSESSMENT_SUPPORTED_SUBJECTS,
     AssessmentScannerInputSchema,
-    PHASE_1_PAGE_CAP,
 } from '@/ai/schemas/assessment-scanner-schemas';
 import { gradeAssessment } from '@/ai/flows/assessment-scanner';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 
-const PHASE_1_ALLOWED_SUBJECTS = new Set(['Mathematics']);
+const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
+
+/**
+ * Normalise the request body so older clients that still send `pageUrl`
+ * (single string) keep working alongside new callers that send `pageUrls`
+ * (string array). The schema only knows about `pageUrls`.
+ */
+function normalisePagePayload(raw: unknown): unknown {
+    if (!raw || typeof raw !== 'object') return raw;
+    const body = raw as Record<string, unknown>;
+
+    // Already on the new shape — leave it alone.
+    if (Array.isArray(body.pageUrls) && body.pageUrls.length > 0) return body;
+
+    // Legacy single-page shape: `{ pageUrl: 'https://...' }`.
+    if (typeof body.pageUrl === 'string' && body.pageUrl.length > 0) {
+        return { ...body, pageUrls: [body.pageUrl] };
+    }
+
+    return body;
+}
 
 async function _handler(request: Request) {
     let assessmentId = 'unknown';
@@ -39,36 +68,68 @@ async function _handler(request: Request) {
             );
         }
 
-        const json = await request.json();
-        assessmentId = json.assessmentId || 'unknown';
+        const rawJson = await request.json();
+        const normalised = normalisePagePayload(rawJson);
+        if (normalised && typeof normalised === 'object') {
+            assessmentId =
+                (normalised as Record<string, unknown>).assessmentId as string ?? 'unknown';
+        }
 
-        // Validate against the long-term schema first — this catches obvious
-        // client mistakes (bad UUID, missing fields) early.
-        const body = AssessmentScannerInputSchema.parse({ ...json, userId });
+        // Pre-schema subject + page-cap guards. Doing these BEFORE the schema
+        // parse produces clearer error messages — a teacher who sends
+        // "Astrology" should see "subject not supported" rather than a Zod
+        // shape error about the broader request body.
+        const candidate = (normalised ?? {}) as Record<string, unknown>;
+        const subject = typeof candidate.subject === 'string' ? candidate.subject : '';
+        const pageUrls = Array.isArray(candidate.pageUrls) ? candidate.pageUrls : [];
 
-        // Phase-1 guard rails (intentionally not in the schema so we can
-        // remove them in one place once Phase 2 lands).
-        if (body.pageUrls.length > PHASE_1_PAGE_CAP) {
+        if (!subject) {
             return NextResponse.json(
                 {
-                    error: 'PHASE_LIMIT',
-                    message: `Multi-page scanning ships in Phase 2. Please upload ${PHASE_1_PAGE_CAP} page at a time for now.`,
-                    code: 'PHASE_1_PAGE_CAP',
+                    error: 'INVALID_INPUT',
+                    message: 'A subject is required.',
+                    code: 'SUBJECT_REQUIRED',
                 },
                 { status: 400 },
             );
         }
-        if (!PHASE_1_ALLOWED_SUBJECTS.has(body.subject)) {
+        if (!SUPPORTED_SUBJECT_SET.has(subject)) {
             return NextResponse.json(
                 {
-                    error: 'PHASE_LIMIT',
-                    message: 'Phase 1 supports Mathematics only. Other subjects ship in Phase 2.',
-                    code: 'PHASE_1_SUBJECT',
-                    allowedSubjects: Array.from(PHASE_1_ALLOWED_SUBJECTS),
+                    error: 'UNSUPPORTED_SUBJECT',
+                    message: `Subject "${subject}" is not supported. Pick one of: ${ASSESSMENT_SUPPORTED_SUBJECTS.join(', ')}. If your subject isn't listed, use "Other".`,
+                    code: 'UNSUPPORTED_SUBJECT',
+                    allowedSubjects: ASSESSMENT_SUPPORTED_SUBJECTS,
                 },
                 { status: 400 },
             );
         }
+        if (pageUrls.length === 0) {
+            return NextResponse.json(
+                {
+                    error: 'INVALID_INPUT',
+                    message: 'At least one page is required (send `pageUrls` as a non-empty array, or `pageUrl` as a string).',
+                    code: 'NO_PAGES',
+                },
+                { status: 400 },
+            );
+        }
+        if (pageUrls.length > ASSESSMENT_DEMO_PAGE_CAP) {
+            return NextResponse.json(
+                {
+                    error: 'PAGE_LIMIT_EXCEEDED',
+                    message: `Up to ${ASSESSMENT_DEMO_PAGE_CAP} pages per scan in the current release. You sent ${pageUrls.length}. Please split into multiple scans.`,
+                    code: 'PAGE_LIMIT_EXCEEDED',
+                    maxPages: ASSESSMENT_DEMO_PAGE_CAP,
+                    receivedPages: pageUrls.length,
+                },
+                { status: 400 },
+            );
+        }
+
+        // Schema parse runs LAST so the targeted guards above own their own
+        // error messages.
+        const body = AssessmentScannerInputSchema.parse({ ...candidate, userId });
 
         const result = await gradeAssessment(body);
         return NextResponse.json(result);
