@@ -92,6 +92,10 @@ export async function middleware(request: NextRequest) {
     if (
         pathname.startsWith('/_next') ||
         pathname === '/favicon.ico' ||
+        // SEO static files served from public/ (llms.txt, llms-full.txt, google verification)
+        pathname === '/llms.txt' ||
+        pathname === '/llms-full.txt' ||
+        pathname === '/google8283f170c9f5e54d.html' ||
         // Firebase Auth helper paths reverse-proxied to *.firebaseapp.com
         // (see next.config.ts rewrites). Don't run auth verification or
         // attach security headers (e.g. X-Frame-Options: DENY would block
@@ -113,7 +117,8 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
         pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
         pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
-        pathname.startsWith('/api/billing/callback');  // Razorpay redirect — verified via signature  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
+        pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
+        pathname.startsWith('/api/seo/');  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
 
     if (isPublicApi) {
         return NextResponse.next();
