@@ -1,9 +1,9 @@
 /**
  * Assessment Scanner — Zod schemas.
  *
- * Phase-1 MVP scope: single page, single student, math + MCQ + short answer
- * only. Multi-page, full subject coverage, gradebook tracking, and class
- * analytics land in subsequent phases.
+ * Phase-2 scope: up to 3 pages per scan, six subject families (Mathematics,
+ * Science, EVS, Social Science, Hindi, English) plus an "Other" generic
+ * fallback. Multi-student rosters and class analytics still land in Phase 3+.
  *
  * Schemas live in their own file (mirroring `quiz-generator-schemas.ts`) so
  * the API route can import them without dragging Genkit + the LLM client into
@@ -19,6 +19,21 @@
  */
 
 import { z } from 'genkit';
+
+// Re-export client-safe constants so existing server-side callers that import
+// them from this file (route, flow, tests) keep working. The constants live
+// in a separate module so UI code can import them without pulling Genkit into
+// the client bundle.
+export {
+    ASSESSMENT_DEMO_PAGE_CAP,
+    PHASE_1_PAGE_CAP,
+    ASSESSMENT_MAX_PAGES,
+    ASSESSMENT_SUPPORTED_SUBJECTS,
+    resolveSubjectFamily,
+    type AssessmentSupportedSubject,
+    type SubjectRubricFamily,
+} from './assessment-scanner-constants';
+import { ASSESSMENT_MAX_PAGES } from './assessment-scanner-constants';
 
 // ───────────────────────────────────────────────────────────────────────────
 // PASS 1: Page extraction
@@ -189,14 +204,10 @@ const ConceptMasterySchema = z.object({
 // Public API: input + output schemas
 // ───────────────────────────────────────────────────────────────────────────
 
-/**
- * Phase-1 cap on pages. Multi-page lands in Phase 2; until then, more than 1
- * page in a single request is rejected at the route layer.
- */
-export const PHASE_1_PAGE_CAP = 1;
-
-/** Phase-2 hard cap on pages per assessment. */
-export const ASSESSMENT_MAX_PAGES = 15;
+// Page-cap, subject list, and `resolveSubjectFamily` now live in
+// `./assessment-scanner-constants.ts` (re-exported at the top of this file)
+// so client-side pages can import them without pulling Genkit / Node-only
+// telemetry deps into the browser bundle.
 
 export const AssessmentScannerInputSchema = z.object({
     assessmentId: z
@@ -206,14 +217,16 @@ export const AssessmentScannerInputSchema = z.object({
     studentId: z
         .string()
         .optional()
-        .describe('Phase-1: optional. Phase-2+: required (linked to roster).'),
+        .describe('Optional today; required once class rosters land (Phase 3+).'),
     classId: z
         .string()
         .optional()
-        .describe('Phase-1: optional. Phase-2+: required.'),
+        .describe('Optional today; required once class rosters land (Phase 3+).'),
     subject: z
         .string()
-        .describe('Subject from SUBJECTS enum (e.g. "Mathematics"). Phase-1: only "Mathematics" is allowed.'),
+        .describe(
+            'Subject from ASSESSMENT_SUPPORTED_SUBJECTS (Mathematics, Science, EVS, Social Science / History / Geography / Civics, Hindi, English, or "Other"). The route validates against this list and rejects unknowns with a 400.',
+        ),
     gradeLevel: z
         .string()
         .describe('Grade from GRADE_LEVELS (e.g. "Class 10").'),
@@ -226,7 +239,7 @@ export const AssessmentScannerInputSchema = z.object({
         .min(1)
         .max(ASSESSMENT_MAX_PAGES)
         .describe(
-            'HTTPS URLs (Firebase Storage download URLs) OR data URIs. The flow normalises both.',
+            'HTTPS URLs (Firebase Storage download URLs) OR data URIs. The flow normalises both. Schema ceiling is 15; the route currently caps demo traffic at ASSESSMENT_DEMO_PAGE_CAP (3) for cost + latency control.',
         ),
     ncertChapterIds: z
         .array(z.string())

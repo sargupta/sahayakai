@@ -1,7 +1,9 @@
 /**
  * @fileOverview Assessment Scanner — AI grading of student answer sheets.
  *
- * Phase-1 MVP: single page, single student, math + MCQ + short answer.
+ * Phase-2 scope: up to 3 pages per scan, multiple subject families
+ * (Mathematics, Science, EVS, Social Science, Hindi, English, Other).
+ *
  * Two-pass strategy:
  *   PASS 1 — Extract page structure (questions + handwritten answers, verbatim)
  *   PASS 2 — Rubric-grounded scoring with NCERT chapter context
@@ -9,6 +11,13 @@
  * Why two passes: gives a clean failure boundary (extraction failed vs grading
  * failed), lets us cache extraction across teacher edits in later phases, and
  * matches the established pattern used by GradeMate/Graider/ExamAI in production.
+ *
+ * Subject-aware grading: Pass 2 prompt branches the rubric by subject family.
+ * Mathematics gets the original, well-tuned rubric (computation correctness,
+ * method working, carry-over, units, sign errors). Other families ship with
+ * subject-aware prompts but no specialist post-processing yet — the model is
+ * instructed to be conservative on confidence so the teacher gets a clear
+ * "review me" signal where it matters.
  *
  * Architecture: plain async function (NOT 'use server'), returns Zod-validated
  * output. The API route at /api/ai/assessment-scanner wraps this with
@@ -27,10 +36,12 @@ import {
     AssessmentScannerOutputSchema,
     PageScanSchema,
     GradedQuestionSchema,
+    resolveSubjectFamily,
     type AssessmentScannerInput,
     type AssessmentScannerOutput,
     type PageScan,
     type GradedQuestion,
+    type SubjectRubricFamily,
 } from '@/ai/schemas/assessment-scanner-schemas';
 import { z } from 'genkit';
 
@@ -81,7 +92,7 @@ const pageExtractionPrompt = ai.definePrompt({
 });
 
 // ───────────────────────────────────────────────────────────────────────────
-// PASS 2 prompt — rubric-grounded scoring
+// PASS 2 prompt — rubric-grounded scoring, subject-aware
 // ───────────────────────────────────────────────────────────────────────────
 
 const Pass2InputSchema = z.object({
@@ -92,6 +103,18 @@ const Pass2InputSchema = z.object({
     ncertContext: z.string(),
     teacherAnswerKeyText: z.string().optional(),
     educationBoard: z.string().optional(),
+    /**
+     * Subject-family rubric guidance, resolved server-side from `subject`.
+     * Lives in the prompt verbatim (not branched via Handlebars) so the model
+     * sees exactly one rubric per call and isn't tempted to merge them.
+     */
+    subjectRubric: z.string(),
+    /**
+     * Honesty disclaimer set when the subject family isn't Mathematics —
+     * tells the model to lean conservative on confidence so the teacher
+     * gets a clear "review me" signal.
+     */
+    confidenceGuidance: z.string(),
 });
 
 const Pass2OutputSchema = z.object({
@@ -99,6 +122,84 @@ const Pass2OutputSchema = z.object({
     recommendedNextSteps: z.array(z.string()),
     studentRecommendations: z.array(z.string()),
 });
+
+/**
+ * Per-family rubric blocks. Lives outside the Handlebars template so each
+ * call sees one focused rubric — combining all six in one mega-prompt would
+ * dilute the model's attention and make Math grading worse.
+ */
+const SUBJECT_RUBRICS: Record<SubjectRubricFamily, string> = {
+    mathematics: `**Mathematics rubric — best-in-class focus:**
+- **Computation correctness**: arithmetic accuracy on every operation.
+- **Method working**: award method marks for correct setup and formula application even when the final number is wrong (carry-over errors, sign errors, transcription slips should keep most of the marks).
+- **Carry-over errors**: distinguish a one-off arithmetic slip from a conceptual misunderstanding — don't double-penalise a single bad number that propagates.
+- **Units**: deduct 0.5 per missing unit on a question that requires one.
+- **Sign errors**: explicit deduction; flag in feedback ("watch the negative sign").
+- **Showing work**: when the student wrote out steps, use \`partialCreditBreakdown\` exhaustively (setup, method, computation, answer). When the answer is correct with no working, award full marks but note in feedback that working would help future scoring.`,
+
+    science: `**Science rubric:**
+- **Concept understanding**: does the answer demonstrate the underlying principle (not just a memorised sentence)?
+- **Terminology accuracy**: scientific terms used correctly — "force" vs "energy", "weight" vs "mass", "evaporation" vs "condensation". Tolerate vernacular variants of the same term.
+- **Diagram correctness** (when relevant): labels correct, proportions reasonable, arrows showing direction where applicable.
+- **Application reasoning**: for "explain why" / "what would happen if" questions, the chain of cause and effect should be sound.
+- **Acceptable variation**: accept paraphrases. Reward partial understanding — a student who names the right phenomenon but misses one step gets significant partial credit.
+- **No experimental working to credit**: there is no equivalent of math's method marks here; partialCreditBreakdown should usually be empty for short/long answers (use it only when the question explicitly asks for steps like an experimental procedure).`,
+
+    evs: `**EVS rubric (Class 1–5, Environmental Studies):**
+- **Observation accuracy**: when the question asks about something the student has seen / experienced (plants in their area, family helpers, etc.), reward genuine observation over textbook-perfect answers.
+- **Age-appropriate vocabulary**: a Class-3 student calling a pollinator "the bee that helps the flower" is fine; don't penalise for not saying "pollinator".
+- **Classification correctness**: living vs non-living, plants vs animals, eatable vs inedible — these are the core EVS skills. Mark these strictly.
+- **Drawings and labels**: accept rough drawings that show the right idea; full marks for correct labels even if the figure is shaky.
+- **Be encouraging**: EVS at this age is about confidence-building. studentFacingFeedback should reinforce curiosity, never shame a wrong observation.
+- **partialCreditBreakdown**: usually empty — these questions are short. Use only when the question has clearly separable parts (e.g. "name three…" — one mark per correct name).`,
+
+    social_science: `**Social Science rubric (History / Geography / Civics):**
+- **Factual accuracy**: dates, names, places, events. Mark these strictly when the question is purely factual.
+- **Causal reasoning (History)**: for "why did X happen" — the chain of causes should be plausible. Reward partial chains; full marks need the key cause + one supporting cause.
+- **Location accuracy (Geography)**: map references, directions, climate-zone classifications must be correct. Tolerate spelling variants of place names.
+- **Constitutional accuracy (Civics)**: rights, duties, articles, three-branches structure — these have right answers; mark strictly.
+- **Source-based questions**: when the question quotes a passage and asks for interpretation, reward correct comprehension over recitation.
+- **partialCreditBreakdown**: use sparingly — only when the question has explicit parts ("list three causes of the revolt of 1857" — one mark per cause).`,
+
+    language: `**Language rubric (Hindi / English) — branches by question type:**
+For **grammar / fill-blank / one-word**:
+- **Grammar correctness**: tense, agreement, number, case. Strict marking.
+- **Spelling**: tolerate one minor spelling slip per answer for primary classes; strict for Class 9+.
+- **Vocabulary**: synonyms and idiomatic equivalents accepted.
+
+For **comprehension / short answer**:
+- **Coherence**: does the answer actually address the question?
+- **Idea development**: at least one supporting detail beyond the bare answer.
+
+For **essay / long-answer / creative writing**, use a four-part rubric:
+- **Thesis / main idea**: clear and on-topic.
+- **Support / examples**: at least two relevant supporting points.
+- **Coherence and flow**: paragraphs connect; ideas don't jump.
+- **Conclusion**: ties back to the thesis.
+Score each 0..full and sum into marksAwarded; record the breakdown in partialCreditBreakdown.
+
+**Vernacular handwriting**: be generous on shirorekha alignment, matra placement, conjuncts — the student is writing by hand, not typing.`,
+
+    other: `**Generic rubric (used when the subject doesn't fit a named family):**
+- **Clarity**: is the answer understandable?
+- **Correctness**: factually right against the question and NCERT context.
+- **Completeness**: covers what the question asked for (not more, not less).
+- **Presentation**: legible, organised; doesn't require deduction unless the question explicitly asked for a specific format.
+
+This is a fallback. The rubric is intentionally generic — set \`confidence\` lower than you would for a subject-tuned rubric so the teacher knows to review. Use partialCreditBreakdown only when the question itself has clearly numbered parts.`,
+};
+
+const NON_MATH_CONFIDENCE_GUIDANCE = `**Confidence guidance for this subject:** Mathematics is the only subject family with a deeply-tuned rubric in this release. The rubric above is subject-aware but not specialist. **Lean conservative on \`confidence\`** — when in doubt, set \`needsTeacherReview: true\`. Teachers will be reviewing the AI's grades carefully on non-Math subjects; an honest "I'm uncertain" is more useful than a confident-but-wrong score.`;
+
+const MATH_CONFIDENCE_GUIDANCE = `**Confidence guidance:** Mathematics is the best-tuned subject in this release. You can be more decisive on confidence here than on other subjects, but still set \`needsTeacherReview: true\` whenever extraction confidence was below 0.8, partial-credit ambiguity remains, or multiple MCQ options were marked.`;
+
+function rubricFor(family: SubjectRubricFamily): string {
+    return SUBJECT_RUBRICS[family];
+}
+
+function confidenceGuidanceFor(family: SubjectRubricFamily): string {
+    return family === 'mathematics' ? MATH_CONFIDENCE_GUIDANCE : NON_MATH_CONFIDENCE_GUIDANCE;
+}
 
 const scoringPrompt = ai.definePrompt({
     name: 'assessmentScannerPass2',
@@ -127,7 +228,13 @@ const scoringPrompt = ai.definePrompt({
 ### Education board: {{educationBoard}}
 {{/if}}
 
-## Scoring rules
+## Subject-specific rubric (use this — do NOT invent your own)
+
+{{{subjectRubric}}}
+
+{{{confidenceGuidance}}}
+
+## Universal scoring rules (apply to every subject)
 
 For EACH extracted question, produce one GradedQuestion:
 
@@ -142,37 +249,31 @@ For EACH extracted question, produce one GradedQuestion:
 
 2. **MCQ**: exact match → full marks; wrong or multiple selections → 0; record this as \`partialCreditBreakdown: []\` (no partial for MCQ).
 
-3. **Math**: award method marks even when the final answer is computationally wrong. Use \`partialCreditBreakdown\` to enumerate steps:
-   \`[{ step: "Set up equation", earned: 1, max: 1 }, { step: "Apply formula", earned: 1, max: 1 }, { step: "Final answer", earned: 0, max: 1 }]\`
-   If the student showed no working but got the right answer, award full marks.
+3. **Fill-blank / one-word / short-answer**: tolerate spelling variants and synonyms — especially in vernacular languages. Award full marks for clearly equivalent answers.
 
-4. **Essay / long-answer**: derive a 4-criterion rubric inline (Understanding / Reasoning / Expression / Examples). Score each 0–full; sum to total.
+4. **Mixed-language answers** (e.g. English question, Hindi answer): full marks if the content is correct, unless the rubric explicitly requires answering in a specific language.
 
-5. **Fill-blank / one-word / short-answer**: tolerate spelling variants and synonyms — especially in vernacular languages. Award full marks for clearly equivalent answers.
+5. **No answer written** (\`isAttempted: false\`): 0 marks, \`mistakePattern: 'incomplete'\`, encouraging studentFacingFeedback.
 
-6. **Mixed-language answers** (e.g. English question, Hindi answer): full marks if the content is correct, unless the rubric explicitly requires answering in a specific language.
+6. **Off-topic answer**: 0 marks, \`mistakePattern: 'off_topic'\`, feedback explains the gap.
 
-7. **No answer written** (\`isAttempted: false\`): 0 marks, \`mistakePattern: 'incomplete'\`, encouraging studentFacingFeedback.
+7. **MCQ with multiple options ticked**: 0 marks, \`needsTeacherReview: true\`, feedback notes the ambiguity.
 
-8. **Off-topic answer**: 0 marks, \`mistakePattern: 'off_topic'\`, feedback explains the gap.
+8. **Question on a question_only page** (no answer space): score 0 / 0 (excluded from total). Do NOT count against the student.
 
-9. **MCQ with multiple options ticked**: 0 marks, \`needsTeacherReview: true\`, feedback notes the ambiguity.
+9. **Confidence < 0.8 OR partial credit ambiguous**: set \`needsTeacherReview: true\`. Be honest about uncertainty — do NOT pretend to be authoritative.
 
-10. **Question on a question_only page** (no answer space): score 0 / 0 (excluded from total). Do NOT count against the student.
+10. **expectedAnswer**: write the correct/reference answer using NCERT context (or teacherAnswerKeyText when provided). For math, include the worked solution.
 
-11. **Confidence < 0.8 OR partial credit ambiguous**: set \`needsTeacherReview: true\`. Be honest about uncertainty — do NOT pretend to be authoritative.
+11. **conceptTested**: short concept name (e.g. "Pythagoras Theorem", "Subject-Verb Agreement", "Photosynthesis").
 
-12. **expectedAnswer**: write the correct/reference answer using NCERT context (or teacherAnswerKeyText when provided). For math, include the worked solution.
+12. **ncertChapterId**: best match from the NCERT context above. Use null if no match.
 
-13. **conceptTested**: short concept name (e.g. "Pythagoras Theorem", "Subject-Verb Agreement", "Photosynthesis").
+13. **mistakePattern**: pick ONE — \`conceptual\` (misunderstood the idea), \`computational\` (right method, wrong arithmetic), \`transcription\` (copied a value wrong from the question), \`incomplete\` (didn't finish), \`off_topic\` (answered the wrong thing), or \`none\` (correct answer).
 
-14. **ncertChapterId**: best match from the NCERT context above. Use null if no match.
+14. **feedback** (teacher-facing): 1–2 sentences in {{language}}. Specific and actionable. NO generic praise.
 
-15. **mistakePattern**: pick ONE — \`conceptual\` (misunderstood the idea), \`computational\` (right method, wrong arithmetic), \`transcription\` (copied a value wrong from the question), \`incomplete\` (didn't finish), \`off_topic\` (answered the wrong thing), or \`none\` (correct answer).
-
-16. **feedback** (teacher-facing): 1–2 sentences in {{language}}. Specific and actionable. NO generic praise.
-
-17. **studentFacingFeedback**: gentler tone, age-appropriate for {{gradeLevel}}, in {{language}}. Encouraging when score is low. **Never shame the student.**
+15. **studentFacingFeedback**: gentler tone, age-appropriate for {{gradeLevel}}, in {{language}}. Encouraging when score is low. **Never shame the student.**
 
 ## Final aggregation
 
@@ -318,6 +419,9 @@ async function scoreAssessment(
     studentRecommendations: string[];
 }> {
     const ncertContext = buildNcertContext(input);
+    const family = resolveSubjectFamily(input.subject);
+    const subjectRubric = rubricFor(family);
+    const confidenceGuidance = confidenceGuidanceFor(family);
 
     const { output } = await runResiliently(
         async (resilienceConfig) =>
@@ -330,10 +434,12 @@ async function scoreAssessment(
                     ncertContext,
                     teacherAnswerKeyText: input.teacherAnswerKeyText,
                     educationBoard: input.educationBoard,
+                    subjectRubric,
+                    confidenceGuidance,
                 },
                 resilienceConfig,
             ),
-        'assessmentScanner.pass2',
+        `assessmentScanner.pass2.${family}`,
     );
 
     if (!output) {
