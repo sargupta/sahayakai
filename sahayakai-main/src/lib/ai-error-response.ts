@@ -57,7 +57,11 @@ const TRANSIENT_NAMES = new Set(['AIQuotaExhaustedError']);
 function errorStatus(error: any): number | null {
     if (typeof error?.status === 'number') return error.status;
     const msg = String(error?.message || '');
-    if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Resource exhausted')) return 429;
+    // Map internal rate limiter (src/lib/server-safety.ts throws
+    // "Rate limit exceeded. Please wait N minutes.") to 429 so the
+    // user sees the proper "AI service overloaded" message + Retry-After
+    // header instead of a generic 500 "AI generation failed".
+    if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Resource exhausted') || msg.includes('Rate limit exceeded')) return 429;
     if (msg.includes('403') || msg.includes('denied access')) return 403;
     if (msg.includes('401')) return 401;
     if (msg.includes('400') || msg.includes('API key expired')) return 400;

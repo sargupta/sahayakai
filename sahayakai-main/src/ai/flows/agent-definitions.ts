@@ -40,7 +40,12 @@ const AllowedFlowEnum = z.enum([
 
 const NcertChapterRefSchema = z.object({
   number: z.number().int().min(1).max(30),
-  title: z.string().min(1).max(300),
+  // Title bound to .max(300) only — was .min(1) but Gemini occasionally
+  // returns {number: 2, title: ""} when it knows the chapter number but
+  // not its NCERT title; the minLength then triggers Genkit schema
+  // validation 500 in /api/ai/intent. Empty title is acceptable; the
+  // downstream prompt template degrades to "Chapter N" without title.
+  title: z.string().max(300),
   learningOutcomes: z.array(z.string().max(300)).max(20).optional(),
 });
 
