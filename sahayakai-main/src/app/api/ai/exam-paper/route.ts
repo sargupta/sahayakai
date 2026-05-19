@@ -100,6 +100,32 @@ async function _handler(request: Request) {
             body.chapters = [];
         }
 
+        // NCERT demo hot-fix (2026-05-19): when there is NO official
+        // blueprint for the chosen board/grade/subject AND no chapters were
+        // selected, Gemini gets two open-ended constraints at once
+        // ("invent the structure" + "invent the syllabus") and routinely
+        // exceeds the 75s budget — surfacing as a 202 in-progress payload
+        // that the UI used to render as "undefined undefined undefined".
+        // Require at least one chapter for the unblueprinted path so the
+        // generator has SOMETHING to anchor on.
+        if ((body.chapters as string[]).length === 0) {
+            const { findBlueprint } = await import('@/ai/data/board-blueprints');
+            const blueprint = findBlueprint(
+                String(body.board),
+                String(body.gradeLevel),
+                String(body.subject),
+            );
+            if (!blueprint) {
+                return NextResponse.json(
+                    {
+                        error: 'chapters_required_for_unblueprinted_subject',
+                        message: `Please add at least one chapter for ${body.board} ${body.gradeLevel} ${body.subject}. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science — for everything else, the AI needs a chapter list to anchor the paper.`,
+                    },
+                    { status: 400 },
+                );
+            }
+        }
+
         if (body.difficulty && !VALID_DIFFICULTIES.includes(body.difficulty as typeof VALID_DIFFICULTIES[number])) {
             return NextResponse.json(
                 { error: `Invalid difficulty. Must be one of: ${VALID_DIFFICULTIES.join(', ')}` },

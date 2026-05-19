@@ -220,13 +220,34 @@ export default function ExamPaperPage() {
         }),
       });
 
+      // 202 = AI hit the timeout budget but is still working in the
+      // background. Don't render the "in-progress" envelope as a paper —
+      // that's how the founder saw "undefined undefined undefined" on
+      // 2026-05-19. Show a friendly notice and let them retry.
+      if (res.status === 202) {
+        const body = await res.json().catch(() => ({}));
+        const msg =
+          body.message ||
+          t("Still generating. Open My Library in about a minute, or try again with a chapter selected.");
+        setError(msg);
+        return;
+      }
+
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || `Failed (${res.status})`);
+        throw new Error(errBody.message || errBody.error || `Failed (${res.status})`);
       }
 
       const data = await res.json();
-      setPaper(data.paper || data);
+      // Defensive: a 200 with no title/sections is the same garbage shape
+      // as the old 202 mis-render. Treat it as an error instead of
+      // rendering "undefined undefined undefined".
+      const candidate = data?.paper || data;
+      if (!candidate || !candidate.title || !Array.isArray(candidate.sections) || candidate.sections.length === 0) {
+        setError(t("The AI returned an incomplete paper. Please try again with a chapter selected."));
+        return;
+      }
+      setPaper(candidate);
     } catch (err: any) {
       setError(err.message || t("Something went wrong. Please try again."));
     } finally {
