@@ -19,6 +19,42 @@
 import { ai, runResiliently } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 
+/**
+ * NCERT-demo 2026-05-19 — chapter validation hook.
+ *
+ * Agent 3's deliverable lives at `@/ai/data/ncert-chapters` and exports
+ * `validateChapter(gradeLevel, subject, chapter): { valid; suggestion? }`.
+ * We import lazily so this file never crashes when the data module is
+ * still in flight. Contract: a permissive passthrough validator keeps
+ * the demo path functional until Agent 3 lands the real lookup table.
+ */
+type VidyaChapterValidator = (
+    gradeLevel: string,
+    subject: string,
+    chapter: string,
+) => { valid: boolean; suggestion?: string };
+
+const PASSTHROUGH_VIDYA_CHAPTER_VALIDATOR: VidyaChapterValidator = () => ({ valid: true });
+
+let cachedVidyaChapterValidator: VidyaChapterValidator | null = null;
+async function loadVidyaChapterValidator(): Promise<VidyaChapterValidator> {
+    if (cachedVidyaChapterValidator) return cachedVidyaChapterValidator;
+    try {
+        const modPath = '@/ai/data/ncert-chapters';
+        const mod = (await import(/* webpackIgnore: true */ modPath)) as {
+            validateChapter?: VidyaChapterValidator;
+        };
+        if (typeof mod?.validateChapter === 'function') {
+            cachedVidyaChapterValidator = mod.validateChapter;
+            return cachedVidyaChapterValidator;
+        }
+    } catch {
+        /* module not present yet — fall through */
+    }
+    cachedVidyaChapterValidator = PASSTHROUGH_VIDYA_CHAPTER_VALIDATOR;
+    return cachedVidyaChapterValidator;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export interface AssistantChatHistoryEntry {
@@ -79,6 +115,22 @@ export interface VidyaPlannedActionParams {
     } | null;
     /** Index pointers (max 2) into earlier `plannedActions` entries. */
     dependsOn?: number[];
+    /**
+     * NCERT-demo 2026-05-19 — when the current voice transcript is too
+     * sparse for the classifier to fully populate the action (e.g. just
+     * "Class 10"), this is a single follow-up the OmniOrb can TTS back
+     * to the teacher INSTEAD of silently inheriting fields from the
+     * prior turn. Bounded to 300 chars to keep TTS latency in budget.
+     */
+    clarifyingPrompt?: string | null;
+    /**
+     * NCERT-demo 2026-05-19 — soft warning when the
+     * (gradeLevel, subject, ncertChapter) tuple does not match a known
+     * NCERT entry (e.g. asking for "Class 7 quadratic equations" — those
+     * live in Class 10). Surfaces in the OmniOrb confirm chip before
+     * navigation; never blocks.
+     */
+    validationWarning?: string | null;
 }
 
 export interface VidyaPlannedAction {
@@ -138,8 +190,78 @@ function buildSystemPrompt(input: AssistantInput): string {
 CRITICAL CONTEXT INJECTION:
 Current User Screen path: ${screen?.path || 'unknown'}
 Active form fields (what the teacher is currently working on): ${JSON.stringify(screen?.uiState || {})}${profileContext}${languageInstruction}
+
+${VIDYA_INTENT_DISAMBIGUATION_BLOCK}
     `;
 }
+
+/**
+ * NCERT-demo 2026-05-19 hardening — strengthens two failure modes the
+ * founder observed:
+ *
+ *   1. "Exam paper" requests silently routed to the quiz generator.
+ *   2. The classifier carried over `gradeLevel` / `subject` /
+ *      `ncertChapter` from a prior turn instead of using ONLY the
+ *      current transcript.
+ *
+ * Appended verbatim after SAHAYAK_SOUL_PROMPT. The wording mirrors the
+ * Genkit \`intentPrompt\` in agent-definitions.ts so both classification
+ * paths (Genkit /api/assistant + sidecar /api/ai/intent) speak the same
+ * disambiguation language. Keep these two strings drifted-into-parity if
+ * you edit one.
+ */
+const VIDYA_INTENT_DISAMBIGUATION_BLOCK = `### 10. FRESH-CLASSIFICATION RULE (NCERT-DEMO 2026-05-19)
+Each turn is a FRESH intent classification. You MUST NOT carry over
+\`topic\`, \`gradeLevel\`, \`subject\`, \`language\`, or \`ncertChapter\`
+values from any previous turn UNLESS the current message explicitly
+references the previous turn ("wahi class", "same as before", "उसी का",
+"ಅದೇ topic", "for the same chapter"). When in doubt, leave the field
+\`null\` and surface a clarifying follow-up in \`response\` (e.g. "Class
+10 mein kis subject ka? Exam paper ya quiz?"). Silent inheritance is the
+exact bug we are fixing — DO NOT GUESS.
+
+If the current message is too sparse to fully fill the action params, you
+may either:
+  (a) Return \`action: null\` and ask ONE short clarifying question in
+      \`response\`, OR
+  (b) Return the action with the partial fields actually present in this
+      turn (leave others null) and end \`response\` with a short
+      clarification ask.
+
+Both are acceptable. Inheriting fields from a prior turn is NOT.
+
+### 11. QUIZ vs EXAM-PAPER DISAMBIGUATION (NCERT-DEMO 2026-05-19)
+These two intents collide and the wrong route loses the demo. Be precise.
+
+- \`quiz-generator\` is for SHORT formative assessment — quizzes, MCQs,
+  warm-up questions, exit tickets, "10 quick questions", "diagnostic",
+  rapid-fire. In-class, NOT board-pattern.
+
+- \`exam-paper\` is for FULL board-style examination papers with sections,
+  marks distribution, and time duration. Triggers: "exam paper", "board
+  paper", "question paper", "प्रश्न पत्र", "model paper", "previous year
+  paper", "PYQ", "pre-board paper", "pattern paper", "CBSE paper", "ICSE
+  paper", "sample paper", "test paper for board", "half-yearly paper",
+  "annual exam paper", "board ke pattern par paper".
+
+Worked examples (commit these to memory):
+  • "Make a quick MCQ quiz on photosynthesis for Class 7."
+       → flow: "quiz-generator"
+  • "Generate a Class 10 CBSE board pattern paper for Maths."
+       → flow: "exam-paper"
+  • "Class 10 ka exam paper banao Maths ka — quadratic equations chapter"
+       → flow: "exam-paper" (Hindi/code-mixed; "exam paper" is explicit)
+  • "कक्षा 7 के लिए 10 छोटे प्रश्न बनाओ" (10 short questions for Class 7)
+       → flow: "quiz-generator"
+  • "10ನೇ ತರಗತಿಗೆ ವಿಜ್ಞಾನ ಬೋರ್ಡ್ ಪರೀಕ್ಷೆ ಪತ್ರಿಕೆ" (Class 10 Science
+    board exam paper in Kannada)
+       → flow: "exam-paper"
+  • "ಪಾಠದ ಆರಂಭದಲ್ಲಿ 5 ಪ್ರಶ್ನೆಗಳು" (5 questions at the start of lesson)
+       → flow: "quiz-generator"
+
+TIE-BREAKER: if BOTH "quiz" and "paper/board" appear, choose
+\`exam-paper\` — the structural artefact wins over the casual word.
+`;
 
 function buildChatContext(history: AssistantChatHistoryEntry[] | undefined): string {
     if (!history || history.length === 0) return '';
@@ -226,6 +348,43 @@ function normalisePlannedActions(parsed: LegacyVidyaShape): VidyaPlannedAction[]
     return [];
 }
 
+/**
+ * NCERT-demo 2026-05-19 — attach a soft `validationWarning` to any
+ * planned action whose (gradeLevel, subject, ncertChapter.title) tuple
+ * the chapter validator rejects. Never throws — when the validator is
+ * still in flight (Agent 3) or errors at runtime we leave the action
+ * untouched so the demo path stays open.
+ */
+async function annotateAssistantValidation(
+    actions: VidyaPlannedAction[],
+): Promise<VidyaPlannedAction[]> {
+    if (actions.length === 0) return actions;
+    const validate = await loadVidyaChapterValidator();
+    return actions.map((action) => {
+        const params = action.params ?? {};
+        const grade = params.gradeLevel ?? '';
+        const subject = params.subject ?? '';
+        const chapter = params.ncertChapter?.title ?? '';
+        if (!grade || !subject || !chapter) return action;
+        let result: { valid: boolean; suggestion?: string };
+        try {
+            result = validate(grade, subject, chapter);
+        } catch {
+            return action;
+        }
+        if (result.valid) return action;
+        return {
+            ...action,
+            params: {
+                ...params,
+                validationWarning:
+                    result.suggestion ??
+                    `Chapter "${chapter}" does not match the NCERT syllabus for ${grade} ${subject}. Please confirm.`,
+            },
+        };
+    });
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────
 
 /**
@@ -274,10 +433,13 @@ export async function runGenkitVidya(
             // if empty). This also lets the dispatcher emit the same
             // shape regardless of which path served (Genkit off-mode
             // vs sidecar canary/full).
+            const plannedActions = await annotateAssistantValidation(
+                normalisePlannedActions(parsed),
+            );
             const out: AssistantOutput = {
                 response: parsed.response ?? '',
                 action: parsed.action ?? null,
-                plannedActions: normalisePlannedActions(parsed),
+                plannedActions,
             };
             // [VIDYA Genkit] one-line structured trace so we can confirm
             // every voice utterance produced a valid intent at the LLM

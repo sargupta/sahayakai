@@ -61,6 +61,20 @@ const VidyaActionParamsSchema = z.object({
   // sets `dependsOn: [0]`). Bounded at 2 entries — deeper graphs
   // should split into separate teacher-confirmed sessions.
   dependsOn: z.array(z.number().int().nonnegative()).max(2).optional(),
+  // NCERT-demo 2026-05-19 — cancel-prior-state semantics. When the
+  // current transcript is too sparse to fully populate the action (e.g.
+  // teacher said only "Class 10"), the classifier surfaces a single
+  // follow-up question the OmniOrb speaks back to the teacher instead
+  // of silently inheriting params from the previous turn. Bounded to
+  // 300 chars to keep TTS latency under 1.5s.
+  clarifyingPrompt: z.string().max(300).nullable().optional(),
+  // NCERT-demo 2026-05-19 — post-classification validation hook.
+  // Populated when the (gradeLevel, subject, ncertChapter) tuple does
+  // not match a known NCERT entry (e.g. teacher asked for "Class 7
+  // Maths chapter on quadratic equations" — quadratics live in Class 10).
+  // The OmniOrb surfaces this as a soft warning before navigating so
+  // the demo doesn't generate a nonsense paper.
+  validationWarning: z.string().max(300).nullable().optional(),
 });
 
 // Gemini 2.5 Flash's structured-output API rejects JSON-Schema `const`
@@ -132,24 +146,91 @@ const intentPrompt = ai.definePrompt({
   },
   prompt: `Analyze the user prompt to determine the intended tool and extract key parameters.
 
+        ⚠️ FRESH CLASSIFICATION RULE (NCERT-demo 2026-05-19 hardening):
+        This is a FRESH classification of the prompt below — treat it as a single,
+        self-contained utterance. DO NOT carry over \`topic\`, \`gradeLevel\`,
+        \`subject\`, \`language\`, or \`ncertChapter\` values from any prior
+        conversation turn. Only populate a field if the CURRENT prompt explicitly
+        contains it (or unambiguously references the previous turn with phrases
+        like "wahi class", "same as before", "उसी का", "ಅದೇ topic"). When in
+        doubt, leave the field null and emit a \`clarifyingPrompt\` (see below)
+        instead of guessing — silent inheritance is the bug we are fixing.
+
         STEP 1 — INTENT CLASSIFICATION:
         - 'lessonPlan': Creating lessons, lesson plans (लेसन प्लान), unit plans, "teach this", "help me teach".
-        - 'quiz': Creating quizzes (क्विज), tests, assessments, exam questions.
+        - 'quiz': Short formative assessments. Triggered by: "quiz", "क्विज", "MCQ", "objective questions", "rapid fire", "warm-up questions", "diagnostic", "formative assessment", "short questions for tomorrow", "10 questions for the period", "exit ticket". A quiz is for IN-CLASS check-for-understanding; it is NOT a board-style paper. If the teacher mentions section structure, marks distribution, or board pattern → it is examPaper, NOT quiz.
         - 'visualAid': finding/creating images, diagrams (चित्र), flashcards.
-        - 'worksheet': Creating worksheets, exercises, assignments.
+        - 'worksheet': Creating worksheets, exercises, take-home assignments.
         - 'virtualFieldTrip': Planning virtual field trips, "take me to...".
         - 'teacherTraining': Professional development, classroom management (मैनेजमेंट), coaching.
         - 'rubric': Creating grading rubrics, assessment criteria.
-        - 'examPaper': Creating board exam papers, question papers (प्रश्न पत्र), "CBSE paper", "board pattern paper", "sample paper", "previous year paper", "model paper", "pre-board paper".
+        - 'examPaper': FULL board-style examination papers with sections, marks distribution, and time duration. Triggered by: "exam paper", "board paper", "question paper", "प्रश्न पत्र", "model paper", "previous year paper", "PYQ", "pre-board paper", "pattern paper", "CBSE paper", "ICSE paper", "sample paper", "test paper for board", "half-yearly paper", "annual exam paper", "board ke pattern par paper". An exam paper is FORMAL summative assessment, typically 60-180 minutes and 40-100 marks.
         - 'instantAnswer': Direct questions (What is...), definitions, quick facts.
         - 'videoStoryteller': Finding educational videos, YouTube.
         - 'unknown': If the intent is unclear or just a greeting.
 
-        STEP 2 — PARAMETER EXTRACTION:
-        - topic: The core subject matter. STRIP conversational markers (e.g., "Hey", "Can you make", "कसा है") and metadata that belongs in other fields (e.g., strip "Class 5" if gradeLevel is Class 5).
-        - gradeLevel: Mandatory "Bharat-First" mapping. You MUST map "grade X", "class X", "कक्षा X", or "Xth grade" to "Class X" format. Valid: "Class 1" to "Class 12".
-        - subject: The academic subject area.
-        - language: The language requested. Map to codes: hi (Hindi), en (English), bn, te, mr, ta, gu, kn, pa, ml.
+        🔑 QUIZ vs EXAM-PAPER DISAMBIGUATION (worked examples):
+        These two intents collide most often. Read these examples carefully —
+        the wrong route loses the founder's demo.
+
+        Example 1 (English, quiz):
+          Input: "Make a quick MCQ quiz on photosynthesis for Class 7."
+          intent: "quiz" — "quick MCQ" + "for Class 7" (no board mention) ⇒ in-class formative.
+
+        Example 2 (English, exam paper):
+          Input: "Generate a Class 10 CBSE board pattern paper for Maths on quadratic equations."
+          intent: "examPaper" — "CBSE board pattern paper" is the strongest signal; the
+          chapter scope just narrows topic. NOT quiz.
+
+        Example 3 (Hindi, exam paper):
+          Input: "Class 10 ka exam paper banao Maths ka — quadratic equations chapter."
+          intent: "examPaper" — "exam paper" is explicit; "banao" is just Hindi
+          imperative. gradeLevel: "Class 10", subject: "Mathematics", topic:
+          "Quadratic Equations". Do NOT route to quiz just because no board name
+          appears — "exam paper" by itself is sufficient.
+
+        Example 4 (Hindi, quiz):
+          Input: "कक्षा 7 के लिए जीव विज्ञान पर 10 छोटे प्रश्न बनाओ।"
+          intent: "quiz" — "10 छोटे प्रश्न" (10 short questions) for a class period
+          is a quiz, NOT a board paper. No section structure mentioned.
+
+        Example 5 (Kannada, exam paper):
+          Input: "10ನೇ ತರಗತಿಗೆ ವಿಜ್ಞಾನ ಬೋರ್ಡ್ ಪರೀಕ್ಷೆ ಪತ್ರಿಕೆ ತಯಾರಿಸಿ."
+          intent: "examPaper" — "ಬೋರ್ಡ್ ಪರೀಕ್ಷೆ ಪತ್ರಿಕೆ" (board exam paper) is
+          unambiguous. gradeLevel: "Class 10", subject: "Science", language: "kn".
+
+        Example 6 (Kannada, quiz):
+          Input: "ಪಾಠದ ಆರಂಭದಲ್ಲಿ ಕೇಳಲು 5 ಪ್ರಶ್ನೆಗಳು ಬೇಕು — ತರಗತಿ 6 ಗಣಿತ."
+          intent: "quiz" — "ಪಾಠದ ಆರಂಭದಲ್ಲಿ" (at the start of the lesson) + 5
+          questions ⇒ warm-up / diagnostic. Quiz, not examPaper.
+
+        Example 7 (Code-mixed, exam paper):
+          Input: "Class 10 ka exam paper banao Maths ka — quadratic equations chapter"
+          intent: "examPaper". topic: "Quadratic Equations", gradeLevel: "Class 10",
+          subject: "Mathematics", language: "hi" (Devanagari + Latin hybrid → resolve
+          to dominant non-English script; here Hindi).
+
+        TIE-BREAKER: if BOTH "quiz" and "paper/board" appear in the same prompt,
+        choose examPaper — the structural artefact wins over the casual term.
+
+        STEP 2 — PARAMETER EXTRACTION (one-shot from CURRENT prompt only):
+        - topic: The core subject matter. STRIP conversational markers (e.g., "Hey", "Can you make", "कसा है") and metadata that belongs in other fields (e.g., strip "Class 5" if gradeLevel is Class 5). If the CURRENT prompt has no topic, return null — do NOT pull from chat history.
+        - gradeLevel: Mandatory "Bharat-First" mapping. You MUST map "grade X", "class X", "कक्षा X", "ತರಗತಿ X", or "Xth grade" to "Class X" format. Valid: "Class 1" to "Class 12". Return null if not present in CURRENT prompt.
+        - subject: The academic subject area. Return null if not present in CURRENT prompt.
+        - language: The language requested OR the dominant script of the CURRENT prompt. Map to codes: hi (Hindi), en (English), bn, te, mr, ta, gu, kn, pa, ml.
+        - ncertChapter: Populate ONLY if the CURRENT prompt explicitly names a chapter (e.g. "Chapter 2 Living Things" or "अध्याय 5 गति"). Otherwise null.
+
+        STEP 2b — CLARIFYING PROMPT (optional, plannedActions[*].params.clarifyingPrompt):
+        If the CURRENT prompt is too sparse to fully populate the action — e.g.
+        the teacher said only "Class 10" with no subject or artefact type — populate
+        \`plannedActions[*].params.clarifyingPrompt\` with ONE short follow-up
+        question the OmniOrb can speak back. Keep it under 200 characters and in
+        the same language as the prompt. Example: "Class 10 in which subject? For
+        an exam paper or a quiz?"
+
+        DO NOT populate \`clarifyingPrompt\` when all required fields are present.
+        DO NOT use \`clarifyingPrompt\` as a substitute for inheriting fields from
+        prior turns — it is the polite alternative to guessing.
 
         SPECIAL INSTRUCTION FOR CONVERSATIONAL HINDI/URDU:
         - Handle mixed scripts (Devanagari/Perso-Arabic) and colloquialisms (e.g., "banana hai", "chahiye", "de sakti ho").
@@ -168,12 +249,13 @@ const intentPrompt = ai.definePrompt({
             "type": "NAVIGATE_AND_FILL",
             "flow": "<one of: lesson-plan | quiz-generator | visual-aid-designer | worksheet-wizard | virtual-field-trip | teacher-training | rubric-generator | exam-paper | video-storyteller>",
             "params": {
-              "topic": "<topic>",
-              "gradeLevel": "<Class N>",
-              "subject": "<subject>",
+              "topic": "<topic from CURRENT prompt or null>",
+              "gradeLevel": "<Class N from CURRENT prompt or null>",
+              "subject": "<subject from CURRENT prompt or null>",
               "language": "<ISO code>",
               "ncertChapter": null,
-              "dependsOn": []
+              "dependsOn": [],
+              "clarifyingPrompt": null
             }
           }
 
@@ -209,6 +291,79 @@ const INTENT_TO_FLOW: Record<string, z.infer<typeof AllowedFlowEnum>> = {
 const NON_ROUTABLE_INTENTS = new Set(['instantAnswer', 'unknown']);
 
 /**
+ * NCERT-demo 2026-05-19 — chapter validation hook.
+ *
+ * The real validator lives in `src/ai/data/ncert-chapters.ts` (Agent 3's
+ * deliverable). We import lazily and fall back to a permissive stub so
+ * this layer never blocks intent classification when the data module is
+ * still in flight. Contract:
+ *
+ *   validateChapter(gradeLevel, subject, chapter)
+ *     → { valid: boolean; suggestion?: string }
+ *
+ * When `valid: false`, the suggestion string (if present) is surfaced
+ * verbatim to the teacher via `params.validationWarning` so the OmniOrb
+ * can speak a soft correction before navigating.
+ */
+type ChapterValidator = (
+  gradeLevel: string,
+  subject: string,
+  chapter: string,
+) => { valid: boolean; suggestion?: string };
+
+const PASSTHROUGH_CHAPTER_VALIDATOR: ChapterValidator = () => ({ valid: true });
+
+async function loadChapterValidator(): Promise<ChapterValidator> {
+  try {
+    // Use a string template so bundlers don't fail at compile time if
+    // the module is still missing on disk (Agent 3 is still landing it).
+    const modPath = '@/ai/data/ncert-chapters';
+    const mod = (await import(/* webpackIgnore: true */ modPath)) as {
+      validateChapter?: ChapterValidator;
+    };
+    if (typeof mod?.validateChapter === 'function') {
+      return mod.validateChapter;
+    }
+  } catch {
+    // Module not present yet — fall through to the permissive stub.
+  }
+  return PASSTHROUGH_CHAPTER_VALIDATOR;
+}
+
+/**
+ * Walk plannedActions and attach a `validationWarning` to any entry whose
+ * (gradeLevel, subject, ncertChapter.title) tuple the validator rejects.
+ * Never throws — validation failures are diagnostic, not blocking.
+ */
+async function annotateChapterValidation(actions: VidyaAction[]): Promise<VidyaAction[]> {
+  if (actions.length === 0) return actions;
+  const validate = await loadChapterValidator();
+  return actions.map((action) => {
+    const params = action.params ?? {};
+    const grade = params.gradeLevel ?? '';
+    const subject = params.subject ?? '';
+    const chapter = params.ncertChapter?.title ?? '';
+    if (!grade || !subject || !chapter) return action;
+    let result: { valid: boolean; suggestion?: string };
+    try {
+      result = validate(grade, subject, chapter);
+    } catch {
+      return action; // validator threw → swallow, do not block demo
+    }
+    if (result.valid) return action;
+    return {
+      ...action,
+      params: {
+        ...params,
+        validationWarning:
+          result.suggestion ??
+          `Chapter "${chapter}" does not match the NCERT syllabus for ${grade} ${subject}. Please confirm.`,
+      },
+    };
+  });
+}
+
+/**
  * Build a single-action `plannedActions` plan from the bare intent +
  * extracted params. Used when the classifier returned a routable intent
  * but no `plannedActions` entry — the dispatcher still wants a uniform
@@ -216,7 +371,13 @@ const NON_ROUTABLE_INTENTS = new Set(['instantAnswer', 'unknown']);
  */
 function synthesizePrimaryAction(
   intent: string,
-  params: { topic?: string; gradeLevel?: string; subject?: string; language?: string },
+  params: {
+    topic?: string;
+    gradeLevel?: string;
+    subject?: string;
+    language?: string;
+    clarifyingPrompt?: string | null;
+  },
 ): VidyaAction | null {
   const flow = INTENT_TO_FLOW[intent];
   if (!flow) return null;
@@ -230,6 +391,8 @@ function synthesizePrimaryAction(
       language: params.language ?? null,
       ncertChapter: null,
       dependsOn: [],
+      clarifyingPrompt: params.clarifyingPrompt ?? null,
+      validationWarning: null,
     },
   };
 }
@@ -276,6 +439,13 @@ export const agentRouterFlow = ai.defineFlow(
       });
       if (primary) plannedActions = [primary];
     }
+
+    // NCERT-demo 2026-05-19 — post-classification validation pass.
+    // Annotates each routable action with a `validationWarning` when the
+    // (gradeLevel, subject, chapter) tuple doesn't match the NCERT syllabus.
+    // Falls back to a passthrough when Agent 3's data module is still in
+    // flight, so this hook never blocks intent classification.
+    plannedActions = await annotateChapterValidation(plannedActions);
 
     return {
       type: intent,
