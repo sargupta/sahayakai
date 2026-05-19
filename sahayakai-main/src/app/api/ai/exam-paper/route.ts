@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
-import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
+import {
+    dispatchExamPaper,
+    ExamPaperGenerationInProgressError,
+} from '@/lib/sidecar/exam-paper-dispatch';
 
 /**
  * @swagger
@@ -115,6 +118,28 @@ async function _handler(request: Request) {
         });
 
     } catch (error) {
+        // NCERT demo hot-fix (2026-05-19): when the Genkit fallback exceeds
+        // budget, surface a friendly "still generating" payload instead of
+        // a generic 500. The underlying Gemini call keeps running in the
+        // background; if it eventually persists to the user's library, the
+        // teacher will see it under "My Library" on next refresh.
+        if (error instanceof ExamPaperGenerationInProgressError) {
+            logger.warn(
+                'Exam paper generation exceeded timeout budget',
+                'EXAM_PAPER',
+                { budgetMs: error.budgetMs, elapsedMs: error.elapsedMs, paperDesc },
+            );
+            return NextResponse.json(
+                {
+                    error: 'generation_in_progress',
+                    message: 'Exam paper still generating. Check My Library in 1 minute.',
+                    budgetMs: error.budgetMs,
+                    elapsedMs: error.elapsedMs,
+                },
+                { status: 202 },
+            );
+        }
+
         logAIError(error, 'EXAM_PAPER', { message: `Exam Paper API Failed for: "${paperDesc}"`, userId: request.headers.get('x-user-id') });
 
         return NextResponse.json(
