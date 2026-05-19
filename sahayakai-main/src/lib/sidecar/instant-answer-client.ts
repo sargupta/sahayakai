@@ -90,7 +90,13 @@ export type SidecarInstantAnswerResponse = GenInstantAnswerResponse;
 
 // ─── ID-token client cache ────────────────────────────────────────────────
 
-const TIMEOUT_MS = 10_000;
+// NCERT demo hot-fix (2026-05-19): bumped from 10s — observed p50 was
+// 8.3s in prod (Google Search grounding adds 2-5s of latency); 10s was
+// risky because the client could fire BEFORE the dispatcher's 20s
+// fallback budget. 20s keeps the two knobs aligned. Env-overridable via
+// `INSTANT_ANSWER_CLIENT_TIMEOUT_MS` (shared with the dispatcher's
+// FALLBACK_TIMEOUT_MS) so production can tune without a redeploy.
+const TIMEOUT_MS = Number(process.env.INSTANT_ANSWER_CLIENT_TIMEOUT_MS) || 20_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 
