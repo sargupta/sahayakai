@@ -25,7 +25,7 @@ export const RubricGeneratorInputSchema = z.object({
 });
 export type RubricGeneratorInput = z.infer<typeof RubricGeneratorInputSchema>;
 
-const RubricGeneratorOutputSchema = z.object({
+export const RubricGeneratorOutputSchema = z.object({
   title: z.string().describe("The title of the rubric (e.g., 'Science Project Rubric')."),
   description: z.string().describe("A brief, one-sentence description of the assignment this rubric is for."),
   criteria: z.array(z.object({
