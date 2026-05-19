@@ -15,7 +15,7 @@
 
 3. **VIDYA voice — wait for the orb to go silent before tapping the next action.** A 3-LOC TTS-fetch abort fix is identified but kept off prod (no-major-changes rule). Behavioral workaround: do not rapid-fire mic taps or navigations while VIDYA is speaking; let each utterance finish.
 
-4. **Exam Paper — always type at least one chapter before clicking Generate.** Empty chapters now defaults to "all chapters" (Deploy #2), but the cleanest demo path still types one.
+4. **Exam Paper — DO NOT generate live on stage. Pre-generate.** Verified runtime tonight: CBSE Class 8 Science + "Force and Pressure" succeeds cleanly in 61s, CBSE Class 10 Math + no chapters lands at 76s and returns the "still generating, check library" 202 message. Both are valid but 60+ seconds is too long for a live demo moment. Recommended flow: pre-generate ONE exam paper tonight, save to My Library, then during demo navigate to /my-library and open it — instant render. If demo requires showing live generation, use Class 8 Science + chapter ("Force and Pressure"), narrate the two-pass architecture during the wait, and tap Cancel at 50s if it has not returned. NEVER click Generate without filling in at least one chapter for non-CBSE-Class-9/10-Math/Science combos — the API will return 400 with a clear inline message ("Please add at least one chapter..."), which is the correct fast-fail behavior, but mid-demo the audience will read it as a bug.
 
 5. **Lesson plan / Visual aid — do not regenerate more than 5 times in 10 minutes.** Server rate limiter is ~7 calls/10min for lesson plan, ~3/10min for visual aid. Rate-limit errors now correctly return 429 (Deploy #2), but you still don't want a "please wait 8 minutes" toast mid-demo.
 
