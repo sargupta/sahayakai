@@ -88,7 +88,10 @@ import {
     VirtualFieldTripSidecarTimeoutError,
     type SidecarVirtualFieldTripResponse,
 } from '@/lib/sidecar/virtual-field-trip-client';
-import { dispatchVirtualFieldTrip } from '@/lib/sidecar/virtual-field-trip-dispatch';
+import {
+    dispatchVirtualFieldTrip,
+    VirtualFieldTripStillGeneratingError,
+} from '@/lib/sidecar/virtual-field-trip-dispatch';
 import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
 
 const mockGenkit = planVirtualFieldTrip as jest.MockedFunction<typeof planVirtualFieldTrip>;
@@ -318,5 +321,139 @@ describe('dispatchVirtualFieldTrip — canary / full', () => {
         );
         expect(mockSidecar).not.toHaveBeenCalled();
         expect(mockPersist).not.toHaveBeenCalled();
+    });
+});
+
+/**
+ * NCERT demo hot-fix (2026-05-19): exercise the bumped 45 s Genkit fallback
+ * timeout + the env override.
+ *
+ * Strategy: the module-scoped `VFT_TIMEOUT_MS` constant is captured at
+ * import time, so each scenario uses `jest.isolateModulesAsync` to re-import
+ * the dispatcher with the desired env. Fake timers let us deterministically
+ * resolve a 20 s mocked Genkit call without actually waiting.
+ */
+describe('dispatchVirtualFieldTrip — timeout budget (NCERT demo hot-fix)', () => {
+    const ORIGINAL_ENV = process.env.VFT_GENKIT_TIMEOUT_MS;
+
+    beforeEach(() => {
+        jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+        if (ORIGINAL_ENV === undefined) {
+            delete process.env.VFT_GENKIT_TIMEOUT_MS;
+        } else {
+            process.env.VFT_GENKIT_TIMEOUT_MS = ORIGINAL_ENV;
+        }
+    });
+
+    /**
+     * Re-imports the dispatcher with the supplied env and wires the same
+     * mocks the suite uses, so the only thing changing between scenarios
+     * is the timeout constant.
+     */
+    async function loadDispatcherWithEnv(envValue: string | undefined) {
+        if (envValue === undefined) {
+            delete process.env.VFT_GENKIT_TIMEOUT_MS;
+        } else {
+            process.env.VFT_GENKIT_TIMEOUT_MS = envValue;
+        }
+
+        // Stash so we can wire the same mock instances after the isolated
+        // re-import resets the registry.
+        let isolated: typeof import('@/lib/sidecar/virtual-field-trip-dispatch');
+        let isolatedGenkit: jest.MockedFunction<typeof planVirtualFieldTrip>;
+        let isolatedFlags: jest.MockedFunction<typeof getFeatureFlags>;
+
+        await jest.isolateModulesAsync(async () => {
+            jest.doMock('@/lib/feature-flags', () => ({
+                getFeatureFlags: jest.fn().mockResolvedValue({
+                    virtualFieldTripSidecarMode: 'off',
+                    virtualFieldTripSidecarPercent: 0,
+                }),
+            }));
+            jest.doMock('@/ai/flows/virtual-field-trip', () => ({
+                planVirtualFieldTrip: jest.fn(),
+            }));
+            jest.doMock('@/lib/sidecar/persist-helpers', () => ({
+                persistSidecarJSON: jest.fn(),
+                persistSidecarImage: jest.fn(),
+            }));
+            jest.doMock('@/lib/sidecar/shadow-diff-writer', () => ({
+                writeAgentShadowDiff: jest.fn(),
+            }));
+            jest.doMock('@/lib/server-safety', () => ({
+                checkServerRateLimit: jest.fn(),
+                checkImageRateLimit: jest.fn(),
+            }));
+            jest.doMock('@/lib/sidecar/virtual-field-trip-client', () => ({
+                callSidecarVirtualFieldTrip: jest.fn(),
+                VirtualFieldTripSidecarConfigError: class extends Error {},
+                VirtualFieldTripSidecarTimeoutError: class extends Error {},
+                VirtualFieldTripSidecarHttpError: class extends Error {},
+                VirtualFieldTripSidecarBehaviouralError: class extends Error {},
+            }));
+
+            isolated = await import('@/lib/sidecar/virtual-field-trip-dispatch');
+            const flowMod = await import('@/ai/flows/virtual-field-trip');
+            const flagsMod = await import('@/lib/feature-flags');
+            isolatedGenkit = flowMod.planVirtualFieldTrip as jest.MockedFunction<typeof planVirtualFieldTrip>;
+            isolatedFlags = flagsMod.getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
+        });
+
+        return {
+            dispatch: isolated!.dispatchVirtualFieldTrip,
+            StillGeneratingError: isolated!.VirtualFieldTripStillGeneratingError,
+            genkit: isolatedGenkit!,
+            flags: isolatedFlags!,
+        };
+    }
+
+    function delayedGenkitOutput(delayMs: number): Promise<VirtualFieldTripOutput> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(GENKIT_OUTPUT), delayMs);
+        });
+    }
+
+    it('resolves (does not throw) when Genkit takes 20 s and timeout is the 45 s default', async () => {
+        const { dispatch, genkit } = await loadDispatcherWithEnv(undefined);
+        genkit.mockImplementation(() => delayedGenkitOutput(20_000));
+
+        const promise = dispatch(BASE_INPUT);
+        // Advance past the 20 s Genkit delay; the 45 s timeout will not have fired.
+        await jest.advanceTimersByTimeAsync(20_000);
+
+        const out = await promise;
+        expect(out.source).toBe('genkit');
+        expect(out.title).toBe(GENKIT_OUTPUT.title);
+    });
+
+    it('throws VirtualFieldTripStillGeneratingError when timeout is 5 s and Genkit takes 20 s', async () => {
+        const { dispatch, StillGeneratingError, genkit } =
+            await loadDispatcherWithEnv('5000');
+        genkit.mockImplementation(() => delayedGenkitOutput(20_000));
+
+        const promise = dispatch(BASE_INPUT);
+        // Swallow the rejection ahead of advancing the fake clock so node
+        // doesn't trip the unhandled-rejection guard.
+        const settled = promise.catch((e) => e);
+
+        await jest.advanceTimersByTimeAsync(5_001);
+
+        const err = await settled;
+        expect(err).toBeInstanceOf(StillGeneratingError);
+        expect((err as InstanceType<typeof StillGeneratingError>).budgetMs).toBe(5_000);
+        expect((err as InstanceType<typeof StillGeneratingError>).elapsedMs).toBeGreaterThanOrEqual(5_000);
+    });
+
+    it('exports the StillGeneratingError class for the API route to catch', () => {
+        // Sanity check the static export the route imports.
+        const err = new VirtualFieldTripStillGeneratingError(45_000, 45_001);
+        expect(err.name).toBe('VirtualFieldTripStillGeneratingError');
+        expect(err.budgetMs).toBe(45_000);
+        expect(err.elapsedMs).toBe(45_001);
+        expect(err.message).toContain('45000');
     });
 });

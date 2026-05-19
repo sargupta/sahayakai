@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 import { VirtualFieldTripInputSchema } from '@/ai/flows/virtual-field-trip';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
-import { dispatchVirtualFieldTrip } from '@/lib/sidecar/virtual-field-trip-dispatch';
+import {
+    dispatchVirtualFieldTrip,
+    VirtualFieldTripStillGeneratingError,
+} from '@/lib/sidecar/virtual-field-trip-dispatch';
 
 /**
  * @swagger
@@ -68,6 +71,23 @@ async function _handler(request: Request) {
         });
 
     } catch (error) {
+        // NCERT demo hot-fix: when the dispatcher's 45s timeout fires, the
+        // Genkit flow itself keeps running in the background and finishes
+        // writing the trip to Firestore. Return a user-actionable 202
+        // pointing the teacher at My Library instead of a generic 500
+        // "AI generation failed" that hides the silently-saved content.
+        if (error instanceof VirtualFieldTripStillGeneratingError) {
+            return NextResponse.json(
+                {
+                    error: 'still_generating',
+                    message:
+                        'Your field trip is still generating. Check My Library in a minute.',
+                    budgetMs: error.budgetMs,
+                    elapsedMs: error.elapsedMs,
+                },
+                { status: 202 },
+            );
+        }
         return handleAIError(error, 'VIRTUAL_FIELD_TRIP', {
             message: `Virtual Field Trip API Failed for topic: "${topicName}"`,
             userId: request.headers.get('x-user-id'),
