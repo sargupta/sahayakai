@@ -190,6 +190,18 @@ export const GradedQuestionSchema = z.object({
         .min(0)
         .max(1)
         .describe('Grader\'s confidence in the score (separate from extraction confidence).'),
+    teacherOverrides: z
+        .object({
+            marksAwarded: z.number().min(0).optional(),
+            feedback: z.string().optional(),
+            studentFacingFeedback: z.string().optional(),
+            studentAnswer: z.string().optional(),
+            editedAt: z.string().optional(),
+        })
+        .optional()
+        .describe(
+            'Teacher corrections layered on top of the AI grade. Kept separate from the AI fields so we can compare AI vs human judgement and improve the prompt over time.',
+        ),
 });
 export type GradedQuestion = z.infer<typeof GradedQuestionSchema>;
 
@@ -294,6 +306,12 @@ export const AssessmentScannerOutputSchema = z.object({
         .array(z.string())
         .describe(
             'Human-readable per-page warnings the UI can show before render (e.g. "Page 1: blurry").',
+        ),
+    teacherEditedAt: z
+        .string()
+        .optional()
+        .describe(
+            'ISO timestamp of the latest teacher edit. Surfaced as an "Edited" badge in My Library so the teacher can tell at a glance which results they have already reviewed.',
         ),
     errorMessage: z.string().optional(),
 });
