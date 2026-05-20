@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useLanguage } from "@/context/language-context";
 import { getAuthToken } from "@/lib/get-auth-token";
+import { useSearchParams } from "next/navigation";
+import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import { LANGUAGE_CODE_MAP } from "@/types";
 import {
   FileText,
   BookOpen,
@@ -88,7 +91,19 @@ const DIFFICULTY_OPTIONS = ["easy", "moderate", "hard", "mixed"] as const;
 
 // ── Page Component ───────────────────────────────────────────────────────
 
+// Next 15 prerender requires useSearchParams() to be wrapped in a
+// Suspense boundary; otherwise the page falls back to client-side
+// rendering at build time and errors out. Inner component holds the
+// hook; default export wraps it.
 export default function ExamPaperPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExamPaperPageInner />
+    </Suspense>
+  );
+}
+
+function ExamPaperPageInner() {
   const { t } = useLanguage();
   // Auth state
   const [authed, setAuthed] = useState(false);
@@ -125,6 +140,38 @@ export default function ExamPaperPage() {
     });
     return () => unsub();
   }, []);
+
+  // ── VIDYA Action: Pre-fill from URL params ─────────────────────────────
+  // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts). Exam-paper uses
+  // imperative useState (not react-hook-form) and stores language as the
+  // display name ("English"), so we normalise the inbound ISO/display value
+  // back to the display name LANGUAGES set the picker expects.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (!searchParams) return;
+    const gradeLevelParam = searchParams.get("gradeLevel");
+    const subjectParam = searchParams.get("subject");
+    const languageParam = searchParams.get("language");
+    const topicParam = searchParams.get("topic");
+
+    const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
+    if (normalisedGrade) setGradeLevel(normalisedGrade);
+    if (subjectParam) setSubject(subjectParam);
+
+    // Map ISO → display name; fall back to "English" if unknown.
+    const iso = normaliseVidyaLanguage(languageParam);
+    if (iso) {
+      const display = LANGUAGE_CODE_MAP[iso as keyof typeof LANGUAGE_CODE_MAP];
+      if (display) setLanguage(display);
+    }
+
+    // VIDYA may emit `topic` as a free-text chapter hint; surface it in the
+    // free-text chapters fallback so the user sees their intent reflected.
+    if (topicParam && chapters.length === 0) {
+      setChaptersInput((prev) => prev || topicParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // ── Blueprint lookup ───────────────────────────────────────────────────
 
@@ -200,6 +247,13 @@ export default function ExamPaperPage() {
         return;
       }
 
+      // NCERT-demo 2026-05-19 hardening: ALWAYS send a non-empty
+      // `language`. Exam-paper uses display name format ("English"); the
+      // initial useState default ensures it can never be empty, but we
+      // defend in depth in case future code wires this to a controlled
+      // selector with a transient empty value.
+      const submittedLanguage = language && language.trim() ? language : 'English';
+
       const res = await fetch("/api/ai/exam-paper", {
         method: "POST",
         headers: {
@@ -214,7 +268,7 @@ export default function ExamPaperPage() {
             ? chapters
             : chaptersInput.split(",").map((c) => c.trim()).filter(Boolean),
           difficulty,
-          language,
+          language: submittedLanguage,
           includeAnswerKey,
           includeMarkingScheme,
         }),
