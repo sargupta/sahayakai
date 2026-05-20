@@ -11,6 +11,7 @@ import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
+import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
 // Known routable flow ids. Mirrors the wire enum in
 // `src/lib/sidecar/types.generated.ts` (`VidyaAction.flow`) and the
@@ -571,7 +572,20 @@ export function OmniOrb() {
         // logic from the existing chatHistory closure.
         _originalTranscript?: string,
     ) => {
-        // Learn teacher preferences from agentic actions
+        // Learn teacher preferences from agentic actions.
+        //
+        // LANGUAGE POISONING GUARD (2026-05-19): NEVER persist `language`
+        // here. A voice utterance like "lesson plan for grade 7 science"
+        // gets a `language` param from VIDYA's intent classifier (often
+        // derived from the *speech* language detector, not an explicit
+        // teacher preference). Writing that into the long-term profile
+        // silently flipped subsequent generations to Hindi even when the
+        // form dropdown showed English — the leak that hit the NCERT demo.
+        //
+        // Persistent language preference is set EXPLICITLY at onboarding
+        // and Settings only. Action params still flow to the destination
+        // form via the URL (see queryParams below), so the one-off intent
+        // is honoured without poisoning the profile.
         const profilePatch: Record<string, string> = {};
         if (action.params?.gradeLevel) {
             updateTeacherProfile({ preferredGrade: action.params.gradeLevel });
@@ -581,10 +595,8 @@ export function OmniOrb() {
             updateTeacherProfile({ preferredSubject: action.params.subject });
             profilePatch.preferredSubject = action.params.subject;
         }
-        if (action.params?.language) {
-            updateTeacherProfile({ preferredLanguage: action.params.language });
-            profilePatch.preferredLanguage = action.params.language;
-        }
+        // INTENTIONALLY OMITTED: action.params.language → profile write.
+        // Honour as a session-level hint only (URL param below).
         if (Object.keys(profilePatch).length > 0) syncProfilePatch(profilePatch);
 
         // Persist session turn with the triggered action
@@ -603,6 +615,14 @@ export function OmniOrb() {
             }
         }
 
+        // Normalise language to an ISO-2 code BEFORE it lands in the URL.
+        // The destination forms (lesson-plan, quiz-generator, …) drive
+        // <LanguageSelector> with ISO values ("en", "hi"). VIDYA's
+        // supervisor sometimes emits the display name ("English") which
+        // the selector then rejects and falls back to the default — that
+        // is the second half of the "form shows English, output Hindi"
+        // bug. Shared with the destination forms via
+        // `@/lib/vidya-action-normalizer` so both ends agree.
         const queryParams = new URLSearchParams();
         if (params.topic) queryParams.set("topic", params.topic);
         if (params.question) queryParams.set("question", params.question);
@@ -610,7 +630,8 @@ export function OmniOrb() {
         if (params.prompt) queryParams.set("prompt", params.prompt);
         if (params.subject) queryParams.set("subject", params.subject);
         if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
-        if (params.language) queryParams.set("language", params.language);
+        const normalisedLang = normaliseVidyaLanguage(params.language);
+        if (normalisedLang) queryParams.set("language", normalisedLang);
 
         const targetUrl = `/${action.flow}?${queryParams.toString()}`;
         // eslint-disable-next-line no-console

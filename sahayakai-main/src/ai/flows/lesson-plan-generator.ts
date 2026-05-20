@@ -187,7 +187,20 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
     const { dbAdapter } = await import('@/lib/db/adapter');
     const profile = await dbAdapter.getUser(uid).catch(() => null);
 
-    if (profile?.preferredLanguage && !input.language) {
+    // Profile-language fallback is intentionally STRICT: only fires when
+    // the client truly omitted `language` (undefined/null). An empty
+    // string from a half-filled form must NOT silently flip to the
+    // profile preference — that was the second half of the NCERT-demo
+    // 2026-05-19 language leak (form showed English, output came back
+    // Hindi because VIDYA had earlier poisoned profile.preferredLanguage
+    // and the form forgot to forward its dropdown value). The form path
+    // is now belt-and-braces hardened to always send a non-empty
+    // `language`; this stays as a safety net for legacy callers
+    // (server-side actions, scripts) that may genuinely lack the field.
+    if (
+      profile?.preferredLanguage &&
+      (input.language === undefined || input.language === null)
+    ) {
       localizedInput.language = profile.preferredLanguage;
     }
 
@@ -304,6 +317,7 @@ Primary content is in the provided textbook image: {{media url=imageDataUri}}
 
 Topic: {{{topic}}}
 Grade Levels: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+{{#if subject}}Subject: {{{subject}}} — ALWAYS treat this as the authoritative subject area. Do NOT infer a different subject from the topic. If the topic is "Chapter 2" and subject is "Science", generate a Class N Science Ch 2 plan (NOT Mathematics Ch 2, NOT any other subject).{{/if}}
 Language: {{{language}}}
 Difficulty: {{{difficultyLevel}}}
 
