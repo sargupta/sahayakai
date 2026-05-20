@@ -69,6 +69,7 @@ export function AppSidebar() {
   const { setOpenMobile } = useSidebar();
   const { t } = useLanguage();
   const [totalUnread, setTotalUnread] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showCommunityNew, setShowCommunityNew] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [showAllTools, setShowAllTools] = useState(false);
@@ -91,15 +92,21 @@ export function AppSidebar() {
     });
   }, [sidebarUserId]);
 
-  // Live unread badge — subscribe to conversation unread counts
+  // Live unread badges — subscribe to conversation + notification unread counts.
+  // Connection requests show as Notifications (NOT Messages), so the
+  // notifications subscription is what powers the Bell badge in the sidebar.
   useEffect(() => {
     let unsubConv: (() => void) | undefined;
+    let unsubNotif: (() => void) | undefined;
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       unsubConv?.();
+      unsubNotif?.();
       unsubConv = undefined;
+      unsubNotif = undefined;
 
       if (!user) {
         setTotalUnread(0);
+        setUnreadNotifications(0);
         setShowCommunityNew(false);
         setSidebarUserId(null);
         return;
@@ -114,20 +121,41 @@ export function AppSidebar() {
         setSpotlightsSeen(data?.featureSpotlightsSeen ?? []);
       }).catch(() => {});
 
-      const q = query(
+      const convQ = query(
         collection(db, "conversations"),
         where("participantIds", "array-contains", user.uid),
       );
-      unsubConv = onSnapshot(q, (snap) => {
+      unsubConv = onSnapshot(convQ, (snap) => {
         let count = 0;
         snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0; });
         setTotalUnread(count);
       });
+
+      // Notifications badge — count unread docs where this user is the recipient.
+      // Uses where(isRead == false) so the badge updates live as the user
+      // dismisses things from the /notifications page or accepts/declines
+      // connection requests (both call markNotificationAsReadAction).
+      const notifQ = query(
+        collection(db, "notifications"),
+        where("recipientId", "==", user.uid),
+        where("isRead", "==", false),
+      );
+      unsubNotif = onSnapshot(
+        notifQ,
+        (snap) => { setUnreadNotifications(snap.size); },
+        (err) => {
+          // Firestore may need a composite index for this query — log but
+          // don't break the sidebar. The badge just won't show.
+          console.warn('[AppSidebar] notifications subscription error', err);
+          setUnreadNotifications(0);
+        },
+      );
     });
 
     return () => {
       unsubAuth();
       unsubConv?.();
+      unsubNotif?.();
     };
   }, []);
 
@@ -373,15 +401,32 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/notifications')} tooltip={t("Notifications")}>
-                    <Link href="/notifications" onClick={() => handleNavClick('/notifications')}>
+              </>
+            )}
+            {/* Notifications: always visible when signed in — connection
+                requests arrive here, so a new user needs to see the badge to
+                discover the action. (Previously gated behind canShowAdvanced,
+                which silently hid the entire entry point for new users.) */}
+            {sidebarUserId && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/notifications')} tooltip={t("Notifications")}>
+                  <Link href="/notifications" onClick={() => handleNavClick('/notifications')} className="flex items-center justify-between w-full">
+                    <span className="flex items-center gap-2">
                       <Bell className="text-primary" />
                       <span>{t("Notifications")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
+                    </span>
+                    {unreadNotifications > 0 && (
+                      <span
+                        data-testid="notifications-badge"
+                        aria-label={`${unreadNotifications} unread notifications`}
+                        className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-red-500 text-white text-[10px] font-black flex items-center justify-center"
+                      >
+                        {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             )}
           </SidebarMenu>
         </SidebarGroup>

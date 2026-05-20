@@ -38,6 +38,64 @@ export async function getProfileData(_userId?: string) {
 }
 
 /**
+ * Read another teacher's PUBLIC profile (used by /profile/[uid] and the
+ * teacher directory). Returns only fields safe to surface to other teachers.
+ *
+ * Auth: caller must be signed in (any teacher can view any other teacher).
+ * The returned shape mirrors getProfileData so the ProfileView component can
+ * consume both transparently. Certifications are also returned to enable the
+ * "BadgeCheck/verified" affordance on public profiles.
+ *
+ * Added 2026-05-20 to unblock the post-accept "View" flow — the existing
+ * getProfileData throws Forbidden for cross-user reads, which silently
+ * rendered "Profile Not Found".
+ */
+export async function getPublicProfileAction(targetUid: string) {
+    await requireAuth(); // any signed-in teacher can view another teacher
+    if (!targetUid || typeof targetUid !== 'string') {
+        throw new Error('Invalid targetUid');
+    }
+    try {
+        const [profile, certifications] = await Promise.all([
+            dbAdapter.getUser(targetUid),
+            certificationService.getCertificationsByUser(targetUid),
+        ]);
+
+        if (!profile) {
+            return { profile: null, certifications: [] };
+        }
+
+        // Strip private fields that other teachers shouldn't see.
+        // Whitelist approach — only return known-safe fields.
+        const publicProfile = {
+            id: (profile as any).id ?? targetUid,
+            displayName: (profile as any).displayName,
+            photoURL: (profile as any).photoURL,
+            email: (profile as any).email, // public for connection (already shown elsewhere)
+            bio: (profile as any).bio,
+            state: (profile as any).state,
+            district: (profile as any).district,
+            schoolType: (profile as any).schoolType,
+            resourceLevel: (profile as any).resourceLevel,
+            subjects: (profile as any).subjects,
+            languages: (profile as any).languages,
+            gradeLevels: (profile as any).gradeLevels,
+            qualifications: (profile as any).qualifications,
+            yearsOfExperience: (profile as any).yearsOfExperience,
+            verifiedStatus: (profile as any).verifiedStatus,
+            careerStage: (profile as any).careerStage,
+            // intentionally excluded: phoneNumber, fcmTokens, adminRoles,
+            // billing/usage fields, communityIntroState, onboarding flags
+        };
+
+        return dbAdapter.serialize({ profile: publicProfile, certifications });
+    } catch (error) {
+        logger.error("Failed to fetch public profile data", error, 'PROFILE', { targetUid });
+        return { profile: null, certifications: [] };
+    }
+}
+
+/**
  * Add a certification to the caller's profile.
  *
  * Wave 1: now derives uid from session — userId field on FormData is ignored.

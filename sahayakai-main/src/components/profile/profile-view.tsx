@@ -23,7 +23,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getProfileData } from "@/app/actions/profile";
+import { getProfileData, getPublicProfileAction } from "@/app/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +66,14 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
             if (uidToLoad) {
                 setLoading(true);
                 try {
-                    const { profile: userProfile, certifications } = await getProfileData(uidToLoad);
+                    // Bug fix 2026-05-20: getProfileData throws Forbidden when
+                    // viewing another teacher (self-only by design). Route
+                    // cross-user reads through the public action so the View
+                    // flow from notifications/teacher-directory actually works.
+                    const isViewingSelf = !targetUid || (currentUser && currentUser.uid === targetUid);
+                    const { profile: userProfile, certifications } = isViewingSelf
+                        ? await getProfileData(uidToLoad)
+                        : await getPublicProfileAction(uidToLoad);
                     setProfile(userProfile);
                     setCerts(certifications || []);
 
@@ -92,6 +99,8 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         }
                     }
                 } catch (error) {
+                    // Surface for demo-day debugging — previously silent.
+                    console.error('[ProfileView] Failed to load profile', { uid: uidToLoad, error });
                 } finally {
                     setLoading(false);
                 }
