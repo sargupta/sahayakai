@@ -43,6 +43,7 @@ import {
     type GradedQuestion,
     type SubjectRubricFamily,
 } from '@/ai/schemas/assessment-scanner-schemas';
+import { letterGradeFor } from '@/ai/schemas/assessment-scanner-utils';
 import { z } from 'genkit';
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -288,15 +289,6 @@ Also produce:
 // ───────────────────────────────────────────────────────────────────────────
 // Helpers
 // ───────────────────────────────────────────────────────────────────────────
-
-function letterGradeFor(scorePct: number): string {
-    if (scorePct >= 90) return 'A+';
-    if (scorePct >= 80) return 'A';
-    if (scorePct >= 65) return 'B';
-    if (scorePct >= 50) return 'C';
-    if (scorePct >= 35) return 'D';
-    return 'E';
-}
 
 function gradeLevelToNumber(gradeLevel: string): number | null {
     // 'Class 5' → 5; 'Nursery'/'LKG'/'UKG' → null

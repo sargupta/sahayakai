@@ -153,6 +153,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             "visual-aid": "/visual-aid-designer",
             "instant-answer": "/instant-answer",
             "teacher-training": "/teacher-training",
+            "assessment-submission": "/assessment-scanner",
         };
 
         const baseUrl = routeMap[resource.type] || "/library";
@@ -255,8 +256,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
     <div class="metadata">
         <p><strong>Type:</strong> ${type}</p>
         ${content.grade_level ? `<p><strong>Class:</strong> ${content.grade_level}</p>` : ''}
-        ${content.language ? `<p><strong>Language:</strong> ${content.language}</p>` : ''}
-        ${content.subject ? `<p><strong>Subject:</strong> ${content.subject}</p>` : ''}
+        ${content.language ? `<p><strong>${t("Language")}:</strong> ${content.language}</p>` : ''}
+        ${content.subject ? `<p><strong>${t("Subject")}:</strong> ${content.subject}</p>` : ''}
     </div>
     <div class="content">
         ${formatContentByType(content, type)}
@@ -327,7 +328,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         let html = '<div>';
         if (content.criteria && Array.isArray(content.criteria)) {
             html += '<table border="1" cellpadding="10" style="width:100%; border-collapse: collapse;">';
-            html += '<thead><tr><th>Criteria</th><th>Description</th></tr></thead><tbody>';
+            html += `<thead><tr><th>${t("Criteria")}</th><th>${t("Description")}</th></tr></thead><tbody>`;
             content.criteria.forEach((criterion: any) => {
                 html += `<tr><td>${criterion.name || criterion.title}</td><td>${criterion.description || ''}</td></tr>`;
             });
@@ -343,27 +344,28 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
-                        placeholder="Search your library..."
+                        placeholder={t("Search your library...")}
                         className="pl-10 bg-white border-slate-200"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        aria-label="Search your library"
+                        aria-label={t("Search your library")}
                     />
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
                         <SelectTrigger className="w-full md:w-48 bg-white border-slate-200">
-                            <SelectValue placeholder="All types" />
+                            <SelectValue placeholder={t("All types")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Resources</SelectItem>
-                            <SelectItem value="lesson-plan">Lesson Plans</SelectItem>
-                            <SelectItem value="quiz">Quizzes</SelectItem>
-                            <SelectItem value="worksheet">Worksheets</SelectItem>
-                            <SelectItem value="visual-aid">Visual Aids</SelectItem>
-                            <SelectItem value="rubric">Rubrics</SelectItem>
-                            <SelectItem value="virtual-field-trip">Field Trips</SelectItem>
+                            <SelectItem value="all">{t("All Resources")}</SelectItem>
+                            <SelectItem value="lesson-plan">{t("Lesson Plans")}</SelectItem>
+                            <SelectItem value="quiz">{t("Quizzes")}</SelectItem>
+                            <SelectItem value="worksheet">{t("Worksheets")}</SelectItem>
+                            <SelectItem value="visual-aid">{t("Visual Aids")}</SelectItem>
+                            <SelectItem value="rubric">{t("Rubrics")}</SelectItem>
+                            <SelectItem value="virtual-field-trip">{t("Field Trips")}</SelectItem>
+                            <SelectItem value="assessment-submission">{t("Graded Assessments")}</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -373,7 +375,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             size="sm"
                             className="h-10 w-10 p-0"
                             onClick={() => setViewMode("grid")}
-                            aria-label="Grid view"
+                            aria-label={t("Grid view")}
                         >
                             <Grid className="h-4 w-4" />
                         </Button>
@@ -382,7 +384,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             size="sm"
                             className="h-10 w-10 p-0"
                             onClick={() => setViewMode("list")}
-                            aria-label="List view"
+                            aria-label={t("List view")}
                         >
                             <ListIcon className="h-4 w-4" />
                         </Button>

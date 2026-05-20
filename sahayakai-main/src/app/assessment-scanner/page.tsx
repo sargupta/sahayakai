@@ -16,6 +16,7 @@
  *   - Multi-student rosters + class analytics land in Phase 3.
  */
 
+import { AssessmentResultCard } from "@/components/assessment-scanner/assessment-result-card";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -35,7 +36,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { LanguageSelector } from "@/components/language-selector";
@@ -51,17 +51,16 @@ import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    AlertCircle,
     CheckCircle2,
     Info,
     Loader2,
     Plus,
     ScanLine,
     X,
-    XCircle,
 } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
@@ -86,12 +85,26 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function AssessmentScannerPage() {
+    // useSearchParams (called by the inner component) needs a Suspense
+    // boundary in Next 15 — otherwise prerendering of the page bails out.
+    return (
+        <Suspense fallback={null}>
+            <AssessmentScannerPageInner />
+        </Suspense>
+    );
+}
+
+function AssessmentScannerPageInner() {
     const { user, requireAuth, openAuthModal } = useAuth();
     const { t } = useLanguage();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const savedAssessmentId = searchParams?.get("id") ?? null;
 
     const [result, setResult] = useState<AssessmentScannerOutput | null>(null);
+    const [resultMeta, setResultMeta] = useState<{ subject?: string; gradeLevel?: string }>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingSaved, setIsLoadingSaved] = useState(Boolean(savedAssessmentId));
     const submittingRef = useRef(false);
 
     const form = useForm<FormValues>({
@@ -103,6 +116,53 @@ export default function AssessmentScannerPage() {
             language: "English",
         },
     });
+
+    // Re-open a previously-graded assessment when arriving via My Library.
+    useEffect(() => {
+        let cancelled = false;
+        if (!savedAssessmentId || !user) return;
+        setIsLoadingSaved(true);
+        (async () => {
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch(
+                    `/api/content/get?id=${encodeURIComponent(savedAssessmentId)}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    },
+                );
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const json = await res.json();
+                if (cancelled) return;
+                const payload = json?.data as AssessmentScannerOutput | undefined;
+                if (!payload || !Array.isArray(payload.questions)) {
+                    throw new Error("malformed-assessment");
+                }
+                setResult(payload);
+                setResultMeta({
+                    subject: typeof json.subject === "string" ? json.subject : undefined,
+                    gradeLevel:
+                        typeof json.gradeLevel === "string" ? json.gradeLevel : undefined,
+                });
+            } catch (err) {
+                console.error("[AssessmentScanner] failed to load saved", err);
+                if (!cancelled) {
+                    toast({
+                        title: t("Could not open assessment"),
+                        description: t("Please try again from My Library."),
+                        variant: "destructive",
+                    });
+                }
+            } finally {
+                if (!cancelled) setIsLoadingSaved(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [savedAssessmentId, user, toast, t]);
 
     const selectedLanguage = form.watch("language") || "English";
     const pageUrls = form.watch("pageUrls") || [];
@@ -166,6 +226,7 @@ export default function AssessmentScannerPage() {
 
             const data = (await res.json()) as AssessmentScannerOutput;
             setResult(data);
+            setResultMeta({ subject: values.subject, gradeLevel: values.gradeLevel });
         } catch (error) {
             console.error("Assessment scan failed:", error);
             toast({
@@ -408,7 +469,7 @@ export default function AssessmentScannerPage() {
                 </CardContent>
             </Card>
 
-            {isLoading && (
+            {(isLoading || isLoadingSaved) && (
                 <Card className="w-full">
                     <CardHeader>
                         <Skeleton className="h-6 w-1/3" />
@@ -422,184 +483,14 @@ export default function AssessmentScannerPage() {
                 </Card>
             )}
 
-            {result && <AssessmentResult result={result} />}
+            {result && !isLoadingSaved && (
+                <AssessmentResultCard
+                    result={result}
+                    subject={resultMeta.subject}
+                    gradeLevel={resultMeta.gradeLevel}
+                    onResultUpdated={(next) => setResult(next)}
+                />
+            )}
         </div>
-    );
-}
-
-function AssessmentResult({ result }: { result: AssessmentScannerOutput }) {
-    const { t } = useLanguage();
-    const isFailed = result.status === "failed";
-    const isPartial = result.status === "partial";
-
-    return (
-        <Card className="w-full">
-            <CardHeader>
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2">
-                            {t("Result")}
-                            {result.status === "graded" && (
-                                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                            )}
-                            {isPartial && <AlertCircle className="w-5 h-5 text-amber-600" />}
-                            {isFailed && <XCircle className="w-5 h-5 text-destructive" />}
-                        </CardTitle>
-                        <CardDescription>
-                            {result.questions.length}{" "}
-                            {result.questions.length === 1 ? t("question") : t("questions")} ·{" "}
-                            {result.pageCount}{" "}
-                            {result.pageCount === 1 ? t("page") : t("pages")}
-                        </CardDescription>
-                    </div>
-                    {!isFailed && (
-                        <div className="text-right">
-                            <div className="text-3xl font-bold tabular-nums">
-                                {result.scorePct.toFixed(0)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                                {result.totalAwardedMarks.toFixed(1)} / {result.totalMaxMarks}{" "}
-                                {t("marks")} · {result.letterGrade}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {result.imageQualityWarnings.length > 0 && (
-                    <Alert variant="default" className="border-amber-500/50 bg-amber-500/5">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>{t("Image quality")}</AlertTitle>
-                        <AlertDescription>
-                            <ul className="list-disc pl-4 space-y-1 text-xs">
-                                {result.imageQualityWarnings.map((w, i) => (
-                                    <li key={i}>{w}</li>
-                                ))}
-                            </ul>
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                {result.needsReviewCount > 0 && (
-                    <Alert variant="default" className="border-amber-500/50 bg-amber-500/5">
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>{t("Teacher review suggested")}</AlertTitle>
-                        <AlertDescription>
-                            {result.needsReviewCount === 1
-                                ? t("1 question is uncertain. Please verify.")
-                                : `${result.needsReviewCount} ${t("questions are uncertain. Please verify.")}`}
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                {result.questions.length > 0 && (
-                    <Accordion type="multiple" className="w-full">
-                        {result.questions.map((q, i) => {
-                            const pct = q.marksMax > 0 ? (q.marksAwarded / q.marksMax) * 100 : 0;
-                            const tone =
-                                pct >= 80
-                                    ? "text-green-600"
-                                    : pct >= 50
-                                      ? "text-amber-600"
-                                      : "text-destructive";
-                            return (
-                                <AccordionItem key={q.questionId} value={q.questionId}>
-                                    <AccordionTrigger className="hover:no-underline">
-                                        <div className="flex items-start justify-between w-full pr-4 gap-4 text-left">
-                                            <span className="font-medium text-sm flex-1 line-clamp-2">
-                                                Q{i + 1}. {q.questionText}
-                                            </span>
-                                            <span className={`tabular-nums text-sm font-semibold ${tone}`}>
-                                                {q.marksAwarded.toFixed(1)} / {q.marksMax}
-                                            </span>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="space-y-3 text-sm">
-                                        {q.needsTeacherReview && (
-                                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-500/30">
-                                                {t("Needs review")}
-                                            </Badge>
-                                        )}
-                                        <div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                                {t("Student wrote")}
-                                            </div>
-                                            <div className="rounded-md bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap">
-                                                {q.studentAnswer || `(${t("no answer written")})`}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                                {t("Expected")}
-                                            </div>
-                                            <div className="rounded-md bg-muted/20 p-3 font-mono text-xs whitespace-pre-wrap">
-                                                {q.expectedAnswer}
-                                            </div>
-                                        </div>
-                                        {q.partialCreditBreakdown.length > 0 && (
-                                            <div>
-                                                <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                                    {t("Marks breakdown")}
-                                                </div>
-                                                <ul className="text-xs space-y-1">
-                                                    {q.partialCreditBreakdown.map((s, j) => (
-                                                        <li key={j} className="flex justify-between gap-4">
-                                                            <span>{s.step}</span>
-                                                            <span className="tabular-nums font-medium">
-                                                                {s.earned} / {s.max}
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                                {t("Feedback")}
-                                            </div>
-                                            <p className="text-sm">{q.feedback}</p>
-                                        </div>
-                                        {q.studentFacingFeedback && (
-                                            <div>
-                                                <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                                    {t("For the student")}
-                                                </div>
-                                                <p className="text-sm italic">{q.studentFacingFeedback}</p>
-                                            </div>
-                                        )}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            );
-                        })}
-                    </Accordion>
-                )}
-
-                {result.recommendedNextSteps.length > 0 && (
-                    <div className="border-t border-border/30 pt-4">
-                        <h3 className="font-headline text-sm font-semibold mb-2">
-                            {t("Next steps for the teacher")}
-                        </h3>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                            {result.recommendedNextSteps.map((step, i) => (
-                                <li key={i}>{step}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {result.studentRecommendations.length > 0 && (
-                    <div className="border-t border-border/30 pt-4">
-                        <h3 className="font-headline text-sm font-semibold mb-2">
-                            {t("For the student")}
-                        </h3>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                            {result.studentRecommendations.map((step, i) => (
-                                <li key={i}>{step}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
     );
 }
