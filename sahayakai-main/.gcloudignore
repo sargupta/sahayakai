@@ -11,7 +11,14 @@ __pycache__/
 README.md
 docs/
 output/
-scripts/
+# Exclude scripts/* (file-level glob so the parent dir stays visible
+# and the negation below can re-include the api-test subtree, which is
+# imported at runtime by src/lib/openapi-spec.ts -> /api/api-docs).
+# Plain `scripts/` (dir-level) hides everything inside so the negation
+# cannot work. See commit 1054ff1f3 (fix(deploy): correct .gcloudignore
+# negation syntax) — this is the second time this has regressed.
+scripts/*
+!scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/

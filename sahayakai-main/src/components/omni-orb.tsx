@@ -7,9 +7,29 @@ import { useAuth } from "@/context/auth-context";
 import { auth } from "@/lib/firebase";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
-import { Trash2, BrainCircuit, Sparkles } from "lucide-react";
+import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
+import { useToast } from "@/hooks/use-toast";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
+import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
+
+// Known routable flow ids. Mirrors the wire enum in
+// `src/lib/sidecar/types.generated.ts` (`VidyaAction.flow`) and the
+// `FLOW_LABEL` map below. Used to guard against a model hallucinating
+// a flow name we have no page for — e.g. "lesson-plan-tutorial" or
+// "quiz" (instead of "quiz-generator"). Without this guard, the client
+// silently `router.push`es to a 404 and the teacher sees nothing happen.
+const KNOWN_FLOWS = new Set<VidyaAction['flow']>([
+    'lesson-plan',
+    'quiz-generator',
+    'visual-aid-designer',
+    'worksheet-wizard',
+    'virtual-field-trip',
+    'teacher-training',
+    'rubric-generator',
+    'exam-paper',
+    'video-storyteller',
+]);
 
 // Phase N.1 + P5: when the supervisor authors >1 actions for a compound
 // intent ("make a quiz AND a worksheet on photosynthesis"), the client
@@ -55,6 +75,7 @@ export function OmniOrb() {
     const router = useRouter();
     const pathname = usePathname();
     const { user } = useAuth();
+    const { toast } = useToast();
     const {
         chatHistory,
         addMessage,
@@ -64,6 +85,8 @@ export function OmniOrb() {
         teacherProfile,
         updateTeacherProfile,
         mergeTeacherProfile,
+        clearStructuredDataIfStale,
+        markQueryCompleted,
     } = useJarvisStore();
 
     // 2026-04-26: hide OmniOrb when the page-mounted VoiceAssistant chat
@@ -98,12 +121,33 @@ export function OmniOrb() {
     const orbRef = useRef<HTMLDivElement>(null);
 
     // ── Sync URL path to store + publish live form context ───────────────
+    // 2026-05-19 (NCERT demo fix): clearing stale `structuredData` on
+    // pathname change closes a state-pollution hole — pages that do NOT
+    // call `useVidyaFormSync` (e.g. `/exam-paper`) would otherwise inherit
+    // the previous page's form fields and VIDYA would "see" them as
+    // current context. Symptom: founder said "for Class 10" on `/exam-paper`
+    // and the orb routed to `quiz-generator` with Class 7 / Science /
+    // photosynthesis from a prior `/quiz-generator` query.
     useEffect(() => {
         setIsClient(true);
-        // structuredData is read from store (set by individual pages) and passed
-        // through as uiState so VIDYA can "see" active form fields.
-        setScreenContext({ path: pathname, uiState: structuredData });
-    }, [pathname, setScreenContext, structuredData]);
+    }, []);
+
+    useEffect(() => {
+        // Pre-publish stale-clearing must run BEFORE we forward the
+        // payload to VIDYA — otherwise the first query on a page that
+        // doesn't claim ownership leaks the prior page's form fields.
+        clearStructuredDataIfStale(pathname);
+        // Pull the (possibly-just-cleared) value from the store so the
+        // screen-context publish reflects reality, not the closure's
+        // pre-clear snapshot.
+        const fresh = useJarvisStore.getState().structuredData;
+        setScreenContext({ path: pathname, uiState: fresh });
+        // eslint-disable-next-line no-console
+        console.debug('[OmniOrb] screen-context published', {
+            path: pathname,
+            uiStateKeys: Object.keys(fresh ?? {}),
+        });
+    }, [pathname, clearStructuredDataIfStale, setScreenContext, structuredData]);
 
     // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
     // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
@@ -272,8 +316,53 @@ export function OmniOrb() {
     const processTranscription = async (transcript: string, detectedLang?: string) => {
         if (!transcript) return;
 
+        // ── Per-query reset (2026-05-19, NCERT demo fix) ──────────────────
+        // Each mic press is a FRESH query. Three things to wipe so a prior
+        // intent does not bleed in:
+        //   1. `pendingActions` — compound-intent chips authored by the
+        //      previous turn. Tapping a chip later is fine; carrying them
+        //      silently into a NEW utterance is not.
+        //   2. Stale `structuredData` — published by a page the user has
+        //      since navigated away from. The navigation effect already
+        //      calls `clearStructuredDataIfStale(pathname)`, but a
+        //      lingering page-mount race could leave it set; clear again
+        //      defensively here.
+        //   3. Long-gap chat history — if the previous turn happened
+        //      >5 minutes ago, or on a DIFFERENT screen, treat this
+        //      utterance as a fresh conversation rather than a follow-up.
+        //      Otherwise VIDYA's `SAHAYAK_SOUL_PROMPT` cross-turn context
+        //      resolution rule (see `src/ai/soul.ts` line 121) inherits
+        //      gradeLevel / subject / topic / intent from the prior query.
+        setPendingActions([]);
+        clearStructuredDataIfStale(pathname);
+
+        const FRESH_QUERY_WINDOW_MS = 5 * 60 * 1000; // 5 min
+        const storeSnapshot = useJarvisStore.getState();
+        const sinceLastQuery = storeSnapshot.lastQueryAt
+            ? Date.now() - storeSnapshot.lastQueryAt
+            : Infinity;
+        const samePageAsLast = storeSnapshot.lastQueryPath === pathname;
+        const carryHistory = sinceLastQuery < FRESH_QUERY_WINDOW_MS && samePageAsLast;
+        const effectiveChatHistory = carryHistory ? chatHistory : [];
+        const effectiveStructuredData = storeSnapshot.structuredData;
+
+        // eslint-disable-next-line no-console
+        console.info('[OmniOrb] new query — staging cleared', {
+            path: pathname,
+            transcript: transcript.slice(0, 80),
+            chatHistoryCarried: carryHistory,
+            sinceLastQueryMs: sinceLastQuery === Infinity ? null : sinceLastQuery,
+            lastQueryPath: storeSnapshot.lastQueryPath,
+            structuredDataKeys: Object.keys(effectiveStructuredData ?? {}),
+        });
+
         // Start a new Firestore session on the very first message of a conversation
-        if (chatHistory.length === 0 && user) {
+        // OR when the previous query was stale (>5 min gap / different screen).
+        // Mirroring the carry-history rule keeps session boundaries aligned
+        // with intent boundaries — a fresh classifier scope gets a fresh
+        // Firestore doc too, so analytics aren't muddled by mixed intents.
+        const startingFreshSession = !carryHistory || chatHistory.length === 0;
+        if (startingFreshSession && user) {
             currentSessionRef.current = `sess_${user.uid.slice(0, 8)}_${Date.now()}`;
             sessionIsNewRef.current = true;
         }
@@ -289,13 +378,27 @@ export function OmniOrb() {
             ?? 'en-IN';
 
         try {
+            // eslint-disable-next-line no-console
+            console.log('[VIDYA OmniOrb] POST /api/assistant', {
+                transcriptLen: transcript.length,
+                detectedLang: detectedLang ?? null,
+                pathname,
+                chatHistoryLen: chatHistory.length,
+            });
+
             const res = await vidyaApiFetch("/api/assistant", {
                 method: "POST",
                 body: JSON.stringify({
                     message: transcript,
-                    chatHistory,
-                    // Pass live form fields so VIDYA can "see" the screen
-                    currentScreenContext: { path: pathname, uiState: structuredData },
+                    // Send a SCOPED history — empty on a fresh-intent query
+                    // so VIDYA's cross-turn context resolution doesn't pull
+                    // gradeLevel / subject / topic from a prior query.
+                    chatHistory: effectiveChatHistory,
+                    // Pass live form fields so VIDYA can "see" the screen —
+                    // but only when they belong to the current page (the
+                    // store's `clearStructuredDataIfStale` already wiped
+                    // mismatched payloads on navigation; this is read-back).
+                    currentScreenContext: { path: pathname, uiState: effectiveStructuredData },
                     // Pass long-term teacher profile for personalised context
                     teacherProfile,
                     // Pass detected speech language so VIDYA responds in the same language
@@ -304,36 +407,107 @@ export function OmniOrb() {
             });
 
             if (!res) throw new Error("Not authenticated — please sign in to use VIDYA");
-            if (!res.ok) throw new Error("Assistant failed to process request");
+            if (!res.ok) {
+                // Read the body so the toast surfaces the actual server error
+                // (auth failure, plan-limit, sidecar exhaustion, …) instead of
+                // the generic "Assistant failed" string the user saw before.
+                let serverMsg = `HTTP ${res.status}`;
+                try {
+                    const errBody = await res.json();
+                    if (errBody?.error) serverMsg = String(errBody.error);
+                } catch { /* body wasn't JSON */ }
+                throw new Error(serverMsg);
+            }
 
-            const { response, action, plannedActions } = await res.json() as {
-                response?: string;
-                action?: VidyaAction | null;
-                plannedActions?: VidyaAction[];
-            };
+            // Parse JSON in its own try so a malformed body surfaces a
+            // distinct error rather than getting confused with a network
+            // failure in the outer catch.
+            let payload: { response?: string; action?: VidyaAction | null; plannedActions?: VidyaAction[] };
+            try {
+                payload = await res.json();
+            } catch (parseErr) {
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] response JSON parse failed', parseErr);
+                throw new Error('Assistant returned malformed response');
+            }
+            const { response, action, plannedActions } = payload;
+            // eslint-disable-next-line no-console
+            console.log('[VIDYA OmniOrb] /api/assistant response', {
+                hasResponse: Boolean(response),
+                responseLen: (response ?? '').length,
+                actionType: action?.type ?? null,
+                actionFlow: (action as { flow?: string } | null)?.flow ?? null,
+                plannedCount: plannedActions?.length ?? 0,
+            });
 
             if (response) {
                 addMessage("model", response);
                 tts.speak(response, bcp47Lang);
+            } else {
+                // Empty response WITH no action is the silent-failure mode
+                // we hit on demo day before. Surface it so the teacher
+                // doesn't think the mic ate their request.
+                // eslint-disable-next-line no-console
+                console.warn('[VIDYA OmniOrb] empty response from assistant', { action, plannedActions });
+                if (!action && !(plannedActions && plannedActions.length > 0)) {
+                    toast({
+                        title: 'VIDYA had nothing to say',
+                        description: 'Try rephrasing your question.',
+                        variant: 'default',
+                    });
+                }
             }
 
-            // Build the full updated message list for Firestore sync.
+            // ── Mark this query completed so the next mic press can decide
+            //    whether to carry chat history (same screen + <5 min) or
+            //    treat itself as a fresh intent. Must be called AFTER the
+            //    response lands so a thrown error during the fetch above
+            //    does not stamp `lastQueryAt` for a query that never made
+            //    it to the model.
+            markQueryCompleted(pathname);
+
+            // Build the message list for Firestore sync.
             // chatHistory in this closure reflects state BEFORE the addMessage()
             // calls above (Zustand state updates are batched to the next render),
             // so we build the updated list explicitly here.
-            const updatedMessages = [
-                ...chatHistory,
-                { role: "user" as const, parts: [{ text: transcript }] },
-                { role: "model" as const, parts: [{ text: response ?? "" }] },
-            ];
+            // CRITICAL: when this was a fresh-intent query (cross-page or
+            // long gap), the Firestore session was just rotated above —
+            // persist ONLY the current turn pair so analytics / replay see
+            // a session boundary that matches the classifier scope rather
+            // than smuggling the prior (unrelated) turns into a fresh doc.
+            const updatedMessages = startingFreshSession
+                ? [
+                    { role: "user" as const, parts: [{ text: transcript }] },
+                    { role: "model" as const, parts: [{ text: response ?? "" }] },
+                ]
+                : [
+                    ...chatHistory,
+                    { role: "user" as const, parts: [{ text: transcript }] },
+                    { role: "model" as const, parts: [{ text: response ?? "" }] },
+                ];
 
             // P5 — compound intent: 2-3 actions render as confirm-chips so
             // the teacher taps each explicitly. Single action keeps the
             // legacy auto-navigate behaviour to avoid extra-tap regression
             // for the 90% one-flow case.
-            const validActions = (plannedActions ?? []).filter(
+            //
+            // Demo-day hardening: also drop actions whose `flow` isn't in
+            // the KNOWN_FLOWS set. A hallucinated flow (e.g. "lessonplan"
+            // or "quiz") routes to a 404 on this client and the teacher
+            // sees nothing happen — same symptom as the original silent
+            // failure. Toast the model's bad output so the demo audience
+            // sees we're catching it, not silently dropping it.
+            const allActions = (plannedActions ?? []).filter(
                 (a) => a && a.type === "NAVIGATE_AND_FILL",
             );
+            const validActions = allActions.filter((a) => KNOWN_FLOWS.has(a.flow));
+            if (allActions.length !== validActions.length) {
+                const droppedFlows = allActions
+                    .filter((a) => !KNOWN_FLOWS.has(a.flow))
+                    .map((a) => a.flow);
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] dropping unknown flow(s)', droppedFlows);
+            }
             const isCompound = validActions.length > 1;
 
             if (isCompound) {
@@ -345,15 +519,45 @@ export function OmniOrb() {
                 syncSessionTurn(updatedMessages, null);
                 setPendingActions(validActions);
                 setOrbOpen(true);
-            } else if (action && action.type === "NAVIGATE_AND_FILL") {
+            } else if (action && action.type === "NAVIGATE_AND_FILL" && KNOWN_FLOWS.has(action.flow)) {
                 executeAction(action, updatedMessages, transcript);
+            } else if (validActions.length === 1) {
+                // Sidecar/Genkit emitted a single valid planned action but the
+                // top-level `action` was missing/unknown. Auto-execute it.
+                // This closes the gap between `action` and `plannedActions[0]`
+                // when the dispatcher's backward-compat assignment misfires.
+                executeAction(validActions[0], updatedMessages, transcript);
+            } else if (action && action.type === "NAVIGATE_AND_FILL" && !KNOWN_FLOWS.has(action.flow)) {
+                // Model hallucinated a flow we don't have a page for.
+                // Don't navigate (would 404); tell the teacher.
+                // eslint-disable-next-line no-console
+                console.error('[VIDYA OmniOrb] action with unknown flow', action.flow);
+                toast({
+                    title: 'VIDYA picked a tool I do not recognise',
+                    description: `Flow "${action.flow}" is not available. Please rephrase your request.`,
+                    variant: 'destructive',
+                });
+                syncSessionTurn(updatedMessages, null);
+                setPendingActions([]);
             } else {
                 // Conversational turn — persist without action metadata
                 syncSessionTurn(updatedMessages, null);
                 setPendingActions([]);
             }
         } catch (e) {
+            const errMsg = e instanceof Error ? e.message : String(e);
+            // eslint-disable-next-line no-console
+            console.error('[VIDYA OmniOrb] processTranscription failed', e);
             tts.speak("I'm sorry, I encountered an issue connecting to my network. Please try again.", bcp47Lang);
+            // User-visible toast — the previous silent-failure mode meant
+            // founders saw "voice captured, nothing happens" and could not
+            // diagnose live. Now the teacher sees the actual reason on
+            // demo day instead of just hearing an apology.
+            toast({
+                title: 'VIDYA could not act on that',
+                description: errMsg.slice(0, 200),
+                variant: 'destructive',
+            });
         }
     };
 
@@ -368,7 +572,20 @@ export function OmniOrb() {
         // logic from the existing chatHistory closure.
         _originalTranscript?: string,
     ) => {
-        // Learn teacher preferences from agentic actions
+        // Learn teacher preferences from agentic actions.
+        //
+        // LANGUAGE POISONING GUARD (2026-05-19): NEVER persist `language`
+        // here. A voice utterance like "lesson plan for grade 7 science"
+        // gets a `language` param from VIDYA's intent classifier (often
+        // derived from the *speech* language detector, not an explicit
+        // teacher preference). Writing that into the long-term profile
+        // silently flipped subsequent generations to Hindi even when the
+        // form dropdown showed English — the leak that hit the NCERT demo.
+        //
+        // Persistent language preference is set EXPLICITLY at onboarding
+        // and Settings only. Action params still flow to the destination
+        // form via the URL (see queryParams below), so the one-off intent
+        // is honoured without poisoning the profile.
         const profilePatch: Record<string, string> = {};
         if (action.params?.gradeLevel) {
             updateTeacherProfile({ preferredGrade: action.params.gradeLevel });
@@ -378,10 +595,8 @@ export function OmniOrb() {
             updateTeacherProfile({ preferredSubject: action.params.subject });
             profilePatch.preferredSubject = action.params.subject;
         }
-        if (action.params?.language) {
-            updateTeacherProfile({ preferredLanguage: action.params.language });
-            profilePatch.preferredLanguage = action.params.language;
-        }
+        // INTENTIONALLY OMITTED: action.params.language → profile write.
+        // Honour as a session-level hint only (URL param below).
         if (Object.keys(profilePatch).length > 0) syncProfilePatch(profilePatch);
 
         // Persist session turn with the triggered action
@@ -400,6 +615,14 @@ export function OmniOrb() {
             }
         }
 
+        // Normalise language to an ISO-2 code BEFORE it lands in the URL.
+        // The destination forms (lesson-plan, quiz-generator, …) drive
+        // <LanguageSelector> with ISO values ("en", "hi"). VIDYA's
+        // supervisor sometimes emits the display name ("English") which
+        // the selector then rejects and falls back to the default — that
+        // is the second half of the "form shows English, output Hindi"
+        // bug. Shared with the destination forms via
+        // `@/lib/vidya-action-normalizer` so both ends agree.
         const queryParams = new URLSearchParams();
         if (params.topic) queryParams.set("topic", params.topic);
         if (params.question) queryParams.set("question", params.question);
@@ -407,10 +630,14 @@ export function OmniOrb() {
         if (params.prompt) queryParams.set("prompt", params.prompt);
         if (params.subject) queryParams.set("subject", params.subject);
         if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
-        if (params.language) queryParams.set("language", params.language);
+        const normalisedLang = normaliseVidyaLanguage(params.language);
+        if (normalisedLang) queryParams.set("language", normalisedLang);
 
-        router.push(`/${action.flow}?${queryParams.toString()}`);
-    }, [chatHistory, router, updateTeacherProfile]);
+        const targetUrl = `/${action.flow}?${queryParams.toString()}`;
+        // eslint-disable-next-line no-console
+        console.log('[VIDYA OmniOrb] navigating to', targetUrl);
+        router.push(targetUrl);
+    }, [chatHistory, router, updateTeacherProfile, syncProfilePatch, syncSessionTurn]);
 
     // Chip tap handler — pops the action from pendingActions and dispatches.
     // Chips render one-shot so consecutive taps cleanly chain navigations.
@@ -479,7 +706,12 @@ export function OmniOrb() {
                             <span className="font-semibold">Your profile: </span>
                             {[teacherProfile.preferredGrade, teacherProfile.preferredSubject, teacherProfile.schoolContext]
                                 .filter(Boolean).join(" · ")}
-                            {user && <span className="ml-1 opacity-60">(synced ☁️)</span>}
+                            {user && (
+                                <Cloud
+                                    className="ml-1 inline-block h-3 w-3 opacity-60 align-middle"
+                                    aria-label="Synced to cloud"
+                                />
+                            )}
                         </div>
                     )}
 
@@ -546,9 +778,21 @@ export function OmniOrb() {
 
                 {chatHistory.length > 0 && (
                     <>
-                        <div className="absolute -inset-3 rounded-full bg-primary/30 animate-ping pointer-events-none" style={{ animationDuration: "3s" }} />
-                        <div className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse pointer-events-none" style={{ animationDuration: "2s" }} />
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md animate-bounce pointer-events-none border border-primary/20 flex items-center gap-1">
+                        {/* NCERT demo polish (2026-05-19): simplified the
+                            previous triple-animation stack (animate-ping +
+                            animate-pulse + animate-bounce) to a single ring
+                            and a static tooltip. Three concurrent infinite
+                            animations were ~12ms of per-frame compositing
+                            on low-end Android, contributing to the founder's
+                            "lagging" report. Reduced-motion users see no
+                            ring at all. */}
+                        {!reducedMotion && (
+                            <div
+                                className="absolute -inset-2 rounded-full bg-primary/25 animate-pulse pointer-events-none"
+                                style={{ animationDuration: "2.4s" }}
+                            />
+                        )}
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
                             <BrainCircuit className="h-3 w-3" />
                             Tap to reply
                         </div>

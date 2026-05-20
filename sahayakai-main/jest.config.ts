@@ -52,6 +52,8 @@ const config: Config = {
 
     testMatch: [
         '<rootDir>/src/__tests__/**/*.test.{ts,tsx}',
+        // Co-located test folders, e.g. `src/ai/data/__tests__/*.test.ts`.
+        '<rootDir>/src/**/__tests__/**/*.test.{ts,tsx}',
     ],
 
     // Avoid jest-haste-map collisions when sibling Claude worktrees exist on

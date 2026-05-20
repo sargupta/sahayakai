@@ -158,6 +158,25 @@ async function _handler(req: Request) {
             },
         });
 
+        // [VIDYA route] one-line structured trace per request so demo-day
+        // misfires are diagnosable from Cloud Run logs WITHOUT shipping
+        // server-side request bodies. Covers the "captured-but-no-action"
+        // scenario by showing whether the dispatcher emitted an action.
+        // eslint-disable-next-line no-console
+        console.log(
+            JSON.stringify({
+                event: 'vidya.route.dispatched',
+                uid: userId.slice(0, 8),
+                msgLen: message.length,
+                detectedLanguage: detectedLanguage ?? null,
+                hasResponse: Boolean(dispatched.response),
+                actionType: dispatched.action?.type ?? null,
+                actionFlow: (dispatched.action as { flow?: string } | null)?.flow ?? null,
+                plannedCount: dispatched.plannedActions?.length ?? 0,
+                source: dispatched.source,
+            }),
+        );
+
         // P5: surface `plannedActions` to the client so OmniOrb can render
         // confirm-chips for compound intents ("make a quiz AND a worksheet
         // on photosynthesis"). The supervisor authors up to 3 actions; the

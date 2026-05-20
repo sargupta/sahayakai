@@ -45,5 +45,11 @@ export const QuizVariantsOutputSchema = z.object({
   subject: z.string().nullable().optional().describe('The academic subject.'),
   topic: z.string().nullable().optional().describe('The main topic.'),
   isSaved: z.boolean().default(false).describe('Whether the quiz is already saved in the library.'),
+  validationWarning: z.object({
+    invalid: z.boolean(),
+    lenient: z.boolean(),
+    message: z.string(),
+    autoCorrectTo: z.object({ number: z.number(), title: z.string() }).optional(),
+  }).nullable().optional().describe('Soft NCERT chapter validation warning. Surfaces to the UI without blocking generation.'),
 });
 export type QuizVariantsOutput = z.infer<typeof QuizVariantsOutputSchema>;

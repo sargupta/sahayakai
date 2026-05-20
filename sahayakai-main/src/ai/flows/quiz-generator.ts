@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { quizGeneratorFlow } from './quiz-definitions';
 import { logger } from '@/lib/logger';
 import { AIQuotaExhaustedError } from '@/ai/genkit';
+import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
 
 /**
  * True when the error is (or wraps) an AIQuotaExhaustedError, or surfaces a
@@ -57,6 +58,25 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   // reads it. See src/ai/lib/normalize-language.ts.
   const { normalizeLanguage } = await import('@/ai/lib/normalize-language');
   localizedInput.language = normalizeLanguage(localizedInput.language);
+
+  // Soft NCERT chapter validation — best-effort, never blocks generation.
+  let validationWarning: ValidationWarning | null = null;
+  try {
+    validationWarning = validateChapterForFlow({
+      gradeLevel: localizedInput.gradeLevel,
+      subject: localizedInput.subject,
+      chapter: localizedInput.topic,
+    });
+    if (validationWarning) {
+      logger.warn('NCERT chapter validation flagged quiz input', 'QUIZ', validationWarning);
+      // High-confidence auto-correct: rewrite topic to canonical chapter title.
+      if (validationWarning.autoCorrectTo && validationWarning.invalid) {
+        localizedInput.topic = validationWarning.autoCorrectTo.title;
+      }
+    }
+  } catch (validationError) {
+    logger.warn('NCERT validation threw (non-blocking)', 'QUIZ', { error: String(validationError) });
+  }
 
   const difficulties = ['easy', 'medium', 'hard'] as const;
   const contentId = uuidv4();
@@ -122,7 +142,8 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
     gradeLevel: inferredGrade || localizedInput.gradeLevel || 'Class 5',
     subject: inferredSubject || localizedInput.subject || 'General',
     topic: input.topic,
-    isSaved: !!input.userId // If userId is present, it will be auto-saved below
+    isSaved: !!input.userId, // If userId is present, it will be auto-saved below
+    validationWarning: validationWarning ?? undefined,
   };
 
   // If all failed, surface the best-shaped error so the route layer can map

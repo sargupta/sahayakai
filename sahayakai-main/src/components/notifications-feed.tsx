@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Notification } from "@/types";
 import { markNotificationAsReadAction, markAllAsReadAction } from "@/app/actions/notifications";
 import { acceptConnectionRequestAction, declineConnectionRequestAction } from "@/app/actions/connections";
@@ -9,54 +9,136 @@ import { Bell, CheckCircle2, UserPlus, Trophy, Info, ExternalLink, UserCheck, Lo
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface NotificationFeedProps {
     notifications: Notification[];
     userId: string;
+    /**
+     * Optional callback the parent page passes to re-fetch the source of
+     * truth from Firestore after an action lands. Without this, optimistic
+     * removal is the only signal that something happened — refresh wires
+     * the feed back up to server state.
+     */
+    onRefresh?: () => void | Promise<void>;
 }
 
-export function NotificationFeed({ notifications, userId }: NotificationFeedProps) {
+export function NotificationFeed({ notifications: incomingNotifications, userId, onRefresh }: NotificationFeedProps) {
     const router = useRouter();
+    const { toast } = useToast();
+    // Mirror the incoming notifications into local state so we can optimistically
+    // remove/update cards immediately after Accept/Decline lands, instead of
+    // waiting for the parent re-fetch (which Next.js router.refresh() doesn't
+    // re-run for client-only useEffect data).
+    const [notifications, setNotifications] = useState<Notification[]>(incomingNotifications);
     // Track per-notification action loading + resolved state
     const [actionState, setActionState] = useState<Record<string, 'loading' | 'accepted' | 'declined'>>({});
 
+    // Re-sync when the parent passes a new list (e.g. on refresh)
+    useEffect(() => {
+        setNotifications(incomingNotifications);
+    }, [incomingNotifications]);
+
+    const triggerRefresh = async () => {
+        try {
+            if (onRefresh) await onRefresh();
+            router.refresh(); // keep server-cached paths fresh too
+        } catch (e) {
+            console.error('[NotificationFeed] refresh failed', e);
+        }
+    };
+
     const handleMarkAsRead = async (id: string) => {
-        await markNotificationAsReadAction(id);
-        router.refresh();
+        // Optimistic: flag as read in local state immediately
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+        try {
+            await markNotificationAsReadAction(id);
+            await triggerRefresh();
+        } catch (e) {
+            console.error('[NotificationFeed] markAsRead failed', e);
+            // Revert
+            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
+            toast({ title: 'Could not mark as read', variant: 'destructive' });
+        }
     };
 
     const handleMarkAllAsRead = async () => {
-        await markAllAsReadAction(userId);
-        router.refresh();
+        const prevSnapshot = notifications;
+        // Optimistic flip
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        try {
+            await markAllAsReadAction(userId);
+            await triggerRefresh();
+        } catch (e) {
+            console.error('[NotificationFeed] markAllAsRead failed', e);
+            setNotifications(prevSnapshot);
+            toast({ title: 'Could not mark all as read', variant: 'destructive' });
+        }
     };
 
     const handleAccept = async (notification: Notification) => {
         const requestId = notification.metadata?.requestId;
-        if (!requestId) return;
+        if (!requestId) {
+            console.warn('[NotificationFeed] Accept clicked but no requestId on notification', notification);
+            toast({ title: 'Cannot accept: request reference missing', variant: 'destructive' });
+            return;
+        }
+        console.log('[NotificationFeed] Accept', { id: notification.id, requestId, from: notification.senderName });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await acceptConnectionRequestAction(requestId);
-            await markNotificationAsReadAction(notification.id);
+            // Best-effort mark-as-read so the badge count drops too
+            try { await markNotificationAsReadAction(notification.id); } catch { /* non-fatal */ }
             setActionState((prev) => ({ ...prev, [notification.id]: 'accepted' }));
-            router.refresh();
-        } catch {
+            toast({
+                title: `Connected with ${notification.senderName ?? 'teacher'}`,
+                description: 'You can now message them and see their shared resources.',
+            });
+            // Keep the "Connected" feedback visible for ~1.5s, then drop the
+            // card and re-fetch source of truth. Refresh first so the next
+            // render gets the new list, then drop the optimistic entry.
+            setTimeout(async () => {
+                setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+                await triggerRefresh();
+            }, 1500);
+        } catch (e) {
+            console.error('[NotificationFeed] acceptConnectionRequest failed', e);
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
+            toast({
+                title: 'Could not accept request',
+                description: e instanceof Error ? e.message : 'Please try again.',
+                variant: 'destructive',
+            });
         }
     };
 
     const handleDecline = async (notification: Notification) => {
         const requestId = notification.metadata?.requestId;
-        if (!requestId) return;
+        if (!requestId) {
+            toast({ title: 'Cannot decline: request reference missing', variant: 'destructive' });
+            return;
+        }
+        console.log('[NotificationFeed] Decline', { id: notification.id, requestId });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await declineConnectionRequestAction(requestId);
-            await markNotificationAsReadAction(notification.id);
+            try { await markNotificationAsReadAction(notification.id); } catch { /* non-fatal */ }
             setActionState((prev) => ({ ...prev, [notification.id]: 'declined' }));
-            router.refresh();
-        } catch {
+            toast({ title: 'Request declined' });
+            setTimeout(async () => {
+                setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+                await triggerRefresh();
+            }, 1200);
+        } catch (e) {
+            console.error('[NotificationFeed] declineConnectionRequest failed', e);
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
+            toast({
+                title: 'Could not decline request',
+                description: e instanceof Error ? e.message : 'Please try again.',
+                variant: 'destructive',
+            });
         }
     };
 
@@ -100,6 +182,12 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                     const requestId = notification.metadata?.requestId;
                     // Only show inline actions if there's a requestId and not yet acted upon
                     const showActions = isConnectRequest && !!requestId && !aState;
+                    // Build a View destination. Prefer the notification's `link`
+                    // (set when the request was created), else fall back to the
+                    // sender's public profile. This is what the View button hit
+                    // before — but a missing link silently rendered no button.
+                    const viewHref = notification.link
+                        ?? (notification.senderId ? `/profile/${notification.senderId}` : undefined);
 
                     return (
                         <Card key={notification.id} className={`border-l-4 ${notification.isRead ? 'border-l-transparent' : 'border-l-primary'} transition-all hover:shadow-elevated shadow-soft rounded-xl`}>
@@ -140,6 +228,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                             size="sm"
                                                             className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-full px-4"
                                                             onClick={() => handleAccept(notification)}
+                                                            data-testid={`accept-${notification.id}`}
                                                         >
                                                             Accept
                                                         </Button>
@@ -148,6 +237,7 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                             variant="outline"
                                                             className="h-8 text-xs rounded-full px-4 border-border text-muted-foreground hover:text-red-500 hover:border-red-200"
                                                             onClick={() => handleDecline(notification)}
+                                                            data-testid={`decline-${notification.id}`}
                                                         >
                                                             Decline
                                                         </Button>
@@ -172,9 +262,9 @@ export function NotificationFeed({ notifications, userId }: NotificationFeedProp
                                                         Mark read
                                                     </Button>
                                                 )}
-                                                {notification.link && (
+                                                {viewHref && (
                                                     <Button size="sm" variant="outline" asChild className="h-8 text-xs border-primary/20 text-primary hover:bg-primary/10">
-                                                        <Link href={notification.link}>
+                                                        <Link href={viewHref} data-testid={`view-${notification.id}`}>
                                                             View <ExternalLink className="ml-1 h-3 w-3" />
                                                         </Link>
                                                     </Button>
