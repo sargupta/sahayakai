@@ -226,6 +226,17 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "ওয়ার্কশীট উইজার্ড", "Gujarati": "વર્કશીટ વિઝાર્ડ", "Punjabi": "ਵਰਕਸ਼ੀਟ ਵਿਜ਼ਾਰਡ",
         "Malayalam": "വർക്ക്‌ഷീറ്റ് വിസാർഡ്", "Odia": "ୱର୍କଶିଟ୍ ୱିଜାର୍ଡ"
     },
+    // SaaS-convention transliteration (matches Visual Aid Designer / Content Creator
+    // pattern in lines 232-242). "मूल्यांकन स्कैनर" is the dictionary literal but
+    // Indian teachers commonly say "असेसमेंट" in code-mixed speech and the sidebar
+    // chip needs to fit in a narrow column on mobile. Keeping transliterations
+    // short + recognizable.
+    "Assessment Scanner": {
+        "English": "Assessment Scanner", "Hindi": "असेसमेंट स्कैनर", "Kannada": "ಅಸೆಸ್ಮೆಂಟ್ ಸ್ಕ್ಯಾನರ್",
+        "Tamil": "அசெஸ்மென்ட் ஸ்கேனர்", "Telugu": "అసెస్‌మెంట్ స్కానర్", "Marathi": "असेसमेंट स्कॅनर",
+        "Bengali": "অ্যাসেসমেন্ট স্ক্যানার", "Gujarati": "અસેસમેન્ટ સ્કેનર", "Punjabi": "ਅਸੈਸਮੈਂਟ ਸਕੈਨਰ",
+        "Malayalam": "അസെസ്മെന്റ് സ്കാനർ", "Odia": "ଆସେସମେଣ୍ଟ ସ୍କାନର"
+    },
     // Tool-name transliterations: Indian SaaS convention. Real teachers
     // type "विज़ुअल एड", "कंटेंट क्रिएटर", "वर्चुअल फील्ड ट्रिप",
     // "टीचर ट्रेनिंग" — not the dictionary-literal renderings.
