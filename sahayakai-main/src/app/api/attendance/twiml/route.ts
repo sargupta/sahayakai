@@ -113,7 +113,16 @@ export async function GET(req: NextRequest) {
   <Say language="${langCode}" voice="${voice}">${esc(message)}</Say>
   <Pause length="1"/>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.inviteResponse)}</Say>
-  <Gather input="speech dtmf" action="${gatherUrl}" method="POST" language="${speechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="10" numDigits="1"${speechHints}>
+  <!--
+    Initial-turn timeout bumped from 10s → 20s on 2026-05-20. After the
+    ~15-20 s greeting+teacher-message+invite sequence the parent often
+    pauses 5-10 s to process before speaking; 10s fired Twilio's empty
+    SpeechResult webhook and the POST handler replayed the "I'm sorry,
+    I could not hear you" prompt as the agent's first audible recovery,
+    forcing the teacher to manually intervene. Subsequent turns keep
+    timeout=10 — by then the parent is engaged and responds quickly.
+  -->
+  <Gather input="speech dtmf" action="${gatherUrl}" method="POST" language="${speechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="20" numDigits="1"${speechHints}>
     <Say language="${langCode}" voice="${voice}">${esc(prompts.waitingPrompt)}</Say>
   </Gather>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.noResponseGoodbye)}</Say>
