@@ -27,6 +27,20 @@ interface ContactParentModalProps {
     subject: string;
     consecutiveAbsences?: number;
     twilioConfigured: boolean;
+    /** Optional pre-fill: when the class page already knows the most likely
+     *  reason for this student (e.g. opened from the "Consecutive absences"
+     *  chip in the triage banner), pre-select it so the teacher does not have
+     *  to re-choose. The teacher can still switch. */
+    suggestedReason?: OutreachReason;
+    /** Pre-loaded absent dates (YYYY-MM-DD, descending). When provided, the
+     *  Add-Note panel renders an "Absent days" card instead of marks for the
+     *  consecutive_absences reason. The class page fetches these via
+     *  getStudentAbsenceDatesAction to avoid a per-modal-open round-trip. */
+    absenceDates?: string[];
+    /** Attendance summary for the past 30 days. Used in the positive_feedback
+     *  panel to surface "100% attendance" as a fallback win when no high-score
+     *  assessment is available. */
+    attendanceRate?: number;
 }
 
 const REASONS: { value: OutreachReason; label: string; description: string; icon: React.ElementType }[] = [
@@ -50,6 +64,7 @@ interface CallResult {
 export function ContactParentModal({
     open, onOpenChange,
     student, classId, className, subject, consecutiveAbsences, twilioConfigured,
+    suggestedReason, absenceDates, attendanceRate,
 }: ContactParentModalProps) {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -68,6 +83,17 @@ export function ContactParentModal({
 
     const canCall = twilioConfigured && !!TWILIO_LANGUAGE_MAP[student.parentLanguage];
     const unsupportedForCall = twilioConfigured && !TWILIO_LANGUAGE_MAP[student.parentLanguage];
+
+    // Pre-select reason from class-page hint when the modal opens. Only fires
+    // once per open — the teacher can still override with another chip.
+    useEffect(() => {
+        if (open && suggestedReason && !reason) {
+            setReason(suggestedReason);
+        }
+        // Intentionally narrow deps — we only want to react to `open` flipping
+        // true, not to the teacher then switching reasons mid-flow.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, suggestedReason]);
 
     const handleClose = () => {
         onOpenChange(false);
@@ -371,39 +397,21 @@ export function ContactParentModal({
                             </Badge>
                         </div>
 
-                        {/* Performance context the AI will reference. Shown so the
-                            teacher knows what scores the generated message will cite. */}
-                        {loadingPerf ? (
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Loading recent marks…
-                            </div>
-                        ) : performanceContext?.subjectBreakdown?.length ? (
-                            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                    Recent marks (AI will reference)
-                                    {performanceContext.isAtRisk && (
-                                        <Badge variant="destructive" className="ml-2 text-[9px] h-4 px-1">At-risk</Badge>
-                                    )}
-                                </p>
-                                {performanceContext.subjectBreakdown.slice(0, 3).map((a, i) => (
-                                    <div key={i} className="flex items-baseline justify-between gap-3 text-xs">
-                                        <span className="text-foreground/80 truncate">
-                                            {a.subject} · {a.name.replace(/\s*[—-].*$/, '').trim()}
-                                        </span>
-                                        <span className="font-semibold tabular-nums shrink-0">
-                                            {a.marksObtained}/{a.maxMarks}
-                                            <span className="text-muted-foreground font-normal ml-1">
-                                                ({Math.round(a.percentage)}%)
-                                            </span>
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : null}
+                        {/* Reason-aware context card. Behavioral / absence reasons
+                            do NOT show marks — they would be irrelevant and
+                            misleading (a top performer can still have a
+                            behavioral issue). See ReasonContextPanel below. */}
+                        <ReasonContextPanel
+                            reason={reason}
+                            performanceContext={performanceContext}
+                            absenceDates={absenceDates}
+                            consecutiveAbsences={consecutiveAbsences}
+                            attendanceRate={attendanceRate}
+                            loadingPerf={loadingPerf}
+                        />
 
                         <Textarea
-                            placeholder="Add specific details (optional) — e.g., 'Absent Mon, Tue, Wed' or 'Scored 12/50 in Math test'"
+                            placeholder={placeholderFor(reason)}
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={3}
@@ -476,6 +484,205 @@ export function ContactParentModal({
             </DialogContent>
         </Dialog>
     );
+}
+
+// ── Reason-aware context panel ──────────────────────────────────────────────
+//
+// The Add-Note step shows different evidence depending on why the teacher
+// is calling. Marks belong in the academic-concern + positive-feedback
+// paths only; absences belong in the absence path; behavioral discussions
+// rely on the teacher's free-text note (we surface prompts).
+
+function placeholderFor(reason: OutreachReason | null): string {
+    switch (reason) {
+        case "consecutive_absences":
+            return "Specific note (optional) — e.g., 'Usually a regular attender; checking if everything is okay at home.'";
+        case "behavioral_concern":
+            return "Describe the incident — e.g., 'Calling out during lessons this week; took another student's pen on Monday.'";
+        case "poor_performance":
+            return "Specific note (optional) — e.g., 'Scored 6/25 in last unit test; missed 3 homeworks in 2 weeks.'";
+        case "positive_feedback":
+            return "Achievement to celebrate — e.g., 'Helped two classmates with fractions during revision.'";
+        default:
+            return "Add specific details (optional)";
+    }
+}
+
+function formatAbsenceDate(yyyyMmDd: string): string {
+    // Construct as local date to avoid UTC-offset day shift.
+    const [y, m, d] = yyyyMmDd.split('-').map(Number);
+    if (!y || !m || !d) return yyyyMmDd;
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+interface ReasonContextPanelProps {
+    reason: OutreachReason | null;
+    performanceContext: PerformanceContext | null;
+    absenceDates?: string[];
+    consecutiveAbsences?: number;
+    attendanceRate?: number;
+    loadingPerf: boolean;
+}
+
+function ReasonContextPanel({
+    reason, performanceContext, absenceDates, consecutiveAbsences, attendanceRate, loadingPerf,
+}: ReasonContextPanelProps) {
+    if (!reason) return null;
+
+    // ── Consecutive absences: list absent dates, no marks ───────────────────
+    if (reason === "consecutive_absences") {
+        const dates = absenceDates ?? [];
+        const streak = consecutiveAbsences ?? 0;
+        if (dates.length === 0 && streak === 0) {
+            return (
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                    No absences found in the last 30 days. Pick a different reason, or add a specific note below.
+                </div>
+            );
+        }
+        return (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-2">
+                    <CalendarX2 className="h-3 w-3" /> Absent days (AI will reference)
+                    {streak >= 2 && (
+                        <Badge variant="destructive" className="ml-1 text-[9px] h-4 px-1">{streak} in a row</Badge>
+                    )}
+                </p>
+                {dates.length > 0 ? (
+                    <ul className="flex flex-wrap gap-1.5">
+                        {dates.slice(0, 6).map((d) => (
+                            <li key={d} className="px-2 py-0.5 rounded-md bg-white border border-amber-200 text-[11px] text-amber-900 tabular-nums">
+                                {formatAbsenceDate(d)}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-xs text-amber-800">
+                        Marked absent {streak} day{streak === 1 ? '' : 's'} in a row.
+                    </p>
+                )}
+                <p className="text-[11px] text-amber-700/80 leading-relaxed">
+                    The AI will express concern for the child&apos;s well-being — it will <strong>not</strong> mention test scores.
+                </p>
+            </div>
+        );
+    }
+
+    // ── Behavioral concern: prompts for the teacher's note, no marks ────────
+    if (reason === "behavioral_concern") {
+        return (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-orange-700 flex items-center gap-2">
+                    <AlertTriangle className="h-3 w-3" /> Behavioral context (AI will reference your note)
+                </p>
+                <p className="text-xs text-orange-900 leading-relaxed">
+                    The AI does <strong>not</strong> have classroom observations. Add a 1-2 sentence note below so the message is specific. Examples teachers commonly cite:
+                </p>
+                <ul className="space-y-0.5 text-[11px] text-orange-800">
+                    <li>· Disrupting lessons — calling out, talking over others</li>
+                    <li>· Peer conflict — argument or rough play at recess</li>
+                    <li>· Withdrawn — quieter than usual, sitting alone</li>
+                    <li>· Not following instructions / homework</li>
+                </ul>
+            </div>
+        );
+    }
+
+    // ── Positive feedback: highlight the highest mark / perfect attendance ──
+    if (reason === "positive_feedback") {
+        const highest = performanceContext?.subjectBreakdown?.length
+            ? [...performanceContext.subjectBreakdown].sort((a, b) => b.percentage - a.percentage)[0]
+            : null;
+        const perfectAttendance = typeof attendanceRate === 'number' && attendanceRate >= 99;
+        if (loadingPerf) {
+            return (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Loading recent wins…
+                </div>
+            );
+        }
+        if (!highest && !perfectAttendance) {
+            return (
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                    No recent achievement on record. Describe what you want to celebrate in the note below.
+                </div>
+            );
+        }
+        return (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-2">
+                    <Star className="h-3 w-3" /> Recent win (AI will celebrate)
+                </p>
+                {highest && (
+                    <div className="flex items-baseline justify-between gap-3 text-xs">
+                        <span className="text-emerald-900 truncate">
+                            {highest.subject} · {highest.name.replace(/\s*[—-].*$/, '').trim()}
+                        </span>
+                        <span className="font-bold tabular-nums shrink-0 text-emerald-800">
+                            {highest.marksObtained}/{highest.maxMarks}
+                            <span className="font-normal ml-1 text-emerald-700">({Math.round(highest.percentage)}%)</span>
+                        </span>
+                    </div>
+                )}
+                {perfectAttendance && (
+                    <div className="text-xs text-emerald-900 flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        {attendanceRate}% attendance this month
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // ── Poor performance: keep marks but highlight the LOWEST (the cite target) ─
+    if (reason === "poor_performance") {
+        if (loadingPerf) {
+            return (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Loading recent marks…
+                </div>
+            );
+        }
+        if (!performanceContext?.subjectBreakdown?.length) {
+            return (
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                    No assessment data yet. Add specific scores in the note below.
+                </div>
+            );
+        }
+        // Sort ascending — the AI is instructed to cite ONE score; surfacing
+        // the lowest first nudges the conversation toward the actual concern.
+        const sorted = [...performanceContext.subjectBreakdown].sort((a, b) => a.percentage - b.percentage);
+        return (
+            <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-2">
+                    <TrendingDown className="h-3 w-3" /> Recent marks (AI will cite lowest)
+                    {performanceContext.isAtRisk && (
+                        <Badge variant="destructive" className="ml-1 text-[9px] h-4 px-1">At-risk</Badge>
+                    )}
+                </p>
+                {sorted.slice(0, 3).map((a, i) => (
+                    <div key={i} className={cn(
+                        "flex items-baseline justify-between gap-3 text-xs",
+                        i === 0 ? "text-rose-900 font-medium" : "text-foreground/80",
+                    )}>
+                        <span className="truncate">
+                            {a.subject} · {a.name.replace(/\s*[—-].*$/, '').trim()}
+                        </span>
+                        <span className="font-semibold tabular-nums shrink-0">
+                            {a.marksObtained}/{a.maxMarks}
+                            <span className="text-muted-foreground font-normal ml-1">
+                                ({Math.round(a.percentage)}%)
+                            </span>
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    return null;
 }
 
 // ── Calling in progress view ────────────────────────────────────────────────

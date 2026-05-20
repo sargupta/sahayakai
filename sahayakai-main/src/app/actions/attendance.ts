@@ -495,3 +495,166 @@ export async function getTwilioConfigStatusAction(): Promise<{ configured: boole
     );
     return { configured };
 }
+
+// ── Outreach triage helpers (added for Contact-Parent demo polish) ───────────
+//
+// These two read-only actions power the "Needs outreach today" banner and
+// the reason-aware Add-Note panel in ContactParentModal. They surface
+// per-student academic and absence signals so the teacher can pick the
+// right student × reason for outreach without scrolling the alphabetical
+// roster. Both auth-gated on class ownership; no plan gate (read-only).
+
+/**
+ * Returns the most recent `limitDays` dates (YYYY-MM-DD, descending) on which
+ * the given student was marked `absent`. Powers the "Absent days" panel that
+ * replaces the marks card when reason=consecutive_absences.
+ */
+export async function getStudentAbsenceDatesAction(
+    classId: string,
+    studentId: string,
+    limitDays: number = 30,
+): Promise<string[]> {
+    const uid = await getAuthUserId();
+    const db = await getDb();
+
+    const classDoc = await db.collection('classes').doc(classId).get();
+    if (!classDoc.exists) return [];
+    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+
+    const today = new Date();
+    const startDate = (() => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - limitDays);
+        return d.toLocaleDateString('sv');
+    })();
+    const endDate = today.toLocaleDateString('sv');
+
+    const snap = await db.collection('attendance').doc(classId)
+        .collection('records')
+        .where('date', '>=', startDate)
+        .where('date', '<=', endDate)
+        .get();
+
+    const absent: string[] = [];
+    snap.docs.forEach((d) => {
+        const data = d.data() as DailyAttendanceRecord;
+        if (data.records?.[studentId] === 'absent') absent.push(d.id);
+    });
+    return absent.sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * Per-student rollup of recent assessment performance. Computes the weighted
+ * average across the most recent 3 assessments per student. Used by the class
+ * page to flag at-risk students (avg < 35%) and high-performers (avg ≥ 85%)
+ * for the triage banner. Falls back to empty array on any failure so the
+ * banner degrades gracefully to attendance-only signals.
+ */
+export interface StudentPerformanceSummary {
+    studentId: string;
+    latestPercentage: number;          // 0–100, weighted avg of last 3 assessments
+    isAtRisk: boolean;                 // avg < 35
+    lowestSubject?: string;            // subject of the lowest-scoring recent assessment
+    lowestMarks?: { obtained: number; max: number };
+    highestSubject?: string;
+    highestPercentage?: number;
+}
+
+export async function getClassPerformanceSummariesAction(
+    classId: string,
+): Promise<StudentPerformanceSummary[]> {
+    const uid = await getAuthUserId();
+    const db = await getDb();
+
+    const classDoc = await db.collection('classes').doc(classId).get();
+    if (!classDoc.exists) return [];
+    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+
+    // One round-trip via collectionGroup — the seed sets `classId` on every
+    // assessment doc so we can filter without iterating per-student.
+    const snap = await db.collectionGroup('assessments')
+        .where('classId', '==', classId)
+        .get();
+
+    interface Mark {
+        studentId: string;
+        subject: string;
+        marksObtained: number;
+        maxMarks: number;
+        percentage: number;
+        date: string;
+    }
+
+    const byStudent = new Map<string, Mark[]>();
+    snap.docs.forEach((d) => {
+        const data = d.data() as Mark & { studentId?: string };
+        if (!data.studentId) return;
+        const list = byStudent.get(data.studentId) ?? [];
+        list.push({
+            studentId: data.studentId,
+            subject: data.subject ?? 'Unknown',
+            marksObtained: data.marksObtained ?? 0,
+            maxMarks: data.maxMarks ?? 1,
+            percentage: typeof data.percentage === 'number'
+                ? data.percentage
+                : (data.marksObtained / data.maxMarks) * 100,
+            date: data.date ?? '',
+        });
+        byStudent.set(data.studentId, list);
+    });
+
+    const summaries: StudentPerformanceSummary[] = [];
+    byStudent.forEach((marks, studentId) => {
+        const recent = [...marks]
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 3);
+        if (recent.length === 0) return;
+
+        const avg = recent.reduce((s, m) => s + m.percentage, 0) / recent.length;
+        const lowest = recent.reduce((lo, m) => m.percentage < lo.percentage ? m : lo, recent[0]);
+        const highest = recent.reduce((hi, m) => m.percentage > hi.percentage ? m : hi, recent[0]);
+
+        summaries.push({
+            studentId,
+            latestPercentage: Math.round(avg * 10) / 10,
+            isAtRisk: avg < 35,
+            lowestSubject: lowest.subject,
+            lowestMarks: { obtained: lowest.marksObtained, max: lowest.maxMarks },
+            highestSubject: highest.subject,
+            highestPercentage: Math.round(highest.percentage * 10) / 10,
+        });
+    });
+
+    return dbAdapter.serialize(summaries) as StudentPerformanceSummary[];
+}
+
+/**
+ * Returns the studentIds for which the most recent `parent_outreach` record
+ * within the past `lookbackDays` was a behavioral concern. Lets the class
+ * page surface a "Behavioral concern" group in the triage banner without
+ * an extra round-trip to behavior-specific collections (which don't exist).
+ */
+export async function getStudentsWithRecentBehavioralOutreachAction(
+    classId: string,
+    lookbackDays: number = 30,
+): Promise<string[]> {
+    const uid = await getAuthUserId();
+    const db = await getDb();
+
+    const since = new Date();
+    since.setDate(since.getDate() - lookbackDays);
+    const sinceIso = since.toISOString();
+
+    const snap = await db.collection('parent_outreach')
+        .where('teacherUid', '==', uid)
+        .where('classId', '==', classId)
+        .where('reason', '==', 'behavioral_concern')
+        .get();
+
+    const ids = new Set<string>();
+    snap.docs.forEach((d) => {
+        const data = d.data() as ParentOutreach;
+        if ((data.createdAt ?? '') >= sinceIso) ids.add(data.studentId);
+    });
+    return Array.from(ids);
+}
