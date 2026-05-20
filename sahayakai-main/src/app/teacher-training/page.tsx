@@ -33,6 +33,7 @@ import { Save, History, MessageCircleQuestion } from "lucide-react";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
 
 const formSchema = z.object({
@@ -192,12 +193,20 @@ function TeacherTrainingContent() {
       fetchSaved();
     } else if (questionParam) {
       // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts):
+      //   - SET_OPTS forces controlled selectors to re-render with the
+      //     incoming value before the 300ms auto-submit fires.
+      //   - VIDYA emits language in display-name form; normalise to ISO.
+      // (No gradeLevel on this form.)
       const subjectParam = searchParams.get("subject");
       const languageParam = searchParams.get("language");
 
-      form.setValue("question", questionParam);
-      if (subjectParam) form.setValue("subject", subjectParam);
-      if (languageParam) form.setValue("language", languageParam);
+      const SET_OPTS = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
+
+      form.setValue("question", questionParam, SET_OPTS);
+      if (subjectParam) form.setValue("subject", subjectParam, SET_OPTS);
+      const normalisedLang = normaliseVidyaLanguage(languageParam);
+      if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
       // ───────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
@@ -223,13 +232,23 @@ function TeacherTrainingContent() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
+      // ALWAYS send a non-empty `language`; strip the "General" subject
+      // placeholder so the model isn't misled by a meaningless default.
+      const submittedLanguage = values.language && values.language.trim()
+        ? values.language
+        : 'en';
+      const submittedSubject = values.subject && values.subject !== 'General'
+        ? values.subject
+        : undefined;
+
       const res = await fetch("/api/ai/teacher-training", {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
           question: values.question,
-          language: values.language || selectedLanguage,
-          subject: values.subject,
+          language: submittedLanguage,
+          subject: submittedSubject,
         })
       });
 
