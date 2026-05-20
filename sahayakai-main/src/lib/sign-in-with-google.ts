@@ -151,7 +151,18 @@ export async function consumePendingSignIn(): Promise<{
 } | null> {
     try {
         const result = await getRedirectResult(auth);
-        if (!result) return null;
+        if (!result) {
+            // CRITICAL — iOS Safari ITP / third-party cookie block / SDK race
+            // can cause getRedirectResult() to silently return null on the
+            // post-OAuth return trip. If we do NOT clear the pending flag
+            // here, `src/app/page.tsx:67` (`if (pending && !user) return null`)
+            // will render BLANK indefinitely because the flag stays set in
+            // sessionStorage forever. Verified in the NCERT-demo-day bug:
+            // teacher selected email account on iPhone, returned to blank
+            // page, no recovery without "Clear Website Data" or reinstall.
+            clearPendingSignIn();
+            return null;
+        }
         const flow = readPendingSignIn();
         clearPendingSignIn();
         return {

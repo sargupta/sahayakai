@@ -60,6 +60,26 @@ export default function HomePage() {
     setPendingChecked(true);
   }, []);
 
+  // Belt-and-braces: if the pending flag is still set but Firebase auth
+  // didn't deliver a user within 5 seconds (iOS Safari ITP, third-party
+  // cookie block, or any silent getRedirectResult failure), force-clear
+  // the flag so the landing page renders instead of a permanent blank.
+  // The primary fix is in sign-in-with-google.ts (clear on null result)
+  // but this guard catches any future regression or edge case where the
+  // sessionStorage flag outlives the auth attempt.
+  useEffect(() => {
+    if (!pending || user) return;
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.removeItem(PENDING_SIGN_IN_KEY);
+      } catch {
+        // ignore — storage access can throw in incognito/locked-down browsers
+      }
+      setPending(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [pending, user]);
+
   // Briefly render nothing while Firebase auth resolves so returning
   // authenticated teachers never see the landing page flash. Also cover
   // the post-redirect window when `loading=false, user=null` is a lie.
