@@ -9,6 +9,7 @@ import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles } from "lucide-react";
 import { tts } from "@/lib/tts";
+import { useToast } from "@/hooks/use-toast";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
 
 // Phase N.1 + P5: when the supervisor authors >1 actions for a compound
@@ -55,6 +56,7 @@ export function OmniOrb() {
     const router = useRouter();
     const pathname = usePathname();
     const { user } = useAuth();
+    const { toast } = useToast();
     const {
         chatHistory,
         addMessage,
@@ -409,8 +411,36 @@ export function OmniOrb() {
         if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
         if (params.language) queryParams.set("language", params.language);
 
-        router.push(`/${action.flow}?${queryParams.toString()}`);
-    }, [chatHistory, router, updateTeacherProfile]);
+        const targetUrl = `/${action.flow}?${queryParams.toString()}`;
+
+        // ── Make the navigation VISIBLE ──────────────────────────────────
+        // Without this, the orb panel stays mounted on top of the
+        // destination page and the teacher sees only the chat bubble
+        // saying "Generating now!" while the screen appears unchanged.
+        // They then assume nothing happened and repeat the request.
+        const flowLabel = FLOW_LABEL[action.flow] ?? action.flow.replace(/-/g, ' ');
+        const contextBits = [params.gradeLevel, params.subject, params.topic]
+            .filter((v): v is string => typeof v === 'string' && v.length > 0)
+            .join(' · ');
+        toast({
+            title: `Opening ${flowLabel}`,
+            description: contextBits || undefined,
+        });
+        setOrbOpen(false);
+
+        // ── Same-URL repeat handling ─────────────────────────────────────
+        // router.push to the SAME path+query is a no-op — the destination
+        // page does not re-mount and its auto-submit useEffect does not
+        // re-fire. When the teacher re-asks an identical request (the
+        // common signal that they didn't see the first result land),
+        // router.refresh() forces a re-mount so the autofill + auto-submit
+        // cycle runs cleanly.
+        const currentUrlWithQuery = pathname + (typeof window !== 'undefined' ? window.location.search : '');
+        if (targetUrl === currentUrlWithQuery) {
+            router.refresh();
+        }
+        router.push(targetUrl);
+    }, [chatHistory, router, pathname, toast, updateTeacherProfile]);
 
     // Chip tap handler — pops the action from pendingActions and dispatches.
     // Chips render one-shot so consecutive taps cleanly chain navigations.
