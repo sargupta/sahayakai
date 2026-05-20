@@ -11,7 +11,15 @@ __pycache__/
 README.md
 docs/
 output/
-scripts/
+# Exclude scripts/* (file-level glob so the parent dir stays visible
+# and the negation below can re-include the api-test subtree, which is
+# imported at runtime by src/lib/openapi-spec.ts -> /api/api-docs).
+# Plain `scripts/` (dir-level) hides everything inside so the negation
+# cannot work. See commits 1054ff1f3 and a2462fee2 — this is the third
+# time this pattern has regressed via a sync-from-main merge. DO NOT
+# replace these two lines with `scripts/`.
+scripts/*
+!scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/
