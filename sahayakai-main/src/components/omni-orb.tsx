@@ -636,8 +636,31 @@ export function OmniOrb() {
         const targetUrl = `/${action.flow}?${queryParams.toString()}`;
         // eslint-disable-next-line no-console
         console.log('[VIDYA OmniOrb] navigating to', targetUrl);
+
+        // ── Make the navigation VISIBLE ──────────────────────────────────
+        // Without this, the orb panel stays mounted on top of the
+        // destination page and the teacher sees only the chat bubble
+        // saying "Generating now!" while the screen appears unchanged.
+        const flowLabel = FLOW_LABEL[action.flow] ?? action.flow.replace(/-/g, ' ');
+        const contextBits = [params.gradeLevel, params.subject, params.topic]
+            .filter((v): v is string => typeof v === 'string' && v.length > 0)
+            .join(' · ');
+        toast({
+            title: `Opening ${flowLabel}`,
+            description: contextBits || undefined,
+        });
+        setOrbOpen(false);
+
+        // ── Same-URL repeat handling ─────────────────────────────────────
+        // router.push to the SAME path+query is a no-op. When the teacher
+        // re-asks an identical request (signal they didn't see the result),
+        // router.refresh() forces a re-mount.
+        const currentUrlWithQuery = pathname + (typeof window !== 'undefined' ? window.location.search : '');
+        if (targetUrl === currentUrlWithQuery) {
+            router.refresh();
+        }
         router.push(targetUrl);
-    }, [chatHistory, router, updateTeacherProfile, syncProfilePatch, syncSessionTurn]);
+    }, [chatHistory, router, pathname, toast, updateTeacherProfile, syncProfilePatch, syncSessionTurn]);
 
     // Chip tap handler — pops the action from pendingActions and dispatches.
     // Chips render one-shot so consecutive taps cleanly chain navigations.

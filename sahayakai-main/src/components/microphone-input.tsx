@@ -40,6 +40,27 @@ declare global {
   }
 }
 
+// ~1s of opus/webm at typical mic bitrate. Smaller blobs are silence/mis-taps
+// and the cloud STT (Gemini) returns an apology string for empty audio that
+// then leaks into the chat as if it were a teacher utterance.
+const MIN_AUDIO_BYTES = 2000;
+
+// Heuristic for "the model couldn't transcribe and apologised instead of
+// returning a transcript". Seen in prod when an empty/silent webm reaches
+// Gemini multimodal. Must be cheap and conservative — false positives drop
+// real transcripts, false negatives leak into the chat.
+const TRANSCRIPTION_REFUSAL_PATTERNS: RegExp[] = [
+  /i am sorry,?\s+i\s+(cannot|can'?t)\s+(process|transcribe)\s+the\s+audio/i,
+  /no audio input was provided/i,
+  /please provide an audio input/i,
+  /i\s+(cannot|can'?t)\s+hear\s+(any\s+|the\s+)?(speech|audio|voice)/i,
+];
+
+export function isLikelyTranscriptionRefusal(text: string): boolean {
+  if (!text) return false;
+  return TRANSCRIPTION_REFUSAL_PATTERNS.some((re) => re.test(text));
+}
+
 type MicStatus = 'idle' | 'greeting' | 'initializing' | 'recording' | 'processing';
 
 type MicrophoneInputProps = {
@@ -429,6 +450,27 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         }
 
         const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeTypeRef.current || "audio/webm" });
+
+        // Reject tiny blobs before paying for a cloud STT call. Below this
+        // size threshold the audio is empty or near-empty and Gemini returns
+        // its "I am sorry, I cannot process the audio" apology string instead
+        // of an error — which previously leaked into the chat as a teacher
+        // turn.
+        if (audioBlob.size < MIN_AUDIO_BYTES) {
+          logger.warn("MicrophoneInput: Captured audio below minimum size", 'VOICE', {
+            bytes: audioBlob.size,
+            minBytes: MIN_AUDIO_BYTES,
+          });
+          toast({
+            title: "No speech detected",
+            description: "Try holding the mic and speaking a bit longer.",
+            variant: "default",
+          });
+          stream.getTracks().forEach(track => track.stop());
+          setStatus('idle');
+          return;
+        }
+
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
 
@@ -450,6 +492,21 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             toast({
               title: "No Speech Detected",
               description: "We couldn't hear you clearly.",
+              variant: "default",
+            });
+            return;
+          }
+          // Defense in depth: if the cloud STT returned its own apology
+          // string instead of a real transcript (Gemini does this for
+          // silent or unintelligible audio), do NOT append it as the
+          // teacher's message. The server-side check in voice-to-text.ts
+          // also catches this — duplicated here so a bypass on either
+          // side still fails closed.
+          if (isLikelyTranscriptionRefusal(text)) {
+            logger.warn("MicrophoneInput: STT returned a refusal string, dropping", 'VOICE', { textPreview: text.slice(0, 80) });
+            toast({
+              title: "No speech detected",
+              description: "We didn't catch any audio — please try again.",
               variant: "default",
             });
             return;

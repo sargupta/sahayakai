@@ -190,7 +190,21 @@ async function _handler(req: Request) {
             plannedActions: dispatched.plannedActions,
         };
 
-        if (isFreshQuery) {
+        // Only cache pure-conversational replies (no tool action, no
+        // planned actions). Tool-trigger responses must always re-classify
+        // because:
+        //   1. The teacher may want a different topic/grade than the
+        //      cached version's params.
+        //   2. A repeat ask is the canonical signal that the previous
+        //      navigation didn't land — replaying the cached "Generating
+        //      now!" reply with the same action creates a no-op loop.
+        // OmniOrb's same-URL `router.refresh()` path handles the visible
+        // re-mount on a true repeat; here we just ensure the LLM gets to
+        // re-classify rather than parroting itself.
+        const isCacheable = isFreshQuery
+            && !dispatched.action
+            && (!dispatched.plannedActions || dispatched.plannedActions.length === 0);
+        if (isCacheable) {
             setCachedIntent(cacheKey, wireResponse);
             // Async, non-blocking — never awaited.
             void setFirestoreCache(
