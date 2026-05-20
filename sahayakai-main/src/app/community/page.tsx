@@ -22,6 +22,11 @@ import { ResourceFeed } from '@/components/community/resource-feed';
 import { ExploreGroups } from '@/components/community/explore-groups';
 import { CreatePostDialog } from '@/components/community/create-post-dialog';
 
+// Demo: live persona pulse — posts an AI-generated teacher message to
+// community_chat every 3-5 min while this page is open. No-op in prod when
+// NEXT_PUBLIC_DEMO_PERSONAS_ENABLED=false.
+import { useCommunityLivePulse } from '@/hooks/use-community-live-pulse';
+
 // Server actions
 import {
   ensureUserGroupsAction,
@@ -80,6 +85,11 @@ export default function CommunityPage() {
   // version no longer matches when they resolve. Replaces the original
   // last-write-wins behaviour where a slow refresh could clobber newer data.
   const refreshVersionRef = useRef(0);
+
+  // Demo hook — runs only when NEXT_PUBLIC_DEMO_PERSONAS_ENABLED !== 'false'.
+  // Posts one AI persona message to community_chat every 3-5 min so the
+  // Community tab feels alive during the NCERT demo.
+  useCommunityLivePulse({ frequency: 'normal', enabled: true });
 
   // ── Data loading ─────────────────────────────────────────────────────────
   useEffect(() => {
