@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
-import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
+import {
+    dispatchExamPaper,
+    ExamPaperGenerationInProgressError,
+} from '@/lib/sidecar/exam-paper-dispatch';
 
 /**
  * @swagger
@@ -88,6 +91,41 @@ async function _handler(request: Request) {
             );
         }
 
+        // Default chapters to [] if missing/null. The Genkit schema marks
+        // `chapters` as required (z.array(z.string())) but the field
+        // description explicitly says "Empty array means cover all chapters
+        // for the subject" — so an absent body field should not 500. UI
+        // doesn't enforce a chapter pick (button stays enabled when blank).
+        if (!Array.isArray(body.chapters)) {
+            body.chapters = [];
+        }
+
+        // NCERT demo hot-fix (2026-05-19): when there is NO official
+        // blueprint for the chosen board/grade/subject AND no chapters were
+        // selected, Gemini gets two open-ended constraints at once
+        // ("invent the structure" + "invent the syllabus") and routinely
+        // exceeds the 75s budget — surfacing as a 202 in-progress payload
+        // that the UI used to render as "undefined undefined undefined".
+        // Require at least one chapter for the unblueprinted path so the
+        // generator has SOMETHING to anchor on.
+        if ((body.chapters as string[]).length === 0) {
+            const { findBlueprint } = await import('@/ai/data/board-blueprints');
+            const blueprint = findBlueprint(
+                String(body.board),
+                String(body.gradeLevel),
+                String(body.subject),
+            );
+            if (!blueprint) {
+                return NextResponse.json(
+                    {
+                        error: 'chapters_required_for_unblueprinted_subject',
+                        message: `Please add at least one chapter for ${body.board} ${body.gradeLevel} ${body.subject}. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science — for everything else, the AI needs a chapter list to anchor the paper.`,
+                    },
+                    { status: 400 },
+                );
+            }
+        }
+
         if (body.difficulty && !VALID_DIFFICULTIES.includes(body.difficulty as typeof VALID_DIFFICULTIES[number])) {
             return NextResponse.json(
                 { error: `Invalid difficulty. Must be one of: ${VALID_DIFFICULTIES.join(', ')}` },
@@ -115,6 +153,28 @@ async function _handler(request: Request) {
         });
 
     } catch (error) {
+        // NCERT demo hot-fix (2026-05-19): when the Genkit fallback exceeds
+        // budget, surface a friendly "still generating" payload instead of
+        // a generic 500. The underlying Gemini call keeps running in the
+        // background; if it eventually persists to the user's library, the
+        // teacher will see it under "My Library" on next refresh.
+        if (error instanceof ExamPaperGenerationInProgressError) {
+            logger.warn(
+                'Exam paper generation exceeded timeout budget',
+                'EXAM_PAPER',
+                { budgetMs: error.budgetMs, elapsedMs: error.elapsedMs, paperDesc },
+            );
+            return NextResponse.json(
+                {
+                    error: 'generation_in_progress',
+                    message: 'Exam paper still generating. Check My Library in 1 minute.',
+                    budgetMs: error.budgetMs,
+                    elapsedMs: error.elapsedMs,
+                },
+                { status: 202 },
+            );
+        }
+
         logAIError(error, 'EXAM_PAPER', { message: `Exam Paper API Failed for: "${paperDesc}"`, userId: request.headers.get('x-user-id') });
 
         return NextResponse.json(

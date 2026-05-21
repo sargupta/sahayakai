@@ -1,6 +1,21 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+// Server-side mirror of the client refusal-detection patterns. Kept inline
+// (rather than re-imported from the client component) so this server flow
+// has no client-only dependencies. Update both lists in lock-step.
+const TRANSCRIPTION_REFUSAL_PATTERNS: RegExp[] = [
+  /i am sorry,?\s+i\s+(cannot|can'?t)\s+(process|transcribe)\s+the\s+audio/i,
+  /no audio input was provided/i,
+  /please provide an audio input/i,
+  /i\s+(cannot|can'?t)\s+hear\s+(any\s+|the\s+)?(speech|audio|voice)/i,
+];
+
+export function isLikelyTranscriptionRefusal(text: string): boolean {
+  if (!text) return false;
+  return TRANSCRIPTION_REFUSAL_PATTERNS.some((re) => re.test(text));
+}
+
 const VoiceToTextInputSchema = z.object({
   audioDataUri: z
     .string()
@@ -61,6 +76,10 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
       throw new Error("Empty transcription returned from model");
     }
 
+    if (isLikelyTranscriptionRefusal(transcription.text)) {
+      throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
+    }
+
     return { text: transcription.text, language: transcription.language };
   }, 'voiceToText.sarvam');
 }
@@ -73,6 +92,10 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
 
     if (!transcription?.text) {
       throw new Error("Empty transcription returned from model");
+    }
+
+    if (isLikelyTranscriptionRefusal(transcription.text)) {
+      throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
     }
 
     return { text: transcription.text, language: transcription.language };

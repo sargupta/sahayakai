@@ -54,6 +54,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // --- Notifications ---
+    // Recipients can read their own notification docs (powers the global
+    // sidebar badge + the /notifications page realtime updates).
+    // Writes/updates are owned by the server (Admin SDK via server actions
+    // in src/app/actions/notifications.ts) — the client cannot fabricate
+    // notifications nor mark them as read directly. Updates from the
+    // recipient go through markNotificationAsReadAction.
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && resource.data.recipientId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
     // --- Direct Messages & Group Conversations ---
 
     match /conversations/{convId} {

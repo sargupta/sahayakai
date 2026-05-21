@@ -26,6 +26,47 @@
   .container-narrow  { @apply max-w-2xl mx-auto px-4 md:px-6; }
   .container-default { @apply max-w-5xl mx-auto px-4 md:px-8; }
   .container-wide    { @apply max-w-7xl mx-auto px-4 md:px-10; }
+
+  /* ========================================
+     NCERT DEMO POLISH (2026-05-19)
+     Indic-script readability utility — applies generous line-height,
+     subtle letter-tracking, and word-wrap rules that work across the
+     11 supported scripts. Apply on any block that renders AI-generated
+     output in a non-English language (lesson-plan body, quiz items,
+     community posts).
+
+     Devanagari, Kannada, Malayalam, and Tamil all need line-height ≥1.6
+     to avoid descender/ascender collisions; Bengali matras require even
+     more vertical room. 1.7 is the conservative all-script default.
+     ======================================== */
+  .indic-text {
+    line-height: 1.7;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .indic-text p,
+  .indic-text li,
+  .indic-text h1,
+  .indic-text h2,
+  .indic-text h3,
+  .indic-text h4 {
+    line-height: 1.7;
+  }
+  .indic-text h1,
+  .indic-text h2,
+  .indic-text h3 {
+    line-height: 1.45;
+  }
+
+  /* Demo-mode mobile safety: long Indic words (compound Sanskrit /
+     Tamil terms) overflow narrow viewports without break-word. Cap
+     all output containers so the lesson plan never horizontal-scrolls
+     on a 360px Android. */
+  .demo-safe-wrap {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
 }
 
 @layer base {

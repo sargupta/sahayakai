@@ -1,12 +1,13 @@
 name: Deploy to Firebase Hosting and Functions
 
+# Disabled 2026-05-21: this workflow auto-deploys Firebase Hosting on
+# push to main, racing with the manual scripts/safe-deploy.sh which is
+# the canonical deploy path. Re-enable only after the preview env +
+# branch-protection pipeline lands (see plan at
+# .claude/plans/based-on-the-current-tidy-rabbit.md, Phase A + B + D).
+# Manual run via workflow_dispatch is still allowed for emergencies.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build_and_deploy:

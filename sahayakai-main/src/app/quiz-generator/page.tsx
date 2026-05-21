@@ -28,6 +28,7 @@ import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { SelectableCard } from "@/components/selectable-card";
 import { cn } from "@/lib/utils";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { SectionCard } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -608,13 +609,23 @@ function QuizGeneratorContent() {
       fetchSavedContent();
     } else if (topicParam) {
       // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts):
+      //   - SET_OPTS forces controlled selectors to re-render with the
+      //     incoming value before the 300ms auto-submit fires.
+      //   - VIDYA emits language/grade in display-name form; normalise
+      //     to ISO ("en") / "Class N" before writing.
       const subjectParam = searchParams.get("subject");
       const gradeLevelParam = searchParams.get("gradeLevel");
       const languageParam = searchParams.get("language");
-      form.setValue("topic", topicParam);
-      if (subjectParam) form.setValue("subject", subjectParam);
-      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
-      if (languageParam) form.setValue("language", languageParam);
+
+      const SET_OPTS = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
+
+      form.setValue("topic", topicParam, SET_OPTS);
+      if (subjectParam) form.setValue("subject", subjectParam, SET_OPTS);
+      const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
+      if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
+      const normalisedLang = normaliseVidyaLanguage(languageParam);
+      if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
       // ────────────────────────────────────────────────────────────────────
       setTimeout(() => {
         form.handleSubmit(onSubmit)();
@@ -642,12 +653,23 @@ function QuizGeneratorContent() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
+      // ALWAYS send a non-empty `language`; strip the "General" subject
+      // placeholder so the model isn't misled by a meaningless default.
+      const submittedLanguage = values.language && values.language.trim()
+        ? values.language
+        : 'en';
+      const submittedSubject = values.subject && values.subject !== 'General'
+        ? values.subject
+        : undefined;
+
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
           ...values,
-          language: values.language || selectedLanguage,
+          language: submittedLanguage,
+          subject: submittedSubject,
           useRuralContext: true
         })
       });

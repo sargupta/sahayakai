@@ -19,13 +19,18 @@ import {
 } from './rubric-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { withTimeout } from './with-timeout';
+import { WithTimeoutError, withTimeout } from './with-timeout';
 
 // Bumped from 12s — the Genkit rubric flow legitimately takes 11–13s for the
 // model call alone, and persistContent adds another ~2s. The previous 12s cap
 // caused intermittent 500s ("rubric genkit fallback timed out after 12002ms")
 // even when the model returned successfully. 30s leaves p99 headroom.
-const FALLBACK_TIMEOUT_MS = 30_000;
+//
+// NCERT demo hot-fix (2026-05-19): env-overridable via `RUBRIC_TIMEOUT_MS`
+// so production can tune without a redeploy. Default 30s is the existing
+// fallback budget (already safe vs. p50 17.3s); the same env var also
+// governs the sidecar client TIMEOUT_MS in `rubric-client.ts`.
+const FALLBACK_TIMEOUT_MS = Number(process.env.RUBRIC_TIMEOUT_MS) || 30_000;
 
 export type RubricSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -176,6 +181,29 @@ function logDispatch(
 export async function dispatchRubric(
     input: RubricDispatchInput,
 ): Promise<DispatchedRubric> {
+    // NCERT demo hot-fix (2026-05-19): wrap entire dispatch in
+    // start-time accounting so the timeout path logs a structured
+    // `[rubric.dispatch] timeout` line (no silent 500s).
+    const __dispatchStartedAt = Date.now();
+    try {
+        return await _dispatchRubricInner(input, __dispatchStartedAt);
+    } catch (err) {
+        if (err instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[rubric.dispatch] timeout', {
+                budgetMs: FALLBACK_TIMEOUT_MS,
+                observedMs: Date.now() - __dispatchStartedAt,
+                label: err.label,
+            });
+        }
+        throw err;
+    }
+}
+
+async function _dispatchRubricInner(
+    input: RubricDispatchInput,
+    dispatchStartedAt: number,
+): Promise<DispatchedRubric> {
     // Phase K — pre-call rate-limit gate. Lifted out of the Genkit flow
     // so the sidecar canary/full path enforces it too. AIQuotaExhaustedError
     // (and the legacy "Rate limit exceeded" plain Error) propagate to the
@@ -195,7 +223,10 @@ export async function dispatchRubric(
             FALLBACK_TIMEOUT_MS,
             'rubric genkit fallback',
         );
-        logDispatch(decision, { source: 'genkit', uid: input.userId });
+        const durationMs = Date.now() - dispatchStartedAt;
+        logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
+        // eslint-disable-next-line no-console
+        console.log('[rubric.dispatch] complete', { durationMs, source: 'genkit' });
         return genkitToDispatched(out, 'genkit', decision);
     }
 
@@ -225,17 +256,26 @@ export async function dispatchRubric(
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
+        // eslint-disable-next-line no-console
+        console.log('[rubric.dispatch] complete', {
+            durationMs: Date.now() - dispatchStartedAt,
+            source: 'genkit',
+        });
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
     const sidecar = await runSidecarSafe(sidecarRequest);
     if (sidecar.ok) {
+        const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, {
             source: 'sidecar',
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
             sidecarVersion: sidecar.res.sidecarVersion,
+            durationMs,
         });
+        // eslint-disable-next-line no-console
+        console.log('[rubric.dispatch] complete', { durationMs, source: 'sidecar' });
         const dispatched = sidecarToDispatched(sidecar.res, decision);
         // Phase K — persist sidecar output to Storage + Firestore so it
         // shows up in My Library, mirroring the Genkit flow's behaviour.
@@ -299,5 +339,10 @@ export async function dispatchRubric(
         FALLBACK_TIMEOUT_MS,
         'rubric genkit fallback',
     );
+    // eslint-disable-next-line no-console
+    console.log('[rubric.dispatch] complete', {
+        durationMs: Date.now() - dispatchStartedAt,
+        source: 'genkit_fallback',
+    });
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

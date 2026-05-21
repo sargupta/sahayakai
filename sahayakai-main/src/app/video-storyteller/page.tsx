@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import {
   Video, Loader2, Sparkles, RefreshCw, ArrowLeft,
   Star, BookOpen, GraduationCap, Bell, School, type LucideIcon
@@ -15,6 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
 import { getUserProfileAction } from "@/app/actions/auth";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { useSearchParams } from "next/navigation";
+import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import { LANGUAGE_CODE_MAP } from "@/types";
 
 interface VideoRecommendations {
   categories: {
@@ -36,7 +39,19 @@ const CATEGORIES: { key: string; title: string; icon: LucideIcon }[] = [
   { key: "courses",        title: "Teacher Training Courses", icon: School },
 ];
 
+// Next 15 prerender requires useSearchParams() to be wrapped in a
+// Suspense boundary; otherwise the page falls back to client-side
+// rendering at build time and errors out. Default export wraps the
+// inner component.
 export default function VideoStorytellerPage() {
+  return (
+    <Suspense fallback={null}>
+      <VideoStorytellerPageInner />
+    </Suspense>
+  );
+}
+
+function VideoStorytellerPageInner() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
@@ -95,26 +110,49 @@ export default function VideoStorytellerPage() {
     }
   };
 
+  // ── VIDYA Action: Pre-fill from URL params ─────────────────────────────
+  // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts). Video Storyteller
+  // uses imperative useState filters and stores language as display name
+  // ("English"); we normalise the inbound ISO/display value to the display
+  // form the API consumer expects.
+  const searchParams = useSearchParams();
+  const hasAppliedVidyaParams = useRef(false);
+
   useEffect(() => {
     const loadProfile = async () => {
       if (user) {
         const result = await getUserProfileAction(user.uid);
-        if (result.success && result.profile) {
-          const profile = result.profile;
-          const initialFilters = {
-            subject: profile.subjects?.[0],
-            gradeLevel: profile.teachingGradeLevels?.[0],
-            language: profile.preferredLanguage || "English",
-          };
-          setFilters(initialFilters);
-          fetchRecommendations(initialFilters);
-        } else {
-          fetchRecommendations(filters);
-        }
+
+        // VIDYA params take precedence over profile defaults so the
+        // teacher's spoken intent overrides their persisted preference.
+        const gradeLevelParam = searchParams?.get("gradeLevel") ?? null;
+        const subjectParam = searchParams?.get("subject") ?? null;
+        const languageParam = searchParams?.get("language") ?? null;
+        const topicParam = searchParams?.get("topic") ?? null;
+        const hasVidyaParams = !!(gradeLevelParam || subjectParam || languageParam || topicParam);
+
+        const iso = normaliseVidyaLanguage(languageParam);
+        const displayLang = iso
+          ? LANGUAGE_CODE_MAP[iso as keyof typeof LANGUAGE_CODE_MAP]
+          : undefined;
+
+        const profile = result.success ? result.profile : null;
+
+        const initialFilters = {
+          subject: subjectParam || profile?.subjects?.[0],
+          gradeLevel: normaliseVidyaGradeLevel(gradeLevelParam)
+            ?? profile?.teachingGradeLevels?.[0],
+          language: displayLang || profile?.preferredLanguage || "English",
+          searchQuery: topicParam || undefined,
+        };
+        setFilters(initialFilters);
+        if (hasVidyaParams) hasAppliedVidyaParams.current = true;
+        fetchRecommendations(initialFilters);
       }
     };
     loadProfile();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams]);
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters);

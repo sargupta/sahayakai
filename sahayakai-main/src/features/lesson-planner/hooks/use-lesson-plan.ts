@@ -25,6 +25,7 @@ import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
@@ -231,14 +232,39 @@ export function useLessonPlan() {
             fetchSavedContent();
         } else if (topicParam) {
             // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+            //
+            // NCERT-demo 2026-05-19 bug: only `topic` reached the visible
+            // form fields. Root causes addressed below:
+            //
+            //   1. Bare `setValue(...)` updates form state but does NOT
+            //      mark fields as touched/dirty, so controlled selectors
+            //      already mounted with their defaultValue
+            //      (SubjectSelector="General", LanguageSelector="en")
+            //      sometimes failed to re-render with the new value before
+            //      the form auto-submitted 300ms later. Forcing
+            //      shouldDirty + shouldTouch + shouldValidate makes the
+            //      Controller treat each setValue as a real interaction
+            //      and re-render reliably.
+            //
+            //   2. VIDYA emits language/grade in display-name form
+            //      ("English", "7th Grade") on some paths but the
+            //      selectors expect canonical values ("en", "Class 7").
+            //      A mismatch silently kept the old default visible. We
+            //      normalise both before writing.
             const subjectParam = searchParams.get("subject");
             const gradeLevelParam = searchParams.get("gradeLevel");
             const languageParam = searchParams.get("language");
 
-            form.setValue("topic", topicParam);
-            if (subjectParam) form.setValue("subject", subjectParam);
-            if (gradeLevelParam) form.setValue("gradeLevels", [gradeLevelParam]);
-            if (languageParam) form.setValue("language", languageParam);
+            const SET_OPTS = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
+
+            // Shared normalisers — same module the OmniOrb client uses to
+            // build the outbound URL, so both ends speak the same shape.
+            form.setValue("topic", topicParam, SET_OPTS);
+            if (subjectParam) form.setValue("subject", subjectParam, SET_OPTS);
+            const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
+            if (normalisedGrade) form.setValue("gradeLevels", [normalisedGrade], SET_OPTS);
+            const normalisedLang = normaliseVidyaLanguage(languageParam);
+            if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
             // ────────────────────────────────────────────────────────────────────
 
             setTimeout(() => {
@@ -396,18 +422,43 @@ export function useLessonPlan() {
                 headers["Authorization"] = `Bearer ${token}`;
             }
 
+            // NCERT-demo 2026-05-19 hardening: ALWAYS send a non-empty
+            // `language`. If `values.language` is ever falsy (form not yet
+            // hydrated, hand-crafted submit, etc.), default to "en" rather
+            // than letting the server fall back to a poisoned
+            // profile.preferredLanguage. The server-side fallback now
+            // only fires when the field is *truly* absent (undefined),
+            // so passing an explicit value here is the authoritative
+            // signal that the user's dropdown is the source of truth.
+            const submittedLanguage = values.language && values.language.trim()
+                ? values.language
+                : 'en';
+
+            // Subject hardening: "General" is the form-level default placeholder
+            // and carries zero pedagogical signal — sending it actively MISLEADS
+            // the model. The NCERT-demo failure produced a Class 7 Mathematics
+            // plan for a "Chapter 2 science" request because subject reached
+            // the API as "General", the model had no authoritative hint, and
+            // its own NCERT priors voted Mathematics. Strip the placeholder so
+            // the model knows it must infer from `topic` instead of trusting
+            // a meaningless default; when VIDYA pre-filled a real subject
+            // (Science, History, …) it passes through untouched.
+            const submittedSubject = values.subject && values.subject !== 'General'
+                ? values.subject
+                : undefined;
+
             const res = await fetch("/api/ai/lesson-plan", {
                 method: "POST",
                 headers: headers,
                 body: JSON.stringify({
                     topic: values.topic,
-                    language: values.language,
+                    language: submittedLanguage,
                     gradeLevels: values.gradeLevels,
                     imageDataUri: values.imageDataUri,
                     useRuralContext: true,
                     resourceLevel: resourceLevel,
                     difficultyLevel: difficultyLevel,
-                    subject: values.subject,
+                    subject: submittedSubject,
                     ncertChapter: selectedChapter ? {
                         title: selectedChapter.title,
                         number: selectedChapter.number,

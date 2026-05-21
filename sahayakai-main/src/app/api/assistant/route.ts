@@ -158,6 +158,25 @@ async function _handler(req: Request) {
             },
         });
 
+        // [VIDYA route] one-line structured trace per request so demo-day
+        // misfires are diagnosable from Cloud Run logs WITHOUT shipping
+        // server-side request bodies. Covers the "captured-but-no-action"
+        // scenario by showing whether the dispatcher emitted an action.
+        // eslint-disable-next-line no-console
+        console.log(
+            JSON.stringify({
+                event: 'vidya.route.dispatched',
+                uid: userId.slice(0, 8),
+                msgLen: message.length,
+                detectedLanguage: detectedLanguage ?? null,
+                hasResponse: Boolean(dispatched.response),
+                actionType: dispatched.action?.type ?? null,
+                actionFlow: (dispatched.action as { flow?: string } | null)?.flow ?? null,
+                plannedCount: dispatched.plannedActions?.length ?? 0,
+                source: dispatched.source,
+            }),
+        );
+
         // P5: surface `plannedActions` to the client so OmniOrb can render
         // confirm-chips for compound intents ("make a quiz AND a worksheet
         // on photosynthesis"). The supervisor authors up to 3 actions; the
@@ -171,7 +190,21 @@ async function _handler(req: Request) {
             plannedActions: dispatched.plannedActions,
         };
 
-        if (isFreshQuery) {
+        // Only cache pure-conversational replies (no tool action, no
+        // planned actions). Tool-trigger responses must always re-classify
+        // because:
+        //   1. The teacher may want a different topic/grade than the
+        //      cached version's params.
+        //   2. A repeat ask is the canonical signal that the previous
+        //      navigation didn't land — replaying the cached "Generating
+        //      now!" reply with the same action creates a no-op loop.
+        // OmniOrb's same-URL `router.refresh()` path handles the visible
+        // re-mount on a true repeat; here we just ensure the LLM gets to
+        // re-classify rather than parroting itself.
+        const isCacheable = isFreshQuery
+            && !dispatched.action
+            && (!dispatched.plannedActions || dispatched.plannedActions.length === 0);
+        if (isCacheable) {
             setCachedIntent(cacheKey, wireResponse);
             // Async, non-blocking — never awaited.
             void setFirestoreCache(

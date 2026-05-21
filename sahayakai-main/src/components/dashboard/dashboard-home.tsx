@@ -191,28 +191,34 @@ export function DashboardHome() {
       {/* Clean Top Bar for Consistency */}
       <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-surface-md" />
 
-      {/* Hero Section */}
-      <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs md:text-sm font-medium border border-orange-100 mb-2 md:mb-4">
+      {/* Hero Section
+          NCERT demo polish (2026-05-19): tightened cascade durations
+          (700ms → 350ms) and used saffron primary token instead of
+          bare orange-50/orange-700 so the accent matches the rest of
+          the app's saffron design system (60-30-10 rule). The original
+          stacked 700ms cascade was perceptibly slow on a mid-range
+          Android — contributed to the "lagging" report. */}
+      <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saffron-50 text-saffron-700 text-xs md:text-sm font-medium border border-saffron-100 mb-2 md:mb-4">
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>AI-Powered Teaching Assistant for Bharat</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight">
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight indic-text leading-[1.1]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("Ideas for your classes")}
           </p>
         ) : (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
           </p>
         )}
       </div>
 
       {/* Main Voice-First Input Section */}
-      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 flex flex-col items-center gap-8">
+      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-6 duration-medium delay-75 z-10 flex flex-col items-center gap-8">
 
         {/* BIG MIC BUTTON */}
         <FeatureSpotlight
@@ -273,7 +279,7 @@ export function DashboardHome() {
           <p className="text-center text-xs text-muted-foreground px-4">
             try: "Quiz about photosynthesis" or "Lesson plan for solar system"
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground indic-text leading-relaxed text-center px-4">
             Works in हिंदी, ಕನ್ನಡ, தமிழ் + 8 more languages
           </p>
 
@@ -317,23 +323,26 @@ export function DashboardHome() {
         </div>
       </div>
 
-      {/* Sample Output -- hidden for new users who see personalized suggestions */}
+      {/* Sample Output -- hidden for new users who see personalized suggestions.
+          NCERT demo polish (2026-05-19): trimmed slide-in-from-bottom-10/12 →
+          bottom-4 and cascade delays 150/200ms → 100/150ms so the page feels
+          settled within ~600ms total instead of 1.4s. */}
       {!showNewUserHome && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-150 flex justify-center">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100 flex justify-center">
           <SampleOutputSection />
         </div>
       )}
 
       {/* Demo Interaction -- hidden for new users */}
       {!showNewUserHome && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
           <DemoInteraction />
         </div>
       )}
 
       {/* Quick Actions Grid — personalized for new users, full grid for experienced */}
       {showNewUserHome && suggestions.length > 0 ? (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200 space-y-4">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             {suggestions.map(s => (
               <SuggestionCard key={s.id} suggestion={s} />
@@ -370,7 +379,7 @@ export function DashboardHome() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
           <QuickActionCard
             title="Lesson Plan"
             icon={BookOpen}

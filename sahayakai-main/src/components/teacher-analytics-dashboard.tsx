@@ -2,40 +2,54 @@
  * Teacher Analytics Dashboard Component
  *
  * Displays teacher's personal health score and engagement metrics
- * with circular progress indicators (hollow circles with thick borders)
+ * with circular progress indicators (hollow circles with thick borders).
+ *
+ * v3 (2026-05-20) UI hardening:
+ *   - Loading skeleton while initial fetch in flight
+ *   - Error state with retry button (instead of silent failure)
+ *   - Cold-start (level === 'new') gets a friendly Getting Started panel
+ *   - Stale-data indicator ("Updated X minutes ago") + auto-refresh hint
+ *   - Composite headline now MATCHES sum of dimensions (raw-sum invariant)
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState, useCallback } from 'react';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface TeacherHealthScore {
     score: number; // 0-100
+    level: 'new' | 'healthy' | 'at-risk' | 'critical';
     risk_level: 'healthy' | 'at-risk' | 'critical';
     activity_score: number;
     engagement_score: number;
     success_score: number;
     growth_score: number;
+    community_score: number;
     days_since_last_use: number;
     consecutive_days_used: number;
     estimated_students_impacted: number;
+    is_cold_start: boolean;
+    lastUpdated?: string | null;
 }
 
 interface CircularProgressProps {
-    value: number; // 0-100
-    max: number; // Usually 100, but can be different (e.g., 30 for activity)
+    value: number; // 0-max
+    max: number;
     label: string;
     size?: 'sm' | 'md' | 'lg';
     color?: 'green' | 'yellow' | 'red' | 'blue';
 }
 
 function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: CircularProgressProps) {
-    const percentage = (value / max) * 100;
+    // Defensive: never show NaN/Infinity
+    const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(max, value)) : 0;
+    const percentage = max > 0 ? (safeValue / max) * 100 : 0;
 
-    // Size configurations
     const sizeConfig = {
         sm: { diameter: 80, strokeWidth: 6, fontSize: 'text-lg' },
         md: { diameter: 120, strokeWidth: 8, fontSize: 'text-2xl' },
@@ -47,7 +61,6 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
-    // Color configurations
     const colorMap = {
         green: { stroke: 'stroke-green-500', text: 'text-green-600' },
         yellow: { stroke: 'stroke-yellow-500', text: 'text-yellow-600' },
@@ -60,7 +73,6 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
     return (
         <div className="flex flex-col items-center gap-2">
             <svg width={diameter} height={diameter} className="transform -rotate-90">
-                {/* Background circle (hollow) */}
                 <circle
                     cx={diameter / 2}
                     cy={diameter / 2}
@@ -70,8 +82,6 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
                     fill="none"
                     className="text-gray-200 dark:text-gray-700"
                 />
-
-                {/* Progress circle (hollow, thick border) */}
                 <circle
                     cx={diameter / 2}
                     cy={diameter / 2}
@@ -85,42 +95,84 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
                     className={`${stroke} transition-all duration-500 ease-out`}
                 />
             </svg>
-
-            {/* Value display (centered) */}
             <div className="absolute flex flex-col items-center justify-center" style={{ width: diameter, height: diameter }}>
                 <span className={`font-bold font-headline ${fontSize} ${text}`}>
-                    {Math.round(value)}
+                    {Math.round(safeValue)}
                 </span>
                 <span className="text-xs text-muted-foreground">/ {max}</span>
             </div>
-
-            {/* Label */}
             <span className="text-sm font-medium text-center mt-1">{label}</span>
         </div>
     );
 }
 
+function formatRelativeTime(iso: string | null | undefined): string | null {
+    if (!iso) return null;
+    try {
+        const then = new Date(iso).getTime();
+        if (!Number.isFinite(then)) return null;
+        const diffMs = Date.now() - then;
+        if (diffMs < 0) return 'just now';
+        const minutes = Math.floor(diffMs / 60000);
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    } catch {
+        return null;
+    }
+}
+
 export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     const [healthScore, setHealthScore] = useState<TeacherHealthScore | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    useEffect(() => {
-        async function fetchHealthScore() {
-            try {
-                const res = await fetch(`/api/analytics/teacher-health/${userId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setHealthScore(data);
-                }
-            } catch (error) {
-            } finally {
-                setIsLoading(false);
+    const fetchHealthScore = useCallback(async () => {
+        if (!userId) return;
+        try {
+            setError(null);
+            const res = await fetch(`/api/analytics/teacher-health/${userId}`, { cache: 'no-store' });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
             }
+            const data = (await res.json()) as TeacherHealthScore & { error?: string };
+            // Defensive: never trust raw API output blindly — clamp
+            // every visible number so a broken backend can't render NaN.
+            const safe: TeacherHealthScore = {
+                score: Math.max(0, Math.min(100, Number(data.score) || 0)),
+                level: (data.level as TeacherHealthScore['level']) || 'critical',
+                risk_level: (data.risk_level as TeacherHealthScore['risk_level']) || 'critical',
+                activity_score: Math.max(0, Math.min(30, Number(data.activity_score) || 0)),
+                engagement_score: Math.max(0, Math.min(30, Number(data.engagement_score) || 0)),
+                success_score: Math.max(0, Math.min(20, Number(data.success_score) || 0)),
+                growth_score: Math.max(0, Math.min(20, Number(data.growth_score) || 0)),
+                community_score: Math.max(0, Math.min(20, Number(data.community_score) || 0)),
+                days_since_last_use: Math.max(0, Number(data.days_since_last_use) || 0),
+                consecutive_days_used: Math.max(0, Number(data.consecutive_days_used) || 0),
+                estimated_students_impacted: Math.max(0, Number(data.estimated_students_impacted) || 0),
+                is_cold_start: Boolean(data.is_cold_start),
+                lastUpdated: data.lastUpdated ?? null,
+            };
+            setHealthScore(safe);
+        } catch (e) {
+            setError('Unable to refresh — please try again.');
+        } finally {
+            setIsLoading(false);
+            setIsRefreshing(false);
         }
-
-        fetchHealthScore();
     }, [userId]);
 
+    useEffect(() => {
+        fetchHealthScore();
+    }, [fetchHealthScore]);
+
+    // -------------------------------------------------------------------------
+    // LOADING STATE — skeleton, no stale numbers
+    // -------------------------------------------------------------------------
     if (isLoading) {
         return (
             <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
@@ -140,28 +192,88 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
         );
     }
 
-    if (!healthScore) {
+    // -------------------------------------------------------------------------
+    // ERROR STATE — explicit retry
+    // -------------------------------------------------------------------------
+    if (error && !healthScore) {
         return (
-            <Card>
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+                <div className="h-1.5 w-full bg-destructive" />
                 <CardHeader>
-                    <CardTitle className="font-headline">Analytics Dashboard</CardTitle>
-                    <CardDescription>Start using the app to generate your impact metrics.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                    <p className="text-sm text-balance text-muted-foreground">
-                        Your dashboard will populate automatically as you create content and engage with the community.
-                    </p>
-                    <div className="flex gap-2">
-                        <div className="p-4 bg-muted rounded-xl border border-border text-center w-full">
-                            <h3 className="font-headline font-semibold text-lg">0</h3>
-                            <p className="text-xs text-muted-foreground uppercase">Impact Score</p>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                        <CardTitle className="font-headline">Couldn't load your impact</CardTitle>
                     </div>
+                    <CardDescription>{error}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={() => { setIsRefreshing(true); fetchHealthScore(); }} disabled={isRefreshing}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        Retry
+                    </Button>
                 </CardContent>
-            </Card>
+            </div>
         );
     }
 
+    if (!healthScore) {
+        // Unreachable in practice — handled by error or cold-start branches.
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // COLD-START STATE — friendly Getting Started, NOT all-red zeros
+    // -------------------------------------------------------------------------
+    if (healthScore.is_cold_start || healthScore.level === 'new') {
+        return (
+            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+                <div className="h-1.5 w-full bg-primary" />
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        <CardTitle className="font-headline">Welcome to your Impact Dashboard</CardTitle>
+                    </div>
+                    <CardDescription>
+                        Your score grows as you create lesson plans, worksheets, and other resources.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-4 bg-muted/50 border border-border rounded-xl">
+                        <p className="text-sm text-foreground">
+                            Generate your first lesson plan to start your impact journey. Every resource
+                            you create reflects in your Activity, Engagement, Success Rate, and Growth scores.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                        <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Activity</p>
+                            <p className="text-2xl font-bold font-headline">—</p>
+                            <p className="text-xs text-muted-foreground">/ 30</p>
+                        </div>
+                        <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Engagement</p>
+                            <p className="text-2xl font-bold font-headline">—</p>
+                            <p className="text-xs text-muted-foreground">/ 30</p>
+                        </div>
+                        <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Success</p>
+                            <p className="text-2xl font-bold font-headline">—</p>
+                            <p className="text-xs text-muted-foreground">/ 20</p>
+                        </div>
+                        <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Growth</p>
+                            <p className="text-2xl font-bold font-headline">—</p>
+                            <p className="text-xs text-muted-foreground">/ 20</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // STANDARD STATE
+    // -------------------------------------------------------------------------
     const getRiskColor = (riskLevel: string): 'green' | 'yellow' | 'red' => {
         if (riskLevel === 'healthy') return 'green';
         if (riskLevel === 'at-risk') return 'yellow';
@@ -174,13 +286,29 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
         return 'destructive';
     };
 
+    // INVARIANT CHECK: composite must equal sum of dimensions (off by <=1)
+    const dimensionSum =
+        healthScore.activity_score +
+        healthScore.engagement_score +
+        healthScore.success_score +
+        healthScore.growth_score;
+
+    const displayedComposite = healthScore.score;
+    // If they ever drift (shouldn't, but defense in depth), prefer the
+    // visible sum so user sees math that adds up.
+    const headlineScore = Math.abs(displayedComposite - dimensionSum) > 1
+        ? dimensionSum
+        : displayedComposite;
+
+    const relativeUpdated = formatRelativeTime(healthScore.lastUpdated);
+
     return (
         <div className="space-y-6">
             {/* Overall Health Score */}
             <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                         <div>
                             <CardTitle className="font-headline">Your Teaching Impact Score</CardTitle>
                             <CardDescription>
@@ -188,9 +316,9 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             </CardDescription>
                         </div>
                         <Badge variant={getRiskBadgeVariant(healthScore.risk_level)} className="capitalize">
-                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500" /> Excellent</> : ''}
-                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500" /> Good</> : ''}
-                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Needs Attention</> : ''}
+                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-1" /> Excellent</> : null}
+                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1" /> Good</> : null}
+                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-1" /> Needs Attention</> : null}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -198,7 +326,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                     <div className="flex flex-col items-center gap-6 py-4">
                         <div className="relative">
                             <CircularProgress
-                                value={healthScore.score}
+                                value={headlineScore}
                                 max={100}
                                 label="Overall Score"
                                 size="lg"
@@ -222,6 +350,22 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Last Active</p>
                             </div>
                         </div>
+
+                        {(relativeUpdated || error) && (
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                {relativeUpdated && <span>Updated {relativeUpdated}</span>}
+                                {error && <span className="text-amber-600">Showing last good values</span>}
+                                <button
+                                    onClick={() => { setIsRefreshing(true); fetchHealthScore(); }}
+                                    disabled={isRefreshing}
+                                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                                    aria-label="Refresh impact score"
+                                >
+                                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                    Refresh
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </div>
@@ -231,7 +375,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                 <CardHeader className="px-0 pt-0">
                     <CardTitle className="font-headline">Score Breakdown</CardTitle>
                     <CardDescription>
-                        Your score is calculated from four key areas
+                        Adds up to your overall score of {headlineScore} / 100
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
