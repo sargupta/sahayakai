@@ -1,9 +1,16 @@
 name: Deploy to Cloud Run
 
+# Disabled 2026-05-21: this workflow auto-deploys to Cloud Run on push
+# to main with `gcloud run deploy` and full traffic (no --no-traffic
+# guard), racing with the manual scripts/safe-deploy.sh which has
+# clean-tree, race-detection, and tagged-revision guards. It also uses a
+# different Artifact Registry path (sahayakai/ vs safe-deploy's
+# cloud-run-source-deploy/) which audit-deployments.sh flags as a race
+# signal. Re-enable only after the preview env + cloudbuild-preview.yaml
+# pipeline lands (see plan at .claude/plans/based-on-the-current-tidy-
+# rabbit.md, Phase A + B). Manual run via workflow_dispatch still
+# allowed for emergencies.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
