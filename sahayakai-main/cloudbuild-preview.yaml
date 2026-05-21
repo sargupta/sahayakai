@@ -1,0 +1,80 @@
+# cloudbuild-preview.yaml
+#
+# Preview deploy pipeline for SahayakAI. Triggered on push to `develop`
+# via the Cloud Build GitHub trigger `sahayakai-preview-deploy`.
+#
+# Deploys to the `sahayakai-preview` Cloud Run service (separate from
+# prod `sahayakai-hotfix-resilience`). Preview is the staging tier where
+# develop tip lands automatically so teachers / QA / Abhishek can validate
+# features against production-shaped infra before promoting to main + prod.
+#
+# Why a separate file from cloudbuild.yaml:
+#   - Different target service (preview, not prod)
+#   - Preview gets DEMO_MODE=true env var (gates demo-only surfaces)
+#   - Routes traffic immediately (preview is low-stakes; tagged-revision
+#     ceremony of prod is unnecessary here)
+#   - Distinct _SERVICE substitution so scripts/safe-deploy.sh's
+#     build-in-flight guard can tell prod and preview builds apart
+#
+# Cost note: preview Cloud Run runs at min-instances=0 (cold start ~3-5s
+# on first request after idle, ~$5-10/mo). Bump to 1 if QA team finds
+# cold start annoying (~$30-50/mo).
+
+substitutions:
+  _SERVICE: sahayakai-preview
+  _PROD_REGISTRY: cloud-run-source-deploy
+
+steps:
+  # ── 1. Build ──────────────────────────────────────────────────────────────
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:latest
+      - --file=Dockerfile
+      - .
+
+  # ── 2. Push both tags ─────────────────────────────────────────────────────
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
+    waitFor: [build]
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:latest
+    waitFor: [build]
+
+  # ── 3. Deploy to preview with traffic. ───────────────────────────────────
+  # Preview is low-stakes — no --no-traffic ceremony. Latest develop tip
+  # always serves on the preview URL. Use the tagged revision URL
+  # (`dev-<sha>`) if you need to test a specific develop SHA.
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-preview
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
+      - --region=asia-southeast1
+      - --project=$PROJECT_ID
+      - --tag=dev-$SHORT_SHA
+      - --update-env-vars=DEMO_MODE=true,NODE_ENV=production
+      - --quiet
+    waitFor: [push-sha]
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+# Hard cap so a hung build never blocks the queue forever.
+timeout: 1800s
+
+images:
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:latest

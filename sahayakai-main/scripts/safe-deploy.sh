@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # safe-deploy.sh
 #
-# Wraps `gcloud run deploy` with three guardrails that prevent
+# Wraps `gcloud run deploy` with four guardrails that prevent
 # concurrent deploys from clobbering each other:
 #
 #   1. Refuses to deploy if a Cloud Build job for this project is
@@ -9,7 +9,15 @@
 #   2. Refuses if a Cloud Run revision was created in the last
 #      MIN_REVISION_AGE_SECONDS (default 90 s) — tells you another
 #      session probably just deployed.
-#   3. Defaults to --no-traffic. The new revision is created and
+#   3. Refuses tracked-file drift from HEAD (commit or stash first).
+#   4. Refuses non-prod, non-preview branches. Maps:
+#         main     → sahayakai-hotfix-resilience (PROD)
+#         develop  → sahayakai-preview            (PREVIEW)
+#         hotfix/* → sahayakai-hotfix-resilience (PROD, emergency)
+#      Any other branch (feature/*, fix/*, etc.) is rejected — open
+#      a PR to develop or main first.
+#
+#   5. Defaults to --no-traffic. The new revision is created and
 #      kept warm, but traffic routing must be flipped manually with
 #      `gcloud run services update-traffic --to-latest`. This makes
 #      racing harmless: each agent's deploy creates its own revision,
@@ -19,18 +27,30 @@
 # 100 % traffic to the new revision (the historical default behaviour).
 #
 # Usage:
-#   ./scripts/safe-deploy.sh                       # safe — no-traffic
+#   git checkout main
+#   ./scripts/safe-deploy.sh                       # safe — prod, no-traffic
+#
+#   git checkout develop
+#   ./scripts/safe-deploy.sh                       # safe — preview, no-traffic
+#
 #   ./scripts/safe-deploy.sh --route-immediately   # legacy — risky
 #
-# Environment overrides:
+# Environment overrides (precedence: env var > branch-derived default):
 #   PROJECT_ID, SERVICE, REGION, MIN_REVISION_AGE_SECONDS
+#   If SERVICE is set explicitly, the branch check is bypassed.
 
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
-SERVICE="${SERVICE:-sahayakai-hotfix-resilience}"
+PROD_SERVICE="${PROD_SERVICE:-sahayakai-hotfix-resilience}"
+PREVIEW_SERVICE="${PREVIEW_SERVICE:-sahayakai-preview}"
 REGION="${REGION:-asia-southeast1}"
 MIN_REVISION_AGE_SECONDS="${MIN_REVISION_AGE_SECONDS:-90}"
+
+# Branch-aware service selection. Computed after we read HEAD_BRANCH.
+# May be overridden by setting SERVICE in the environment.
+SERVICE_EXPLICIT="${SERVICE:-}"
+SERVICE=""
 
 ROUTE_IMMEDIATELY=0
 for arg in "$@"; do
@@ -43,22 +63,56 @@ for arg in "$@"; do
     esac
 done
 
-echo "▸ safe-deploy starting (project=$PROJECT_ID service=$SERVICE region=$REGION)"
+echo "▸ safe-deploy starting (project=$PROJECT_ID region=$REGION)"
 
-# Guard 1: ongoing builds
-echo "▸ guard 1/3: checking for ongoing Cloud Build jobs..."
-ongoing=$(gcloud builds list --ongoing --project="$PROJECT_ID" --format="value(id)" 2>/dev/null | wc -l | tr -d '[:space:]')
+# Guard 0: branch-aware service selection. Done FIRST so subsequent guards
+# query the right service.
+echo "▸ guard 0/4: branch-aware service selection..."
+HEAD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [[ -n "$SERVICE_EXPLICIT" ]]; then
+    SERVICE="$SERVICE_EXPLICIT"
+    echo "  ⚠ SERVICE explicitly set to '$SERVICE' via env — bypassing branch check."
+elif [[ "$HEAD_BRANCH" == "main" ]] || [[ "$HEAD_BRANCH" == hotfix/* ]]; then
+    SERVICE="$PROD_SERVICE"
+    echo "  ✓ branch '$HEAD_BRANCH' → PROD service '$SERVICE'"
+elif [[ "$HEAD_BRANCH" == "develop" ]]; then
+    SERVICE="$PREVIEW_SERVICE"
+    echo "  ✓ branch '$HEAD_BRANCH' → PREVIEW service '$SERVICE'"
+else
+    echo "✗ ABORT: branch '$HEAD_BRANCH' is not a deploy source."
+    echo
+    echo "  Deploy sources:"
+    echo "    main      → $PROD_SERVICE (production)"
+    echo "    develop   → $PREVIEW_SERVICE (preview)"
+    echo "    hotfix/*  → $PROD_SERVICE (production, emergency)"
+    echo
+    echo "  For feature/fix/chore work, open a PR to develop first."
+    echo "  Develop pushes auto-deploy to preview via Cloud Build."
+    echo
+    echo "  To override (NOT recommended), set SERVICE=<name> in the env."
+    exit 5
+fi
+
+# Guard 1: ongoing builds. Filter by the target service so a preview build
+# doesn't block a prod deploy and vice versa.
+echo "▸ guard 1/4: checking for ongoing Cloud Build jobs targeting $SERVICE..."
+ongoing=$(gcloud builds list --ongoing --project="$PROJECT_ID" \
+    --filter="substitutions._SERVICE=$SERVICE" \
+    --format="value(id)" 2>/dev/null | wc -l | tr -d '[:space:]')
 if [[ "$ongoing" -gt 0 ]]; then
-    echo "✗ ABORT: $ongoing Cloud Build job(s) are currently running:"
-    gcloud builds list --ongoing --project="$PROJECT_ID" --format="table(id,createTime,status)" | head -10
+    echo "✗ ABORT: $ongoing Cloud Build job(s) for $SERVICE are running:"
+    gcloud builds list --ongoing --project="$PROJECT_ID" \
+        --filter="substitutions._SERVICE=$SERVICE" \
+        --format="table(id,createTime,status)" | head -10
     echo "  Wait for them to finish, then retry. If you must override, run:"
     echo "    gcloud builds cancel <BUILD_ID> --project=$PROJECT_ID"
     exit 2
 fi
-echo "  ✓ no ongoing builds."
+echo "  ✓ no ongoing builds targeting $SERVICE."
 
 # Guard 2: too-recent revision
-echo "▸ guard 2/3: checking last revision age..."
+echo "▸ guard 2/4: checking last revision age for $SERVICE..."
 last_iso=$(gcloud run revisions list \
     --service="$SERVICE" --region="$REGION" --project="$PROJECT_ID" \
     --limit=1 --format="value(metadata.creationTimestamp)" 2>/dev/null)
@@ -85,7 +139,7 @@ fi
 # differs from HEAD. We deliberately do NOT block on untracked files
 # because parallel sessions and worktrees often leave junk lying around;
 # untracked items are excluded from the deploy via .gcloudignore.
-echo "▸ guard 3/3: checking git tracked files..."
+echo "▸ guard 3/4: checking git tracked files..."
 if ! git diff --quiet HEAD --; then
     echo "✗ ABORT: tracked files differ from HEAD:"
     git diff --name-status HEAD -- | head -10
@@ -93,14 +147,9 @@ if ! git diff --quiet HEAD --; then
     exit 4
 fi
 HEAD_SHA=$(git rev-parse --short HEAD)
-HEAD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "  ✓ clean tree at $HEAD_BRANCH @ $HEAD_SHA"
 
-# Optional: confirm we are on main
-if [[ "$HEAD_BRANCH" != "main" ]]; then
-    echo "  ⚠ deploying from $HEAD_BRANCH (not main). Continuing in 3 s..."
-    sleep 3
-fi
+echo "▸ guard 4/4: target confirmed → $SERVICE (from branch $HEAD_BRANCH)"
 
 DEPLOY_FLAGS=(
     --region="$REGION"
