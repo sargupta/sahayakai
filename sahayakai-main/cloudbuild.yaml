@@ -21,6 +21,13 @@
 # Variables:
 #   $PROJECT_ID  — provided by Cloud Build automatically
 #   $SHORT_SHA   — provided by Cloud Build automatically (first 7 chars)
+#   $_SERVICE    — substitution; set per trigger or default below. Used by
+#                  scripts/safe-deploy.sh's build-in-flight guard to scope
+#                  the ongoing-build check to a specific Cloud Run service,
+#                  so a preview build does not block a prod deploy.
+
+substitutions:
+  _SERVICE: sahayakai-hotfix-resilience
 
 steps:
   # ── 1. Build ──────────────────────────────────────────────────────────────
