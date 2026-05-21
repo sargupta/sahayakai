@@ -1,12 +1,83 @@
 # SahayakAI Changelog
 
 All notable changes to the SahayakAI platform are tracked here.
-Format derived from [Keep a Changelog](https://keepachangelog.com/),
-versioning aligns with the AI agent migration phases (B - U).
+Format derived from [Keep a Changelog](https://keepachangelog.com/).
+Versioning is CalVer (`release-YYYY-MM-DD` tags); the older B–U phase
+numbering tracks the AI agent migration internally.
+
+See [docs/BRANCHING.md](./docs/BRANCHING.md) for release process.
 
 ---
 
-## [Unreleased] — Forensic Remediation Sprint (PRs #21, #23, #24)
+## [Unreleased]
+
+(Phase C — Firebase Remote Config feature flags + Phase D follow-ups
+are queued on develop but not yet released to prod.)
+
+---
+
+## [2026-05-21] — `release-2026-05-21` (catch-up release + workflow rationalization)
+
+`main` was 65 commits behind `develop` (which had been the de facto
+production source for ~2 weeks). This release reconciles the two and
+hardens the deploy pipeline so the drift does not recur.
+
+PRs: [#43](https://github.com/sargupta/sahayakai/pull/43) (catch-up + auto-deploy disable), [#44](https://github.com/sargupta/sahayakai/pull/44) (preview env tooling), Phase D PR (this changelog + branching docs).
+
+### Added
+
+- **Assessment Scanner Phase 1 + 2** — math grading + 5 additional subjects, multi-page up to 3, teacher edit + share/copy/print, library reopen. New POST `/api/ai/assessment-scanner`, PATCH `/api/assessment-scanner/[id]`. New Firestore `assessments/{id}` schema.
+- **Community Personas + Live Pulse** — 10 seeded teacher personas, 50 backfilled messages, demo-only `/api/community/persona-pulse` endpoint posting on a 3–5 min interval. **Demo code, currently live in prod**; will move behind `feature_community_personas` Remote Config flag in Phase C.
+- **Notifications system** — new Firestore `notifications/{notifId}` collection + read-only-for-client rule + global unread badge on the app sidebar.
+- **NCERT chapter seed + soft validation** — Class 1–10 chapter database in `src/lib/ncert/validate-chapter.ts`; threaded into lesson-plan, quiz, and exam-paper flows. Regional anchors (Rajasthan / Karnataka / Tamil Nadu) in `src/lib/regional-examples.ts` (+457 LOC).
+- **VIDYA greeting suppressor** — `src/lib/vidya-greeting-suppressor.ts` (+203 LOC, 23 tests). Strips redundant opening greetings (Namaste / Sure / Of course) after first turn across 11 languages.
+- **VIDYA form prefill sweep** — quiz, exam-paper, worksheet, visual-aid, virtual-field-trip, teacher-training, rubric, video-storyteller forms now accept teacher state (grade/subject/chapter/language) via normalizer + URL params.
+- **Parent outreach reason-aware Contact-Parent flow** — `src/components/attendance/contact-parent-modal.tsx` (+269 LOC). Triage banner on attendance page surfaces reason codes (sick, exam, moved, etc.).
+- **iOS Safari auth blank-page guard** — null-safety on `getRedirectResult` + 5s safety timeout in `src/lib/sign-in-with-google.ts`.
+- **Library route + download/print fixes** — assessment-scanner, exam-paper, video-storyteller, assessment, micro-lesson types now open in viewer and download via HTML print flow (+83 LOC in `src/components/library/content-gallery.tsx`).
+- **Wire-contract tests** for assessment-scanner PATCH edit endpoint.
+- **Preview Cloud Run environment** (`sahayakai-preview`) — provisioned 2026-05-21. URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`. Auto-deploys develop tip (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` until then). Full docs at [`docs/PREVIEW_ENV.md`](./docs/PREVIEW_ENV.md).
+- **Branch-aware `safe-deploy.sh`** — main → prod, develop → preview, hotfix/* → prod, anything else → ABORT. Build-in-flight check scoped per service via `substitutions._SERVICE` filter.
+- **`cloudbuild-preview.yaml`** — preview build pipeline (parallel to `cloudbuild.yaml`).
+- **Repo organization artifacts** — `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS`, `docs/BRANCHING.md`, `docs/INCIDENTS.md`, `docs/ROLLBACK.md`, `docs/PREVIEW_ENV.md`.
+
+### Changed
+
+- **AI flows migrated from `gemini-2.5-pro` to `gemini-2.0-flash`** across lesson-plan, exam-paper, visual-aid, video-storyteller, instant-answer. ~20% cost reduction; quality regression risk monitored. Will be wrapped in `feature_gemini_2_0_flash` Remote Config flag in Phase C.
+- **5 LLM timeouts bumped** + new `GENKIT_TIMEOUT_OVERRIDE_MS` env var: lesson-plan, quiz, exam-paper (30s → 75s), virtual-field-trip (15s → 45s), instant-answer.
+- **Dockerfile Node heap → 4GB** (unblocks Cloud Build OOM on Next.js builds).
+- **TwiML initial-turn Gather timeout 10s → 20s** — parent-outreach voice calls give parents more time on slow rural connections.
+- **`.gcloudignore` re-include `scripts/*`** — third regression of this rule; deploy was failing because deploy scripts were excluded from the build context.
+- **`tsconfig.json` exclude untracked sibling packages** — prevents `SARGVISION-Site/`, `keynote-mcp/`, etc. from poisoning typecheck.
+- **Impact score robustness rewrite** — `src/lib/analytics/impact-score.ts` rewritten (+327 LOC), 474 edge-case tests added (`src/lib/__tests__/impact-score-edge-cases.test.ts`).
+
+### Fixed
+
+- **intent classifier P0**: `z.literal('...')` compiled to JSON-Schema `const`, which Gemini rejects at deep nesting → switched to `z.enum([...] as const)`. Regression test scans all `outputSchema`s for `const`. (See [`docs/INCIDENTS.md`](./docs/INCIDENTS.md#2026-05-19))
+- **VIDYA conversation failures**: STT refusal strings filtered before reaching chat; intent-result caching disabled for tool-trigger flows (so repeats re-classify); empty/silent audio blobs < 2KB blocked pre-cloud.
+- **VIDYA language poisoning**: form prefill normalizer prevents language-mismatched submissions from updating the teacher profile.
+- **OmniOrb action-staging state**: now wipes per query so prior intent does not bleed into the next action.
+- **Firestore section registration**: rules + indexes can now deploy cleanly (was failing due to unregistered section).
+- **Notifications flow**: global badge + accept persistence + view profile flow now correctly wire through the notifications collection.
+
+### Removed
+
+- Stale workbox artifact (`public/workbox-58cdce56.js.map`) — rotated by `next-pwa` build; old file was confusing.
+
+### Security
+
+- Firestore rules: added `/notifications/{notifId}` as read-only-for-client (server / Admin SDK owns writes).
+- `.github/workflows/google-cloudrun-docker.yml` and `.github/workflows/firebase-deploy.yml` set to `workflow_dispatch` only (was auto-deploying on every push to main, racing `safe-deploy.sh` without `--no-traffic` safety).
+
+### Operational notes
+
+- Production was already serving this code at the time of release (Cloud Run revision `sahayakai-hotfix-resilience-00449-puj`, tag `dep-6e448e013`, since 2026-05-20T08:58Z). The release tag `release-2026-05-21` retroactively marks this state on `main`.
+- Rollback fence: `prod-2026-05-21-pre-catchup` → same SHA, kept for the rollback procedure.
+- Cloud Build GitHub App is NOT currently installed on `sargupta/sahayakai`; `gcloud beta builds triggers list` returns empty. All deploys via `scripts/safe-deploy.sh`. See [`DEPLOY.md`](./DEPLOY.md) for the current state.
+
+---
+
+## [Unreleased — old, pre-2026-05-21] — Forensic Remediation Sprint (PRs #21, #23, #24)
 
 These three independent PRs land first. Each is small, low-risk, and
 unblocks separate concerns.
