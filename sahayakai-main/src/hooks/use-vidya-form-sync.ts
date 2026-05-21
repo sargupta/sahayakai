@@ -48,6 +48,16 @@ export function useVidyaFormSync(
 
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
+            // 2026-05-19 (NCERT demo fix): on unmount, if we are still the
+            // publisher of the live `structuredData` payload, clear it.
+            // Without this, navigating from a sync'd page (e.g. quiz-
+            // generator) to a NON-sync'd page (e.g. exam-paper) would leave
+            // the prior page's form fields visible to VIDYA, who would then
+            // mistake them for the new page's active state.
+            const current = useJarvisStore.getState().structuredData;
+            if (current?.page === pageKey) {
+                useJarvisStore.getState().setStructuredData({});
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageKey, setStructuredData, saveFormSnapshot, serialised]);

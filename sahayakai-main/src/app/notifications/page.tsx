@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { getNotificationsAction } from "@/app/actions/notifications";
@@ -13,21 +13,31 @@ export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchNotifications = useCallback(async (uid: string) => {
+        try {
+            const data = await getNotificationsAction(uid);
+            setNotifications(data);
+        } catch (error) {
+            console.error("[NotificationsPage] Failed to fetch notifications:", error);
+        }
+    }, []);
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setFirebaseUser(user);
-                try {
-                    const data = await getNotificationsAction(user.uid);
-                    setNotifications(data);
-                } catch (error) {
-                    console.error("Failed to fetch notifications:", error);
-                }
+                await fetchNotifications(user.uid);
             }
             setLoading(false);
         });
         return () => unsubscribe();
-    }, []);
+    }, [fetchNotifications]);
+
+    const handleRefresh = useCallback(async () => {
+        if (firebaseUser) {
+            await fetchNotifications(firebaseUser.uid);
+        }
+    }, [firebaseUser, fetchNotifications]);
 
     if (loading) {
         return (
@@ -63,7 +73,7 @@ export default function NotificationsPage() {
                     </div>
                 </div>
 
-                <NotificationFeed notifications={notifications} userId={firebaseUser.uid} />
+                <NotificationFeed notifications={notifications} userId={firebaseUser.uid} onRefresh={handleRefresh} />
             </div>
         </div>
     );

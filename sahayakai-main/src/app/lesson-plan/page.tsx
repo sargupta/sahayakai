@@ -3,19 +3,28 @@
 import { Suspense } from "react";
 import { useLessonPlan } from "@/features/lesson-planner/hooks/use-lesson-plan";
 import { LessonPlanView } from "@/features/lesson-planner/components/lesson-plan-view";
-import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { LessonPlanFormSkeleton } from "@/components/skeletons";
 
 function LessonPlanContent() {
-  const router = useRouter(); // Added useRouter hook
-  const searchParams = useSearchParams(); // Added useSearchParams hook
   const state = useLessonPlan();
   return <LessonPlanView {...state} />;
 }
 
+/**
+ * /lesson-plan — flagship feature page.
+ *
+ * NCERT demo polish (2026-05-19): the original Suspense fallback was a
+ * single centered spinner. On the demo path this is the first thing the
+ * audience sees, so the fallback now renders a shape-matched skeleton
+ * (form on top, generate button on the right) so the layout doesn't
+ * jump when the real form hydrates.
+ *
+ * The 20–30s in-flight loading state (after the teacher submits) is
+ * handled inside <LessonPlanView /> via <LessonPlanLoadingOverlay />.
+ */
 export default function LessonPlanAgentPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+    <Suspense fallback={<LessonPlanFormSkeleton />}>
       <LessonPlanContent />
     </Suspense>
   );

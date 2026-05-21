@@ -153,39 +153,84 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             "visual-aid": "/visual-aid-designer",
             "instant-answer": "/instant-answer",
             "teacher-training": "/teacher-training",
+            // NCERT-demo 2026-05-20 — missing routes were producing 404 on
+            // library card click. /library route does not exist in app/, so
+            // the fallback was a dead-end. These types each have a generator
+            // page that accepts ?id= and re-hydrates the saved artefact.
+            "exam-paper": "/exam-paper",
+            "video-storyteller": "/video-storyteller",
+            "assessment-scanner": "/assessment-scanner",
+            "assessment": "/assessment-scanner",
+            "assessment-submission": "/assessment-scanner",
+            "micro-lesson": "/lesson-plan",
         };
 
-        const baseUrl = routeMap[resource.type] || "/library";
+        const baseUrl = routeMap[resource.type];
+        if (!baseUrl) {
+            toast({
+                title: "Cannot open this item",
+                description: `Resource type "${resource.type}" does not have a viewer yet. Use Download to export it.`,
+                variant: "destructive",
+            });
+            return;
+        }
         router.push(`${baseUrl}?id=${resource.id}`);
     };
 
     const handleDownload = async (resource: BaseContent) => {
         try {
-            // Priority 1: Client-Side Export (formatted HTML)
-            // If we have the data locally, generate a beautiful HTML file immediately.
-            // This is preferred for Lesson Plans, Quizzes, Worksheets, etc.
-            if (resource.data && ['lesson-plan', 'quiz', 'worksheet', 'rubric', 'micro-lesson'].includes(resource.type)) {
+            // Priority 1: Client-Side Export (formatted HTML, print-to-PDF ready)
+            // If we have the data locally, open a print-formatted HTML in a new
+            // window and auto-trigger the browser's print dialog. The teacher
+            // gets a Save-as-PDF flow in two clicks instead of receiving a raw
+            // JSON file. NCERT-demo 2026-05-20 — list extended to include
+            // exam-paper, video-storyteller, virtual-field-trip,
+            // assessment-scanner. Visual aids stay on the server-side path
+            // (binary image, served via signed URL).
+            const HTML_PRINTABLE_TYPES = new Set([
+                'lesson-plan', 'quiz', 'worksheet', 'rubric', 'micro-lesson',
+                'exam-paper', 'video-storyteller', 'virtual-field-trip',
+                'teacher-training', 'instant-answer',
+                'assessment', 'assessment-submission', 'assessment-scanner',
+            ]);
+            if (resource.data && HTML_PRINTABLE_TYPES.has(resource.type)) {
                 toast({
-                    title: "Exporting...",
-                    description: `Generating document for ${resource.title}...`
+                    title: "Preparing PDF...",
+                    description: `Opening print dialog for ${resource.title}. Choose "Save as PDF" in the print menu.`,
                 });
 
                 const blob = createDownloadableContent(resource.data, resource.type);
                 const url = URL.createObjectURL(blob);
-                // Strip only filesystem-unsafe characters, preserving Indic/Unicode chars
-                const cleanTitle = (resource.title || 'Untitled').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'Untitled';
 
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `SahayakAI_${cleanTitle}.html`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Open in a new tab and auto-trigger print. User picks
+                // "Save as PDF" from the browser print dialog. Works on
+                // every desktop browser + iOS Safari Share -> Print.
+                const printWindow = window.open(url, '_blank');
+                if (printWindow) {
+                    printWindow.addEventListener('load', () => {
+                        try {
+                            printWindow.print();
+                        } catch {
+                            // print() can be blocked in some sandbox modes;
+                            // the tab still shows the rendered content so the
+                            // user can hit Ctrl/Cmd+P manually.
+                        }
+                    });
+                } else {
+                    // Popup blocked — fall back to direct download
+                    const cleanTitle = (resource.title || 'Untitled').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'Untitled';
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `SahayakAI_${cleanTitle}.html`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    toast({
+                        title: "Popup blocked",
+                        description: "Saved as HTML instead. Open the file and press Ctrl/Cmd+P to save as PDF.",
+                    });
+                }
 
-                toast({
-                    title: "Export Complete",
-                    description: "File downloaded successfully.",
-                });
                 return;
             }
 

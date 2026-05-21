@@ -86,7 +86,14 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
     // `z.string().optional()`); the codegen narrows it to the BCP-47-ish
     // 11-way union the sidecar enforces. The route normalises before
     // reaching here, so the cast is sound.
-    return {
+    // Hyperlocal fields (state, district, regionalContextBlock) are
+    // populated on the Genkit-side `LessonPlanInput`. The sidecar's
+    // generated wire schema does not yet declare them, so they would
+    // be stripped during JSON serialization on the Python side — but
+    // forwarding them costs nothing and lets a future sidecar release
+    // pick them up without another TS change. The `as unknown` cast
+    // keeps the strict generated type happy without a schema bump.
+    const extended = {
         topic: input.topic,
         language: input.language as SidecarLessonPlanRequest['language'],
         gradeLevels: input.gradeLevels,
@@ -99,7 +106,11 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
         // Phase J.4 hot-fix (B3 inconsistency): forward userId on the
         // wire so the sidecar's contract matches every other agent.
         userId: input.userId,
+        state: input.state,
+        district: input.district,
+        regionalContextBlock: input.regionalContextBlock,
     };
+    return extended as unknown as SidecarLessonPlanRequest;
 }
 
 function sidecarToLessonPlan(

@@ -30,6 +30,7 @@ import { SubjectSelector } from "@/components/subject-selector";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 
 
 
@@ -323,14 +324,23 @@ function WorksheetWizardContent() {
       fetchSavedContent();
     } else if (promptParam) {
       // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
+      // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts):
+      //   - SET_OPTS forces controlled selectors to re-render with the
+      //     incoming value before the 300ms auto-submit fires.
+      //   - VIDYA emits language/grade in display-name form; normalise
+      //     to ISO ("en") / "Class N" before writing.
       const subjectParam = searchParams.get("subject");
       const gradeLevelParam = searchParams.get("gradeLevel");
       const languageParam = searchParams.get("language");
 
-      form.setValue("prompt", promptParam);
-      if (subjectParam) form.setValue("subject", subjectParam);
-      if (gradeLevelParam) form.setValue("gradeLevel", gradeLevelParam);
-      if (languageParam) form.setValue("language", languageParam);
+      const SET_OPTS = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
+
+      form.setValue("prompt", promptParam, SET_OPTS);
+      if (subjectParam) form.setValue("subject", subjectParam, SET_OPTS);
+      const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
+      if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
+      const normalisedLang = normaliseVidyaLanguage(languageParam);
+      if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
       // ── FIX: auto-generate when VIDYA navigates here with a pre-filled prompt
       setTimeout(() => form.handleSubmit(onSubmit)(), 300);
       // ────────────────────────────────────────────────────────────────────
@@ -354,10 +364,24 @@ function WorksheetWizardContent() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
+      // ALWAYS send a non-empty `language`; strip the "General" subject
+      // placeholder so the model isn't misled by a meaningless default.
+      const submittedLanguage = values.language && values.language.trim()
+        ? values.language
+        : 'en';
+      const submittedSubject = values.subject && values.subject !== 'General'
+        ? values.subject
+        : undefined;
+
       const res = await fetch("/api/ai/worksheet", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ ...values, language: values.language || selectedLanguage })
+        body: JSON.stringify({
+          ...values,
+          language: submittedLanguage,
+          subject: submittedSubject,
+        })
       });
 
       if (!res.ok) {

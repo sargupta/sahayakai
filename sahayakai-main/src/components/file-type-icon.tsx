@@ -9,6 +9,7 @@ import {
   PencilRuler,
   Lightbulb,
   Map as MapIcon,
+  ScanLine,
   Video,
   GraduationCap,
   type LucideProps,
@@ -46,6 +47,8 @@ export const FileTypeIcon: FC<FileTypeIconProps> = ({ type, ...props }) => {
       return <Video {...props} />;
     case 'teacher-training':
       return <GraduationCap {...props} />;
+    case 'assessment-submission':
+      return <ScanLine {...props} />;
     default:
       return <FileText {...props} />;
   }

@@ -11,6 +11,7 @@ import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { findBlueprint } from '@/ai/data/board-blueprints';
 import type { PYQQuestion, PYQRetrievalOptions } from '@/lib/services/pyq-retrieval-service';
+import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
 
 const ExamPaperInputSchema = z.object({
   board: z.string().describe("The education board (e.g., 'CBSE', 'ICSE')."),
@@ -64,6 +65,13 @@ const ExamPaperOutputSchema = z.object({
     year: z.number().nullable().optional(),
     chapter: z.string().optional(),
   })).optional().describe("PYQ source attributions: which prior-year questions were used or adapted."),
+  validationWarnings: z.array(z.object({
+    invalid: z.boolean(),
+    lenient: z.boolean(),
+    message: z.string(),
+    autoCorrectTo: z.object({ number: z.number(), title: z.string() }).optional(),
+    input: z.object({ gradeLevel: z.string(), subject: z.string(), chapter: z.string() }),
+  })).optional().describe('Per-chapter NCERT validation warnings. Generation still proceeds; UI surfaces these so the teacher can correct or confirm the chapter list.'),
 });
 export type ExamPaperOutput = z.infer<typeof ExamPaperOutputSchema>;
 
@@ -244,6 +252,37 @@ const examPaperGeneratorFlow = ai.defineFlow(
           language: input.language,
         }
       });
+
+      // Soft NCERT chapter validation — best-effort, never blocks generation.
+      // Each chapter the teacher selected is validated; warnings aggregate
+      // into the output for the UI to surface.
+      const validationWarnings: ValidationWarning[] = [];
+      try {
+        for (const chapter of input.chapters ?? []) {
+          const w = validateChapterForFlow({
+            gradeLevel: input.gradeLevel,
+            subject: input.subject,
+            chapter,
+          });
+          if (w) validationWarnings.push(w);
+        }
+        if (validationWarnings.length > 0) {
+          StructuredLogger.warn('NCERT chapter validation flagged exam-paper input', {
+            service: 'exam-paper-generator-flow',
+            operation: 'ncertValidation',
+            userId: input.userId,
+            requestId,
+            metadata: { warnings: validationWarnings },
+          });
+        }
+      } catch (validationError) {
+        StructuredLogger.warn('NCERT validation threw (non-blocking)', {
+          service: 'exam-paper-generator-flow',
+          operation: 'ncertValidation',
+          requestId,
+          metadata: { error: String(validationError) },
+        });
+      }
 
       const blueprintConstraint = buildBlueprintConstraint(input);
 
@@ -488,6 +527,9 @@ const examPaperGeneratorFlow = ai.defineFlow(
         }
       });
 
+      if (validationWarnings.length > 0) {
+        return { ...output, validationWarnings };
+      }
       return output;
 
     } catch (flowError: any) {

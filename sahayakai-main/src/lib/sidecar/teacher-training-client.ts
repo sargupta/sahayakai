@@ -62,7 +62,12 @@ export type SidecarTeacherTrainingAdvicePoint = GenTeacherTrainingAdvicePoint;
 export type SidecarTeacherTrainingRequest = GenTeacherTrainingRequest;
 export type SidecarTeacherTrainingResponse = GenTeacherTrainingResponse;
 
-const TIMEOUT_MS = 12_000;
+// NCERT demo hot-fix (2026-05-19): bumped from 12s — observed p50 was
+// 13.7s in prod, so 12s was failing at p50 for the sidecar HTTP call.
+// Env-overridable via `TEACHER_TRAINING_TIMEOUT_MS` (shared with the
+// dispatcher's FALLBACK_TIMEOUT_MS) so production can tune without a
+// redeploy.
+const TIMEOUT_MS = Number(process.env.TEACHER_TRAINING_TIMEOUT_MS) || 20_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 

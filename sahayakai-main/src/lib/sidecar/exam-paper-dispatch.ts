@@ -27,11 +27,43 @@ import {
 } from './exam-paper-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { withTimeout } from './with-timeout';
+import { withTimeout, WithTimeoutError } from './with-timeout';
 
-// Mirrors `TIMEOUT_MS` in exam-paper-client.ts. Phase J.2 hot-fix (P0
-// #7) — caps the Genkit fallback to the same budget as the sidecar.
-const FALLBACK_TIMEOUT_MS = 30_000;
+// NCERT demo hot-fix (2026-05-19): exam-paper is the most token-heavy
+// flow we run (full paper + answer key + marking scheme + sections).
+// Observed cold-start latency at CBSE Class 8 Science: 30–45 s; the
+// old 30 s budget tripped `WithTimeoutError` even when Gemini was
+// completing successfully. Bumped to 75 s — still well under Cloud
+// Run's 300 s request-timeout default, and overridable per-env for
+// future tuning without a code change.
+//
+// Phase J.2 history: this used to mirror `TIMEOUT_MS` in
+// exam-paper-client.ts (30 s) — capping the Genkit fallback to the
+// same budget as the sidecar. We now intentionally diverge: the
+// sidecar has its own 30 s cap, but when we fall *back* to Genkit
+// we accept a longer wait rather than hand the user a 500.
+const EXAM_PAPER_TIMEOUT_MS =
+    Number(process.env.EXAM_PAPER_GENKIT_TIMEOUT_MS) || 75_000;
+const FALLBACK_TIMEOUT_MS = EXAM_PAPER_TIMEOUT_MS;
+
+// Sentinel thrown when the Genkit fallback exceeds budget. The route
+// handler unwraps this and returns a structured `generation_in_progress`
+// payload instead of a generic 500. The actual Gemini call is allowed
+// to keep running in the background (see with-timeout.ts) — if it
+// eventually persists to the user's library, it shows up under
+// "My Library" the next time the teacher opens it.
+export class ExamPaperGenerationInProgressError extends Error {
+    readonly budgetMs: number;
+    readonly elapsedMs: number;
+    constructor(budgetMs: number, elapsedMs: number) {
+        super(
+            `Exam paper still generating after ${elapsedMs}ms (budget ${budgetMs}ms)`,
+        );
+        this.name = 'ExamPaperGenerationInProgressError';
+        this.budgetMs = budgetMs;
+        this.elapsedMs = elapsedMs;
+    }
+}
 
 export type ExamPaperSidecarMode = 'off' | 'shadow' | 'canary' | 'full';
 
@@ -152,19 +184,103 @@ function genkitToDispatched(
     return { ...out, source, decision };
 }
 
-async function runGenkitSafe(input: ExamPaperInput) {
+/**
+ * Run the Genkit `generateExamPaper` flow under the `FALLBACK_TIMEOUT_MS`
+ * budget and emit structured logs at the timeout boundary on both the
+ * success and timeout paths. Caller-side (shadow mode) wraps the whole
+ * Promise.all so we never let an unhandled `WithTimeoutError` reach the
+ * user — we swallow it into `{ ok: false }`.
+ */
+async function runGenkitSafe(input: ExamPaperInput, source: ExamPaperDispatchSource) {
+    const startedAt = Date.now();
     try {
         const out = await withTimeout(
             generateExamPaper(input),
             FALLBACK_TIMEOUT_MS,
             'exam-paper genkit fallback',
         );
+        // eslint-disable-next-line no-console
+        console.log('[exam-paper.dispatch] complete', {
+            durationMs: Date.now() - startedAt,
+            source,
+            budgetMs: FALLBACK_TIMEOUT_MS,
+        });
         return { ok: true as const, out };
     } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
         if (e.name === 'AbortError') throw e;
+        if (e instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[exam-paper.dispatch] timeout', {
+                budgetMs: FALLBACK_TIMEOUT_MS,
+                elapsedMs: e.elapsedMs,
+                source,
+                // Redact prompt — board/grade/subject only.
+                prompt: redactExamPaperInput(input),
+            });
+        }
         return { ok: false as const, error: e };
     }
+}
+
+/**
+ * Same as `runGenkitSafe` but throws instead of swallowing — used on
+ * the `off` and `genkit_fallback` paths where we want the failure to
+ * surface to the route handler, which then maps `WithTimeoutError` to
+ * the structured `generation_in_progress` response.
+ */
+async function runGenkitOrThrow(
+    input: ExamPaperInput,
+    source: ExamPaperDispatchSource,
+): Promise<ExamPaperOutput> {
+    const startedAt = Date.now();
+    try {
+        const out = await withTimeout(
+            generateExamPaper(input),
+            FALLBACK_TIMEOUT_MS,
+            'exam-paper genkit fallback',
+        );
+        // eslint-disable-next-line no-console
+        console.log('[exam-paper.dispatch] complete', {
+            durationMs: Date.now() - startedAt,
+            source,
+            budgetMs: FALLBACK_TIMEOUT_MS,
+        });
+        return out;
+    } catch (err) {
+        if (err instanceof WithTimeoutError) {
+            // eslint-disable-next-line no-console
+            console.error('[exam-paper.dispatch] timeout', {
+                budgetMs: FALLBACK_TIMEOUT_MS,
+                elapsedMs: err.elapsedMs,
+                source,
+                prompt: redactExamPaperInput(input),
+            });
+            throw new ExamPaperGenerationInProgressError(
+                FALLBACK_TIMEOUT_MS,
+                err.elapsedMs,
+            );
+        }
+        throw err;
+    }
+}
+
+/**
+ * Strip user-supplied free-text from log payloads. We keep the structural
+ * fields (board, grade, subject, language, difficulty) because they are
+ * useful for triaging which exam-paper shape is slow, but drop
+ * `teacherContext` and chapter strings which may carry PII.
+ */
+function redactExamPaperInput(input: ExamPaperInput): Record<string, unknown> {
+    return {
+        board: input.board,
+        gradeLevel: input.gradeLevel,
+        subject: input.subject,
+        language: input.language,
+        difficulty: input.difficulty,
+        chapterCount: input.chapters?.length ?? 0,
+        hasTeacherContext: Boolean(input.teacherContext),
+    };
 }
 
 async function runSidecarSafe(request: SidecarExamPaperRequest) {
@@ -197,11 +313,7 @@ export async function dispatchExamPaper(
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await withTimeout(
-            generateExamPaper(input),
-            FALLBACK_TIMEOUT_MS,
-            'exam-paper genkit fallback',
-        );
+        const out = await runGenkitOrThrow(input, 'genkit');
         logDispatch(decision, { source: 'genkit', uid: input.userId });
         return genkitToDispatched(out, 'genkit', decision);
     }
@@ -209,7 +321,7 @@ export async function dispatchExamPaper(
     if (decision.mode === 'shadow') {
         const shadowStartedAt = Date.now();
         const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input),
+            runGenkitSafe(input, 'genkit'),
             runSidecarSafe(sidecarRequest),
         ]);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
@@ -293,10 +405,6 @@ export async function dispatchExamPaper(
         sidecarLatencyMs: sidecar.latencyMs,
     });
 
-    const out = await withTimeout(
-        generateExamPaper(input),
-        FALLBACK_TIMEOUT_MS,
-        'exam-paper genkit fallback',
-    );
+    const out = await runGenkitOrThrow(input, 'genkit_fallback');
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }

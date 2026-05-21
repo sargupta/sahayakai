@@ -22,7 +22,11 @@ interface JarvisState {
     // ── Session memory (last 20 turns) ───────────────────────────────────
     chatHistory: { role: 'user' | 'model'; parts: { text: string }[] }[];
     currentScreenContext: ScreenContext | null;
-    // Live form fields published by the active page so VIDYA can "see" them
+    // Live form fields published by the active page so VIDYA can "see" them.
+    // CRITICAL: this is page-scoped via the `page` key. The OmniOrb client
+    // strips this from the API payload whenever `structuredData.page` does
+    // not match the current pathname — otherwise a stale form from a prior
+    // page would bleed into the next intent classification.
     structuredData: Record<string, any>;
 
     // ── Long-term teacher profile ─────────────────────────────────────────
@@ -43,10 +47,33 @@ interface JarvisState {
     // open/close; read by OmniOrb in its render guard.
     voiceDialogOpen: boolean;
 
+    // ── Per-query staging state (2026-05-19, NCERT demo prep) ────────────
+    // `lastQueryAt`  — unix-ms timestamp of the last completed voice query.
+    //                  Used by OmniOrb to decide whether the chatHistory
+    //                  should be carried into the next query (short gap =
+    //                  follow-up; long gap = fresh intent).
+    // `lastQueryPath` — pathname of the screen on which the previous query
+    //                  was issued. Cross-page transitions are treated as a
+    //                  fresh intent rather than a continuation, so
+    //                  "for Class 10" on `/exam-paper` does NOT inherit
+    //                  "quiz, Class 7, Science, photosynthesis" from the
+    //                  prior `/quiz-generator` query.
+    // Neither is persisted across browser sessions (only in-memory).
+    lastQueryAt: number | null;
+    lastQueryPath: string | null;
+
     // ── Actions ───────────────────────────────────────────────────────────
     addMessage: (role: 'user' | 'model', text: string) => void;
     setScreenContext: (context: ScreenContext) => void;
     setStructuredData: (data: Record<string, any>) => void;
+    /**
+     * Wipe `structuredData` only when the currently-published payload
+     * belongs to a different page (i.e. the user navigated away from the
+     * page that owned it and the new page never claimed ownership).
+     * Lets pages without `useVidyaFormSync` avoid leaking the previous
+     * page's form state into the next OmniOrb query.
+     */
+    clearStructuredDataIfStale: (currentPath: string) => void;
     setVoiceDialogOpen: (open: boolean) => void;
     /** Merge partial profile update — never wipes the whole profile */
     updateTeacherProfile: (patch: Partial<TeacherProfile>) => void;
@@ -59,6 +86,8 @@ interface JarvisState {
     mergeTeacherProfile: (firestoreProfile: Partial<TeacherProfile>) => void;
     saveFormSnapshot: (page: string, data: Record<string, any>) => void;
     clearFormSnapshot: (page: string) => void;
+    /** Mark a query as just-completed so freshness checks can use it. */
+    markQueryCompleted: (path: string) => void;
     /** Clears only session memory; profile and snapshots are intentionally preserved */
     resetContext: () => void;
 }
@@ -80,8 +109,31 @@ export const useJarvisStore = create<JarvisState>()(
             teacherProfile: DEFAULT_PROFILE,
             formSnapshots: {},
             voiceDialogOpen: false,
+            lastQueryAt: null,
+            lastQueryPath: null,
 
             setVoiceDialogOpen: (open) => set({ voiceDialogOpen: open }),
+
+            clearStructuredDataIfStale: (currentPath) =>
+                set((state) => {
+                    const sdPage = state.structuredData?.page;
+                    // No `page` field means no page has claimed ownership —
+                    // safest to clear so VIDYA isn't fed orphan form data.
+                    if (!sdPage) return Object.keys(state.structuredData).length > 0
+                        ? { structuredData: {} }
+                        : {};
+                    // Compare the publisher's pageKey against the screen's
+                    // pathname slug. `worksheet-wizard` ↔ `/worksheet-wizard`,
+                    // case-insensitive trim of leading slash.
+                    const slug = currentPath.replace(/^\//, '').split('/')[0] || '';
+                    if (slug && slug.toLowerCase() === String(sdPage).toLowerCase()) {
+                        return {}; // same page, keep
+                    }
+                    return { structuredData: {} };
+                }),
+
+            markQueryCompleted: (path) =>
+                set({ lastQueryAt: Date.now(), lastQueryPath: path }),
 
             addMessage: (role, text) =>
                 set((state) => {
@@ -132,7 +184,13 @@ export const useJarvisStore = create<JarvisState>()(
 
             /** Only wipe session state — profile and snapshots survive reset intentionally */
             resetContext: () =>
-                set({ chatHistory: [], currentScreenContext: null, structuredData: {} }),
+                set({
+                    chatHistory: [],
+                    currentScreenContext: null,
+                    structuredData: {},
+                    lastQueryAt: null,
+                    lastQueryPath: null,
+                }),
         }),
         {
             name: 'jarvis-storage',

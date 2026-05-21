@@ -1,0 +1,130 @@
+/**
+ * POST /api/community/persona-pulse
+ *
+ * Demo-only endpoint that mints one in-character message from a random
+ * teacher persona and writes it to `community_chat`. Called by the
+ * `useCommunityLivePulse` hook on a 3-5 min interval while the /community
+ * page is open during the NCERT demo.
+ *
+ * Auth: any signed-in user. No plan check — this is demo infra.
+ *
+ * Request body:
+ *   { recentMessages?: Array<{ authorName: string; text: string }> }
+ *
+ * Response:
+ *   { message, personaName, personaState, personaSubject }
+ *
+ * Safety:
+ *   - Hard-cap on output length (180 chars enforced by the flow's prompt).
+ *   - Temperature 0.85, max 150 tokens → predictable cost (~$0.0002/call).
+ *   - All writes are tagged `isDemoPersona: true` so they're trivially filterable.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { Timestamp } from 'firebase-admin/firestore';
+import { getDb } from '@/lib/firebase-admin';
+import {
+  COMMUNITY_PERSONAS,
+  pickRandomPersona,
+  getPersonaById,
+} from '@/ai/data/community-personas';
+import {
+  generateCommunityPersonaMessage,
+  type RecentMessageContext,
+} from '@/ai/flows/community-persona-message';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+interface RequestBody {
+  recentMessages?: RecentMessageContext[];
+  /** Optional explicit persona id — if omitted, a random one is chosen. */
+  personaId?: string;
+  /** Optional mode override — 'auto' by default. */
+  mode?: 'reply' | 'fresh' | 'auto';
+}
+
+export async function POST(req: NextRequest) {
+  // 1. Auth check — middleware injects x-user-id when the Bearer token is valid.
+  const userId = req.headers.get('x-user-id');
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 2. Parse body (tolerant — empty body is valid).
+  let body: RequestBody = {};
+  try {
+    const raw = await req.text();
+    if (raw) body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  // 3. Pick persona — caller can override but default is random.
+  const persona = body.personaId
+    ? getPersonaById(body.personaId) ?? pickRandomPersona()
+    : pickRandomPersona();
+
+  // 4. Sanitize recentMessages input (trust the client only enough to use as
+  //    LLM context; cap length and count so a malicious payload can't blow up
+  //    the prompt budget).
+  const recent = (body.recentMessages ?? [])
+    .slice(-5)
+    .filter((m) => typeof m?.authorName === 'string' && typeof m?.text === 'string')
+    .map((m) => ({
+      authorName: String(m.authorName).slice(0, 80),
+      text: String(m.text).slice(0, 400),
+    }));
+
+  // 5. Generate + write.
+  try {
+    const out = await generateCommunityPersonaMessage(persona, recent, body.mode ?? 'auto');
+
+    const db = await getDb();
+    const docId = `persona_live_${Date.now()}_${persona.id.replace('persona_', '')}`;
+    await db.collection('community_chat').doc(docId).set({
+      text: out.message,
+      authorId: persona.id,
+      authorName: persona.displayName,
+      authorPhotoURL: null,
+      createdAt: Timestamp.now(),
+      isDemoPersona: true,
+      personaState: persona.state,
+      personaSubject: persona.subject,
+      // Marker for downstream cleanup — distinguishes seed vs live-pulse:
+      personaSource: 'live_pulse',
+    });
+
+    return NextResponse.json({
+      ok: true,
+      message: out.message,
+      personaId: persona.id,
+      personaName: persona.displayName,
+      personaState: persona.state,
+      personaSubject: persona.subject,
+      docId,
+    });
+  } catch (err) {
+    console.error('[persona-pulse] generation failed', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Generation failed' },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * GET — convenience for debugging. Returns the list of personas (no LLM call).
+ */
+export async function GET() {
+  return NextResponse.json({
+    personas: COMMUNITY_PERSONAS.map((p) => ({
+      id: p.id,
+      displayName: p.displayName,
+      state: p.state,
+      subject: p.subject,
+      gradeLevel: p.gradeLevel,
+      preferredLanguage: p.preferredLanguage,
+    })),
+  });
+}

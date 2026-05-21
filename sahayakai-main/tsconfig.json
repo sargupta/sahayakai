@@ -37,6 +37,14 @@
   "exclude": [
     "node_modules",
     "scripts",
-    "src/__tests__"
+    "src/__tests__",
+    "sargvision-seo-package",
+    "sargvision-seo-package-v2",
+    "sargvision-seo-package-v3",
+    "SARGVISION-Site",
+    "_AI_CAREER_COMPANION_AD",
+    "company",
+    "sisfs_application",
+    "sahayak-voice-poc"
   ]
 }

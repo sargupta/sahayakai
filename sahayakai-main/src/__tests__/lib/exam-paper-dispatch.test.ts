@@ -70,7 +70,10 @@ jest.mock('@/lib/server-safety', () => ({
 // Imports after mocks.
 import { generateExamPaper, type ExamPaperOutput } from '@/ai/flows/exam-paper-generator';
 import { getFeatureFlags } from '@/lib/feature-flags';
-import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
+import {
+    dispatchExamPaper,
+    ExamPaperGenerationInProgressError,
+} from '@/lib/sidecar/exam-paper-dispatch';
 import {
     callSidecarExamPaper,
     ExamPaperSidecarBehaviouralError,
@@ -248,5 +251,78 @@ describe('dispatchExamPaper — canary mode (Phase K persistence)', () => {
 
         expect(out.source).toBe('genkit_fallback');
         expect(mockPersist).not.toHaveBeenCalled();
+    });
+});
+
+// ── Genkit fallback timeout (NCERT demo hot-fix 2026-05-19) ──────────────────
+//
+// The default Genkit fallback budget is 75 s (was 30 s before this fix).
+// Exam paper is the most token-heavy flow we run, so a 30 s cap was tripping
+// `WithTimeoutError` even when Gemini was still generating successfully.
+//
+// We use fake timers so the test runs in <1 s — we never actually sleep
+// 50 s / 80 s, we just advance the simulated clock.
+
+describe('dispatchExamPaper — Genkit fallback timeout', () => {
+    beforeEach(() => {
+        jest.useFakeTimers();
+    });
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    it('passes through when Genkit completes within 75 s budget (50 s simulated)', async () => {
+        setMode('off');
+        // Resolve after 50 simulated seconds — under the 75 s budget.
+        mockGenerateExam.mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    setTimeout(() => resolve(GENKIT_OUTPUT), 50_000);
+                }),
+        );
+
+        const promise = dispatchExamPaper(BASE_INPUT);
+        // Advance simulated clock past 50 s but well before 75 s.
+        await jest.advanceTimersByTimeAsync(50_000);
+        const out = await promise;
+
+        expect(out.source).toBe('genkit');
+        expect(out.title).toBe(GENKIT_OUTPUT.title);
+    });
+
+    it('throws ExamPaperGenerationInProgressError when Genkit exceeds 75 s (80 s simulated)', async () => {
+        setMode('off');
+        // Never resolves within the test window — simulating an 80 s+ Gemini call.
+        mockGenerateExam.mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    setTimeout(() => resolve(GENKIT_OUTPUT), 80_000);
+                }),
+        );
+
+        // Silence the structured error log from the dispatcher.
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Attach the rejection assertion BEFORE advancing the clock so
+        // the promise is already being awaited when the timer fires —
+        // otherwise the rejection is "unhandled" until `advanceTimersByTimeAsync`
+        // returns control, which Jest flags as a test failure.
+        const promise = dispatchExamPaper(BASE_INPUT);
+        const assertion = expect(promise).rejects.toBeInstanceOf(
+            ExamPaperGenerationInProgressError,
+        );
+        // Advance just past the 75 s timeout boundary.
+        await jest.advanceTimersByTimeAsync(76_000);
+        await assertion;
+
+        // Verify the structured timeout log fired.
+        expect(errSpy).toHaveBeenCalledWith(
+            '[exam-paper.dispatch] timeout',
+            expect.objectContaining({
+                budgetMs: 75_000,
+                source: 'genkit',
+            }),
+        );
+        errSpy.mockRestore();
     });
 });

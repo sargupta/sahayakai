@@ -80,6 +80,7 @@ const FOLDER_MAP: Record<ContentType, string> = {
   'teacher-training': 'teacher_training',
   'exam-paper': 'exam_papers',
   'assessment': 'assessments',
+  'assessment-submission': 'assessment_submissions',
 };
 
 // ---------------------------------------------------------------------------
