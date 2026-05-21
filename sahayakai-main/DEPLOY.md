@@ -179,3 +179,45 @@ audit + flip workflow, but builds via local `gcloud run deploy
 gcloud run services update-traffic sahayakai-hotfix-resilience \
   --region=asia-southeast1 --project=sahayakai-b4248 --to-latest
 ```
+
+---
+
+## Current state (as of 2026-05-21)
+
+**The Cloud Build GitHub trigger described in the "One-time setup"
+section above is NOT currently active.** `gcloud beta builds triggers
+list --project=sahayakai-b4248` returns empty. The GitHub App may have
+been uninstalled or never wired up post-trigger-creation.
+
+**All deploys to prod are currently via `scripts/safe-deploy.sh`** (the
+"emergency" path is the primary path right now). `safe-deploy.sh` is
+now branch-aware:
+
+| Branch       | Deploys to                              |
+|--------------|-----------------------------------------|
+| `main`       | `sahayakai-hotfix-resilience` (PROD)    |
+| `develop`    | `sahayakai-preview` (PREVIEW, staging)  |
+| `hotfix/*`   | `sahayakai-hotfix-resilience` (PROD)    |
+| anything else| ABORT (open PR to develop or main)      |
+
+See [docs/PREVIEW_ENV.md](./docs/PREVIEW_ENV.md) for the preview
+environment.
+
+To re-enable auto-deploy via Cloud Build triggers later:
+
+1. Install the Cloud Build GitHub App per the "One-time setup" section
+   above (manual OAuth).
+2. Run `bash scripts/setup-build-trigger.sh` (prod) and
+   `bash scripts/setup-build-trigger-preview.sh` (preview).
+3. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
+
+## Preview environment
+
+`sahayakai-preview` is a separate Cloud Run service. Auto-deploys from
+develop tip once the GitHub App is reinstalled; until then, manual via
+`safe-deploy.sh` after `git checkout develop`. It is the staging tier
+where features get validated before promotion to prod.
+
+URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`
+
+Full docs: [docs/PREVIEW_ENV.md](./docs/PREVIEW_ENV.md).
