@@ -98,59 +98,84 @@
 
 ## Git Standards & Branching Rules
 
+> Canonical doc: [`sahayakai-main/docs/BRANCHING.md`](sahayakai-main/docs/BRANCHING.md). This section is a summary.
+
 ### Branch Strategy
-- **`main`** — production branch. Auto-deploys to Cloud Run (`sahayakai-hotfix-resilience`) on push. **NEVER commit directly to main.**
-- **`feature/<name>`** — new features (e.g., `feature/jarvis-omniorb`, `feature/chat-phase1`)
-- **`fix/<name>`** — bug fixes and hotfixes (e.g., `fix/vft-audio-input`, `fix/tts-auth`)
-- **`chore/<name>`** — tooling, deps, config (e.g., `chore/update-deps`)
+- **`main`** — production branch. **NEVER commit directly to main.** Only receives merges from `develop` (release PRs) or `hotfix/*` (emergencies). Auto-deploy is DISABLED; prod deploys are manual via `sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout.
+- **`develop`** — integration / staging branch. Source of truth for the `sahayakai-preview` Cloud Run service. Auto-deploys to preview on push (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` from a `develop` checkout until then).
+- **`feature/<name>`** — new features. Branch from `develop`, merge back to `develop` via squash PR.
+- **`fix/<name>`** — bug fixes (non-emergency). Branch from `develop`, merge back to `develop`.
+- **`hotfix/<name>`** — emergency prod fix. Branch from `main`, merge to `main` + back-merge to `develop`.
+- **`chore/<name>`**, **`docs/<name>`**, **`refactor/<name>`** — same pattern as `fix/*`.
+
+Legacy aliases (`feat/*`, `bugfix/*`, `audit/*`, `polish/*`) are deprecated — use canonical names. Cleanup PR pending.
 
 ### Workflow (mandatory)
-```
-# 1. Always branch off main
-git checkout main && git pull origin main
+```bash
+# 1. Always branch off develop (use main only for hotfix)
+git checkout develop && git pull origin develop --ff-only
 git checkout -b fix/<descriptive-name>
 
 # 2. Make changes, commit with conventional commits
 git add <specific files>   # never git add -A or git add .
 git commit -m "fix(scope): description"
 
-# 3. Merge to main via --no-ff so branch is visible in history
-git checkout main
-git merge fix/<name> --no-ff -m "merge(fix): <description>"
-git push origin main
+# 3. Open PR to develop. Squash-merge.
+git push -u origin fix/<name>
+gh pr create --base develop ...
+gh pr merge --squash --delete-branch
 
-# 4. Clean up
-git branch -d fix/<name>
+# 4. (Periodically) Promote develop → main via --no-ff merge PR
+gh pr create --base main --head develop --title "release(YYYY-MM-DD): ..."
+gh pr merge --merge   # --no-ff merge (NOT squash — preserves history)
+
+# 5. Tag the release
+git checkout main && git pull
+git tag release-YYYY-MM-DD
+git push origin release-YYYY-MM-DD
+
+# 6. Deploy
+git checkout main
+bash sahayakai-main/scripts/safe-deploy.sh   # deploys with --no-traffic
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region=asia-southeast1 --to-latest   # flip traffic
+bash sahayakai-main/scripts/smoke-test.sh
 ```
 
 ### Commit Message Convention (Conventional Commits)
 ```
 <type>(<scope>): <short description>
 
-Types: feat | fix | chore | docs | refactor | test | perf | merge
-Scope: cost | tts | vft | quiz | auth | ci | deps | soul | ...
+Types: feat | fix | chore | docs | refactor | test | perf | build | ci | revert | merge
+Scope: cost | tts | vft | quiz | auth | ci | deps | flag | deploy | community | vidya | ...
 
 Examples:
   fix(tts): add Authorization header for prod middleware
   feat(chat): add Firestore real-time message listener
   fix(cost): remove unnecessary grounding from lesson-plan
   chore(deps): upgrade firebase-admin to 13.x
-  merge(fix): vft audio input + cross-page context resolution
+  chore(release): catch up main to develop tip — 65 commits
 ```
 
 ### Rules Claude Must Follow
-1. **Never work directly on `main`.** Always create a `fix/` or `feature/` branch first.
-2. **Never `git add -A` or `git add .`** — stage specific files only (avoid committing .env, secrets, large binaries).
+1. **Never work directly on `main`.** Always create a `fix/`, `feature/`, `chore/`, `docs/`, or `hotfix/` branch first.
+2. **Never `git add -A` or `git add .`** — stage specific files only.
 3. **Never `git push --force`** to main.
 4. **Never `--no-verify`** (skip hooks) unless explicitly asked.
-5. **Merge with `--no-ff`** so branch history is preserved in main's graph.
-6. **Always confirm before `git push`** unless the user says "you have all permissions, deploy".
-7. **Co-author every commit** with `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`.
+5. **Squash merge** for `feature/*`, `fix/*`, `chore/*`, `docs/*` → `develop`. **`--no-ff` merge** for `develop` → `main` and `hotfix/*` → `main` (preserves history for `git bisect` / `git blame`). Never rebase-merge feature branches.
+6. **Always confirm before destructive ops** (force push, branch delete on shared branches, etc.).
+7. **Co-author every commit** with `Co-Authored-By: <agent name> <noreply@anthropic.com>` when an AI agent contributed.
+8. **Use `safe-deploy.sh` only** for prod and preview deploys. It is branch-aware: main → prod, develop → preview, hotfix/* → prod. Other branches are refused.
+9. **Never run raw `gcloud run deploy`** for `sahayakai-hotfix-resilience`. The race-detection and `--no-traffic` guards in `safe-deploy.sh` are the only protection against parallel-session clobbering.
 
 ### Deployment
-- Deployment = `git push origin main`
-- Firebase App Hosting auto-deploys on every push to main
-- Service: `sahayakai-hotfix-resilience` (Cloud Run, asia-south1)
+
+Reality (2026-05-21):
+- **Prod deploy**: `bash sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout, then manual `gcloud run services update-traffic ... --to-latest`. NO auto-deploy on push to main (workflows disabled, Cloud Build trigger not installed).
+- **Preview deploy** (`sahayakai-preview`): `bash sahayakai-main/scripts/safe-deploy.sh` from a `develop` checkout. Will become auto on push to develop once the Cloud Build GitHub App is reinstalled and `scripts/setup-build-trigger-preview.sh` is run.
+- **Service**: `sahayakai-hotfix-resilience` (prod) and `sahayakai-preview` (preview) — Cloud Run, region `asia-southeast1`, project `sahayakai-b4248`.
+
+See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/PREVIEW_ENV.md`](sahayakai-main/docs/PREVIEW_ENV.md) for preview env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
 
 ## Maintenance Log
 *   **2026-01-29:** Project initialized. Discovery Questions answered via strategic analysis. Handshake verified Gemini API link. Created `architecture/lesson_plan_generation_sop.md`.

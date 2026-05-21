@@ -1,0 +1,48 @@
+# CODEOWNERS — auto-assigns reviewers when PRs touch these paths.
+#
+# Solo dev today (@sargupta), but laying ownership in place makes adding
+# contributors trivial later. Also acts as a "did I think about this
+# surface?" checklist for self-review of risky changes.
+#
+# Syntax: <path pattern> <owner1> [owner2 ...]
+# Patterns follow .gitignore semantics. Last matching rule wins.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+
+# Default — everything reviews back to @sargupta
+*                                                       @sargupta
+
+# Deploy / infra — request a second look from self before merging
+/scripts/                                               @sargupta
+/sahayakai-main/scripts/                                @sargupta
+/.github/                                               @sargupta
+/.gcloudignore                                          @sargupta
+/sahayakai-main/.gcloudignore                           @sargupta
+/sahayakai-main/cloudbuild.yaml                         @sargupta
+/sahayakai-main/cloudbuild-preview.yaml                 @sargupta
+/sahayakai-main/Dockerfile                              @sargupta
+/sahayakai-main/apphosting.yaml                         @sargupta
+/sahayakai-main/firestore.rules                         @sargupta
+/sahayakai-main/firestore.indexes.json                  @sargupta
+/sahayakai-main/next.config.*                           @sargupta
+
+# AI flows — high cost-impact surface, every change risks $/call delta
+/sahayakai-main/src/ai/flows/                           @sargupta
+/sahayakai-main/src/ai/schemas/                         @sargupta
+
+# Auth / billing / security-sensitive paths
+/sahayakai-main/src/lib/auth/                           @sargupta
+/sahayakai-main/src/middleware.ts                       @sargupta
+/sahayakai-main/src/lib/plan-config.ts                  @sargupta
+/sahayakai-main/src/lib/plan-*.ts                       @sargupta
+
+# Workflow / branching / deploy docs — keep aligned with reality
+/DEPLOY.md                                              @sargupta
+/sahayakai-main/DEPLOY.md                               @sargupta
+/sahayakai-main/docs/BRANCHING.md                       @sargupta
+/sahayakai-main/docs/PREVIEW_ENV.md                     @sargupta
+/sahayakai-main/docs/ROLLBACK.md                        @sargupta
+/sahayakai-main/docs/FEATURE_FLAGS.md                   @sargupta
+/sahayakai-main/docs/INCIDENTS.md                       @sargupta
+/CHANGELOG.md                                           @sargupta
+/sahayakai-main/CHANGELOG.md                            @sargupta
