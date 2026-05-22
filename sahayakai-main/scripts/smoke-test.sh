@@ -94,15 +94,22 @@ echo "--- Page Routes ---"
 check "Home"                "$BASE/"
 check "Lesson Plan"         "$BASE/lesson-plan"
 check "Attendance"          "$BASE/attendance"
-check "Library"             "$BASE/library"
+check "My Library"          "$BASE/my-library"
+check "Community Library"   "$BASE/community-library"
 check "Community"           "$BASE/community"
-check "Visual Aid"          "$BASE/visual-aid"
+check "Visual Aid Creator"  "$BASE/visual-aid-creator"
+check "Visual Aid Designer" "$BASE/visual-aid-designer"
 
-# ── API routes (public) ─────────────────────────────────────────────────────
+# ── API routes ──────────────────────────────────────────────────────────────
+# These routes accept POST only and reject empty-body requests with 400
+# (Bad Request). 400 confirms the route exists and the handler ran. Both
+# moved from public-GET to validated-POST in the develop catch-up
+# (release-2026-05-21) — smoke test was previously testing GET 200 and
+# silently failing for weeks.
 echo ""
 echo "--- API Routes ---"
-check "Teacher Activity"    "$BASE/api/teacher-activity"  # public — no auth needed
-check "Metrics"             "$BASE/api/metrics"            # public
+check_post "Teacher Activity (empty body)"  "$BASE/api/teacher-activity"  "400"
+check_post "Metrics (empty body)"           "$BASE/api/metrics"           "400"
 
 # ── Security — confirm /admin and AI POST routes require auth ───────────────
 echo ""
