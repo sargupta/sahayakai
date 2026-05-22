@@ -13,12 +13,17 @@
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
+PROJECT_NUMBER="${PROJECT_NUMBER:-640589855975}"
 TRIGGER_NAME="${TRIGGER_NAME:-sahayakai-preview-deploy}"
 GITHUB_OWNER="${GITHUB_OWNER:-sargupta}"
 GITHUB_REPO="${GITHUB_REPO:-sahayakai}"
 BRANCH_PATTERN="${BRANCH_PATTERN:-^develop$}"
 BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild-preview.yaml}"
 INCLUDED_FILES="${INCLUDED_FILES:-sahayakai-main/**}"
+# Org policy requires a user-managed service account (no Google-managed
+# default). Same compute SA prod uses — has the roles needed for
+# Cloud Build + Cloud Run deploy.
+BUILD_SERVICE_ACCOUNT="${BUILD_SERVICE_ACCOUNT:-projects/$PROJECT_ID/serviceAccounts/$PROJECT_NUMBER-compute@developer.gserviceaccount.com}"
 
 echo "Project:           $PROJECT_ID"
 echo "Trigger:           $TRIGGER_NAME"
@@ -26,6 +31,7 @@ echo "Repo:              github.com/$GITHUB_OWNER/$GITHUB_REPO"
 echo "Branch pattern:    $BRANCH_PATTERN"
 echo "Build config:      $BUILD_CONFIG"
 echo "Included files:    $INCLUDED_FILES"
+echo "Build SA:          $BUILD_SERVICE_ACCOUNT"
 echo
 
 if gcloud beta builds triggers describe "$TRIGGER_NAME" --project="$PROJECT_ID" >/dev/null 2>&1; then
@@ -42,6 +48,7 @@ gcloud beta builds triggers create github \
     --branch-pattern="$BRANCH_PATTERN" \
     --build-config="$BUILD_CONFIG" \
     --included-files="$INCLUDED_FILES" \
+    --service-account="$BUILD_SERVICE_ACCOUNT" \
     --description="On push to develop: build & deploy sahayakai-preview (staging tier). Routes 100% traffic immediately — preview is low-stakes."
 
 echo
