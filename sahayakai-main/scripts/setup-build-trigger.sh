@@ -12,12 +12,18 @@
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
+PROJECT_NUMBER="${PROJECT_NUMBER:-640589855975}"
 TRIGGER_NAME="${TRIGGER_NAME:-sahayakai-main-deploy}"
 GITHUB_OWNER="${GITHUB_OWNER:-sargupta}"
 GITHUB_REPO="${GITHUB_REPO:-sahayakai}"
 BRANCH_PATTERN="${BRANCH_PATTERN:-^main$}"
 BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild.yaml}"
 INCLUDED_FILES="${INCLUDED_FILES:-sahayakai-main/**}"
+# Org policy requires a user-managed service account (no Google-managed
+# default). The compute SA already has roles/run.admin + roles/editor +
+# roles/secretmanager.secretAccessor — enough to build images, push to
+# Artifact Registry, and deploy Cloud Run.
+BUILD_SERVICE_ACCOUNT="${BUILD_SERVICE_ACCOUNT:-projects/$PROJECT_ID/serviceAccounts/$PROJECT_NUMBER-compute@developer.gserviceaccount.com}"
 
 echo "Project:           $PROJECT_ID"
 echo "Trigger:           $TRIGGER_NAME"
@@ -25,6 +31,7 @@ echo "Repo:              github.com/$GITHUB_OWNER/$GITHUB_REPO"
 echo "Branch pattern:    $BRANCH_PATTERN"
 echo "Build config:      $BUILD_CONFIG"
 echo "Included files:    $INCLUDED_FILES"
+echo "Build SA:          $BUILD_SERVICE_ACCOUNT"
 echo
 
 if gcloud beta builds triggers describe "$TRIGGER_NAME" --project="$PROJECT_ID" >/dev/null 2>&1; then
@@ -41,6 +48,7 @@ gcloud beta builds triggers create github \
     --branch-pattern="$BRANCH_PATTERN" \
     --build-config="$BUILD_CONFIG" \
     --included-files="$INCLUDED_FILES" \
+    --service-account="$BUILD_SERVICE_ACCOUNT" \
     --description="On push to main: build & deploy sahayakai-hotfix-resilience with --no-traffic. Operator flips traffic manually."
 
 echo
