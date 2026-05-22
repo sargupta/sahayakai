@@ -16,6 +16,39 @@ are queued on develop but not yet released to prod.)
 
 ---
 
+## [2026-05-22] — `release-2026-05-22` (auto-deploy pipeline validated + /api/health build provenance)
+
+First release ridden end-to-end on the new Cloud Build trigger pipeline (PR #43 set it up, this release proves it works).
+
+PRs: [#47](https://github.com/sargupta/sahayakai/pull/47), [#48](https://github.com/sargupta/sahayakai/pull/48), [#49](https://github.com/sargupta/sahayakai/pull/49), [#50](https://github.com/sargupta/sahayakai/pull/50), [#51](https://github.com/sargupta/sahayakai/pull/51) (smoke test fix on develop only, will flow with next release).
+
+### Added
+
+- **`/api/health` build provenance** — response now includes a `build` object with `gitSha` (`$SHORT_SHA`), `gitShaFull` (`$COMMIT_SHA`), `buildId` (Cloud Build run UUID). Answers "which SHA is live RIGHT NOW?" with one curl. Local builds report `"local"`.
+- **Auto-deploy on push to `develop`** — Cloud Build trigger `sahayakai-preview-deploy` runs `cloudbuild-preview.yaml` → deploys to `sahayakai-preview` with 100% traffic.
+- **Auto-deploy on push to `main`** — Cloud Build trigger `sahayakai-main-deploy` runs `cloudbuild.yaml` → deploys prod with `--no-traffic --tag=sha-<sha>`. Manual `gcloud run services update-traffic --to-latest` still required to expose new code to users (intentional safety gate).
+
+### Changed
+
+- **`scripts/setup-build-trigger.sh` + `setup-build-trigger-preview.sh`** now pass `--service-account` (org policy requires user-managed SA). Defaults to `640589855975-compute@developer.gserviceaccount.com` (same SA prod Cloud Run already runs as).
+- **`cloudbuild.yaml` + `cloudbuild-preview.yaml`** build step has `dir: sahayakai-main` so docker finds the Dockerfile at the correct path inside the monorepo `/workspace`.
+- **`Dockerfile`** accepts `GIT_SHA`, `GIT_SHA_FULL`, `BUILD_ID` build args (forwarded to runtime ENV in both builder + runner stages).
+- **`scripts/smoke-test.sh`** updated for the `release-2026-05-21` renames: `/library` → `/my-library` + `/community-library`, `/visual-aid` → `/visual-aid-creator` + `/visual-aid-designer`, `/api/teacher-activity` + `/api/metrics` from GET 200 to POST 400 (route exists, bad payload). All checks now pass against prod. **(PR #51 — on develop, ships with next release.)**
+
+### Fixed
+
+- Console UI created `sahayakai-main-deploy` with wrong filename (`cloudbuild.yaml` instead of `sahayakai-main/cloudbuild.yaml`) — would have 404'd. Recreated via CLI with the correct path.
+
+### Operational notes
+
+- Prod revision: `sahayakai-hotfix-resilience-00451-fov`, image `sha256:...`, tag `sha-df0b938`.
+- Previous revision: `sahayakai-hotfix-resilience-00449-puj` (release-2026-05-21, `dep-6e448e013`).
+- Verified live: `curl https://sahayakai.com/api/health` → `build.gitSha = "df0b938"`.
+- Smoke test passing on all routes after PR #51 (still on develop).
+- Cloud Build GitHub App reinstalled by user mid-day 2026-05-22 — triggers now firing automatically on push to main and develop.
+
+---
+
 ## [2026-05-21] — `release-2026-05-21` (catch-up release + workflow rationalization)
 
 `main` was 65 commits behind `develop` (which had been the de facto
