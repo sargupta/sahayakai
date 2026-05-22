@@ -26,8 +26,13 @@ substitutions:
 
 steps:
   # ── 1. Build ──────────────────────────────────────────────────────────────
+  # `dir: sahayakai-main` is required: Cloud Build clones the WHOLE repo
+  # to /workspace, so without this step's `dir`, --file=Dockerfile would
+  # resolve to /workspace/Dockerfile (which doesn't exist — Dockerfile
+  # lives at /workspace/sahayakai-main/Dockerfile).
   - id: build
     name: gcr.io/cloud-builders/docker
+    dir: sahayakai-main
     args:
       - build
       - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
