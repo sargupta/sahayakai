@@ -6,6 +6,15 @@ export async function GET() {
         status: 'healthy',
         version: process.env.npm_package_version || 'unknown',
         environment: process.env.NODE_ENV || 'unknown',
+        // Build-time provenance. Injected via Docker --build-arg from
+        // Cloud Build's $SHORT_SHA / $COMMIT_SHA / $BUILD_ID. Lets us
+        // answer "which SHA is live RIGHT NOW?" with one curl.
+        // Local `npm run build` reports "local" for all three.
+        build: {
+            gitSha: process.env.GIT_SHA || 'unknown',
+            gitShaFull: process.env.GIT_SHA_FULL || 'unknown',
+            buildId: process.env.BUILD_ID || 'unknown',
+        },
         checks: {
             server: {
                 healthy: true,
