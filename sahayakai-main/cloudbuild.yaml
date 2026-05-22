@@ -42,6 +42,9 @@ steps:
       - build
       - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
       - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+      - --build-arg=GIT_SHA=$SHORT_SHA
+      - --build-arg=GIT_SHA_FULL=$COMMIT_SHA
+      - --build-arg=BUILD_ID=$BUILD_ID
       - --file=Dockerfile
       - .
 

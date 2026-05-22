@@ -37,6 +37,9 @@ steps:
       - build
       - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:$SHORT_SHA
       - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:latest
+      - --build-arg=GIT_SHA=$SHORT_SHA
+      - --build-arg=GIT_SHA_FULL=$COMMIT_SHA
+      - --build-arg=BUILD_ID=$BUILD_ID
       - --file=Dockerfile
       - .
 
