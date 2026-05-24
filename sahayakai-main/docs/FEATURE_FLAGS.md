@@ -77,6 +77,7 @@ npx tsx src/scripts/update-flags.ts --kill-switch true
 | `communityPersonas` | `POST /api/community/persona-pulse` | enabled | New persona-pulse messages stop. Existing seeded messages remain (filter on `community_chat` where `isDemoPersona: true` would be needed for full hide). | #53 |
 | `assessmentScannerDemoMode` | `POST /api/ai/assessment-scanner` page-cap check | enabled (cap = 3) | DISABLED bumps server cap to 15 (schema ceiling). Client UI still enforces 3 today — full bump needs client-side flag plumbing (Task 15a). Server-side flag still useful as a kill switch / for API-direct callers. | #58 |
 | `ncertChapterValidation` | `src/ai/flows/exam-paper-generator.ts` soft validation block | enabled | Skips chapter validation entirely. Useful when the NCERT chapter seed is stale and the teacher's correct chapter triggers a false-positive warning. | #58 |
+| `geminiFlash2_0` | `src/lib/ai-models.ts` (`getActiveGeminiModel()`) | enabled | DISABLED falls back from `gemini-2.0-flash` to `gemini-2.5-pro`. **Resolver only landed in this PR** — individual flow wraps follow incrementally. Until each call site is wrapped, that site keeps using `2.0-flash` unconditionally. `.prompt` YAML frontmatter (used by `ai.prompt()` calls) cannot read the flag and stays on `FLASH_2_0` — those need runtime model override (`prompt.generate({ model: ... })`) to participate. | #61 |
 
 To kill `communityPersonas` in prod (e.g., once real-teacher volume on `/community` warrants):
 
