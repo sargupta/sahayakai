@@ -116,14 +116,19 @@ export function useCommunityLivePulse(options: Options = {}) {
               );
             } else if (res.status === 503) {
               // Server has disabled the feature via
-              // system_config/feature_flags.features.communityPersonas. Stop
-              // polling — do not reschedule. The hook will reactivate on next
-              // page mount (when the feature flag is flipped back ON).
+              // system_config/feature_flags.features.communityPersonas.
+              // Pause polling but schedule ONE retry tick 15 minutes out so
+              // the hook recovers automatically if the flag is flipped back
+              // ON (without requiring a page remount). If 503 fires again
+              // on the retry, another 15-min pause schedules.
               const text = await res.text().catch(() => '');
+              const RETRY_AFTER_503_MS = 15 * 60 * 1000;
               console.log(
-                `[persona-pulse] disabled by feature flag (503): ${text.slice(0, 200)} — stopping`,
+                `[persona-pulse] disabled by feature flag (503): ${text.slice(0, 200)} — pausing ${RETRY_AFTER_503_MS / 60000}min`,
               );
-              mountedRef.current = false;
+              if (mountedRef.current) {
+                timerRef.current = setTimeout(fireTick, RETRY_AFTER_503_MS);
+              }
               return;
             } else {
               const text = await res.text().catch(() => '');
