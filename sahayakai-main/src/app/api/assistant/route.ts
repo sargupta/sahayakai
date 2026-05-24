@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
 // Keyed on: normalised_message + "::" + screen_path
@@ -201,9 +202,21 @@ async function _handler(req: Request) {
         // OmniOrb's same-URL `router.refresh()` path handles the visible
         // re-mount on a true repeat; here we just ensure the LLM gets to
         // re-classify rather than parroting itself.
+        //
+        // Feature flag: vidyaIntentCacheGate
+        //   ENABLED  (default) — apply the tool-trigger exclusion above
+        //                         (current behavior since commit 514d33928)
+        //   DISABLED            — cache everything (revert to pre-fix
+        //                         behavior, useful for cost-reduction
+        //                         investigation)
+        // Flip in Firestore: system_config/feature_flags.features
+        //   .vidyaIntentCacheGate.enabled = false
+        const cacheGate = await isFeatureEnabled('vidyaIntentCacheGate', userId);
         const isCacheable = isFreshQuery
-            && !dispatched.action
-            && (!dispatched.plannedActions || dispatched.plannedActions.length === 0);
+            && (!cacheGate.enabled || (
+                !dispatched.action
+                && (!dispatched.plannedActions || dispatched.plannedActions.length === 0)
+            ));
         if (isCacheable) {
             setCachedIntent(cacheKey, wireResponse);
             // Async, non-blocking — never awaited.

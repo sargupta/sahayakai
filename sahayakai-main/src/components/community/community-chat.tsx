@@ -5,6 +5,7 @@ import { collection, query, orderBy, limitToLast, onSnapshot, Timestamp } from "
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { useFeatureFlag } from "@/context/feature-flags-context";
 import { sendChatMessageAction } from "@/app/actions/community";
 import { sendGroupChatMessageAction } from "@/app/actions/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,6 +51,13 @@ export function CommunityChat({
 }: CommunityChatProps = {}) {
     const { user } = useAuth();
     const { t } = useLanguage();
+    // Feature flag: communityPersonas
+    //   ENABLED (default) — show all messages (including seeded
+    //                       isDemoPersona: true demo personas)
+    //   DISABLED          — filter out isDemoPersona messages client-side
+    //                       (server already stopped writing new ones from
+    //                       persona-pulse via PR #53's wrap)
+    const personasEnabled = useFeatureFlag('communityPersonas');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -71,15 +79,22 @@ export function CommunityChat({
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            setMessages(snapshot.docs.map((doc) => ({
+            const all = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...(doc.data() as Omit<ChatMessage, "id">),
-            })));
+            }));
+            // Filter out seeded demo personas when the communityPersonas
+            // flag is disabled. Real-user messages (no isDemoPersona
+            // marker) always render.
+            const visible = personasEnabled
+                ? all
+                : all.filter((m) => !(m as { isDemoPersona?: boolean }).isDemoPersona);
+            setMessages(visible);
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [collectionPath]);
+    }, [collectionPath, personasEnabled]);
 
     // Auto-scroll on new messages — but ONLY if the user is already near the
     // bottom. Yanking them back when they're scrolled up reading history is
