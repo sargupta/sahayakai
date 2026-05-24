@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# commit-msg hook — enforce Conventional Commits format.
+#
+# Run automatically by git on `git commit` once the message is composed
+# (after pre-commit). Installed by scripts/install-hooks.sh into
+# .git/hooks/commit-msg.
+#
+# Accepted format:
+#   <type>(<scope>): <subject>
+#
+# Types: feat | fix | chore | docs | refactor | test | perf | build | ci | revert | merge
+# Scope: optional but recommended; lowercase, kebab-case
+# Subject: ≤72 chars, imperative mood, no trailing period
+#
+# Allowed exceptions:
+#   - Merge commits (`Merge ...`)
+#   - Revert commits (`Revert "..."`)
+#   - Squash / fixup commits (`fixup! ...`, `squash! ...`)
+#   - GitHub merge-PR commits (`Merge pull request #N from ...`)
+#
+# Override: set SKIP_COMMITLINT=1 in env.
+
+set -euo pipefail
+
+# $1 is the path to the commit message file (typically .git/COMMIT_EDITMSG)
+COMMIT_MSG_FILE="${1:?commit-msg hook: missing file path argument}"
+
+if [[ ! -f "$COMMIT_MSG_FILE" ]]; then
+    echo "commit-msg: file not found: $COMMIT_MSG_FILE" >&2
+    exit 1
+fi
+
+# Override switch — useful for emergencies.
+if [[ "${SKIP_COMMITLINT:-0}" == "1" ]]; then
+    echo "commit-msg: SKIP_COMMITLINT=1 — skipping format check"
+    exit 0
+fi
+
+# Read the first non-empty, non-comment line as the subject.
+SUBJECT=""
+while IFS= read -r line || [[ -n "$line" ]]; do
+    # Skip comment lines (git writes them when an editor is used).
+    [[ "$line" =~ ^# ]] && continue
+    # Skip blank lines before the subject.
+    if [[ -z "$SUBJECT" && -z "$line" ]]; then continue; fi
+    SUBJECT="$line"
+    break
+done < "$COMMIT_MSG_FILE"
+
+if [[ -z "$SUBJECT" ]]; then
+    echo "✗ commit-msg: empty commit message" >&2
+    exit 1
+fi
+
+# Allow merge / revert / squash exceptions.
+case "$SUBJECT" in
+    Merge\ *)      exit 0 ;;
+    Revert\ *)     exit 0 ;;
+    fixup!\ *)     exit 0 ;;
+    squash!\ *)    exit 0 ;;
+    amend!\ *)     exit 0 ;;
+esac
+
+# Conventional Commit regex (intentionally lenient — scope optional).
+# Format: type(scope): subject  OR  type: subject  OR  type!: subject (breaking)
+PATTERN='^(feat|fix|chore|docs|refactor|test|perf|build|ci|revert|merge)(\([a-z0-9._-]+\))?!?:[[:space:]].{1,}$'
+
+if [[ ! "$SUBJECT" =~ $PATTERN ]]; then
+    cat <<EOF >&2
+✗ commit-msg: subject line does not match Conventional Commits format.
+
+Got:
+    $SUBJECT
+
+Expected:
+    <type>(<scope>): <subject>
+    <type>: <subject>
+    <type>!: <subject>   (for breaking changes)
+
+Types: feat | fix | chore | docs | refactor | test | perf | build | ci | revert | merge
+
+Examples:
+    fix(deploy): resolve gcloudignore merge markers
+    feat(flags): wrap Community Personas behind feature flag
+    chore(release): catch up main to develop tip
+
+To bypass in an emergency: SKIP_COMMITLINT=1 git commit ...
+See docs/BRANCHING.md for the full convention.
+EOF
+    exit 1
+fi
+
+# Soft length check on subject (warn, don't block — block would be too strict).
+SUBJECT_LEN=${#SUBJECT}
+if [[ "$SUBJECT_LEN" -gt 100 ]]; then
+    echo "⚠ commit-msg: subject is ${SUBJECT_LEN} chars (>100 — consider shortening, but allowed)"
+fi
+
+exit 0
