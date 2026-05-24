@@ -96,14 +96,25 @@ fi
 
 # Guard 1: ongoing builds. Filter by the target service so a preview build
 # doesn't block a prod deploy and vice versa.
+#
+# The OR-filter catches two cases:
+#   a) Builds with substitutions._SERVICE set (canonical — set by our
+#      cloudbuild.yaml + cloudbuild-preview.yaml).
+#   b) Builds that DON'T set the substitution but DO push to the
+#      service's image path (manual `gcloud builds submit`, externally
+#      triggered builds, legacy YAMLs). Without the OR, those would be
+#      invisible to the guard and the race window would re-open.
+#
+# `images:<prefix>` is a substring match against the build's images list.
 echo "▸ guard 1/4: checking for ongoing Cloud Build jobs targeting $SERVICE..."
+build_filter="(substitutions._SERVICE=$SERVICE) OR (images:asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/$SERVICE)"
 ongoing=$(gcloud builds list --ongoing --project="$PROJECT_ID" \
-    --filter="substitutions._SERVICE=$SERVICE" \
+    --filter="$build_filter" \
     --format="value(id)" 2>/dev/null | wc -l | tr -d '[:space:]')
 if [[ "$ongoing" -gt 0 ]]; then
     echo "✗ ABORT: $ongoing Cloud Build job(s) for $SERVICE are running:"
     gcloud builds list --ongoing --project="$PROJECT_ID" \
-        --filter="substitutions._SERVICE=$SERVICE" \
+        --filter="$build_filter" \
         --format="table(id,createTime,status)" | head -10
     echo "  Wait for them to finish, then retry. If you must override, run:"
     echo "    gcloud builds cancel <BUILD_ID> --project=$PROJECT_ID"
@@ -111,8 +122,19 @@ if [[ "$ongoing" -gt 0 ]]; then
 fi
 echo "  ✓ no ongoing builds targeting $SERVICE."
 
-# Guard 2: too-recent revision
+# Guard 2: too-recent revision.
+#
+# Hotfix exception: when deploying from a hotfix/* branch, the operator
+# is responding to a live incident — they cannot wait 90s for the
+# baseline threshold if a normal release just shipped. Relax to 10s.
+# That's still long enough to detect two hotfixes racing within seconds
+# of each other.
 echo "▸ guard 2/4: checking last revision age for $SERVICE..."
+age_threshold="$MIN_REVISION_AGE_SECONDS"
+if [[ "$HEAD_BRANCH" == hotfix/* ]]; then
+    age_threshold=10
+    echo "  ▸ hotfix branch — relaxing revision-age threshold to ${age_threshold}s"
+fi
 last_iso=$(gcloud run revisions list \
     --service="$SERVICE" --region="$REGION" --project="$PROJECT_ID" \
     --limit=1 --format="value(metadata.creationTimestamp)" 2>/dev/null)
@@ -123,13 +145,13 @@ if [[ -n "$last_iso" ]]; then
     if last_epoch=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$last_clean" +%s 2>/dev/null); then
         now_epoch=$(date -u +%s)
         age=$(( now_epoch - last_epoch ))
-        if [[ "$age" -lt "$MIN_REVISION_AGE_SECONDS" ]]; then
-            echo "✗ ABORT: last revision was created $age s ago (< $MIN_REVISION_AGE_SECONDS s)."
+        if [[ "$age" -lt "$age_threshold" ]]; then
+            echo "✗ ABORT: last revision was created $age s ago (< ${age_threshold} s)."
             echo "  Another session probably just deployed. Wait, then verify via:"
             echo "    gcloud run revisions list --service=$SERVICE --region=$REGION --project=$PROJECT_ID --limit=3"
             exit 3
         fi
-        echo "  ✓ last revision is $age s old (≥ $MIN_REVISION_AGE_SECONDS s)."
+        echo "  ✓ last revision is $age s old (≥ ${age_threshold} s)."
     else
         echo "  ⚠ could not parse revision timestamp — proceeding anyway."
     fi
