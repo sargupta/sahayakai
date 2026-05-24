@@ -12,6 +12,7 @@ import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { findBlueprint } from '@/ai/data/board-blueprints';
 import type { PYQQuestion, PYQRetrievalOptions } from '@/lib/services/pyq-retrieval-service';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 const ExamPaperInputSchema = z.object({
   board: z.string().describe("The education board (e.g., 'CBSE', 'ICSE')."),
@@ -256,24 +257,34 @@ const examPaperGeneratorFlow = ai.defineFlow(
       // Soft NCERT chapter validation — best-effort, never blocks generation.
       // Each chapter the teacher selected is validated; warnings aggregate
       // into the output for the UI to surface.
+      //
+      // Feature flag: ncertChapterValidation
+      //   ENABLED (default) — run the soft validation, surface warnings
+      //   DISABLED          — skip entirely (silences warnings when the
+      //                       NCERT chapter seed gets stale or wrong)
+      // Flip in Firestore: system_config/feature_flags.features
+      //   .ncertChapterValidation.enabled = false
       const validationWarnings: ValidationWarning[] = [];
+      const ncertFlag = await isFeatureEnabled('ncertChapterValidation', input.userId ?? 'system');
       try {
-        for (const chapter of input.chapters ?? []) {
-          const w = validateChapterForFlow({
-            gradeLevel: input.gradeLevel,
-            subject: input.subject,
-            chapter,
-          });
-          if (w) validationWarnings.push(w);
-        }
-        if (validationWarnings.length > 0) {
-          StructuredLogger.warn('NCERT chapter validation flagged exam-paper input', {
-            service: 'exam-paper-generator-flow',
-            operation: 'ncertValidation',
-            userId: input.userId,
-            requestId,
-            metadata: { warnings: validationWarnings },
-          });
+        if (ncertFlag.enabled) {
+          for (const chapter of input.chapters ?? []) {
+            const w = validateChapterForFlow({
+              gradeLevel: input.gradeLevel,
+              subject: input.subject,
+              chapter,
+            });
+            if (w) validationWarnings.push(w);
+          }
+          if (validationWarnings.length > 0) {
+            StructuredLogger.warn('NCERT chapter validation flagged exam-paper input', {
+              service: 'exam-paper-generator-flow',
+              operation: 'ncertValidation',
+              userId: input.userId,
+              requestId,
+              metadata: { warnings: validationWarnings },
+            });
+          }
         }
       } catch (validationError) {
         StructuredLogger.warn('NCERT validation threw (non-blocking)', {

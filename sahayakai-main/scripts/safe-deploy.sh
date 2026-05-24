@@ -215,7 +215,11 @@ DEPLOY_FLAGS=(
 )
 
 if [[ "$ROUTE_IMMEDIATELY" -eq 0 ]]; then
-    DEPLOY_FLAGS+=( --no-traffic --tag="dep-$HEAD_SHA" )
+    # Tag prefix `sha-` matches cloudbuild.yaml's --tag=sha-$SHORT_SHA so
+    # `audit-deployments.sh` and operator queries see one consistent
+    # convention across local + trigger-based deploys. Older revisions
+    # tagged `dep-<sha>` (pre-release-2026-05-22.3) remain immutable.
+    DEPLOY_FLAGS+=( --no-traffic --tag="sha-$HEAD_SHA" )
     echo "▸ deploying with --no-traffic (revision will NOT auto-receive traffic)."
     echo "  After deploy, flip traffic explicitly:"
     echo "    gcloud run services update-traffic $SERVICE --region=$REGION --project=$PROJECT_ID --to-latest"
