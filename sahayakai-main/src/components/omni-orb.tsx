@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useAuth } from "@/context/auth-context";
+import { useFeatureFlag } from "@/context/feature-flags-context";
+import { stripRedundantGreeting } from "@/lib/vidya-greeting-suppressor";
 import { auth } from "@/lib/firebase";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { Button } from "@/components/ui/button";
@@ -76,6 +78,15 @@ export function OmniOrb() {
     const pathname = usePathname();
     const { user } = useAuth();
     const { toast } = useToast();
+    // Feature flag: vidyaGreetingSuppressor
+    //   ENABLED (default) — strip redundant opening greetings ("Namaste",
+    //                       "Sure", "Of course") after the first model
+    //                       turn so VIDYA doesn't sound like a chatbot
+    //                       in a multi-turn conversation. See
+    //                       src/lib/vidya-greeting-suppressor.ts.
+    //   DISABLED          — leave the LLM output untouched (revert to
+    //                       pre-suppressor behavior).
+    const greetingSuppressorEnabled = useFeatureFlag('vidyaGreetingSuppressor');
     const {
         chatHistory,
         addMessage,
@@ -441,8 +452,17 @@ export function OmniOrb() {
             });
 
             if (response) {
-                addMessage("model", response);
-                tts.speak(response, bcp47Lang);
+                // Apply greeting suppressor when the user is mid-conversation
+                // (effectiveChatHistory already has at least one model turn).
+                // First-turn replies keep their warm opener.
+                const prevHadModelTurn = effectiveChatHistory.some(
+                    (m) => m.role === 'model',
+                );
+                const finalResponse = greetingSuppressorEnabled
+                    ? stripRedundantGreeting(response, { prevHadModelTurn })
+                    : response;
+                addMessage("model", finalResponse);
+                tts.speak(finalResponse, bcp47Lang);
             } else {
                 // Empty response WITH no action is the silent-failure mode
                 // we hit on demo day before. Surface it so the teacher
