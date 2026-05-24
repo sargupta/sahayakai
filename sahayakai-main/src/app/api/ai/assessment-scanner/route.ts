@@ -28,11 +28,13 @@
 import { NextResponse } from 'next/server';
 import {
     ASSESSMENT_DEMO_PAGE_CAP,
+    ASSESSMENT_MAX_PAGES,
     ASSESSMENT_SUPPORTED_SUBJECTS,
     AssessmentScannerInputSchema,
 } from '@/ai/schemas/assessment-scanner-schemas';
 import { gradeAssessment } from '@/ai/flows/assessment-scanner';
 import { handleAIError } from '@/lib/ai-error-response';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import { withPlanCheck } from '@/lib/plan-guard';
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
@@ -114,13 +116,24 @@ async function _handler(request: Request) {
                 { status: 400 },
             );
         }
-        if (pageUrls.length > ASSESSMENT_DEMO_PAGE_CAP) {
+        // Feature flag: assessmentScannerDemoMode
+        //   ENABLED (default) — cap at ASSESSMENT_DEMO_PAGE_CAP (3, demo)
+        //   DISABLED          — cap at ASSESSMENT_MAX_PAGES (15, schema)
+        // Flip in Firestore: system_config/feature_flags.features
+        //   .assessmentScannerDemoMode.enabled = false
+        // Note: client UI also caps at ASSESSMENT_DEMO_PAGE_CAP today, so
+        // flipping the server flag without a matching client-side change
+        // only affects API callers that bypass the UI. See FEATURE_FLAGS.md
+        // for client-side flag plumbing (Task 15a, separate PR).
+        const demoMode = await isFeatureEnabled('assessmentScannerDemoMode', userId);
+        const effectivePageCap = demoMode.enabled ? ASSESSMENT_DEMO_PAGE_CAP : ASSESSMENT_MAX_PAGES;
+        if (pageUrls.length > effectivePageCap) {
             return NextResponse.json(
                 {
                     error: 'PAGE_LIMIT_EXCEEDED',
-                    message: `Up to ${ASSESSMENT_DEMO_PAGE_CAP} pages per scan in the current release. You sent ${pageUrls.length}. Please split into multiple scans.`,
+                    message: `Up to ${effectivePageCap} pages per scan in the current release. You sent ${pageUrls.length}. Please split into multiple scans.`,
                     code: 'PAGE_LIMIT_EXCEEDED',
-                    maxPages: ASSESSMENT_DEMO_PAGE_CAP,
+                    maxPages: effectivePageCap,
                     receivedPages: pageUrls.length,
                 },
                 { status: 400 },

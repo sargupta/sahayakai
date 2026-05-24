@@ -74,7 +74,9 @@ npx tsx src/scripts/update-flags.ts --kill-switch true
 
 | Feature key | Where it gates | Default | Kill effect | PR |
 |---|---|---|---|---|
-| `communityPersonas` | `POST /api/community/persona-pulse` | enabled | New persona-pulse messages stop. Existing seeded messages remain (filter on `community_chat` where `isDemoPersona: true` would be needed for full hide). | this release |
+| `communityPersonas` | `POST /api/community/persona-pulse` | enabled | New persona-pulse messages stop. Existing seeded messages remain (filter on `community_chat` where `isDemoPersona: true` would be needed for full hide). | #53 |
+| `assessmentScannerDemoMode` | `POST /api/ai/assessment-scanner` page-cap check | enabled (cap = 3) | DISABLED bumps server cap to 15 (schema ceiling). Client UI still enforces 3 today — full bump needs client-side flag plumbing (Task 15a). Server-side flag still useful as a kill switch / for API-direct callers. | #58 |
+| `ncertChapterValidation` | `src/ai/flows/exam-paper-generator.ts` soft validation block | enabled | Skips chapter validation entirely. Useful when the NCERT chapter seed is stale and the teacher's correct chapter triggers a false-positive warning. | #58 |
 
 To kill `communityPersonas` in prod (e.g., once real-teacher volume on `/community` warrants):
 
