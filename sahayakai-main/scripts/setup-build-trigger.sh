@@ -19,11 +19,16 @@ GITHUB_REPO="${GITHUB_REPO:-sahayakai}"
 BRANCH_PATTERN="${BRANCH_PATTERN:-^main$}"
 BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild.yaml}"
 INCLUDED_FILES="${INCLUDED_FILES:-sahayakai-main/**}"
-# Org policy requires a user-managed service account (no Google-managed
-# default). The compute SA already has roles/run.admin + roles/editor +
-# roles/secretmanager.secretAccessor — enough to build images, push to
-# Artifact Registry, and deploy Cloud Run.
-BUILD_SERVICE_ACCOUNT="${BUILD_SERVICE_ACCOUNT:-projects/$PROJECT_ID/serviceAccounts/$PROJECT_NUMBER-compute@developer.gserviceaccount.com}"
+# Dedicated least-privilege deployer SA (created 2026-05-24, Task 21).
+# Has the minimal roles needed for Cloud Build → Cloud Run deploy:
+#   roles/cloudbuild.builds.builder
+#   roles/run.admin
+#   roles/artifactregistry.writer
+#   roles/logging.logWriter
+#   roles/secretmanager.secretAccessor
+#   roles/iam.serviceAccountUser (on the Cloud Run runtime SA — compute SA)
+# Previously used the default compute SA with roles/editor (overprivileged).
+BUILD_SERVICE_ACCOUNT="${BUILD_SERVICE_ACCOUNT:-projects/$PROJECT_ID/serviceAccounts/cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com}"
 
 echo "Project:           $PROJECT_ID"
 echo "Trigger:           $TRIGGER_NAME"
