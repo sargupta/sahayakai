@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { AuthProvider } from '@/context/auth-context';
+import { FeatureFlagsProvider } from '@/context/feature-flags-context';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 import { StructuredData } from '@/components/structured-data';
 import { AppShell } from './app-shell';
@@ -126,8 +127,10 @@ export default function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning>
         <LanguageProvider>
           <AuthProvider>
-            <AppShell>{children}</AppShell>
-            <AuthDialog />
+            <FeatureFlagsProvider>
+              <AppShell>{children}</AppShell>
+              <AuthDialog />
+            </FeatureFlagsProvider>
           </AuthProvider>
           <Toaster />
         </LanguageProvider>
