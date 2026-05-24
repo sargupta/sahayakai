@@ -15,14 +15,9 @@ output/
 # and the negation below can re-include the api-test subtree, which is
 # imported at runtime by src/lib/openapi-spec.ts -> /api/api-docs).
 # Plain `scripts/` (dir-level) hides everything inside so the negation
-<<<<<<< HEAD
-# cannot work. See commit 1054ff1f3 (fix(deploy): correct .gcloudignore
-# negation syntax) — this is the second time this has regressed.
-=======
 # cannot work. See commits 1054ff1f3 and a2462fee2 — this is the third
 # time this pattern has regressed via a sync-from-main merge. DO NOT
 # replace these two lines with `scripts/`.
->>>>>>> origin/develop
 scripts/*
 !scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
