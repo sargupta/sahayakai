@@ -140,9 +140,21 @@ last_iso=$(gcloud run revisions list \
     --limit=1 --format="value(metadata.creationTimestamp)" 2>/dev/null)
 
 if [[ -n "$last_iso" ]]; then
-    # Strip nanoseconds + Z, then convert to epoch (BSD date — macOS)
-    last_clean="${last_iso:0:19}"
-    if last_epoch=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$last_clean" +%s 2>/dev/null); then
+    # Cross-platform ISO-8601 parse. BSD `date -j -u -f` only works on
+    # macOS; GNU `date -d` only works on Linux. python3 ships on macOS,
+    # Cloud Build builders, GH Actions Linux runners. Fail-soft: if
+    # python3 missing or parse fails, skip the age check rather than
+    # block deploy.
+    last_epoch=$(python3 -c "
+from datetime import datetime
+ts = '$last_iso'
+if '.' in ts:
+    ts = ts.split('.', 1)[0]
+if ts.endswith('Z'):
+    ts = ts[:-1] + '+00:00'
+print(int(datetime.fromisoformat(ts).timestamp()))
+" 2>/dev/null)
+    if [[ -n "$last_epoch" ]]; then
         now_epoch=$(date -u +%s)
         age=$(( now_epoch - last_epoch ))
         if [[ "$age" -lt "$age_threshold" ]]; then
@@ -153,7 +165,7 @@ if [[ -n "$last_iso" ]]; then
         fi
         echo "  ✓ last revision is $age s old (≥ ${age_threshold} s)."
     else
-        echo "  ⚠ could not parse revision timestamp — proceeding anyway."
+        echo "  ⚠ could not parse revision timestamp ($last_iso) — proceeding anyway."
     fi
 fi
 

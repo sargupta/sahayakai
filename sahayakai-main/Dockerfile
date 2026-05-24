@@ -87,6 +87,13 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Build-time assertion: standalone mode must produce server.js. If a
+# future next.config drops `output: 'standalone'`, the COPY above
+# silently copies an empty tree and CMD ["node","server.js"] fails at
+# runtime instead of build time. This RUN turns the silent failure into
+# a loud build failure.
+RUN test -f server.js || { echo "ERROR: server.js missing — check next.config 'output: standalone'"; exit 1; }
+
 USER nextjs
 
 EXPOSE 3000
