@@ -53,9 +53,11 @@ SERVICE_EXPLICIT="${SERVICE:-}"
 SERVICE=""
 
 ROUTE_IMMEDIATELY=0
+I_KNOW=0
 for arg in "$@"; do
     case "$arg" in
         --route-immediately) ROUTE_IMMEDIATELY=1 ;;
+        --i-know-what-im-doing) I_KNOW=1 ;;
         --help|-h)
             sed -n '2,30p' "$0"
             exit 0
@@ -71,6 +73,26 @@ echo "▸ guard 0/4: branch-aware service selection..."
 HEAD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 if [[ -n "$SERVICE_EXPLICIT" ]]; then
+    # SERVICE override is fine when the operator is on a known deploy
+    # branch (just retargeting to a different service for testing).
+    # But from a feature/fix/* branch combined with --route-immediately,
+    # it can ship random WIP straight to prod. Require an explicit
+    # --i-know-what-im-doing flag for that combination.
+    case "$HEAD_BRANCH" in
+        main|develop|hotfix/*) ;;
+        *)
+            if [[ "$I_KNOW" -ne 1 ]]; then
+                echo "✗ ABORT: SERVICE explicitly set to '$SERVICE_EXPLICIT' from non-deploy branch '$HEAD_BRANCH'."
+                echo
+                echo "  This combination bypasses the branch check. Confirm intent:"
+                echo "    SERVICE='$SERVICE_EXPLICIT' bash scripts/safe-deploy.sh --i-know-what-im-doing"
+                echo
+                echo "  Or open a PR to develop / main and deploy from the canonical branch."
+                exit 6
+            fi
+            echo "  ⚠ --i-know-what-im-doing acknowledged — proceeding from '$HEAD_BRANCH'."
+            ;;
+    esac
     SERVICE="$SERVICE_EXPLICIT"
     echo "  ⚠ SERVICE explicitly set to '$SERVICE' via env — bypassing branch check."
 elif [[ "$HEAD_BRANCH" == "main" ]] || [[ "$HEAD_BRANCH" == hotfix/* ]]; then
