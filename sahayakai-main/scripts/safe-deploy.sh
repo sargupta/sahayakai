@@ -53,9 +53,11 @@ SERVICE_EXPLICIT="${SERVICE:-}"
 SERVICE=""
 
 ROUTE_IMMEDIATELY=0
+I_KNOW=0
 for arg in "$@"; do
     case "$arg" in
         --route-immediately) ROUTE_IMMEDIATELY=1 ;;
+        --i-know-what-im-doing) I_KNOW=1 ;;
         --help|-h)
             sed -n '2,30p' "$0"
             exit 0
@@ -71,6 +73,26 @@ echo "▸ guard 0/4: branch-aware service selection..."
 HEAD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 if [[ -n "$SERVICE_EXPLICIT" ]]; then
+    # SERVICE override is fine when the operator is on a known deploy
+    # branch (just retargeting to a different service for testing).
+    # But from a feature/fix/* branch combined with --route-immediately,
+    # it can ship random WIP straight to prod. Require an explicit
+    # --i-know-what-im-doing flag for that combination.
+    case "$HEAD_BRANCH" in
+        main|develop|hotfix/*) ;;
+        *)
+            if [[ "$I_KNOW" -ne 1 ]]; then
+                echo "✗ ABORT: SERVICE explicitly set to '$SERVICE_EXPLICIT' from non-deploy branch '$HEAD_BRANCH'."
+                echo
+                echo "  This combination bypasses the branch check. Confirm intent:"
+                echo "    SERVICE='$SERVICE_EXPLICIT' bash scripts/safe-deploy.sh --i-know-what-im-doing"
+                echo
+                echo "  Or open a PR to develop / main and deploy from the canonical branch."
+                exit 6
+            fi
+            echo "  ⚠ --i-know-what-im-doing acknowledged — proceeding from '$HEAD_BRANCH'."
+            ;;
+    esac
     SERVICE="$SERVICE_EXPLICIT"
     echo "  ⚠ SERVICE explicitly set to '$SERVICE' via env — bypassing branch check."
 elif [[ "$HEAD_BRANCH" == "main" ]] || [[ "$HEAD_BRANCH" == hotfix/* ]]; then
@@ -140,9 +162,21 @@ last_iso=$(gcloud run revisions list \
     --limit=1 --format="value(metadata.creationTimestamp)" 2>/dev/null)
 
 if [[ -n "$last_iso" ]]; then
-    # Strip nanoseconds + Z, then convert to epoch (BSD date — macOS)
-    last_clean="${last_iso:0:19}"
-    if last_epoch=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$last_clean" +%s 2>/dev/null); then
+    # Cross-platform ISO-8601 parse. BSD `date -j -u -f` only works on
+    # macOS; GNU `date -d` only works on Linux. python3 ships on macOS,
+    # Cloud Build builders, GH Actions Linux runners. Fail-soft: if
+    # python3 missing or parse fails, skip the age check rather than
+    # block deploy.
+    last_epoch=$(python3 -c "
+from datetime import datetime
+ts = '$last_iso'
+if '.' in ts:
+    ts = ts.split('.', 1)[0]
+if ts.endswith('Z'):
+    ts = ts[:-1] + '+00:00'
+print(int(datetime.fromisoformat(ts).timestamp()))
+" 2>/dev/null)
+    if [[ -n "$last_epoch" ]]; then
         now_epoch=$(date -u +%s)
         age=$(( now_epoch - last_epoch ))
         if [[ "$age" -lt "$age_threshold" ]]; then
@@ -153,7 +187,7 @@ if [[ -n "$last_iso" ]]; then
         fi
         echo "  ✓ last revision is $age s old (≥ ${age_threshold} s)."
     else
-        echo "  ⚠ could not parse revision timestamp — proceeding anyway."
+        echo "  ⚠ could not parse revision timestamp ($last_iso) — proceeding anyway."
     fi
 fi
 

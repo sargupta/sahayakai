@@ -11,9 +11,9 @@ export async function GET() {
         // answer "which SHA is live RIGHT NOW?" with one curl.
         // Local `npm run build` reports "local" for all three.
         build: {
-            gitSha: process.env.GIT_SHA || 'unknown',
-            gitShaFull: process.env.GIT_SHA_FULL || 'unknown',
-            buildId: process.env.BUILD_ID || 'unknown',
+            gitSha: process.env.GIT_SHA || 'local',
+            gitShaFull: process.env.GIT_SHA_FULL || 'local',
+            buildId: process.env.BUILD_ID || 'local',
         },
         checks: {
             server: {

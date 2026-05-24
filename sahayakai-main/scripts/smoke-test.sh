@@ -45,11 +45,23 @@ check() {
 }
 
 # POST variant — for routes that only accept POST. Sends an empty JSON body
-# and expects an auth-rejection status (typically 401) since no token is set.
+# and asserts EITHER (a) status matches expected_status, OR (b) status
+# matches AND body contains expected_body_substring. The body assertion
+# is critical for "route exists, validation rejected" checks where status
+# alone can lie: if validation tightens (rejecting empty), 400 stays;
+# if it loosens (accepting {}), 200 comes back. A body assertion locks
+# in the contract: "this is the validation error we expect."
+#
+# Args:
+#   $1 label
+#   $2 url
+#   $3 expected_status (default 401)
+#   $4 expected_body_substring (optional — if set, body must contain it)
 check_post() {
   local label="$1"
   local url="$2"
   local expected_status="${3:-401}"
+  local expected_body_substring="${4:-}"
 
   local status
   status=$(curl -s -o /tmp/smoke_body -w "%{http_code}" \
@@ -60,15 +72,27 @@ check_post() {
     --data '{}' \
     "$url")
 
-  if [[ "$status" == "$expected_status" ]]; then
-    echo "  PASS  [$status] $label"
-  else
+  if [[ "$status" != "$expected_status" ]]; then
     echo "  FAIL  [$status] $label  (expected $expected_status)"
     echo "        URL: $url (POST)"
     head -c 200 /tmp/smoke_body 2>/dev/null | tr -d '\n'
     echo ""
     FAIL=1
+    return
   fi
+
+  if [[ -n "$expected_body_substring" ]]; then
+    if ! grep -qF "$expected_body_substring" /tmp/smoke_body 2>/dev/null; then
+      echo "  FAIL  [$status] $label  (body missing substring: '$expected_body_substring')"
+      echo "        URL: $url (POST)"
+      head -c 200 /tmp/smoke_body 2>/dev/null | tr -d '\n'
+      echo ""
+      FAIL=1
+      return
+    fi
+  fi
+
+  echo "  PASS  [$status] $label"
 }
 
 # ── Health check — validates env vars are present ───────────────────────────
@@ -94,15 +118,22 @@ echo "--- Page Routes ---"
 check "Home"                "$BASE/"
 check "Lesson Plan"         "$BASE/lesson-plan"
 check "Attendance"          "$BASE/attendance"
-check "Library"             "$BASE/library"
+check "My Library"          "$BASE/my-library"
+check "Community Library"   "$BASE/community-library"
 check "Community"           "$BASE/community"
-check "Visual Aid"          "$BASE/visual-aid"
+check "Visual Aid Creator"  "$BASE/visual-aid-creator"
+check "Visual Aid Designer" "$BASE/visual-aid-designer"
 
-# ── API routes (public) ─────────────────────────────────────────────────────
+# ── API routes ──────────────────────────────────────────────────────────────
+# These routes accept POST only and reject empty-body requests with 400
+# (Bad Request). 400 confirms the route exists and the handler ran. Both
+# moved from public-GET to validated-POST in the develop catch-up
+# (release-2026-05-21) — smoke test was previously testing GET 200 and
+# silently failing for weeks.
 echo ""
 echo "--- API Routes ---"
-check "Teacher Activity"    "$BASE/api/teacher-activity"  # public — no auth needed
-check "Metrics"             "$BASE/api/metrics"            # public
+check_post "Teacher Activity (empty body)"  "$BASE/api/teacher-activity"  "400"  "Invalid events format"
+check_post "Metrics (empty body)"           "$BASE/api/metrics"           "400"  "Invalid metrics format"
 
 # ── Security — confirm /admin and AI POST routes require auth ───────────────
 echo ""

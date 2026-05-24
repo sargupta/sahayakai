@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getDb } from '@/lib/firebase-admin';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import {
   COMMUNITY_PERSONAS,
   pickRandomPersona,
@@ -49,6 +50,20 @@ export async function POST(req: NextRequest) {
   const userId = req.headers.get('x-user-id');
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 1a. Feature flag gate. Demo-only seeded personas may be killed in prod
+  // once real-teacher volume on /community warrants. Flag default is ON
+  // (preserves current behavior). To kill: set
+  //   system_config/feature_flags.features.communityPersonas.enabled = false
+  // in Firestore. The useCommunityLivePulse hook treats 503 as a
+  // stop-polling signal. See docs/FEATURE_FLAGS.md.
+  const flag = await isFeatureEnabled('communityPersonas', userId);
+  if (!flag.enabled) {
+    return NextResponse.json(
+      { error: 'Feature disabled', reason: flag.reason },
+      { status: 503 },
+    );
   }
 
   // 2. Parse body (tolerant — empty body is valid).
