@@ -82,7 +82,15 @@ export async function POST(req: NextRequest) {
 
     const db = await getDb();
     const docId = `persona_live_${Date.now()}_${persona.id.replace('persona_', '')}`;
-    await db.collection('community_chat').doc(docId).set({
+    // Preview env (DEMO_MODE=true) routes persona writes to a separate
+    // collection so prod /community readers don't see preview QA noise.
+    // Prod (DEMO_MODE unset or != 'true') writes to the canonical
+    // community_chat collection. Strict string equality is intentional —
+    // anything other than the literal 'true' falls through to prod.
+    // See docs/PREVIEW_ENV.md for the DEMO_MODE contract.
+    const targetCollection =
+      process.env.DEMO_MODE === 'true' ? 'community_chat_preview' : 'community_chat';
+    await db.collection(targetCollection).doc(docId).set({
       text: out.message,
       authorId: persona.id,
       authorName: persona.displayName,
