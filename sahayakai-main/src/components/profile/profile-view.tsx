@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import { PlanBadge } from "@/components/plan-badge";
 import {
     sendConnectionRequestAction,
     acceptConnectionRequestAction,
@@ -222,6 +223,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 </span>
                             )}
                         </div>
+                        {isOwnProfile && (
+                            <div className="flex justify-center md:justify-start">
+                                <PlanBadge />
+                            </div>
+                        )}
                     </div>
 
                     {profile?.bio && (
@@ -293,7 +299,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                         setConnStatus('none');
                                     } finally { setConnLoading(false); }
                                 }}
-                                title="Withdraw request"
+                                title={t("Withdraw request")}
                             >
                                 <Clock className="h-5 w-5" /> Pending
                             </Button>

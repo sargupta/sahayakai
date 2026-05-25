@@ -320,6 +320,12 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Bengali": "সেটিংস", "Gujarati": "સેટિંગ્સ", "Punjabi": "ਸੈਟਿੰਗਾਂ",
         "Malayalam": "ക്രമീകരണങ്ങൾ", "Odia": "ସେଟିଂସ"
     },
+    "Upgrade": {
+        "English": "Upgrade", "Hindi": "अपग्रेड करें", "Kannada": "ಅಪ್‌ಗ್ರೇಡ್",
+        "Tamil": "மேம்படுத்து", "Telugu": "అప్‌గ్రేడ్", "Marathi": "अपग्रेड करा",
+        "Bengali": "আপগ্রেড", "Gujarati": "અપગ્રેડ", "Punjabi": "ਅਪਗ੍ਰੇਡ",
+        "Malayalam": "അപ്‌ഗ്രേഡ്", "Odia": "ଅପଗ୍ରେଡ୍"
+    },
     // === Teacher Training page i18n ===
     "Your Question or Challenge": {
         "English": "Your Question or Challenge", "Hindi": "आपका प्रश्न या चुनौती", "Kannada": "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಅಥವಾ ಸವಾಲು",
