@@ -14,6 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UsageDisplay } from "@/components/usage-display"
+import { PlanBadge } from "@/components/plan-badge"
 import {
   BarChart,
   Bell,
@@ -450,6 +451,9 @@ export function AppSidebar() {
         {/* ACCOUNT — bottom of main content */}
         <SidebarGroup>
           <SidebarGroupLabel>{t("Account")}</SidebarGroupLabel>
+          <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
+            <PlanBadge />
+          </div>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip={t("My Profile")}>
