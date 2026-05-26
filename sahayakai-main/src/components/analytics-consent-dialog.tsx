@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { GraduationCap } from 'lucide-react';
 import { saveAnalyticsConsent } from '@/lib/analytics-consent';
 import { setAnalyticsEnabled } from '@/lib/analytics-events';
+import { useLanguage } from '@/context/language-context';
 
 interface AnalyticsConsentDialogProps {
     open: boolean;
@@ -34,6 +35,7 @@ export function AnalyticsConsentDialog({
 }: AnalyticsConsentDialogProps) {
     const [acknowledged, setAcknowledged] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const { t } = useLanguage();
 
     const handleAccept = async () => {
         setIsLoading(true);
@@ -63,32 +65,32 @@ export function AnalyticsConsentDialog({
         <Dialog open={open} onOpenChange={() => { }}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 font-headline">Help Us Improve SahayakAI <GraduationCap className="h-5 w-5" /></DialogTitle>
+                    <DialogTitle className="flex items-center gap-2 font-headline">{t("Help Us Improve SahayakAI")} <GraduationCap className="h-5 w-5" /></DialogTitle>
                     <DialogDescription className="space-y-3 pt-2">
                         <p>
-                            We'd like to track how you use SahayakAI to:
+                            {t("We'd like to track how you use SahayakAI to:")}
                         </p>
                         <ul className="list-disc pl-5 space-y-1 text-sm">
-                            <li>Improve app performance and fix issues faster</li>
-                            <li>Understand which features help teachers most</li>
-                            <li>Provide personalized support if you're struggling</li>
-                            <li>Measure our impact on students across India</li>
+                            <li>{t("Improve app performance and fix issues faster")}</li>
+                            <li>{t("Understand which features help teachers most")}</li>
+                            <li>{t("Provide personalized support if you're struggling")}</li>
+                            <li>{t("Measure our impact on students across India")}</li>
                         </ul>
 
                         <div className="bg-muted p-3 rounded-md text-sm space-y-2">
-                            <p className="font-semibold">What we'll track:</p>
+                            <p className="font-semibold">{t("What we'll track:")}</p>
                             <ul className="list-disc pl-5 space-y-1">
-                                <li>Features you use and content you create</li>
-                                <li>App performance (load times, errors)</li>
-                                <li>Your engagement patterns</li>
+                                <li>{t("Features you use and content you create")}</li>
+                                <li>{t("App performance (load times, errors)")}</li>
+                                <li>{t("Your engagement patterns")}</li>
                             </ul>
 
-                            <p className="font-semibold mt-3">Privacy Promise:</p>
+                            <p className="font-semibold mt-3">{t("Privacy Promise:")}</p>
                             <ul className="list-disc pl-5 space-y-1">
-                                <li>Your data stays secure in India</li>
-                                <li>We'll keep data for 1 year, then delete it</li>
-                                <li>You can see your own analytics anytime</li>
-                                <li>You can revoke consent anytime in settings</li>
+                                <li>{t("Your data stays secure in India")}</li>
+                                <li>{t("We'll keep data for 1 year, then delete it")}</li>
+                                <li>{t("You can see your own analytics anytime")}</li>
+                                <li>{t("You can revoke consent anytime in settings")}</li>
                             </ul>
                         </div>
 
@@ -102,7 +104,7 @@ export function AnalyticsConsentDialog({
                                 htmlFor="acknowledge"
                                 className="text-sm cursor-pointer leading-tight"
                             >
-                                I understand my activity will be tracked and data kept for 1 year
+                                {t("I understand my activity will be tracked and data kept for 1 year")}
                             </label>
                         </div>
                     </DialogDescription>
@@ -115,14 +117,14 @@ export function AnalyticsConsentDialog({
                         disabled={isLoading}
                         className="w-full sm:w-auto"
                     >
-                        No, Don't Track
+                        {t("No, Don't Track")}
                     </Button>
                     <Button
                         onClick={handleAccept}
                         disabled={!acknowledged || isLoading}
                         className="w-full sm:w-auto"
                     >
-                        {isLoading ? 'Saving...' : 'Yes, Help Improve'}
+                        {isLoading ? t('Saving...') : t('Yes, Help Improve')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
