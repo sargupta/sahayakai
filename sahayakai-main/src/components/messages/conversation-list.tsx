@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { PresenceDot } from './presence-dot';
+import { useLanguage } from "@/context/language-context";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -26,14 +27,14 @@ function getInitials(name: string): string {
     return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 }
 
-function getConversationLabel(conv: Conversation, myUid: string): { name: string; photo: string | null } {
+function getConversationLabel(conv: Conversation, myUid: string, t: (k: string) => string): { name: string; photo: string | null } {
     if (conv.type === "group") {
-        return { name: conv.name ?? "Group", photo: conv.groupPhotoURL ?? null };
+        return { name: conv.name ?? t("Group"), photo: conv.groupPhotoURL ?? null };
     }
     const otherId = conv.participantIds.find((id) => id !== myUid);
-    if (!otherId) return { name: "Teacher", photo: null };
+    if (!otherId) return { name: t("Teacher"), photo: null };
     return {
-        name: conv.participants[otherId]?.displayName ?? "Teacher",
+        name: conv.participants[otherId]?.displayName ?? t("Teacher"),
         photo: conv.participants[otherId]?.photoURL ?? null,
     };
 }
@@ -51,7 +52,8 @@ function ConversationListItem({
     isActive: boolean;
     onClick: () => void;
 }) {
-    const { name, photo } = getConversationLabel(conv, myUid);
+    const { t } = useLanguage();
+    const { name, photo } = getConversationLabel(conv, myUid, t);
     const unread = conv.unreadCount?.[myUid] ?? 0;
     const isMyLastMsg = conv.lastMessageSenderId === myUid;
     const otherUid = conv.type === 'direct' ? conv.participantIds.find(id => id !== myUid) : undefined;
@@ -103,7 +105,7 @@ function ConversationListItem({
                     "text-xs truncate mt-0.5",
                     unread > 0 ? "font-semibold text-slate-700" : "text-slate-400"
                 )}>
-                    {isMyLastMsg ? "You: " : ""}{conv.lastMessage || "Start a conversation"}
+                    {isMyLastMsg ? t("You: ") : ""}{conv.lastMessage || t("Start a conversation")}
                 </p>
             </div>
         </button>
@@ -124,6 +126,7 @@ export function ConversationList({
     onNewDM,
 }: ConversationListProps) {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -148,7 +151,7 @@ export function ConversationList({
 
     const filtered = search.trim()
         ? conversations.filter((conv) => {
-            const label = getConversationLabel(conv, user?.uid ?? "").name.toLowerCase();
+            const label = getConversationLabel(conv, user?.uid ?? "", t).name.toLowerCase();
             return label.includes(search.toLowerCase());
         })
         : conversations;
@@ -158,13 +161,13 @@ export function ConversationList({
             {/* Header */}
             <div className="px-4 py-4 border-b border-slate-100 shrink-0">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-black text-slate-900 tracking-tight">Messages</h2>
+                    <h2 className="text-base font-black text-slate-900 tracking-tight">{t("Messages")}</h2>
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={onNewDM}
                         className="h-8 w-8 rounded-xl text-slate-400 hover:text-orange-500 hover:bg-orange-50"
-                        title="New message"
+                        title={t("New message")}
                     >
                         <PenSquare className="h-4 w-4" />
                     </Button>
@@ -174,7 +177,7 @@ export function ConversationList({
                     <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search conversations…"
+                        placeholder={t("Search conversations…")}
                         className="pl-9 h-9 text-sm bg-slate-50 border-slate-200 rounded-xl focus-visible:ring-orange-400/30"
                     />
                 </div>
@@ -192,9 +195,9 @@ export function ConversationList({
                             <MessageCircle className="h-8 w-8 text-orange-300" />
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-slate-700">No messages yet</p>
+                            <p className="text-sm font-bold text-slate-700">{t("No messages yet")}</p>
                             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                                Use the <PenSquare className="inline h-3 w-3 mb-0.5" /> button above to find a teacher and start a conversation.
+                                <PenSquare className="inline h-3 w-3 mb-0.5 mr-1" />{t("Use the button above to find a teacher and start a conversation.")}
                             </p>
                         </div>
                     </div>

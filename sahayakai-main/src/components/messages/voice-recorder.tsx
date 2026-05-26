@@ -5,6 +5,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { Mic, Square, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 interface VoiceRecorderProps {
     onSend: (audioUrl: string, duration: number) => void;
@@ -14,6 +15,7 @@ interface VoiceRecorderProps {
 type RecorderState = "idle" | "recording" | "uploading";
 
 export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
+    const { t } = useLanguage();
     const [state, setState] = useState<RecorderState>("idle");
     const [elapsed, setElapsed] = useState(0);
 
@@ -117,7 +119,7 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
         return (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
                 <Loader2 className="h-4 w-4 animate-spin text-orange-500 shrink-0" />
-                <span className="text-xs text-slate-500 font-medium">Sending…</span>
+                <span className="text-xs text-slate-500 font-medium">{t("Sending…")}</span>
             </div>
         );
     }
@@ -134,7 +136,7 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
                 <button
                     onClick={cancelRecording}
                     className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
-                    title="Cancel"
+                    title={t("Cancel")}
                 >
                     <X className="h-4 w-4" />
                 </button>
@@ -144,7 +146,7 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
                     className="flex items-center gap-1 h-8 px-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all active:scale-95 shrink-0"
                 >
                     <Square className="h-3 w-3 fill-white" />
-                    Send
+                    {t("Send")}
                 </button>
             </div>
         );
@@ -159,7 +161,7 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
                 "text-slate-400 hover:text-orange-500 hover:bg-orange-50",
                 "disabled:opacity-40 disabled:cursor-not-allowed"
             )}
-            title="Record voice message"
+            title={t("Record voice message")}
         >
             <Mic className="h-4 w-4" />
         </button>
