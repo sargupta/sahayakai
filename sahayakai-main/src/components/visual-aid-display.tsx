@@ -9,6 +9,7 @@ import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { useLanguage } from "@/context/language-context";
 
 type VisualAidDisplayProps = {
     visualAid: VisualAidOutput;
@@ -26,15 +27,15 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
     language,
 }) => {
     const { toast } = useToast();
+    const { t: translate } = useLanguage();
     const t = getResultShellDict(language);
 
     const handleSave = async () => {
         try {
             if (visualAid.storagePath) {
                 toast({
-                    title: "Already in Library",
-                    description:
-                        "This visual aid was saved automatically when generated.",
+                    title: translate("Already in Library"),
+                    description: translate("This visual aid was saved automatically when generated."),
                 });
                 return;
             }
