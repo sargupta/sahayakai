@@ -4798,6 +4798,10 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Save Changes": {
         "English": "Save Changes", "Hindi": "परिवर्तन सहेजें", "Kannada": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ", "Tamil": "மாற்றங்களைச் சேமி", "Telugu": "మార్పులను సేవ్ చేయి", "Marathi": "बदल जतन करा", "Bengali": "পরিবর্তনগুলি সংরক্ষণ করুন", "Gujarati": "ફેરફારો સાચવો", "Punjabi": "ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ", "Malayalam": "മാറ്റങ്ങൾ സേവ് ചെയ്യുക", "Odia": "ପରିବର୍ତ୍ତନ ସଞ୍ଚୟ କରନ୍ତୁ"
     },
+    // === Wave 2: Teacher Training (description only — title already in dict) ===
+    "There was an error getting advice. Please try again.": {
+        "English": "There was an error getting advice. Please try again.", "Hindi": "सलाह प्राप्त करने में त्रुटि हुई। कृपया पुनः प्रयास करें।", "Kannada": "ಸಲಹೆ ಪಡೆಯುವಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "ஆலோசனை பெறுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", "Telugu": "సలహా పొందడంలో లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "सल्ला मिळवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", "Bengali": "পরামর্শ পেতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "સલાહ મેળવવામાં ભૂલ થઈ. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ ਹੋਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഉപദേശം ലഭിക്കുന്നതിൽ പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ପରାମର୍ଶ ପାଇବାରେ ତ୍ରୁଟି ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
+    },
     // === Wave 2: Lesson Plan paywall toasts ===
     "Pro Feature": {
         "English": "Pro Feature", "Hindi": "प्रो सुविधा", "Kannada": "Pro ವೈಶಿಷ್ಟ್ಯ", "Tamil": "Pro அம்சம்", "Telugu": "Pro ఫీచర్", "Marathi": "Pro वैशिष्ट्य", "Bengali": "Pro বৈশিষ্ট্য", "Gujarati": "Pro સુવિધા", "Punjabi": "Pro ਵਿਸ਼ੇਸ਼ਤਾ", "Malayalam": "Pro ഫീച്ചർ", "Odia": "Pro ବୈଶିଷ୍ଟ୍ୟ"
