@@ -11,6 +11,7 @@ import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
 import type { Student, OutreachReason, CallSummary, TranscriptTurn, PerformanceContext } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import {
     Loader2, Phone, Copy, RefreshCw, CheckCircle2,
     CalendarX2, TrendingDown, AlertTriangle, Star,
@@ -68,6 +69,7 @@ export function ContactParentModal({
 }: ContactParentModalProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
 
     const [step, setStep] = useState<Step>("reason");
     const [reason, setReason] = useState<OutreachReason | null>(null);
@@ -260,7 +262,7 @@ export function ContactParentModal({
             setLanguageCode(data.languageCode);
             setStep("review");
         } catch (err: any) {
-            toast({ title: "Failed to generate", description: err.message, variant: "destructive" });
+            toast({ title: t("Failed to generate"), description: err.message, variant: "destructive" });
         } finally {
             setGenerating(false);
         }
@@ -317,7 +319,7 @@ export function ContactParentModal({
             setStep("calling");
             pollForSummary(oid);
         } catch (err: any) {
-            toast({ title: "Call failed", description: err.message, variant: "destructive" });
+            toast({ title: t("Call failed"), description: err.message, variant: "destructive" });
         } finally {
             setCalling(false);
         }
@@ -331,7 +333,7 @@ export function ContactParentModal({
         await navigator.clipboard.writeText(generatedMessage);
         setStep("summary");
         setCallResult({ callStatus: 'manual', callDurationSeconds: null, answeredBy: null, turnCount: 0, transcript: [], callSummary: null });
-        toast({ title: "Copied to clipboard", description: "Paste in WhatsApp to send." });
+        toast({ title: t("Copied to clipboard"), description: t("Paste in WhatsApp to send.") });
     };
 
     return (
