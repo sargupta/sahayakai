@@ -167,7 +167,7 @@ function RubricGeneratorContent() {
           console.error("Failed to load saved rubric:", err);
           toast({
             title: translate("Load Failed"),
-            description: "Could not load the saved rubric.",
+            description: translate("Could not load the saved rubric."),
             variant: "destructive"
           });
         } finally {
@@ -251,7 +251,7 @@ function RubricGeneratorContent() {
       console.error("Failed to generate rubric:", error);
       toast({
         title: translate("Generation Failed"),
-        description: "There was an error generating the rubric. Please try again.",
+        description: translate("There was an error generating the rubric. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -353,7 +353,7 @@ function RubricGeneratorContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{translate("Subject")}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}
@@ -414,7 +414,7 @@ function RubricGeneratorContent() {
         <>
           <div className="my-8 flex items-center gap-3">
             <hr className="flex-1 border-border/40" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{translate("Result")}</span>
             <hr className="flex-1 border-border/40" />
           </div>
           <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
