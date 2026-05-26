@@ -4802,6 +4802,67 @@ const dictionary: Record<string, Record<Language, string>> = {
     "There was an error getting advice. Please try again.": {
         "English": "There was an error getting advice. Please try again.", "Hindi": "सलाह प्राप्त करने में त्रुटि हुई। कृपया पुनः प्रयास करें।", "Kannada": "ಸಲಹೆ ಪಡೆಯುವಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "ஆலோசனை பெறுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", "Telugu": "సలహా పొందడంలో లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "सल्ला मिळवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", "Bengali": "পরামর্শ পেতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "સલાહ મેળવવામાં ભૂલ થઈ. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ ਹੋਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഉപദേശം ലഭിക്കുന്നതിൽ പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ପରାମର୍ଶ ପାଇବାରେ ତ୍ରୁଟି ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
     },
+    // === Wave 5: Attendance Calendar (MONTH_NAMES + headers) ===
+    "January": {
+        "English": "January", "Hindi": "जनवरी", "Kannada": "ಜನವರಿ", "Tamil": "ஜனவரி", "Telugu": "జనవరి", "Marathi": "जानेवारी", "Bengali": "জানুয়ারি", "Gujarati": "જાન્યુઆરી", "Punjabi": "ਜਨਵਰੀ", "Malayalam": "ജനുവരി", "Odia": "ଜାନୁଆରୀ"
+    },
+    "February": {
+        "English": "February", "Hindi": "फरवरी", "Kannada": "ಫೆಬ್ರವರಿ", "Tamil": "பிப்ரவரி", "Telugu": "ఫిబ్రవరి", "Marathi": "फेब्रुवारी", "Bengali": "ফেব্রুয়ারি", "Gujarati": "ફેબ્રુઆરી", "Punjabi": "ਫਰਵਰੀ", "Malayalam": "ഫെബ്രുവരി", "Odia": "ଫେବୃଆରୀ"
+    },
+    "March": {
+        "English": "March", "Hindi": "मार्च", "Kannada": "ಮಾರ್ಚ್", "Tamil": "மார்ச்", "Telugu": "మార్చి", "Marathi": "मार्च", "Bengali": "মার্চ", "Gujarati": "માર્ચ", "Punjabi": "ਮਾਰਚ", "Malayalam": "മാർച്ച്", "Odia": "ମାର୍ଚ୍ଚ"
+    },
+    "April": {
+        "English": "April", "Hindi": "अप्रैल", "Kannada": "ಏಪ್ರಿಲ್", "Tamil": "ஏப்ரல்", "Telugu": "ఏప్రిల్", "Marathi": "एप्रिल", "Bengali": "এপ্রিল", "Gujarati": "એપ્રિલ", "Punjabi": "ਅਪ੍ਰੈਲ", "Malayalam": "ഏപ്രിൽ", "Odia": "ଅପ୍ରେଲ୍"
+    },
+    "May": {
+        "English": "May", "Hindi": "मई", "Kannada": "ಮೇ", "Tamil": "மே", "Telugu": "మే", "Marathi": "मे", "Bengali": "মে", "Gujarati": "મે", "Punjabi": "ਮਈ", "Malayalam": "മേയ്", "Odia": "ମେ"
+    },
+    "June": {
+        "English": "June", "Hindi": "जून", "Kannada": "ಜೂನ್", "Tamil": "ஜூன்", "Telugu": "జూన్", "Marathi": "जून", "Bengali": "জুন", "Gujarati": "જૂન", "Punjabi": "ਜੂਨ", "Malayalam": "ജൂൺ", "Odia": "ଜୁନ୍"
+    },
+    "July": {
+        "English": "July", "Hindi": "जुलाई", "Kannada": "ಜುಲೈ", "Tamil": "ஜூலை", "Telugu": "జూలై", "Marathi": "जुलै", "Bengali": "জুলাই", "Gujarati": "જુલાઈ", "Punjabi": "ਜੁਲਾਈ", "Malayalam": "ജൂലൈ", "Odia": "ଜୁଲାଇ"
+    },
+    "August": {
+        "English": "August", "Hindi": "अगस्त", "Kannada": "ಆಗಸ್ಟ್", "Tamil": "ஆகஸ்ட்", "Telugu": "ఆగస్టు", "Marathi": "ऑगस्ट", "Bengali": "আগস্ট", "Gujarati": "ઓગસ્ટ", "Punjabi": "ਅਗਸਤ", "Malayalam": "ഓഗസ്റ്റ്", "Odia": "ଅଗଷ୍ଟ"
+    },
+    "September": {
+        "English": "September", "Hindi": "सितंबर", "Kannada": "ಸೆಪ್ಟೆಂಬರ್", "Tamil": "செப்டம்பர்", "Telugu": "సెప్టెంబర్", "Marathi": "सप्टेंबर", "Bengali": "সেপ্টেম্বর", "Gujarati": "સપ્ટેમ્બર", "Punjabi": "ਸਤੰਬਰ", "Malayalam": "സെപ്റ്റംബർ", "Odia": "ସେପ୍ଟେମ୍ବର"
+    },
+    "October": {
+        "English": "October", "Hindi": "अक्टूबर", "Kannada": "ಅಕ್ಟೋಬರ್", "Tamil": "அக்டோபர்", "Telugu": "అక్టోబర్", "Marathi": "ऑक्टोबर", "Bengali": "অক্টোবর", "Gujarati": "ઓક્ટોબર", "Punjabi": "ਅਕਤੂਬਰ", "Malayalam": "ഒക്ടോബർ", "Odia": "ଅକ୍ଟୋବର"
+    },
+    "November": {
+        "English": "November", "Hindi": "नवंबर", "Kannada": "ನವೆಂಬರ್", "Tamil": "நவம்பர்", "Telugu": "నవంబర్", "Marathi": "नोव्हेंबर", "Bengali": "নভেম্বর", "Gujarati": "નવેમ્બર", "Punjabi": "ਨਵੰਬਰ", "Malayalam": "നവംബർ", "Odia": "ନଭେମ୍ବର"
+    },
+    "December": {
+        "English": "December", "Hindi": "दिसंबर", "Kannada": "ಡಿಸೆಂಬರ್", "Tamil": "டிசம்பர்", "Telugu": "డిసెంబర్", "Marathi": "डिसेंबर", "Bengali": "ডিসেম্বর", "Gujarati": "ડિસેમ્બર", "Punjabi": "ਦਸੰਬਰ", "Malayalam": "ഡിസംബർ", "Odia": "ଡିସେମ୍ବର"
+    },
+    "Student": {
+        "English": "Student", "Hindi": "छात्र", "Kannada": "ವಿದ್ಯಾರ್ಥಿ", "Tamil": "மாணவர்", "Telugu": "విద్యార్థి", "Marathi": "विद्यार्थी", "Bengali": "ছাত্র", "Gujarati": "વિદ્યાર્થી", "Punjabi": "ਵਿਦਿਆਰਥੀ", "Malayalam": "വിദ്യാർത്ഥി", "Odia": "ଛାତ୍ର"
+    },
+    "Present": {
+        "English": "Present", "Hindi": "उपस्थित", "Kannada": "ಹಾಜರಿದ್ದಾರೆ", "Tamil": "வந்துள்ளார்", "Telugu": "హాజరు", "Marathi": "उपस्थित", "Bengali": "উপস্থিত", "Gujarati": "હાજર", "Punjabi": "ਹਾਜ਼ਰ", "Malayalam": "ഹാജർ", "Odia": "ଉପସ୍ଥିତ"
+    },
+    "Absent": {
+        "English": "Absent", "Hindi": "अनुपस्थित", "Kannada": "ಗೈರುಹಾಜರ", "Tamil": "வரவில்லை", "Telugu": "గైర్హాజరు", "Marathi": "गैरहजर", "Bengali": "অনুপস্থিত", "Gujarati": "ગેરહાજર", "Punjabi": "ਗੈਰ-ਹਾਜ਼ਰ", "Malayalam": "അസാന്നിധ്യം", "Odia": "ଅନୁପସ୍ଥିତ"
+    },
+    "Late": {
+        "English": "Late", "Hindi": "देर से", "Kannada": "ತಡವಾಗಿ", "Tamil": "தாமதம்", "Telugu": "ఆలస్యం", "Marathi": "उशीर", "Bengali": "দেরি", "Gujarati": "મોડું", "Punjabi": "ਦੇਰ", "Malayalam": "വൈകി", "Odia": "ବିଳମ୍ବ"
+    },
+    "Days": {
+        "English": "Days", "Hindi": "दिन", "Kannada": "ದಿನಗಳು", "Tamil": "நாட்கள்", "Telugu": "రోజులు", "Marathi": "दिवस", "Bengali": "দিন", "Gujarati": "દિવસો", "Punjabi": "ਦਿਨ", "Malayalam": "ദിവസങ്ങൾ", "Odia": "ଦିନ"
+    },
+    "Rate": {
+        "English": "Rate", "Hindi": "दर", "Kannada": "ದರ", "Tamil": "விகிதம்", "Telugu": "రేటు", "Marathi": "दर", "Bengali": "হার", "Gujarati": "દર", "Punjabi": "ਦਰ", "Malayalam": "നിരക്ക്", "Odia": "ହାର"
+    },
+    "Previous month": {
+        "English": "Previous month", "Hindi": "पिछला महीना", "Kannada": "ಹಿಂದಿನ ತಿಂಗಳು", "Tamil": "முந்தைய மாதம்", "Telugu": "మునుపటి నెల", "Marathi": "मागील महिना", "Bengali": "পূর্ববর্তী মাস", "Gujarati": "પાછલો મહિનો", "Punjabi": "ਪਿਛਲਾ ਮਹੀਨਾ", "Malayalam": "മുൻ മാസം", "Odia": "ପୂର୍ବ ମାସ"
+    },
+    "Next month": {
+        "English": "Next month", "Hindi": "अगला महीना", "Kannada": "ಮುಂದಿನ ತಿಂಗಳು", "Tamil": "அடுத்த மாதம்", "Telugu": "తదుపరి నెల", "Marathi": "पुढील महिना", "Bengali": "পরবর্তী মাস", "Gujarati": "આગલો મહિનો", "Punjabi": "ਅਗਲਾ ਮਹੀਨਾ", "Malayalam": "അടുത്ത മാസം", "Odia": "ପରବର୍ତ୍ତୀ ମାସ"
+    },
     // === Wave 5: Contact Parent Modal (REASONS, step labels, action buttons) ===
     "Consecutive Absences": {
         "English": "Consecutive Absences", "Hindi": "लगातार अनुपस्थिति", "Kannada": "ಸತತ ಗೈರುಹಾಜರಿ", "Tamil": "தொடர்ச்சியான வராமை", "Telugu": "వరుస గైర్హాజరు", "Marathi": "सलग गैरहजेरी", "Bengali": "ক্রমাগত অনুপস্থিতি", "Gujarati": "સતત ગેરહાજરી", "Punjabi": "ਲਗਾਤਾਰ ਗੈਰ-ਹਾਜ਼ਰੀ", "Malayalam": "തുടർച്ചയായ അസാന്നിധ്യം", "Odia": "କ୍ରମାଗତ ଅନୁପସ୍ଥିତି"
