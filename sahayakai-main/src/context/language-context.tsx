@@ -4802,6 +4802,58 @@ const dictionary: Record<string, Record<Language, string>> = {
     "There was an error getting advice. Please try again.": {
         "English": "There was an error getting advice. Please try again.", "Hindi": "सलाह प्राप्त करने में त्रुटि हुई। कृपया पुनः प्रयास करें।", "Kannada": "ಸಲಹೆ ಪಡೆಯುವಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "ஆலோசனை பெறுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", "Telugu": "సలహా పొందడంలో లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "सल्ला मिळवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", "Bengali": "পরামর্শ পেতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "સલાહ મેળવવામાં ભૂલ થઈ. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ ਹੋਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഉപദേശം ലഭിക്കുന്നതിൽ പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ପରାମର୍ଶ ପାଇବାରେ ତ୍ରୁଟି ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
     },
+    // === Wave 6: Grade Level Selector (harvested from local object, now 11 langs) ===
+    "Class 1": {
+        "English": "Class 1", "Hindi": "पहली कक्षा", "Kannada": "ಒಂದನೇ ತರಗತಿ", "Tamil": "முதலாம் வகுப்பு", "Telugu": "ఒకటవ తరగతి", "Marathi": "इयत्ता पहिली", "Bengali": "প্রথম শ্রেণী", "Gujarati": "પ્રથમ ધોરણ", "Punjabi": "ਪਹਿਲੀ ਜਮਾਤ", "Malayalam": "ഒന്നാം ക്ലാസ്", "Odia": "ପ୍ରଥମ ଶ୍ରେଣୀ"
+    },
+    "Class 2": {
+        "English": "Class 2", "Hindi": "दूसरी कक्षा", "Kannada": "ಎರಡನೇ ತರಗತಿ", "Tamil": "இரண்டாம் வகுப்பு", "Telugu": "రెండవ తరగతి", "Marathi": "इयत्ता दुसरी", "Bengali": "দ্বিতীয় শ্রেণী", "Gujarati": "બીજું ધોરણ", "Punjabi": "ਦੂਜੀ ਜਮਾਤ", "Malayalam": "രണ്ടാം ക്ലാസ്", "Odia": "ଦ୍ୱିତୀୟ ଶ୍ରେଣୀ"
+    },
+    "Class 3": {
+        "English": "Class 3", "Hindi": "तीसरी कक्षा", "Kannada": "ಮೂರನೇ ತರಗತಿ", "Tamil": "மூன்றாம் வகுப்பு", "Telugu": "మూడవ తరగతి", "Marathi": "इयत्ता तिसरी", "Bengali": "তৃতীয় শ্রেণী", "Gujarati": "ત્રીજું ધોરણ", "Punjabi": "ਤੀਜੀ ਜਮਾਤ", "Malayalam": "മൂന്നാം ക്ലാസ്", "Odia": "ତୃତୀୟ ଶ୍ରେଣୀ"
+    },
+    "Class 4": {
+        "English": "Class 4", "Hindi": "चौथी कक्षा", "Kannada": "ನಾಲ್ಕನೇ ತರಗತಿ", "Tamil": "நான்காம் வகுப்பு", "Telugu": "నాల్గవ తరగతి", "Marathi": "इयत्ता चौथी", "Bengali": "চতুর্থ শ্রেণী", "Gujarati": "ચોથું ધોરણ", "Punjabi": "ਚੌਥੀ ਜਮਾਤ", "Malayalam": "നാലാം ക്ലാസ്", "Odia": "ଚତୁର୍ଥ ଶ୍ରେଣୀ"
+    },
+    "Class 5": {
+        "English": "Class 5", "Hindi": "पांचवीं कक्षा", "Kannada": "ಐದನೇ ತರಗತಿ", "Tamil": "ஐந்தாம் வகுப்பு", "Telugu": "ఐదవ తరగతి", "Marathi": "इयत्ता पाचवी", "Bengali": "পঞ্চম শ্রেণী", "Gujarati": "પાંચમું ધોરણ", "Punjabi": "ਪੰਜਵੀਂ ਜਮਾਤ", "Malayalam": "അഞ്ചാം ക്ലാസ്", "Odia": "ପଞ୍ଚମ ଶ୍ରେଣୀ"
+    },
+    "Class 6": {
+        "English": "Class 6", "Hindi": "छठी कक्षा", "Kannada": "ಆರನೇ ತರಗತಿ", "Tamil": "ஆறாம் வகுப்பு", "Telugu": "ఆరవ తరగతి", "Marathi": "इयत्ता सहावी", "Bengali": "ষষ্ঠ শ্রেণী", "Gujarati": "છઠ્ઠું ધોરણ", "Punjabi": "ਛੇਵੀਂ ਜਮਾਤ", "Malayalam": "ആറാം ക്ലാസ്", "Odia": "ଷଷ୍ଠ ଶ୍ରେଣୀ"
+    },
+    "Class 7": {
+        "English": "Class 7", "Hindi": "सातवीं कक्षा", "Kannada": "ಏಳನೇ ತರಗತಿ", "Tamil": "ஏழாம் வகுப்பு", "Telugu": "ఏడవ తరగతి", "Marathi": "इयत्ता सातवी", "Bengali": "সপ্তম শ্রেণী", "Gujarati": "સાતમું ધોરણ", "Punjabi": "ਸੱਤਵੀਂ ਜਮਾਤ", "Malayalam": "ഏഴാം ക്ലാസ്", "Odia": "ସପ୍ତମ ଶ୍ରେଣୀ"
+    },
+    "Class 8": {
+        "English": "Class 8", "Hindi": "आठवीं कक्षा", "Kannada": "ಎಂಟನೇ ತರಗತಿ", "Tamil": "எட்டாம் வகுப்பு", "Telugu": "ఎనిమిదవ తరగతి", "Marathi": "इयत्ता आठवी", "Bengali": "অষ্টম শ্রেণী", "Gujarati": "આઠમું ધોરણ", "Punjabi": "ਅੱਠਵੀਂ ਜਮਾਤ", "Malayalam": "എട്ടാം ക്ലാസ്", "Odia": "ଅଷ୍ଟମ ଶ୍ରେଣୀ"
+    },
+    "Class 9": {
+        "English": "Class 9", "Hindi": "नौवीं कक्षा", "Kannada": "ಒಂಬತ್ತನೇ ತರಗತಿ", "Tamil": "ஒன்பதாம் வகுப்பு", "Telugu": "తొమ్మిదవ తరగతి", "Marathi": "इयत्ता नववी", "Bengali": "নবম শ্রেণী", "Gujarati": "નવમું ધોરણ", "Punjabi": "ਨੌਵੀਂ ਜਮਾਤ", "Malayalam": "ഒൻപതാം ക്ലാസ്", "Odia": "ନବମ ଶ୍ରେଣୀ"
+    },
+    "Class 10": {
+        "English": "Class 10", "Hindi": "दसवीं कक्षा", "Kannada": "ಹತ್ತನೇ ತರಗತಿ", "Tamil": "பத்தாம் வகுப்பு", "Telugu": "పదవ తరగతి", "Marathi": "इयत्ता दहावी", "Bengali": "দশম শ্রেণী", "Gujarati": "દસમું ધોરણ", "Punjabi": "ਦਸਵੀਂ ਜਮਾਤ", "Malayalam": "പത്താം ക്ലാസ്", "Odia": "ଦଶମ ଶ୍ରେଣୀ"
+    },
+    "Class 11": {
+        "English": "Class 11", "Hindi": "ग्यारहवीं कक्षा", "Kannada": "ಹನ್ನೊಂದನೇ ತರಗತಿ", "Tamil": "பதினொன்றாம் வகுப்பு", "Telugu": "పదకొండవ తరగతి", "Marathi": "इयत्ता अकरावी", "Bengali": "একাদশ শ্রেণী", "Gujarati": "અગિયારમું ધોરણ", "Punjabi": "ਗਿਆਰਵੀਂ ਜਮਾਤ", "Malayalam": "പതിനൊന്നാം ക്ലാസ്", "Odia": "ଏକାଦଶ ଶ୍ରେଣୀ"
+    },
+    "Class 12": {
+        "English": "Class 12", "Hindi": "बारहवीं कक्षा", "Kannada": "ಹನ್ನೆರಡನೇ ತರಗತಿ", "Tamil": "பன்னிரண்டாம் வகுப்பு", "Telugu": "పన్నెండవ తరగతి", "Marathi": "इयत्ता बारावी", "Bengali": "দ্বাদশ শ্রেণী", "Gujarati": "બારમું ધોરણ", "Punjabi": "ਬਾਰ੍ਹਵੀਂ ਜਮਾਤ", "Malayalam": "പന്ത്രണ്ടാം ക്ലാസ്", "Odia": "ଦ୍ୱାଦଶ ଶ୍ରେଣୀ"
+    },
+    "Select a class": {
+        "English": "Select a class", "Hindi": "एक कक्षा चुनें", "Kannada": "ಒಂದು ತರಗತಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ", "Tamil": "ஒரு வகுப்பைத் தேர்ந்தெடுக்கவும்", "Telugu": "ఒక తరగతిని ఎంచుకోండి", "Marathi": "एक वर्ग निवडा", "Bengali": "একটি শ্রেণী নির্বাচন করুন", "Gujarati": "એક વર્ગ પસંદ કરો", "Punjabi": "ਇੱਕ ਜਮਾਤ ਚੁਣੋ", "Malayalam": "ഒരു ക്ലാസ് തിരഞ്ഞെടുക്കുക", "Odia": "ଏକ ଶ୍ରେଣୀ ବାଛନ୍ତୁ"
+    },
+    "Select Class(es)": {
+        "English": "Select Class(es)", "Hindi": "कक्षा(एं) चुनें", "Kannada": "ತರಗತಿ(ಗಳನ್ನು) ಆಯ್ಕೆಮಾಡಿ", "Tamil": "வகுப்பு(களை)த் தேர்ந்தெடுக்கவும்", "Telugu": "తరగతి(లను) ఎంచుకోండి", "Marathi": "वर्ग निवडा", "Bengali": "শ্রেণী(গুলি) নির্বাচন করুন", "Gujarati": "વર્ગ(ઓ) પસંદ કરો", "Punjabi": "ਜਮਾਤ(ਾਂ) ਚੁਣੋ", "Malayalam": "ക്ലാസ്(കൾ) തിരഞ്ഞെടുക്കുക", "Odia": "ଶ୍ରେଣୀ(ଗୁଡ଼ିକ) ବାଛନ୍ତୁ"
+    },
+    "class selected": {
+        "English": "class selected", "Hindi": "कक्षा चुनी गई", "Kannada": "ತರಗತಿ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", "Tamil": "வகுப்பு தேர்ந்தெடுக்கப்பட்டது", "Telugu": "తరగతి ఎంచుకోబడింది", "Marathi": "वर्ग निवडला", "Bengali": "শ্রেণী নির্বাচিত", "Gujarati": "વર્ગ પસંદ કરેલ", "Punjabi": "ਜਮਾਤ ਚੁਣੀ", "Malayalam": "ക്ലാസ് തിരഞ്ഞെടുത്തു", "Odia": "ଶ୍ରେଣୀ ବଛାଯାଇଛି"
+    },
+    "classes selected": {
+        "English": "classes selected", "Hindi": "कक्षाएं चुनी गईं", "Kannada": "ತರಗತಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ", "Tamil": "வகுப்புகள் தேர்ந்தெடுக்கப்பட்டன", "Telugu": "తరగతులు ఎంచుకోబడ్డాయి", "Marathi": "वर्ग निवडले", "Bengali": "শ্রেণীগুলি নির্বাচিত", "Gujarati": "વર્ગો પસંદ કરેલ", "Punjabi": "ਜਮਾਤਾਂ ਚੁਣੀਆਂ", "Malayalam": "ക്ലാസുകൾ തിരഞ്ഞെടുത്തു", "Odia": "ଶ୍ରେଣୀଗୁଡ଼ିକ ବଛାଯାଇଛି"
+    },
+    "Select Class Levels": {
+        "English": "Select Class Levels", "Hindi": "कक्षा स्तर चुनें", "Kannada": "ತರಗತಿ ಮಟ್ಟಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ", "Tamil": "வகுப்பு நிலைகளைத் தேர்ந்தெடுக்கவும்", "Telugu": "తరగతి స్థాయిలను ఎంచుకోండి", "Marathi": "वर्ग स्तर निवडा", "Bengali": "শ্রেণী স্তর নির্বাচন করুন", "Gujarati": "વર્ગ સ્તર પસંદ કરો", "Punjabi": "ਜਮਾਤ ਪੱਧਰ ਚੁਣੋ", "Malayalam": "ക്ലാസ് ലെവലുകൾ തിരഞ്ഞെടുക്കുക", "Odia": "ଶ୍ରେଣୀ ସ୍ତର ବାଛନ୍ତୁ"
+    },
     // === Wave 6: Subject names (harvested from subject-selector.tsx local object) ===
     "Mathematics": {
         "English": "Mathematics", "Hindi": "गणित", "Kannada": "ಗಣಿತ", "Tamil": "கணிதம்", "Telugu": "గణితం", "Marathi": "गणित", "Bengali": "গণিত", "Gujarati": "ગણિત", "Punjabi": "ਗਣਿਤ", "Malayalam": "ഗണിതം", "Odia": "ଗଣିତ"
