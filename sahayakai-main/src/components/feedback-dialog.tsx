@@ -14,6 +14,7 @@ import { ThumbsDown, ThumbsUp, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { submitFeedback } from "@/app/actions/feedback";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 
 interface FeedbackDialogProps {
     page: string; // e.g., "lesson-plan"
@@ -28,6 +29,7 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
     const [comment, setComment] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const { t } = useLanguage();
 
     const handleSubmit = async (selectedRating: 'thumbs-up' | 'thumbs-down', userComment?: string) => {
         setIsSubmitting(true);
@@ -83,7 +85,7 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
     return (
         <>
             <div className={`flex items-center gap-2 ${className}`}>
-                <span className="text-sm text-muted-foreground mr-2">Was this helpful?</span>
+                <span className="text-sm text-muted-foreground mr-2">{t("Was this helpful?")}</span>
                 <Button
                     variant="outline"
                     size="sm"
@@ -105,14 +107,14 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>How can we improve?</DialogTitle>
+                        <DialogTitle>{t("How can we improve?")}</DialogTitle>
                         <DialogDescription>
-                            We're sorry the result wasn't what you expected. Please tell us what went wrong so we can fix it.
+                            {t("We're sorry the result wasn't what you expected. Please tell us what went wrong so we can fix it.")}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                         <Textarea
-                            placeholder="e.g., The objectives were too vague, or the generated activities were not age-appropriate..."
+                            placeholder={t("e.g., The objectives were too vague, or the generated activities were not age-appropriate...")}
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             className="min-h-[100px]"
