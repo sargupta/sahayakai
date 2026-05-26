@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import {
     Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+import { useLanguage } from "@/context/language-context";
 
 // ── Resource type picker (what teacher can share) ─────────────────────────────
 
@@ -37,10 +38,10 @@ const SHAREABLE_TYPES: { type: SharedResource["type"]; label: string; icon: Reac
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getConversationTitle(conv: Conversation, myUid: string): string {
-    if (conv.type === "group") return conv.name ?? "Group";
+function getConversationTitle(conv: Conversation, myUid: string, t: (k: string) => string): string {
+    if (conv.type === "group") return conv.name ?? t("Group");
     const otherId = conv.participantIds.find((id) => id !== myUid);
-    return otherId ? (conv.participants[otherId]?.displayName ?? "Teacher") : "Chat";
+    return otherId ? (conv.participants[otherId]?.displayName ?? t("Teacher")) : t("Chat");
 }
 
 function getConversationPhoto(conv: Conversation, myUid: string): string | null {
@@ -72,6 +73,7 @@ function InlineResourcePicker({
     onShare: (resource: SharedResource, caption: string) => void;
     onClose: () => void;
 }) {
+    const { t } = useLanguage();
     const [step, setStep] = useState<"pick-type" | "fill-details">("pick-type");
     const [draft, setDraft] = useState<ResourceDraft | null>(null);
     const [caption, setCaption] = useState("");
@@ -98,18 +100,18 @@ function InlineResourcePicker({
         <div className="w-[min(18rem,calc(100vw-2rem))] p-3 space-y-3">
             {step === "pick-type" ? (
                 <>
-                    <p className="text-xs font-bold text-foreground uppercase tracking-wide">Share a resource</p>
+                    <p className="text-xs font-bold text-foreground uppercase tracking-wide">{t("Share a resource")}</p>
                     <div className="grid grid-cols-2 gap-2">
-                        {SHAREABLE_TYPES.map((t) => {
-                            const Icon = t.icon;
+                        {SHAREABLE_TYPES.map((st) => {
+                            const Icon = st.icon;
                             return (
                                 <button
-                                    key={t.type}
-                                    onClick={() => selectType(t)}
+                                    key={st.type}
+                                    onClick={() => selectType(st)}
                                     className="flex items-center gap-2 p-2 rounded-xl border border-border bg-muted/40 hover:bg-primary/5 hover:border-primary/20 transition-all text-left"
                                 >
                                     <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span className="text-xs font-medium text-foreground">{t.label}</span>
+                                    <span className="text-xs font-medium text-foreground">{t(st.label)}</span>
                                 </button>
                             );
                         })}
@@ -122,31 +124,34 @@ function InlineResourcePicker({
                             <ArrowLeft className="h-4 w-4" />
                         </button>
                         <p className="text-xs font-bold text-foreground uppercase tracking-wide">
-                            {SHAREABLE_TYPES.find(t => t.type === draft?.type)?.label}
+                            {(() => {
+                                const lbl = SHAREABLE_TYPES.find(st => st.type === draft?.type)?.label;
+                                return lbl ? t(lbl) : "";
+                            })()}
                         </p>
                     </div>
                     <div className="space-y-2">
                         <input
                             autoFocus
-                            placeholder="Topic / Title *"
+                            placeholder={t("Topic / Title *")}
                             value={draft?.title ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, title: e.target.value } : d)}
                             className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <input
-                            placeholder="Class (optional)"
+                            placeholder={t("Class (optional)")}
                             value={draft?.gradeLevel ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, gradeLevel: e.target.value } : d)}
                             className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <input
-                            placeholder="Subject (optional)"
+                            placeholder={t("Subject (optional)")}
                             value={draft?.subject ?? ""}
                             onChange={(e) => setDraft((d) => d ? { ...d, subject: e.target.value } : d)}
                             className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <textarea
-                            placeholder="Add a message (optional)"
+                            placeholder={t("Add a message (optional)")}
                             value={caption}
                             onChange={(e) => setCaption(e.target.value)}
                             rows={2}
@@ -158,7 +163,7 @@ function InlineResourcePicker({
                             disabled={!draft?.title.trim()}
                             className="w-full bg-primary hover:bg-primary/90 text-white"
                         >
-                            Share Resource
+                            {t("Share Resource")}
                         </Button>
                     </div>
                 </>
@@ -176,6 +181,7 @@ interface ConversationThreadProps {
 
 export function ConversationThread({ conversation, onBack }: ConversationThreadProps) {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const { messages, loading, loadingMore, hasMore, loadMore } = usePaginatedMessages(conversation.id);
     const [input, setInput] = useState("");
     const [resourceOpen, setResourceOpen] = useState(false);
@@ -185,7 +191,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     const { outboxMessages, sendWithOutbox, retryMessage, mergeWithFirestore } = useMessageOutbox(conversation.id);
     const { isOtherTyping, setTyping } = useTypingIndicator(conversation.id, user?.uid);
 
-    const title = user ? getConversationTitle(conversation, user.uid) : "Chat";
+    const title = user ? getConversationTitle(conversation, user.uid, t) : t("Chat");
     const photo = user ? getConversationPhoto(conversation, user.uid) : null;
     const otherUid = conversation.type === 'direct'
         ? conversation.participantIds.find(id => id !== user?.uid)
@@ -295,8 +301,8 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         <div className="p-4 bg-primary/5 rounded-full">
                             <Send className="h-8 w-8 text-primary/40" />
                         </div>
-                        <p className="text-sm font-bold text-foreground">Start the conversation</p>
-                        <p className="text-xs text-muted-foreground">Send a message or share a teaching resource.</p>
+                        <p className="text-sm font-bold text-foreground">{t("Start the conversation")}</p>
+                        <p className="text-xs text-muted-foreground">{t("Send a message or share a teaching resource.")}</p>
                     </div>
                 ) : (
                     displayMessages.map((msg, idx) => {
@@ -329,14 +335,14 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                                     variant="ghost"
                                     size="icon"
                                     className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 shrink-0"
-                                    title="Share a resource"
+                                    title={t("Share a resource")}
                                 >
                                     <Paperclip className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent side="top" align="start" className="p-0 rounded-2xl shadow-xl border-border">
                                 <div className="flex items-center justify-between px-3 pt-3">
-                                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Share</span>
+                                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{t("Share")}</span>
                                     <button onClick={() => setResourceOpen(false)}>
                                         <X className="h-3.5 w-3.5 text-muted-foreground" />
                                     </button>
@@ -354,7 +360,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             value={input}
                             onChange={(e) => { setInput(e.target.value); setTyping(); }}
                             onKeyDown={handleKeyDown}
-                            placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
+                            placeholder={t("Type a message…")}
                             className="flex-1 min-h-[40px] max-h-32 text-sm bg-muted/40 border-border rounded-xl resize-none focus-visible:ring-primary/30 placeholder:text-muted-foreground py-2.5"
                             rows={1}
                             maxLength={1000}
@@ -376,7 +382,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         </Button>
                     </div>
                 ) : (
-                    <p className="text-center text-xs text-muted-foreground font-medium py-1">Sign in to send messages.</p>
+                    <p className="text-center text-xs text-muted-foreground font-medium py-1">{t("Sign in to send messages.")}</p>
                 )}
             </div>
         </div>
