@@ -279,7 +279,7 @@ function TeacherTrainingContent() {
       console.error("Failed to get advice:", error);
       toast({
         title: t("Failed to Get Advice"),
-        description: "There was an error getting advice. Please try again.",
+        description: t("There was an error getting advice. Please try again."),
         variant: "destructive",
       });
     } finally {

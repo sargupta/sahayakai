@@ -281,7 +281,7 @@ function VirtualFieldTripContent() {
           console.error("Failed to load saved field trip:", err);
           toast({
             title: translate("Load Failed"),
-            description: "Could not load the saved field trip.",
+            description: translate("Could not load the saved field trip."),
             variant: "destructive"
           });
         } finally {
@@ -368,7 +368,7 @@ function VirtualFieldTripContent() {
       console.error("Failed to plan trip:", error);
       toast({
         title: translate("Planning Failed"),
-        description: "There was an error planning the virtual trip. Please try again.",
+        description: translate("There was an error planning the virtual trip. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -518,7 +518,7 @@ function VirtualFieldTripContent() {
           <>
           <div className="my-8 flex items-center gap-3">
             <hr className="flex-1 border-border/40" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{translate("Result")}</span>
             <hr className="flex-1 border-border/40" />
           </div>
           <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><VirtualFieldTripDisplay

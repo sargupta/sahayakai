@@ -18,6 +18,7 @@ import { useNetworkAware } from "@/hooks/use-network-aware";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
+import { useLanguage } from "@/context/language-context";
 
 interface VideoRecommendations {
   categories: {
@@ -31,12 +32,13 @@ interface VideoRecommendations {
   categorizedVideos: Record<string, YouTubeVideo[]>;
 }
 
-const CATEGORIES: { key: string; title: string; icon: LucideIcon }[] = [
-  { key: "topRecommended", title: "Top Recommended for You", icon: Star },
-  { key: "storytelling",   title: "Storytelling for Your Subjects", icon: BookOpen },
-  { key: "pedagogy",       title: "Pedagogy & Teaching Methods", icon: GraduationCap },
-  { key: "govtUpdates",    title: "Government Updates", icon: Bell },
-  { key: "courses",        title: "Teacher Training Courses", icon: School },
+// Category title keys — actual titles resolved via t() inside the component (Wave 2 i18n).
+const CATEGORY_DEFS: { key: string; titleKey: string; icon: LucideIcon }[] = [
+  { key: "topRecommended", titleKey: "Top Recommended for You", icon: Star },
+  { key: "storytelling",   titleKey: "Storytelling for Your Subjects", icon: BookOpen },
+  { key: "pedagogy",       titleKey: "Pedagogy & Teaching Methods", icon: GraduationCap },
+  { key: "govtUpdates",    titleKey: "Government Updates", icon: Bell },
+  { key: "courses",        titleKey: "Teacher Training Courses", icon: School },
 ];
 
 // Next 15 prerender requires useSearchParams() to be wrapped in a
@@ -54,6 +56,7 @@ export default function VideoStorytellerPage() {
 function VideoStorytellerPageInner() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
@@ -261,21 +264,21 @@ function VideoStorytellerPageInner() {
         <div>
         <div className="my-8 flex items-center gap-3">
           <hr className="flex-1 border-border/40" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{t("Result")}</span>
           <hr className="flex-1 border-border/40" />
         </div>
         <div className="divide-y divide-border">
-          {CATEGORIES.map(cat => (
+          {CATEGORY_DEFS.map(cat => (
             <VideoCarousel
               key={cat.key}
               categoryKey={cat.key}
-              title={cat.title}
+              title={t(cat.titleKey)}
               icon={cat.icon}
               videos={recommendations.categorizedVideos[cat.key]}
               onVideoSelect={handleVideoSelect}
               onViewAll={(key) => {
-                const found = CATEGORIES.find(c => c.key === key);
-                if (found) setExpandedCategory(found);
+                const found = CATEGORY_DEFS.find(c => c.key === key);
+                if (found) setExpandedCategory({ key: found.key, title: t(found.titleKey), icon: found.icon });
               }}
             />
           ))}

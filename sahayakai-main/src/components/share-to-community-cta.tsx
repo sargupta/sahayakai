@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { shareLatestContentAction } from '@/app/actions/community';
+import { useLanguage } from '@/context/language-context';
 import type { ContentType } from '@/types';
 
 interface ShareToCommunityCTAProps {
@@ -20,6 +21,7 @@ interface ShareToCommunityCTAProps {
 export function ShareToCommunityCTA({ contentType, className }: ShareToCommunityCTAProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
     const [status, setStatus] = useState<'idle' | 'loading' | 'shared'>('idle');
     const pendingRef = useRef(false);
 
@@ -32,7 +34,7 @@ export function ShareToCommunityCTA({ contentType, className }: ShareToCommunity
         try {
             await shareLatestContentAction(contentType);
             setStatus('shared');
-            toast({ title: 'Shared to Community', description: 'Other teachers can now find this in the Community Library.' });
+            toast({ title: t('Shared to Community'), description: t('Other teachers can now find this in the Community Library.') });
         } catch (error: any) {
             const msg = error?.message || '';
             if (msg.includes('already shared')) {
@@ -41,8 +43,8 @@ export function ShareToCommunityCTA({ contentType, className }: ShareToCommunity
                 setStatus('idle');
                 pendingRef.current = false;
                 toast({
-                    title: 'Could not share',
-                    description: msg || 'Please try again.',
+                    title: t('Could not share'),
+                    description: msg || t('Please try again'),
                     variant: 'destructive',
                 });
             }
@@ -53,7 +55,7 @@ export function ShareToCommunityCTA({ contentType, className }: ShareToCommunity
         return (
             <div className={`flex items-center gap-2 text-sm text-green-600 font-medium ${className ?? ''}`}>
                 <Check className="h-4 w-4" />
-                Shared to Community
+                {t('Shared to Community')}
             </div>
         );
     }
@@ -71,7 +73,7 @@ export function ShareToCommunityCTA({ contentType, className }: ShareToCommunity
             ) : (
                 <Users className="h-3.5 w-3.5" />
             )}
-            {status === 'loading' ? 'Sharing...' : 'Share to Community'}
+            {status === 'loading' ? t('Sharing...') : t('Share to Community')}
         </Button>
     );
 }

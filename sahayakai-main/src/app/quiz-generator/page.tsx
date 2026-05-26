@@ -1034,7 +1034,7 @@ function QuizGeneratorContent() {
         <>
           <div className="flex items-center gap-3">
             <hr className="flex-1 border-border/40" />
-            <span className="type-caption text-muted-foreground px-2">Result</span>
+            <span className="type-caption text-muted-foreground px-2">{translate("Result")}</span>
             <hr className="flex-1 border-border/40" />
           </div>
           <SectionCard
