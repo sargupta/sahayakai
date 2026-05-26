@@ -568,8 +568,8 @@ export default function CommunityPage() {
             <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground leading-snug">Staff Room</div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">Open chat</div>
+            <div className="font-semibold text-sm text-foreground leading-snug">{t("Staff Room")}</div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">{t("Open chat")}</div>
           </div>
         </button>
         <button
@@ -581,8 +581,8 @@ export default function CommunityPage() {
             <UserSearch className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground leading-snug">Find Teachers</div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">By subject or school</div>
+            <div className="font-semibold text-sm text-foreground leading-snug">{t("Find Teachers")}</div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">{t("By subject or school")}</div>
           </div>
         </button>
       </div>
@@ -592,7 +592,7 @@ export default function CommunityPage() {
         <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/15 animate-in fade-in duration-500">
           <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 text-sm text-foreground">
-            <span className="font-medium">Welcome!</span> These groups match your subjects and classes. Post questions, share resources, and connect with fellow teachers.
+            <span className="font-medium">{t("Welcome!")}</span> {t("These groups match your subjects and classes. Post questions, share resources, and connect with fellow teachers.")}
           </div>
           <button onClick={() => setShowFirstVisitHint(false)} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-4 w-4" />
@@ -621,12 +621,12 @@ export default function CommunityPage() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Users className="h-6 w-6 text-primary" />
           </div>
-          <p className="text-sm font-bold text-foreground">Join your first group</p>
+          <p className="text-sm font-bold text-foreground">{t("Join your first group")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Groups are how you find teachers in your subject, grade, and area.
+            {t("Groups are how you find teachers in your subject, grade, and area.")}
           </p>
           <Button onClick={handleOpenExploreGroups} className="mt-3 gap-1.5">
-            Browse groups
+            {t("Browse groups")}
           </Button>
         </div>
       )}

@@ -21,7 +21,7 @@ export function LandingNav({ onAuthClick }: Props) {
         <span className="flex items-baseline gap-1.5">
           SahayakAI
           <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-neutral-400">
-            by SARGVISION Intelligence
+            {t("by SARGVISION Intelligence")}
           </span>
         </span>
       </div>

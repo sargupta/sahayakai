@@ -11,6 +11,7 @@ import { TWILIO_LANGUAGE_MAP } from "@/types/attendance";
 import type { Student, OutreachReason, CallSummary, TranscriptTurn, PerformanceContext } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import {
     Loader2, Phone, Copy, RefreshCw, CheckCircle2,
     CalendarX2, TrendingDown, AlertTriangle, Star,
@@ -43,11 +44,12 @@ interface ContactParentModalProps {
     attendanceRate?: number;
 }
 
-const REASONS: { value: OutreachReason; label: string; description: string; icon: React.ElementType }[] = [
-    { value: "consecutive_absences", label: "Consecutive Absences", description: "Student has been absent for multiple days", icon: CalendarX2 },
-    { value: "poor_performance",     label: "Academic Concern",     description: "Grades or performance has declined",        icon: TrendingDown },
-    { value: "behavioral_concern",   label: "Behavioral Concern",   description: "Classroom behavior needs attention",        icon: AlertTriangle },
-    { value: "positive_feedback",    label: "Positive Feedback",    description: "Share an achievement or good news",         icon: Star },
+// labelKey/descriptionKey resolved via t() at render time (Wave 5 i18n).
+const REASONS: { value: OutreachReason; labelKey: string; descriptionKey: string; icon: React.ElementType }[] = [
+    { value: "consecutive_absences", labelKey: "Consecutive Absences", descriptionKey: "Student has been absent for multiple days", icon: CalendarX2 },
+    { value: "poor_performance",     labelKey: "Academic Concern",     descriptionKey: "Grades or performance has declined",        icon: TrendingDown },
+    { value: "behavioral_concern",   labelKey: "Behavioral Concern",   descriptionKey: "Classroom behavior needs attention",        icon: AlertTriangle },
+    { value: "positive_feedback",    labelKey: "Positive Feedback",    descriptionKey: "Share an achievement or good news",         icon: Star },
 ];
 
 type Step = "reason" | "note" | "review" | "calling" | "summary";
@@ -68,6 +70,7 @@ export function ContactParentModal({
 }: ContactParentModalProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
 
     const [step, setStep] = useState<Step>("reason");
     const [reason, setReason] = useState<OutreachReason | null>(null);
@@ -260,7 +263,7 @@ export function ContactParentModal({
             setLanguageCode(data.languageCode);
             setStep("review");
         } catch (err: any) {
-            toast({ title: "Failed to generate", description: err.message, variant: "destructive" });
+            toast({ title: t("Failed to generate"), description: err.message, variant: "destructive" });
         } finally {
             setGenerating(false);
         }
@@ -317,7 +320,7 @@ export function ContactParentModal({
             setStep("calling");
             pollForSummary(oid);
         } catch (err: any) {
-            toast({ title: "Call failed", description: err.message, variant: "destructive" });
+            toast({ title: t("Call failed"), description: err.message, variant: "destructive" });
         } finally {
             setCalling(false);
         }
@@ -331,7 +334,7 @@ export function ContactParentModal({
         await navigator.clipboard.writeText(generatedMessage);
         setStep("summary");
         setCallResult({ callStatus: 'manual', callDurationSeconds: null, answeredBy: null, turnCount: 0, transcript: [], callSummary: null });
-        toast({ title: "Copied to clipboard", description: "Paste in WhatsApp to send." });
+        toast({ title: t("Copied to clipboard"), description: t("Paste in WhatsApp to send.") });
     };
 
     return (
@@ -374,8 +377,8 @@ export function ContactParentModal({
                                             <Icon className={cn("h-4 w-4", reason === r.value ? "text-primary" : "text-muted-foreground")} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-foreground">{r.label}</p>
-                                            <p className="text-xs text-muted-foreground">{r.description}</p>
+                                            <p className="text-sm font-semibold text-foreground">{t(r.labelKey)}</p>
+                                            <p className="text-xs text-muted-foreground">{t(r.descriptionKey)}</p>
                                         </div>
                                     </button>
                                 );
@@ -393,7 +396,7 @@ export function ContactParentModal({
                     <div className="space-y-4 mt-2">
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-xs">
-                                {REASONS.find((r) => r.value === reason)?.label}
+                                {(() => { const r = REASONS.find((r) => r.value === reason); return r ? t(r.labelKey) : ''; })()}
                             </Badge>
                         </div>
 
@@ -411,22 +414,22 @@ export function ContactParentModal({
                         />
 
                         <Textarea
-                            placeholder={placeholderFor(reason)}
+                            placeholder={t(placeholderKeyFor(reason))}
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={3}
                             className="resize-none text-sm"
                         />
                         <div className="flex gap-2">
-                            <Button variant="outline" className="flex-1" onClick={() => setStep("reason")}>Back</Button>
+                            <Button variant="outline" className="flex-1" onClick={() => setStep("reason")}>{t("Back")}</Button>
                             <Button
                                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={generateMessage}
                                 disabled={generating}
                             >
                                 {generating
-                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
-                                    : "Generate Message"
+                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("Generating...")}</>
+                                    : t("Generate Message")
                                 }
                             </Button>
                         </div>
@@ -445,14 +448,14 @@ export function ContactParentModal({
                             disabled={generating}
                         >
                             {generating
-                                ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Regenerating...</>
-                                : <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
+                                ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("Regenerating...")}</>
+                                : <><RefreshCw className="h-3 w-3 mr-1" /> {t("Regenerate")}</>
                             }
                         </Button>
 
                         {unsupportedForCall && (
                             <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
-                                Auto-call is not available for {student.parentLanguage}. Use WhatsApp copy instead.
+                                {t("Auto-call is not available for")} {student.parentLanguage}. {t("Use WhatsApp copy instead.")}
                             </p>
                         )}
 
@@ -463,7 +466,7 @@ export function ContactParentModal({
                                 onClick={handleCopyWhatsApp}
                             >
                                 <Copy className="h-4 w-4" />
-                                Copy for WhatsApp
+                                {t("Copy for WhatsApp")}
                             </Button>
 
                             {canCall && (
@@ -473,8 +476,8 @@ export function ContactParentModal({
                                     disabled={calling}
                                 >
                                     {calling
-                                        ? <><Loader2 className="h-4 w-4 animate-spin" /> Calling...</>
-                                        : <><Phone className="h-4 w-4" /> Call Parent</>
+                                        ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("Calling...")}</>
+                                        : <><Phone className="h-4 w-4" /> {t("Call Parent")}</>
                                     }
                                 </Button>
                             )}
@@ -493,7 +496,7 @@ export function ContactParentModal({
 // paths only; absences belong in the absence path; behavioral discussions
 // rely on the teacher's free-text note (we surface prompts).
 
-function placeholderFor(reason: OutreachReason | null): string {
+function placeholderKeyFor(reason: OutreachReason | null): string {
     switch (reason) {
         case "consecutive_absences":
             return "Specific note (optional) — e.g., 'Usually a regular attender; checking if everything is okay at home.'";

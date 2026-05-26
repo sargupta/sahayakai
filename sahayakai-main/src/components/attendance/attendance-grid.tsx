@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { saveAttendanceAction, getAttendanceForDateAction } from "@/app/actions/attendance";
 import type { Student, AttendanceStatus } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 import { Loader2, CheckCircle2, XCircle, Clock, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ const STATUS_CONFIG = {
 
 export function AttendanceGrid({ classId, students, date }: AttendanceGridProps) {
     const { toast } = useToast();
+    const { t } = useLanguage();
     const [records, setRecords] = useState<StatusMap>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -90,12 +92,12 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
         try {
             await saveAttendanceAction(classId, date, records);
             setSaved(true);
-            toast({ title: "Attendance saved" });
+            toast({ title: t("Attendance saved") });
         } catch (err: any) {
             const description = err.message === 'PREMIUM_REQUIRED'
-                ? "Attendance is a Pro feature. Please upgrade your plan."
+                ? t("Attendance is a Pro feature. Please upgrade your plan.")
                 : err.message;
-            toast({ title: "Failed to save", description, variant: "destructive" });
+            toast({ title: t("Failed to save"), description, variant: "destructive" });
         } finally {
             setSaving(false);
         }

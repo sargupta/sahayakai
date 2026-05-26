@@ -20,6 +20,7 @@ import {
     type LangCode,
 } from "@/lib/detect-language";
 import { useJarvisStore } from "@/store/jarvisStore";
+import { useLanguage } from "@/context/language-context";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -175,6 +176,7 @@ function ActionCard({ action, onNavigate }: { action: VidyaAction; onNavigate: (
 
 export function VoiceAssistant({ context }: VoiceAssistantProps) {
     const router = useRouter();
+    const { t } = useLanguage();
     // Page-aware context (2026-04-26 fix): VIDYA was suggesting quiz
     // generation even when the teacher was on /teacher-training. Root cause:
     // currentScreenContext.path was being passed the JSON-stringified page
@@ -414,17 +416,17 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                     <Brain className="h-10 w-10 text-primary/50" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-foreground text-base">Hello! I'm VIDYA</p>
+                                    <p className="font-bold text-foreground text-base">{t("Hello! I'm VIDYA")}</p>
                                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                                        Your Senior Pedagogical Mentor. Ask me to create lesson plans, quizzes, worksheets, visual aids, and more — in any Indian language. Speak or type and I'll match your language automatically.
+                                        {t("Your Senior Pedagogical Mentor. Ask me to create lesson plans, quizzes, worksheets, visual aids, and more — in any Indian language. Speak or type and I'll match your language automatically.")}
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 w-full mt-2">
                                     {[
-                                        { text: "Make a lesson plan", icon: <FileText className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "I need a quiz", icon: <ClipboardList className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "Create a visual aid", icon: <Lightbulb className="w-3.5 h-3.5 inline-block shrink-0" /> },
-                                        { text: "Show me videos", icon: <Video className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: t("Make a lesson plan"), icon: <FileText className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: t("I need a quiz"), icon: <ClipboardList className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: t("Create a visual aid"), icon: <Lightbulb className="w-3.5 h-3.5 inline-block shrink-0" /> },
+                                        { text: t("Show me videos"), icon: <Video className="w-3.5 h-3.5 inline-block shrink-0" /> },
                                     ].map(s => (
                                         <button key={s.text} onClick={() => sendMessage(s.text)}
                                             className="text-left text-xs p-2 rounded-xl border border-border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all text-foreground font-medium flex items-center gap-1.5">
@@ -469,7 +471,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                         <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.15s]" />
                                         <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.3s]" />
                                     </div>
-                                    <span className="text-xs text-muted-foreground font-medium">VIDYA is thinking...</span>
+                                    <span className="text-xs text-muted-foreground font-medium">{t("VIDYA is thinking...")}</span>
                                 </div>
                             </div>
                         )}
@@ -485,7 +487,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                                 value={textInput}
                                 onChange={e => setTextInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(textInput); } }}
-                                placeholder="Type or speak to VIDYA..."
+                                placeholder={t("Type or speak to VIDYA...")}
                                 className="flex-1 text-sm bg-muted/50 border border-border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 placeholder:text-muted-foreground"
                             />
                             <Button
@@ -501,7 +503,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                         <div className="flex justify-center">
                             <MicrophoneInput
                                 onTranscriptChange={(text, lang) => sendMessage(text, lang)}
-                                label="Or tap to speak..."
+                                label={t("Or tap to speak...")}
                                 iconSize="sm"
                                 className="scale-90"
                                 greetingLang={greetingConfig.greetingLang}

@@ -20,6 +20,7 @@ import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { useLanguage } from "@/context/language-context";
 
 // Simple markdown to HTML converter for basic formatting
 // Escapes HTML entities first to prevent XSS from AI-generated content
@@ -209,6 +210,7 @@ const PDF_ID = "lesson-plan-pdf";
 export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en' }) => {
   const { toast } = useToast();
   const { canExport } = useSubscription();
+  const { t: translate } = useLanguage();
   const t = displayTranslations[selectedLanguage] || displayTranslations.en;
   const rs = getResultShellDict(selectedLanguage);
   const [editablePlan, setEditablePlan] = useState(lessonPlan);
@@ -369,12 +371,12 @@ ${editablePlan.assessment}
   const proGatedCopy = () =>
     canExport
       ? handleCopy()
-      : toast({ title: "Pro Feature", description: "Upgrade to Pro to copy and export lesson plans." });
+      : toast({ title: translate("Pro Feature"), description: translate("Upgrade to Pro to copy and export lesson plans.") });
 
   const proGatedDownload = () =>
     canExport
       ? handleDownload()
-      : toast({ title: "Pro Feature", description: "Upgrade to Pro to download PDF." });
+      : toast({ title: translate("Pro Feature"), description: translate("Upgrade to Pro to download PDF.") });
 
   const actions = isEditing
     ? [

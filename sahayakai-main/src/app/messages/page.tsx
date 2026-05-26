@@ -14,25 +14,27 @@ import { PushPermissionBanner } from "@/components/notifications/push-permission
 import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useLanguage } from "@/context/language-context";
 
 // ── Empty state (no conversation selected) ────────────────────────────────────
 
 function NoConversationSelected() {
+    const { t } = useLanguage();
     return (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-4 bg-muted/20">
             <div className="p-6 bg-primary/10 rounded-full shadow-soft border border-border/50">
                 <MessageCircle className="h-12 w-12 text-primary" />
             </div>
             <div className="space-y-2 max-w-xs">
-                <h3 className="text-base font-bold font-headline text-foreground">Your Messages</h3>
+                <h3 className="text-base font-bold font-headline text-foreground">{t("Your Messages")}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                    Connect with teachers in the Community to start messaging. When someone accepts your connection request, you can chat here.
+                    {t("Connect with teachers in the Community to start messaging. When someone accepts your connection request, you can chat here.")}
                 </p>
                 <a
                     href="/community"
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-2"
                 >
-                    Find Teachers
+                    {t("Find Teachers")}
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </a>
             </div>

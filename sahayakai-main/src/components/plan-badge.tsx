@@ -45,13 +45,13 @@ export function PlanBadge({ compact = false, className }: PlanBadgeProps) {
 
     const key = (plan as PlanKey) in PLAN_STYLES ? (plan as PlanKey) : 'free';
     const { className: styleClass, Icon } = PLAN_STYLES[key];
-    const label = PLAN_DISPLAY_NAMES[key];
+    const label = t(PLAN_DISPLAY_NAMES[key]);
 
     return (
         <div className={cn('flex items-center gap-2', className)}>
             <Link
                 href="/pricing"
-                aria-label={`Current plan: ${label}. Manage subscription.`}
+                aria-label={`${t("Current plan:")} ${label}. ${t("Manage subscription.")}`}
                 className={cn(
                     'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors',
                     styleClass,

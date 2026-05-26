@@ -70,14 +70,14 @@ export function SignedOutBanner() {
       <div className="flex items-center gap-3 text-saffron-800 flex-wrap">
         <span className="w-2 h-2 rounded-full bg-saffron flex-none" />
         <span className="font-medium">
-          See you tomorrow{name && name.trim() ? `, ${name}` : ""}.
+          {t("See you tomorrow")}{name && name.trim() ? `, ${name}` : ""}.
         </span>
         <a
           href="/"
           className="inline-flex items-center gap-1.5 font-semibold hover:underline"
         >
           <LogIn className="w-[13px] h-[13px]" strokeWidth={2.4} />
-          Sign back in
+          {t("Sign back in")}
         </a>
       </div>
       <button

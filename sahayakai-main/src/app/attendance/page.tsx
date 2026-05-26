@@ -30,8 +30,8 @@ function AttendancePageContent() {
             .then(setClasses)
             .catch((err) => {
                 toast({
-                    title: "Failed to load classes",
-                    description: err.message || "Please try refreshing the page.",
+                    title: t("Failed to load classes"),
+                    description: err.message || t("Please try refreshing the page."),
                     variant: "destructive",
                 });
             })
@@ -44,14 +44,14 @@ function AttendancePageContent() {
 
     const handleDelete = async (cls: ClassRecord, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm(`Delete "${cls.name}"? This cannot be undone.`)) return;
+        if (!confirm(t("Delete class confirm").replace("{name}", cls.name))) return;
         setDeleting(cls.id);
         try {
             await deleteClassAction(cls.id);
-            toast({ title: "Class deleted" });
+            toast({ title: t("Class deleted") });
             load();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            toast({ title: t("Error"), description: err.message, variant: "destructive" });
         } finally {
             setDeleting(null);
         }
@@ -137,7 +137,7 @@ function AttendancePageContent() {
                                         "h-9 w-9 text-muted-foreground/50 hover:text-red-500",
                                         "sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity",
                                     )}
-                                    aria-label="Delete class"
+                                    aria-label={t("Delete class")}
                                     onClick={(e) => handleDelete(cls, e)}
                                     disabled={deleting === cls.id}
                                 >

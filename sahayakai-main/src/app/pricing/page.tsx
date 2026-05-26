@@ -194,10 +194,10 @@ function PricingContent() {
             if (data.shortUrl) {
                 window.location.href = data.shortUrl;
             } else {
-                alert('Failed to create subscription. Please try again.');
+                alert(t('Failed to create subscription. Please try again.'));
             }
         } catch {
-            alert('Something went wrong. Please try again.');
+            alert(t('Something went wrong. Please try again.'));
         } finally {
             setCreating(false);
         }
@@ -208,7 +208,7 @@ function PricingContent() {
 
         const email = emailInput.trim().toLowerCase();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            setEmailError('Please enter a valid email address.');
+            setEmailError(t('Please enter a valid email address.'));
             return;
         }
 
@@ -225,10 +225,10 @@ function PricingContent() {
             if (res.ok && data.shortUrl) {
                 window.location.href = data.shortUrl;
             } else {
-                setEmailError(data.error || 'Could not start checkout. Please try again.');
+                setEmailError(data.error || t('Could not start checkout. Please try again.'));
             }
         } catch {
-            setEmailError('Network error. Please check your connection and try again.');
+            setEmailError(t('Network error. Please check your connection and try again.'));
         } finally {
             setCreating(false);
         }

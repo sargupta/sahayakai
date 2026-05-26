@@ -13,6 +13,7 @@ import {
     Clock, AlertCircle, RotateCcw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/language-context";
 
 // ── Resource card config (mirrors community page TYPE_CONFIG) ─────────────────
 
@@ -41,6 +42,7 @@ function getInitials(name: string): string {
 
 function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["resource"]>; isOwn: boolean }) {
     const router = useRouter();
+    const { t } = useLanguage();
     const cfg = RESOURCE_CONFIG[resource.type] ?? {
         color: "bg-slate-50 border-slate-200 text-slate-700",
         icon: BookOpen,
@@ -69,7 +71,7 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                 <Badge className={cn("text-[9px] px-1.5 py-0 border-0 font-bold rounded-full",
                     isOwn ? "bg-white/30 text-white" : "bg-white/70"
                 )}>
-                    {cfg.label}
+                    {t(cfg.label)}
                 </Badge>
             </div>
             <p className={cn("text-xs font-bold leading-snug", isOwn ? "text-white" : "text-slate-800")}>
@@ -104,7 +106,7 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                 )}
                 variant="outline"
             >
-                Open in Tool <ArrowRight className="h-3 w-3" />
+                {t("Open in Tool")} <ArrowRight className="h-3 w-3" />
             </Button>
         </div>
     );
