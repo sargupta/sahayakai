@@ -4802,6 +4802,46 @@ const dictionary: Record<string, Record<Language, string>> = {
     "There was an error getting advice. Please try again.": {
         "English": "There was an error getting advice. Please try again.", "Hindi": "सलाह प्राप्त करने में त्रुटि हुई। कृपया पुनः प्रयास करें।", "Kannada": "ಸಲಹೆ ಪಡೆಯುವಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "ஆலோசனை பெறுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", "Telugu": "సలహా పొందడంలో లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "सल्ला मिळवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", "Bengali": "পরামর্শ পেতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "સલાહ મેળવવામાં ભૂલ થઈ. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ ਹੋਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഉപദേശം ലഭിക്കുന്നതിൽ പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ପରାମର୍ଶ ପାଇବାରେ ତ୍ରୁଟି ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
     },
+    // === Wave 6: Subject names (harvested from subject-selector.tsx local object) ===
+    "Mathematics": {
+        "English": "Mathematics", "Hindi": "गणित", "Kannada": "ಗಣಿತ", "Tamil": "கணிதம்", "Telugu": "గణితం", "Marathi": "गणित", "Bengali": "গণিত", "Gujarati": "ગણિત", "Punjabi": "ਗਣਿਤ", "Malayalam": "ഗണിതം", "Odia": "ଗଣିତ"
+    },
+    "Science": {
+        "English": "Science", "Hindi": "विज्ञान", "Kannada": "ವಿಜ್ಞಾನ", "Tamil": "அறிவியல்", "Telugu": "విజ్ఞానం", "Marathi": "विज्ञान", "Bengali": "বিজ্ঞান", "Gujarati": "વિજ્ઞાન", "Punjabi": "ਵਿਗਿਆਨ", "Malayalam": "ശാസ്ത്രം", "Odia": "ବିଜ୍ଞାନ"
+    },
+    "Social Science": {
+        "English": "Social Science", "Hindi": "सामाजिक विज्ञान", "Kannada": "ಸಮಾಜ ವಿಜ್ಞಾನ", "Tamil": "சமூக அறிவியல்", "Telugu": "సాంఘిక శాస్త్రం", "Marathi": "सामाजिक विज्ञान", "Bengali": "সামাজিক বিজ্ঞান", "Gujarati": "સામાજિક વિજ્ઞાન", "Punjabi": "ਸਮਾਜਿਕ ਵਿਗਿਆਨ", "Malayalam": "സാമൂഹിക ശാസ്ത്രം", "Odia": "ସାମାଜିକ ବିଜ୍ଞାନ"
+    },
+    "History": {
+        "English": "History", "Hindi": "इतिहास", "Kannada": "ಇತಿಹಾಸ", "Tamil": "வரலாறு", "Telugu": "చరిత్ర", "Marathi": "इतिहास", "Bengali": "ইতিহাস", "Gujarati": "ઇતિહાસ", "Punjabi": "ਇਤਿਹਾਸ", "Malayalam": "ചരിത്രം", "Odia": "ଇତିହାସ"
+    },
+    "Geography": {
+        "English": "Geography", "Hindi": "भूगोल", "Kannada": "ಭೂಗೋಳ", "Tamil": "புவியியல்", "Telugu": "భూగోళశాస్త్రం", "Marathi": "भूगोल", "Bengali": "ভূগোল", "Gujarati": "ભૂગોળ", "Punjabi": "ਭੂਗੋਲ", "Malayalam": "ഭൂമിശാസ്ത്രം", "Odia": "ଭୂଗୋଳ"
+    },
+    "Civics": {
+        "English": "Civics", "Hindi": "नागरिक शास्त्र", "Kannada": "ನಾಗರಿಕ ಶಾಸ್ತ್ರ", "Tamil": "குடிமையியல்", "Telugu": "పౌరశాస్త్రం", "Marathi": "नागरिक शास्त्र", "Bengali": "নাগরিক বিজ্ঞান", "Gujarati": "નાગરિક શાસ્ત્ર", "Punjabi": "ਨਾਗਰਿਕ ਸ਼ਾਸਤਰ", "Malayalam": "പൗരധർമ്മം", "Odia": "ନାଗରିକ ଶାସ୍ତ୍ର"
+    },
+    "Hindi": {
+        "English": "Hindi", "Hindi": "हिंदी", "Kannada": "ಹಿಂದಿ", "Tamil": "ஹிந்தி", "Telugu": "హిందీ", "Marathi": "हिंदी", "Bengali": "হিন্দি", "Gujarati": "હિન્દી", "Punjabi": "ਹਿੰਦੀ", "Malayalam": "ഹിന്ദി", "Odia": "ହିନ୍ଦୀ"
+    },
+    "Sanskrit": {
+        "English": "Sanskrit", "Hindi": "संस्कृत", "Kannada": "ಸಂಸ್ಕೃತ", "Tamil": "சமஸ்கிருதம்", "Telugu": "సంస్కృతం", "Marathi": "संस्कृत", "Bengali": "সংস্কৃত", "Gujarati": "સંસ્કૃત", "Punjabi": "ਸੰਸਕ੍ਰਿਤ", "Malayalam": "സംസ്കൃതം", "Odia": "ସଂସ୍କୃତ"
+    },
+    "Kannada": {
+        "English": "Kannada", "Hindi": "कन्नड़", "Kannada": "ಕನ್ನಡ", "Tamil": "கன்னடம்", "Telugu": "కన్నడ", "Marathi": "कन्नड", "Bengali": "কন্নড়", "Gujarati": "કન્નડ", "Punjabi": "ਕੰਨੜ", "Malayalam": "കന്നഡ", "Odia": "କନ୍ନଡ"
+    },
+    "Computer Science": {
+        "English": "Computer Science", "Hindi": "कंप्यूटर विज्ञान", "Kannada": "ಗಣಕವಿಜ್ಞಾನ", "Tamil": "கணினி அறிவியல்", "Telugu": "కంప్యూటర్ సైన్స్", "Marathi": "संगणक विज्ञान", "Bengali": "কম্পিউটার বিজ্ঞান", "Gujarati": "કમ્પ્યુટર વિજ્ઞાન", "Punjabi": "ਕੰਪਿਊਟਰ ਵਿਗਿਆਨ", "Malayalam": "കമ്പ്യൂട്ടർ സയൻസ്", "Odia": "କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନ"
+    },
+    "Environmental Studies (EVS)": {
+        "English": "Environmental Studies (EVS)", "Hindi": "पर्यावरण अध्ययन (EVS)", "Kannada": "ಪರಿಸರ ಅಧ್ಯಯನ (EVS)", "Tamil": "சுற்றுச்சூழல் ஆய்வுகள் (EVS)", "Telugu": "పర్యావరణ అధ్యయనాలు (EVS)", "Marathi": "पर्यावरण अभ्यास (EVS)", "Bengali": "পরিবেশ অধ্যয়ন (EVS)", "Gujarati": "પર્યાવરણ અભ્યાસ (EVS)", "Punjabi": "ਵਾਤਾਵਰਨ ਅਧਿਐਨ (EVS)", "Malayalam": "പരിസ്ഥിതി പഠനങ്ങൾ (EVS)", "Odia": "ପରିବେଶ ଅଧ୍ୟୟନ (EVS)"
+    },
+    "General": {
+        "English": "General", "Hindi": "सामान्य", "Kannada": "ಸಾಮಾನ್ಯ", "Tamil": "பொதுவான", "Telugu": "సాధారణ", "Marathi": "सामान्य", "Bengali": "সাধারণ", "Gujarati": "સામાન્ય", "Punjabi": "ਆਮ", "Malayalam": "പൊതുവായ", "Odia": "ସାଧାରଣ"
+    },
+    "Select a subject": {
+        "English": "Select a subject", "Hindi": "विषय चुनें", "Kannada": "ವಿಷಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ", "Tamil": "ஒரு பாடத்தைத் தேர்ந்தெடுக்கவும்", "Telugu": "ఒక విషయాన్ని ఎంచుకోండి", "Marathi": "विषय निवडा", "Bengali": "একটি বিষয় নির্বাচন করুন", "Gujarati": "વિષય પસંદ કરો", "Punjabi": "ਇੱਕ ਵਿਸ਼ਾ ਚੁਣੋ", "Malayalam": "ഒരു വിഷയം തിരഞ്ഞെടുക്കുക", "Odia": "ଏକ ବିଷୟ ବାଛନ୍ତୁ"
+    },
     // === Wave 6: Rubric Generator (local translations harvested) ===
     "Create clear and fair grading rubrics for any assignment.": {
         "English": "Create clear and fair grading rubrics for any assignment.", "Hindi": "किसी भी असाइनमेंट के लिए स्पष्ट और निष्पक्ष ग्रेडिंग रूब्रिक बनाएं।", "Kannada": "ಯಾವುದೇ ನಿಯೋಜನೆಗಾಗಿ ಸ್ಪಷ್ಟ ಮತ್ತು ನ್ಯಾಯಯುತ ಗ್ರೇಡಿಂಗ್ ರೂಬ್ರಿಕ್‌ಗಳನ್ನು ರಚಿಸಿ.", "Tamil": "எந்தவொரு வேலைக்கும் தெளிவான மற்றும் நியாயமான மதிப்பீட்டு ரூப்ரிக்குகளை உருவாக்கவும்.", "Telugu": "ఏదైనా అసైన్‌మెంట్ కోసం స్పష్టమైన మరియు న్యాయమైన గ్రేడింగ్ రుబ్రిక్‌లను సృష్టించండి.", "Marathi": "कोणत्याही असाइनमेंटसाठी स्पष्ट आणि निष्पक्ष ग्रेडिंग रुब्रिक तयार करा.", "Bengali": "যেকোনো অ্যাসাইনমেন্টের জন্য স্পষ্ট এবং ন্যায্য গ্রেডিং রুব্রিক তৈরি করুন।", "Gujarati": "કોઈપણ અસાઇનમેન્ટ માટે સ્પષ્ટ અને નિષ્પક્ષ ગ્રેડિંગ રુબ્રિક બનાવો.", "Punjabi": "ਕਿਸੇ ਵੀ ਅਸਾਈਨਮੈਂਟ ਲਈ ਸਪਸ਼ਟ ਅਤੇ ਨਿਰਪੱਖ ਗ੍ਰੇਡਿੰਗ ਰੁਬ੍ਰਿਕ ਬਣਾਓ।", "Malayalam": "ഏതെങ്കിലും അസൈൻമെന്റിനായി വ്യക്തവും നീതിയുക്തവുമായ ഗ്രേഡിംഗ് റൂബ്രിക്കുകൾ സൃഷ്ടിക്കുക.", "Odia": "ଯେକୌଣସି ଆସାଇନମେଣ୍ଟ ପାଇଁ ସ୍ପଷ୍ଟ ଏବଂ ନ୍ୟାୟସଙ୍ଗତ ଗ୍ରେଡିଂ ରୁବ୍ରିକ୍ ସୃଷ୍ଟି କରନ୍ତୁ।"
