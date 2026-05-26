@@ -2,6 +2,9 @@
 
 import { useSubscription } from '@/hooks/use-subscription';
 import { useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
+import { PLAN_DISPLAY_NAMES } from '@/lib/plan-config';
+import type { PlanType } from '@/lib/plan-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,13 +45,14 @@ function getBarBg(pct: number): string {
 export default function UsagePage() {
     const { user } = useAuth();
     const { usage, plan, isPro, loading } = useSubscription();
+    const { t } = useLanguage();
 
     if (!user) {
         return (
             <AuthGate
                 icon={Gauge}
-                title="Sign in to see your usage"
-                description="Sign in to see how many generations you've used this month and what's left on your plan."
+                title={t("Sign in to see your usage")}
+                description={t("Sign in to see how many generations you've used this month and what's left on your plan.")}
             >
                 {null}
             </AuthGate>
@@ -77,7 +81,7 @@ export default function UsagePage() {
 
     limited.sort((a, b) => b.pct - a.pct);
 
-    const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+    const planLabel = t(PLAN_DISPLAY_NAMES[plan as PlanType] ?? (plan.charAt(0).toUpperCase() + plan.slice(1)));
     const resetDate = new Date();
     resetDate.setMonth(resetDate.getMonth() + 1, 1);
     const resetLabel = resetDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' });
