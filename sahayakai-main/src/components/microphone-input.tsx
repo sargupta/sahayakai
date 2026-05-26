@@ -462,8 +462,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             minBytes: MIN_AUDIO_BYTES,
           });
           toast({
-            title: "No speech detected",
-            description: "Try holding the mic and speaking a bit longer.",
+            title: t("No speech detected"),
+            description: t("Try holding the mic and speaking a bit longer."),
             variant: "default",
           });
           stream.getTracks().forEach(track => track.stop());
@@ -490,8 +490,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
           if (!text || text.length < 2) {
             toast({
-              title: "No Speech Detected",
-              description: "We couldn't hear you clearly.",
+              title: t("No Speech Detected"),
+              description: t("We couldn't hear you clearly."),
               variant: "default",
             });
             return;
@@ -505,8 +505,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           if (isLikelyTranscriptionRefusal(text)) {
             logger.warn("MicrophoneInput: STT returned a refusal string, dropping", 'VOICE', { textPreview: text.slice(0, 80) });
             toast({
-              title: "No speech detected",
-              description: "We didn't catch any audio — please try again.",
+              title: t("No speech detected"),
+              description: t("We didn't catch any audio — please try again."),
               variant: "default",
             });
             return;
@@ -516,8 +516,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           logger.error("Voice-to-text transcription failed", error);
 
           toast({
-            title: "Error",
-            description: "Failed to transcribe audio. Please try again.",
+            title: t("Error"),
+            description: t("Failed to transcribe audio. Please try again."),
             variant: "destructive",
           });
         } finally {
@@ -539,8 +539,8 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     } catch (err) {
       logger.error("Microphone access denied", err);
       toast({
-        title: "Microphone Access Denied",
-        description: "Please allow microphone access in your browser settings.",
+        title: t("Microphone Access Denied"),
+        description: t("Please allow microphone access in your browser settings."),
         variant: "destructive",
       });
       // Use forceReset() to fully release audio hardware (AudioContext, MediaStream).
