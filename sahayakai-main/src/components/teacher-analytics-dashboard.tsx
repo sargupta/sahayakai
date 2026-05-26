@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/context/language-context';
 
 interface TeacherHealthScore {
     score: number; // 0-100
@@ -126,6 +127,7 @@ function formatRelativeTime(iso: string | null | undefined): string | null {
 }
 
 export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
+    const { t } = useLanguage();
     const [healthScore, setHealthScore] = useState<TeacherHealthScore | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -159,7 +161,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
             };
             setHealthScore(safe);
         } catch (e) {
-            setError('Unable to refresh — please try again.');
+            setError(t('Unable to refresh — please try again.'));
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -202,14 +204,14 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <AlertCircle className="h-5 w-5 text-destructive" />
-                        <CardTitle className="font-headline">Couldn't load your impact</CardTitle>
+                        <CardTitle className="font-headline">{t("Couldn't load your impact")}</CardTitle>
                     </div>
                     <CardDescription>{error}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button onClick={() => { setIsRefreshing(true); fetchHealthScore(); }} disabled={isRefreshing}>
                         <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        Retry
+                        {t("Retry")}
                     </Button>
                 </CardContent>
             </div>
@@ -231,7 +233,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
-                        <CardTitle className="font-headline">Welcome to your Impact Dashboard</CardTitle>
+                        <CardTitle className="font-headline">{t("Welcome to your Impact Dashboard")}</CardTitle>
                     </div>
                     <CardDescription>
                         Your score grows as you create lesson plans, worksheets, and other resources.
@@ -310,7 +312,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                 <CardHeader>
                     <div className="flex items-center justify-between flex-wrap gap-2">
                         <div>
-                            <CardTitle className="font-headline">Your Teaching Impact Score</CardTitle>
+                            <CardTitle className="font-headline">{t("Your Teaching Impact Score")}</CardTitle>
                             <CardDescription>
                                 Based on activity, engagement, success rate, and growth
                             </CardDescription>
@@ -359,7 +361,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                                     onClick={() => { setIsRefreshing(true); fetchHealthScore(); }}
                                     disabled={isRefreshing}
                                     className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-                                    aria-label="Refresh impact score"
+                                    aria-label={t("Refresh impact score")}
                                 >
                                     <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
                                     Refresh

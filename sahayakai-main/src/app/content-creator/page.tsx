@@ -4,44 +4,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Images, Video, Globe2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 export default function ContentCreatorPage() {
+  const { t } = useLanguage();
   const tools = [
     {
-      title: "Visual Aid Designer",
-      description: "Create simple line drawings and diagrams for your lessons.",
+      title: t("Visual Aid Designer"),
+      description: t("Create simple line drawings and diagrams for your lessons."),
       icon: Images,
       href: "/visual-aid-designer",
       color: "text-primary bg-primary/10",
       active: true,
-      buttonText: "Create Visuals"
+      buttonText: t("Create Visuals")
     },
     {
-      title: "Virtual Field Trip",
-      description: "Plan exciting virtual tours using Google Earth.",
+      title: t("Virtual Field Trip"),
+      description: t("Plan exciting virtual tours using Google Earth."),
       icon: Globe2,
       href: "/virtual-field-trip",
       color: "text-primary bg-primary/10",
       active: true,
-      buttonText: "Plan Trip"
+      buttonText: t("Plan Trip")
     },
     {
-      title: "Video Storyteller",
-      description: "Discover curated educational videos for your lessons.",
+      title: t("Video Storyteller"),
+      description: t("Discover curated educational videos for your lessons."),
       icon: Video,
       href: "/video-storyteller",
       color: "text-primary bg-primary/10",
       active: true,
-      buttonText: "Browse Videos"
+      buttonText: t("Browse Videos")
     }
   ];
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
       <div className="text-center space-y-4 mb-10">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">Content Creator Studio</h1>
+        <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{t("Content Creator Studio")}</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Tools to help you create engaging multimedia content for your classroom.
+          {t("Tools to help you create engaging multimedia content for your classroom.")}
         </p>
       </div>
 

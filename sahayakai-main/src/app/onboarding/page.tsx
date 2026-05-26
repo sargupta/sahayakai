@@ -292,8 +292,8 @@ export default function OnboardingPage() {
             setStep(2);
         } catch {
             toast({
-                title: "Setup Failed",
-                description: "Could not save your profile. Please try again.",
+                title: t("Setup Failed"),
+                description: t("Could not save your profile. Please try again."),
                 variant: "destructive"
             });
         } finally {
@@ -365,7 +365,7 @@ export default function OnboardingPage() {
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-muted-foreground font-medium">Loading...</p>
+            <p className="text-muted-foreground font-medium">{t("Loading...")}</p>
         </div>
     );
 
@@ -490,7 +490,7 @@ export default function OnboardingPage() {
                                 <Input
                                     value={selectedTopic}
                                     onChange={(e) => setSelectedTopic(e.target.value)}
-                                    placeholder="Enter a topic..."
+                                    placeholder={t("Enter a topic...")}
                                     className="h-10 text-sm shadow-soft flex-1"
                                 />
                                 <MicrophoneInput
