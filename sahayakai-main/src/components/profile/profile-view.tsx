@@ -140,7 +140,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 <Skeleton className="h-20 w-20 rounded-full" />
                 <Skeleton className="h-8 w-48 rounded-xl" />
                 <Skeleton className="h-4 w-64 rounded-xl" />
-                <p className="text-muted-foreground font-medium">Loading professional profile...</p>
+                <p className="text-muted-foreground font-medium">{t("Loading professional profile...")}</p>
             </div>
         );
     }
@@ -152,11 +152,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <UserIcon className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-bold font-headline">Teacher Sign-in Required</h1>
-                    <p className="text-muted-foreground">Please sign in with your professional account to view your profile and certifications.</p>
+                    <h1 className="text-2xl font-bold font-headline">{t("Teacher Sign-in Required")}</h1>
+                    <p className="text-muted-foreground">{t("Please sign in with your professional account to view your profile and certifications.")}</p>
                 </div>
                 <Button onClick={() => document.getElementById('auth-button')?.click()} className="w-full">
-                    Go to Header to Sign In
+                    {t("Go to Header to Sign In")}
                 </Button>
             </div>
         );
@@ -169,11 +169,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <UserIcon className="h-10 w-10 text-muted-foreground/40" />
                 </div>
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-bold font-headline">Profile Not Found</h1>
-                    <p className="text-muted-foreground">The teacher profile you are looking for does not exist or has been removed.</p>
+                    <h1 className="text-2xl font-bold font-headline">{t("Profile Not Found")}</h1>
+                    <p className="text-muted-foreground">{t("The teacher profile you are looking for does not exist or has been removed.")}</p>
                 </div>
                 <Button onClick={() => window.history.back()} variant="outline" className="w-full">
-                    Go Back
+                    {t("Go Back")}
                 </Button>
             </div>
         );
@@ -211,11 +211,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 <div className="text-center md:text-left space-y-4 flex-1">
                     <div className="space-y-2">
                         <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-foreground font-headline tracking-tighter leading-tight line-clamp-2">
-                            {(isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || "Educator"}
+                            {(isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || t("Educator")}
                         </h1>
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground font-medium">
                             <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-default">
-                                <Mail className="h-4 w-4" /> {(isOwnProfile ? firebaseUser?.email : profile?.email) || "Contact Hidden"}
+                                <Mail className="h-4 w-4" /> {(isOwnProfile ? firebaseUser?.email : profile?.email) || t("Contact Hidden")}
                             </span>
                             {profile?.designation && (
                                 <span className="flex items-center gap-1.5 text-muted-foreground/70">
@@ -238,7 +238,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
                     <div className="flex flex-wrap justify-center md:justify-start gap-3">
                         <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full ring-2 ring-white">
-                            Verified Educator
+                            {t("Verified Educator")}
                         </Badge>
                         {profile?.department && (
                             <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full ring-2 ring-white">
@@ -284,7 +284,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                     } finally { setConnLoading(false); }
                                 }}
                             >
-                                <UserPlus className="h-5 w-5" /> Connect
+                                <UserPlus className="h-5 w-5" /> {t("Connect")}
                             </Button>
                         ) : connStatus === 'pending_sent' ? (
                             <Button
@@ -301,7 +301,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 }}
                                 title={t("Withdraw request")}
                             >
-                                <Clock className="h-5 w-5" /> Pending
+                                <Clock className="h-5 w-5" /> {t("Pending")}
                             </Button>
                         ) : connStatus === 'pending_received' ? (
                             <div className="flex flex-col gap-2">
@@ -316,7 +316,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                         } finally { setConnLoading(false); }
                                     }}
                                 >
-                                    <UserCheck className="h-5 w-5 mr-2" /> Accept
+                                    <UserCheck className="h-5 w-5 mr-2" /> {t("Accept")}
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -330,7 +330,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                         } finally { setConnLoading(false); }
                                     }}
                                 >
-                                    Decline
+                                    {t("Decline")}
                                 </Button>
                             </div>
                         ) : (
@@ -348,8 +348,8 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             >
                                 <UserCheck className="h-5 w-5 group-hover/conn:hidden" />
                                 <UserMinus className="h-5 w-5 hidden group-hover/conn:inline-block" />
-                                <span className="group-hover/conn:hidden">Connected</span>
-                                <span className="hidden group-hover/conn:inline">Disconnect</span>
+                                <span className="group-hover/conn:hidden">{t("Connected")}</span>
+                                <span className="hidden group-hover/conn:inline">{t("Disconnect")}</span>
                             </Button>
                         )}
                         {connStatus === 'connected' && (
@@ -359,7 +359,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 className="rounded-full border-border hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 h-12"
                             >
                                 <MessageCircle className="h-5 w-5" />
-                                Message
+                                {t("Message")}
                             </Button>
                         )}
                     </div>
@@ -387,13 +387,13 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         <div className="space-y-1">
                             <CardTitle className="flex items-center gap-2 text-2xl font-black text-foreground">
                                 <ShieldCheck className="h-7 w-7 text-primary" />
-                                Professional Certifications
+                                {t("Professional Certifications")}
                             </CardTitle>
-                            <CardDescription className="text-base text-muted-foreground">Government and institutional recognized records.</CardDescription>
+                            <CardDescription className="text-base text-muted-foreground">{t("Government and institutional recognized records.")}</CardDescription>
                         </div>
                         {isOwnProfile && (
                             <Button size="sm" className="gap-2 h-10 rounded-xl px-4 font-bold shadow-soft transition-transform">
-                                <Plus className="h-4 w-4" /> Add New
+                                <Plus className="h-4 w-4" /> {t("Add New")}
                             </Button>
                         )}
                     </CardHeader>
@@ -421,11 +421,11 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         ) : (
                             <div className="text-center py-10 sm:py-20 bg-muted/30 rounded-2xl border-2 border-dashed border-border">
                                 <Clock className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4 opacity-50" />
-                                <p className="text-foreground/70 text-lg font-bold">No verified certifications found</p>
-                                <p className="text-muted-foreground mt-2 max-w-xs mx-auto">Verified educator credentials build trust in the community.</p>
+                                <p className="text-foreground/70 text-lg font-bold">{t("No verified certifications found")}</p>
+                                <p className="text-muted-foreground mt-2 max-w-xs mx-auto">{t("Verified educator credentials build trust in the community.")}</p>
                                 {isOwnProfile && (
                                     <Button variant="outline" className="mt-6 rounded-xl border-border hover:bg-background transition-all">
-                                        Start Verification
+                                        {t("Start Verification")}
                                     </Button>
                                 )}
                             </div>
@@ -438,7 +438,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         <CardHeader className="p-4 sm:p-8 pb-4 border-b border-border">
                             <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                                 <History className="h-6 w-6 text-blue-500" />
-                                Recent Activity
+                                {t("Recent Activity")}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-8">
@@ -446,8 +446,8 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
                                 <div className="relative pl-8 space-y-1 group">
                                     <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-blue-500 bg-background group-hover:bg-blue-500 transition-colors" />
-                                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Recently</span>
-                                    <p className="font-bold text-foreground/80">Participated in Educator Hub</p>
+                                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t("Recently")}</span>
+                                    <p className="font-bold text-foreground/80">{t("Participated in Educator Hub")}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -459,13 +459,13 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 <GraduationCap className="h-40 w-40" />
                             </div>
                             <div className="relative space-y-2">
-                                <h3 className="font-black text-2xl tracking-tighter">Help others grow!</h3>
+                                <h3 className="font-black text-2xl tracking-tighter">{t("Help others grow!")}</h3>
                                 <p className="text-indigo-100 text-sm font-medium leading-relaxed opacity-90">
-                                    Your teaching experience is invaluable. Join the TeacherConnect network to share your lesson plans.
+                                    {t("Your teaching experience is invaluable. Join the TeacherConnect network to share your lesson plans.")}
                                 </p>
                             </div>
                             <Button variant="secondary" className="relative w-full bg-white text-indigo-600 hover:bg-white/90 border-none font-bold h-12 rounded-xl text-base shadow-soft transition-all active:scale-95">
-                                Enable Activity Feed
+                                {t("Enable Activity Feed")}
                             </Button>
                         </Card>
                     )}
