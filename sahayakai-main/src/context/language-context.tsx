@@ -4802,6 +4802,22 @@ const dictionary: Record<string, Record<Language, string>> = {
     "There was an error getting advice. Please try again.": {
         "English": "There was an error getting advice. Please try again.", "Hindi": "सलाह प्राप्त करने में त्रुटि हुई। कृपया पुनः प्रयास करें।", "Kannada": "ಸಲಹೆ ಪಡೆಯುವಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "ஆலோசனை பெறுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", "Telugu": "సలహా పొందడంలో లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "सल्ला मिळवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.", "Bengali": "পরামর্শ পেতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "સલાહ મેળવવામાં ભૂલ થઈ. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ ਹੋਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഉപദേശം ലഭിക്കുന്നതിൽ പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ପରାମର୍ଶ ପାଇବାରେ ତ୍ରୁଟି ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
     },
+    // === Wave 3: Attendance (grid + contact-parent-modal toasts) ===
+    "Attendance saved": {
+        "English": "Attendance saved", "Hindi": "उपस्थिति सहेजी गई", "Kannada": "ಹಾಜರಾತಿ ಉಳಿಸಲಾಗಿದೆ", "Tamil": "வருகை சேமிக்கப்பட்டது", "Telugu": "హాజరు సేవ్ చేయబడింది", "Marathi": "उपस्थिती जतन झाली", "Bengali": "উপস্থিতি সংরক্ষিত", "Gujarati": "હાજરી સાચવી", "Punjabi": "ਹਾਜ਼ਰੀ ਸੰਭਾਲੀ", "Malayalam": "ഹാജർ സേവ് ചെയ്തു", "Odia": "ଉପସ୍ଥିତି ସଞ୍ଚୟ ହୋଇଛି"
+    },
+    "Failed to generate": {
+        "English": "Failed to generate", "Hindi": "उत्पन्न करने में विफल", "Kannada": "ರಚಿಸಲು ವಿಫಲವಾಗಿದೆ", "Tamil": "உருவாக்க முடியவில்லை", "Telugu": "ఉత్పన్నం చేయడంలో విఫలమైంది", "Marathi": "तयार करण्यात अयशस्वी", "Bengali": "তৈরি করতে ব্যর্থ", "Gujarati": "બનાવવામાં નિષ્ફળ", "Punjabi": "ਤਿਆਰ ਕਰਨ ਵਿੱਚ ਅਸਫਲ", "Malayalam": "സൃഷ്ടിക്കാൻ കഴിഞ്ഞില്ല", "Odia": "ସୃଷ୍ଟି କରିବାରେ ବିଫଳ"
+    },
+    "Call failed": {
+        "English": "Call failed", "Hindi": "कॉल विफल", "Kannada": "ಕರೆ ವಿಫಲವಾಗಿದೆ", "Tamil": "அழைப்பு தோல்வி", "Telugu": "కాల్ విఫలమైంది", "Marathi": "कॉल अयशस्वी", "Bengali": "কল ব্যর্থ", "Gujarati": "કૉલ નિષ્ફળ", "Punjabi": "ਕਾਲ ਅਸਫਲ", "Malayalam": "കോൾ പരാജയപ്പെട്ടു", "Odia": "କଲ୍ ବିଫଳ"
+    },
+    "Copied to clipboard": {
+        "English": "Copied to clipboard", "Hindi": "क्लिपबोर्ड पर कॉपी हुआ", "Kannada": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ", "Tamil": "கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது", "Telugu": "క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది", "Marathi": "क्लिपबोर्डवर कॉपी केले", "Bengali": "ক্লিপবোর্ডে কপি হয়েছে", "Gujarati": "ક્લિપબોર્ડ પર કૉપિ થયું", "Punjabi": "ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ", "Malayalam": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി", "Odia": "କ୍ଲିପବୋର୍ଡକୁ କପି ହୋଇଛି"
+    },
+    "Paste in WhatsApp to send.": {
+        "English": "Paste in WhatsApp to send.", "Hindi": "भेजने के लिए WhatsApp में पेस्ट करें।", "Kannada": "ಕಳುಹಿಸಲು WhatsApp ನಲ್ಲಿ ಪೇಸ್ಟ್ ಮಾಡಿ.", "Tamil": "அனுப்ப WhatsApp இல் ஒட்டவும்.", "Telugu": "పంపడానికి WhatsAppలో పేస్ట్ చేయండి.", "Marathi": "पाठवण्यासाठी WhatsApp मध्ये पेस्ट करा.", "Bengali": "পাঠাতে WhatsApp এ পেস্ট করুন।", "Gujarati": "મોકલવા માટે WhatsApp માં પેસ્ટ કરો.", "Punjabi": "ਭੇਜਣ ਲਈ WhatsApp ਵਿੱਚ ਪੇਸਟ ਕਰੋ।", "Malayalam": "അയയ്ക്കാൻ WhatsApp-ൽ പേസ്റ്റ് ചെയ്യുക.", "Odia": "ପଠାଇବାକୁ WhatsApp ରେ ପେଷ୍ଟ କରନ୍ତୁ।"
+    },
     // === Wave 3: Attendance subroutes (classId + marks) ===
     "Error loading class": {
         "English": "Error loading class", "Hindi": "कक्षा लोड करने में त्रुटि", "Kannada": "ತರಗತಿ ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ", "Tamil": "வகுப்பை ஏற்றுவதில் பிழை", "Telugu": "తరగతిని లోడ్ చేయడంలో లోపం", "Marathi": "वर्ग लोड करताना त्रुटी", "Bengali": "শ্রেণী লোড করতে ত্রুটি", "Gujarati": "વર્ગ લોડ કરવામાં ભૂલ", "Punjabi": "ਜਮਾਤ ਲੋਡ ਕਰਨ ਵਿੱਚ ਗਲਤੀ", "Malayalam": "ക്ലാസ് ലോഡ് ചെയ്യുന്നതിൽ പിശക്", "Odia": "ଶ୍ରେଣୀ ଲୋଡ୍ କରିବାରେ ତ୍ରୁଟି"
