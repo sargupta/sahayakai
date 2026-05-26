@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/language-context";
 
 interface NotificationFeedProps {
     notifications: Notification[];
@@ -28,6 +29,7 @@ interface NotificationFeedProps {
 export function NotificationFeed({ notifications: incomingNotifications, userId, onRefresh }: NotificationFeedProps) {
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useLanguage();
     // Mirror the incoming notifications into local state so we can optimistically
     // remove/update cards immediately after Accept/Decline lands, instead of
     // waiting for the parent re-fetch (which Next.js router.refresh() doesn't
@@ -60,7 +62,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             console.error('[NotificationFeed] markAsRead failed', e);
             // Revert
             setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
-            toast({ title: 'Could not mark as read', variant: 'destructive' });
+            toast({ title: t('Could not mark as read'), variant: 'destructive' });
         }
     };
 
@@ -74,7 +76,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
         } catch (e) {
             console.error('[NotificationFeed] markAllAsRead failed', e);
             setNotifications(prevSnapshot);
-            toast({ title: 'Could not mark all as read', variant: 'destructive' });
+            toast({ title: t('Could not mark all as read'), variant: 'destructive' });
         }
     };
 
@@ -82,7 +84,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
         const requestId = notification.metadata?.requestId;
         if (!requestId) {
             console.warn('[NotificationFeed] Accept clicked but no requestId on notification', notification);
-            toast({ title: 'Cannot accept: request reference missing', variant: 'destructive' });
+            toast({ title: t('Cannot accept: request reference missing'), variant: 'destructive' });
             return;
         }
         console.log('[NotificationFeed] Accept', { id: notification.id, requestId, from: notification.senderName });
@@ -93,8 +95,8 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             try { await markNotificationAsReadAction(notification.id); } catch { /* non-fatal */ }
             setActionState((prev) => ({ ...prev, [notification.id]: 'accepted' }));
             toast({
-                title: `Connected with ${notification.senderName ?? 'teacher'}`,
-                description: 'You can now message them and see their shared resources.',
+                title: `${t('Connected with')} ${notification.senderName ?? t('teacher')}`,
+                description: t('You can now message them and see their shared resources.'),
             });
             // Keep the "Connected" feedback visible for ~1.5s, then drop the
             // card and re-fetch source of truth. Refresh first so the next
@@ -107,8 +109,8 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             console.error('[NotificationFeed] acceptConnectionRequest failed', e);
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
             toast({
-                title: 'Could not accept request',
-                description: e instanceof Error ? e.message : 'Please try again.',
+                title: t('Could not accept request'),
+                description: e instanceof Error ? e.message : t('Please try again.'),
                 variant: 'destructive',
             });
         }
@@ -117,7 +119,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
     const handleDecline = async (notification: Notification) => {
         const requestId = notification.metadata?.requestId;
         if (!requestId) {
-            toast({ title: 'Cannot decline: request reference missing', variant: 'destructive' });
+            toast({ title: t('Cannot decline: request reference missing'), variant: 'destructive' });
             return;
         }
         console.log('[NotificationFeed] Decline', { id: notification.id, requestId });
@@ -126,7 +128,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             await declineConnectionRequestAction(requestId);
             try { await markNotificationAsReadAction(notification.id); } catch { /* non-fatal */ }
             setActionState((prev) => ({ ...prev, [notification.id]: 'declined' }));
-            toast({ title: 'Request declined' });
+            toast({ title: t('Request declined') });
             setTimeout(async () => {
                 setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
                 await triggerRefresh();
@@ -135,8 +137,8 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             console.error('[NotificationFeed] declineConnectionRequest failed', e);
             setActionState((prev) => { const s = { ...prev }; delete s[notification.id]; return s; });
             toast({
-                title: 'Could not decline request',
-                description: e instanceof Error ? e.message : 'Please try again.',
+                title: t('Could not decline request'),
+                description: e instanceof Error ? e.message : t('Please try again.'),
                 variant: 'destructive',
             });
         }
@@ -158,8 +160,8 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
                 <Bell className="h-12 w-12 text-muted-foreground/60" />
                 <div>
-                    <h3 className="text-xl font-semibold text-foreground">No notifications yet</h3>
-                    <p className="text-muted-foreground">When you gain followers or earn badges, they'll appear here.</p>
+                    <h3 className="text-xl font-semibold text-foreground">{t("No notifications yet")}</h3>
+                    <p className="text-muted-foreground">{t("When you gain followers or earn badges, they'll appear here.")}</p>
                 </div>
             </div>
         );
@@ -168,10 +170,10 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent Activity</h2>
+                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("Recent Activity")}</h2>
                 <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="text-primary hover:text-primary hover:bg-primary/10">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Mark all as read
+                    {t("Mark all as read")}
                 </Button>
             </div>
 
@@ -230,7 +232,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                             onClick={() => handleAccept(notification)}
                                                             data-testid={`accept-${notification.id}`}
                                                         >
-                                                            Accept
+                                                            {t("Accept")}
                                                         </Button>
                                                         <Button
                                                             size="sm"
@@ -239,7 +241,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                             onClick={() => handleDecline(notification)}
                                                             data-testid={`decline-${notification.id}`}
                                                         >
-                                                            Decline
+                                                            {t("Decline")}
                                                         </Button>
                                                     </>
                                                 )}
@@ -250,22 +252,22 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                 )}
                                                 {aState === 'accepted' && (
                                                     <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-                                                        <UserCheck className="h-3.5 w-3.5" /> Connected
+                                                        <UserCheck className="h-3.5 w-3.5" /> {t("Connected")}
                                                     </span>
                                                 )}
                                                 {aState === 'declined' && (
-                                                    <span className="text-xs text-muted-foreground/60">Request declined</span>
+                                                    <span className="text-xs text-muted-foreground/60">{t("Request declined")}</span>
                                                 )}
 
                                                 {!notification.isRead && !showActions && (
                                                     <Button size="sm" variant="ghost" onClick={() => handleMarkAsRead(notification.id)} className="h-8 text-xs">
-                                                        Mark read
+                                                        {t("Mark read")}
                                                     </Button>
                                                 )}
                                                 {viewHref && (
                                                     <Button size="sm" variant="outline" asChild className="h-8 text-xs border-primary/20 text-primary hover:bg-primary/10">
                                                         <Link href={viewHref} data-testid={`view-${notification.id}`}>
-                                                            View <ExternalLink className="ml-1 h-3 w-3" />
+                                                            {t("View")} <ExternalLink className="ml-1 h-3 w-3" />
                                                         </Link>
                                                     </Button>
                                                 )}

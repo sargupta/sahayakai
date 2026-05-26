@@ -7,8 +7,10 @@ import { getNotificationsAction } from "@/app/actions/notifications";
 import { NotificationFeed } from "@/components/notifications-feed";
 import { Bell, Loader2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/auth-gate";
+import { useLanguage } from "@/context/language-context";
 
 export default function NotificationsPage() {
+    const { t } = useLanguage();
     const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export default function NotificationsPage() {
         return (
             <div className="flex flex-col items-center justify-center py-40">
                 <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                <p className="mt-4 text-muted-foreground">Loading your updates...</p>
+                <p className="mt-4 text-muted-foreground">{t("Loading your updates...")}</p>
             </div>
         );
     }
@@ -68,8 +70,8 @@ export default function NotificationsPage() {
                         <Bell className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold font-headline tracking-tight text-foreground">Notifications</h1>
-                        <p className="text-muted-foreground mt-1">Stay updated with your community activity</p>
+                        <h1 className="text-3xl font-bold font-headline tracking-tight text-foreground">{t("Notifications")}</h1>
+                        <p className="text-muted-foreground mt-1">{t("Stay updated with your community activity")}</p>
                     </div>
                 </div>
 
