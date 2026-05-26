@@ -14,6 +14,7 @@ import { GRADE_LEVELS, SUBJECTS } from "@/types";
 import { createClassAction } from "@/app/actions/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface CreateClassDialogProps {
     open: boolean;
@@ -23,6 +24,7 @@ interface CreateClassDialogProps {
 
 export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClassDialogProps) {
     const { toast } = useToast();
+    const { t } = useLanguage();
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({
         name: "",
@@ -45,15 +47,15 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
                 section: form.section || undefined,
                 academicYear: form.academicYear,
             });
-            toast({ title: "Class created" });
+            toast({ title: t("Class created") });
             onCreated(classId);
             onOpenChange(false);
             setForm((f) => ({ ...f, name: "", section: "" }));
         } catch (err: any) {
             const description = err.message === 'PREMIUM_REQUIRED'
-                ? "Attendance is a Pro feature. Please upgrade your plan."
+                ? t("Attendance is a Pro feature. Please upgrade your plan.")
                 : err.message;
-            toast({ title: "Failed to create class", description, variant: "destructive" });
+            toast({ title: t("Failed to create class"), description, variant: "destructive" });
         } finally {
             setSaving(false);
         }
@@ -63,14 +65,14 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-slate-900 font-black">Create a Class</DialogTitle>
+                    <DialogTitle className="text-slate-900 font-black">{t("Create a Class")}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                     <div className="space-y-1.5">
-                        <Label htmlFor="name">Class Name *</Label>
+                        <Label htmlFor="name">{t("Class Name *")}</Label>
                         <Input
                             id="name"
-                            placeholder="e.g. Class 6A"
+                            placeholder={t("e.g. Class 6A")}
                             value={form.name}
                             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                             required
@@ -78,9 +80,9 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <Label>Grade Level *</Label>
+                            <Label>{t("Grade Level *")}</Label>
                             <Select value={form.gradeLevel} onValueChange={(v) => setForm((f) => ({ ...f, gradeLevel: v as any }))}>
-                                <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder={t("Grade")} /></SelectTrigger>
                                 <SelectContent>
                                     {GRADE_LEVELS.map((g) => (
                                         <SelectItem key={g} value={g}>{g}</SelectItem>
@@ -89,9 +91,9 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
                             </Select>
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Section</Label>
+                            <Label>{t("Section")}</Label>
                             <Input
-                                placeholder="e.g. A"
+                                placeholder={t("e.g. A")}
                                 value={form.section}
                                 onChange={(e) => setForm((f) => ({ ...f, section: e.target.value }))}
                                 maxLength={3}
@@ -99,9 +101,9 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Subject *</Label>
+                        <Label>{t("Subject *")}</Label>
                         <Select value={form.subject} onValueChange={(v) => setForm((f) => ({ ...f, subject: v as any }))}>
-                            <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder={t("Select subject")} /></SelectTrigger>
                             <SelectContent>
                                 {SUBJECTS.map((s) => (
                                     <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -110,23 +112,23 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Academic Year *</Label>
+                        <Label>{t("Academic Year *")}</Label>
                         <Input
-                            placeholder="e.g. 2025-26"
+                            placeholder={t("e.g. 2025-26")}
                             value={form.academicYear}
                             onChange={(e) => setForm((f) => ({ ...f, academicYear: e.target.value }))}
                             required
                         />
                     </div>
                     <DialogFooter className="pt-2">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("Cancel")}</Button>
                         <Button
                             type="submit"
                             disabled={saving || !form.name || !form.subject || !form.gradeLevel}
                             className="bg-orange-500 hover:bg-orange-600 text-white"
                         >
                             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                            Create Class
+                            {t("Create Class")}
                         </Button>
                     </DialogFooter>
                 </form>

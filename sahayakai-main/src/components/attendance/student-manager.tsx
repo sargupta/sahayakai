@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UserPlus, Pencil, Trash2, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 interface StudentManagerProps {
     classId: string;
@@ -30,6 +31,7 @@ const BLANK_FORM = { name: "", rollNumber: "", parentPhone: "", parentLanguage: 
 
 export function StudentManager({ classId, students, onRefresh }: StudentManagerProps) {
     const { toast } = useToast();
+    const { t } = useLanguage();
     const [sheetOpen, setSheetOpen] = useState(false);
     const [editing, setEditing] = useState<Student | null>(null);
     const [form, setForm] = useState(BLANK_FORM);
@@ -64,7 +66,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                     parentPhone: form.parentPhone,
                     parentLanguage: form.parentLanguage,
                 });
-                toast({ title: "Student updated" });
+                toast({ title: t("Student updated") });
             } else {
                 await addStudentAction(classId, {
                     name: form.name,
@@ -72,29 +74,29 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                     parentPhone: form.parentPhone,
                     parentLanguage: form.parentLanguage,
                 });
-                toast({ title: "Student added" });
+                toast({ title: t("Student added") });
             }
             setSheetOpen(false);
             onRefresh();
         } catch (err: any) {
             const description = err.message === 'PREMIUM_REQUIRED'
-                ? "Attendance is a Pro feature. Please upgrade your plan."
+                ? t("Attendance is a Pro feature. Please upgrade your plan.")
                 : err.message;
-            toast({ title: "Error", description, variant: "destructive" });
+            toast({ title: t("Error"), description, variant: "destructive" });
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (studentId: string, name: string) => {
-        if (!confirm(`Remove ${name} from this class?`)) return;
+        if (!confirm(t("Remove {name} from this class?").replace("{name}", name))) return;
         setDeleting(studentId);
         try {
             await deleteStudentAction(classId, studentId);
-            toast({ title: "Student removed" });
+            toast({ title: t("Student removed") });
             onRefresh();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            toast({ title: t("Error"), description: err.message, variant: "destructive" });
         } finally {
             setDeleting(null);
         }
@@ -111,7 +113,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                     className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
                 >
                     <UserPlus className="h-4 w-4" />
-                    Add Student
+                    {t("Add Student")}
                 </Button>
             </div>
 
@@ -120,8 +122,8 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                     <div className="p-4 bg-orange-50 rounded-full">
                         <UserPlus className="h-8 w-8 text-orange-300" />
                     </div>
-                    <p className="text-sm font-bold text-slate-700">No students yet</p>
-                    <p className="text-xs text-slate-400">Add students to start taking attendance.</p>
+                    <p className="text-sm font-bold text-slate-700">{t("No students yet")}</p>
+                    <p className="text-xs text-slate-400">{t("Add students to start taking attendance.")}</p>
                 </div>
             ) : (
                 <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
@@ -137,7 +139,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`Edit ${s.name}`}>
+                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`${t("Edit")} ${s.name}`}>
                                     <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
@@ -145,7 +147,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                                     className="h-10 w-10 text-slate-400 hover:text-red-500"
                                     onClick={() => handleDelete(s.id, s.name)}
                                     disabled={deleting === s.id}
-                                    aria-label={`Delete ${s.name}`}
+                                    aria-label={`${t("Delete")} ${s.name}`}
                                 >
                                     {deleting === s.id
                                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -162,11 +164,11 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>{editing ? "Edit Student" : "Add Student"}</SheetTitle>
+                        <SheetTitle>{editing ? t("Edit Student") : t("Add Student")}</SheetTitle>
                     </SheetHeader>
                     <div className="space-y-4 mt-6">
                         <div className="space-y-1.5">
-                            <Label>Roll Number *</Label>
+                            <Label>{t("Roll Number *")}</Label>
                             <Input
                                 type="number" min={1} max={40}
                                 value={form.rollNumber}
@@ -174,15 +176,15 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Student Name *</Label>
+                            <Label>{t("Student Name *")}</Label>
                             <Input
-                                placeholder="Full name"
+                                placeholder={t("Full name")}
                                 value={form.name}
                                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Parent's Phone *</Label>
+                            <Label>{t("Parent's Phone *")}</Label>
                             <div className="flex">
                                 <span className="flex items-center px-3 border border-r-0 border-slate-200 rounded-l-md bg-slate-50 text-sm text-slate-500">+91</span>
                                 <Input
@@ -195,7 +197,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Parent's Language</Label>
+                            <Label>{t("Parent's Language")}</Label>
                             <Select value={form.parentLanguage} onValueChange={(v) => setForm((f) => ({ ...f, parentLanguage: v as any }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -211,7 +213,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                             disabled={saving || !form.name || !form.rollNumber || !form.parentPhone}
                         >
                             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                            {editing ? "Save Changes" : "Add Student"}
+                            {editing ? t("Save Changes") : t("Add Student")}
                         </Button>
                     </SheetFooter>
                 </SheetContent>
