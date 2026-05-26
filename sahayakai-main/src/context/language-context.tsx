@@ -4889,6 +4889,9 @@ const dictionary: Record<string, Record<Language, string>> = {
     "PDF (Coming Soon)": {
         "English": "PDF (Coming Soon)", "Hindi": "PDF (जल्द आ रहा है)", "Kannada": "PDF (ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ)", "Tamil": "PDF (விரைவில் வருகிறது)", "Telugu": "PDF (త్వరలో వస్తోంది)", "Marathi": "PDF (लवकरच येत आहे)", "Bengali": "PDF (শীঘ্রই আসছে)", "Gujarati": "PDF (જલ્દી આવી રહ્યું છે)", "Punjabi": "PDF (ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ)", "Malayalam": "PDF (ഉടനെ വരുന്നു)", "Odia": "PDF (ଶୀଘ୍ର ଆସୁଛି)"
     },
+    "No sections were generated. Please try again.": {
+        "English": "No sections were generated. Please try again.", "Hindi": "कोई खंड उत्पन्न नहीं हुआ। कृपया पुनः प्रयास करें।", "Kannada": "ಯಾವುದೇ ವಿಭಾಗಗಳನ್ನು ರಚಿಸಲಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "எந்த பகுதியும் உருவாக்கப்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Telugu": "ఏ విభాగాలు ఉత్పన్నం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "कोणतेही विभाग तयार झाले नाहीत. कृपया पुन्हा प्रयत्न करा.", "Bengali": "কোনো বিভাগ তৈরি হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "કોઈ વિભાગ બન્યો નથી. કૃપા કરી ફરી પ્રયાસ કરો.", "Punjabi": "ਕੋਈ ਭਾਗ ਨਹੀਂ ਬਣਾਏ ਗਏ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "വിഭാഗങ്ങളൊന്നും സൃഷ്ടിച്ചിട്ടില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "କୌଣସି ବିଭାଗ ସୃଷ୍ଟି ହୋଇନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
+    },
     "PDF export coming soon": {
         "English": "PDF export coming soon", "Hindi": "PDF निर्यात जल्द ही आ रहा है", "Kannada": "PDF ರಫ್ತು ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ", "Tamil": "PDF ஏற்றுமதி விரைவில் வருகிறது", "Telugu": "PDF ఎగుమతి త్వరలో వస్తోంది", "Marathi": "PDF निर्यात लवकरच येत आहे", "Bengali": "PDF এক্সপোর্ট শীঘ্রই আসছে", "Gujarati": "PDF નિકાસ જલ્દી આવી રહી છે", "Punjabi": "PDF ਨਿਰਯਾਤ ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ", "Malayalam": "PDF കയറ്റുമതി ഉടനെ വരുന്നു", "Odia": "PDF ରପ୍ତାନି ଶୀଘ୍ର ଆସୁଛି"
     },
