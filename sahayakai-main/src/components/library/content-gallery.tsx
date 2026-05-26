@@ -89,8 +89,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             setNextCursor(data.nextCursor ?? null);
         } catch (error: any) {
             toast({
-                title: "Error",
-                description: error.message || "Could not load library. Please try again.",
+                title: t("Error"),
+                description: error.message || t("Could not load library. Please try again."),
                 variant: "destructive",
             });
         } finally {
@@ -133,11 +133,11 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             if (onCountChange) {
                 onCountChange(items.length - 1);
             }
-            toast({ title: "Deleted", description: `"${resource.title}" removed from your library.` });
+            toast({ title: t("Deleted"), description: `"${resource.title}" ${t("removed from your library.")}` });
         } catch (error: any) {
             toast({
-                title: "Delete Failed",
-                description: error.message || "Could not delete item.",
+                title: t("Delete Failed"),
+                description: error.message || t("Could not delete item."),
                 variant: "destructive"
             });
         }
@@ -168,8 +168,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         const baseUrl = routeMap[resource.type];
         if (!baseUrl) {
             toast({
-                title: "Cannot open this item",
-                description: `Resource type "${resource.type}" does not have a viewer yet. Use Download to export it.`,
+                title: t("Cannot open this item"),
+                description: `${t("Resource type")} "${resource.type}" ${t("does not have a viewer yet. Use Download to export it.")}`,
                 variant: "destructive",
             });
             return;
@@ -195,8 +195,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             ]);
             if (resource.data && HTML_PRINTABLE_TYPES.has(resource.type)) {
                 toast({
-                    title: "Preparing PDF...",
-                    description: `Opening print dialog for ${resource.title}. Choose "Save as PDF" in the print menu.`,
+                    title: t("Preparing PDF..."),
+                    description: `${t("Opening print dialog for")} ${resource.title}. ${t("Choose \"Save as PDF\" in the print menu.")}`,
                 });
 
                 const blob = createDownloadableContent(resource.data, resource.type);
@@ -226,8 +226,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                     link.click();
                     document.body.removeChild(link);
                     toast({
-                        title: "Popup blocked",
-                        description: "Saved as HTML instead. Open the file and press Ctrl/Cmd+P to save as PDF.",
+                        title: t("Popup blocked"),
+                        description: t("Saved as HTML instead. Open the file and press Ctrl/Cmd+P to save as PDF."),
                     });
                 }
 
@@ -237,8 +237,8 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             // Priority 2: Server-Side Download (Binary files or Missing Data)
             // Use this for Visual Aids (images) or if local data is incomplete
             toast({
-                title: "Download Started",
-                description: `Fetching secure link for ${resource.title || "content"}...`
+                title: t("Download Started"),
+                description: `${t("Fetching secure link for")} ${resource.title || t("content")}...`
             });
 
             const token = await user?.getIdToken();
@@ -264,14 +264,14 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             document.body.removeChild(link);
 
             toast({
-                title: "Download Ready",
-                description: "Your file is downloading.",
+                title: t("Download Ready"),
+                description: t("Your file is downloading."),
             });
 
         } catch (error: any) {
             toast({
-                title: "Download Failed",
-                description: error.message || "Could not retrieve file.",
+                title: t("Download Failed"),
+                description: error.message || t("Could not retrieve file."),
                 variant: "destructive"
             });
         }
