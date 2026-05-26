@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Mic, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useLanguage } from '@/context/language-context';
 
 const DEMO_TRANSCRIPT = "Make a quiz on photosynthesis for Class 8";
 
@@ -15,6 +16,7 @@ const DEMO_RESULT = [
 type Phase = 'idle' | 'listening' | 'typing' | 'thinking' | 'result';
 
 export function DemoInteraction() {
+    const { t } = useLanguage();
     const [phase, setPhase] = useState<Phase>('idle');
     const [displayedText, setDisplayedText] = useState('');
     const [hasPlayed, setHasPlayed] = useState(false);
@@ -91,7 +93,7 @@ export function DemoInteraction() {
     return (
         <div ref={containerRef} className="w-full max-w-md mx-auto">
             <p className="text-center text-xs text-muted-foreground mb-3">
-                See how it works
+                {t("See how it works")}
             </p>
             <Card className="border border-border/60 shadow-soft overflow-hidden">
                 <CardContent className="p-4 space-y-3">
@@ -108,10 +110,10 @@ export function DemoInteraction() {
                         </div>
                         <div className="flex-1 min-w-0">
                             {phase === 'idle' && (
-                                <p className="text-sm text-muted-foreground italic">Voice-first AI for teachers</p>
+                                <p className="text-sm text-muted-foreground italic">{t("Voice-first AI for teachers")}</p>
                             )}
                             {phase === 'listening' && (
-                                <p className="text-sm text-red-500 font-medium">Listening...</p>
+                                <p className="text-sm text-red-500 font-medium">{t("Listening...")}</p>
                             )}
                             {(phase === 'typing' || phase === 'thinking' || phase === 'result') && (
                                 <p className="text-sm text-foreground">
@@ -130,7 +132,7 @@ export function DemoInteraction() {
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
                             </span>
-                            Generating quiz...
+                            {t("Generating quiz...")}
                         </div>
                     )}
 
@@ -139,7 +141,7 @@ export function DemoInteraction() {
                         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                                 <Sparkles className="h-3 w-3" />
-                                Quiz: Photosynthesis (Class 8)
+                                {t("Quiz: Photosynthesis (Class 8)")}
                             </div>
                             {DEMO_RESULT.map((item, i) => (
                                 <div key={i} className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
@@ -150,7 +152,7 @@ export function DemoInteraction() {
                                 onClick={handleReplay}
                                 className="text-[10px] text-primary hover:text-primary/80 font-medium mt-1 transition-colors"
                             >
-                                Replay demo
+                                {t("Replay demo")}
                             </button>
                         </div>
                     )}
