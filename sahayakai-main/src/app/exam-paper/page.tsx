@@ -366,10 +366,10 @@ function ExamPaperPageInner() {
       <div className="space-y-1">
         <h1 className="text-2xl font-headline tracking-tight flex items-center gap-2">
           <FileText className="w-6 h-6 text-primary" />
-          Board Exam Paper Generator
+          {t("Board Exam Paper Generator")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Generate board-pattern question papers with answer keys
+          {t("Generate board-pattern question papers with answer keys")}
         </p>
       </div>
 
@@ -381,7 +381,7 @@ function ExamPaperPageInner() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="board">Board</Label>
+                <Label htmlFor="board">{t("Board")}</Label>
                 <Select value={board} onValueChange={setBoard}>
                   <SelectTrigger id="board">
                     <SelectValue />
@@ -415,7 +415,7 @@ function ExamPaperPageInner() {
 
             {/* Subject */}
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">{t("Subject")}</Label>
               {availableSubjects.length > 0 ? (
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger id="subject">
@@ -439,7 +439,7 @@ function ExamPaperPageInner() {
                   />
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Info className="w-3.5 h-3.5 shrink-0" />
-                    No blueprint for {board} {gradeLevel} — AI will generate a standard pattern.
+                    {t("No blueprint for")} {board} {gradeLevel} — {t("AI will generate a standard pattern.")}
                   </p>
                 </div>
               )}
@@ -472,9 +472,9 @@ function ExamPaperPageInner() {
           {/* Chapters */}
           <div className="card-section space-y-2">
             <Label>
-              Chapters{" "}
+              {t("Chapters")}{" "}
               <span className="text-muted-foreground font-normal">
-                (optional — select from list or type below)
+                {t("(optional — select from list or type below)")}
               </span>
             </Label>
             {chapterSuggestions.length > 0 ? (
@@ -507,14 +507,14 @@ function ExamPaperPageInner() {
                 </div>
                 {chapters.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {chapters.length} chapter{chapters.length !== 1 ? "s" : ""} selected
+                    {chapters.length} {chapters.length === 1 ? t("chapter") : t("chapters")} {t("selected")}
                     {" · "}
                     <button
                       type="button"
                       className="underline hover:no-underline"
                       onClick={() => setChapters([])}
                     >
-                      Clear all
+                      {t("Clear all")}
                     </button>
                   </p>
                 )}
@@ -571,14 +571,14 @@ function ExamPaperPageInner() {
                 checked={includeAnswerKey}
                 onCheckedChange={(v) => setIncludeAnswerKey(v === true)}
               />
-              <span className="text-sm">Include Answer Key</span>
+              <span className="text-sm">{t("Include Answer Key")}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={includeMarkingScheme}
                 onCheckedChange={(v) => setIncludeMarkingScheme(v === true)}
               />
-              <span className="text-sm">Include Marking Scheme</span>
+              <span className="text-sm">{t("Include Marking Scheme")}</span>
             </label>
           </div>
 
@@ -592,12 +592,12 @@ function ExamPaperPageInner() {
             {generating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating your exam paper...
+                {t("Generating your exam paper...")}
               </>
             ) : (
               <>
                 <FileText className="w-4 h-4 mr-2" />
-                Generate Paper
+                {t("Generate Paper")}
               </>
             )}
           </Button>
@@ -634,7 +634,7 @@ function ExamPaperPageInner() {
         <div className="space-y-4">
           <div className="my-8 flex items-center gap-3">
             <hr className="flex-1 border-border/40" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">Result</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{t("Result")}</span>
             <hr className="flex-1 border-border/40" />
           </div>
         <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 space-y-4">
@@ -659,7 +659,7 @@ function ExamPaperPageInner() {
               <CardContent className="pt-0">
                 <div className="text-sm space-y-1 border-t border-border pt-3">
                   <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                    General Instructions
+                    {t("General Instructions")}
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                     {paper.generalInstructions.map((inst, i) => (
@@ -676,7 +676,7 @@ function ExamPaperPageInner() {
             <Card>
               <CardContent className="pt-6 text-center text-sm text-muted-foreground py-8">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                No sections were generated. Please try again.
+                {t("No sections were generated. Please try again.")}
               </CardContent>
             </Card>
           )}
@@ -747,7 +747,7 @@ function ExamPaperPageInner() {
                 >
                   <span className="font-headline font-semibold flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
-                    Answer Key
+                    {t("Answer Key")}
                   </span>
                   {answerKeyOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
@@ -779,7 +779,7 @@ function ExamPaperPageInner() {
                 >
                   <span className="font-headline font-semibold flex items-center gap-2">
                     <Award className="w-4 h-4" />
-                    Marking Scheme
+                    {t("Marking Scheme")}
                   </span>
                   {markingSchemeOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
@@ -800,14 +800,14 @@ function ExamPaperPageInner() {
           {/* Blueprint Summary */}
           {paper.blueprintSummary && (
             <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/50 border border-border">
-              <p className="font-medium mb-1">Blueprint Summary</p>
+              <p className="font-medium mb-1">{t("Blueprint Summary")}</p>
               {typeof paper.blueprintSummary === 'string' ? (
                 <p>{paper.blueprintSummary}</p>
               ) : (
                 <div className="space-y-2">
                   {paper.blueprintSummary.chapterWise?.length > 0 && (
                     <div>
-                      <p className="font-medium text-foreground/70 mb-0.5">Chapter-wise</p>
+                      <p className="font-medium text-foreground/70 mb-0.5">{t("Chapter-wise")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {paper.blueprintSummary.chapterWise.map((c, i) => (
                           <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{c.chapter}: {c.marks}m</span>
@@ -817,7 +817,7 @@ function ExamPaperPageInner() {
                   )}
                   {paper.blueprintSummary.difficultyWise?.length > 0 && (
                     <div>
-                      <p className="font-medium text-foreground/70 mb-0.5">Difficulty</p>
+                      <p className="font-medium text-foreground/70 mb-0.5">{t("Difficulty")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {paper.blueprintSummary.difficultyWise.map((d, i) => (
                           <span key={i} className="px-2 py-0.5 rounded-full bg-muted border border-border">{d.level}: {d.percentage}%</span>
@@ -845,11 +845,11 @@ function ExamPaperPageInner() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {saved ? "Saved to Library" : "Save to Library"}
+              {saved ? t("Saved to Library") : t("Save to Library")}
             </Button>
-            <Button variant="outline" className="flex-1" disabled title="PDF export coming soon">
+            <Button variant="outline" className="flex-1" disabled title={t("PDF export coming soon")}>
               <Download className="w-4 h-4 mr-2" />
-              PDF (Coming Soon)
+              {t("PDF (Coming Soon)")}
             </Button>
           </div>
           <ShareToCommunityCTA contentType="exam-paper" className="mt-3" />
