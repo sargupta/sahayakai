@@ -57,7 +57,7 @@ interface ConsentPrefs {
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { plan, isPro, loading: planLoading } = useSubscription();
   const getIdToken = useCallback(async () => {
     if (!user) throw new Error('Not authenticated');
@@ -231,11 +231,11 @@ export default function SettingsPage() {
       } else {
         const data = await res.json();
         if (data.jobId) {
-          alert('Large export started. You will be notified when it is ready.');
+          alert(t('Large export started. You will be notified when it is ready.'));
         }
       }
     } catch {
-      alert('Export failed. Please try again.');
+      alert(t('Export failed. Please try again.'));
     } finally {
       setExporting(false);
     }
@@ -253,13 +253,13 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Account deletion scheduled. You have 30 days to export your data.');
+        alert(t('Account deletion scheduled. You have 30 days to export your data.'));
         router.push('/');
       } else {
-        alert(data.error || 'Failed to delete account');
+        alert(data.error || t('Failed to delete account'));
       }
     } catch {
-      alert('Failed to delete account. Please try again.');
+      alert(t('Failed to delete account. Please try again.'));
     } finally {
       setDeleting(false);
     }
@@ -604,26 +604,26 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <Trash2 className="h-5 w-5 text-destructive shrink-0" />
             <div>
-              <p className="text-sm font-medium text-destructive">Delete Account</p>
-              <p className="text-xs text-muted-foreground">30-day grace period to export data</p>
+              <p className="text-sm font-medium text-destructive">{t("Delete Account")}</p>
+              <p className="text-xs text-muted-foreground">{t("30-day grace period to export data")}</p>
             </div>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">Delete</Button>
+              <Button variant="destructive" size="sm">{t("Delete")}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t("Are you sure?")}</AlertDialogTitle>
                 <AlertDialogDescription className="space-y-2">
-                  <p>This action will:</p>
+                  <p>{t("This action will:")}</p>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Cancel your subscription (if active)</li>
-                    <li>Sign you out immediately</li>
-                    <li>Give you 30 days to export your data</li>
-                    <li>Permanently delete everything after 30 days</li>
+                    <li>{t("Cancel your subscription (if active)")}</li>
+                    <li>{t("Sign you out immediately")}</li>
+                    <li>{t("Give you 30 days to export your data")}</li>
+                    <li>{t("Permanently delete everything after 30 days")}</li>
                   </ul>
-                  <p className="pt-2 font-medium">Type DELETE to confirm:</p>
+                  <p className="pt-2 font-medium">{t("Type DELETE to confirm:")}</p>
                   <input
                     type="text"
                     className="w-full border rounded px-3 py-2 mt-1"
@@ -634,13 +634,13 @@ export default function SettingsPage() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>{t("Cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteAccount}
                   disabled={deleteConfirmText !== 'DELETE' || deleting}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  {deleting ? 'Deleting...' : 'Delete Account'}
+                  {deleting ? t("Deleting...") : t("Delete Account")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
