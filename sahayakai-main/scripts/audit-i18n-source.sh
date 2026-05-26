@@ -80,6 +80,10 @@ EXCLUDE_PATTERNS=(
     '/\*'                    # comment lines
     '^\s*\*'                 # comment continuation
     '^\s*//'                 # single-line comment
+    'alt=\"SahayakAI logo\"' # brand alt-text — universal across all 11 languages
+    'alt=\"SahayakAI\"'      # brand
+    'alt=\"VIDYA\"'          # brand
+    'alt=\"SARGVISION\"'     # brand
 )
 
 build_exclude_args() {
