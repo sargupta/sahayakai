@@ -76,7 +76,7 @@ function ClassDetailContent() {
             setPerfSummaries(perfs);
             setBehavioralStudentIds(behavioralIds);
         } catch (err: any) {
-            toast({ title: "Error loading class", description: err.message, variant: "destructive" });
+            toast({ title: t("Error loading class"), description: err.message, variant: "destructive" });
         } finally {
             setLoading(false);
         }

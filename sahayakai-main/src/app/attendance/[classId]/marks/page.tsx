@@ -74,7 +74,7 @@ function MarksEntryContent() {
                 getStudentsAction(classId),
             ]);
             if (!classData) {
-                toast({ title: 'Class not found', description: 'This class does not exist or you do not have access.', variant: 'destructive' });
+                toast({ title: t('Class not found'), description: t('This class does not exist or you do not have access.'), variant: 'destructive' });
                 return;
             }
             setCls(classData);
@@ -90,7 +90,7 @@ function MarksEntryContent() {
             }
             setMarksMap(initial);
         } catch (err: any) {
-            toast({ title: "Error loading class", description: err.message, variant: "destructive" });
+            toast({ title: t("Error loading class"), description: err.message, variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -110,15 +110,15 @@ function MarksEntryContent() {
     const handleSave = async () => {
         // Validate metadata
         if (!assessmentName.trim()) {
-            toast({ title: "Assessment name is required", variant: "destructive" });
+            toast({ title: t("Assessment name is required"), variant: "destructive" });
             return;
         }
         if (!subject) {
-            toast({ title: "Please select a subject", variant: "destructive" });
+            toast({ title: t("Please select a subject"), variant: "destructive" });
             return;
         }
         if (maxMarks <= 0) {
-            toast({ title: "Max marks must be greater than 0", variant: "destructive" });
+            toast({ title: t("Max marks must be greater than 0"), variant: "destructive" });
             return;
         }
 
@@ -130,8 +130,8 @@ function MarksEntryContent() {
             const obtained = Number(entry.marks);
             if (isNaN(obtained) || obtained < 0 || obtained > maxMarks) {
                 toast({
-                    title: `Invalid marks for ${s.name}`,
-                    description: `Must be 0 to ${maxMarks}`,
+                    title: `${t("Invalid marks for")} ${s.name}`,
+                    description: `${t("Must be 0 to")} ${maxMarks}`,
                     variant: "destructive",
                 });
                 return;
@@ -146,7 +146,7 @@ function MarksEntryContent() {
         }
 
         if (marks.length === 0) {
-            toast({ title: "Enter marks for at least one student", variant: "destructive" });
+            toast({ title: t("Enter marks for at least one student"), variant: "destructive" });
             return;
         }
 
@@ -154,7 +154,7 @@ function MarksEntryContent() {
         try {
             const token = await getAuthToken();
             if (!token) {
-                toast({ title: "Session expired. Please log in again.", variant: "destructive" });
+                toast({ title: t("Session expired. Please log in again."), variant: "destructive" });
                 return;
             }
 
@@ -184,10 +184,10 @@ function MarksEntryContent() {
                 throw new Error(data.error || `Save failed (${res.status})`);
             }
 
-            toast({ title: "Marks saved successfully" });
+            toast({ title: t("Marks saved successfully") });
             router.push(`/attendance/${classId}`);
         } catch (err: any) {
-            toast({ title: "Failed to save marks", description: err.message, variant: "destructive" });
+            toast({ title: t("Failed to save marks"), description: err.message, variant: "destructive" });
         } finally {
             setSaving(false);
         }
