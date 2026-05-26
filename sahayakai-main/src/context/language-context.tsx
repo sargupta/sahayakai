@@ -4798,6 +4798,16 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Save Changes": {
         "English": "Save Changes", "Hindi": "परिवर्तन सहेजें", "Kannada": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ", "Tamil": "மாற்றங்களைச் சேமி", "Telugu": "మార్పులను సేవ్ చేయి", "Marathi": "बदल जतन करा", "Bengali": "পরিবর্তনগুলি সংরক্ষণ করুন", "Gujarati": "ફેરફારો સાચવો", "Punjabi": "ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ", "Malayalam": "മാറ്റങ്ങൾ സേവ് ചെയ്യുക", "Odia": "ପରିବର୍ତ୍ତନ ସଞ୍ଚୟ କରନ୍ତୁ"
     },
+    // === Wave 2: Lesson Plan paywall toasts ===
+    "Pro Feature": {
+        "English": "Pro Feature", "Hindi": "प्रो सुविधा", "Kannada": "Pro ವೈಶಿಷ್ಟ್ಯ", "Tamil": "Pro அம்சம்", "Telugu": "Pro ఫీచర్", "Marathi": "Pro वैशिष्ट्य", "Bengali": "Pro বৈশিষ্ট্য", "Gujarati": "Pro સુવિધા", "Punjabi": "Pro ਵਿਸ਼ੇਸ਼ਤਾ", "Malayalam": "Pro ഫീച്ചർ", "Odia": "Pro ବୈଶିଷ୍ଟ୍ୟ"
+    },
+    "Upgrade to Pro to copy and export lesson plans.": {
+        "English": "Upgrade to Pro to copy and export lesson plans.", "Hindi": "पाठ योजनाओं को कॉपी और निर्यात करने के लिए Pro में अपग्रेड करें।", "Kannada": "ಪಾಠ ಯೋಜನೆಗಳನ್ನು ನಕಲಿಸಲು ಮತ್ತು ರಫ್ತು ಮಾಡಲು Pro ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.", "Tamil": "பாடம் திட்டங்களை நகலெடுக்கவும் ஏற்றுமதி செய்யவும் Pro-வுக்கு மேம்படுத்தவும்.", "Telugu": "పాఠ ప్రణాళికలను కాపీ చేయడానికి మరియు ఎగుమతి చేయడానికి Proకి అప్‌గ్రేడ్ చేయండి.", "Marathi": "पाठ योजना कॉपी आणि निर्यात करण्यासाठी Pro वर अपग्रेड करा.", "Bengali": "পাঠ পরিকল্পনা কপি এবং রপ্তানি করতে Pro-তে আপগ্রেড করুন।", "Gujarati": "પાઠ યોજનાઓ કૉપિ અને નિકાસ કરવા માટે Proમાં અપગ્રેડ કરો.", "Punjabi": "ਪਾਠ ਯੋਜਨਾਵਾਂ ਨੂੰ ਕਾਪੀ ਕਰਨ ਅਤੇ ਨਿਰਯਾਤ ਕਰਨ ਲਈ Pro ਵਿੱਚ ਅਪਗ੍ਰੇਡ ਕਰੋ।", "Malayalam": "പാഠ്യപദ്ധതികൾ പകർത്താനും കയറ്റുമതി ചെയ്യാനും Pro ലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക.", "Odia": "ପାଠ ଯୋଜନା କପି ଏବଂ ରପ୍ତାନି କରିବାକୁ Pro କୁ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।"
+    },
+    "Upgrade to Pro to download PDF.": {
+        "English": "Upgrade to Pro to download PDF.", "Hindi": "PDF डाउनलोड करने के लिए Pro में अपग्रेड करें।", "Kannada": "PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು Pro ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.", "Tamil": "PDF பதிவிறக்கம் செய்ய Pro-வுக்கு மேம்படுத்தவும்.", "Telugu": "PDF డౌన్‌లోడ్ చేయడానికి Proకి అప్‌గ్రేడ్ చేయండి.", "Marathi": "PDF डाउनलोड करण्यासाठी Pro वर अपग्रेड करा.", "Bengali": "PDF ডাউনলোড করতে Pro-তে আপগ্রেড করুন।", "Gujarati": "PDF ડાઉનલોડ કરવા માટે Proમાં અપગ્રેડ કરો.", "Punjabi": "PDF ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ Pro ਵਿੱਚ ਅਪਗ੍ਰੇਡ ਕਰੋ।", "Malayalam": "PDF ഡൗൺലോഡ് ചെയ്യാൻ Pro ലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക.", "Odia": "PDF ଡାଉନଲୋଡ୍ କରିବାକୁ Pro କୁ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।"
+    },
     // === Wave 2: Exam Paper ===
     "Board Exam Paper Generator": {
         "English": "Board Exam Paper Generator", "Hindi": "बोर्ड परीक्षा पेपर जनरेटर", "Kannada": "ಬೋರ್ಡ್ ಪರೀಕ್ಷಾ ಪತ್ರಿಕೆ ಜನರೇಟರ್", "Tamil": "வாரிய தேர்வுத் தாள் ஜெனரேட்டர்", "Telugu": "బోర్డు పరీక్షా పేపర్ జనరేటర్", "Marathi": "बोर्ड परीक्षा पेपर जनरेटर", "Bengali": "বোর্ড পরীক্ষার পেপার জেনারেটর", "Gujarati": "બોર્ડ પરીક્ષા પેપર જનરેટર", "Punjabi": "ਬੋਰਡ ਪ੍ਰੀਖਿਆ ਪੇਪਰ ਜਨਰੇਟਰ", "Malayalam": "ബോർഡ് പരീക്ഷാ പേപ്പർ ജനറേറ്റർ", "Odia": "ବୋର୍ଡ ପରୀକ୍ଷା ପେପର ଜେନେରେଟର"
