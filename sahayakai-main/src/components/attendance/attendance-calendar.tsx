@@ -6,6 +6,7 @@ import { getStudentSummariesAction } from "@/app/actions/attendance";
 import type { StudentAttendanceSummary } from "@/types/attendance";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 interface AttendanceCalendarProps {
     classId: string;
@@ -18,6 +19,7 @@ const MONTH_NAMES = [
 ];
 
 export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCalendarProps) {
+    const { t } = useLanguage();
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -56,15 +58,15 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
         <div className="space-y-4">
             {/* Month navigator */}
             <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" onClick={prevMonth} aria-label="Previous month">
+                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" onClick={prevMonth} aria-label={t("Previous month")}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <p className="text-sm font-bold text-slate-900">{MONTH_NAMES[month - 1]} {year}</p>
+                <p className="text-sm font-bold text-slate-900">{t(MONTH_NAMES[month - 1])} {year}</p>
                 <Button
                     variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]"
                     onClick={nextMonth}
                     disabled={year === now.getFullYear() && month >= now.getMonth() + 1}
-                    aria-label="Next month"
+                    aria-label={t("Next month")}
                 >
                     <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -82,12 +84,12 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                 <div className="space-y-2">
                     {/* Header */}
                     <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_2fr] gap-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                        <span>Student</span>
-                        <span className="text-center">Present</span>
-                        <span className="text-center">Absent</span>
-                        <span className="text-center">Late</span>
-                        <span className="text-center">Days</span>
-                        <span className="text-right">Rate</span>
+                        <span>{t("Student")}</span>
+                        <span className="text-center">{t("Present")}</span>
+                        <span className="text-center">{t("Absent")}</span>
+                        <span className="text-center">{t("Late")}</span>
+                        <span className="text-center">{t("Days")}</span>
+                        <span className="text-right">{t("Rate")}</span>
                     </div>
 
                     {summaries.map((s) => (
