@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import {
     Dialog,
     DialogContent,
@@ -25,6 +26,7 @@ export function AuthDialog() {
     const { isAuthModalOpen, closeAuthModal } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    const { t } = useLanguage();
 
     const handleSignIn = async () => {
         try {
@@ -92,10 +94,10 @@ export function AuthDialog() {
                     </div>
 
                     <DialogTitle className="text-[22px] font-headline font-bold tracking-tight text-foreground leading-snug">
-                        Sign in to continue
+                        {t("Sign in to continue")}
                     </DialogTitle>
                     <DialogDescription className="mt-2 text-[14px] text-muted-foreground leading-relaxed">
-                        Access your library, track your usage, and pick up where you left off — across every classroom tool.
+                        {t("Access your library, track your usage, and pick up where you left off — across every classroom tool.")}
                     </DialogDescription>
 
                     {/* Google Sign-In button — follows Google branding guidelines:
@@ -108,15 +110,15 @@ export function AuthDialog() {
                         className="mt-8 w-full h-11 inline-flex items-center justify-center gap-3 rounded-full bg-white border border-neutral-300 text-[14px] font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm"
                     >
                         <GoogleGIcon className="h-[18px] w-[18px]" />
-                        Sign in with Google
+                        {t("Sign in with Google")}
                     </button>
 
                     <p className="mt-5 text-[11px] text-center text-muted-foreground leading-relaxed">
-                        By signing in, you agree to the{" "}
+                        {t("By signing in, you agree to the")}{" "}
                         <a href="/privacy-for-teachers" className="underline underline-offset-2 hover:text-foreground">
-                            Privacy notice
+                            {t("Privacy notice")}
                         </a>
-                        {" "}and Terms.
+                        {" "}{t("and Terms.")}
                     </p>
                 </div>
             </DialogContent>
