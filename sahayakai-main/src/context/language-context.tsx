@@ -4933,6 +4933,9 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Download Failed": {
         "English": "Download Failed", "Hindi": "डाउनलोड विफल", "Kannada": "ಡೌನ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ", "Tamil": "பதிவிறக்கம் தோல்வி", "Telugu": "డౌన్‌లోడ్ విఫలమైంది", "Marathi": "डाउनलोड अयशस्वी", "Bengali": "ডাউনলোড ব্যর্থ", "Gujarati": "ડાઉનલોડ નિષ્ફળ", "Punjabi": "ਡਾਊਨਲੋਡ ਅਸਫਲ", "Malayalam": "ഡൗൺലോഡ് പരാജയപ്പെട്ടു", "Odia": "ଡାଉନଲୋଡ୍ ବିଫଳ"
     },
+    "Failed to save": {
+        "English": "Failed to save", "Hindi": "सहेजने में विफल", "Kannada": "ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ", "Tamil": "சேமிக்க முடியவில்லை", "Telugu": "సేవ్ చేయడంలో విఫలమైంది", "Marathi": "जतन करण्यात अयशस्वी", "Bengali": "সংরক্ষণ করতে ব্যর্থ", "Gujarati": "સાચવવામાં નિષ્ફળ", "Punjabi": "ਸੰਭਾਲਣ ਵਿੱਚ ਅਸਫਲ", "Malayalam": "സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല", "Odia": "ସଞ୍ଚୟ କରିବାରେ ବିଫଳ"
+    },
     "Could not retrieve file.": {
         "English": "Could not retrieve file.", "Hindi": "फ़ाइल प्राप्त नहीं की जा सकी।", "Kannada": "ಫೈಲ್ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.", "Tamil": "கோப்பைப் பெற முடியவில்லை.", "Telugu": "ఫైల్‌ను తిరిగి పొందలేకపోయాము.", "Marathi": "फाइल मिळवता आली नाही.", "Bengali": "ফাইল পুনরুদ্ধার করা যায়নি।", "Gujarati": "ફાઇલ પુનઃપ્રાપ્ત કરી શકાઈ નથી.", "Punjabi": "ਫਾਈਲ ਪ੍ਰਾਪਤ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।", "Malayalam": "ഫയൽ വീണ്ടെടുക്കാൻ കഴിഞ്ഞില്ല.", "Odia": "ଫାଇଲ୍ ପୁନରୁଦ୍ଧାର କରିହେଲା ନାହିଁ।"
     },
