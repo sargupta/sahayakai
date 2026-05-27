@@ -7006,6 +7006,15 @@ const dictionary: Record<string, Record<Language, string>> = {
     "remaining": {
         "English": "remaining", "Hindi": "शेष", "Kannada": "ಉಳಿದಿದೆ", "Tamil": "மீதம்", "Telugu": "మిగిలి ఉంది", "Marathi": "उरलेले", "Bengali": "অবশিষ্ট", "Gujarati": "બાકી", "Punjabi": "ਬਾਕੀ", "Malayalam": "ശേഷിക്കുന്നു", "Odia": "ବାକି"
     },
+    "Loading chapters...": {
+        "English": "Loading chapters...", "Hindi": "अध्याय लोड हो रहे हैं...", "Kannada": "ಅಧ್ಯಾಯಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ...", "Tamil": "அத்தியாயங்கள் ஏற்றப்படுகின்றன...", "Telugu": "అధ్యాయాలు లోడ్ అవుతున్నాయి...", "Marathi": "अध्याय लोड होत आहेत...", "Bengali": "অধ্যায় লোড হচ্ছে...", "Gujarati": "પ્રકરણો લોડ થઈ રહ્યા છે...", "Punjabi": "ਅਧਿਆਏ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...", "Malayalam": "അധ്യായങ്ങൾ ലോഡ് ചെയ്യുന്നു...", "Odia": "ଅଧ୍ୟାୟଗୁଡ଼ିକ ଲୋଡ୍ ହେଉଛି..."
+    },
+    "No chapters found": {
+        "English": "No chapters found", "Hindi": "कोई अध्याय नहीं मिला", "Kannada": "ಯಾವುದೇ ಅಧ್ಯಾಯಗಳು ಕಂಡುಬಂದಿಲ್ಲ", "Tamil": "அத்தியாயங்கள் எதுவும் இல்லை", "Telugu": "అధ్యాయాలు కనుగొనబడలేదు", "Marathi": "कोणतेही अध्याय आढळले नाहीत", "Bengali": "কোনো অধ্যায় পাওয়া যায়নি", "Gujarati": "કોઈ પ્રકરણો મળ્યા નથી", "Punjabi": "ਕੋਈ ਅਧਿਆਏ ਨਹੀਂ ਮਿਲੇ", "Malayalam": "അധ്യായങ്ങളൊന്നും കണ്ടെത്തിയില്ല", "Odia": "କୌଣସି ଅଧ୍ୟାୟ ମିଳିଲା ନାହିଁ"
+    },
+    "Select chapter": {
+        "English": "Select chapter", "Hindi": "अध्याय चुनें", "Kannada": "ಅಧ್ಯಾಯ ಆಯ್ಕೆಮಾಡಿ", "Tamil": "அத்தியாயத்தைத் தேர்ந்தெடுக்கவும்", "Telugu": "అధ్యాయాన్ని ఎంచుకోండి", "Marathi": "अध्याय निवडा", "Bengali": "অধ্যায় নির্বাচন করুন", "Gujarati": "પ્રકરણ પસંદ કરો", "Punjabi": "ਅਧਿਆਏ ਚੁਣੋ", "Malayalam": "അധ്യായം തിരഞ്ഞെടുക്കുക", "Odia": "ଅଧ୍ୟାୟ ବାଛନ୍ତୁ"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:
