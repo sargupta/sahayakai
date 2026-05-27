@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import {
     Carousel,
@@ -10,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { VideoCard } from './VideoCard';
 import { YouTubeVideo } from '@/lib/youtube';
+import { useLanguage } from '@/context/language-context';
 
 interface VideoCarouselProps {
     title: string;
@@ -28,6 +31,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
     onVideoSelect,
     onViewAll
 }) => {
+    const { t } = useLanguage();
     if (!videos || videos.length === 0) return null;
 
     return (
@@ -45,7 +49,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
                     onClick={() => onViewAll?.(categoryKey)}
                     className="text-xs text-primary hover:text-primary hover:bg-primary/5 font-semibold gap-1 h-7 px-2"
                 >
-                    View all
+                    {t("View all")}
                     <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
             </div>

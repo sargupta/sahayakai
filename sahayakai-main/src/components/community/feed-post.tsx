@@ -107,7 +107,7 @@ export default function FeedPost({
 }: FeedPostProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const typeConfig = POST_TYPE_CONFIG[post.postType] ?? POST_TYPE_CONFIG.share;
   const TypeIcon = typeConfig.icon;
@@ -238,7 +238,7 @@ export default function FeedPost({
 
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:bg-muted/60">
             <MessageCircle className="h-4 w-4" />
-            Comment
+            {t("Comment")}
           </Button>
 
           {connectionStatus === "none" && onConnect && (
@@ -249,7 +249,7 @@ export default function FeedPost({
               onClick={() => onConnect(post.authorUid)}
             >
               <UserPlus className="h-4 w-4" />
-              Connect
+              {t("Connect")}
             </Button>
           )}
         </div>

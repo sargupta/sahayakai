@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { getChaptersForGrade, type NCERTChapter } from '@/data/ncert';
 import { getNCERTChapters } from '@/app/actions/ncert';
 import { BookOpen, Target, Clock, Loader2 } from 'lucide-react';
+import { useLanguage } from '@/context/language-context';
 
 interface NCERTChapterSelectorProps {
     onChapterSelect: (chapter: NCERTChapter | null) => void;
@@ -66,6 +67,7 @@ function getSubjectsForGrade(grade: number) {
 }
 
 export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className }: NCERTChapterSelectorProps) {
+    const { t } = useLanguage();
     const [subject, setSubject] = useState<string>('');
     const [selectedChapterId, setSelectedChapterId] = useState<string>('');
     const [chapters, setChapters] = useState<NCERTChapter[]>([]);
@@ -129,7 +131,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                 <div className="space-y-2">
                     <Label className="font-headline flex items-center gap-2">
                         <BookOpen className="h-4 w-4" />
-                        NCERT Subject
+                        {t("NCERT Subject")}
                     </Label>
                     <Select value={subject} onValueChange={handleSubjectChange} disabled={!selectedGrade}>
                         <SelectTrigger className="bg-white/50 backdrop-blur-sm">
@@ -200,7 +202,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                         </div>
 
                         <div>
-                            <h4 className="font-headline text-sm font-semibold mb-2">Learning Outcomes:</h4>
+                            <h4 className="font-headline text-sm font-semibold mb-2">{t("Learning Outcomes:")}</h4>
                             <ul className="list-disc list-inside space-y-1 text-sm">
                                 {selectedChapter.learningOutcomes.map((outcome, idx) => (
                                     <li key={idx} className="text-muted-foreground">{outcome}</li>
@@ -209,7 +211,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                         </div>
 
                         <div>
-                            <h4 className="font-headline text-sm font-semibold mb-2">Keywords:</h4>
+                            <h4 className="font-headline text-sm font-semibold mb-2">{t("Keywords:")}</h4>
                             <div className="flex flex-wrap gap-1">
                                 {selectedChapter.keywords.map((keyword, idx) => (
                                     <Badge key={idx} variant="secondary" className="text-xs">
@@ -228,7 +230,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
 
                 {!selectedGrade && (
                     <p className="text-sm text-muted-foreground">
-                        Please select a grade level first to see NCERT chapters.
+                        {t("Please select a grade level first to see NCERT chapters.")}
                     </p>
                 )}
             </div>

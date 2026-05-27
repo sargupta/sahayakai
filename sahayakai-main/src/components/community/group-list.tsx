@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { getGroupColor, Group } from "@/types/community";
 import { Compass, LayoutGrid } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface GroupListProps {
   groups: Group[];
@@ -24,6 +25,7 @@ export default function GroupList({
   onExploreGroups,
   hasDiscoverableGroups,
 }: GroupListProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
       {/* All chip */}
@@ -75,7 +77,7 @@ export default function GroupList({
           className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-all"
         >
           <Compass className="h-3.5 w-3.5" />
-          Explore
+          {t("Explore")}
         </button>
       )}
     </div>

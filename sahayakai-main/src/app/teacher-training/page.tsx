@@ -598,6 +598,7 @@ function TeacherTrainingContent() {
 }
 
 export default function TeacherTrainingPage() {
+  const { t } = useLanguage();
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
       {/* Bug #6 (audit 2026-04-27): the form was rendering for unauthenticated
@@ -606,8 +607,8 @@ export default function TeacherTrainingPage() {
           a form that silently breaks. */}
       <AuthGate
         icon={GraduationCap}
-        title="Sign in to ask the AI Coach"
-        description="Get advice grounded in pedagogical principles — sign in to ask anything about teaching."
+        title={t("Sign in to ask the AI Coach")}
+        description={t("Get advice grounded in pedagogical principles — sign in to ask anything about teaching.")}
       >
         <TeacherTrainingContent />
       </AuthGate>

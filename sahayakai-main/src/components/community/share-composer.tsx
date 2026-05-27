@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { useClickOutside } from '@/hooks/use-click-outside';
 import { createGroupPostAction } from '@/app/actions/groups';
@@ -47,6 +48,7 @@ interface ShareComposerProps {
 
 export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerProps) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const [expanded, setExpanded] = useState(false);
@@ -62,12 +64,12 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
   // left it open and overlapping content.
   useClickOutside(groupDropdownRef, () => setGroupOpen(false), groupOpen);
 
-  const activeTemplate = SHARE_TEMPLATES.find((t) => t.id === postType) ?? SHARE_TEMPLATES[0];
+  const activeTemplate = SHARE_TEMPLATES.find((tpl) => tpl.id === postType) ?? SHARE_TEMPLATES[0];
 
   if (!user) {
     return (
       <Card className="bg-card border border-border rounded-xl shadow-soft p-4 text-center text-muted-foreground text-sm">
-        Sign in to share
+        {t("Sign in to share")}
       </Card>
     );
   }
@@ -83,11 +85,11 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
   async function handleSubmit() {
     const targetGroup = groupId ?? selectedGroupId;
     if (!targetGroup) {
-      toast({ title: 'Select a group', description: 'Choose which group to post in.', variant: 'destructive' });
+      toast({ title: t('Select a group'), description: t('Choose which group to post in.'), variant: 'destructive' });
       return;
     }
     if (!content.trim()) {
-      toast({ title: 'Write something', description: 'Your post cannot be empty.', variant: 'destructive' });
+      toast({ title: t('Write something'), description: t('Your post cannot be empty.'), variant: 'destructive' });
       return;
     }
 
@@ -100,11 +102,11 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
       setExpanded(false);
       if (!groupId) setSelectedGroupId('');
       onPostCreated?.({ postId, groupId: targetGroup, postType, content: submittedContent });
-      toast({ title: 'Posted!' });
+      toast({ title: t('Posted!') });
     } catch (err) {
       toast({
-        title: 'Failed to post',
-        description: err instanceof Error ? err.message : 'Something went wrong',
+        title: t('Failed to post'),
+        description: err instanceof Error ? err.message : t('Something went wrong'),
         variant: 'destructive',
       });
     } finally {
@@ -127,7 +129,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
             <AvatarImage src={user.photoURL ?? undefined} />
             <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
-          <span className="text-muted-foreground text-sm">What did you try today?</span>
+          <span className="text-muted-foreground text-sm">{t("What did you try today?")}</span>
         </div>
       </Card>
     );
@@ -229,7 +231,7 @@ export function ShareComposer({ groupId, groups, onPostCreated }: ShareComposerP
                 setContent('');
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               size="sm"

@@ -47,8 +47,8 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
             }
 
             toast({
-                title: "Feedback Received",
-                description: "Thank you! Your feedback helps us improve.",
+                title: t("Feedback Received"),
+                description: t("Thank you! Your feedback helps us improve."),
             });
             setIsOpen(false);
             setComment("");
@@ -56,8 +56,8 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
 
         } catch (error: any) {
             toast({
-                title: "Error",
-                description: "Could not save feedback. Please check your connection.",
+                title: t("Error"),
+                description: t("Could not save feedback. Please check your connection."),
                 variant: "destructive",
             });
         } finally {
@@ -121,9 +121,9 @@ export function FeedbackDialog({ page, feature, context, className }: FeedbackDi
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setIsOpen(false)}>{t("Cancel")}</Button>
                         <Button onClick={handleCommentSubmit} disabled={!comment.trim() || isSubmitting}>
-                            {isSubmitting ? "Submitting..." : "Submit Feedback"}
+                            {isSubmitting ? t("Submitting...") : t("Submit Feedback")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

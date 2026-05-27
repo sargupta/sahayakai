@@ -48,8 +48,8 @@ export function AuthDialog() {
                     const data = await response.json();
                     if (data.exists === false) {
                         toast({
-                            title: "Profile setup required",
-                            description: "Finish your profile to continue.",
+                            title: t("Profile setup required"),
+                            description: t("Finish your profile to continue."),
                         });
                         closeAuthModal();
                         router.push("/onboarding");
@@ -61,7 +61,7 @@ export function AuthDialog() {
             }
         } catch (error: any) {
             toast({
-                title: "Sign-in failed",
+                title: t("Sign-in failed"),
                 description: error.message,
                 variant: "destructive",
             });

@@ -2,6 +2,7 @@
 
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
+import { useLanguage } from '@/context/language-context';
 
 interface UsageRemainingBadgeProps {
     /** The feature key from plan-config (e.g., 'lesson-plan', 'quiz') */
@@ -18,6 +19,7 @@ interface UsageRemainingBadgeProps {
  * - Red when depleted, links to /pricing
  */
 export function UsageRemainingBadge({ feature }: UsageRemainingBadgeProps) {
+    const { t } = useLanguage();
     const { usage, loading, isPro } = useSubscription();
 
     if (loading) return null;
@@ -34,7 +36,7 @@ export function UsageRemainingBadge({ feature }: UsageRemainingBadgeProps) {
                 href="/pricing"
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 hover:bg-red-200 transition-colors"
             >
-                Limit reached
+                {t("Limit reached")}
             </Link>
         );
     }

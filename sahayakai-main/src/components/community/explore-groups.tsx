@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type Group, getGroupColor } from "@/types/community";
 import { Users, Check, Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface ExploreGroupsProps {
   groups: Group[];
@@ -18,6 +19,7 @@ export function ExploreGroups({
   onJoinGroup,
   onPreviewGroup,
 }: ExploreGroupsProps) {
+  const { t } = useLanguage();
   const [joiningIds, setJoiningIds] = useState<Set<string>>(new Set());
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
 
@@ -90,15 +92,15 @@ export function ExploreGroups({
                   {isJoined ? (
                     <>
                       <Check className="h-3.5 w-3.5 mr-1" />
-                      Joined
+                      {t("Joined")}
                     </>
                   ) : isJoining ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                      Joining
+                      {t("Joining")}
                     </>
                   ) : (
-                    "Join"
+                    t("Join")
                   )}
                 </Button>
               </div>

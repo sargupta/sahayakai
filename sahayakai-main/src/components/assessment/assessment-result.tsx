@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ResultShell } from "@/components/ui/result-shell";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
@@ -95,6 +96,7 @@ export function AssessmentResult({
   onTranscriptSave,
   getAuthToken,
 }: AssessmentResultProps) {
+  const { t: tr } = useLanguage();
   const t = translations[language] || translations.en;
   const [editedTranscript, setEditedTranscript] = useState(
     result.editedTranscript ?? result.rawTranscript ?? "",
@@ -188,7 +190,7 @@ export function AssessmentResult({
         share?: (data: { title: string; text: string }) => Promise<void>;
       }) : null;
       if (nav?.share) {
-        await nav.share({ title: "SahayakAI Assessment", text: summary });
+        await nav.share({ title: tr("SahayakAI Assessment"), text: summary });
         return;
       }
       if (nav?.clipboard?.writeText) {

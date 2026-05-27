@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { requestNotificationPermission } from '@/lib/fcm-client';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/context/language-context';
 
 export function PushPermissionBanner() {
+    const { t } = useLanguage();
     const [show, setShow] = useState(false);
     const [enabling, setEnabling] = useState(false);
 
@@ -45,7 +47,7 @@ export function PushPermissionBanner() {
         <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border border-orange-100 rounded-xl mx-4 mt-3">
             <Bell className="h-4 w-4 text-orange-500 shrink-0" />
             <p className="text-xs text-slate-700 font-medium flex-1">
-                Enable notifications to never miss a message from fellow teachers.
+                {t("Enable notifications to never miss a message from fellow teachers.")}
             </p>
             <Button
                 size="sm"

@@ -118,7 +118,7 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
     if (students.length === 0) {
         return (
             <div className="text-center py-16 text-slate-400 text-sm">
-                Add students first to take attendance.
+                {t("Add students first to take attendance.")}
             </div>
         );
     }
@@ -138,13 +138,13 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
                     onClick={markAllPresent}
                 >
                     <CheckCheck className="h-3.5 w-3.5 mr-1" />
-                    All Present
+                    {t("All Present")}
                 </Button>
             </div>
 
             {/* Legend */}
             <div className="flex items-center gap-4 text-xs text-slate-400 px-1">
-                <span>Tap to cycle:</span>
+                <span>{t("Tap to cycle:")}</span>
                 {(['present', 'absent', 'late'] as const).map((s) => (
                     <span key={s} className={cn("px-2 py-0.5 rounded-md border font-medium", STATUS_CONFIG[s].activeBg)}>
                         {STATUS_CONFIG[s].label} {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -197,9 +197,9 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
                     disabled={saving}
                 >
                     {saving
-                        ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</>
+                        ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("Saving…")}</>
                         : saved
-                            ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Attendance Saved</>
+                            ? <><CheckCircle2 className="h-4 w-4 mr-2" /> {t("Attendance Saved")}</>
                             : "Submit Attendance"
                     }
                 </Button>

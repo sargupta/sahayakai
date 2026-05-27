@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
@@ -78,6 +79,7 @@ export function OmniOrb() {
     const pathname = usePathname();
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useLanguage();
     // Feature flag: vidyaGreetingSuppressor
     //   ENABLED (default) — strip redundant opening greetings ("Namaste",
     //                       "Sure", "Of course") after the first model
@@ -471,8 +473,8 @@ export function OmniOrb() {
                 console.warn('[VIDYA OmniOrb] empty response from assistant', { action, plannedActions });
                 if (!action && !(plannedActions && plannedActions.length > 0)) {
                     toast({
-                        title: 'VIDYA had nothing to say',
-                        description: 'Try rephrasing your question.',
+                        title: t('VIDYA had nothing to say'),
+                        description: t('Try rephrasing your question.'),
                         variant: 'default',
                     });
                 }
@@ -553,7 +555,7 @@ export function OmniOrb() {
                 // eslint-disable-next-line no-console
                 console.error('[VIDYA OmniOrb] action with unknown flow', action.flow);
                 toast({
-                    title: 'VIDYA picked a tool I do not recognise',
+                    title: t('VIDYA picked a tool I do not recognise'),
                     description: `Flow "${action.flow}" is not available. Please rephrase your request.`,
                     variant: 'destructive',
                 });
@@ -574,7 +576,7 @@ export function OmniOrb() {
             // diagnose live. Now the teacher sees the actual reason on
             // demo day instead of just hearing an apology.
             toast({
-                title: 'VIDYA could not act on that',
+                title: t('VIDYA could not act on that'),
                 description: errMsg.slice(0, 200),
                 variant: 'destructive',
             });
@@ -722,7 +724,7 @@ export function OmniOrb() {
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
-                            VIDYA Memory
+                            {t("VIDYA Memory")}
                         </h3>
                         <Button
                             variant="ghost"
@@ -737,7 +739,7 @@ export function OmniOrb() {
                                 setPendingActions([]);
                                 setOrbOpen(false);
                             }}
-                            title="Clear Context"
+                            title={t("Clear Context")}
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -746,13 +748,13 @@ export function OmniOrb() {
                     {/* Teacher profile summary */}
                     {(teacherProfile.preferredGrade || teacherProfile.preferredSubject) && (
                         <div className="mb-3 p-2 bg-primary/5 rounded-xl text-xs text-primary border border-primary/10">
-                            <span className="font-semibold">Your profile: </span>
+                            <span className="font-semibold">{t("Your profile:")} </span>
                             {[teacherProfile.preferredGrade, teacherProfile.preferredSubject, teacherProfile.schoolContext]
                                 .filter(Boolean).join(" · ")}
                             {user && (
                                 <Cloud
                                     className="ml-1 inline-block h-3 w-3 opacity-60 align-middle"
-                                    aria-label="Synced to cloud"
+                                    aria-label={t("Synced to cloud")}
                                 />
                             )}
                         </div>
@@ -760,7 +762,7 @@ export function OmniOrb() {
 
                     <div className="max-h-60 overflow-y-auto flex flex-col gap-3 text-sm">
                         {chatHistory.length === 0 ? (
-                            <p className="text-slate-500 italic text-center py-4">Memory is clear. I have no context of prior conversations.</p>
+                            <p className="text-slate-500 italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
                         ) : (
                             chatHistory.map((msg, i) => (
                                 <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-slate-100 self-end ml-4" : "bg-primary/10 self-start mr-4")}>
@@ -778,7 +780,7 @@ export function OmniOrb() {
                     {pendingActions.length > 1 && (
                         <div className="mt-3 pt-3 border-t border-border">
                             <p className="text-xs font-semibold text-muted-foreground mb-2">
-                                Pick what to generate next:
+                                {t("Pick what to generate next:")}
                             </p>
                             <div className="flex flex-wrap gap-2" data-testid="planned-action-chips">
                                 {pendingActions.map((a, idx) => (
@@ -837,7 +839,7 @@ export function OmniOrb() {
                         )}
                         <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
                             <BrainCircuit className="h-3 w-3" />
-                            Tap to reply
+                            {t("Tap to reply")}
                         </div>
                     </>
                 )}
@@ -859,7 +861,7 @@ export function OmniOrb() {
                     }}
                     className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-white text-primary hover:bg-slate-100 border pointer-events-auto"
                     size="icon"
-                    title="View Memory"
+                    title={t("View Memory")}
                 >
                     <BrainCircuit className="h-5 w-5" />
                 </Button>

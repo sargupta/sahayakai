@@ -67,16 +67,16 @@ export function AuthButton() {
                     if (data.exists === false) {
                         redirectToOnboarding = true;
                         toast({
-                            title: "Almost there!",
-                            description: "Complete your professional profile to join the community.",
+                            title: t("Almost there!"),
+                            description: t("Complete your professional profile to join the community."),
                         });
                     }
                 }
                 if (!redirectToOnboarding) {
-                    toast({ title: "Welcome back!", description: "You're all set!" });
+                    toast({ title: t("Welcome back!"), description: t("You're all set!") });
                 }
             } catch {
-                toast({ title: "Welcome back!", description: "Logging you in..." });
+                toast({ title: t("Welcome back!"), description: t("Logging you in...") });
             }
 
             if (redirectToOnboarding) {
@@ -97,12 +97,12 @@ export function AuthButton() {
         try {
             await signOut(auth);
             toast({
-                title: "Signed Out",
-                description: "See you again soon!",
+                title: t("Signed Out"),
+                description: t("See you again soon!"),
             });
         } catch (error: any) {
             toast({
-                title: "Error signing out",
+                title: t("Error signing out"),
                 description: error.message,
                 variant: "destructive",
             });
@@ -156,12 +156,12 @@ export function AuthButton() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <ShieldCheck className="mr-2 h-4 w-4" />
-                    <span>Certifications</span>
+                    <span>{t("Certifications")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
+                    <span>{t("Sign out")}</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

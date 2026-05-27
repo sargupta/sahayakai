@@ -107,8 +107,8 @@ export function PrivacyConsentForm() {
             });
         } catch {
             toast({
-                title: 'Could not save',
-                description: 'Something went wrong recording your acceptance. Please try again.',
+                title: t('Could not save'),
+                description: t('Something went wrong recording your acceptance. Please try again.'),
                 variant: 'destructive',
             });
         } finally {
@@ -131,10 +131,10 @@ export function PrivacyConsentForm() {
         return (
             <div className="mt-12 pt-10 border-t border-black/[0.08]">
                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary mb-3">
-                    Record your acceptance
+                    {t("Record your acceptance")}
                 </div>
                 <h3 className="font-headline text-[22px] sm:text-[26px] font-bold tracking-tight text-foreground mb-3">
-                    Sign in to acknowledge these commitments.
+                    {t("Sign in to acknowledge these commitments.")}
                 </h3>
                 <p className="text-[14px] sm:text-[15px] text-muted-foreground leading-[1.65] max-w-[58ch] mb-6">
                     We record your acceptance against your account so we can show you the exact version of
@@ -145,7 +145,7 @@ export function PrivacyConsentForm() {
                     size="lg"
                     className="rounded-full px-6 font-medium"
                 >
-                    Sign in to continue
+                    {t("Sign in to continue")}
                 </Button>
             </div>
         );

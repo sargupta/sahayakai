@@ -10,11 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from '@/context/language-context';
 
 
 type Resource = {
   id: string;
-  title: string;
+  titleKey: string;
   type: FileType;
   author: string;
   authorAvatar: string;
@@ -22,16 +23,17 @@ type Resource = {
 };
 
 const mockResources: Resource[] = [
-  { id: '1', title: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: '/avatars/ravi_kumar.png', likes: 128 },
-  { id: '2', title: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: '/avatars/priya_singh.png', likes: 95 },
-  { id: '3', title: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: '/avatars/sameer_gupta.png', likes: 210 },
-  { id: '4', title: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: '/avatars/aisha_khan.png', likes: 72 },
-  { id: '5', 'title': 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: '/avatars/ravi_kumar.png', likes: 350 },
+  { id: '1', titleKey: 'Interactive Lesson on the Solar System', type: 'lesson-plan', author: 'Ravi Kumar', authorAvatar: '/avatars/ravi_kumar.png', likes: 128 },
+  { id: '2', titleKey: 'Advanced Fractions Quiz (Grade 7)', type: 'quiz', author: 'Priya Singh', authorAvatar: '/avatars/priya_singh.png', likes: 95 },
+  { id: '3', titleKey: 'Creative Writing Rubric for Short Stories', type: 'rubric', author: 'Sameer Gupta', authorAvatar: '/avatars/sameer_gupta.png', likes: 210 },
+  { id: '4', titleKey: 'Mughal Empire Word Search', type: 'worksheet', author: 'Aisha Khan', authorAvatar: '/avatars/aisha_khan.png', likes: 72 },
+  { id: '5', titleKey: 'Visual Aid: The Human Heart', type: 'image', author: 'Ravi Kumar', authorAvatar: '/avatars/ravi_kumar.png', likes: 350 },
 ];
 
 
 export default function CommunityPage() {
     const [language, setLanguage] = useState('en');
+    const { t } = useLanguage();
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
@@ -40,24 +42,24 @@ export default function CommunityPage() {
             <div className="flex justify-center items-center mb-4">
                 <Library className="w-12 h-12 text-primary" />
             </div>
-            <CardTitle className="font-headline text-2xl sm:text-3xl">Community Library</CardTitle>
+            <CardTitle className="font-headline text-2xl sm:text-3xl">{t("Community Library")}</CardTitle>
             <CardDescription>
-                Discover and share educational resources with fellow teachers.
+                {t("Discover and share educational resources with fellow teachers.")}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input placeholder="Search for lesson plans, quizzes, and more..." className="pl-10 bg-white/50" />
+                    <Input placeholder={t("Search for lesson plans, quizzes, and more...")} className="pl-10 bg-white/50" />
                 </div>
                 <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
             </div>
 
             <Tabs defaultValue="trending">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="trending">Trending</TabsTrigger>
-                    <TabsTrigger value="following">Following</TabsTrigger>
+                    <TabsTrigger value="trending">{t("Trending")}</TabsTrigger>
+                    <TabsTrigger value="following">{t("Following")}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="trending">
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
@@ -67,7 +69,7 @@ export default function CommunityPage() {
                                     <div className="flex items-center gap-3">
                                         <FileTypeIcon type={resource.type} className="h-8 w-8 text-primary" />
                                         <div>
-                                            <CardTitle className="text-lg font-semibold">{resource.title}</CardTitle>
+                                            <CardTitle className="text-lg font-semibold">{t(resource.titleKey)}</CardTitle>
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                                                 <Avatar className="h-6 w-6">
                                                     <AvatarImage src={resource.authorAvatar} alt={resource.author} data-ai-hint="teacher profile"/>
@@ -88,7 +90,7 @@ export default function CommunityPage() {
                                     </div>
                                     <Button variant="outline" size="sm">
                                         <Download className="mr-2 h-4 w-4" />
-                                        Download
+                                        {t("Download")}
                                     </Button>
                                 </CardFooter>
                            </Card>
@@ -97,8 +99,8 @@ export default function CommunityPage() {
                 </TabsContent>
                 <TabsContent value="following">
                     <div className="text-center py-12 text-muted-foreground">
-                        <p>Content from teachers you follow will appear here.</p>
-                        <Button variant="link">Find teachers to follow</Button>
+                        <p>{t("Content from teachers you follow will appear here.")}</p>
+                        <Button variant="link">{t("Find teachers to follow")}</Button>
                     </div>
                 </TabsContent>
             </Tabs>

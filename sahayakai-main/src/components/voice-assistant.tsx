@@ -358,13 +358,13 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                 <button
                     onClick={() => setIsOpen(true)}
                     className="relative h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 hover:scale-110 transition-all pointer-events-auto border-2 border-background flex items-center justify-center group"
-                    aria-label="Open VIDYA Mentor"
+                    aria-label={t("Open VIDYA Mentor")}
                 >
                     <Brain className="h-6 w-6 text-white" />
                     <span className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-background animate-pulse" />
                     {/* Tooltip */}
                     <div className="absolute right-16 bottom-1 bg-foreground text-background text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        Ask VIDYA
+                        {t("Ask VIDYA")}
                     </div>
                 </button>
             </div>
@@ -394,7 +394,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         {messages.length > 0 && (
-                            <Button variant="ghost" size="icon" onClick={resetSession} title="Reset Session"
+                            <Button variant="ghost" size="icon" onClick={resetSession} title={t("Reset Session")}
                                 className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full">
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>

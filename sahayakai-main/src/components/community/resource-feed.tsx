@@ -311,6 +311,7 @@ const ResourceList = ({
   onLike: (r: Resource) => void;
   onSave: (r: Resource) => void;
 }) => {
+  const { t } = useLanguage();
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   useEffect(() => { setVisibleCount(INITIAL_VISIBLE); }, [resources.length]);
@@ -330,9 +331,9 @@ const ResourceList = ({
           <Library className="h-8 w-8 text-primary" />
         </div>
         <div className="max-w-sm space-y-1.5">
-          <h3 className="text-base font-bold text-foreground font-headline">No resources yet</h3>
+          <h3 className="text-base font-bold text-foreground font-headline">{t("No resources yet")}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.
+            {t("Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.")}
           </p>
         </div>
       </div>
@@ -448,8 +449,8 @@ export function ResourceFeed() {
         setResources(unique);
       } catch {
         toast({
-          title: "Couldn't load resources",
-          description: 'Please check your connection and try again.',
+          title: t("Couldn't load resources"),
+          description: t('Please check your connection and try again.'),
           variant: 'destructive',
         });
       } finally {
@@ -474,7 +475,7 @@ export function ResourceFeed() {
 
   const handleLike = async (resource: Resource) => {
     if (!user) {
-      toast({ title: 'Sign in to like resources', variant: 'destructive' });
+      toast({ title: t('Sign in to like resources'), variant: 'destructive' });
       return;
     }
     // Capture pre-toggle state so the rollback path can revert BOTH the Set
@@ -509,13 +510,13 @@ export function ResourceFeed() {
           r.id === resource.id ? { ...r, likes: r.likes - delta } : r,
         ),
       );
-      toast({ title: 'Could not update like', variant: 'destructive' });
+      toast({ title: t('Could not update like'), variant: 'destructive' });
     }
   };
 
   const handleSave = async (resource: Resource) => {
     if (!user) {
-      toast({ title: 'Sign in to save resources', variant: 'destructive' });
+      toast({ title: t('Sign in to save resources'), variant: 'destructive' });
       return;
     }
     setSavedIds((prev) => new Set(prev).add(resource.id));
@@ -537,7 +538,7 @@ export function ResourceFeed() {
       });
     } catch {
       setSavedIds((prev) => { const next = new Set(prev); next.delete(resource.id); return next; });
-      toast({ title: 'Could not save resource', variant: 'destructive' });
+      toast({ title: t('Could not save resource'), variant: 'destructive' });
     }
   };
 
