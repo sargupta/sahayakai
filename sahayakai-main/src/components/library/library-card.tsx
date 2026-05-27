@@ -9,6 +9,7 @@ import { ThumbsUp, Download, Calendar, BookOpen, Trash2 } from "lucide-react";
 import { FileTypeIcon } from "@/components/file-type-icon";
 import { cn } from "@/lib/utils";
 import { BaseContent } from "@/types";
+import { useLanguage } from "@/context/language-context";
 
 interface LibraryCardProps {
     resource: BaseContent;
@@ -43,6 +44,7 @@ export function LibraryCard({
     isFollowing,
     showAuthor = false
 }: LibraryCardProps) {
+    const { t } = useLanguage();
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     // Format date safely
@@ -77,7 +79,7 @@ export function LibraryCard({
                                     <AvatarFallback className="text-[10px] bg-muted">AI</AvatarFallback>
                                 </Avatar>
                                 <span className="text-xs font-medium text-muted-foreground truncate">
-                                    SahayakAI Assistant
+                                    {t("SahayakAI Assistant")}
                                 </span>
                             </div>
                         )}
@@ -110,7 +112,7 @@ export function LibraryCard({
                                     onClick={() => { onDelete(resource); setConfirmDelete(false); }}
                                 >
                                     <Trash2 className="h-3.5 w-3.5" />
-                                    <span>Confirm</span>
+                                    <span>{t("Confirm")}</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -118,7 +120,7 @@ export function LibraryCard({
                                     className="h-8 px-2 text-muted-foreground"
                                     onClick={() => setConfirmDelete(false)}
                                 >
-                                    Cancel
+                                    {t("Cancel")}
                                 </Button>
                             </>
                         ) : (
@@ -127,8 +129,8 @@ export function LibraryCard({
                                 size="sm"
                                 className="min-h-[44px] min-w-[44px] p-0 text-muted-foreground/70 hover:text-red-500 hover:bg-red-50 transition-colors"
                                 onClick={() => setConfirmDelete(true)}
-                                title="Delete"
-                                aria-label="Delete"
+                                title={t("Delete")}
+                                aria-label={t("Delete")}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -150,7 +152,7 @@ export function LibraryCard({
                         onClick={() => onDownload?.(resource)}
                     >
                         <Download className="h-4 w-4" />
-                        <span className="hidden sm:inline">Export</span>
+                        <span className="hidden sm:inline">{t("Export")}</span>
                     </Button>
                 </div>
             </CardFooter>

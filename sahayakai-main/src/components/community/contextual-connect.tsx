@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Check, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/context/language-context";
 
 interface ContextualConnectProps {
   authorUid: string;
@@ -25,6 +26,7 @@ export function ContextualConnect({
   onDismiss,
 }: ContextualConnectProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [status, setStatus] = useState<"idle" | "loading" | "sent">("idle");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -46,7 +48,7 @@ export function ContextualConnect({
       // failure path, but we still want the local status to revert.
       console.error("ContextualConnect: handleConnect failed", err);
       setStatus("idle");
-      toast({ title: "Could not send request", variant: "destructive" });
+      toast({ title: t("Could not send request"), variant: "destructive" });
     }
   };
 
@@ -81,7 +83,7 @@ export function ContextualConnect({
         {status === "sent" ? (
           <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-green-600">
             <Check className="h-3.5 w-3.5" />
-            Request sent
+            {t("Request sent")}
           </span>
         ) : (
           <Button

@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/context/language-context";
 
 interface GroupsSidebarProps {
   myGroups: Group[];
@@ -51,6 +52,7 @@ export function GroupsSidebar({
   onConnectTeacher,
 }: GroupsSidebarProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [joiningGroups, setJoiningGroups] = useState<Set<string>>(new Set());
   // joinedGroups was previously a local Set that lived alongside myGroups and
   // could drift (e.g. user leaves a group elsewhere). Derive from myGroups
@@ -123,13 +125,13 @@ export function GroupsSidebar({
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            People You May Know
+            {t("People You May Know")}
           </h3>
           <button
             onClick={onOpenTeacherDirectory}
             className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
           >
-            View All
+            {t("View All")}
           </button>
         </div>
         <Card className="p-4">
@@ -183,7 +185,7 @@ export function GroupsSidebar({
                 </div>
               )) : (
               <p className="text-xs text-slate-400 text-center py-2">
-                No suggestions yet
+                {t("No suggestions yet")}
               </p>
             )}
           </div>
@@ -191,7 +193,7 @@ export function GroupsSidebar({
             onClick={onOpenTeacherDirectory}
             className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
           >
-            Browse All Teachers
+            {t("Browse All Teachers")}
           </button>
         </Card>
       </div>
@@ -204,7 +206,7 @@ export function GroupsSidebar({
         <div className="flex items-center gap-3">
           <MessageCircle className="h-5 w-5 text-slate-600 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Staff Room</p>
+            <p className="text-sm font-medium">{t("Staff Room")}</p>
             <div className="flex items-center gap-1.5">
               {/* Pulse only when a message landed in the last 5 minutes — the
                   decorative-always pulse was misleading. */}
@@ -232,7 +234,7 @@ export function GroupsSidebar({
       {myGroups.length > 0 && (
         <div>
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            My Groups
+            {t("My Groups")}
           </h3>
           <Card className="p-4">
             <div className="space-y-1">
@@ -274,14 +276,14 @@ export function GroupsSidebar({
         <div>
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Discover Groups
+              {t("Discover Groups")}
             </h3>
             {onViewAllGroups && suggestedGroups.length > 5 && (
               <button
                 onClick={onViewAllGroups}
                 className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
               >
-                View All
+                {t("View All")}
               </button>
             )}
           </div>
@@ -327,7 +329,7 @@ export function GroupsSidebar({
                 onClick={onViewAllGroups}
                 className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
               >
-                Browse all groups
+                {t("Browse all groups")}
               </button>
             )}
           </Card>

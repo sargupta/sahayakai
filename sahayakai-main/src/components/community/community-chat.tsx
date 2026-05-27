@@ -212,8 +212,8 @@ export function CommunityChat({
                             <MessageCircle className="h-8 w-8 text-primary/40" />
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-foreground">Start the conversation</p>
-                            <p className="text-xs text-muted-foreground mt-1">Be the first to share something with fellow teachers.</p>
+                            <p className="text-sm font-bold text-foreground">{t("Start the conversation")}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t("Be the first to share something with fellow teachers.")}</p>
                         </div>
                     </div>
                 ) : (
@@ -323,7 +323,7 @@ export function CommunityChat({
                     </div>
                 ) : (
                     <p className="text-center text-xs text-muted-foreground font-medium py-1">
-                        Sign in to participate in community chat.
+                        {t("Sign in to participate in community chat.")}
                     </p>
                 )}
             </div>

@@ -515,7 +515,7 @@ export default function OnboardingPage() {
                                         {generatedContent.result?.title || generatedContent.title || "Your Lesson Plan"}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Created successfully! You can view and edit this from your library.
+                                        {t("Created successfully! You can view and edit this from your library.")}
                                     </p>
                                 </div>
                             )}
@@ -526,7 +526,7 @@ export default function OnboardingPage() {
                                         Could not generate. Don&apos;t worry, you can create content anytime from the home page.
                                     </p>
                                     <Button variant="outline" size="sm" onClick={handleGenerate} className="mt-2 rounded-xl">
-                                        Try again
+                                        {t("Try again")}
                                     </Button>
                                 </div>
                             )}
@@ -611,7 +611,7 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 0 && (
                             <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Select your role at school">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label={t("Select your role at school")}>
                                     {ROLE_OPTIONS.map(opt => (
                                         <button
                                             key={opt.value}
@@ -763,7 +763,7 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 3 && (
                             <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Select your subjects">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label={t("Select your subjects")}>
                                     {SUBJECTS.map((subject) => (
                                         <div key={subject} className={cn(
                                             "flex items-center space-x-2 p-2.5 border rounded-xl transition-all cursor-pointer group hover:border-primary/50",
@@ -809,7 +809,7 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 4 && (
                             <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="grid grid-cols-4 md:grid-cols-6 gap-2" role="group" aria-label="Select your classes">
+                                <div className="grid grid-cols-4 md:grid-cols-6 gap-2" role="group" aria-label={t("Select your classes")}>
                                     {GRADE_LEVELS.slice(3).map((grade) => (
                                         <button
                                             key={grade}

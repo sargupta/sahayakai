@@ -82,7 +82,7 @@ import { Suspense } from "react";
 
 export default function QuizGeneratorPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{/* i18n-exempt: pre-context fallback */}Loading…</div>}>
       <QuizGeneratorContent />
     </Suspense>
   );
@@ -433,7 +433,7 @@ function QuizGeneratorContent() {
                   />
 
                   <div className="space-y-2">
-                    <FormLabel className="font-headline">Quick Ideas</FormLabel>
+                    <FormLabel className="font-headline">{translate("Quick Ideas")}</FormLabel>
                     <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
                   </div>
                 </div>

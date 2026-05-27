@@ -54,8 +54,8 @@ export default function NotificationsPage() {
         return (
             <AuthGate
                 icon={Bell}
-                title="Sign in to see notifications"
-                description="Sign in to get notified when a fellow teacher connects, replies, or shares a resource."
+                title={t("Sign in to see notifications")}
+                description={t("Sign in to get notified when a fellow teacher connects, replies, or shares a resource.")}
             >
                 {null}
             </AuthGate>

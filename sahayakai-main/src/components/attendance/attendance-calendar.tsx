@@ -78,7 +78,7 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                 </div>
             ) : summaries.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-sm">
-                    No attendance data for this month.
+                    {t("No attendance data for this month.")}
                 </div>
             ) : (
                 <div className="space-y-2">

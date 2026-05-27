@@ -236,34 +236,33 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         <CardTitle className="font-headline">{t("Welcome to your Impact Dashboard")}</CardTitle>
                     </div>
                     <CardDescription>
-                        Your score grows as you create lesson plans, worksheets, and other resources.
+                        {t("Your score grows as you create lesson plans, worksheets, and other resources.")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="p-4 bg-muted/50 border border-border rounded-xl">
                         <p className="text-sm text-foreground">
-                            Generate your first lesson plan to start your impact journey. Every resource
-                            you create reflects in your Activity, Engagement, Success Rate, and Growth scores.
+                            {t("Generate your first lesson plan to start your impact journey. Every resource you create reflects in your Activity, Engagement, Success Rate, and Growth scores.")}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                         <div className="p-3 bg-muted/30 border border-border rounded-xl">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Activity</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Activity")}</p>
                             <p className="text-2xl font-bold font-headline">—</p>
                             <p className="text-xs text-muted-foreground">/ 30</p>
                         </div>
                         <div className="p-3 bg-muted/30 border border-border rounded-xl">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Engagement</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Engagement")}</p>
                             <p className="text-2xl font-bold font-headline">—</p>
                             <p className="text-xs text-muted-foreground">/ 30</p>
                         </div>
                         <div className="p-3 bg-muted/30 border border-border rounded-xl">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Success</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Success")}</p>
                             <p className="text-2xl font-bold font-headline">—</p>
                             <p className="text-xs text-muted-foreground">/ 20</p>
                         </div>
                         <div className="p-3 bg-muted/30 border border-border rounded-xl">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Growth</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Growth")}</p>
                             <p className="text-2xl font-bold font-headline">—</p>
                             <p className="text-xs text-muted-foreground">/ 20</p>
                         </div>
@@ -314,13 +313,13 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         <div>
                             <CardTitle className="font-headline">{t("Your Teaching Impact Score")}</CardTitle>
                             <CardDescription>
-                                Based on activity, engagement, success rate, and growth
+                                {t("Based on activity, engagement, success rate, and growth")}
                             </CardDescription>
                         </div>
                         <Badge variant={getRiskBadgeVariant(healthScore.risk_level)} className="capitalize">
-                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-1" /> Excellent</> : null}
-                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1" /> Good</> : null}
-                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-1" /> Needs Attention</> : null}
+                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-1" /> {t("Excellent")}</> : null}
+                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1" /> {t("Good")}</> : null}
+                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-1" /> {t("Needs Attention")}</> : null}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -330,7 +329,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             <CircularProgress
                                 value={headlineScore}
                                 max={100}
-                                label="Overall Score"
+                                label={t("Overall Score")}
                                 size="lg"
                                 color={getRiskColor(healthScore.risk_level)}
                             />
@@ -339,24 +338,24 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl text-center">
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-blue-600 font-headline">{healthScore.consecutive_days_used}</p>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Day Streak</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Day Streak")}</p>
                             </div>
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-green-600 font-headline">{healthScore.estimated_students_impacted}</p>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Students Impacted</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Students Impacted")}</p>
                             </div>
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-purple-600 font-headline">
-                                    {healthScore.days_since_last_use === 0 ? 'Today' : `${healthScore.days_since_last_use}d ago`}
+                                    {healthScore.days_since_last_use === 0 ? t('Today') : `${healthScore.days_since_last_use}d ago`}
                                 </p>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Last Active</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Last Active")}</p>
                             </div>
                         </div>
 
                         {(relativeUpdated || error) && (
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                {relativeUpdated && <span>Updated {relativeUpdated}</span>}
-                                {error && <span className="text-amber-600">Showing last good values</span>}
+                                {relativeUpdated && <span>{t("Updated")} {relativeUpdated}</span>}
+                                {error && <span className="text-amber-600">{t("Showing last good values")}</span>}
                                 <button
                                     onClick={() => { setIsRefreshing(true); fetchHealthScore(); }}
                                     disabled={isRefreshing}
@@ -364,7 +363,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                                     aria-label={t("Refresh impact score")}
                                 >
                                     <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                                    Refresh
+                                    {t("Refresh")}
                                 </button>
                             </div>
                         )}
@@ -375,9 +374,9 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
             {/* Component Scores */}
             <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden p-6">
                 <CardHeader className="px-0 pt-0">
-                    <CardTitle className="font-headline">Score Breakdown</CardTitle>
+                    <CardTitle className="font-headline">{t("Score Breakdown")}</CardTitle>
                     <CardDescription>
-                        Adds up to your overall score of {headlineScore} / 100
+                        {t("Adds up to your overall score of")} {headlineScore} / 100
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
@@ -386,7 +385,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             <CircularProgress
                                 value={healthScore.activity_score}
                                 max={30}
-                                label="Activity"
+                                label={t("Activity")}
                                 size="md"
                                 color={healthScore.activity_score >= 20 ? 'green' : healthScore.activity_score >= 10 ? 'yellow' : 'red'}
                             />
@@ -396,7 +395,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             <CircularProgress
                                 value={healthScore.engagement_score}
                                 max={30}
-                                label="Engagement"
+                                label={t("Engagement")}
                                 size="md"
                                 color={healthScore.engagement_score >= 20 ? 'green' : healthScore.engagement_score >= 10 ? 'yellow' : 'red'}
                             />
@@ -406,7 +405,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             <CircularProgress
                                 value={healthScore.success_score}
                                 max={20}
-                                label="Success Rate"
+                                label={t("Success Rate")}
                                 size="md"
                                 color={healthScore.success_score >= 14 ? 'green' : healthScore.success_score >= 8 ? 'yellow' : 'red'}
                             />
@@ -416,7 +415,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             <CircularProgress
                                 value={healthScore.growth_score}
                                 max={20}
-                                label="Growth"
+                                label={t("Growth")}
                                 size="md"
                                 color={healthScore.growth_score >= 14 ? 'green' : healthScore.growth_score >= 8 ? 'yellow' : 'red'}
                             />
@@ -425,10 +424,10 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
 
                     {/* Explanations */}
                     <div className="mt-6 space-y-2 text-sm">
-                        <p><strong>Activity (0-30):</strong> How often you use the app and session quality</p>
-                        <p><strong>Engagement (0-30):</strong> Content created and feature diversity</p>
-                        <p><strong>Success (0-20):</strong> Generation quality and low friction</p>
-                        <p><strong>Growth (0-20):</strong> Week-over-week improvement and streaks</p>
+                        <p><strong>{t("Activity")} (0-30):</strong> {t("How often you use the app and session quality")}</p>
+                        <p><strong>{t("Engagement")} (0-30):</strong> {t("Content created and feature diversity")}</p>
+                        <p><strong>{t("Success")} (0-20):</strong> {t("Generation quality and low friction")}</p>
+                        <p><strong>{t("Growth")} (0-20):</strong> {t("Week-over-week improvement and streaks")}</p>
                     </div>
                 </CardContent>
             </div>

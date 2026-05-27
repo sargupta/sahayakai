@@ -3,8 +3,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Images } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 export default function VisualAidDesignerPage() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
       <div className="w-full bg-card border border-border shadow-soft rounded-xl overflow-hidden">
@@ -15,13 +17,13 @@ export default function VisualAidDesignerPage() {
           <div className="flex justify-center items-center mb-4">
             <Images className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="font-headline text-2xl sm:text-3xl">Visual Aid Designer</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">{t("Visual Aid Designer")}</CardTitle>
           <CardDescription>
-            This feature is coming soon. Generate beautiful visual aids from a simple description!
+            {t("This feature is coming soon. Generate beautiful visual aids from a simple description!")}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">Stay tuned!</p>
+          <p className="text-center text-muted-foreground">{t("Stay tuned!")}</p>
         </CardContent>
       </div>
     </div>

@@ -352,7 +352,7 @@ function ExamPaperPageInner() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
         <AlertCircle className="w-12 h-12 text-muted-foreground" />
         <p className="text-muted-foreground text-center">
-          Please log in to generate exam papers.
+          {t("Please log in to generate exam papers.")}
         </p>
       </div>
     );

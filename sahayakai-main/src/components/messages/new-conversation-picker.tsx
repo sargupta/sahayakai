@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { getAllTeachersAction } from "@/app/actions/community";
 import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
 import { sendConnectionRequestAction, getMyConnectionDataAction } from "@/app/actions/connections";
@@ -25,6 +26,7 @@ interface NewConversationPickerProps {
 
 export function NewConversationPicker({ onConversationReady }: NewConversationPickerProps) {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [connData, setConnData] = useState<MyConnectionData>({ connectedUids: [], sentRequestUids: [], receivedRequests: [] });
     const [search, setSearch] = useState("");
@@ -52,9 +54,9 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
     }, [fetchInitialData]);
 
     const filtered = search.trim()
-        ? teachers.filter((t) =>
-            t.displayName?.toLowerCase().includes(search.toLowerCase()) ||
-            t.schoolName?.toLowerCase().includes(search.toLowerCase())
+        ? teachers.filter((tch) =>
+            tch.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+            tch.schoolName?.toLowerCase().includes(search.toLowerCase())
         )
         : teachers;
 
@@ -95,14 +97,14 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
         <div className="flex flex-col h-full bg-card">
             {/* Header */}
             <div className="px-5 py-4 border-b border-border shrink-0">
-                <p className="text-base font-black text-foreground tracking-tight mb-3">New Message</p>
+                <p className="text-base font-black text-foreground tracking-tight mb-3">{t("New Message")}</p>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                     <Input
                         autoFocus
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search teachers…"
+                        placeholder={t("Search teachers…")}
                         className="pl-9 h-9 text-sm bg-muted/40 border-border rounded-xl focus-visible:ring-primary/30"
                     />
                 </div>
@@ -117,7 +119,7 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
                 ) : filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center space-y-2">
                         <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
-                        <p className="text-sm font-bold text-muted-foreground">No teachers found</p>
+                        <p className="text-sm font-bold text-muted-foreground">{t("No teachers found")}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-border/40">
@@ -171,7 +173,7 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
                                     ) : pending ? (
                                         <span className="shrink-0 flex items-center gap-1 px-3 h-8 rounded-full text-[11px] font-bold text-muted-foreground border border-border bg-muted/40">
                                             <Lock className="h-3 w-3" />
-                                            Pending
+                                            {t("Pending")}
                                         </span>
                                     ) : (
                                         <button
@@ -197,7 +199,7 @@ export function NewConversationPicker({ onConversationReady }: NewConversationPi
             {/* Footer hint */}
             <div className="px-5 py-3 border-t border-border shrink-0 bg-muted/30">
                 <p className="text-[10px] text-muted-foreground text-center">
-                    You can only message teachers you're connected with.
+                    {t("You can only message teachers you're connected with.")}
                 </p>
             </div>
         </div>

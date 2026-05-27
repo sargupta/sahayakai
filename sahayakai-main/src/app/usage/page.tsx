@@ -151,7 +151,7 @@ export default function UsagePage() {
             {unlimited.length > 0 && (
                 <Card>
                     <CardContent className="py-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Unlimited on your plan</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{t("Unlimited on your plan")}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {unlimited.map((f) => {
                                 const meta = FEATURE_META[f.key];
@@ -174,14 +174,14 @@ export default function UsagePage() {
                 <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/50">
                     <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-5">
                         <div>
-                            <p className="text-sm font-semibold">Need more?</p>
+                            <p className="text-sm font-semibold">{t("Need more?")}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Higher limits, better AI, export, parent messaging
+                                {t("Higher limits, better AI, export, parent messaging")}
                             </p>
                         </div>
                         <Button asChild size="sm" className="bg-amber-600 hover:bg-amber-700 shrink-0">
                             <Link href="/pricing">
-                                View Plans <ArrowRight className="h-4 w-4 ml-1" />
+                                {t("View Plans")} <ArrowRight className="h-4 w-4 ml-1" />
                             </Link>
                         </Button>
                     </CardContent>

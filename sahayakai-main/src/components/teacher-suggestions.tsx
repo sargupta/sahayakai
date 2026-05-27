@@ -9,8 +9,10 @@ import { getRecommendedTeachersAction, followTeacherAction, getFollowingIdsActio
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useLanguage } from "@/context/language-context";
 
 export function TeacherSuggestions() {
+    const { t } = useLanguage();
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export function TeacherSuggestions() {
     if (loading) return (
         <Card className="border-slate-200">
             <CardHeader>
-                <CardTitle className="text-sm font-semibold">Suggested for You</CardTitle>
+                <CardTitle className="text-sm font-semibold">{t("Suggested for You")}</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center py-6">
                 <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
@@ -79,7 +81,7 @@ export function TeacherSuggestions() {
     return (
         <Card className="border-slate-200 shadow-sm sticky top-4">
             <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold text-slate-800">Suggested for You</CardTitle>
+                <CardTitle className="text-sm font-bold text-slate-800">{t("Suggested for You")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {suggestions.map((teacher) => (

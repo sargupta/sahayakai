@@ -13,6 +13,7 @@ import { SubjectSelector } from "@/components/subject-selector";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface LessonPlanSidebarProps {
   selectedLanguage: string;
@@ -53,6 +54,7 @@ export function LessonPlanSidebar({
   generateButton,
 }: LessonPlanSidebarProps) {
   const { control } = useFormContext();
+  const { t } = useLanguage();
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -170,7 +172,7 @@ export function LessonPlanSidebar({
         <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="space-y-1">
             <FormLabel className="font-headline">
-              Resources Available
+              {t("Resources Available")}
             </FormLabel>
             <ResourceSelector
               value={resourceLevel}
@@ -204,7 +206,7 @@ export function LessonPlanSidebar({
                 }}
               />
             ) : (
-              <p className="text-xs text-muted-foreground py-2">Select a class above to link an NCERT chapter.</p>
+              <p className="text-xs text-muted-foreground py-2">{t("Select a class above to link an NCERT chapter.")}</p>
             )}
           </div>
         </div>

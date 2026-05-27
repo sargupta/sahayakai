@@ -1,8 +1,12 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FileText } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 export default function NotFound() {
+    const { t } = useLanguage();
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
             <div className="text-center space-y-6 max-w-md mx-auto">
@@ -11,16 +15,16 @@ export default function NotFound() {
                 </div>
 
                 <div className="space-y-2">
-                    <h1 className="text-4xl font-headline tracking-tight text-foreground">Page Not Found</h1>
+                    <h1 className="text-4xl font-headline tracking-tight text-foreground">{t("Page Not Found")}</h1>
                     <p className="text-muted-foreground text-lg">
-                        We couldn't find the page you're looking for. It might have been moved or deleted.
+                        {t("We couldn't find the page you're looking for. It might have been moved or deleted.")}
                     </p>
                 </div>
 
                 <div className="pt-4">
                     <Link href="/">
                         <Button size="lg" className="rounded-xl bg-primary hover:bg-primary/90">
-                            Return Home
+                            {t("Return Home")}
                         </Button>
                     </Link>
                 </div>

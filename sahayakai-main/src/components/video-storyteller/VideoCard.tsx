@@ -1,7 +1,10 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlayCircle, Clock, Eye, BookOpen } from 'lucide-react';
 import { YouTubeVideo } from '@/lib/youtube';
+import { useLanguage } from '@/context/language-context';
 
 interface VideoCardProps {
     video: YouTubeVideo;
@@ -22,6 +25,7 @@ function getThumbnailUrl(video: YouTubeVideo): string {
 }
 
 export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
+    const { t } = useLanguage();
     const [imgError, setImgError] = useState(false);
     const [imgSrc, setImgSrc] = useState(getThumbnailUrl(video));
 
@@ -67,7 +71,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 {isOfficial && (
                     <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-soft border border-primary/10">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-tight">Official source</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-tight">{t("Official source")}</span>
                     </div>
                 )}
 

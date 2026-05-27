@@ -471,7 +471,7 @@ function InstantAnswerContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{translate("Subject")}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}

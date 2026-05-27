@@ -214,7 +214,7 @@ export default function CommunityPage() {
               : item,
           ),
         );
-        toast({ title: 'Could not update like', variant: 'destructive' });
+        toast({ title: t('Could not update like'), variant: 'destructive' });
       }
     },
     [likedPostIds, toast],
@@ -226,7 +226,7 @@ export default function CommunityPage() {
       // Previously this routed to likeGroupPostAction with an empty groupId
       // and therefore always 404'd.
       if (!user) {
-        toast({ title: 'Sign in to like resources', variant: 'destructive' });
+        toast({ title: t('Sign in to like resources'), variant: 'destructive' });
         return;
       }
       const wasLiked = likedPostIds.has(resourceId);
@@ -275,7 +275,7 @@ export default function CommunityPage() {
               : item,
           ),
         );
-        toast({ title: 'Could not update like', variant: 'destructive' });
+        toast({ title: t('Could not update like'), variant: 'destructive' });
       }
     },
     [likedPostIds, toast, user],
@@ -293,24 +293,24 @@ export default function CommunityPage() {
             ...prev,
             sentRequestUids: [...prev.sentRequestUids, uid],
           }));
-          toast({ title: 'Connection request sent' });
+          toast({ title: t('Connection request sent') });
         } else if (result.status === 'already_pending') {
           setConnectionData((prev) =>
             prev.sentRequestUids.includes(uid)
               ? prev
               : { ...prev, sentRequestUids: [...prev.sentRequestUids, uid] },
           );
-          toast({ title: 'Request already pending' });
+          toast({ title: t('Request already pending') });
         } else if (result.status === 'already_connected') {
           setConnectionData((prev) =>
             prev.connectedUids.includes(uid)
               ? prev
               : { ...prev, connectedUids: [...prev.connectedUids, uid] },
           );
-          toast({ title: 'Already connected' });
+          toast({ title: t('Already connected') });
         }
       } catch {
-        toast({ title: 'Could not send request', variant: 'destructive' });
+        toast({ title: t('Could not send request'), variant: 'destructive' });
       }
     },
     [toast],
@@ -324,9 +324,9 @@ export default function CommunityPage() {
         const refreshed = await getMyGroupsAction();
         setMyGroups(refreshed);
         setSuggestedGroups((prev) => prev.filter((g) => g.id !== groupId));
-        toast({ title: 'Joined group' });
+        toast({ title: t('Joined group') });
       } catch {
-        toast({ title: 'Could not join group', variant: 'destructive' });
+        toast({ title: t('Could not join group'), variant: 'destructive' });
       }
     },
     [toast],
@@ -445,7 +445,7 @@ export default function CommunityPage() {
             if (updated) setActiveGroup(updated);
           } catch (err) {
             console.error("Failed to join group:", err);
-            toast({ title: "Could not join group", description: "Please try again.", variant: "destructive" });
+            toast({ title: t("Could not join group"), description: t("Please try again."), variant: "destructive" });
           }
         }}
       />
@@ -464,14 +464,14 @@ export default function CommunityPage() {
             onClick={() => setShowTeacherDirectory(false)}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t("Back")}
           </Button>
           <h2 className="font-headline text-lg font-bold text-foreground">
-            Find Teachers
+            {t("Find Teachers")}
           </h2>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Search teachers across Bharat by subject, grade, school, or area. Send a connect request to start a conversation.
+          {t("Search teachers across Bharat by subject, grade, school, or area. Send a connect request to start a conversation.")}
         </p>
         <TeacherDirectory />
       </div>
@@ -490,14 +490,14 @@ export default function CommunityPage() {
             onClick={() => setShowStaffRoom(false)}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t("Back")}
           </Button>
           <h2 className="font-headline text-lg font-bold text-foreground">
-            Staff Room
+            {t("Staff Room")}
           </h2>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          An open chat room for every teacher on SahayakAI. Ask questions, share ideas, say hello.
+          {t("An open chat room for every teacher on SahayakAI. Ask questions, share ideas, say hello.")}
         </p>
         <CommunityChat />
       </div>
@@ -516,10 +516,10 @@ export default function CommunityPage() {
             onClick={() => setShowExploreGroups(false)}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t("Back")}
           </Button>
           <h2 className="font-headline text-lg font-bold text-foreground">
-            Explore Groups
+            {t("Explore Groups")}
           </h2>
         </div>
         <ExploreGroups
@@ -546,10 +546,10 @@ export default function CommunityPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="font-headline text-xl sm:text-2xl font-bold text-foreground leading-tight">
-              Community
+              {t("Community")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5 leading-relaxed indic-text">
-              Share, learn, and grow with teachers across Bharat
+              {t("Share, learn, and grow with teachers across Bharat")}
             </p>
           </div>
         </div>
@@ -686,7 +686,7 @@ export default function CommunityPage() {
           {/* Shared Resources */}
           <div className="mt-6">
             <h2 className="font-headline text-lg font-bold text-foreground mb-3">
-              Shared Resources
+              {t("Shared Resources")}
             </h2>
             <ResourceFeed />
           </div>

@@ -46,6 +46,7 @@ function NoConversationSelected() {
 
 function MessagesPageContent() {
     const { user, loading: authLoading } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -128,8 +129,8 @@ function MessagesPageContent() {
         return (
             <AuthGate
                 icon={MessageCircle}
-                title="Sign in to see your messages"
-                description="Sign in with Google to chat with other teachers and get notified of new replies."
+                title={t("Sign in to see your messages")}
+                description={t("Sign in with Google to chat with other teachers and get notified of new replies.")}
             >
                 {null}
             </AuthGate>

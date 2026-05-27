@@ -355,7 +355,7 @@ export function ContactParentModal({
                     <SummaryView callResult={callResult} student={student} onClose={handleClose} />
                 ) : step === "reason" ? (
                     <div className="space-y-3 mt-2">
-                        <p className="text-xs text-muted-foreground font-medium">Select reason for outreach:</p>
+                        <p className="text-xs text-muted-foreground font-medium">{t("Select reason for outreach:")}</p>
                         <div className="grid grid-cols-1 gap-2">
                             {REASONS.map((r) => {
                                 const Icon = r.icon;
@@ -389,7 +389,7 @@ export function ContactParentModal({
                             disabled={!reason}
                             onClick={() => setStep("note")}
                         >
-                            Next: Add Note
+                            {t("Next: Add Note")}
                         </Button>
                     </div>
                 ) : step === "note" ? (
@@ -531,6 +531,7 @@ interface ReasonContextPanelProps {
 function ReasonContextPanel({
     reason, performanceContext, absenceDates, consecutiveAbsences, attendanceRate, loadingPerf,
 }: ReasonContextPanelProps) {
+    const { t } = useLanguage();
     if (!reason) return null;
 
     // ── Consecutive absences: list absent dates, no marks ───────────────────
@@ -580,7 +581,7 @@ function ReasonContextPanel({
                     <AlertTriangle className="h-3 w-3" /> Behavioral context (AI will reference your note)
                 </p>
                 <p className="text-xs text-orange-900 leading-relaxed">
-                    The AI does <strong>not</strong> have classroom observations. Add a 1-2 sentence note below so the message is specific. Examples teachers commonly cite:
+                    {t("The AI does")} <strong>{t("not")}</strong> {t("have classroom observations. Add a 1-2 sentence note below so the message is specific. Examples teachers commonly cite:")}
                 </p>
                 <ul className="space-y-0.5 text-[11px] text-orange-800">
                     <li>· Disrupting lessons — calling out, talking over others</li>
@@ -601,14 +602,14 @@ function ReasonContextPanel({
         if (loadingPerf) {
             return (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Loading recent wins…
+                    <Loader2 className="h-3 w-3 animate-spin" /> {t("Loading recent wins…")}
                 </div>
             );
         }
         if (!highest && !perfectAttendance) {
             return (
                 <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-                    No recent achievement on record. Describe what you want to celebrate in the note below.
+                    {t("No recent achievement on record. Describe what you want to celebrate in the note below.")}
                 </div>
             );
         }
@@ -643,14 +644,14 @@ function ReasonContextPanel({
         if (loadingPerf) {
             return (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Loading recent marks…
+                    <Loader2 className="h-3 w-3 animate-spin" /> {t("Loading recent marks…")}
                 </div>
             );
         }
         if (!performanceContext?.subjectBreakdown?.length) {
             return (
                 <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-                    No assessment data yet. Add specific scores in the note below.
+                    {t("No assessment data yet. Add specific scores in the note below.")}
                 </div>
             );
         }
@@ -662,7 +663,7 @@ function ReasonContextPanel({
                 <p className="text-[10px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-2">
                     <TrendingDown className="h-3 w-3" /> Recent marks (AI will cite lowest)
                     {performanceContext.isAtRisk && (
-                        <Badge variant="destructive" className="ml-1 text-[9px] h-4 px-1">At-risk</Badge>
+                        <Badge variant="destructive" className="ml-1 text-[9px] h-4 px-1">{t("At-risk")}</Badge>
                     )}
                 </p>
                 {sorted.slice(0, 3).map((a, i) => (
@@ -691,6 +692,7 @@ function ReasonContextPanel({
 // ── Calling in progress view ────────────────────────────────────────────────
 
 function CallingView({ student, callResult }: { student: Student; callResult: CallResult | null }) {
+    const { t } = useLanguage();
     const status = callResult?.callStatus;
     const turns = callResult?.turnCount ?? 0;
 
@@ -718,7 +720,7 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Summary will appear when the call ends
+                {t("Summary will appear when the call ends")}
             </div>
         </div>
     );
@@ -727,6 +729,7 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
 // ── Call summary view ───────────────────────────────────────────────────────
 
 function SummaryView({ callResult, student, onClose }: { callResult: CallResult | null; student: Student; onClose: () => void }) {
+    const { t } = useLanguage();
     const summary = callResult?.callSummary;
     const transcript = callResult?.transcript ?? [];
     const isManual = callResult?.callStatus === 'manual';
@@ -738,7 +741,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                 <div className="p-4 bg-emerald-50 rounded-full">
                     <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                 </div>
-                <p className="font-bold text-foreground">Message copied!</p>
+                <p className="font-bold text-foreground">{t("Message copied!")}</p>
                 <p className="text-xs text-muted-foreground">Outreach logged for {student.name}. Paste in WhatsApp to send.</p>
                 <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
             </div>
@@ -755,7 +758,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     {callResult?.callStatus === 'busy' ? 'Line was busy' :
                      callResult?.callStatus === 'no_answer' ? 'No answer' : 'Call could not connect'}
                 </p>
-                <p className="text-xs text-muted-foreground">You can try again later or use WhatsApp instead.</p>
+                <p className="text-xs text-muted-foreground">{t("You can try again later or use WhatsApp instead.")}</p>
                 <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
             </div>
         );
@@ -767,7 +770,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
             <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div>
-                    <p className="text-sm font-semibold text-emerald-800">Call completed</p>
+                    <p className="text-sm font-semibold text-emerald-800">{t("Call completed")}</p>
                     <p className="text-xs text-emerald-600">
                         {callResult?.callDurationSeconds ? `${Math.ceil(callResult.callDurationSeconds / 60)} min` : ''} · {callResult?.turnCount ?? 0} exchanges
                         {summary?.parentSentiment && ` · Parent was ${summary.parentSentiment}`}
@@ -780,14 +783,14 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                 <div className="space-y-3">
                     {/* Parent response */}
                     <div className="p-3 bg-muted/40 rounded-lg border border-border">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">Parent Response</p>
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">{t("Parent Response")}</p>
                         <p className="text-sm text-foreground">{summary.parentResponse}</p>
                     </div>
 
                     {/* Concerns */}
                     {summary.parentConcerns.length > 0 && (
                         <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                            <p className="text-xs font-semibold text-amber-600 mb-1">Concerns Raised</p>
+                            <p className="text-xs font-semibold text-amber-600 mb-1">{t("Concerns Raised")}</p>
                             <ul className="space-y-1">
                                 {summary.parentConcerns.map((c, i) => (
                                     <li key={i} className="text-xs text-amber-800 flex gap-2">
@@ -801,7 +804,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     {/* Parent commitments */}
                     {summary.parentCommitments.length > 0 && (
                         <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <p className="text-xs font-semibold text-blue-600 mb-1">Parent Commitments</p>
+                            <p className="text-xs font-semibold text-blue-600 mb-1">{t("Parent Commitments")}</p>
                             <ul className="space-y-1">
                                 {summary.parentCommitments.map((c, i) => (
                                     <li key={i} className="text-xs text-blue-800 flex gap-2">
@@ -815,7 +818,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     {/* Action items for teacher */}
                     <div className="p-3 bg-primary/8 rounded-lg border border-primary/20">
                         <p className="text-xs font-semibold text-primary mb-1 flex items-center gap-1">
-                            <ClipboardList className="h-3 w-3" /> Your Action Items
+                            <ClipboardList className="h-3 w-3" /> {t("Your Action Items")}
                         </p>
                         <ul className="space-y-1">
                             {summary.actionItemsForTeacher.map((a, i) => (
@@ -829,7 +832,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     {/* Guidance given */}
                     {summary.guidanceGiven.length > 0 && (
                         <div className="p-3 bg-violet-50 rounded-lg border border-violet-100">
-                            <p className="text-xs font-semibold text-violet-600 mb-1">Guidance Shared with Parent</p>
+                            <p className="text-xs font-semibold text-violet-600 mb-1">{t("Guidance Shared with Parent")}</p>
                             <ul className="space-y-1">
                                 {summary.guidanceGiven.map((g, i) => (
                                     <li key={i} className="text-xs text-violet-800 flex gap-2">
@@ -843,7 +846,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     {/* Follow-up */}
                     {summary.followUpNeeded && summary.followUpSuggestion && (
                         <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
-                            <p className="text-xs font-semibold text-rose-600 mb-1">Follow-up Recommended</p>
+                            <p className="text-xs font-semibold text-rose-600 mb-1">{t("Follow-up Recommended")}</p>
                             <p className="text-xs text-rose-800">{summary.followUpSuggestion}</p>
                         </div>
                     )}
@@ -851,7 +854,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
             ) : (
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-4">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Generating summary...
+                    {t("Generating summary...")}
                 </div>
             )}
 

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/language-context';
 
 interface UpgradePromptProps {
     feature: string;
@@ -18,6 +19,7 @@ interface UpgradePromptProps {
  * Positive framing: celebrates what they've done, then nudges upgrade.
  */
 export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptProps) {
+    const { t } = useLanguage();
     const featureLabel = feature.replace(/-/g, ' ');
 
     if (inline) {
@@ -27,7 +29,7 @@ export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptPro
                 <span className="text-amber-800 dark:text-amber-200">
                     You&apos;ve created {used} {featureLabel}s this month.{' '}
                     <Link href="/pricing" className="font-medium underline underline-offset-2">
-                        Upgrade to Pro
+                        {t("Upgrade to Pro")}
                     </Link>{' '}
                     for more.
                 </span>
@@ -41,7 +43,7 @@ export function UpgradePrompt({ feature, used, limit, inline }: UpgradePromptPro
                 <Sparkles className="h-8 w-8 text-amber-600" />
                 <div>
                     <h3 className="font-headline text-lg font-semibold text-amber-900 dark:text-amber-100">
-                        Great work this month!
+                        {t("Great work this month!")}
                     </h3>
                     <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
                         You&apos;ve created {used} {featureLabel}s — that&apos;s {used} lessons your students benefited from.

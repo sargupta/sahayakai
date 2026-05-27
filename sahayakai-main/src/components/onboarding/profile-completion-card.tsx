@@ -51,11 +51,11 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
             import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
                 markChecklistItemAction(user.uid, 'complete-profile')
             ).catch(() => {});
-            toast({ title: "Profile updated", description: "Your profile is now complete." });
+            toast({ title: t("Profile updated"), description: t("Your profile is now complete.") });
             onComplete?.();
             setDismissed(true);
         } catch {
-            toast({ title: "Error", description: "Could not update profile.", variant: "destructive" });
+            toast({ title: t("Error"), description: t("Could not update profile."), variant: "destructive" });
         } finally {
             setSaving(false);
         }
@@ -67,7 +67,7 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                 <button
                     onClick={() => { setDismissed(true); onDismiss?.(); }}
                     className="absolute top-3 right-3 text-muted-foreground hover:text-foreground p-1"
-                    aria-label="Dismiss"
+                    aria-label={t("Dismiss")}
                 >
                     <X className="h-4 w-4" />
                 </button>
@@ -79,10 +79,10 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
             <CardContent className="space-y-3 pb-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                        <Label className="text-xs">Department</Label>
+                        <Label className="text-xs">{t("Department")}</Label>
                         <Select value={formData.department} onValueChange={(v) => setFormData(p => ({ ...p, department: v }))}>
                             <SelectTrigger className="h-9 text-sm shadow-soft">
-                                <SelectValue placeholder="Select" />
+                                <SelectValue placeholder={t("Select")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -90,9 +90,9 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                         </Select>
                     </div>
                     <div className="space-y-1">
-                        <Label className="text-xs">Designation</Label>
+                        <Label className="text-xs">{t("Designation")}</Label>
                         <Input
-                            placeholder="e.g. Senior Teacher"
+                            placeholder={t("e.g. Senior Teacher")}
                             value={formData.designation}
                             onChange={(e) => setFormData(p => ({ ...p, designation: e.target.value }))}
                             className="h-9 text-sm shadow-soft"
@@ -100,9 +100,9 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                     </div>
                 </div>
                 <div className="space-y-1">
-                    <Label className="text-xs">District / Region</Label>
+                    <Label className="text-xs">{t("District / Region")}</Label>
                     <Input
-                        placeholder="e.g. North Delhi"
+                        placeholder={t("e.g. North Delhi")}
                         value={formData.district}
                         onChange={(e) => setFormData(p => ({ ...p, district: e.target.value }))}
                         className="h-9 text-sm shadow-soft"
@@ -111,7 +111,7 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                 <div className="space-y-1">
                     <Label className="text-xs">Short Bio (optional)</Label>
                     <Textarea
-                        placeholder="Your teaching philosophy..."
+                        placeholder={t("Your teaching philosophy...")}
                         value={formData.bio}
                         onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
                         className="h-16 text-sm shadow-soft resize-none"
@@ -123,7 +123,7 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
                         Save
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => { setDismissed(true); onDismiss?.(); }} className="rounded-xl">
-                        Skip for now
+                        {t("Skip for now")}
                     </Button>
                 </div>
             </CardContent>
