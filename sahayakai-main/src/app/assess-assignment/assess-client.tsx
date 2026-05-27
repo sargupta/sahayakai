@@ -38,50 +38,27 @@ import {
 } from "lucide-react";
 import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import type { AssessAssignmentOutput } from "@/ai/flows/assignment-assessor";
+import { useLanguage } from "@/context/language-context";
 
-type Translations = Record<string, Record<string, string>>;
+// Local `translations` removed (Wave 6 cleanup). All strings now via global useLanguage().
 
-const translations: Translations = {
-  en: {
-    pageTitle: "Assess a Student's Work",
-    pageHelper: "Take one photo of a student's handwritten assignment. The AI will transcribe, score against a rubric, and suggest what to work on next.",
-    cameraHeading: "Photo",
-    metaHeading: "About this assignment",
-    studentIdLabel: "Student handle (optional)",
-    studentIdHelper: "Use a roll number or alias — never the student's name.",
-    studentIdPlaceholder: "e.g. roll-23",
-    languageLabel: "Feedback language",
-    gradeLabel: "Class",
-    subjectLabel: "Subject",
-    submit: "Grade this assignment",
-    submitDisabledNoPhoto: "Add a photo first",
-    submitting: "Grading…",
-    processingStages: [
-      "Reading the handwriting…",
-      "Verifying the transcription…",
-      "Scoring against the rubric…",
-      "Writing feedback…",
-      "Wrapping up…",
-    ].join("|"),
-    errorTitle: "Could not grade this work",
-    errorGeneric: "Something went wrong. Please retake the photo and try again.",
-    errorRateLimit: "You've hit today's grading limit. Try again tomorrow or upgrade your plan.",
-    errorPlan: "Grading is not available on your current plan.",
-    errorBusy: "AI service is busy. Please try again in a minute.",
-    errorUnauth: "Please sign in to grade student work.",
-    gateTitle: "Assess a Student's Work",
-    gateDescription: "Sign in with Google to grade a handwritten assignment in seconds.",
-  },
-};
+const PROCESSING_STAGES_RAW = [
+  "Reading the handwriting…",
+  "Verifying the transcription…",
+  "Scoring against the rubric…",
+  "Writing feedback…",
+  "Wrapping up…",
+].join("|");
 
 const PROCESSING_INTERVAL_MS = 4000;
 
 export default function AssessAssignmentClient() {
+  const { t } = useLanguage();
   return (
     <AuthGate
       icon={ClipboardCheck}
-      title={translations.en.gateTitle}
-      description={translations.en.gateDescription}
+      title={t("Assess a Student's Work")}
+      description={t("Sign in with Google to grade a handwritten assignment in seconds.")}
     >
       <AssessAssignmentContent />
     </AuthGate>
@@ -91,6 +68,7 @@ export default function AssessAssignmentClient() {
 function AssessAssignmentContent() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [language, setLanguage] = useState<string>("en");
   const [gradeLevel, setGradeLevel] = useState<string | undefined>(undefined);
   const [subject, setSubject] = useState<string | undefined>(undefined);
@@ -102,8 +80,10 @@ function AssessAssignmentContent() {
   const [stageIndex, setStageIndex] = useState(0);
   const inFlight = useRef(false);
 
-  const t = useMemo(() => translations[language] || translations.en, [language]);
-  const stages = useMemo(() => t.processingStages.split("|"), [t]);
+  const stages = useMemo(
+    () => PROCESSING_STAGES_RAW.split("|").map((s) => t(s)),
+    [t],
+  );
 
   // Cycle stage messages while processing — gives the teacher visible progress
   // during the 20-30s gemini-2.5-pro vision call.
@@ -143,15 +123,15 @@ function AssessAssignmentContent() {
         }),
       });
       if (!res.ok) {
-        let message = t.errorGeneric;
-        if (res.status === 401) message = t.errorUnauth;
-        else if (res.status === 403) message = t.errorPlan;
-        else if (res.status === 429) message = t.errorRateLimit;
-        else if (res.status === 503) message = t.errorBusy;
+        let message = t("Something went wrong. Please retake the photo and try again.");
+        if (res.status === 401) message = t("Please sign in to grade student work.");
+        else if (res.status === 403) message = t("Grading is not available on your current plan.");
+        else if (res.status === 429) message = t("You've hit today's grading limit. Try again tomorrow or upgrade your plan.");
+        else if (res.status === 503) message = t("AI service is busy. Please try again in a minute.");
         const body = await safeJson(res);
         const detail = body?.message || body?.error;
         toast({
-          title: t.errorTitle,
+          title: t("Could not grade this work"),
           description: detail && typeof detail === "string" ? detail : message,
           variant: "destructive",
         });
@@ -161,7 +141,7 @@ function AssessAssignmentContent() {
       setResult(json);
     } catch (err) {
       console.error("[AssessAssignment] submit failed", err);
-      toast({ title: t.errorTitle, description: t.errorGeneric, variant: "destructive" });
+      toast({ title: t("Could not grade this work"), description: t("Something went wrong. Please retake the photo and try again."), variant: "destructive" });
     } finally {
       setProcessing(false);
       inFlight.current = false;
@@ -176,8 +156,8 @@ function AssessAssignmentContent() {
         <div className="inline-flex h-12 w-12 items-center justify-center rounded-surface-lg bg-primary/10 text-primary mb-3">
           <ClipboardCheck className="h-6 w-6" />
         </div>
-        <h1 className="font-headline text-2xl sm:text-3xl font-bold">{t.pageTitle}</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-2">{t.pageHelper}</p>
+        <h1 className="font-headline text-2xl sm:text-3xl font-bold">{t("Assess a Student's Work")}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">{t("Take one photo of a student's handwritten assignment. The AI will transcribe, score against a rubric, and suggest what to work on next.")}</p>
       </header>
 
       <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -186,7 +166,7 @@ function AssessAssignmentContent() {
           <CardHeader className="pb-3">
             <CardTitle className="font-headline text-base flex items-center gap-2">
               <ScanEye className="h-4 w-4 text-primary" />
-              {t.cameraHeading}
+              {t("Photo")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -201,32 +181,32 @@ function AssessAssignmentContent() {
         <div className="lg:col-span-2 space-y-4">
           <Card className="shadow-soft border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="font-headline text-base">{t.metaHeading}</CardTitle>
+              <CardTitle className="font-headline text-base">{t("About this assignment")}</CardTitle>
               <CardDescription className="text-xs">
-                Helps the AI calibrate its feedback to the right class and subject.
+                {t("Helps the AI calibrate its feedback to the right class and subject.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="student-id" className="text-xs font-semibold flex items-center gap-2">
                   <Hash className="h-3 w-3" />
-                  {t.studentIdLabel}
+                  {t("Student handle (optional)")}
                 </Label>
                 <Input
                   id="student-id"
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
-                  placeholder={t.studentIdPlaceholder}
+                  placeholder={t("e.g. roll-23")}
                   maxLength={64}
                 />
-                <p className="text-xs text-muted-foreground">{t.studentIdHelper}</p>
+                <p className="text-xs text-muted-foreground">{t("Use a roll number or alias — never the student's name.")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold flex items-center gap-2">
                     <GraduationCap className="h-3 w-3" />
-                    {t.gradeLabel}
+                    {t("Class")}
                   </Label>
                   <GradeLevelSelector
                     value={gradeLevel ? [gradeLevel] : []}
@@ -236,7 +216,7 @@ function AssessAssignmentContent() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold">{t.subjectLabel}</Label>
+                  <Label className="text-xs font-semibold">{t("Subject")}</Label>
                   <SubjectSelector
                     value={subject}
                     onValueChange={(v) => setSubject(v)}
@@ -248,7 +228,7 @@ function AssessAssignmentContent() {
               <div className="space-y-2">
                 <Label className="text-xs font-semibold flex items-center gap-2">
                   <Languages className="h-3 w-3" />
-                  {t.languageLabel}
+                  {t("Feedback language")}
                 </Label>
                 <LanguageSelector value={language} onValueChange={setLanguage} />
               </div>
@@ -276,14 +256,14 @@ function AssessAssignmentContent() {
           {processing ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {t.submitting}
+              {t("Grading…")}
             </>
           ) : !imageDataUri ? (
-            t.submitDisabledNoPhoto
+            t("Add a photo first")
           ) : (
             <>
               <Sparkles className="mr-2 h-5 w-5" />
-              {t.submit}
+              {t("Grade this assignment")}
             </>
           )}
         </Button>
