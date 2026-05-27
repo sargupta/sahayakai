@@ -363,9 +363,9 @@ ${editablePlan.assessment}
   }
 
   const meta = [
-    lessonPlan.gradeLevel && { icon: <GraduationCap className="h-3.5 w-3.5" />, value: lessonPlan.gradeLevel },
-    lessonPlan.duration && { icon: <Clock className="h-3.5 w-3.5" />, value: lessonPlan.duration },
-    lessonPlan.subject && { icon: <BookOpen className="h-3.5 w-3.5" />, value: lessonPlan.subject },
+    lessonPlan.gradeLevel && { icon: <GraduationCap className="h-3.5 w-3.5" />, value: translate(lessonPlan.gradeLevel) },
+    lessonPlan.duration && { icon: <Clock className="h-3.5 w-3.5" />, value: translate(lessonPlan.duration) },
+    lessonPlan.subject && { icon: <BookOpen className="h-3.5 w-3.5" />, value: translate(lessonPlan.subject) },
   ].filter(Boolean) as any[];
 
   const proGatedCopy = () =>

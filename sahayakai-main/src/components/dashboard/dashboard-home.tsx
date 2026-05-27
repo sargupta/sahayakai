@@ -38,20 +38,23 @@ type FormValues = z.infer<typeof formSchema>;
 
 
 
-const SuggestionCard = ({ suggestion, startLabel }: { suggestion: ContextualSuggestion; startLabel: string }) => (
-  <Link href={suggestion.toolHref} className="group">
-    <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
-      <CardContent className="p-4 flex flex-col gap-2">
-        <span className="type-caption text-primary/70">{suggestion.toolLabel}</span>
-        <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
-        <p className="text-xs text-muted-foreground">{suggestion.subject} &middot; {suggestion.gradeLevel}</p>
-        <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-          {startLabel} <ArrowRight className="h-3 w-3" />
-        </div>
-      </CardContent>
-    </Card>
-  </Link>
-);
+const SuggestionCard = ({ suggestion, startLabel }: { suggestion: ContextualSuggestion; startLabel: string }) => {
+  const { t } = useLanguage();
+  return (
+    <Link href={suggestion.toolHref} className="group">
+      <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
+        <CardContent className="p-4 flex flex-col gap-2">
+          <span className="type-caption text-primary/70">{suggestion.toolLabel}</span>
+          <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
+          <p className="text-xs text-muted-foreground">{suggestion.subject ? t(suggestion.subject) : suggestion.subject} &middot; {suggestion.gradeLevel ? t(suggestion.gradeLevel) : suggestion.gradeLevel}</p>
+          <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {startLabel} <ArrowRight className="h-3 w-3" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 export function DashboardHome() {
   const { requireAuth, openAuthModal } = useAuth();

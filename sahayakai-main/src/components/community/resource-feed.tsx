@@ -154,6 +154,7 @@ const ResourceCard = ({
   onSave: (r: Resource) => void;
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const c = cfg(resource.type);
 
   const handleUseThis = () => {
@@ -221,12 +222,12 @@ const ResourceCard = ({
           <div className="flex flex-wrap gap-1.5 pt-1">
             {resource.gradeLevel && (
               <Badge className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground font-semibold border-0 rounded-full">
-                {resource.gradeLevel}
+                {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
               </Badge>
             )}
             {resource.subject && (
               <Badge className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 font-semibold border-0 rounded-full">
-                {resource.subject}
+                {resource.subject ? t(resource.subject) : resource.subject}
               </Badge>
             )}
             <Badge className={cn('text-[10px] px-2 py-0.5 font-semibold border-0 rounded-full', c.bg, c.text)}>

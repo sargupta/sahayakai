@@ -112,9 +112,9 @@ function AttendancePageContent() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-base font-black text-foreground truncate">{cls.name}</p>
                                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                    <span>{cls.gradeLevel}</span>
+                                    <span>{cls.gradeLevel ? t(cls.gradeLevel) : cls.gradeLevel}</span>
                                     <span>·</span>
-                                    <span>{cls.subject}</span>
+                                    <span>{cls.subject ? t(cls.subject) : cls.subject}</span>
                                     {cls.section && <><span>·</span><span>Section {cls.section}</span></>}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">

@@ -246,8 +246,8 @@ export function RubricPicker({
                 {savedList.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title}
-                    {r.gradeLevel ? ` · ${r.gradeLevel}` : ""}
-                    {r.subject ? ` · ${r.subject}` : ""}
+                    {r.gradeLevel ? ` · ${t(r.gradeLevel)}` : ""}
+                    {r.subject ? ` · ${t(r.subject)}` : ""}
                   </option>
                 ))}
               </select>
