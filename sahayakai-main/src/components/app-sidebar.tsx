@@ -487,7 +487,7 @@ export function AppSidebar() {
       {sidebarUserId && (
         <SidebarFooter>
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>{t("Admin")}</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip={t("Mission Control")}>

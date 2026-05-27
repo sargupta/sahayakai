@@ -77,9 +77,9 @@ export function DashboardHome() {
   useEffect(() => {
     // Client-side only logic
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning");
-    else if (hour < 18) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
+    if (hour < 12) setGreeting(t("Good Morning"));
+    else if (hour < 18) setGreeting(t("Good Afternoon"));
+    else setGreeting(t("Good Evening"));
 
     // Handle voice transcript from URL
     if (typeof window !== 'undefined') {
@@ -201,7 +201,7 @@ export function DashboardHome() {
       <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saffron-50 text-saffron-700 text-xs md:text-sm font-medium border border-saffron-100 mb-2 md:mb-4">
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
-          <span>AI-Powered Teaching Assistant for Bharat</span>
+          <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
         </div>
         <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight indic-text leading-[1.1]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
@@ -212,7 +212,7 @@ export function DashboardHome() {
           </p>
         ) : (
           <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
-            I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.
+            {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
           </p>
         )}
       </div>
@@ -223,7 +223,7 @@ export function DashboardHome() {
         {/* BIG MIC BUTTON */}
         <FeatureSpotlight
           id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
-          message="Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!"
+          message={t("Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!")}
           seenSpotlights={spotlightsSeen}
           onDismiss={markSpotlightSeen}
           position="bottom"
@@ -232,11 +232,11 @@ export function DashboardHome() {
             <MicrophoneInput
               onTranscriptChange={handleTranscript}
               iconSize="xl"
-              label="Speak your topic"
+              label={t("Speak your topic")}
               className=""
             />
             <p className="text-muted-foreground text-sm md:text-sm">
-              Tap the microphone and tell Sahayak what you want to teach today
+              {t("Tap the microphone and tell Sahayak what you want to teach today")}
             </p>
           </div>
         </FeatureSpotlight>
@@ -249,7 +249,7 @@ export function DashboardHome() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <AutoCompleteInput
-                      placeholder="Type a topic, e.g. 'Photosynthesis for Class 8'"
+                      placeholder={t("Type a topic, e.g. 'Photosynthesis for Class 8'")}
                       {...form.register("topic")}
                       value={form.watch("topic")}
                       selectedLanguage={userLanguage || "English"}
