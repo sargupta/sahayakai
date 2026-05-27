@@ -116,20 +116,24 @@ function TeacherTrainingContent() {
 
   // UX audit #13: load last question on mount so teacher can pick up
   // where they left off. Only show if it's recent (within 7 days).
+  // Cross-language guard (2026-05-27): only restore if the saved question
+  // was typed in the same UI language as the current session, otherwise
+  // a Hindi-typed question bleeds into Bengali UI and renders mixed scripts.
   useEffect(() => {
     try {
       const raw = localStorage.getItem("tt-last-question");
       if (!raw) return;
-      const { q, ts } = JSON.parse(raw);
+      const { q, ts, uiLang } = JSON.parse(raw);
       const ageMs = Date.now() - (ts ?? 0);
       const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-      if (q && typeof q === "string" && ageMs < SEVEN_DAYS) {
+      const sameLang = (uiLang ?? 'English') === uiLanguage;
+      if (q && typeof q === "string" && ageMs < SEVEN_DAYS && sameLang) {
         setLastQuestion(q);
       }
     } catch {
       // ignore parse errors / localStorage unavailable
     }
-  }, []);
+  }, [uiLanguage]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -275,7 +279,7 @@ function TeacherTrainingContent() {
       try {
         localStorage.setItem(
           "tt-last-question",
-          JSON.stringify({ q: values.question, ts: Date.now() }),
+          JSON.stringify({ q: values.question, ts: Date.now(), uiLang: uiLanguage }),
         );
       } catch {
         // localStorage may be unavailable (private mode, restricted webview)

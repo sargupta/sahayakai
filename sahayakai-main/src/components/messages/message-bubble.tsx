@@ -83,14 +83,14 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                         <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                             isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
                         )}>
-                            {resource.gradeLevel}
+                            {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
                         </span>
                     )}
                     {resource.subject && (
                         <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                             isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
                         )}>
-                            {resource.subject}
+                            {resource.subject ? t(resource.subject) : resource.subject}
                         </span>
                     )}
                 </div>

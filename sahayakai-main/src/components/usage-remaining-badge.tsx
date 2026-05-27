@@ -44,7 +44,7 @@ export function UsageRemainingBadge({ feature }: UsageRemainingBadgeProps) {
     if (pct >= 70) {
         return (
             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                {remaining} remaining
+                {remaining} {t("remaining")}
             </span>
         );
     }

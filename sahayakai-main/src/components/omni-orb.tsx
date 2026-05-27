@@ -215,9 +215,10 @@ export function OmniOrb() {
         if (!preferredGrade && !preferredSubject) return; // no profile yet
 
         const hour = new Date().getHours();
-        const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-        const context = [preferredGrade, preferredSubject].filter(Boolean).join(" · ");
-        const tip = `${greeting}! Ready to prep your ${context} class? Just ask me to generate anything.`;
+        const greeting = hour < 12 ? t("Good Morning") : hour < 17 ? t("Good Afternoon") : t("Good Evening");
+        // Translate grade + subject tokens individually so each side of the · resolves correctly in the active UI language.
+        const context = [preferredGrade, preferredSubject].filter(Boolean).map(s => t(s as string)).join(" · ");
+        const tip = `${greeting}! ${t("Ready to prep your")} ${context} ${t("class? Just ask me to generate anything.")}`;
 
         setProactiveTip(tip);
         proactiveShown.current = true;

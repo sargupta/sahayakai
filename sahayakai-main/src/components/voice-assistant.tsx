@@ -138,6 +138,7 @@ const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color:
 // ─── Action Card ─────────────────────────────────────────────────────────────
 
 function ActionCard({ action, onNavigate }: { action: VidyaAction; onNavigate: () => void }) {
+    const { t } = useLanguage();
     const config = FLOW_CONFIG[action.flow];
     if (!config) return null;
 
@@ -150,10 +151,10 @@ function ActionCard({ action, onNavigate }: { action: VidyaAction; onNavigate: (
                     <p className="text-sm font-semibold truncate">{action.label}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                         {action.params.gradeLevel && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 font-medium">{action.params.gradeLevel}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 font-medium">{action.params.gradeLevel ? t(action.params.gradeLevel) : action.params.gradeLevel}</span>
                         )}
                         {action.params.subject && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 font-medium">{action.params.subject}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 font-medium">{action.params.subject ? t(action.params.subject) : action.params.subject}</span>
                         )}
                         {action.params.topic && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 font-medium truncate max-w-[120px]">{action.params.topic}</span>

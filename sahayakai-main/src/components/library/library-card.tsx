@@ -66,10 +66,10 @@ export function LibraryCard({
 
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                             <Badge variant="secondary" className="bg-muted text-muted-foreground border-none text-[10px] px-2 py-0.5">
-                                {resource.gradeLevel}
+                                {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
                             </Badge>
                             <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] px-2 py-0.5">
-                                {resource.subject}
+                                {resource.subject ? t(resource.subject) : resource.subject}
                             </Badge>
                         </div>
 
