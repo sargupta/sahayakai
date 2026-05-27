@@ -27,33 +27,11 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 type Mode = "infer" | "generate" | "saved";
 
-type Translations = Record<string, Record<string, string>>;
-
-const translations: Translations = {
-  en: {
-    title: "Grading rubric",
-    helper: "How should the AI grade this work?",
-    modeInfer: "Let AI choose a rubric",
-    modeInferHelp: "Quickest. Uses a balanced 4-criterion rubric.",
-    modeGenerate: "Generate a new rubric",
-    modeGenerateHelp: "Tell us what the assignment was; AI builds a fresh rubric.",
-    modeSaved: "Pick from My Library",
-    modeSavedHelp: "Reuse a rubric you've already generated.",
-    descPlaceholder: "e.g. Class 5 science worksheet on the water cycle, 10 short-answer questions",
-    descLabel: "What was the assignment?",
-    generateBtn: "Generate rubric",
-    generatingBtn: "Generating…",
-    chooseSaved: "Choose a saved rubric",
-    noSaved: "You haven't saved any rubrics yet. Switch to 'Generate' to make one.",
-    loadingSaved: "Loading your saved rubrics…",
-    rubricReady: "Rubric ready: {{title}}",
-    generateError: "Could not generate the rubric. Please try again.",
-    loadError: "Could not load your saved rubrics.",
-  },
-};
+// Local `translations` removed (Wave 6 cleanup). All strings now via global useLanguage().
 
 interface SavedRubricSummary {
   id: string;
@@ -78,7 +56,7 @@ export function RubricPicker({
   onRubricChange,
   className,
 }: RubricPickerProps) {
-  const t = translations[language] || translations.en;
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [mode, setMode] = useState<Mode>("infer");
@@ -121,11 +99,11 @@ export function RubricPicker({
     } catch (err) {
       console.error("[RubricPicker] load saved failed", err);
       setSavedList([]);
-      toast({ title: t.loadError, variant: "destructive" });
+      toast({ title: t("Could not load your saved rubrics."), variant: "destructive" });
     } finally {
       setSavedLoading(false);
     }
-  }, [user, t.loadError, toast]);
+  }, [user, t, toast]);
 
   async function handleGenerate() {
     if (!user || !assignmentDescription.trim() || generating) return;
@@ -151,7 +129,7 @@ export function RubricPicker({
       onRubricChange(rubric, "generate");
     } catch (err) {
       console.error("[RubricPicker] generate failed", err);
-      toast({ title: t.generateError, variant: "destructive" });
+      toast({ title: t("Could not generate the rubric. Please try again."), variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -174,15 +152,15 @@ export function RubricPicker({
       }
     } catch (err) {
       console.error("[RubricPicker] load saved item failed", err);
-      toast({ title: t.loadError, variant: "destructive" });
+      toast({ title: t("Could not load your saved rubrics."), variant: "destructive" });
     }
   }
 
   return (
     <div className={cn("space-y-4 rounded-surface-lg border border-border bg-card p-4 sm:p-6 shadow-soft", className)}>
       <header>
-        <h3 className="font-headline text-base font-semibold">{t.title}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">{t.helper}</p>
+        <h3 className="font-headline text-base font-semibold">{t("Grading rubric")}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{t("How should the AI grade this work?")}</p>
       </header>
 
       <fieldset className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -190,33 +168,33 @@ export function RubricPicker({
           checked={mode === "infer"}
           onSelect={() => setMode("infer")}
           icon={<Sparkles className="h-4 w-4" />}
-          label={t.modeInfer}
-          help={t.modeInferHelp}
+          label={t("Let AI choose a rubric")}
+          help={t("Quickest. Uses a balanced 4-criterion rubric.")}
         />
         <ModeChip
           checked={mode === "generate"}
           onSelect={() => setMode("generate")}
           icon={<Wand2 className="h-4 w-4" />}
-          label={t.modeGenerate}
-          help={t.modeGenerateHelp}
+          label={t("Generate a new rubric")}
+          help={t("Tell us what the assignment was; AI builds a fresh rubric.")}
         />
         <ModeChip
           checked={mode === "saved"}
           onSelect={() => setMode("saved")}
           icon={<BookOpen className="h-4 w-4" />}
-          label={t.modeSaved}
-          help={t.modeSavedHelp}
+          label={t("Pick from My Library")}
+          help={t("Reuse a rubric you've already generated.")}
         />
       </fieldset>
 
       {mode === "generate" && (
         <div className="space-y-2">
           <Label htmlFor="assignment-desc" className="text-xs font-semibold">
-            {t.descLabel}
+            {t("What was the assignment?")}
           </Label>
           <Input
             id="assignment-desc"
-            placeholder={t.descPlaceholder}
+            placeholder={t("e.g. Class 5 science worksheet on the water cycle, 10 short-answer questions")}
             value={assignmentDescription}
             onChange={(e) => setAssignmentDescription(e.target.value)}
           />
@@ -230,12 +208,12 @@ export function RubricPicker({
             {generating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t.generatingBtn}
+                {t("Generating…")}
               </>
             ) : (
               <>
                 <Wand2 className="mr-2 h-4 w-4" />
-                {t.generateBtn}
+                {t("Generate rubric")}
               </>
             )}
           </Button>
@@ -247,16 +225,16 @@ export function RubricPicker({
           {savedLoading && (
             <p className="text-xs text-muted-foreground flex items-center gap-2">
               <Loader2 className="h-3 w-3 animate-spin" />
-              {t.loadingSaved}
+              {t("Loading your saved rubrics…")}
             </p>
           )}
           {!savedLoading && savedList?.length === 0 && (
-            <p className="text-xs text-muted-foreground">{t.noSaved}</p>
+            <p className="text-xs text-muted-foreground">{t("You haven't saved any rubrics yet. Switch to 'Generate' to make one.")}</p>
           )}
           {!savedLoading && savedList && savedList.length > 0 && (
             <>
               <Label htmlFor="saved-rubric" className="text-xs font-semibold">
-                {t.chooseSaved}
+                {t("Choose a saved rubric")}
               </Label>
               <select
                 id="saved-rubric"
@@ -280,7 +258,7 @@ export function RubricPicker({
 
       {readyRubric && (
         <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
-          {t.rubricReady.replace("{{title}}", readyRubric.title)}
+          {t("Rubric ready: {{title}}").replace("{{title}}", readyRubric.title)}
         </p>
       )}
     </div>
