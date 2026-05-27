@@ -237,7 +237,7 @@ function InstantAnswerContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 6",
       subject: "General",
     },

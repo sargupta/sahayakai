@@ -221,7 +221,7 @@ function VisualAidContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 6",
       subject: "General",
     },

@@ -211,7 +211,7 @@ function VirtualFieldTripContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 8",
       subject: "General",
     },

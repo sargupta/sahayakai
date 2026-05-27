@@ -139,7 +139,7 @@ function TeacherTrainingContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       subject: "General",
     },
   });

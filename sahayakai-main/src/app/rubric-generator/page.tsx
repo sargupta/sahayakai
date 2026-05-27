@@ -28,6 +28,7 @@ import {
 import { MicrophoneInput } from "@/components/microphone-input";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
@@ -50,7 +51,7 @@ function RubricGeneratorContent() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t: translate } = useLanguage();
+  const { t: translate, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const searchParams = useSearchParams();
   const hasLoaded = useRef(false);
@@ -60,7 +61,7 @@ function RubricGeneratorContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       assignmentDescription: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 7",
       subject: "General",
     },

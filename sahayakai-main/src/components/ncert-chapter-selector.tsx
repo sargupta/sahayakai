@@ -162,9 +162,9 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                         >
                             <SelectTrigger className="bg-white/50 backdrop-blur-sm">
                                 <SelectValue placeholder={
-                                    isLoadingChapters ? "Loading chapters..." :
-                                    chapters.length === 0 ? "No chapters found" :
-                                    "Select chapter"
+                                    isLoadingChapters ? t("Loading chapters...") :
+                                    chapters.length === 0 ? t("No chapters found") :
+                                    t("Select chapter")
                                 } />
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
