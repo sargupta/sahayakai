@@ -260,7 +260,11 @@ function WorksheetWizardContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const t = translations[selectedLanguage] || translations.en;
+  // UI chrome (taglines, placeholders, labels) follows the global UI language,
+  // NOT the AI-output language form field. Without this, switching the app
+  // language leaves chrome in the previous language until a hard refresh.
+  const uiLangCode = LANGUAGE_TO_ISO[userLanguage] || 'en';
+  const t = translations[uiLangCode] || translations.en;
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present

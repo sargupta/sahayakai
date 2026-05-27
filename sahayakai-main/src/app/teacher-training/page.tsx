@@ -25,6 +25,7 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { saveToLibrary } from "@/app/actions/content";
 import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Removed (audit 2026-04-27): VoiceAssistant import. The global OmniOrb
@@ -108,7 +109,7 @@ function TeacherTrainingContent() {
   const [savedToLib, setSavedToLib] = useState(false);
   const [lastQuestion, setLastQuestion] = useState<string | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot, teacherProfile } = useJarvisStore();
   const proTipKey = PRO_TIP_KEYS[new Date().getDate() % PRO_TIP_KEYS.length];
@@ -150,8 +151,12 @@ function TeacherTrainingContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const descriptionLines = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
-  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
+  // UI chrome (tagline, placeholder) follows the global UI language, NOT the
+  // AI-output language form field. Without this, switching the app to Bengali
+  // leaves the chrome English until a hard refresh re-initialises the form.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
+  const descriptionLines = descriptionTranslations[uiLangCode] || descriptionTranslations.en;
+  const placeholder = placeholderTranslations[uiLangCode] || placeholderTranslations.en;
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present
@@ -459,17 +464,17 @@ function TeacherTrainingContent() {
                   {teacherProfile.preferredGrade && teacherProfile.preferredSubject && (
                     <div className="space-y-2">
                       <FormLabel className="font-headline flex items-center gap-2">
-                        {t("For your")} {teacherProfile.preferredGrade} {teacherProfile.preferredSubject} {t("students")}
+                        {t("For your")} {t(teacherProfile.preferredGrade)} {t(teacherProfile.preferredSubject)} {t("students")}
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wide">
                           {t("Personalised")}
                         </span>
                       </FormLabel>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {[
-                          `${t("How do I keep")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("students focused for the full period?")}`,
-                          `${t("Best way to introduce a new")} ${teacherProfile.preferredSubject} ${t("chapter to")} ${teacherProfile.preferredGrade}?`,
-                          `${t("How do I assess")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("understanding without a formal test?")}`,
-                          `${t("Common")} ${teacherProfile.preferredSubject} ${t("misconceptions in")} ${teacherProfile.preferredGrade} ${t("and how to fix them?")}`,
+                          `${t("How do I keep")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("students focused for the full period?")}`,
+                          `${t("Best way to introduce a new")} ${t(teacherProfile.preferredSubject)} ${t("chapter to")} ${t(teacherProfile.preferredGrade)}?`,
+                          `${t("How do I assess")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("understanding without a formal test?")}`,
+                          `${t("Common")} ${t(teacherProfile.preferredSubject)} ${t("misconceptions in")} ${t(teacherProfile.preferredGrade)} ${t("and how to fix them?")}`,
                         ].map((prompt, i) => (
                           <button
                             key={i}
