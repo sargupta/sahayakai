@@ -162,36 +162,80 @@ export function OmniOrb() {
         });
     }, [pathname, clearStructuredDataIfStale, setScreenContext, structuredData]);
 
-    // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
-    // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
-    // Near-top always shows. A 24 px delta absorbs trackpad micro-scroll
-    // and iOS rubber-band; anything further triggers the transition.
+    // ── Aggressive auto-hide (2026-05-27 rewrite) ────────────────────────
+    // Previous behaviour was "hide on scroll-down only" but most teachers
+    // reported the orb felt persistent on read-heavy pages because short
+    // pages never crossed the 120px threshold and trackpad inertia kept
+    // re-triggering scroll-up which restored it.
+    //
+    // New behaviour:
+    //   • Hide on ANY scroll (either direction) — even 1px of scrolling
+    //     dismisses the orb while the teacher reads.
+    //   • Restore after IDLE_DELAY ms of no scroll activity (no scroll
+    //     events for ~1.4s).
+    //   • Also hide after 6s of full inactivity (no scroll, no pointer
+    //     movement) on read-heavy pages — those pages added to the
+    //     READ_HEAVY_PATHS allowlist below. Pointer movement restores.
+    //   • Listens to BOTH window.scroll and the captured-scroll event so
+    //     pages mounted inside an internal overflow-auto container also
+    //     trigger hide.
     useEffect(() => {
         if (!isClient) return;
-        let lastY = window.scrollY;
-        let ticking = false;
-        const NEAR_TOP = 120;
-        const DELTA = 24;
-        const onScroll = () => {
-            if (ticking) return;
-            ticking = true;
-            requestAnimationFrame(() => {
-                const y = window.scrollY;
-                const delta = y - lastY;
-                if (y < NEAR_TOP) {
-                    setHiddenByScroll(false);
-                } else if (delta > DELTA) {
-                    setHiddenByScroll(true);
-                } else if (delta < -DELTA) {
-                    setHiddenByScroll(false);
-                }
-                lastY = y;
-                ticking = false;
-            });
+        const IDLE_AFTER_SCROLL_MS = 1400;
+        const READ_HEAVY_PATHS = [
+            '/lesson-plan',
+            '/teacher-training',
+            '/instant-answer',
+            '/community',
+            '/community-library',
+            '/library',
+            '/messages',
+            '/privacy-for-teachers',
+        ];
+        const READ_HEAVY_IDLE_MS = 6000;
+        let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null;
+        let pointerIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+        const isReadHeavy = READ_HEAVY_PATHS.some(p => pathname?.startsWith(p));
+
+        const hide = () => setHiddenByScroll(true);
+        const restoreSoon = (ms: number) => {
+            if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
+            scrollIdleTimer = setTimeout(() => setHiddenByScroll(false), ms);
         };
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-    }, [isClient]);
+
+        const onScroll = () => {
+            hide();
+            restoreSoon(IDLE_AFTER_SCROLL_MS);
+        };
+
+        const onPointerActivity = () => {
+            // Pointer activity = teacher engaged. Restore immediately.
+            setHiddenByScroll(false);
+            if (pointerIdleTimer) clearTimeout(pointerIdleTimer);
+            if (isReadHeavy) {
+                pointerIdleTimer = setTimeout(() => setHiddenByScroll(true), READ_HEAVY_IDLE_MS);
+            }
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+        window.addEventListener("pointermove", onPointerActivity, { passive: true });
+        window.addEventListener("touchstart", onPointerActivity, { passive: true });
+
+        // On read-heavy pages, start in idle countdown so the orb hides
+        // 6s after page load if the teacher doesn't interact.
+        if (isReadHeavy) {
+            pointerIdleTimer = setTimeout(() => setHiddenByScroll(true), READ_HEAVY_IDLE_MS);
+        }
+
+        return () => {
+            window.removeEventListener("scroll", onScroll, { capture: true } as any);
+            window.removeEventListener("pointermove", onPointerActivity);
+            window.removeEventListener("touchstart", onPointerActivity);
+            if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
+            if (pointerIdleTimer) clearTimeout(pointerIdleTimer);
+        };
+    }, [isClient, pathname]);
 
     // ── Respect prefers-reduced-motion: when user wants less motion, the
     // orb still hides on scroll but without the slide/opacity transition.
