@@ -7243,6 +7243,21 @@ const dictionary: Record<string, Record<Language, string>> = {
     "{count} remaining": {
         "English": "{count} remaining", "Hindi": "{count} शेष", "Kannada": "{count} ಉಳಿದಿದೆ", "Tamil": "{count} மீதம்", "Telugu": "{count} మిగిలి ఉంది", "Marathi": "{count} शिल्लक", "Bengali": "{count} অবশিষ্ট", "Gujarati": "{count} બાકી", "Punjabi": "{count} ਬਾਕੀ", "Malayalam": "{count} ശേഷിക്കുന്നു", "Odia": "{count} ବାକି"
     },
+    "Tamil keyboard": {
+        "English": "Tamil keyboard", "Hindi": "तमिल कीबोर्ड", "Kannada": "ತಮಿಳು ಕೀಬೋರ್ಡ್", "Tamil": "தமிழ் விசைப்பலகை", "Telugu": "తమిళ కీబోర్డ్", "Marathi": "तमिळ कीबोर्ड", "Bengali": "তামিল কীবোর্ড", "Gujarati": "તમિલ કીબોર્ડ", "Punjabi": "ਤਮਿਲ ਕੀਬੋਰਡ", "Malayalam": "തമിഴ് കീബോർഡ്", "Odia": "ତାମିଲ କୀବୋର୍ଡ"
+    },
+    "ABC": {
+        "English": "ABC", "Hindi": "ABC", "Kannada": "ABC", "Tamil": "ABC", "Telugu": "ABC", "Marathi": "ABC", "Bengali": "ABC", "Gujarati": "ABC", "Punjabi": "ABC", "Malayalam": "ABC", "Odia": "ABC"
+    },
+    "Space": {
+        "English": "Space", "Hindi": "स्पेस", "Kannada": "ಸ್ಪೇಸ್", "Tamil": "இடைவெளி", "Telugu": "స్పేస్", "Marathi": "स्पेस", "Bengali": "স্পেস", "Gujarati": "સ્પેસ", "Punjabi": "ਸਪੇਸ", "Malayalam": "സ്പേസ്", "Odia": "ସ୍ପେସ୍"
+    },
+    "Backspace": {
+        "English": "Backspace", "Hindi": "बैकस्पेस", "Kannada": "ಬ್ಯಾಕ್‌ಸ್ಪೇಸ್", "Tamil": "பின்னழி", "Telugu": "బ్యాక్‌స్పేస్", "Marathi": "बॅकस्पेस", "Bengali": "ব্যাকস্পেস", "Gujarati": "બેકસ્પેસ", "Punjabi": "ਬੈਕਸਪੇਸ", "Malayalam": "ബാക്ക്സ്പേസ്", "Odia": "ବ୍ୟାକ୍‌ସ୍ପେସ୍"
+    },
+    "Close": {
+        "English": "Close", "Hindi": "बंद करें", "Kannada": "ಮುಚ್ಚಿ", "Tamil": "மூடு", "Telugu": "మూసివేయి", "Marathi": "बंद करा", "Bengali": "বন্ধ করুন", "Gujarati": "બંધ કરો", "Punjabi": "ਬੰਦ ਕਰੋ", "Malayalam": "അടയ്ക്കുക", "Odia": "ବନ୍ଦ କରନ୍ତୁ"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

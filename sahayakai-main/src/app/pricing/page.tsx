@@ -96,7 +96,7 @@ export default function PricingPage() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center">
+                <div className="force-light min-h-screen flex items-center justify-center bg-background">
                     <p className="text-neutral-500 text-sm">{t("Loading pricing…")}</p>
                 </div>
             }
@@ -239,7 +239,7 @@ function PricingContent() {
     const proPlanKey = billingPeriod === 'monthly' ? 'pro_monthly' : 'pro_annual';
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="force-light flex flex-col min-h-screen bg-background text-foreground">
             <LandingNav onAuthClick={openAuthModal} />
 
             <div

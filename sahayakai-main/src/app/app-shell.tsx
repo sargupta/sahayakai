@@ -12,6 +12,7 @@ import { Logo } from "@/components/logo";
 import { AuthButton } from "@/components/auth/auth-button";
 import { GlobalHooks } from "@/components/global-hooks";
 import { OmniOrb } from "@/components/omni-orb";
+import { TamilKeyboard } from "@/components/tamil-keyboard";
 import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
 import { VoiceQuotaToastListener } from "@/components/voice-quota-toast-listener";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -116,6 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           to clear it on mobile). */}
       <GlobalHooks />
       <OmniOrb />
+      <TamilKeyboard />
       <MotherTongueGreeting />
       <CommandPalette />
       <MobileBottomNav />

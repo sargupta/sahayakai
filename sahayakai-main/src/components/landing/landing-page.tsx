@@ -17,7 +17,7 @@ export function LandingPage({ onAuthClick }: Props) {
   const titleIndex = useLandingTitleIndex();
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="force-light flex flex-col min-h-screen">
       <SignedOutBanner />
       <LandingNav onAuthClick={onAuthClick} />
 
