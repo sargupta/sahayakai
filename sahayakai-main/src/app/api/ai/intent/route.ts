@@ -74,7 +74,11 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { prompt, language } = body;
+        // `language` = caller-supplied language hint (UI language, ISO code).
+        // `uiLanguage` = explicit UI-language override; when present it MUST
+        // win for instant answers so a teacher who set the app to Tamil gets
+        // a Tamil answer even if they typed/spoke an English-script prompt.
+        const { prompt, language, uiLanguage } = body;
         promptText = prompt || 'Unknown Prompt';
 
         // 1. Determine Intent and extract params
@@ -106,6 +110,13 @@ export async function POST(request: Request) {
         // produces nothing useful so the page shows a clean placeholder.
         const finalTopic = (extractedTopic && extractedTopic.trim()) || cleanTopicFallback(prompt);
         const finalLanguage = detectedLanguage || language || 'en';
+
+        // BUG #32 (2026-05-28): the spoken/typed prompt's script (detectedLanguage)
+        // must NOT override the teacher's chosen UI language for the ANSWER. A
+        // Tamil-UI user asking a question in romanized/English script previously
+        // got an English answer because detectedLanguage ('en') won. When the
+        // client passes an explicit uiLanguage, honor it for instant answers.
+        const answerLanguage = uiLanguage || finalLanguage;
 
         let result: any;
         const queryParams = new URLSearchParams();
@@ -155,7 +166,7 @@ export async function POST(request: Request) {
                 // gets a useful answer + video rather than a dead end.
                 const answer = await instantAnswer({
                     question: prompt,
-                    language: finalLanguage,
+                    language: answerLanguage,
                     userId: userId,
                 });
                 result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };

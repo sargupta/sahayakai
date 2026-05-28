@@ -94,8 +94,8 @@ const sizeClass: Record<ResultShellSize, string> = {
 };
 
 const variantCardClass: Record<ResultShellVariant, string> = {
-    solid: "bg-white",
-    glass: "bg-white/70 backdrop-blur-lg border-white/60",
+    solid: "bg-card",
+    glass: "bg-card/70 backdrop-blur-lg border-border/60",
 };
 
 const variantHeaderClass: Record<ResultShellVariant, string> = {

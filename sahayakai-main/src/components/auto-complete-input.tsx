@@ -158,7 +158,7 @@ export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange,
         value={value}
         onChange={onChange}
         onFocus={() => setIsFocused(true)}
-        className="bg-white/50 backdrop-blur-sm"
+        className="bg-card/50 backdrop-blur-sm"
         autoComplete="off"
         {...props}
       />

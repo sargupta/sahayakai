@@ -39,7 +39,7 @@ export function ResourceSelector({ value, onValueChange, className }: ResourceSe
     return (
         <div className={cn("space-y-1.5", className)}>
             <Select value={value} onValueChange={(val) => onValueChange(val as ResourceLevel)}>
-                <SelectTrigger className="w-full bg-white border-slate-200">
+                <SelectTrigger className="w-full bg-card border-border">
                     <SelectValue placeholder={t("Select resources")} />
                 </SelectTrigger>
                 <SelectContent>

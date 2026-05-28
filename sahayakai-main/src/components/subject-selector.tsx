@@ -19,7 +19,7 @@ export const SubjectSelector: FC<SubjectSelectorProps> = ({ onValueChange, value
 
     return (
         <Select onValueChange={onValueChange} value={value}>
-            <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
+            <SelectTrigger className="w-full bg-card/50 backdrop-blur-sm">
                 <SelectValue placeholder={t("Select a subject")} />
             </SelectTrigger>
             <SelectContent>

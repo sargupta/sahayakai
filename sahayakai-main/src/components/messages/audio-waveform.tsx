@@ -194,7 +194,7 @@ export function AudioWaveform({ audioUrl, duration, isOwn, uploadProgress }: Aud
                 )}
                 <span className={cn(
                     'text-[10px] font-medium tabular-nums',
-                    isOwn ? 'text-white/60' : 'text-slate-400'
+                    isOwn ? 'text-white/60' : 'text-muted-foreground'
                 )}>
                     {playing ? formatTime(currentTime) : formatTime(totalDuration)}
                 </span>

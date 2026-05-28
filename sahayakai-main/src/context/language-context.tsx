@@ -7231,6 +7231,18 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Your browser does not support voice recording.": {
         "English": "Your browser does not support voice recording.", "Hindi": "आपका ब्राउज़र वॉइस रिकॉर्डिंग का समर्थन नहीं करता।", "Kannada": "ನಿಮ್ಮ ಬ್ರೌಸರ್ ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ.", "Tamil": "உங்கள் உலாவி குரல் பதிவை ஆதரிக்கவில்லை.", "Telugu": "మీ బ్రౌజర్ వాయిస్ రికార్డింగ్‌కు మద్దతు ఇవ్వదు.", "Marathi": "तुमचा ब्राउझर व्हॉइस रेकॉर्डिंगला समर्थन देत नाही.", "Bengali": "আপনার ব্রাউজার ভয়েস রেকর্ডিং সমর্থন করে না।", "Gujarati": "તમારું બ્રાઉઝર વૉઇસ રેકોર્ડિંગને સમર્થન આપતું નથી.", "Punjabi": "ਤੁਹਾਡਾ ਬ੍ਰਾਊਜ਼ਰ ਵੌਇਸ ਰਿਕਾਰਡਿੰਗ ਦਾ ਸਮਰਥਨ ਨਹੀਂ ਕਰਦਾ।", "Malayalam": "നിങ്ങളുടെ ബ്രൗസർ വോയ്സ് റെക്കോർഡിംഗ് പിന്തുണയ്ക്കുന്നില്ല.", "Odia": "ଆପଣଙ୍କ ବ୍ରାଉଜର୍ ଭଏସ୍ ରେକର୍ଡିଂକୁ ସମର୍ଥନ କରେ ନାହିଁ।"
     },
+    "Usage": {
+        "English": "Usage", "Hindi": "उपयोग", "Kannada": "ಬಳಕೆ", "Tamil": "பயன்பாடு", "Telugu": "వినియోగం", "Marathi": "वापर", "Bengali": "ব্যবহার", "Gujarati": "વપરાશ", "Punjabi": "ਵਰਤੋਂ", "Malayalam": "ഉപയോഗം", "Odia": "ବ୍ୟବହାର"
+    },
+    "Resets {date}": {
+        "English": "Resets {date}", "Hindi": "{date} को रीसेट होगा", "Kannada": "{date} ರಂದು ಮರುಹೊಂದಿಸಲಾಗುತ್ತದೆ", "Tamil": "{date} அன்று மீட்டமைக்கப்படும்", "Telugu": "{date}న రీసెట్ అవుతుంది", "Marathi": "{date} रोजी रीसेट होईल", "Bengali": "{date} তারিখে রিসেট হবে", "Gujarati": "{date} ના રોજ રીસેટ થશે", "Punjabi": "{date} ਨੂੰ ਰੀਸੈੱਟ ਹੋਵੇਗਾ", "Malayalam": "{date}ന് റീസെറ്റ് ചെയ്യും", "Odia": "{date}ରେ ରିସେଟ୍ ହେବ"
+    },
+    "Limit reached, resets {date}": {
+        "English": "Limit reached, resets {date}", "Hindi": "सीमा समाप्त, {date} को रीसेट होगा", "Kannada": "ಮಿತಿ ತಲುಪಿದೆ, {date} ರಂದು ಮರುಹೊಂದಿಸಲಾಗುತ್ತದೆ", "Tamil": "வரம்பு எட்டப்பட்டது, {date} அன்று மீட்டமைக்கப்படும்", "Telugu": "పరిమితి చేరుకుంది, {date}న రీసెట్ అవుతుంది", "Marathi": "मर्यादा संपली, {date} रोजी रीसेट होईल", "Bengali": "সীমা শেষ, {date} তারিখে রিসেট হবে", "Gujarati": "મર્યાદા પૂરી, {date} ના રોજ રીસેટ થશે", "Punjabi": "ਸੀਮਾ ਪੂਰੀ, {date} ਨੂੰ ਰੀਸੈੱਟ ਹੋਵੇਗਾ", "Malayalam": "പരിധി തീർന്നു, {date}ന് റീസെറ്റ് ചെയ്യും", "Odia": "ସୀମା ସରିଲା, {date}ରେ ରିସେଟ୍ ହେବ"
+    },
+    "{count} remaining": {
+        "English": "{count} remaining", "Hindi": "{count} शेष", "Kannada": "{count} ಉಳಿದಿದೆ", "Tamil": "{count} மீதம்", "Telugu": "{count} మిగిలి ఉంది", "Marathi": "{count} शिल्लक", "Bengali": "{count} অবশিষ্ট", "Gujarati": "{count} બાકી", "Punjabi": "{count} ਬਾਕੀ", "Malayalam": "{count} ശേഷിക്കുന്നു", "Odia": "{count} ବାକି"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

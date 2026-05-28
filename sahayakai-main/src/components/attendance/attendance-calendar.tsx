@@ -61,7 +61,7 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                 <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" onClick={prevMonth} aria-label={t("Previous month")}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <p className="text-sm font-bold text-slate-900">{t(MONTH_NAMES[month - 1])} {year}</p>
+                <p className="text-sm font-bold text-foreground">{t(MONTH_NAMES[month - 1])} {year}</p>
                 <Button
                     variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]"
                     onClick={nextMonth}
@@ -74,16 +74,16 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/60" />
                 </div>
             ) : summaries.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-sm">
+                <div className="text-center py-12 text-muted-foreground text-sm">
                     {t("No attendance data for this month.")}
                 </div>
             ) : (
                 <div className="space-y-2">
                     {/* Header */}
-                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_2fr] gap-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_2fr] gap-2 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                         <span>{t("Student")}</span>
                         <span className="text-center">{t("Present")}</span>
                         <span className="text-center">{t("Absent")}</span>
@@ -95,10 +95,10 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                     {summaries.map((s) => (
                         <div
                             key={s.studentId}
-                            className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_2fr] gap-2 items-center px-3 py-3 bg-white rounded-xl border border-slate-100"
+                            className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_2fr] gap-2 items-center px-3 py-3 bg-card rounded-xl border border-border"
                         >
                             <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-900 truncate">{s.studentName}</p>
+                                <p className="text-sm font-semibold text-foreground truncate">{s.studentName}</p>
                                 {s.consecutiveAbsences >= 2 && (
                                     <p className="text-[10px] text-red-500 font-semibold mt-0.5">
                                         {s.consecutiveAbsences} days absent in a row
@@ -108,9 +108,9 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                             <span className="text-center text-sm font-bold text-emerald-600">{s.presentDays}</span>
                             <span className="text-center text-sm font-bold text-red-500">{s.absentDays}</span>
                             <span className="text-center text-sm font-bold text-amber-600">{s.lateDays}</span>
-                            <span className="text-center text-xs text-slate-400">{s.totalDays}</span>
+                            <span className="text-center text-xs text-muted-foreground">{s.totalDays}</span>
                             <div className="flex items-center gap-2 justify-end">
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                     <div
                                         className={cn(
                                             "h-full rounded-full transition-all",

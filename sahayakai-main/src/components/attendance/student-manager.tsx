@@ -105,7 +105,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-500">{students.length}/40 students</p>
+                <p className="text-sm text-muted-foreground">{students.length}/40 students</p>
                 <Button
                     size="sm"
                     onClick={openAdd}
@@ -122,29 +122,29 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                     <div className="p-4 bg-orange-50 rounded-full">
                         <UserPlus className="h-8 w-8 text-orange-300" />
                     </div>
-                    <p className="text-sm font-bold text-slate-700">{t("No students yet")}</p>
-                    <p className="text-xs text-slate-400">{t("Add students to start taking attendance.")}</p>
+                    <p className="text-sm font-bold text-foreground">{t("No students yet")}</p>
+                    <p className="text-xs text-muted-foreground">{t("Add students to start taking attendance.")}</p>
                 </div>
             ) : (
-                <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
+                <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
                     {students.map((s) => (
-                        <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition-colors">
-                            <span className="w-8 text-center text-xs font-black text-slate-400 shrink-0">{s.rollNumber}</span>
+                        <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors">
+                            <span className="w-8 text-center text-xs font-black text-muted-foreground shrink-0">{s.rollNumber}</span>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-slate-900 truncate">{s.name}</p>
+                                <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                    <Phone className="h-3 w-3 text-slate-400" />
-                                    <span className="text-xs text-slate-500">{s.parentPhone}</span>
+                                    <Phone className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">{s.parentPhone}</span>
                                     <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{s.parentLanguage}</Badge>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`${t("Edit")} ${s.name}`}>
+                                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-orange-500" onClick={() => openEdit(s)} aria-label={`${t("Edit")} ${s.name}`}>
                                     <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                     variant="ghost" size="icon"
-                                    className="h-10 w-10 text-slate-400 hover:text-red-500"
+                                    className="h-10 w-10 text-muted-foreground hover:text-red-500"
                                     onClick={() => handleDelete(s.id, s.name)}
                                     disabled={deleting === s.id}
                                     aria-label={`${t("Delete")} ${s.name}`}
@@ -186,7 +186,7 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
                         <div className="space-y-1.5">
                             <Label>{t("Parent's Phone *")}</Label>
                             <div className="flex">
-                                <span className="flex items-center px-3 border border-r-0 border-slate-200 rounded-l-md bg-slate-50 text-sm text-slate-500">+91</span>
+                                <span className="flex items-center px-3 border border-r-0 border-border rounded-l-md bg-muted/50 text-sm text-muted-foreground">+91</span>
                                 <Input
                                     className="rounded-l-none"
                                     placeholder="9876543210"

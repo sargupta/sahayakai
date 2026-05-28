@@ -268,7 +268,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
             }}
           >
             <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground/60" />
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-foreground">
               {t("Join this group to share, post, and chat with members")}
             </p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">

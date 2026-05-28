@@ -37,7 +37,7 @@ export default function CommunityPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
-        <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl">
+        <Card className="w-full bg-card/30 backdrop-blur-lg border-border/40 shadow-xl">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
                 <Library className="w-12 h-12 text-primary" />
@@ -51,7 +51,7 @@ export default function CommunityPage() {
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input placeholder={t("Search for lesson plans, quizzes, and more...")} className="pl-10 bg-white/50" />
+                    <Input placeholder={t("Search for lesson plans, quizzes, and more...")} className="pl-10 bg-card/50" />
                 </div>
                 <LanguageSelector onValueChange={setLanguage} defaultValue={language} />
             </div>

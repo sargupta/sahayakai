@@ -39,7 +39,7 @@ export const LanguageSelector: FC<LanguageSelectorProps> = ({ onValueChange, def
 
   return (
     <Select onValueChange={onValueChange} defaultValue={finalDefaultValue} value={value}>
-      <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
+      <SelectTrigger className="w-full bg-card/50 backdrop-blur-sm">
         <SelectValue placeholder={t("Select a language")} />
       </SelectTrigger>
       <SelectContent>

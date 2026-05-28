@@ -134,7 +134,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                         {t("NCERT Subject")}
                     </Label>
                     <Select value={subject} onValueChange={handleSubjectChange} disabled={!selectedGrade}>
-                        <SelectTrigger className="bg-white/50 backdrop-blur-sm">
+                        <SelectTrigger className="bg-card/50 backdrop-blur-sm">
                             <SelectValue placeholder={selectedGrade ? "Select subject" : "Select grade first"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -160,7 +160,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                             onValueChange={handleChapterChange}
                             disabled={isLoadingChapters || chapters.length === 0}
                         >
-                            <SelectTrigger className="bg-white/50 backdrop-blur-sm">
+                            <SelectTrigger className="bg-card/50 backdrop-blur-sm">
                                 <SelectValue placeholder={
                                     isLoadingChapters ? t("Loading chapters...") :
                                     chapters.length === 0 ? t("No chapters found") :
@@ -191,7 +191,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
 
                 {/* Chapter Details */}
                 {selectedChapter && (
-                    <div className="mt-4 p-4 bg-white/40 backdrop-blur-sm rounded-lg border border-primary/20 space-y-3 animate-in fade-in slide-in-from-top-2">
+                    <div className="mt-4 p-4 bg-card/40 backdrop-blur-sm rounded-lg border border-primary/20 space-y-3 animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-muted-foreground font-medium">{selectedChapter.textbookName}</span>
                             {selectedChapter.textbookEdition && (

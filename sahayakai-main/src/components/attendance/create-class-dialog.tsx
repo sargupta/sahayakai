@@ -65,7 +65,7 @@ export function CreateClassDialog({ open, onOpenChange, onCreated }: CreateClass
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-slate-900 font-black">{t("Create a Class")}</DialogTitle>
+                    <DialogTitle className="text-foreground font-black">{t("Create a Class")}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                     <div className="space-y-1.5">

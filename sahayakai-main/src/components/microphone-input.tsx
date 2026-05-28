@@ -717,7 +717,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       {/* Waveform Visualization - Elegant glassmorphic container */}
       {status === 'recording' && (
         <div className={cn(
-          "overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/40 transition-all duration-500 shadow-xl",
+          "overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/40 transition-all duration-500 shadow-xl",
           isFloating ? "fixed bottom-44 right-8 w-72 h-32" : "h-20 w-full"
         )}>
           <canvas ref={canvasRef} width="300" height="100" className="h-full w-full opacity-80" />
