@@ -68,32 +68,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ jobId, status: 'pending', fileCount: fileMap.size });
     }
 
-    // Build ZIP inline using archiver
+    // Build ZIP inline using archiver.
+    //
+    // BUG #31 (2026-05-28): The previous implementation called
+    // `await archive.finalize()` BEFORE draining the PassThrough, then
+    // iterated the stream. Archiver pipes into the PassThrough's bounded
+    // internal buffer (default 16KB highWaterMark); once that buffer fills
+    // and nobody is reading, archiver's writes back-pressure and
+    // `finalize()`'s promise NEVER resolves — so the `await` hung forever and
+    // the client spinner spun indefinitely. There was also no 'error'
+    // listener, so an archiver error would leave the stream unended and the
+    // (old) `for await` loop hanging too.
+    //
+    // Fix: collect chunks via event listeners that run CONCURRENTLY with
+    // finalize, resolve on 'end', reject on any 'error', and guard the whole
+    // thing with a timeout so the request can never hang past maxDuration.
     const archiver = (await import('archiver')).default;
-    const { PassThrough } = await import('stream');
-
-    const passThrough = new PassThrough();
     const archive = archiver('zip', { zlib: { level: 6 } });
-    archive.pipe(passThrough);
 
-    for (const [path, buffer] of fileMap) {
-      archive.append(buffer, { name: path });
-    }
-    await archive.finalize();
+    const zipBuffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const timer = setTimeout(() => {
+        reject(new Error('ZIP build timed out'));
+      }, 90_000); // well under maxDuration (120s) so we 500 cleanly, not hang
 
-    // Collect chunks into a single buffer
-    const chunks: Buffer[] = [];
-    for await (const chunk of passThrough) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-    const zipBuffer = Buffer.concat(chunks);
+      archive.on('data', (chunk: Buffer) => {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      });
+      archive.on('warning', (err: Error) => {
+        logger.warn('Archiver warning during export', 'EXPORT', { userId, error: String(err) });
+      });
+      archive.on('error', (err: Error) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+      archive.on('end', () => {
+        clearTimeout(timer);
+        resolve(Buffer.concat(chunks));
+      });
+
+      for (const [path, buffer] of fileMap) {
+        archive.append(buffer, { name: path });
+      }
+      // finalize() kicks off streaming; the 'end' handler above resolves.
+      // We intentionally do NOT await it here — draining happens via the
+      // 'data' listener concurrently, avoiding the back-pressure deadlock.
+      archive.finalize().catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
 
     const timestamp = new Date().toISOString().slice(0, 10);
     const filename = `sahayakai_export_${timestamp}.zip`;
 
     logger.info('Individual export completed', 'EXPORT', { userId, fileCount: fileMap.size });
 
-    return new NextResponse(zipBuffer, {
+    // Use a Uint8Array view so the body type matches BodyInit regardless of
+    // the resolved Buffer ArrayBuffer variant.
+    return new NextResponse(zipBuffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/zip',

@@ -161,6 +161,41 @@ async function _handler(request: Request) {
         const result = await gradeAssessment(body);
         return NextResponse.json(result);
     } catch (error) {
+        // BUG #3 hardening: map KNOWN, user-fixable failure causes to a
+        // specific 422 with an actionable message, instead of letting them
+        // fall through to handleAIError's generic "AI generation failed" 500.
+        // Detect by `.code` (duck-typed) so we don't couple the route bundle
+        // to the flow's error classes / a possibly-divergent zod identity.
+        const code = (error as { code?: string } | null)?.code;
+
+        if (code === 'PAGE_UNREADABLE') {
+            // Already logged at ERROR inside the flow with the raw fetch error.
+            return NextResponse.json(
+                {
+                    error: 'page_unreadable',
+                    code: 'PAGE_UNREADABLE',
+                    message:
+                        (error as { message?: string }).message ??
+                        'One of the uploaded pages could not be read. Please re-upload it and try again.',
+                    pageNumber: (error as { pageNumber?: number }).pageNumber,
+                },
+                { status: 422 },
+            );
+        }
+
+        if (code === 'EMPTY_EXTRACTION') {
+            return NextResponse.json(
+                {
+                    error: 'empty_extraction',
+                    code: 'EMPTY_EXTRACTION',
+                    message:
+                        (error as { message?: string }).message ??
+                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
+                },
+                { status: 422 },
+            );
+        }
+
         return handleAIError(error, 'ASSESSMENT_SCANNER', {
             message: `Assessment Scanner API failed for assessmentId: "${assessmentId}"`,
             userId: request.headers.get('x-user-id'),
