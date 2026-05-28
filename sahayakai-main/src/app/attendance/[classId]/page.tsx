@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { AuthGate } from "@/components/auth/auth-gate";
@@ -20,12 +20,13 @@ import { AttendanceCalendar } from "@/components/attendance/attendance-calendar"
 import { ContactParentModal } from "@/components/attendance/contact-parent-modal";
 import { useToast } from "@/hooks/use-toast";
 import {
-    ArrowLeft, Loader2, Phone, AlertTriangle,
+    Loader2, Phone, AlertTriangle,
     ClipboardList, Users, BarChart2,
     CalendarX2, TrendingDown, Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/back-button";
 
 function todayStr() {
     return format(new Date(), 'yyyy-MM-dd');
@@ -33,7 +34,6 @@ function todayStr() {
 
 function ClassDetailContent() {
     const { classId } = useParams<{ classId: string }>();
-    const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
 
@@ -211,9 +211,7 @@ function ClassDetailContent() {
         <div className="w-full max-w-2xl mx-auto space-y-5">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => router.push('/attendance')}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
+                <BackButton to="/attendance" className="shrink-0" />
                 <div className="flex-1 min-w-0">
                     <h1 className="text-xl font-black font-headline tracking-tight text-foreground truncate">{cls.name}</h1>
                     <p className="text-xs text-muted-foreground">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} {t("students")}</p>

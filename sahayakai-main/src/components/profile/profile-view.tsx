@@ -13,7 +13,6 @@ import {
     BadgeCheck,
     Clock,
     Plus,
-    ArrowLeft,
     GraduationCap,
     Mail,
     Briefcase,
@@ -42,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import { BackButton } from "@/components/ui/back-button";
 import { PlanBadge } from "@/components/plan-badge";
 import {
     sendConnectionRequestAction,
@@ -132,18 +132,6 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
         ? isOwnProfileManual
         : (firebaseUser?.uid === (targetUid || firebaseUser?.uid) || !targetUid);
 
-    // Back navigation. router.back() silently does nothing when the profile was
-    // opened in a fresh tab (shared link / "open in new tab" from notifications),
-    // because there's no prior entry in the session history. Fall back to the
-    // community directory so the button always takes the teacher somewhere.
-    const handleBack = () => {
-        if (typeof window !== "undefined" && window.history.length <= 1) {
-            router.push("/community");
-        } else {
-            router.back();
-        }
-    };
-
     // Reload the caller's certifications after adding one. Only meaningful on
     // own profile (addCertificationAction is self-only on the server).
     const reloadCerts = async () => {
@@ -226,15 +214,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 back button. Matches the ArrowLeft + ghost Button pattern used by
                 the community sub-views. */}
             {!isOwnProfile && (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 rounded-full border-border bg-background/80 backdrop-blur-sm shadow-soft hover:bg-muted/60 text-foreground font-semibold"
-                    onClick={handleBack}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    {t("Back")}
-                </Button>
+                <BackButton to="/community" />
             )}
 
             {/* Profile Header - Premium Glassmorphic Card */}

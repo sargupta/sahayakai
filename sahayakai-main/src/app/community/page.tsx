@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, ArrowLeft, UserSearch, X, Info, MessageCircle } from 'lucide-react';
+import { Users, Plus, UserSearch, X, Info, MessageCircle } from 'lucide-react';
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db as clientDb } from '@/lib/firebase';
@@ -457,15 +458,7 @@ export default function CommunityPage() {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
         <div className="flex items-center gap-3 mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowTeacherDirectory(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("Back")}
-          </Button>
+          <BackButton onBack={() => setShowTeacherDirectory(false)} />
           <h2 className="font-headline text-lg font-bold text-foreground">
             {t("Find Teachers")}
           </h2>
@@ -483,15 +476,7 @@ export default function CommunityPage() {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
         <div className="flex items-center gap-3 mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowStaffRoom(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("Back")}
-          </Button>
+          <BackButton onBack={() => setShowStaffRoom(false)} />
           <h2 className="font-headline text-lg font-bold text-foreground">
             {t("Staff Room")}
           </h2>
@@ -509,15 +494,7 @@ export default function CommunityPage() {
     return (
       <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6">
         <div className="flex items-center gap-3 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowExploreGroups(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("Back")}
-          </Button>
+          <BackButton onBack={() => setShowExploreGroups(false)} />
           <h2 className="font-headline text-lg font-bold text-foreground">
             {t("Explore Groups")}
           </h2>

@@ -25,6 +25,7 @@ import {
     Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLanguage } from "@/context/language-context";
+import { BackButton } from "@/components/ui/back-button";
 
 // ── Resource type picker (what teacher can share) ─────────────────────────────
 
@@ -257,9 +258,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0 shadow-soft">
                 {onBack && (
-                    <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors mr-1">
-                        <ArrowLeft className="h-5 w-5" />
-                    </button>
+                    <BackButton onBack={onBack} className="mr-1" />
                 )}
                 <div className="relative">
                     <Avatar className="h-9 w-9 ring-2 ring-border">
