@@ -15,7 +15,7 @@ export default function ImpactDashboardPage() {
       <AuthGate
         icon={BarChart3}
         title={t("Sign in to see your impact")}
-        description="Track lesson plans created, students reached, and classroom time saved."
+        description={t("Track lesson plans created, students reached, and classroom time saved.")}
       >
         {null}
       </AuthGate>

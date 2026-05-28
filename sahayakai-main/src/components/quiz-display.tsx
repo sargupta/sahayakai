@@ -130,7 +130,15 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
         element.style.display = "block";
         element.classList.remove("hidden");
         toast({ title: t.pdfPreparingTitle, description: t.pdfPreparingDesc });
-        const variantTitle = currentQuiz.title || "Quiz";
+        // Filenames must stay ASCII-safe. In non-Latin UI languages (e.g.
+        // Tamil) the quiz title is in a non-Latin script; stripping those
+        // characters used to collapse the slug to a bare separator dash.
+        // Fall back to "Quiz" whenever the title is empty or has no usable
+        // Latin/alphanumeric characters after sanitising.
+        const asciiTitle = (currentQuiz.title || "")
+            .replace(/[^a-zA-Z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+        const variantTitle = asciiTitle || "Quiz";
         const res = await exportElementToPdf({
             elementId: PDF_ID,
             filename: `Sahayak_Quiz_${variantTitle}_${activeTab}.pdf`,

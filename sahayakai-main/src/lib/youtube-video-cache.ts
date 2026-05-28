@@ -39,7 +39,8 @@ export function buildCacheKey(
     gradeLevel: string,
     language?: string,
     state?: string,
-    educationBoard?: string
+    educationBoard?: string,
+    topic?: string
 ): string {
     const parts = [
         subject.toLowerCase().trim(),
@@ -47,6 +48,11 @@ export function buildCacheKey(
         (language || 'english').toLowerCase().trim(),
         (state || 'general').toLowerCase().trim(),
         (educationBoard || 'cbse').toLowerCase().trim(),
+        // topic MUST be part of the key — otherwise a topic search
+        // (e.g. "Chola empire") collides with a prior generic search
+        // for the same (subject, grade) and replays stale videos +
+        // the wrong "Class 5" personalizedMessage regardless of topic.
+        (topic || '').toLowerCase().trim(),
     ];
     return createHash('sha256')
         .update(parts.join(':'))
@@ -63,11 +69,12 @@ export async function getCachedVideos(
     gradeLevel: string,
     language?: string,
     state?: string,
-    educationBoard?: string
+    educationBoard?: string,
+    topic?: string
 ): Promise<VideoCacheEntry | null> {
     try {
         const db = await getDb();
-        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard);
+        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard, topic);
         const doc = await db.collection(CACHE_COLLECTION).doc(key).get();
 
         if (!doc.exists) return null;
@@ -104,11 +111,12 @@ export async function setCachedVideos(
     personalizedMessage: string,
     language?: string,
     state?: string,
-    educationBoard?: string
+    educationBoard?: string,
+    topic?: string
 ): Promise<void> {
     try {
         const db = await getDb();
-        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard);
+        const key = buildCacheKey(subject, gradeLevel, language, state, educationBoard, topic);
         const now = new Date();
         const expiresAt = new Date(now.getTime() + CACHE_TTL_HOURS * 60 * 60 * 1000);
 

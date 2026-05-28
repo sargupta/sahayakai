@@ -7015,6 +7015,138 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Select chapter": {
         "English": "Select chapter", "Hindi": "अध्याय चुनें", "Kannada": "ಅಧ್ಯಾಯ ಆಯ್ಕೆಮಾಡಿ", "Tamil": "அத்தியாயத்தைத் தேர்ந்தெடுக்கவும்", "Telugu": "అధ్యాయాన్ని ఎంచుకోండి", "Marathi": "अध्याय निवडा", "Bengali": "অধ্যায় নির্বাচন করুন", "Gujarati": "પ્રકરણ પસંદ કરો", "Punjabi": "ਅਧਿਆਏ ਚੁਣੋ", "Malayalam": "അധ്യായം തിരഞ്ഞെടുക്കുക", "Odia": "ଅଧ୍ୟାୟ ବାଛନ୍ତୁ"
     },
+    "CBSE": {
+        "English": "CBSE", "Hindi": "CBSE", "Kannada": "CBSE", "Tamil": "CBSE", "Telugu": "CBSE", "Marathi": "CBSE", "Bengali": "CBSE", "Gujarati": "CBSE", "Punjabi": "CBSE", "Malayalam": "CBSE", "Odia": "CBSE"
+    },
+    "ICSE / ISC": {
+        "English": "ICSE / ISC", "Hindi": "ICSE / ISC", "Kannada": "ICSE / ISC", "Tamil": "ICSE / ISC", "Telugu": "ICSE / ISC", "Marathi": "ICSE / ISC", "Bengali": "ICSE / ISC", "Gujarati": "ICSE / ISC", "Punjabi": "ICSE / ISC", "Malayalam": "ICSE / ISC", "Odia": "ICSE / ISC"
+    },
+    "Andhra Pradesh State Board": {
+        "English": "Andhra Pradesh State Board", "Hindi": "Andhra Pradesh State Board", "Kannada": "Andhra Pradesh State Board", "Tamil": "Andhra Pradesh State Board", "Telugu": "Andhra Pradesh State Board", "Marathi": "Andhra Pradesh State Board", "Bengali": "Andhra Pradesh State Board", "Gujarati": "Andhra Pradesh State Board", "Punjabi": "Andhra Pradesh State Board", "Malayalam": "Andhra Pradesh State Board", "Odia": "Andhra Pradesh State Board"
+    },
+    "Assam State Board (SEBA)": {
+        "English": "Assam State Board (SEBA)", "Hindi": "Assam State Board (SEBA)", "Kannada": "Assam State Board (SEBA)", "Tamil": "Assam State Board (SEBA)", "Telugu": "Assam State Board (SEBA)", "Marathi": "Assam State Board (SEBA)", "Bengali": "Assam State Board (SEBA)", "Gujarati": "Assam State Board (SEBA)", "Punjabi": "Assam State Board (SEBA)", "Malayalam": "Assam State Board (SEBA)", "Odia": "Assam State Board (SEBA)"
+    },
+    "Bihar State Board (BSEB)": {
+        "English": "Bihar State Board (BSEB)", "Hindi": "Bihar State Board (BSEB)", "Kannada": "Bihar State Board (BSEB)", "Tamil": "Bihar State Board (BSEB)", "Telugu": "Bihar State Board (BSEB)", "Marathi": "Bihar State Board (BSEB)", "Bengali": "Bihar State Board (BSEB)", "Gujarati": "Bihar State Board (BSEB)", "Punjabi": "Bihar State Board (BSEB)", "Malayalam": "Bihar State Board (BSEB)", "Odia": "Bihar State Board (BSEB)"
+    },
+    "Chhattisgarh State Board (CGBSE)": {
+        "English": "Chhattisgarh State Board (CGBSE)", "Hindi": "Chhattisgarh State Board (CGBSE)", "Kannada": "Chhattisgarh State Board (CGBSE)", "Tamil": "Chhattisgarh State Board (CGBSE)", "Telugu": "Chhattisgarh State Board (CGBSE)", "Marathi": "Chhattisgarh State Board (CGBSE)", "Bengali": "Chhattisgarh State Board (CGBSE)", "Gujarati": "Chhattisgarh State Board (CGBSE)", "Punjabi": "Chhattisgarh State Board (CGBSE)", "Malayalam": "Chhattisgarh State Board (CGBSE)", "Odia": "Chhattisgarh State Board (CGBSE)"
+    },
+    "Goa Board of Secondary Education": {
+        "English": "Goa Board of Secondary Education", "Hindi": "Goa Board of Secondary Education", "Kannada": "Goa Board of Secondary Education", "Tamil": "Goa Board of Secondary Education", "Telugu": "Goa Board of Secondary Education", "Marathi": "Goa Board of Secondary Education", "Bengali": "Goa Board of Secondary Education", "Gujarati": "Goa Board of Secondary Education", "Punjabi": "Goa Board of Secondary Education", "Malayalam": "Goa Board of Secondary Education", "Odia": "Goa Board of Secondary Education"
+    },
+    "Gujarat State Board (GSEB)": {
+        "English": "Gujarat State Board (GSEB)", "Hindi": "Gujarat State Board (GSEB)", "Kannada": "Gujarat State Board (GSEB)", "Tamil": "Gujarat State Board (GSEB)", "Telugu": "Gujarat State Board (GSEB)", "Marathi": "Gujarat State Board (GSEB)", "Bengali": "Gujarat State Board (GSEB)", "Gujarati": "Gujarat State Board (GSEB)", "Punjabi": "Gujarat State Board (GSEB)", "Malayalam": "Gujarat State Board (GSEB)", "Odia": "Gujarat State Board (GSEB)"
+    },
+    "Haryana State Board (HBSE)": {
+        "English": "Haryana State Board (HBSE)", "Hindi": "Haryana State Board (HBSE)", "Kannada": "Haryana State Board (HBSE)", "Tamil": "Haryana State Board (HBSE)", "Telugu": "Haryana State Board (HBSE)", "Marathi": "Haryana State Board (HBSE)", "Bengali": "Haryana State Board (HBSE)", "Gujarati": "Haryana State Board (HBSE)", "Punjabi": "Haryana State Board (HBSE)", "Malayalam": "Haryana State Board (HBSE)", "Odia": "Haryana State Board (HBSE)"
+    },
+    "Himachal Pradesh State Board (HPBOSE)": {
+        "English": "Himachal Pradesh State Board (HPBOSE)", "Hindi": "Himachal Pradesh State Board (HPBOSE)", "Kannada": "Himachal Pradesh State Board (HPBOSE)", "Tamil": "Himachal Pradesh State Board (HPBOSE)", "Telugu": "Himachal Pradesh State Board (HPBOSE)", "Marathi": "Himachal Pradesh State Board (HPBOSE)", "Bengali": "Himachal Pradesh State Board (HPBOSE)", "Gujarati": "Himachal Pradesh State Board (HPBOSE)", "Punjabi": "Himachal Pradesh State Board (HPBOSE)", "Malayalam": "Himachal Pradesh State Board (HPBOSE)", "Odia": "Himachal Pradesh State Board (HPBOSE)"
+    },
+    "Jharkhand Academic Council (JAC)": {
+        "English": "Jharkhand Academic Council (JAC)", "Hindi": "Jharkhand Academic Council (JAC)", "Kannada": "Jharkhand Academic Council (JAC)", "Tamil": "Jharkhand Academic Council (JAC)", "Telugu": "Jharkhand Academic Council (JAC)", "Marathi": "Jharkhand Academic Council (JAC)", "Bengali": "Jharkhand Academic Council (JAC)", "Gujarati": "Jharkhand Academic Council (JAC)", "Punjabi": "Jharkhand Academic Council (JAC)", "Malayalam": "Jharkhand Academic Council (JAC)", "Odia": "Jharkhand Academic Council (JAC)"
+    },
+    "Karnataka State Board (KSEEB)": {
+        "English": "Karnataka State Board (KSEEB)", "Hindi": "Karnataka State Board (KSEEB)", "Kannada": "Karnataka State Board (KSEEB)", "Tamil": "Karnataka State Board (KSEEB)", "Telugu": "Karnataka State Board (KSEEB)", "Marathi": "Karnataka State Board (KSEEB)", "Bengali": "Karnataka State Board (KSEEB)", "Gujarati": "Karnataka State Board (KSEEB)", "Punjabi": "Karnataka State Board (KSEEB)", "Malayalam": "Karnataka State Board (KSEEB)", "Odia": "Karnataka State Board (KSEEB)"
+    },
+    "Kerala State Board (SCERT)": {
+        "English": "Kerala State Board (SCERT)", "Hindi": "Kerala State Board (SCERT)", "Kannada": "Kerala State Board (SCERT)", "Tamil": "Kerala State Board (SCERT)", "Telugu": "Kerala State Board (SCERT)", "Marathi": "Kerala State Board (SCERT)", "Bengali": "Kerala State Board (SCERT)", "Gujarati": "Kerala State Board (SCERT)", "Punjabi": "Kerala State Board (SCERT)", "Malayalam": "Kerala State Board (SCERT)", "Odia": "Kerala State Board (SCERT)"
+    },
+    "Madhya Pradesh State Board (MPBSE)": {
+        "English": "Madhya Pradesh State Board (MPBSE)", "Hindi": "Madhya Pradesh State Board (MPBSE)", "Kannada": "Madhya Pradesh State Board (MPBSE)", "Tamil": "Madhya Pradesh State Board (MPBSE)", "Telugu": "Madhya Pradesh State Board (MPBSE)", "Marathi": "Madhya Pradesh State Board (MPBSE)", "Bengali": "Madhya Pradesh State Board (MPBSE)", "Gujarati": "Madhya Pradesh State Board (MPBSE)", "Punjabi": "Madhya Pradesh State Board (MPBSE)", "Malayalam": "Madhya Pradesh State Board (MPBSE)", "Odia": "Madhya Pradesh State Board (MPBSE)"
+    },
+    "Maharashtra State Board (MSBSHSE)": {
+        "English": "Maharashtra State Board (MSBSHSE)", "Hindi": "Maharashtra State Board (MSBSHSE)", "Kannada": "Maharashtra State Board (MSBSHSE)", "Tamil": "Maharashtra State Board (MSBSHSE)", "Telugu": "Maharashtra State Board (MSBSHSE)", "Marathi": "Maharashtra State Board (MSBSHSE)", "Bengali": "Maharashtra State Board (MSBSHSE)", "Gujarati": "Maharashtra State Board (MSBSHSE)", "Punjabi": "Maharashtra State Board (MSBSHSE)", "Malayalam": "Maharashtra State Board (MSBSHSE)", "Odia": "Maharashtra State Board (MSBSHSE)"
+    },
+    "Manipur State Board (COHSEM)": {
+        "English": "Manipur State Board (COHSEM)", "Hindi": "Manipur State Board (COHSEM)", "Kannada": "Manipur State Board (COHSEM)", "Tamil": "Manipur State Board (COHSEM)", "Telugu": "Manipur State Board (COHSEM)", "Marathi": "Manipur State Board (COHSEM)", "Bengali": "Manipur State Board (COHSEM)", "Gujarati": "Manipur State Board (COHSEM)", "Punjabi": "Manipur State Board (COHSEM)", "Malayalam": "Manipur State Board (COHSEM)", "Odia": "Manipur State Board (COHSEM)"
+    },
+    "Meghalaya State Board (MBOSE)": {
+        "English": "Meghalaya State Board (MBOSE)", "Hindi": "Meghalaya State Board (MBOSE)", "Kannada": "Meghalaya State Board (MBOSE)", "Tamil": "Meghalaya State Board (MBOSE)", "Telugu": "Meghalaya State Board (MBOSE)", "Marathi": "Meghalaya State Board (MBOSE)", "Bengali": "Meghalaya State Board (MBOSE)", "Gujarati": "Meghalaya State Board (MBOSE)", "Punjabi": "Meghalaya State Board (MBOSE)", "Malayalam": "Meghalaya State Board (MBOSE)", "Odia": "Meghalaya State Board (MBOSE)"
+    },
+    "Nagaland State Board (NBSE)": {
+        "English": "Nagaland State Board (NBSE)", "Hindi": "Nagaland State Board (NBSE)", "Kannada": "Nagaland State Board (NBSE)", "Tamil": "Nagaland State Board (NBSE)", "Telugu": "Nagaland State Board (NBSE)", "Marathi": "Nagaland State Board (NBSE)", "Bengali": "Nagaland State Board (NBSE)", "Gujarati": "Nagaland State Board (NBSE)", "Punjabi": "Nagaland State Board (NBSE)", "Malayalam": "Nagaland State Board (NBSE)", "Odia": "Nagaland State Board (NBSE)"
+    },
+    "Odisha State Board (BSE Odisha)": {
+        "English": "Odisha State Board (BSE Odisha)", "Hindi": "Odisha State Board (BSE Odisha)", "Kannada": "Odisha State Board (BSE Odisha)", "Tamil": "Odisha State Board (BSE Odisha)", "Telugu": "Odisha State Board (BSE Odisha)", "Marathi": "Odisha State Board (BSE Odisha)", "Bengali": "Odisha State Board (BSE Odisha)", "Gujarati": "Odisha State Board (BSE Odisha)", "Punjabi": "Odisha State Board (BSE Odisha)", "Malayalam": "Odisha State Board (BSE Odisha)", "Odia": "Odisha State Board (BSE Odisha)"
+    },
+    "Punjab State Board (PSEB)": {
+        "English": "Punjab State Board (PSEB)", "Hindi": "Punjab State Board (PSEB)", "Kannada": "Punjab State Board (PSEB)", "Tamil": "Punjab State Board (PSEB)", "Telugu": "Punjab State Board (PSEB)", "Marathi": "Punjab State Board (PSEB)", "Bengali": "Punjab State Board (PSEB)", "Gujarati": "Punjab State Board (PSEB)", "Punjabi": "Punjab State Board (PSEB)", "Malayalam": "Punjab State Board (PSEB)", "Odia": "Punjab State Board (PSEB)"
+    },
+    "Rajasthan State Board (RBSE)": {
+        "English": "Rajasthan State Board (RBSE)", "Hindi": "Rajasthan State Board (RBSE)", "Kannada": "Rajasthan State Board (RBSE)", "Tamil": "Rajasthan State Board (RBSE)", "Telugu": "Rajasthan State Board (RBSE)", "Marathi": "Rajasthan State Board (RBSE)", "Bengali": "Rajasthan State Board (RBSE)", "Gujarati": "Rajasthan State Board (RBSE)", "Punjabi": "Rajasthan State Board (RBSE)", "Malayalam": "Rajasthan State Board (RBSE)", "Odia": "Rajasthan State Board (RBSE)"
+    },
+    "Tamil Nadu State Board (SSLC)": {
+        "English": "Tamil Nadu State Board (SSLC)", "Hindi": "Tamil Nadu State Board (SSLC)", "Kannada": "Tamil Nadu State Board (SSLC)", "Tamil": "Tamil Nadu State Board (SSLC)", "Telugu": "Tamil Nadu State Board (SSLC)", "Marathi": "Tamil Nadu State Board (SSLC)", "Bengali": "Tamil Nadu State Board (SSLC)", "Gujarati": "Tamil Nadu State Board (SSLC)", "Punjabi": "Tamil Nadu State Board (SSLC)", "Malayalam": "Tamil Nadu State Board (SSLC)", "Odia": "Tamil Nadu State Board (SSLC)"
+    },
+    "Telangana State Board (TSBIE)": {
+        "English": "Telangana State Board (TSBIE)", "Hindi": "Telangana State Board (TSBIE)", "Kannada": "Telangana State Board (TSBIE)", "Tamil": "Telangana State Board (TSBIE)", "Telugu": "Telangana State Board (TSBIE)", "Marathi": "Telangana State Board (TSBIE)", "Bengali": "Telangana State Board (TSBIE)", "Gujarati": "Telangana State Board (TSBIE)", "Punjabi": "Telangana State Board (TSBIE)", "Malayalam": "Telangana State Board (TSBIE)", "Odia": "Telangana State Board (TSBIE)"
+    },
+    "Tripura State Board (TBSE)": {
+        "English": "Tripura State Board (TBSE)", "Hindi": "Tripura State Board (TBSE)", "Kannada": "Tripura State Board (TBSE)", "Tamil": "Tripura State Board (TBSE)", "Telugu": "Tripura State Board (TBSE)", "Marathi": "Tripura State Board (TBSE)", "Bengali": "Tripura State Board (TBSE)", "Gujarati": "Tripura State Board (TBSE)", "Punjabi": "Tripura State Board (TBSE)", "Malayalam": "Tripura State Board (TBSE)", "Odia": "Tripura State Board (TBSE)"
+    },
+    "UP Board (UPMSP)": {
+        "English": "UP Board (UPMSP)", "Hindi": "UP Board (UPMSP)", "Kannada": "UP Board (UPMSP)", "Tamil": "UP Board (UPMSP)", "Telugu": "UP Board (UPMSP)", "Marathi": "UP Board (UPMSP)", "Bengali": "UP Board (UPMSP)", "Gujarati": "UP Board (UPMSP)", "Punjabi": "UP Board (UPMSP)", "Malayalam": "UP Board (UPMSP)", "Odia": "UP Board (UPMSP)"
+    },
+    "Uttarakhand State Board (UBSE)": {
+        "English": "Uttarakhand State Board (UBSE)", "Hindi": "Uttarakhand State Board (UBSE)", "Kannada": "Uttarakhand State Board (UBSE)", "Tamil": "Uttarakhand State Board (UBSE)", "Telugu": "Uttarakhand State Board (UBSE)", "Marathi": "Uttarakhand State Board (UBSE)", "Bengali": "Uttarakhand State Board (UBSE)", "Gujarati": "Uttarakhand State Board (UBSE)", "Punjabi": "Uttarakhand State Board (UBSE)", "Malayalam": "Uttarakhand State Board (UBSE)", "Odia": "Uttarakhand State Board (UBSE)"
+    },
+    "West Bengal State Board (WBBSE)": {
+        "English": "West Bengal State Board (WBBSE)", "Hindi": "West Bengal State Board (WBBSE)", "Kannada": "West Bengal State Board (WBBSE)", "Tamil": "West Bengal State Board (WBBSE)", "Telugu": "West Bengal State Board (WBBSE)", "Marathi": "West Bengal State Board (WBBSE)", "Bengali": "West Bengal State Board (WBBSE)", "Gujarati": "West Bengal State Board (WBBSE)", "Punjabi": "West Bengal State Board (WBBSE)", "Malayalam": "West Bengal State Board (WBBSE)", "Odia": "West Bengal State Board (WBBSE)"
+    },
+    "Delhi Board (DBSE)": {
+        "English": "Delhi Board (DBSE)", "Hindi": "Delhi Board (DBSE)", "Kannada": "Delhi Board (DBSE)", "Tamil": "Delhi Board (DBSE)", "Telugu": "Delhi Board (DBSE)", "Marathi": "Delhi Board (DBSE)", "Bengali": "Delhi Board (DBSE)", "Gujarati": "Delhi Board (DBSE)", "Punjabi": "Delhi Board (DBSE)", "Malayalam": "Delhi Board (DBSE)", "Odia": "Delhi Board (DBSE)"
+    },
+    "Puducherry Board": {
+        "English": "Puducherry Board", "Hindi": "Puducherry Board", "Kannada": "Puducherry Board", "Tamil": "Puducherry Board", "Telugu": "Puducherry Board", "Marathi": "Puducherry Board", "Bengali": "Puducherry Board", "Gujarati": "Puducherry Board", "Punjabi": "Puducherry Board", "Malayalam": "Puducherry Board", "Odia": "Puducherry Board"
+    },
+    "Easy": {
+        "English": "Easy", "Hindi": "आसान", "Kannada": "ಸುಲಭ", "Tamil": "எளிது", "Telugu": "సులభం", "Marathi": "सोपे", "Bengali": "সহজ", "Gujarati": "સરળ", "Punjabi": "ਸੌਖਾ", "Malayalam": "എളുപ്പം", "Odia": "ସହଜ"
+    },
+    "Moderate": {
+        "English": "Moderate", "Hindi": "मध्यम", "Kannada": "ಮಧ್ಯಮ", "Tamil": "மிதமான", "Telugu": "మధ్యస్థం", "Marathi": "मध्यम", "Bengali": "মাঝারি", "Gujarati": "મધ્યમ", "Punjabi": "ਦਰਮਿਆਨਾ", "Malayalam": "ഇടത്തരം", "Odia": "ମଧ୍ୟମ"
+    },
+    "Hard": {
+        "English": "Hard", "Hindi": "कठिन", "Kannada": "ಕಠಿಣ", "Tamil": "கடினம்", "Telugu": "కష్టం", "Marathi": "कठीण", "Bengali": "কঠিন", "Gujarati": "અઘરું", "Punjabi": "ਔਖਾ", "Malayalam": "കഠിനം", "Odia": "କଠିନ"
+    },
+    "Mixed": {
+        "English": "Mixed", "Hindi": "मिश्रित", "Kannada": "ಮಿಶ್ರ", "Tamil": "கலப்பு", "Telugu": "మిశ్రమం", "Marathi": "मिश्र", "Bengali": "মিশ্র", "Gujarati": "મિશ્ર", "Punjabi": "ਮਿਸ਼ਰਤ", "Malayalam": "മിശ്രിതം", "Odia": "ମିଶ୍ରିତ"
+    },
+    "Track lesson plans created, students reached, and classroom time saved.": {
+        "English": "Track lesson plans created, students reached, and classroom time saved.", "Hindi": "बनाई गई पाठ योजनाएँ, पहुँचे हुए विद्यार्थी और बचाया गया कक्षा समय ट्रैक करें।", "Kannada": "ರಚಿಸಿದ ಪಾಠ ಯೋಜನೆಗಳು, ತಲುಪಿದ ವಿದ್ಯಾರ್ಥಿಗಳು ಮತ್ತು ಉಳಿಸಿದ ತರಗತಿ ಸಮಯವನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ.", "Tamil": "உருவாக்கப்பட்ட பாடத் திட்டங்கள், சென்றடைந்த மாணவர்கள் மற்றும் சேமிக்கப்பட்ட வகுப்பறை நேரத்தைக் கண்காணிக்கவும்.", "Telugu": "సృష్టించిన పాఠ ప్రణాళికలు, చేరిన విద్యార్థులు మరియు ఆదా చేసిన తరగతి సమయాన్ని ట్రాక్ చేయండి.", "Marathi": "तयार केलेल्या पाठ योजना, पोहोचलेले विद्यार्थी आणि वाचवलेला वर्ग वेळ ट्रॅक करा.", "Bengali": "তৈরি করা পাঠ পরিকল্পনা, পৌঁছানো শিক্ষার্থী এবং সাশ্রয় করা শ্রেণিকক্ষের সময় ট্র্যাক করুন।", "Gujarati": "બનાવેલી પાઠ યોજનાઓ, પહોંચેલા વિદ્યાર્થીઓ અને બચાવેલો વર્ગખંડ સમય ટ્રૅક કરો.", "Punjabi": "ਬਣਾਈਆਂ ਪਾਠ ਯੋਜਨਾਵਾਂ, ਪਹੁੰਚੇ ਵਿਦਿਆਰਥੀ ਅਤੇ ਬਚਾਇਆ ਜਮਾਤ ਸਮਾਂ ਟ੍ਰੈਕ ਕਰੋ।", "Malayalam": "സൃഷ്ടിച്ച പാഠ പദ്ധതികൾ, എത്തിച്ചേർന്ന വിദ്യാർത്ഥികൾ, ലാഭിച്ച ക്ലാസ് മുറി സമയം എന്നിവ ട്രാക്ക് ചെയ്യുക.", "Odia": "ତିଆରି ହୋଇଥିବା ପାଠ ଯୋଜନା, ପହଞ୍ଚିଥିବା ଛାତ୍ରଛାତ୍ରୀ ଏବଂ ସଞ୍ଚୟ ହୋଇଥିବା ଶ୍ରେଣୀକକ୍ଷ ସମୟ ଟ୍ରାକ୍ କରନ୍ତୁ।"
+    },
+    "Add Certification": {
+        "English": "Add Certification", "Hindi": "प्रमाणन जोड़ें", "Kannada": "ಪ್ರಮಾಣೀಕರಣ ಸೇರಿಸಿ", "Tamil": "சான்றிதழ் சேர்க்கவும்", "Telugu": "ధృవీకరణ జోడించండి", "Marathi": "प्रमाणपत्र जोडा", "Bengali": "সার্টিফিকেশন যোগ করুন", "Gujarati": "પ્રમાણપત્ર ઉમેરો", "Punjabi": "ਪ੍ਰਮਾਣੀਕਰਨ ਜੋੜੋ", "Malayalam": "സർട്ടിഫിക്കേഷൻ ചേർക്കുക", "Odia": "ପ୍ରମାଣପତ୍ର ଯୋଡନ୍ତୁ"
+    },
+    "Add a professional credential. It will be marked pending until verified.": {
+        "English": "Add a professional credential. It will be marked pending until verified.", "Hindi": "एक पेशेवर प्रमाण-पत्र जोड़ें। सत्यापित होने तक इसे लंबित के रूप में चिह्नित किया जाएगा।", "Kannada": "ವೃತ್ತಿಪರ ಪ್ರಮಾಣಪತ್ರವನ್ನು ಸೇರಿಸಿ. ಪರಿಶೀಲನೆಯಾಗುವವರೆಗೆ ಅದನ್ನು ಬಾಕಿ ಎಂದು ಗುರುತಿಸಲಾಗುತ್ತದೆ.", "Tamil": "ஒரு தொழில்முறை சான்றிதழைச் சேர்க்கவும். சரிபார்க்கப்படும் வரை அது நிலுவையில் உள்ளதாகக் குறிக்கப்படும்.", "Telugu": "ఒక వృత్తిపరమైన ధృవీకరణ పత్రాన్ని జోడించండి. ధృవీకరించబడే వరకు ఇది పెండింగ్‌గా గుర్తించబడుతుంది.", "Marathi": "व्यावसायिक प्रमाणपत्र जोडा. पडताळणी होईपर्यंत ते प्रलंबित म्हणून चिन्हांकित केले जाईल.", "Bengali": "একটি পেশাদার শংসাপত্র যোগ করুন। যাচাই না হওয়া পর্যন্ত এটি মুলতুবি হিসেবে চিহ্নিত থাকবে।", "Gujarati": "એક વ્યાવસાયિક પ્રમાણપત્ર ઉમેરો. ચકાસણી થાય ત્યાં સુધી તેને બાકી તરીકે ચિહ્નિત કરવામાં આવશે.", "Punjabi": "ਇੱਕ ਪੇਸ਼ੇਵਰ ਪ੍ਰਮਾਣ-ਪੱਤਰ ਜੋੜੋ। ਤਸਦੀਕ ਹੋਣ ਤੱਕ ਇਸਨੂੰ ਬਕਾਇਆ ਵਜੋਂ ਨਿਸ਼ਾਨਬੱਧ ਕੀਤਾ ਜਾਵੇਗਾ।", "Malayalam": "ഒരു പ്രൊഫഷണൽ ക്രെഡൻഷ്യൽ ചേർക്കുക. പരിശോധിക്കുന്നതുവരെ ഇത് തീർപ്പുകൽപ്പിക്കാത്തതായി അടയാളപ്പെടുത്തും.", "Odia": "ଗୋଟିଏ ବୃତ୍ତିଗତ ପ୍ରମାଣପତ୍ର ଯୋଡନ୍ତୁ। ଯାଞ୍ଚ ନ ହେବା ପର୍ଯ୍ୟନ୍ତ ଏହାକୁ ବିଚାରାଧୀନ ଭାବେ ଚିହ୍ନଟ କରାଯିବ।"
+    },
+    "Certification Name": {
+        "English": "Certification Name", "Hindi": "प्रमाणन का नाम", "Kannada": "ಪ್ರಮಾಣೀಕರಣ ಹೆಸರು", "Tamil": "சான்றிதழ் பெயர்", "Telugu": "ధృవీకరణ పేరు", "Marathi": "प्रमाणपत्राचे नाव", "Bengali": "সার্টিফিকেশনের নাম", "Gujarati": "પ્રમાણપત્રનું નામ", "Punjabi": "ਪ੍ਰਮਾਣੀਕਰਨ ਦਾ ਨਾਮ", "Malayalam": "സർട്ടിഫിക്കേഷൻ പേര്", "Odia": "ପ୍ରମାଣପତ୍ର ନାମ"
+    },
+    "Certification submitted": {
+        "English": "Certification submitted", "Hindi": "प्रमाणन सबमिट किया गया", "Kannada": "ಪ್ರಮಾಣೀಕರಣ ಸಲ್ಲಿಸಲಾಗಿದೆ", "Tamil": "சான்றிதழ் சமர்ப்பிக்கப்பட்டது", "Telugu": "ధృవీకరణ సమర్పించబడింది", "Marathi": "प्रमाणपत्र सादर केले", "Bengali": "সার্টিফিকেশন জমা দেওয়া হয়েছে", "Gujarati": "પ્રમાણપત્ર સબમિટ કર્યું", "Punjabi": "ਪ੍ਰਮਾਣੀਕਰਨ ਜਮ੍ਹਾਂ ਕੀਤਾ ਗਿਆ", "Malayalam": "സർട്ടിഫിക്കേഷൻ സമർപ്പിച്ചു", "Odia": "ପ୍ରମାଣପତ୍ର ଦାଖଲ ହୋଇଛି"
+    },
+    "Could not add certification": {
+        "English": "Could not add certification", "Hindi": "प्रमाणन नहीं जोड़ा जा सका", "Kannada": "ಪ್ರಮಾಣೀಕರಣವನ್ನು ಸೇರಿಸಲಾಗಲಿಲ್ಲ", "Tamil": "சான்றிதழைச் சேர்க்க முடியவில்லை", "Telugu": "ధృవీకరణను జోడించలేకపోయాం", "Marathi": "प्रमाणपत्र जोडता आले नाही", "Bengali": "সার্টিফিকেশন যোগ করা যায়নি", "Gujarati": "પ્રમાણપત્ર ઉમેરી શકાયું નહીં", "Punjabi": "ਪ੍ਰਮਾਣੀਕਰਨ ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ", "Malayalam": "സർട്ടിഫിക്കേഷൻ ചേർക്കാനായില്ല", "Odia": "ପ୍ରମାଣପତ୍ର ଯୋଡାଯାଇ ପାରିଲା ନାହିଁ"
+    },
+    "Issue Date": {
+        "English": "Issue Date", "Hindi": "जारी करने की तिथि", "Kannada": "ವಿತರಣಾ ದಿನಾಂಕ", "Tamil": "வழங்கிய தேதி", "Telugu": "జారీ తేదీ", "Marathi": "जारी दिनांक", "Bengali": "ইস্যু তারিখ", "Gujarati": "જારી તારીખ", "Punjabi": "ਜਾਰੀ ਮਿਤੀ", "Malayalam": "ഇഷ്യൂ തീയതി", "Odia": "ଜାରି ତାରିଖ"
+    },
+    "Issuing Body": {
+        "English": "Issuing Body", "Hindi": "जारी करने वाली संस्था", "Kannada": "ವಿತರಣಾ ಸಂಸ್ಥೆ", "Tamil": "வழங்கும் அமைப்பு", "Telugu": "జారీ చేసే సంస్థ", "Marathi": "जारी करणारी संस्था", "Bengali": "ইস্যুকারী সংস্থা", "Gujarati": "જારી કરનાર સંસ્થા", "Punjabi": "ਜਾਰੀ ਕਰਨ ਵਾਲੀ ਸੰਸਥਾ", "Malayalam": "ഇഷ്യൂ ചെയ്യുന്ന സ്ഥാപനം", "Odia": "ଜାରିକାରୀ ସଂସ୍ଥା"
+    },
+    "Your credential was added and is pending verification.": {
+        "English": "Your credential was added and is pending verification.", "Hindi": "आपका प्रमाण-पत्र जोड़ दिया गया है और सत्यापन के लिए लंबित है।", "Kannada": "ನಿಮ್ಮ ಪ್ರಮಾಣಪತ್ರವನ್ನು ಸೇರಿಸಲಾಗಿದೆ ಮತ್ತು ಪರಿಶೀಲನೆಗೆ ಬಾಕಿ ಇದೆ.", "Tamil": "உங்கள் சான்றிதழ் சேர்க்கப்பட்டது மற்றும் சரிபார்ப்புக்காக நிலுவையில் உள்ளது.", "Telugu": "మీ ధృవీకరణ పత్రం జోడించబడింది మరియు ధృవీకరణ కోసం పెండింగ్‌లో ఉంది.", "Marathi": "तुमचे प्रमाणपत्र जोडले गेले आहे आणि पडताळणीसाठी प्रलंबित आहे.", "Bengali": "আপনার শংসাপত্র যোগ করা হয়েছে এবং যাচাইয়ের জন্য মুলতুবি রয়েছে।", "Gujarati": "તમારું પ્રમાણપત્ર ઉમેરવામાં આવ્યું છે અને ચકાસણી માટે બાકી છે.", "Punjabi": "ਤੁਹਾਡਾ ਪ੍ਰਮਾਣ-ਪੱਤਰ ਜੋੜ ਦਿੱਤਾ ਗਿਆ ਹੈ ਅਤੇ ਤਸਦੀਕ ਲਈ ਬਕਾਇਆ ਹੈ।", "Malayalam": "നിങ്ങളുടെ ക്രെഡൻഷ്യൽ ചേർത്തു, പരിശോധനയ്ക്കായി തീർപ്പുകൽപ്പിക്കാതെ കിടക്കുന്നു.", "Odia": "ଆପଣଙ୍କ ପ୍ରମାଣପତ୍ର ଯୋଡାଯାଇଛି ଏବଂ ଯାଞ୍ଚ ପାଇଁ ବିଚାରାଧୀନ ଅଛି।"
+    },
+    "e.g. B.Ed, CTET, Diploma in Education": {
+        "English": "e.g. B.Ed, CTET, Diploma in Education", "Hindi": "जैसे B.Ed, CTET, Diploma in Education", "Kannada": "ಉದಾ. B.Ed, CTET, Diploma in Education", "Tamil": "எ.கா. B.Ed, CTET, Diploma in Education", "Telugu": "ఉదా. B.Ed, CTET, Diploma in Education", "Marathi": "उदा. B.Ed, CTET, Diploma in Education", "Bengali": "যেমন B.Ed, CTET, Diploma in Education", "Gujarati": "દા.ત. B.Ed, CTET, Diploma in Education", "Punjabi": "ਜਿਵੇਂ B.Ed, CTET, Diploma in Education", "Malayalam": "ഉദാ. B.Ed, CTET, Diploma in Education", "Odia": "ଯେପରି B.Ed, CTET, Diploma in Education"
+    },
+    "e.g. NCTE, State Board, University": {
+        "English": "e.g. NCTE, State Board, University", "Hindi": "जैसे NCTE, State Board, University", "Kannada": "ಉದಾ. NCTE, State Board, University", "Tamil": "எ.கா. NCTE, State Board, University", "Telugu": "ఉదా. NCTE, State Board, University", "Marathi": "उदा. NCTE, State Board, University", "Bengali": "যেমন NCTE, State Board, University", "Gujarati": "દા.ત. NCTE, State Board, University", "Punjabi": "ਜਿਵੇਂ NCTE, State Board, University", "Malayalam": "ഉദാ. NCTE, State Board, University", "Odia": "ଯେପରି NCTE, State Board, University"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:
