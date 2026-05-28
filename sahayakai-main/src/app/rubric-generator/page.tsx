@@ -92,6 +92,11 @@ function RubricGeneratorContent() {
   }, []); // runs once on mount only
 
   const selectedLanguage = form.watch("language") || 'en';
+  // Example queries should follow the UI language, not the (possibly stale)
+  // output-language form field. On first render the form default can lock to
+  // 'en' before the UI language hydrates from storage, which left the sample
+  // prompts in English even in Tamil mode.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
 
   useEffect(() => {
     if (!user || hasLoaded.current) return;
@@ -282,7 +287,7 @@ function RubricGeneratorContent() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="rubric" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField

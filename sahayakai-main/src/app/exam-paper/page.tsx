@@ -389,7 +389,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {EDUCATION_BOARDS.map((b) => (
                       <SelectItem key={b} value={b}>
-                        {b}
+                        {t(b)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -405,7 +405,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {GRADE_OPTIONS.map((g) => (
                       <SelectItem key={g} value={g}>
-                        {g}
+                        {t(g)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -424,7 +424,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {availableSubjects.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {s}
+                        {t(s)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -540,7 +540,7 @@ function ExamPaperPageInner() {
                 <SelectContent>
                   {DIFFICULTY_OPTIONS.map((d) => (
                     <SelectItem key={d} value={d}>
-                      {d.charAt(0).toUpperCase() + d.slice(1)}
+                      {t(d.charAt(0).toUpperCase() + d.slice(1))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -556,7 +556,7 @@ function ExamPaperPageInner() {
                 <SelectContent>
                   {LANGUAGES.map((l) => (
                     <SelectItem key={l} value={l}>
-                      {l}
+                      {t(l)}
                     </SelectItem>
                   ))}
                 </SelectContent>

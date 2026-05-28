@@ -108,7 +108,17 @@ export async function POST(request: Request) {
             case 'videoStoryteller':
                 result = { action: 'NAVIGATE', url: `/video-storyteller?${queryString}` };
                 break;
+            case 'examPaper':
+                result = { action: 'NAVIGATE', url: `/exam-paper?${queryString}` };
+                break;
             case 'instantAnswer':
+            default: {
+                // QA #1 (2026-05-28): a bare academic topic with no action verb
+                // ("Relations and Functions Class 12") previously fell to the
+                // default branch and returned "Not sure how to help", which felt
+                // broken. Treat any unclassified-but-non-empty prompt as an
+                // instant-answer question instead of erroring out. The teacher
+                // gets a useful answer + video rather than a dead end.
                 const answer = await instantAnswer({
                     question: prompt,
                     language: finalLanguage,
@@ -116,9 +126,7 @@ export async function POST(request: Request) {
                 });
                 result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };
                 break;
-            default:
-                result = { error: "I'm not sure how to help with that. Please try rephrasing your request." };
-                break;
+            }
         }
 
         return NextResponse.json({

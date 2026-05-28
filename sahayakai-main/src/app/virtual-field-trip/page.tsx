@@ -430,7 +430,7 @@ function VirtualFieldTripContent() {
               />
 
               <div className="p-3 bg-accent/20 rounded-lg">
-                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
+                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="virtual-field-trip" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">

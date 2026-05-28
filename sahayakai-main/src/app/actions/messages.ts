@@ -263,6 +263,12 @@ export async function sendMessageAction({
             senderName: senderSnap?.displayName ?? 'Teacher',
             senderPhotoURL: senderSnap?.photoURL ?? undefined,
             link: `/messages?open=${conversationId}`,
+            // Stamp the conversation so markConversationReadAction can clear the
+            // matching notification docs (and therefore the Bell badge) when the
+            // recipient opens/reads the conversation. Without this, the unread
+            // conversation badge cleared but the "N messages" notification badge
+            // lingered forever.
+            metadata: { conversationId },
         }).catch(() => {});
     }
 
@@ -316,6 +322,32 @@ export async function markConversationReadAction(
             batch.update(doc.ref, { readBy: FieldValue.arrayUnion(userId) });
         });
         await batch.commit();
+    }
+
+    // Also clear the per-message notification docs for this conversation so the
+    // sidebar Bell badge ("N messages") drops to zero once the user has actually
+    // read the thread. sendMessageAction stamps metadata.conversationId on each
+    // SYSTEM "New message" notification; we mark those isRead here.
+    try {
+        const notifSnap = await db
+            .collection('notifications')
+            .where('recipientId', '==', userId)
+            .where('metadata.conversationId', '==', conversationId)
+            .where('isRead', '==', false)
+            .limit(100)
+            .get();
+
+        if (!notifSnap.empty) {
+            const notifBatch = db.batch();
+            notifSnap.docs.forEach((doc) => {
+                notifBatch.update(doc.ref, { isRead: true });
+            });
+            await notifBatch.commit();
+        }
+    } catch (err) {
+        // Non-fatal: a composite index may be required for this query. The
+        // conversation badge still clears; only the notification badge lingers.
+        console.warn('[markConversationReadAction] failed to clear message notifications', err);
     }
 }
 

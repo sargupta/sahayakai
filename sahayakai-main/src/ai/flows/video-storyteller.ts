@@ -505,7 +505,7 @@ export async function getVideoCategorySearchResults(
     // We fold the supplied aiResult.categories (if any) on top of the
     // cache result so the response shape is stable for downstream
     // consumers that read `categories`.
-    const cachedResult = await getCachedVideos(subject, gradeLevel);
+    const cachedResult = await getCachedVideos(subject, gradeLevel, language, state, educationBoard, input.topic);
     if (cachedResult) {
         StructuredLogger.info('Video Storyteller served from cache', {
             metadata: { subject, gradeLevel },
@@ -594,7 +594,7 @@ export async function getVideoCategorySearchResults(
         duration,
     });
 
-    void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
+    void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage, language, state, educationBoard, input.topic);
 
     return {
         categories: aiResult?.categories || {},
