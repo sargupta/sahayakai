@@ -24,9 +24,10 @@ import {
 import {
   Globe, CreditCard, Shield, Download, Trash2, Loader2,
   Crown, ArrowRight, ChevronRight, GraduationCap,
-  Settings as SettingsIcon,
+  Settings as SettingsIcon, Sun, Moon,
 } from 'lucide-react';
-import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification } from '@/types';
+import { useTheme } from 'next-themes';
+import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification, EDUCATION_BOARDS, type EducationBoard } from '@/types';
 import { AuthGate } from '@/components/auth/auth-gate';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,7 @@ interface ConsentPrefs {
 export default function SettingsPage() {
   const { user } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const { plan, isPro, loading: planLoading } = useSubscription();
   const getIdToken = useCallback(async () => {
     if (!user) throw new Error('Not authenticated');
@@ -71,11 +73,16 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  // next-themes only knows the resolved theme on the client; guard the
+  // Select value so SSR markup stays stable and there's no hydration warning.
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
 
   // Professional Profile state
   const [profYears, setProfYears] = useState<string>('');
   const [profRole, setProfRole] = useState<AdministrativeRole | ''>('');
   const [profQuals, setProfQuals] = useState<Qualification[]>([]);
+  const [profBoard, setProfBoard] = useState<EducationBoard | ''>('');
   const [profSaving, setProfSaving] = useState(false);
   const [profSaved, setProfSaved] = useState(false);
   const [profError, setProfError] = useState<string | null>(null);
@@ -181,6 +188,12 @@ export default function SettingsPage() {
       if (Array.isArray(profile.qualifications) && profile.qualifications.length > 0) {
         setProfQuals(profile.qualifications as Qualification[]);
       }
+      // QA #9 — prefer the typed preferredBoard, fall back to the legacy
+      // free-string educationBoard so existing teachers see their board.
+      const board = profile.preferredBoard ?? profile.educationBoard;
+      if (board && (EDUCATION_BOARDS as readonly string[]).includes(board)) {
+        setProfBoard(board as EducationBoard);
+      }
     } catch {
       // Non-blocking — form stays blank, user can fill manually
     }
@@ -277,6 +290,7 @@ export default function SettingsPage() {
       };
       if (profYears !== '') body.yearsOfExperience = Number(profYears);
       if (profRole !== '') body.administrativeRole = profRole;
+      if (profBoard !== '') body.preferredBoard = profBoard;
 
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
@@ -418,6 +432,24 @@ export default function SettingsPage() {
             />
           </div>
 
+          {/* Education Board (QA #9) — board-aligned AI content */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("Education Board")}</Label>
+            <Select value={profBoard} onValueChange={(v) => setProfBoard(v as EducationBoard)}>
+              <SelectTrigger className="max-w-[320px]">
+                <SelectValue placeholder={t("Select your board")} />
+              </SelectTrigger>
+              <SelectContent>
+                {EDUCATION_BOARDS.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {t(b)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("We use your board to align AI-generated papers, quizzes and lessons.")}</p>
+          </div>
+
           {/* Administrative Role */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">{t("Administrative Role")}</Label>
@@ -489,6 +521,33 @@ export default function SettingsPage() {
               {LANGUAGES.map((lang) => (
                 <SelectItem key={lang} value={lang}>{lang}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* ─── Appearance ─── */}
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            {themeMounted && theme === 'dark'
+              ? <Moon className="h-5 w-5 text-muted-foreground shrink-0" />
+              : <Sun className="h-5 w-5 text-muted-foreground shrink-0" />}
+            <div>
+              <p className="text-sm font-medium">{t("Theme")}</p>
+              <p className="text-xs text-muted-foreground">{t("Appearance")}</p>
+            </div>
+          </div>
+          <Select
+            value={themeMounted ? (theme === 'dark' ? 'dark' : 'light') : 'light'}
+            onValueChange={(val) => setTheme(val)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">{t("Light")}</SelectItem>
+              <SelectItem value="dark">{t("Dark")}</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>

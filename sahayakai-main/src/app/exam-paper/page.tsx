@@ -8,6 +8,7 @@ import { getAuthToken } from "@/lib/get-auth-token";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
+import { getProfileData } from "@/app/actions/profile";
 import {
   FileText,
   BookOpen,
@@ -133,10 +134,29 @@ function ExamPaperPageInner() {
   const [markingSchemeOpen, setMarkingSchemeOpen] = useState(false);
 
   // ── Auth guard ─────────────────────────────────────────────────────────
+  // Guard so the teacher's preferred board is applied only once, on first
+  // load — never re-applied after they manually pick a different board.
+  const boardDefaultedRef = React.useRef(false);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setAuthed(!!user);
       setLoading(false);
+      // QA #9 — default the board field to the teacher's preferred board so
+      // generated papers are board-aligned out of the box. Falls back to the
+      // hardcoded "CBSE" default when no board is saved or it's unknown.
+      if (user && !boardDefaultedRef.current) {
+        getProfileData(user.uid)
+          .then(({ profile }) => {
+            const saved = (profile as { preferredBoard?: string; educationBoard?: string } | null);
+            const board = saved?.preferredBoard ?? saved?.educationBoard;
+            if (board && (EDUCATION_BOARDS as readonly string[]).includes(board) && !boardDefaultedRef.current) {
+              boardDefaultedRef.current = true;
+              setBoard(board);
+            }
+          })
+          .catch(() => { /* non-fatal — keep the CBSE default */ });
+      }
     });
     return () => unsub();
   }, []);

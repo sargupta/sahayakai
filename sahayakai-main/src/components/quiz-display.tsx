@@ -14,6 +14,7 @@ import {
     X,
     Printer,
     RotateCw,
+    Loader2,
     ThumbsUp,
     ThumbsDown,
     MessageSquareQuote,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 import { useLanguage } from "@/context/language-context";
@@ -296,6 +298,63 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
         }
     };
 
+    // Per-question "Save Edit": commits the in-progress edits for a single
+    // question. Edits already live in editState.editedVariants (local state),
+    // so this persists the whole edited quiz to the library — the same path
+    // the global Save uses — and toasts a per-question confirmation. If the
+    // quiz was already saved, this updates the saved library doc; otherwise it
+    // creates one. Network failures are reported via toast.
+    const [savingQuestion, setSavingQuestion] = useState<number | null>(null);
+
+    const handleSaveQuestion = async (idx: number) => {
+        setSavingQuestion(idx);
+        try {
+            const { auth } = await import("@/lib/firebase");
+            const user = auth.currentUser;
+            if (!user) {
+                toast({
+                    title: t.loginRequiredTitle,
+                    description: t.loginRequiredDesc,
+                    variant: "destructive",
+                });
+                return;
+            }
+            const saveTitle = currentQuiz.title || "General Quiz";
+            const payload = {
+                id: crypto.randomUUID(),
+                type: "quiz",
+                title: saveTitle,
+                gradeLevel: quiz.gradeLevel || "Class 5",
+                subject: quiz.subject || "General",
+                topic: currentQuiz.title || quiz.topic || "General",
+                language: selectedLanguage || "en",
+                data: editState.editedVariants,
+            };
+            const token = await user.getIdToken();
+            const response = await fetch("/api/content/save", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error("Server rejected save");
+            toast({
+                title: tr("Saved"),
+                description: `${tr("Question")} ${idx + 1} ${tr("saved")}`,
+            });
+        } catch {
+            toast({
+                title: t.saveFailedTitle,
+                description: t.saveFailedDesc,
+                variant: "destructive",
+            });
+        } finally {
+            setSavingQuestion(null);
+        }
+    };
+
     const handleAddQuestion = (
         idx: number,
         type:
@@ -439,6 +498,14 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                 onClick: handleDownloadPDF,
                             },
                         ]}
+                        extraActions={
+                            editState.isEditing ? null : (
+                                <QuickShareButton
+                                    contentType="quiz"
+                                    onSave={handleSaveToLibrary}
+                                />
+                            )
+                        }
                         footer={
                             <FeedbackDialog
                                 page="quiz-generator"
@@ -521,6 +588,37 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                         </TooltipTrigger>
                                                         <TooltipContent className="text-xs">
                                                             {tr("Refine")}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    handleSaveQuestion(
+                                                                        idx,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    savingQuestion ===
+                                                                    idx
+                                                                }
+                                                                className="h-8 w-8 text-blue-600"
+                                                                aria-label={tr(
+                                                                    "Save Edit",
+                                                                )}
+                                                            >
+                                                                {savingQuestion ===
+                                                                idx ? (
+                                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                ) : (
+                                                                    <Check className="h-3.5 w-3.5" />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="text-xs">
+                                                            {tr("Save Edit")}
                                                         </TooltipContent>
                                                     </Tooltip>
                                                     <DropdownMenu>

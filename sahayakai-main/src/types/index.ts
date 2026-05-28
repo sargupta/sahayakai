@@ -166,6 +166,13 @@ export interface UserProfile {
     pincode?: string;
     state?: string;
     educationBoard?: string;
+    /**
+     * Teacher's preferred education board (QA #9). Canonical typed board used
+     * to default AI generation (exam-paper, etc.) to a board-aligned context.
+     * Required at onboarding. Distinct from the free-string `educationBoard`
+     * (kept for backwards-compat); both are populated from the same picker.
+     */
+    preferredBoard?: EducationBoard;
     verifiedStatus?: 'none' | 'pending' | 'verified';
     bio?: string;
     department?: string;

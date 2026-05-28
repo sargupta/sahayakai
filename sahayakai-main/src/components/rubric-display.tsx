@@ -14,6 +14,7 @@ import { Download, Save, Copy, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 
@@ -139,6 +140,9 @@ ${criterion.levels
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },
             ]}
+            extraActions={
+                <QuickShareButton contentType="rubric" onSave={handleSave} />
+            }
             footer={
                 <FeedbackDialog
                     page="rubric"

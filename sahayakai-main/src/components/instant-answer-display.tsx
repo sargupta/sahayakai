@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 
@@ -113,6 +114,12 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },
             ]}
+            extraActions={
+                <QuickShareButton
+                    contentType="instant-answer"
+                    onSave={handleSave}
+                />
+            }
         >
             <div className="prose prose-slate max-w-none prose-sm sm:prose-base">
                 <ReactMarkdown>{answer.answer}</ReactMarkdown>

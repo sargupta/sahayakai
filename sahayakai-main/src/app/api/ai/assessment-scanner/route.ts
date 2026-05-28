@@ -36,6 +36,7 @@ import { gradeAssessment } from '@/ai/flows/assessment-scanner';
 import { handleAIError } from '@/lib/ai-error-response';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dbAdapter } from '@/lib/db/adapter';
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
 
@@ -138,6 +139,19 @@ async function _handler(request: Request) {
                 },
                 { status: 400 },
             );
+        }
+
+        // QA #9 — default the education board to the teacher's saved board so
+        // grading rubrics are board-aligned, without requiring a board field
+        // in the scanner UI. Only fills the gap; an explicit client value wins.
+        if (!candidate.educationBoard) {
+            try {
+                const profile = await dbAdapter.getUser(userId) as { preferredBoard?: string; educationBoard?: string } | null;
+                const board = profile?.preferredBoard ?? profile?.educationBoard;
+                if (board) candidate.educationBoard = board;
+            } catch {
+                // Non-fatal — proceed without a board hint.
+            }
         }
 
         // Schema parse runs LAST so the targeted guards above own their own
