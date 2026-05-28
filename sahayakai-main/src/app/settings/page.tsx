@@ -226,12 +226,19 @@ export default function SettingsPage() {
   const handleExport = async () => {
     if (!user) return;
     setExporting(true);
+    // BUG #31 (2026-05-28): Defense-in-depth client timeout so the spinner can
+    // never spin forever even if the request stalls. The server-side hang
+    // (archiver back-pressure deadlock) is fixed in /api/export, but a slow
+    // network or proxy could still leave fetch pending; abort after 100s.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 100_000);
     try {
       const token = await getIdToken();
       const res = await fetch('/api/export', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ includeProfile: true, includeAnalytics: true }),
+        signal: controller.signal,
       });
       if (res.headers.get('content-type')?.includes('application/zip')) {
         const blob = await res.blob();
@@ -242,14 +249,19 @@ export default function SettingsPage() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        const data = await res.json();
-        if (data.jobId) {
+        // Non-ZIP response: either an async-job acknowledgement, or an error.
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.jobId) {
           alert(t('Large export started. You will be notified when it is ready.'));
+        } else {
+          // Surface server errors (e.g. 500) instead of silently doing nothing.
+          alert(t('Export failed. Please try again.'));
         }
       }
     } catch {
       alert(t('Export failed. Please try again.'));
     } finally {
+      clearTimeout(timeout);
       setExporting(false);
     }
   };

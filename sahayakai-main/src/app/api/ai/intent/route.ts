@@ -5,6 +5,34 @@ import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 
 /**
+ * BUG #7 (2026-05-28): When the agent router fails to extract a concise
+ * `topic`, we no longer dump the entire raw utterance into the destination
+ * page. This helper strips the most common conversational scaffolding and
+ * artefact/action words so a fallback at least resembles a short topic. If
+ * the result is empty or still sentence-length, it returns '' and the caller
+ * omits the param entirely (page shows a clean placeholder).
+ */
+function cleanTopicFallback(raw: string | undefined | null): string {
+    if (!raw) return '';
+    let s = raw.trim();
+    // Strip leading conversational/action scaffolding (English + common Hindi romanization).
+    s = s.replace(
+        /^(hey|hi|hello|please|can you|could you|kya aap|kindly|i want|i need|help me|let'?s|make( me)?|create|generate|build|prepare|design|banao|banana hai|chahiye|de(na|sakti ho)?)[\s,:-]+/gi,
+        ''
+    );
+    // Strip artefact/tool nouns and the connective that usually follows them.
+    s = s.replace(
+        /\b(a |an |the )?(lesson plan|unit plan|quiz|mcq|worksheet|exam paper|board paper|question paper|rubric|field trip|video|visual aid|flashcards?|diagram|training)\b[\s]*(about|on|for|regarding|ka|ke|ki|par|पर|का|के|की|पे)?[\s,:-]*/gi,
+        ''
+    );
+    s = s.replace(/\s+/g, ' ').trim();
+    // If nothing survives, or it still reads as a full sentence (too long / has a verb-y tail),
+    // give up and let the page show its placeholder rather than a cluttered field.
+    if (!s || s.length > 60 || s.split(/\s+/).length > 8) return '';
+    return s;
+}
+
+/**
  * @swagger
  * /api/ai/intent:
  *   post:
@@ -69,13 +97,19 @@ export async function POST(request: Request) {
             plannedActions = [],
         } = flowOutput;
 
-        // Use extracted topic if prompt is generic, otherwise use prompt
-        const finalTopic = extractedTopic || prompt;
+        // BUG #7 (2026-05-28): Prefer the model's CONCISE extracted topic.
+        // Previously we fell back to the raw `prompt` whenever extraction
+        // returned null, which dumped the entire verbose utterance ("can you
+        // help me make a lesson plan about photosynthesis for class 7") into
+        // the destination page's topic field. Instead, only fall back to a
+        // lightly-cleaned prompt, and leave the field empty if cleaning
+        // produces nothing useful so the page shows a clean placeholder.
+        const finalTopic = (extractedTopic && extractedTopic.trim()) || cleanTopicFallback(prompt);
         const finalLanguage = detectedLanguage || language || 'en';
 
         let result: any;
         const queryParams = new URLSearchParams();
-        queryParams.set('topic', finalTopic);
+        if (finalTopic) queryParams.set('topic', finalTopic);
         if (extractedGrade) queryParams.set('gradeLevel', extractedGrade);
         if (extractedSubject) queryParams.set('subject', extractedSubject);
         if (finalLanguage) queryParams.set('language', finalLanguage);

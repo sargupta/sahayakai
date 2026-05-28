@@ -175,6 +175,55 @@ async function _handler(request: Request) {
             );
         }
 
+        // BUG #2 hardening: when the model's output fails Zod validation even
+        // after the schema's safe-fill defaults (e.g. a malformed `sections`
+        // array, or a per-question `marks` that came back non-numeric), the
+        // flow throws a `SchemaValidationError`. Surface this as a 422 with a
+        // clear, actionable message instead of a bare 500 "Internal Server
+        // Error" — and log the raw model output + parse errors at ERROR so the
+        // failure is diagnosable from Cloud Logging without a repro.
+        const errName = (error as { name?: string } | null)?.name;
+        const errCode = (error as { errorCode?: string } | null)?.errorCode;
+        const isSchemaValidation =
+            errName === 'SchemaValidationError' || errCode === 'AI-SCHEMA-001';
+
+        if (isSchemaValidation) {
+            const ctx = (error as { context?: { validationErrors?: unknown } } | null)?.context;
+            const inner = (ctx?.validationErrors ?? {}) as {
+                rawOutput?: unknown;
+                parseErrors?: unknown;
+                expectedSchema?: unknown;
+            };
+            logger.error(
+                `Exam Paper schema validation failed for: "${paperDesc}"`,
+                error,
+                'EXAM_PAPER',
+                {
+                    userId: request.headers.get('x-user-id'),
+                    reason: 'schema_validation',
+                    expectedSchema: inner.expectedSchema,
+                    parseErrors: inner.parseErrors,
+                    // Stringify so the raw model output lands as a single
+                    // searchable field in Cloud Logging rather than being
+                    // dropped by the structured-logging serializer.
+                    rawModelOutput:
+                        typeof inner.rawOutput === 'string'
+                            ? inner.rawOutput
+                            : JSON.stringify(inner.rawOutput ?? null),
+                },
+            );
+
+            return NextResponse.json(
+                {
+                    error: 'exam_paper_unstructured',
+                    code: 'SCHEMA_VALIDATION_FAILED',
+                    message:
+                        "We couldn't structure the exam paper — try fewer chapters or regenerate.",
+                },
+                { status: 422 },
+            );
+        }
+
         logAIError(error, 'EXAM_PAPER', { message: `Exam Paper API Failed for: "${paperDesc}"`, userId: request.headers.get('x-user-id') });
 
         return NextResponse.json(

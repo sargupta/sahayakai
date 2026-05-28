@@ -57,10 +57,16 @@ const ExamPaperOutputSchema = z.object({
   maxMarks: z.number(),
   generalInstructions: z.array(z.string()),
   sections: z.array(ExamPaperSectionSchema),
+  // blueprintSummary and its nested arrays are display-only metadata. Gemini
+  // routinely omits one or both nested arrays (or the whole object) when the
+  // paper itself is well-formed. Making these `.optional()` with `.default()`
+  // safe-fills means a missing summary no longer 500s the whole generation —
+  // the core `sections`/`questions` payload (the thing the teacher actually
+  // needs) still validates strictly.
   blueprintSummary: z.object({
-    chapterWise: z.array(z.object({ chapter: z.string(), marks: z.number() })),
-    difficultyWise: z.array(z.object({ level: z.string(), percentage: z.number() })),
-  }),
+    chapterWise: z.array(z.object({ chapter: z.string(), marks: z.number() })).optional().default([]),
+    difficultyWise: z.array(z.object({ level: z.string(), percentage: z.number() })).optional().default([]),
+  }).optional().default({ chapterWise: [], difficultyWise: [] }),
   pyqSources: z.array(z.object({
     id: z.string(),
     year: z.number().nullable().optional(),
@@ -452,8 +458,14 @@ const examPaperGeneratorFlow = ai.defineFlow(
         );
       }
 
+      // Parse-and-replace: the schema now safe-fills `blueprintSummary` /
+      // `pyqSources` defaults, so we adopt the parsed (defaulted) object as the
+      // canonical output. This guarantees downstream consumers (the dispatcher
+      // and the route response) always see a populated `blueprintSummary`
+      // instead of `undefined` when the model omitted it.
+      let parsedOutput: ExamPaperOutput = output;
       try {
-        ExamPaperOutputSchema.parse(output);
+        parsedOutput = ExamPaperOutputSchema.parse(output);
       } catch (validationError: unknown) {
         const ve = validationError as { message?: string; errors?: unknown };
         throw new SchemaValidationError(
@@ -476,7 +488,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
           const filePath = `users/${input.userId}/exam-papers/${fileName}`;
           const file = storage.bucket().file(filePath);
 
-          await file.save(JSON.stringify(output), {
+          await file.save(JSON.stringify(parsedOutput), {
             contentType: 'application/json',
           });
 
@@ -486,11 +498,11 @@ const examPaperGeneratorFlow = ai.defineFlow(
           await dbAdapter.saveContent(input.userId, {
             id: contentId,
             type: 'exam-paper' as const,
-            title: output.title || `${input.board} ${input.gradeLevel} ${input.subject} Exam Paper`,
+            title: parsedOutput.title || `${input.board} ${input.gradeLevel} ${input.subject} Exam Paper`,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 10') as any,
+            gradeLevel: (parsedOutput.gradeLevel || input.gradeLevel || 'Class 10') as any,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            subject: (input.subject || output.subject || 'General') as any,
+            subject: (input.subject || parsedOutput.subject || 'General') as any,
             topic: input.chapters.length > 0 ? input.chapters.join(', ') : input.subject,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             language: (input.language ?? 'English') as any,
@@ -499,7 +511,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
             isDraft: false,
             createdAt: Timestamp.fromDate(now),
             updatedAt: Timestamp.fromDate(now),
-            data: output,
+            data: parsedOutput,
           });
 
           StructuredLogger.info('Exam paper persisted successfully', {
@@ -533,15 +545,15 @@ const examPaperGeneratorFlow = ai.defineFlow(
         requestId,
         duration,
         metadata: {
-          sectionCount: output.sections.length,
-          totalQuestions: output.sections.reduce((sum, s) => sum + s.questions.length, 0),
+          sectionCount: parsedOutput.sections.length,
+          totalQuestions: parsedOutput.sections.reduce((sum, s) => sum + s.questions.length, 0),
         }
       });
 
       if (validationWarnings.length > 0) {
-        return { ...output, validationWarnings };
+        return { ...parsedOutput, validationWarnings };
       }
-      return output;
+      return parsedOutput;
 
     } catch (flowError: any) {
       const duration = Date.now() - startTime;
