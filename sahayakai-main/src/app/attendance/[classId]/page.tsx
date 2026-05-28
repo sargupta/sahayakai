@@ -342,7 +342,7 @@ function ClassDetailContent() {
                                         isCelebrate ? 'positive_feedback' :
                                         undefined;
                                     return (
-                                        <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-white">
+                                        <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-card">
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
                                                 {summary && (

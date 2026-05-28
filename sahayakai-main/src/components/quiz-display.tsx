@@ -91,7 +91,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
 
     if (!currentQuiz) {
         return (
-            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-white rounded-[var(--radius)] border border-slate-200 shadow-soft">
+            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-card rounded-[var(--radius)] border border-border shadow-soft">
                 {tr("No quiz generated for this difficulty level.")}
             </div>
         );
@@ -553,7 +553,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             idx,
                                                         )
                                                     }
-                                                    className="font-semibold text-base bg-white border-border min-h-[56px]"
+                                                    className="font-semibold text-base bg-card border-border min-h-[56px]"
                                                 />
                                             ) : (
                                                 <p className="font-semibold text-base sm:text-lg leading-snug break-words">
@@ -726,7 +726,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                     (opt, optIdx) => (
                                                         <div
                                                             key={optIdx}
-                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border border-border bg-white"
+                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border border-border bg-card"
                                                         >
                                                             <div className="w-6 h-6 rounded-md border border-border flex items-center justify-center text-[10px] font-black text-muted-foreground bg-muted flex-shrink-0">
                                                                 {String.fromCharCode(
@@ -795,10 +795,10 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             idx,
                                                         )
                                                     }
-                                                    className="h-9 bg-white border-border"
+                                                    className="h-9 bg-card border-border"
                                                 />
                                             ) : (
-                                                <span className="font-bold bg-white px-2 py-1 rounded border border-border inline-block">
+                                                <span className="font-bold bg-card px-2 py-1 rounded border border-border inline-block">
                                                     {q.correctAnswer}
                                                 </span>
                                             )}

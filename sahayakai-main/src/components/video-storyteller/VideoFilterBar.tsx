@@ -59,22 +59,22 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
     };
 
     return (
-        <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-3 shadow-sm">
             <div className="flex flex-col sm:flex-row gap-2">
                 {/* Search */}
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder={t("Search topics, chapters, concepts…")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleApply()}
-                        className="pl-9 h-9 text-sm border-slate-200 rounded-lg bg-slate-50 focus-visible:ring-1 focus-visible:ring-primary/30"
+                        className="pl-9 h-9 text-sm border-border rounded-lg bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <X className="w-3.5 h-3.5" />
                         </button>
@@ -84,8 +84,8 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                 {/* Filters row */}
                 <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                     <Select value={subject} onValueChange={setSubject}>
-                        <SelectTrigger className="h-9 w-full sm:w-36 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <SelectTrigger className="h-9 w-full sm:w-36 text-xs border-border rounded-lg bg-muted/50 gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <SelectValue placeholder={t("Subject")} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -97,8 +97,8 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                     </Select>
 
                     <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
-                            <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-border rounded-lg bg-muted/50 gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <SelectValue placeholder={t("Class")} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -110,8 +110,8 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                     </Select>
 
                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-slate-200 rounded-lg bg-slate-50 gap-1.5">
-                            <Languages className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <SelectTrigger className="h-9 w-full sm:w-32 text-xs border-border rounded-lg bg-muted/50 gap-1.5">
+                            <Languages className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <SelectValue placeholder={t("Language")} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -134,7 +134,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={handleClear}
-                            className="h-9 w-9 p-0 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                            className="h-9 w-9 p-0 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 shrink-0"
                             title={t("Clear filters")}
                         >
                             <X className="w-4 h-4" />

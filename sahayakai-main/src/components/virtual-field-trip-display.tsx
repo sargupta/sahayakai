@@ -133,7 +133,7 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
                                 {stop.description}
                             </p>
 
-                            <div className="bg-white/60 p-3 rounded-lg text-xs space-y-2 border border-primary/5">
+                            <div className="bg-card/60 p-3 rounded-lg text-xs space-y-2 border border-primary/5">
                                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
                                     <strong className="text-primary/80 flex-shrink-0">
                                         {t.contextLabel}:
@@ -149,11 +149,11 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <div className="bg-white/50 p-2 rounded text-xs">
+                                <div className="bg-card/50 p-2 rounded text-xs">
                                     <strong>{t.factLabel}:</strong>{" "}
                                     {stop.educationalFact}
                                 </div>
-                                <div className="bg-white/50 p-2 rounded text-xs italic">
+                                <div className="bg-card/50 p-2 rounded text-xs italic">
                                     <strong>{t.askLabel}:</strong>{" "}
                                     {stop.reflectionPrompt}
                                 </div>

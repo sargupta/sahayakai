@@ -132,6 +132,18 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
         ? isOwnProfileManual
         : (firebaseUser?.uid === (targetUid || firebaseUser?.uid) || !targetUid);
 
+    // Back navigation. router.back() silently does nothing when the profile was
+    // opened in a fresh tab (shared link / "open in new tab" from notifications),
+    // because there's no prior entry in the session history. Fall back to the
+    // community directory so the button always takes the teacher somewhere.
+    const handleBack = () => {
+        if (typeof window !== "undefined" && window.history.length <= 1) {
+            router.push("/community");
+        } else {
+            router.back();
+        }
+    };
+
     // Reload the caller's certifications after adding one. Only meaningful on
     // own profile (addCertificationAction is self-only on the server).
     const reloadCerts = async () => {
@@ -199,7 +211,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <h1 className="text-2xl font-bold font-headline">{t("Profile Not Found")}</h1>
                     <p className="text-muted-foreground">{t("The teacher profile you are looking for does not exist or has been removed.")}</p>
                 </div>
-                <Button onClick={() => window.history.back()} variant="outline" className="w-full">
+                <Button onClick={() => router.push('/community')} variant="outline" className="w-full">
                     {t("Go Back")}
                 </Button>
             </div>
@@ -215,10 +227,10 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 the community sub-views. */}
             {!isOwnProfile && (
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
-                    onClick={() => router.back()}
+                    className="gap-1.5 rounded-full border-border bg-background/80 backdrop-blur-sm shadow-soft hover:bg-muted/60 text-foreground font-semibold"
+                    onClick={handleBack}
                 >
                     <ArrowLeft className="h-4 w-4" />
                     {t("Back")}
@@ -290,7 +302,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             </Badge>
                         )}
                         {profile?.schoolName && (
-                            <Badge variant="outline" className="text-foreground/70 border-border bg-white/50 px-4 py-1.5 text-xs font-semibold rounded-full backdrop-blur-sm">
+                            <Badge variant="outline" className="text-foreground/70 border-border bg-background/50 px-4 py-1.5 text-xs font-semibold rounded-full backdrop-blur-sm">
                                 {profile.schoolName}
                             </Badge>
                         )}
@@ -448,7 +460,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
             )}
 
             <div className="grid gap-10 md:grid-cols-12">
-                <Card className="md:col-span-8 bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
+                <Card className="md:col-span-8 bg-card/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-8 border-b border-border">
                         <div className="space-y-1">
                             <CardTitle className="flex items-center gap-2 text-2xl font-black text-foreground">
@@ -508,7 +520,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 </Card>
 
                 <div className="md:col-span-4 space-y-8">
-                    <Card className="bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
+                    <Card className="bg-card/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
                         <CardHeader className="p-4 sm:p-8 pb-4 border-b border-border">
                             <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                                 <History className="h-6 w-6 text-blue-500" />

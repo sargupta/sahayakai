@@ -46,7 +46,7 @@ export function PushPermissionBanner() {
     return (
         <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border border-orange-100 rounded-xl mx-4 mt-3">
             <Bell className="h-4 w-4 text-orange-500 shrink-0" />
-            <p className="text-xs text-slate-700 font-medium flex-1">
+            <p className="text-xs text-foreground font-medium flex-1">
                 {t("Enable notifications to never miss a message from fellow teachers.")}
             </p>
             <Button
@@ -57,7 +57,7 @@ export function PushPermissionBanner() {
             >
                 {enabling ? 'Enabling...' : 'Enable'}
             </Button>
-            <button onClick={handleDismiss} className="text-slate-400 hover:text-slate-600 shrink-0">
+            <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground shrink-0">
                 <X className="h-3.5 w-3.5" />
             </button>
         </div>

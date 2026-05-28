@@ -110,14 +110,14 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
     if (loading) {
         return (
             <div className="flex justify-center items-center h-48">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/60" />
             </div>
         );
     }
 
     if (students.length === 0) {
         return (
-            <div className="text-center py-16 text-slate-400 text-sm">
+            <div className="text-center py-16 text-muted-foreground text-sm">
                 {t("Add students first to take attendance.")}
             </div>
         );
@@ -126,15 +126,15 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
     return (
         <div className="space-y-4">
             {/* Summary bar */}
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl text-xs font-semibold">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl text-xs font-semibold">
                 <span className="text-emerald-600">{presentCount} Present</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-muted-foreground/60">·</span>
                 <span className="text-red-500">{absentCount} Absent</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-muted-foreground/60">·</span>
                 <span className="text-amber-600">{lateCount} Late</span>
                 <Button
                     variant="ghost" size="sm"
-                    className="ml-auto h-7 text-xs text-slate-500 hover:text-orange-500"
+                    className="ml-auto h-7 text-xs text-muted-foreground hover:text-orange-500"
                     onClick={markAllPresent}
                 >
                     <CheckCheck className="h-3.5 w-3.5 mr-1" />
@@ -143,7 +143,7 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 text-xs text-slate-400 px-1">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground px-1">
                 <span>{t("Tap to cycle:")}</span>
                 {(['present', 'absent', 'late'] as const).map((s) => (
                     <span key={s} className={cn("px-2 py-0.5 rounded-md border font-medium", STATUS_CONFIG[s].activeBg)}>

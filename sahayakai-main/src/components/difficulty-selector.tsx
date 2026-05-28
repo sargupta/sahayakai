@@ -43,7 +43,7 @@ export function DifficultySelector({ value, onValueChange, className }: Difficul
                 <span className="text-xs font-semibold text-slate-600">{t("Difficulty Level")}</span>
             </div>
             <Select value={value} onValueChange={(val) => onValueChange(val as DifficultyLevel)}>
-                <SelectTrigger className="w-full bg-white border-slate-200">
+                <SelectTrigger className="w-full bg-card border-border">
                     <SelectValue placeholder={t("Select difficulty")} />
                 </SelectTrigger>
                 <SelectContent>

@@ -765,7 +765,7 @@ export function OmniOrb() {
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (
-                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-bottom-5">
+                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-3xl shadow-2xl border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
@@ -807,10 +807,10 @@ export function OmniOrb() {
 
                     <div className="max-h-60 overflow-y-auto flex flex-col gap-3 text-sm">
                         {chatHistory.length === 0 ? (
-                            <p className="text-slate-500 italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
+                            <p className="text-muted-foreground italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
                         ) : (
                             chatHistory.map((msg, i) => (
-                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-slate-100 self-end ml-4" : "bg-primary/10 self-start mr-4")}>
+                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
                                     {msg.parts.map((p) => p.text).join("")}
                                 </div>
                             ))
@@ -857,7 +857,7 @@ export function OmniOrb() {
                 {/* Proactive daily-inspiration tip */}
                 {proactiveTip && (
                     <div
-                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-white border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-slate-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
+                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
                     >
                         <div className="flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -882,7 +882,7 @@ export function OmniOrb() {
                                 style={{ animationDuration: "2.4s" }}
                             />
                         )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
                             <BrainCircuit className="h-3 w-3" />
                             {t("Tap to reply")}
                         </div>
@@ -904,7 +904,7 @@ export function OmniOrb() {
                         e.stopPropagation();
                         if (!isDragging) setOrbOpen(!orbOpen);
                     }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-white text-primary hover:bg-slate-100 border pointer-events-auto"
+                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
                     size="icon"
                     title={t("View Memory")}
                 >

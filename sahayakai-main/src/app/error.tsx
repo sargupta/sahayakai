@@ -24,7 +24,7 @@ export default function Error({
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-soft max-w-md w-full text-center space-y-6">
+            <div className="bg-card p-8 rounded-2xl shadow-soft max-w-md w-full text-center space-y-6">
                 <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                     <AlertCircle className="w-8 h-8 text-red-600" />
                 </div>

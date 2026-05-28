@@ -39,7 +39,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4 text-primary shrink-0" />
-                    <h2 className="text-base sm:text-lg font-headline font-bold text-slate-900 leading-none">
+                    <h2 className="text-base sm:text-lg font-headline font-bold text-foreground leading-none">
                         {title}
                     </h2>
                 </div>
@@ -65,8 +65,8 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="hidden md:flex -left-5 bg-white border-slate-200 hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
-                <CarouselNext className="hidden md:flex -right-5 bg-white border-slate-200 hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
+                <CarouselPrevious className="hidden md:flex -left-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
+                <CarouselNext className="hidden md:flex -right-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
             </Carousel>
         </div>
     );

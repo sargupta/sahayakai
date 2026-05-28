@@ -170,7 +170,7 @@ ${criterion.levels
                     </TableHeader>
                     <TableBody>
                         {rubric.criteria.map((criterion, ci) => (
-                            <TableRow key={ci} className="bg-white/50">
+                            <TableRow key={ci} className="bg-card/50">
                                 <TableCell className="border border-primary/20 p-2 align-top">
                                     <p className="font-bold">
                                         {criterion.name}

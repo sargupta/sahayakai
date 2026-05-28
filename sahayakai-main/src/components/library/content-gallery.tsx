@@ -384,12 +384,12 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white/40 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card/50 backdrop-blur-sm p-4 rounded-2xl border border-white/40 shadow-sm">
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder={t("Search your library...")}
-                        className="pl-10 bg-white border-slate-200"
+                        className="pl-10 bg-card border-border"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         aria-label={t("Search your library")}
@@ -398,7 +398,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="w-full md:w-48 bg-white border-slate-200">
+                        <SelectTrigger className="w-full md:w-48 bg-card border-border">
                             <SelectValue placeholder={t("All types")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -412,7 +412,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         </SelectContent>
                     </Select>
 
-                    <div className="flex items-center border border-slate-200 rounded-lg p-1 bg-white">
+                    <div className="flex items-center border border-border rounded-lg p-1 bg-card">
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
@@ -438,7 +438,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-32 gap-4">
                     <Loader2 className="h-12 w-12 animate-spin text-primary/60" />
-                    <p className="text-slate-500 font-medium animate-pulse">{t("Fetching your creative workspace...")}</p>
+                    <p className="text-muted-foreground font-medium animate-pulse">{t("Fetching your creative workspace...")}</p>
                 </div>
             ) : filteredItems.length > 0 ? (
                 <div className="space-y-6">

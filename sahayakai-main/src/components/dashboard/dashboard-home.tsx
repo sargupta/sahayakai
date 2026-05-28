@@ -17,6 +17,7 @@ import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, L
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { SectionCard } from "@/components/layout";
 import { SampleOutputSection } from "@/components/landing/sample-output-section";
 import { useCommunityIntro } from "@/hooks/use-community-intro";
@@ -122,7 +123,14 @@ export function DashboardHome() {
       const res = await fetch("/api/ai/intent", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ prompt: values.topic, language: userLanguage })
+        // Send the current UI language (as an ISO code, the agent/route
+        // contract) so the assistant answers in the teacher's chosen
+        // language even when the spoken/typed prompt is in another script.
+        body: JSON.stringify({
+          prompt: values.topic,
+          language: LANGUAGE_TO_ISO[userLanguage] ?? "en",
+          uiLanguage: LANGUAGE_TO_ISO[userLanguage] ?? "en",
+        })
       });
 
       if (!res.ok) {
@@ -206,15 +214,15 @@ export function DashboardHome() {
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight indic-text leading-[1.1]">
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight indic-text leading-[1.1]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("Ideas for your classes")}
           </p>
         ) : (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
           </p>
         )}

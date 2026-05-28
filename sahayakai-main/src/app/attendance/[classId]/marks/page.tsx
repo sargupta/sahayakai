@@ -226,7 +226,7 @@ function MarksEntryContent() {
             </div>
 
             {/* Assessment Metadata */}
-            <div className="bg-white rounded-2xl border border-border/50 p-4 space-y-4 shadow-soft">
+            <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-4 shadow-soft">
                 <div className="flex items-center gap-2 mb-1">
                     <ClipboardList className="h-4 w-4 text-primary" />
                     <span className="text-sm font-bold text-foreground">{t("Assessment Details")}</span>
@@ -327,7 +327,7 @@ function MarksEntryContent() {
                     <p className="text-xs text-muted-foreground">{t("Add students first from the class page.")}</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl border border-border/50 shadow-soft overflow-hidden">
+                <div className="bg-card rounded-2xl border border-border/50 shadow-soft overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
