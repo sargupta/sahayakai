@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES } from "@/types";
-import type { AdministrativeRole } from "@/types";
+import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS } from "@/types";
+import type { AdministrativeRole, EducationBoard } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
 import { updateProfileAction, getProfileData } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
@@ -253,6 +253,12 @@ export default function OnboardingPage() {
                 schoolName: formData.schoolName,
                 schoolNormalized: formData.schoolName.toUpperCase().trim(),
                 educationBoard: formData.educationBoard || undefined,
+                // QA #9 — persist the canonical typed board so AI tools can
+                // default to a board-aligned context. Mirrors educationBoard
+                // (same picker); kept as a typed EducationBoard field.
+                preferredBoard: (EDUCATION_BOARDS as readonly string[]).includes(formData.educationBoard)
+                    ? (formData.educationBoard as EducationBoard)
+                    : undefined,
                 state: formData.state || undefined,
                 subjects: formData.subjects,
                 gradeLevels: formData.gradeLevels,
@@ -728,7 +734,7 @@ export default function OnboardingPage() {
                                     ))}
                                 </div>
                                 {formData.boardCategory === 'state_board' && formData.state && formData.educationBoard && (
-                                    <p className="text-xs text-muted-foreground mt-2">Selected: {formData.educationBoard}</p>
+                                    <p className="text-xs text-muted-foreground mt-2">{t("Selected:")} {formData.educationBoard}</p>
                                 )}
                                 {formData.boardCategory === 'state_board' && !formData.state && (
                                     <p className="text-xs text-destructive mt-2">{t("Please select your state first.")}</p>

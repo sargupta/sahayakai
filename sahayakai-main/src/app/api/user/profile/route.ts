@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdapter } from '@/lib/db/adapter';
 import { UserProfileSchema } from '@/ai/schemas/content-schemas';
-import { UserProfile, ADMINISTRATIVE_ROLES, QUALIFICATIONS } from '@/types';
+import { UserProfile, ADMINISTRATIVE_ROLES, QUALIFICATIONS, EDUCATION_BOARDS } from '@/types';
 import { logger } from '@/lib/logger';
 
 /**
@@ -140,6 +140,7 @@ export async function PATCH(request: Request) {
             yearsOfExperience?: unknown;
             administrativeRole?: unknown;
             qualifications?: unknown;
+            preferredBoard?: unknown;
         };
 
         const partialData: Partial<UserProfile> = {};
@@ -175,6 +176,19 @@ export async function PATCH(request: Request) {
                 );
             }
             partialData.qualifications = body.qualifications as typeof QUALIFICATIONS[number][];
+        }
+
+        if (body.preferredBoard !== undefined) {
+            if (!(EDUCATION_BOARDS as readonly string[]).includes(body.preferredBoard as string)) {
+                return NextResponse.json(
+                    { error: `preferredBoard must be one of: ${EDUCATION_BOARDS.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+            partialData.preferredBoard = body.preferredBoard as typeof EDUCATION_BOARDS[number];
+            // Keep the legacy free-string field in sync so existing consumers
+            // (teacher directory, onboarding resume) stay consistent.
+            partialData.educationBoard = body.preferredBoard as string;
         }
 
         await dbAdapter.updateUser(userId, partialData);

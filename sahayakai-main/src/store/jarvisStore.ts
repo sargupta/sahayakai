@@ -14,6 +14,7 @@ export type TeacherProfile = {
     preferredGrade: string | null;
     preferredSubject: string | null;
     preferredLanguage: string | null;
+    preferredBoard: string | null; // QA #9 — board-aligned AI defaults (e.g. "CBSE")
     schoolContext: string | null; // e.g. "village school, Rajasthan, no projector"
     lastActiveAt: number | null;  // unix ms — for daily-inspiration freshness check
 };
@@ -96,6 +97,7 @@ const DEFAULT_PROFILE: TeacherProfile = {
     preferredGrade: null,
     preferredSubject: null,
     preferredLanguage: null,
+    preferredBoard: null,
     schoolContext: null,
     lastActiveAt: null,
 };

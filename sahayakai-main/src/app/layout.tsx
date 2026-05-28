@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
+import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/context/auth-context';
 import { FeatureFlagsProvider } from '@/context/feature-flags-context';
 import { AuthDialog } from '@/components/auth/auth-dialog';
@@ -125,15 +126,17 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <LanguageProvider>
-          <AuthProvider>
-            <FeatureFlagsProvider>
-              <AppShell>{children}</AppShell>
-              <AuthDialog />
-            </FeatureFlagsProvider>
-          </AuthProvider>
-          <Toaster />
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <FeatureFlagsProvider>
+                <AppShell>{children}</AppShell>
+                <AuthDialog />
+              </FeatureFlagsProvider>
+            </AuthProvider>
+            <Toaster />
+          </LanguageProvider>
+        </ThemeProvider>
         {/* Cloudflare Web Analytics — manual JS snippet install.
             Plain <script defer> so it SSRs into the HTML (curl-visible);
             `defer` keeps it from blocking parsing. Mirrors the exact

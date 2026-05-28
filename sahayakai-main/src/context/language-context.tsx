@@ -7147,6 +7147,33 @@ const dictionary: Record<string, Record<Language, string>> = {
     "e.g. NCTE, State Board, University": {
         "English": "e.g. NCTE, State Board, University", "Hindi": "जैसे NCTE, State Board, University", "Kannada": "ಉದಾ. NCTE, State Board, University", "Tamil": "எ.கா. NCTE, State Board, University", "Telugu": "ఉదా. NCTE, State Board, University", "Marathi": "उदा. NCTE, State Board, University", "Bengali": "যেমন NCTE, State Board, University", "Gujarati": "દા.ત. NCTE, State Board, University", "Punjabi": "ਜਿਵੇਂ NCTE, State Board, University", "Malayalam": "ഉദാ. NCTE, State Board, University", "Odia": "ଯେପରି NCTE, State Board, University"
     },
+    "Appearance": {
+        "English": "Appearance", "Hindi": "दिखावट", "Kannada": "ಗೋಚರಿಕೆ", "Tamil": "தோற்றம்", "Telugu": "రూపం", "Marathi": "देखावा", "Bengali": "চেহারা", "Gujarati": "દેખાવ", "Punjabi": "ਦਿੱਖ", "Malayalam": "രൂപഭാവം", "Odia": "ଦୃଶ୍ୟ"
+    },
+    "Theme": {
+        "English": "Theme", "Hindi": "थीम", "Kannada": "ಥೀಮ್", "Tamil": "தீம்", "Telugu": "థీమ్", "Marathi": "थीम", "Bengali": "থিম", "Gujarati": "થીમ", "Punjabi": "ਥੀਮ", "Malayalam": "തീം", "Odia": "ଥିମ୍"
+    },
+    "Light": {
+        "English": "Light", "Hindi": "लाइट", "Kannada": "ಲೈಟ್", "Tamil": "ஒளி", "Telugu": "లైట్", "Marathi": "लाइट", "Bengali": "লাইট", "Gujarati": "લાઇટ", "Punjabi": "ਲਾਈਟ", "Malayalam": "ലൈറ്റ്", "Odia": "ଲାଇଟ୍"
+    },
+    "Dark": {
+        "English": "Dark", "Hindi": "डार्क", "Kannada": "ಡಾರ್ಕ್", "Tamil": "இருள்", "Telugu": "డార్క్", "Marathi": "डार्क", "Bengali": "ডার্ক", "Gujarati": "ડાર્ક", "Punjabi": "ਡਾਰਕ", "Malayalam": "ഡാർക്ക്", "Odia": "ଡାର୍କ"
+    },
+    "Toggle theme": {
+        "English": "Toggle theme", "Hindi": "थीम बदलें", "Kannada": "ಥೀಮ್ ಬದಲಿಸಿ", "Tamil": "தீமை மாற்று", "Telugu": "థీమ్ మార్చండి", "Marathi": "थीम बदला", "Bengali": "থিম পরিবর্তন করুন", "Gujarati": "થીમ બદલો", "Punjabi": "ਥੀਮ ਬਦਲੋ", "Malayalam": "തീം മാറ്റുക", "Odia": "ଥିମ୍ ବଦଳାନ୍ତୁ"
+    },
+    "Select your board": {
+        "English": "Select your board", "Hindi": "अपना बोर्ड चुनें", "Kannada": "ನಿಮ್ಮ ಬೋರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ", "Tamil": "உங்கள் வாரியத்தைத் தேர்ந்தெடுக்கவும்", "Telugu": "మీ బోర్డును ఎంచుకోండి", "Marathi": "तुमचे मंडळ निवडा", "Bengali": "আপনার বোর্ড নির্বাচন করুন", "Gujarati": "તમારું બોર્ડ પસંદ કરો", "Punjabi": "ਆਪਣਾ ਬੋਰਡ ਚੁਣੋ", "Malayalam": "നിങ്ങളുടെ ബോർഡ് തിരഞ്ഞെടുക്കുക", "Odia": "ଆପଣଙ୍କ ବୋର୍ଡ ବାଛନ୍ତୁ"
+    },
+    "Selected:": {
+        "English": "Selected:", "Hindi": "चयनित:", "Kannada": "ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ:", "Tamil": "தேர்ந்தெடுக்கப்பட்டது:", "Telugu": "ఎంచుకున్నవి:", "Marathi": "निवडलेले:", "Bengali": "নির্বাচিত:", "Gujarati": "પસંદ કરેલ:", "Punjabi": "ਚੁਣਿਆ ਗਿਆ:", "Malayalam": "തിരഞ്ഞെടുത്തത്:", "Odia": "ବଛାଯାଇଛି:"
+    },
+    "Shared": {
+        "English": "Shared", "Hindi": "साझा किया गया", "Kannada": "ಹಂಚಲಾಗಿದೆ", "Tamil": "பகிரப்பட்டது", "Telugu": "షేర్ చేయబడింది", "Marathi": "शेअर केले", "Bengali": "শেয়ার করা হয়েছে", "Gujarati": "શેર કર્યું", "Punjabi": "ਸਾਂਝਾ ਕੀਤਾ", "Malayalam": "പങ്കിട്ടു", "Odia": "ସେୟାର କରାଯାଇଛି"
+    },
+    "We use your board to align AI-generated papers, quizzes and lessons.": {
+        "English": "We use your board to align AI-generated papers, quizzes and lessons.", "Hindi": "हम AI-जनित पेपर, क्विज़ और पाठों को संरेखित करने के लिए आपके बोर्ड का उपयोग करते हैं।", "Kannada": "AI-ರಚಿತ ಪತ್ರಿಕೆಗಳು, ರಸಪ್ರಶ್ನೆಗಳು ಮತ್ತು ಪಾಠಗಳನ್ನು ಹೊಂದಿಸಲು ನಾವು ನಿಮ್ಮ ಬೋರ್ಡ್ ಬಳಸುತ್ತೇವೆ.", "Tamil": "AI உருவாக்கிய தாள்கள், வினாடி வினாக்கள் மற்றும் பாடங்களைச் சீரமைக்க உங்கள் வாரியத்தைப் பயன்படுத்துகிறோம்.", "Telugu": "AI రూపొందించిన పేపర్లు, క్విజ్‌లు మరియు పాఠాలను సర్దుబాటు చేయడానికి మేము మీ బోర్డును ఉపయోగిస్తాము.", "Marathi": "AI-निर्मित पेपर, क्विझ आणि धडे संरेखित करण्यासाठी आम्ही तुमचे मंडळ वापरतो.", "Bengali": "AI-উত্পন্ন পেপার, কুইজ এবং পাঠ সারিবদ্ধ করতে আমরা আপনার বোর্ড ব্যবহার করি।", "Gujarati": "AI-જનરેટેડ પેપર, ક્વિઝ અને પાઠને સંરેખિત કરવા માટે અમે તમારા બોર્ડનો ઉપયોગ કરીએ છીએ.", "Punjabi": "ਅਸੀਂ AI ਦੁਆਰਾ ਬਣਾਏ ਪੇਪਰ, ਕਵਿਜ਼ ਅਤੇ ਪਾਠਾਂ ਨੂੰ ਇਕਸਾਰ ਕਰਨ ਲਈ ਤੁਹਾਡੇ ਬੋਰਡ ਦੀ ਵਰਤੋਂ ਕਰਦੇ ਹਾਂ।", "Malayalam": "AI സൃഷ്ടിച്ച പേപ്പറുകൾ, ക്വിസുകൾ, പാഠങ്ങൾ എന്നിവ ക്രമീകരിക്കാൻ ഞങ്ങൾ നിങ്ങളുടെ ബോർഡ് ഉപയോഗിക്കുന്നു.", "Odia": "AI ଦ୍ୱାରା ସୃଷ୍ଟ ପେପର, କୁଇଜ୍ ଏବଂ ପାଠ ସଜାଡ଼ିବାକୁ ଆମେ ଆପଣଙ୍କ ବୋର୍ଡ ବ୍ୟବହାର କରୁ।"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

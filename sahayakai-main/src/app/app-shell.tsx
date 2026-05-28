@@ -19,6 +19,7 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { CommandPalette, openCommandPalette } from "@/components/command-palette";
 import { LanguagePill } from "@/components/language-pill";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
@@ -96,6 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ⌘K
                 </kbd>
               </button>
+              <ThemeToggle />
               <LanguagePill />
               <AuthButton />
             </div>
