@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import {
-  Video, Loader2, Sparkles, RefreshCw, ArrowLeft,
+  Video, Loader2, Sparkles, RefreshCw,
   Star, BookOpen, GraduationCap, Bell, School, type LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { VideoCard } from "@/components/video-storyteller/VideoCard";
 import { VideoCarousel } from "@/components/video-storyteller/VideoCarousel";
 import { YouTubeVideo } from "@/lib/youtube";
@@ -173,15 +174,7 @@ function VideoStorytellerPageInner() {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setExpandedCategory(null)}
-            className="rounded-xl gap-1.5 h-8 text-xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </Button>
+          <BackButton onBack={() => setExpandedCategory(null)} />
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4 text-primary" />

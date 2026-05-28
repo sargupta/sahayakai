@@ -24,8 +24,9 @@ import { SUBJECTS } from "@/types";
 import type { Subject } from "@/types";
 import { format } from "date-fns";
 import {
-    ArrowLeft, Loader2, Save, ClipboardList,
+    Loader2, Save, ClipboardList,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 
 const TYPE_LABELS: Record<AssessmentType, string> = {
     unit_test: "Unit Test",
@@ -207,14 +208,7 @@ function MarksEntryContent() {
         <div className="w-full max-w-3xl mx-auto space-y-6 pb-8">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => router.push(`/attendance/${classId}`)}
-                    className="shrink-0"
-                >
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
+                <BackButton to={`/attendance/${classId}`} className="shrink-0" />
                 <div>
                     <h1 className="text-xl font-black text-foreground font-headline tracking-tight">
                         {t("Enter Marks")} {cls ? `\u2014 ${cls.name}` : ""}
