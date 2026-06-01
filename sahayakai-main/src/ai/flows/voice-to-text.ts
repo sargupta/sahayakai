@@ -72,12 +72,22 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
   return runResiliently(async (config) => {
     const { output: transcription } = await voiceToTextPrompt({ audioDataUri: base64Audio }, config);
 
+    // Silent / unintelligible audio is a normal outcome (background noise,
+    // user tapped mic without speaking). Return empty text instead of
+    // throwing so the route handler returns 200 with empty text and the
+    // client UI shows a "didn't catch that" hint — instead of a 500 that
+    // looks like infra failure. Avoids:
+    //   1. runResiliently retry storm (3x wasted Gemini calls per silent clip)
+    //   2. logAIError noise (was the #1 daily error signature: 65/wk)
+    //   3. bad UX (modal error popup for what is, semantically, silence)
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      console.warn('[voiceToText.sarvam] empty transcription — returning empty result');
+      return { text: '', language: undefined };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
-      throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
+      console.warn('[voiceToText.sarvam] model refusal pattern — treating as silent audio');
+      return { text: '', language: undefined };
     }
 
     return { text: transcription.text, language: transcription.language };
@@ -90,12 +100,16 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
   return runResiliently(async (config) => {
     const { output: transcription } = await voiceToTextPrompt(input, config);
 
+    // Same silence-vs-error treatment as voiceToTextFormData — see comment
+    // there for rationale. Empty text is a valid response, not a failure.
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      console.warn('[voiceToText.gemini] empty transcription — returning empty result');
+      return { text: '', language: undefined };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
-      throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
+      console.warn('[voiceToText.gemini] model refusal pattern — treating as silent audio');
+      return { text: '', language: undefined };
     }
 
     return { text: transcription.text, language: transcription.language };

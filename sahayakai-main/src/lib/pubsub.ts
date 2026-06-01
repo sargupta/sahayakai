@@ -35,7 +35,28 @@ export async function publishEvent(topicName: string, data: object) {
         logger.info(`Message ${messageId} published to ${topicName}`, 'PUBSUB', data as Record<string, unknown>);
         return messageId;
     } catch (error) {
-        logger.error(`Failed to publish to ${topicName}`, error, 'PUBSUB', data as Record<string, unknown>);
+        // gRPC code 5 = NOT_FOUND. The topic isn't provisioned in this
+        // project — Pub/Sub is a side-channel (storage cleanup), so a
+        // missing topic should NOT pollute the error budget. Downgrade to
+        // WARN so it doesn't trip the prod-error-rate-spike alert. To
+        // create the topic and stop these entirely:
+        //   gcloud pubsub topics create sahayakai-storage-cleanup \
+        //     --project=sahayakai-b4248
+        // Full Pub/Sub setup (subscription, DLQ) at
+        // src/app/api/jobs/storage-cleanup/route.ts:15-21.
+        const code = (error as { code?: number })?.code;
+        const message = error instanceof Error ? error.message : String(error);
+        const isNotFound = code === 5 || /NOT_FOUND.*Resource not found/i.test(message);
+
+        if (isNotFound) {
+            logger.warn(
+                `Pub/Sub topic '${topicName}' not found — skipping publish. Create the topic to enable this side-channel.`,
+                'PUBSUB',
+                data as Record<string, unknown>,
+            );
+        } else {
+            logger.error(`Failed to publish to ${topicName}`, error, 'PUBSUB', data as Record<string, unknown>);
+        }
         // Don't throw — publishing is always a side-effect, never block the main flow
     }
 }

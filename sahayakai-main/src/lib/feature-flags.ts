@@ -401,7 +401,14 @@ export async function isFeatureEnabled(featureName: string, uid: string): Promis
     return { enabled: true, reason: 'billing_kill_switch_all_free' };
   }
 
-  const toggle = cfg.features[featureName];
+  // Defensive: if the Firestore `feature_flags` doc was written without a
+  // `features` map, `cfg.features` is `undefined` and the bracket access
+  // throws "Cannot read properties of undefined (reading 'X')". Optional-
+  // chain so a missing map degrades to the "not configured → default on"
+  // branch instead of a 500. Root cause of P0 incident observed in GCP
+  // logs (2026-06): persona-pulse, exam-paper, assessment-scanner all
+  // crashed here when the Firestore doc lacked `features`.
+  const toggle = cfg.features?.[featureName];
 
   // Feature not listed → enabled by default
   if (!toggle) {
@@ -608,7 +615,7 @@ export async function evaluateAllFlags(uid: string): Promise<{
   const sub = await isSubscriptionEnabled(uid);
   const featureResults: Record<string, FlagEvaluation> = {};
 
-  for (const [name] of Object.entries(cfg.features)) {
+  for (const [name] of Object.entries(cfg.features ?? {})) {
     featureResults[name] = await isFeatureEnabled(name, uid);
   }
 

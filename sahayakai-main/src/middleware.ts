@@ -85,8 +85,50 @@ async function verifyIdToken(token: string) {
     }
 }
 
+// Common bot-scan probe paths. These are scanners (Censys, GPTBot variants,
+// generic vulnerability scrapers) looking for committed secrets and admin
+// panels. Observed in GCP logs (2026-06) as the dominant cause of the
+// Cloud Run SSR 256 MiB OOM cascade — each /.env hit was triggering full
+// Next.js SSR. Short-circuit with 404 BEFORE auth verification, JWKS
+// fetches, or any allocation a router init would do.
+const BOT_PROBE_PATHS = [
+    '/.env',
+    '/.git',
+    '/.aws',
+    '/.ssh',
+    '/.svn',
+    '/.DS_Store',
+    '/.htaccess',
+    '/.htpasswd',
+    '/wp-admin',
+    '/wp-login.php',
+    '/wp-includes',
+    '/wp-content',
+    '/xmlrpc.php',
+    '/phpmyadmin',
+    '/phpMyAdmin',
+    '/server-status',
+    '/.vscode',
+    '/.idea',
+];
+
+function isBotProbe(pathname: string): boolean {
+    return BOT_PROBE_PATHS.some(
+        (p) =>
+            pathname === p ||
+            pathname.startsWith(p + '/') ||
+            pathname.startsWith(p + '.'),
+    );
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // Bot-scan short-circuit. Cheap path: return 404 with no body before any
+    // auth work or SSR init. Cuts ~50% of OOM-triggering Cloud Run traffic.
+    if (isBotProbe(pathname)) {
+        return new NextResponse(null, { status: 404 });
+    }
 
     // Skip static assets entirely
     if (
