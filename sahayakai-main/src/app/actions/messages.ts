@@ -12,7 +12,13 @@ import { sendPushToUser } from '@/lib/fcm-server';
 async function getAuthUserId(): Promise<string> {
     const h = await headers();
     const uid = h.get('x-user-id');
-    if (!uid) throw new Error('Unauthorized');
+    if (!uid) {
+        // Defense-in-depth — middleware should have caught this. If it fires
+        // we want visibility, not a silent 500.
+        // eslint-disable-next-line no-console
+        console.warn('[messages] getAuthUserId() rejected — no x-user-id header (middleware bypassed?)');
+        throw new Error('Unauthorized');
+    }
     return uid;
 }
 

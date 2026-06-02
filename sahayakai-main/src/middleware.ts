@@ -162,6 +162,24 @@ export async function middleware(request: NextRequest) {
 
     const isApiOrAdmin = pathname.startsWith('/api/') || pathname.startsWith('/admin/');
 
+    // Server actions are POST requests to page routes. Without an explicit
+    // gate here, an expired-session client call lets the action run with no
+    // x-user-id, the action's `getAuthUserId()` throws "Unauthorized", and
+    // Next.js converts to a generic 500 — bad UX (error page instead of
+    // login redirect) and noisy GCP logs (12 such 500s observed in the
+    // 2026-06-01 audit, all from one user retrying with expired session).
+    // Treat any non-idempotent method to a non-API non-admin path the same
+    // as an API call: require auth.
+    //
+    // Safe by exclusion: all known legitimate non-API POST endpoints
+    // (Twilio webhooks, payment callbacks, Cloud Scheduler jobs) live under
+    // /api/* and are already covered by the isPublicApi short-circuit
+    // above. Firebase auth helpers under /__/ are short-circuited by the
+    // static-asset block. There is no public page route that accepts POST.
+    const isMutatingMethod =
+        request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS';
+    const isPageMutation = !isApiOrAdmin && isMutatingMethod;
+
     if (rawToken) {
         if (process.env.NODE_ENV === 'development' && rawToken === 'dev-token') {
             // Dev bypass — inject mock UID when using the dev token placeholder
@@ -180,14 +198,18 @@ export async function middleware(request: NextRequest) {
                 const raw = typeof plan === 'string' ? plan : '';
                 const resolved = LEGACY[raw] ?? (VALID_PLANS.includes(raw) ? raw : 'free');
                 requestHeaders.set('x-user-plan', resolved);
-            } else if (isApiOrAdmin) {
-                // Invalid token on protected routes → reject
+            } else if (isApiOrAdmin || isPageMutation) {
+                // Invalid token on protected routes OR a server-action POST →
+                // reject with 401 (not 500). The client SDK can detect this
+                // and trigger a login redirect.
                 return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
             }
         }
     } else {
-        if (isApiOrAdmin) {
-            // No token at all on protected API/admin routes
+        if (isApiOrAdmin || isPageMutation) {
+            // No token at all on a protected API/admin route OR a page
+            // server-action POST. Reject with 401 instead of letting the
+            // action throw "Unauthorized" and surface as a 500.
             if (process.env.NODE_ENV === 'development') {
                 requestHeaders.set('x-user-id', 'dev-user-123');
                 requestHeaders.set('x-user-plan', 'pro');
@@ -195,7 +217,8 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }
         }
-        // Page routes without a token: pass through, x-user-id simply not set
+        // Page GETs without a token: pass through, x-user-id simply not set.
+        // The page can decide whether to render a public version or redirect.
     }
 
     // Security headers for all non-static responses
