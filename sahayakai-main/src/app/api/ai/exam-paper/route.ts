@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { logAIError } from '@/lib/ai-error-response';
+import { handleAIError, logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 import {
     dispatchExamPaper,
@@ -224,12 +224,22 @@ async function _handler(request: Request) {
             );
         }
 
-        logAIError(error, 'EXAM_PAPER', { message: `Exam Paper API Failed for: "${paperDesc}"`, userId: request.headers.get('x-user-id') });
-
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
+        // BUG #21 hardening: route every remaining failure category through
+        // `handleAIError` so we map quota exhaustion (503 + Retry-After),
+        // safety violations (400), and ZodError input failures (400 with
+        // field issues) to specific responses instead of returning a bare
+        // 500 "Internal Server Error" for everything. Generic catch-alls
+        // were why QA kept seeing "Internal Server Error" on Gemini timeouts
+        // and safety blocks.
+        return handleAIError(error, 'EXAM_PAPER', {
+            message: `Exam Paper API Failed for: "${paperDesc}"`,
+            userId: request.headers.get('x-user-id'),
+            extra: {
+                board: paperDesc,
+                errorType: (error as { name?: string } | null)?.name,
+                errorCode: (error as { errorCode?: string } | null)?.errorCode,
+            },
+        });
     }
 }
 

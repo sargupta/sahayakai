@@ -232,6 +232,106 @@ export function ContactParentModal({
         return () => stopPolling();
     }, [open, stopPolling]);
 
+    // QA #5 (2026-06-02) modal-resume fix:
+    //
+    // When the modal opens, look up the most recent outreach for this
+    // (teacher, student) pair. Three cases:
+    //   (a) Already has a callSummary  → jump straight to the summary view
+    //       so the teacher can read what the AI captured. Without this, the
+    //       summary that landed AFTER the 5-min poll timeout (or AFTER the
+    //       teacher closed the modal mid-call) is invisible forever.
+    //   (b) Call is in flight (status='initiated', no summary yet) → resume
+    //       polling against the same outreachId so we don't start a duplicate
+    //       call and we surface the summary as soon as it lands.
+    //   (c) No recent outreach → fresh flow, do nothing.
+    //
+    // Guarded by `step === "reason"` so we don't blow away a flow the teacher
+    // is mid-way through (e.g. they just clicked "Call Parent" and are now
+    // on the "calling" step — the pollForSummary call already covers that).
+    useEffect(() => {
+        if (!open || !student.id || !user) return;
+        if (step !== "reason") return;
+        let abort = false;
+        (async () => {
+            try {
+                const { auth } = await import('@/lib/firebase');
+                const token = await auth.currentUser?.getIdToken();
+                if (!token || abort) return;
+                const res = await fetch(
+                    `/api/attendance/outreach-latest?studentId=${encodeURIComponent(student.id)}`,
+                    { headers: { Authorization: `Bearer ${token}` } },
+                );
+                if (!res.ok || abort) return;
+                const data = await res.json() as {
+                    outreachId: string | null;
+                    callStatus?: string | null;
+                    callDurationSeconds?: number | null;
+                    answeredBy?: string | null;
+                    turnCount?: number;
+                    transcript?: TranscriptTurn[];
+                    callSummary?: CallSummary | null;
+                };
+                if (abort || !data.outreachId) return;
+
+                const terminal = ['completed', 'failed', 'no_answer', 'busy'];
+                const isTerminal = data.callStatus && terminal.includes(data.callStatus);
+
+                // Case (a) — terminal call with a summary already generated.
+                if (isTerminal && data.callSummary) {
+                    setOutreachId(data.outreachId);
+                    setCallResult({
+                        callStatus:          data.callStatus ?? null,
+                        callDurationSeconds: data.callDurationSeconds ?? null,
+                        answeredBy:          data.answeredBy ?? null,
+                        turnCount:           data.turnCount ?? 0,
+                        transcript:          data.transcript ?? [],
+                        callSummary:         data.callSummary,
+                    });
+                    setStep("summary");
+                    return;
+                }
+
+                // Case (b) — call in flight, resume polling so the summary
+                // surfaces when it lands without forcing a duplicate dial.
+                if (data.callStatus === 'initiated') {
+                    setOutreachId(data.outreachId);
+                    setCallResult({
+                        callStatus:          data.callStatus ?? null,
+                        callDurationSeconds: data.callDurationSeconds ?? null,
+                        answeredBy:          data.answeredBy ?? null,
+                        turnCount:           data.turnCount ?? 0,
+                        transcript:          data.transcript ?? [],
+                        callSummary:         null,
+                    });
+                    setStep("calling");
+                    pollForSummary(data.outreachId);
+                    return;
+                }
+
+                // Case — call ended (terminal) but summary not yet generated.
+                // Jump to the summary view (it will render "Generating
+                // summary…") and resume polling so the summary shows up.
+                if (isTerminal && !data.callSummary) {
+                    setOutreachId(data.outreachId);
+                    setCallResult({
+                        callStatus:          data.callStatus ?? null,
+                        callDurationSeconds: data.callDurationSeconds ?? null,
+                        answeredBy:          data.answeredBy ?? null,
+                        turnCount:           data.turnCount ?? 0,
+                        transcript:          data.transcript ?? [],
+                        callSummary:         null,
+                    });
+                    setStep("summary");
+                    pollForSummary(data.outreachId);
+                }
+            } catch {
+                // Non-blocking — modal still works without resume context.
+            }
+        })();
+        return () => { abort = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, student.id, user]);
+
     const generateMessage = async () => {
         if (!reason) return;
         setGenerating(true);

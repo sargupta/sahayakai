@@ -107,20 +107,20 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
     );
 }
 
-function formatRelativeTime(iso: string | null | undefined): string | null {
+function formatRelativeTime(iso: string | null | undefined, t: (s: string) => string): string | null {
     if (!iso) return null;
     try {
         const then = new Date(iso).getTime();
         if (!Number.isFinite(then)) return null;
         const diffMs = Date.now() - then;
-        if (diffMs < 0) return 'just now';
+        if (diffMs < 0) return t('just now');
         const minutes = Math.floor(diffMs / 60000);
-        if (minutes < 1) return 'just now';
-        if (minutes < 60) return `${minutes}m ago`;
+        if (minutes < 1) return t('just now');
+        if (minutes < 60) return `${minutes}${t('m ago')}`;
         const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}h ago`;
+        if (hours < 24) return `${hours}${t('h ago')}`;
         const days = Math.floor(hours / 24);
-        return `${days}d ago`;
+        return `${days}${t('d ago')}`;
     } catch {
         return null;
     }
@@ -301,7 +301,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
         ? dimensionSum
         : displayedComposite;
 
-    const relativeUpdated = formatRelativeTime(healthScore.lastUpdated);
+    const relativeUpdated = formatRelativeTime(healthScore.lastUpdated, t);
 
     return (
         <div className="space-y-6">
@@ -346,7 +346,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             </div>
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
                                 <p className="text-2xl font-bold text-purple-600 font-headline">
-                                    {healthScore.days_since_last_use === 0 ? t('Today') : `${healthScore.days_since_last_use}d ago`}
+                                    {healthScore.days_since_last_use === 0 ? t('Today') : `${healthScore.days_since_last_use}${t('d ago')}`}
                                 </p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Last Active")}</p>
                             </div>

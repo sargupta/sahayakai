@@ -208,10 +208,16 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [displayMessages]);
 
-    // Mark read when conversation opens
+    // Mark read when conversation opens. We swallow errors but log them at
+    // debug level so DevTools shows whether the action actually ran on the
+    // QA's click-thread-from-list path. This clears both the per-conversation
+    // unreadCount AND the sidebar Bell badge ("N messages").
     useEffect(() => {
         if (!user) return;
-        markConversationReadAction(conversation.id, user.uid).catch(() => {});
+        console.debug('[ConversationThread] marking read', { conversationId: conversation.id, uid: user.uid });
+        markConversationReadAction(conversation.id, user.uid)
+            .then(() => console.debug('[ConversationThread] mark read OK', conversation.id))
+            .catch((err) => console.error('[ConversationThread] mark read failed', err));
     }, [conversation.id, user]);
 
     const handleSend = useCallback(async (

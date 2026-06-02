@@ -7258,6 +7258,48 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Close": {
         "English": "Close", "Hindi": "बंद करें", "Kannada": "ಮುಚ್ಚಿ", "Tamil": "மூடு", "Telugu": "మూసివేయి", "Marathi": "बंद करा", "Bengali": "বন্ধ করুন", "Gujarati": "બંધ કરો", "Punjabi": "ਬੰਦ ਕਰੋ", "Malayalam": "അടയ്ക്കുക", "Odia": "ବନ୍ଦ କରନ୍ତୁ"
     },
+    "MCQ": {
+        "English": "MCQ", "Hindi": "MCQ", "Kannada": "MCQ", "Tamil": "MCQ", "Telugu": "MCQ", "Marathi": "MCQ", "Bengali": "MCQ", "Gujarati": "MCQ", "Punjabi": "MCQ", "Malayalam": "MCQ", "Odia": "MCQ"
+    },
+    "VSA": {
+        "English": "VSA", "Hindi": "VSA", "Kannada": "VSA", "Tamil": "VSA", "Telugu": "VSA", "Marathi": "VSA", "Bengali": "VSA", "Gujarati": "VSA", "Punjabi": "VSA", "Malayalam": "VSA", "Odia": "VSA"
+    },
+    "SA": {
+        "English": "SA", "Hindi": "SA", "Kannada": "SA", "Tamil": "SA", "Telugu": "SA", "Marathi": "SA", "Bengali": "SA", "Gujarati": "SA", "Punjabi": "SA", "Malayalam": "SA", "Odia": "SA"
+    },
+    "LA": {
+        "English": "LA", "Hindi": "LA", "Kannada": "LA", "Tamil": "LA", "Telugu": "LA", "Marathi": "LA", "Bengali": "LA", "Gujarati": "LA", "Punjabi": "LA", "Malayalam": "LA", "Odia": "LA"
+    },
+    "Case Study": {
+        "English": "Case Study", "Hindi": "केस अध्ययन", "Kannada": "ಪ್ರಕರಣ ಅಧ್ಯಯನ", "Tamil": "வழக்கு ஆய்வு", "Telugu": "కేస్ స్టడీ", "Marathi": "केस अभ्यास", "Bengali": "কেস স্টাডি", "Gujarati": "કેસ સ્ટડી", "Punjabi": "ਕੇਸ ਸਟੱਡੀ", "Malayalam": "കേസ് സ്റ്റഡി", "Odia": "କେସ୍ ଷ୍ଟଡି"
+    },
+    "A-R": {
+        "English": "A-R", "Hindi": "A-R", "Kannada": "A-R", "Tamil": "A-R", "Telugu": "A-R", "Marathi": "A-R", "Bengali": "A-R", "Gujarati": "A-R", "Punjabi": "A-R", "Malayalam": "A-R", "Odia": "A-R"
+    },
+    "Map": {
+        "English": "Map", "Hindi": "मानचित्र", "Kannada": "ನಕ್ಷೆ", "Tamil": "வரைபடம்", "Telugu": "మ్యాప్", "Marathi": "नकाशा", "Bengali": "মানচিত্র", "Gujarati": "નકશો", "Punjabi": "ਨਕਸ਼ਾ", "Malayalam": "ഭൂപടം", "Odia": "ମ୍ୟାପ"
+    },
+    "Source": {
+        "English": "Source", "Hindi": "स्रोत", "Kannada": "ಮೂಲ", "Tamil": "மூலம்", "Telugu": "మూలం", "Marathi": "स्रोत", "Bengali": "উৎস", "Gujarati": "સ્રોત", "Punjabi": "ਸਰੋਤ", "Malayalam": "സ്രോതസ്സ്", "Odia": "ଉତ୍ସ"
+    },
+    "just now": {
+        "English": "just now", "Hindi": "अभी", "Kannada": "ಈಗಷ್ಟೇ", "Tamil": "இப்போதே", "Telugu": "ఇప్పుడే", "Marathi": "आत्ताच", "Bengali": "এইমাত্র", "Gujarati": "હમણાં જ", "Punjabi": "ਹੁਣੇ", "Malayalam": "ഇപ്പോൾ", "Odia": "ବର୍ତ୍ତମାନ"
+    },
+    "m ago": {
+        "English": "m ago", "Hindi": "मिनट पहले", "Kannada": "ನಿಮಿಷ ಹಿಂದೆ", "Tamil": "நிமிடம் முன்", "Telugu": "నిమి క్రితం", "Marathi": "मिनिटांपूर्वी", "Bengali": "মিনিট আগে", "Gujarati": "મિનિટ પહેલાં", "Punjabi": "ਮਿੰਟ ਪਹਿਲਾਂ", "Malayalam": "മിനിറ്റ് മുമ്പ്", "Odia": "ମିନିଟ ପୂର୍ବେ"
+    },
+    "h ago": {
+        "English": "h ago", "Hindi": "घंटे पहले", "Kannada": "ಗಂಟೆ ಹಿಂದೆ", "Tamil": "மணி முன்", "Telugu": "గం క్రితం", "Marathi": "तासांपूर्वी", "Bengali": "ঘণ্টা আগে", "Gujarati": "કલાક પહેલાં", "Punjabi": "ਘੰਟੇ ਪਹਿਲਾਂ", "Malayalam": "മണിക്കൂർ മുമ്പ്", "Odia": "ଘଣ୍ଟା ପୂର୍ବେ"
+    },
+    "d ago": {
+        "English": "d ago", "Hindi": "दिन पहले", "Kannada": "ದಿನ ಹಿಂದೆ", "Tamil": "நாள் முன்", "Telugu": "రోజు క్రితం", "Marathi": "दिवसांपूर्वी", "Bengali": "দিন আগে", "Gujarati": "દિવસ પહેલાં", "Punjabi": "ਦਿਨ ਪਹਿਲਾਂ", "Malayalam": "ദിവസം മുമ്പ്", "Odia": "ଦିନ ପୂର୍ବେ"
+    },
+    "Please add at least one chapter for this board / grade / subject. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science.": {
+        "English": "Please add at least one chapter for this board / grade / subject. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science.", "Hindi": "कृपया इस बोर्ड / कक्षा / विषय के लिए कम से कम एक अध्याय जोड़ें। हमारे पास केवल CBSE कक्षा 9 और 10 गणित और विज्ञान के लिए आधिकारिक ब्लूप्रिंट हैं।", "Kannada": "ದಯವಿಟ್ಟು ಈ ಬೋರ್ಡ್ / ತರಗತಿ / ವಿಷಯಕ್ಕೆ ಕನಿಷ್ಠ ಒಂದು ಅಧ್ಯಾಯ ಸೇರಿಸಿ. ನಮ್ಮಲ್ಲಿ CBSE ತರಗತಿ 9 ಮತ್ತು 10 ಗಣಿತ ಮತ್ತು ವಿಜ್ಞಾನಕ್ಕೆ ಮಾತ್ರ ಅಧಿಕೃತ ಬ್ಲೂಪ್ರಿಂಟ್‌ಗಳಿವೆ.", "Tamil": "இந்த வாரியம் / வகுப்பு / பாடத்திற்கு குறைந்தது ஒரு அத்தியாயத்தைச் சேர்க்கவும். எங்களிடம் CBSE வகுப்பு 9 மற்றும் 10 கணிதம் மற்றும் அறிவியலுக்கான அதிகாரப்பூர்வ வரைபடங்கள் மட்டுமே உள்ளன.", "Telugu": "దయచేసి ఈ బోర్డు / తరగతి / విషయానికి కనీసం ఒక అధ్యాయాన్ని జోడించండి. మాకు CBSE తరగతి 9 మరియు 10 గణితం మరియు సైన్స్ కోసం మాత్రమే అధికారిక బ్లూప్రింట్‌లు ఉన్నాయి.", "Marathi": "कृपया या मंडळ / इयत्ता / विषयासाठी किमान एक अध्याय जोडा. आमच्याकडे फक्त CBSE इयत्ता 9 आणि 10 गणित आणि विज्ञानासाठी अधिकृत ब्लूप्रिंट आहेत.", "Bengali": "অনুগ্রহ করে এই বোর্ড / শ্রেণী / বিষয়ের জন্য কমপক্ষে একটি অধ্যায় যোগ করুন। আমাদের কাছে শুধুমাত্র CBSE শ্রেণী 9 এবং 10 গণিত ও বিজ্ঞানের জন্য অফিসিয়াল ব্লুপ্রিন্ট আছে।", "Gujarati": "કૃપા કરી આ બોર્ડ / ધોરણ / વિષય માટે ઓછામાં ઓછું એક પ્રકરણ ઉમેરો. અમારી પાસે ફક્ત CBSE ધોરણ 9 અને 10 ગણિત અને વિજ્ઞાન માટેના સત્તાવાર બ્લુપ્રિન્ટ છે.", "Punjabi": "ਕਿਰਪਾ ਕਰਕੇ ਇਸ ਬੋਰਡ / ਜਮਾਤ / ਵਿਸ਼ੇ ਲਈ ਘੱਟੋ ਘੱਟ ਇੱਕ ਅਧਿਆਏ ਜੋੜੋ। ਸਾਡੇ ਕੋਲ ਸਿਰਫ਼ CBSE ਜਮਾਤ 9 ਅਤੇ 10 ਗਣਿਤ ਅਤੇ ਵਿਗਿਆਨ ਲਈ ਅਧਿਕਾਰਤ ਬਲੂਪ੍ਰਿੰਟ ਹਨ।", "Malayalam": "ഈ ബോർഡ് / ക്ലാസ് / വിഷയത്തിന് കുറഞ്ഞത് ഒരു അധ്യായം ചേർക്കുക. ഞങ്ങൾക്ക് CBSE ക്ലാസ് 9, 10 ഗണിതം, ശാസ്ത്രം എന്നിവയ്ക്ക് മാത്രമേ ഔദ്യോഗിക ബ്ലൂപ്രിന്റുകൾ ഉള്ളൂ.", "Odia": "ଦୟାକରି ଏହି ବୋର୍ଡ / ଶ୍ରେଣୀ / ବିଷୟ ପାଇଁ ଅତିକମ୍ ଏକ ଅଧ୍ୟାୟ ଯୋଡନ୍ତୁ। ଆମ ପାଖରେ କେବଳ CBSE ଶ୍ରେଣୀ 9 ଏବଂ 10 ଗଣିତ ଏବଂ ବିଜ୍ଞାନ ପାଇଁ ସରକାରୀ ବ୍ଲୁପ୍ରିଣ୍ଟ ଅଛି।"
+    },
+    "Voice messages are not enabled on this account yet. Please try again later or contact support.": {
+        "English": "Voice messages are not enabled on this account yet. Please try again later or contact support.", "Hindi": "इस खाते पर वॉइस मैसेज अभी सक्षम नहीं हैं। कृपया बाद में पुनः प्रयास करें या सहायता से संपर्क करें।", "Kannada": "ಈ ಖಾತೆಯಲ್ಲಿ ವಾಯ್ಸ್ ಸಂದೇಶಗಳು ಇನ್ನೂ ಸಕ್ರಿಯವಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ.", "Tamil": "இந்த கணக்கில் குரல் செய்திகள் இன்னும் இயக்கப்படவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும் அல்லது ஆதரவை தொடர்பு கொள்ளவும்.", "Telugu": "ఈ ఖాతాలో వాయిస్ సందేశాలు ఇంకా ప్రారంభించబడలేదు. దయచేసి తర్వాత మళ్లీ ప్రయత్నించండి లేదా మద్దతును సంప్రదించండి.", "Marathi": "या खात्यावर व्हॉइस मेसेज अद्याप सक्षम नाहीत. कृपया नंतर पुन्हा प्रयत्न करा किंवा समर्थनाशी संपर्क साधा.", "Bengali": "এই অ্যাকাউন্টে ভয়েস মেসেজ এখনও সক্ষম নয়। অনুগ্রহ করে পরে আবার চেষ্টা করুন বা সহায়তার সাথে যোগাযোগ করুন।", "Gujarati": "આ એકાઉન્ટ પર વોઇસ મેસેજ હજુ સક્ષમ નથી. કૃપા કરી પછી ફરી પ્રયત્ન કરો અથવા સપોર્ટનો સંપર્ક કરો.", "Punjabi": "ਇਸ ਖਾਤੇ 'ਤੇ ਆਵਾਜ਼ ਸੰਦੇਸ਼ ਹਾਲੇ ਚਾਲੂ ਨਹੀਂ ਹਨ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ ਜਾਂ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।", "Malayalam": "ഈ അക്കൗണ്ടിൽ വോയ്സ് സന്ദേശങ്ങൾ ഇതുവരെ പ്രവർത്തനക്ഷമമല്ല. പിന്നീട് വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ പിന്തുണയെ ബന്ധപ്പെടുക.", "Odia": "ଏହି ଆକାଉଣ୍ଟରେ ଭଏସ୍ ବାର୍ତ୍ତା ଏପର୍ଯ୍ୟନ୍ତ ସକ୍ଷମ ହୋଇନାହିଁ। ଦୟାକରି ପରେ ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ସମର୍ଥନ ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ।"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

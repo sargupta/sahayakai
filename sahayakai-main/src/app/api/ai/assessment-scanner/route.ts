@@ -196,9 +196,49 @@ async function _handler(request: Request) {
             );
         }
 
+        // BUG #23 hardening: Pass-2 frequently throws a ZodError-shaped
+        // failure when the Gemini structured output doesn't satisfy the
+        // graded-question schema (e.g. missing `marksAwarded`, malformed
+        // `partialCreditBreakdown`). The flow logs the raw output at ERROR
+        // already; here we surface a specific 422 with an actionable
+        // message instead of leaking `handleAIError`'s 400 "Request body
+        // failed schema validation" (which is wrong — the body was fine,
+        // the *output* didn't validate) or its generic 500 "AI generation
+        // failed". `ZodError.name === 'ZodError'` AND a populated `issues`
+        // array is the duck-type Genkit re-throws here.
+        const errName = (error as { name?: string } | null)?.name;
+        const hasIssues = Array.isArray((error as { issues?: unknown } | null)?.issues);
+        if (errName === 'ZodError' && hasIssues) {
+            // Distinguish: input-body Zod errors come from `AssessmentScannerInputSchema.parse`
+            // and have `issues[].path` rooted at request fields (subject, pageUrls, etc.).
+            // Output-shape Zod errors come from Pass-2 / aggregate validation.
+            const issues = (error as { issues: Array<{ path: (string | number)[] }> }).issues;
+            const inputFields = new Set([
+                'subject', 'pageUrls', 'pageUrl', 'gradeLevel', 'language',
+                'assessmentId', 'studentId', 'classId', 'ncertChapterIds',
+                'totalMaxMarks', 'teacherAnswerKeyText', 'educationBoard', 'userId',
+            ]);
+            const isInputError = issues.some(i => inputFields.has(String(i.path?.[0] ?? '')));
+            if (!isInputError) {
+                return NextResponse.json(
+                    {
+                        error: 'scan_unstructured',
+                        code: 'SCAN_OUTPUT_MALFORMED',
+                        message:
+                            "We couldn't structure the scan results — please re-upload clearer photos or try again in a moment.",
+                    },
+                    { status: 422 },
+                );
+            }
+        }
+
         return handleAIError(error, 'ASSESSMENT_SCANNER', {
             message: `Assessment Scanner API failed for assessmentId: "${assessmentId}"`,
             userId: request.headers.get('x-user-id'),
+            extra: {
+                assessmentId,
+                errorType: errName,
+            },
         });
     }
 }
