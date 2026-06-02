@@ -516,16 +516,16 @@ export default function CommunityPage() {
           the header doesn't overflow on 360px Android viewports, and
           forced a 1.5 line-height on the subtitle so Devanagari/Kannada
           translations don't clip ascenders. */}
-      <div className="rounded-3xl overflow-hidden bg-background border border-border shadow-soft">
+      <div className="rounded-md overflow-hidden bg-card border border-border shadow-soft">
         <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 sm:gap-4">
-          <div className="p-2.5 sm:p-3 bg-background rounded-2xl shadow-soft border border-border shrink-0">
+          <div className="p-2.5 sm:p-3 bg-muted rounded-md border border-border shrink-0">
             <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="font-headline text-xl sm:text-2xl font-bold text-foreground leading-tight">
+            <h1 className="type-h2 text-foreground leading-tight">
               {t("Community")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5 leading-relaxed indic-text">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed indic-text">
               {t("Share, learn, and grow with teachers across Bharat")}
             </p>
           </div>
@@ -538,10 +538,10 @@ export default function CommunityPage() {
       <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3">
         <button
           onClick={handleOpenStaffRoom}
-          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
+          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-md bg-card border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
           aria-label={t("Open Staff Room — chat with every teacher")}
         >
-          <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="p-2 sm:p-2.5 rounded-md bg-primary/10 text-primary shrink-0">
             <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -551,10 +551,10 @@ export default function CommunityPage() {
         </button>
         <button
           onClick={handleOpenTeacherDirectory}
-          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
+          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-md bg-card border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
           aria-label={t("Find Teachers — search by subject or school")}
         >
-          <div className="p-2 sm:p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="p-2 sm:p-2.5 rounded-md bg-primary/10 text-primary shrink-0">
             <UserSearch className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -566,7 +566,7 @@ export default function CommunityPage() {
 
       {/* First-visit inline hint */}
       {showFirstVisitHint && (
-        <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/15 animate-in fade-in duration-500">
+        <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-md bg-primary/5 border border-primary/15 animate-in fade-in duration-500">
           <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 text-sm text-foreground">
             <span className="font-medium">{t("Welcome!")}</span> {t("These groups match your subjects and classes. Post questions, share resources, and connect with fellow teachers.")}
@@ -594,7 +594,7 @@ export default function CommunityPage() {
           either ran but auto-joined nothing (rare) or is still in flight.
           Without this, the page below renders mostly blank space. */}
       {!loading && myGroups.length === 0 && feedItems.length === 0 && (
-        <div className="mt-4 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+        <div className="mt-4 rounded-md border border-dashed border-border bg-muted/30 p-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Users className="h-6 w-6 text-primary" />
           </div>
@@ -703,7 +703,7 @@ export default function CommunityPage() {
         <button
           onClick={() => setShowCreateDialog(true)}
           aria-label={t("Create a Post")}
-          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
+          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-elevated flex items-center justify-center transition-transform active:scale-95"
         >
           <Plus className="h-6 w-6" />
         </button>

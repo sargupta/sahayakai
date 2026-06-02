@@ -354,7 +354,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
-      <div className="card-accent-bar rounded-t-xl" />
+      <div className="card-accent-bar rounded-t-md" />
       <div className="space-y-1">
         <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">{t("Settings")}</h1>
         <p className="text-sm text-muted-foreground">{t("Manage your preferences, plan, and data")}</p>
@@ -579,7 +579,7 @@ export default function SettingsPage() {
             <Badge
               variant="outline"
               className={isPro
-                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                ? 'bg-primary/10 text-primary border-primary/20'
                 : 'bg-muted/40 text-muted-foreground border-border'
               }
             >
@@ -595,7 +595,7 @@ export default function SettingsPage() {
               </Link>
             </Button>
             {!isPro ? (
-              <Button size="sm" asChild className="flex-1 bg-amber-600 hover:bg-amber-700">
+              <Button size="sm" asChild className="flex-1">
                 <Link href="/pricing">
                   {t("Upgrade to Pro")} <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>

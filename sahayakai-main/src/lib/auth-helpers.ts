@@ -28,11 +28,22 @@ export class ForbiddenError extends Error {
 /**
  * Extract the authenticated user id from the middleware-injected header.
  * Throws UnauthorizedError if the header is missing.
+ *
+ * Note (2026-06-01): middleware now rejects unauthenticated POSTs to page
+ * routes at the edge, so this throw is a defense-in-depth. If it fires in
+ * prod, that means the middleware gate was bypassed (e.g. an action called
+ * from a context that skipped middleware) and we want visibility — log a
+ * WARN before throwing so the 401 isn't silent.
  */
 export async function requireAuth(): Promise<string> {
     const h = await headers();
     const uid = h.get('x-user-id');
-    if (!uid) throw new UnauthorizedError();
+    if (!uid) {
+        const path = h.get('x-pathname') || h.get('referer') || 'unknown';
+        // eslint-disable-next-line no-console
+        console.warn(`[auth] requireAuth() rejected — no x-user-id header. Path: ${path}`);
+        throw new UnauthorizedError();
+    }
     return uid;
 }
 

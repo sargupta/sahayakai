@@ -403,25 +403,25 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                 className="w-full"
             >
                 <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
-                    <TabsList className="grid w-full sm:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-xl h-11">
+                    <TabsList className="grid w-full sm:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-md h-11">
                         <TabsTrigger
                             value="easy"
                             disabled={!quiz.easy}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyEasy}
                         </TabsTrigger>
                         <TabsTrigger
                             value="medium"
                             disabled={!quiz.medium}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyMedium}
                         </TabsTrigger>
                         <TabsTrigger
                             value="hard"
                             disabled={!quiz.hard}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyHard}
                         </TabsTrigger>
@@ -528,7 +528,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                             {currentQuiz.questions.map((q, idx) => (
                                 <div
                                     key={idx}
-                                    className="relative p-4 sm:p-5 rounded-xl border border-border bg-muted/30"
+                                    className="relative p-4 sm:p-5 rounded-md border border-border bg-muted/30"
                                 >
                                     <div className="flex justify-between items-start gap-2 mb-3">
                                         <div className="flex-1 min-w-0">
@@ -726,7 +726,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                     (opt, optIdx) => (
                                                         <div
                                                             key={optIdx}
-                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border border-border bg-card"
+                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-sm border border-border bg-card"
                                                         >
                                                             <div className="w-6 h-6 rounded-md border border-border flex items-center justify-center text-[10px] font-black text-muted-foreground bg-muted flex-shrink-0">
                                                                 {String.fromCharCode(
@@ -764,7 +764,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                         {(q.questionType === "short_answer" ||
                                             q.questionType ===
                                                 "fill_in_the_blanks") && (
-                                            <div className="w-full h-20 border-2 border-dashed border-border rounded-lg bg-muted/20 flex items-center justify-center text-muted-foreground/70 text-xs sm:text-sm">
+                                            <div className="w-full h-20 border border-dashed border-border rounded-md bg-muted/20 flex items-center justify-center text-muted-foreground/70 text-xs sm:text-sm">
                                                 {t.studentAnswerArea}
                                             </div>
                                         )}
@@ -778,7 +778,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                 : "opacity-0 max-h-0 py-0 border-none",
                                         )}
                                     >
-                                        <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 text-sm space-y-2">
+                                        <div className="bg-primary/5 p-3 rounded-md border border-primary/10 text-sm space-y-2">
                                             <div className="flex items-center gap-2">
                                                 <Check className="h-4 w-4 text-green-600" />
                                                 <span className="font-bold uppercase text-[10px] tracking-wider">

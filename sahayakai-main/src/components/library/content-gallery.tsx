@@ -384,7 +384,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card/50 backdrop-blur-sm p-4 rounded-2xl border border-white/40 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card p-4 rounded-md border border-border shadow-soft">
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -412,7 +412,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                         </SelectContent>
                     </Select>
 
-                    <div className="flex items-center border border-border rounded-lg p-1 bg-card">
+                    <div className="flex items-center border border-border rounded-md p-1 bg-card">
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
