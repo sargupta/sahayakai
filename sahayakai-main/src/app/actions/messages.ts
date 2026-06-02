@@ -326,28 +326,56 @@ export async function markConversationReadAction(
 
     // Also clear the per-message notification docs for this conversation so the
     // sidebar Bell badge ("N messages") drops to zero once the user has actually
-    // read the thread. sendMessageAction stamps metadata.conversationId on each
-    // SYSTEM "New message" notification; we mark those isRead here.
+    // read the thread.
+    //
+    // IMPORTANT: we deliberately DO NOT include `where('metadata.conversationId', '==', ...)`
+    // in the Firestore query. Three reasons:
+    //   1. A 3-way composite index (recipientId + metadata.conversationId + isRead)
+    //      almost certainly doesn't exist in prod — the query would silently fail
+    //      and the badge would never clear (this was the actual bug QA reported).
+    //   2. Legacy notification docs created before sendMessageAction started stamping
+    //      `metadata.conversationId` have no such field at all, so they'd never match
+    //      even with a perfect index. Those are the "2 messages" the user can't clear.
+    //   3. Equality on a nested map field is brittle across Admin SDK versions.
+    //
+    // Instead we run a single-where scan (recipientId + isRead==false — this index
+    // exists, the sidebar listener uses the same shape) and filter in code by
+    // matching either metadata.conversationId OR the link querystring.
     try {
         const notifSnap = await db
             .collection('notifications')
             .where('recipientId', '==', userId)
-            .where('metadata.conversationId', '==', conversationId)
             .where('isRead', '==', false)
-            .limit(100)
+            .limit(200)
             .get();
 
-        if (!notifSnap.empty) {
+        const linkNeedle = `open=${conversationId}`;
+        const matching = notifSnap.docs.filter((d) => {
+            const data = d.data() ?? {};
+            const metaMatch = data.metadata?.conversationId === conversationId;
+            const linkMatch = typeof data.link === 'string' && data.link.includes(linkNeedle);
+            return metaMatch || linkMatch;
+        });
+
+        console.debug(
+            '[markConversationReadAction] scanned %d unread notifs, %d match conv %s',
+            notifSnap.size,
+            matching.length,
+            conversationId,
+        );
+
+        if (matching.length > 0) {
             const notifBatch = db.batch();
-            notifSnap.docs.forEach((doc) => {
+            matching.forEach((doc) => {
                 notifBatch.update(doc.ref, { isRead: true });
             });
             await notifBatch.commit();
+            console.debug('[markConversationReadAction] cleared %d message notifications', matching.length);
         }
     } catch (err) {
-        // Non-fatal: a composite index may be required for this query. The
+        // Non-fatal: log loudly so we can spot it in Cloud Logging. The
         // conversation badge still clears; only the notification badge lingers.
-        console.warn('[markConversationReadAction] failed to clear message notifications', err);
+        console.error('[markConversationReadAction] failed to clear message notifications', err);
     }
 }
 

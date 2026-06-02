@@ -175,12 +175,24 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
             });
             const url = await getDownloadURL(storageRef);
             onSend(url, duration);
-        } catch (err) {
+        } catch (err: any) {
             // Surface upload failures (most commonly Storage rules denying the
             // voice-messages/{uid}/ path, or a network error) instead of failing silently.
+            // QA #13 (2026-06-02): split the permission-denied case so we tell
+            // the user it's a server-side config issue, not their connection —
+            // before storage.rules landed, every upload returned this code and
+            // we were misattributing it to flaky internet.
+            const code = err?.code ?? '';
+            const isPermissionDenied =
+                code === 'storage/unauthorized' ||
+                code === 'storage/unauthenticated' ||
+                /unauthorized|permission|denied/i.test(err?.message ?? '');
+            console.error('[voice-recorder] upload failed', { code, message: err?.message });
             toast({
                 title: t("Could not send voice message"),
-                description: t("Upload failed. Please check your connection and try again."),
+                description: isPermissionDenied
+                    ? t("Voice messages are not enabled on this account yet. Please try again later or contact support.")
+                    : t("Upload failed. Please check your connection and try again."),
                 variant: "destructive",
             });
         } finally {

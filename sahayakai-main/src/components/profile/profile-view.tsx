@@ -41,7 +41,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
-import { BackButton } from "@/components/ui/back-button";
 import { PlanBadge } from "@/components/plan-badge";
 import {
     sendConnectionRequestAction,
@@ -208,14 +207,10 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            {/* Back affordance — only when viewing another teacher's profile
-                (reached via the community teacher directory / notifications).
-                Own profile (/my-profile) is a top-level destination and needs no
-                back button. Matches the ArrowLeft + ghost Button pattern used by
-                the community sub-views. */}
-            {!isOwnProfile && (
-                <BackButton to="/community" />
-            )}
+            {/* Back affordance for non-own profiles is now rendered by the
+                route's ProfileBackBar (sticky top bar) — guarantees visibility.
+                Own profile (/my-profile) renders ProfileView directly without
+                that wrapper, so no back button there. */}
 
             {/* Profile Header - Premium Glassmorphic Card */}
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-gradient-to-b from-primary/5 to-transparent backdrop-blur-xl p-6 md:p-10 rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden group">
