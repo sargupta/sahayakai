@@ -9,6 +9,7 @@ import { tts } from "@/lib/tts";
 import { Mic, StopCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useLanguage, BCP47_MAP } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 
 /** Localised mic greeting — spoken when the teacher first taps the mic.
  *  Keyed by the Language display name used across the app. Falls back to
@@ -473,6 +474,11 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
+        // 2026-12 Bengali STT fix: pass the user's app language as a hint to
+        // the cloud STT flow. Without this, Gemini auto-detect biased to
+        // English/Hindi and mis-transcribed Bengali/Tamil/Telugu/Malayalam/
+        // Odia audio. The flow reads formData.get("language") on the server.
+        formData.append("language", LANGUAGE_TO_ISO[language] ?? "en");
 
         try {
           // COST OPTIMIZATION: Use browser SpeechRecognition first (free).
