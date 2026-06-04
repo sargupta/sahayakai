@@ -249,6 +249,8 @@ const scoringPrompt = ai.definePrompt({
 
 **Output language for ALL feedback:** {{language}}.
 
+**Native Script Mandate (CRITICAL):** All teacher-facing and student-facing feedback fields MUST be in {{language}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Tumi bhalo korecho" instead of "তুমি ভালো করেছ" is a critical failure. (English-only metadata fields like \`mistakePattern\` enum values stay in English.)
+
 ## Inputs
 
 ### Extracted student work (from Pass 1, do not re-extract)

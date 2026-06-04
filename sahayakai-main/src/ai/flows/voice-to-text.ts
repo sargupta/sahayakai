@@ -35,6 +35,69 @@ const ISO_TO_LANG_HINT: Record<string, { name: string; script: string }> = {
   or: { name: 'Odia',      script: 'Odia' },
 };
 
+// Unicode script ranges for each ISO language. Used by `scriptMatchesExpected`
+// to detect when the model returned Latin-transliterated Indic text (a known
+// Gemini failure mode for short / noisy / accented Bengali, Tamil, Telugu,
+// Kannada, Malayalam, Odia, Gujarati, Punjabi, Marathi, and Hindi audio).
+const ISO_TO_SCRIPT_RANGE: Record<string, { test: (cp: number) => boolean }> = {
+  bn: { test: (c) => c >= 0x0980 && c <= 0x09ff },
+  ta: { test: (c) => c >= 0x0b80 && c <= 0x0bff },
+  te: { test: (c) => c >= 0x0c00 && c <= 0x0c7f },
+  kn: { test: (c) => c >= 0x0c80 && c <= 0x0cff },
+  ml: { test: (c) => c >= 0x0d00 && c <= 0x0d7f },
+  or: { test: (c) => c >= 0x0b00 && c <= 0x0b7f },
+  gu: { test: (c) => c >= 0x0a80 && c <= 0x0aff },
+  pa: { test: (c) => c >= 0x0a00 && c <= 0x0a7f },
+  hi: { test: (c) => c >= 0x0900 && c <= 0x097f },
+  mr: { test: (c) => c >= 0x0900 && c <= 0x097f },
+};
+
+// Languages we'll force a retry on when output came back as pure Latin.
+const RETRYABLE_INDIC = new Set(['bn', 'ta', 'te', 'kn', 'ml', 'or', 'gu', 'pa', 'hi', 'mr']);
+
+function isLatin(cp: number): boolean {
+  return (cp >= 0x0041 && cp <= 0x005a) || (cp >= 0x0061 && cp <= 0x007a);
+}
+
+/**
+ * Returns true if the output text's script is consistent with the expected
+ * language. Code-switching with English (Latin chars) is allowed — we only
+ * fail when the expected lang is Indic AND there's a meaningful chunk of
+ * non-Latin-eligible script characters AND none of them sit in the expected
+ * Unicode range.
+ *
+ * Heuristic: count "letter-like" codepoints (skip whitespace, digits, punct).
+ * If the expected language has a script range, require that >=30% of the
+ * non-Latin letter chars fall in that range. If there are <=5 non-Latin
+ * letter chars total, treat as English code-switching and pass.
+ */
+export function scriptMatchesExpected(text: string, isoLang: string | undefined): boolean {
+  if (!isoLang) return true;
+  const range = ISO_TO_SCRIPT_RANGE[isoLang];
+  if (!range) return true; // English or unknown — nothing to validate
+  if (!text) return true;
+
+  let inExpected = 0;
+  let nonLatinLetters = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    // skip whitespace, digits, ASCII punct, common symbols
+    if (cp < 0x0041) continue;
+    if (isLatin(cp)) continue;
+    // letter-ish — any non-Latin, non-ASCII codepoint
+    nonLatinLetters++;
+    if (range.test(cp)) inExpected++;
+  }
+
+  // Pure Latin or near-pure Latin output. If the user's UI lang is Indic but
+  // they genuinely spoke English, we should NOT keep retrying. Treat <=5
+  // non-Latin chars as "looks English" and pass.
+  if (nonLatinLetters <= 5) return true;
+
+  // Need at least 30% of non-Latin letters to be in the expected script.
+  return inExpected / nonLatinLetters >= 0.3;
+}
+
 const VoiceToTextInputSchema = z.object({
   audioDataUri: z
     .string()
@@ -65,9 +128,13 @@ const voiceToTextPrompt = ai.definePrompt({
 
 Your task is to transcribe the audio and detect its language.
 
+{{#if forceScript}}
+CRITICAL — RETRY ATTEMPT: Your previous attempt returned Latin transliteration. The audio is in **{{expectedLanguageName}}**. Output in **{{expectedLanguageScript}} script ONLY** — absolutely no romanization. If you cannot recognize the audio as {{expectedLanguageName}}, transcribe what you do hear but DO NOT romanize Indic phonemes.
+{{else}}
 {{#if expectedLanguageHint}}
 PRIMARY LANGUAGE HINT (USE THIS):
 The user's app is set to **{{expectedLanguageName}}** ({{expectedLanguageScript}} script). Transcribe in that language and script UNLESS the audio is clearly in a different language. Code-switching with English is allowed. NEVER output Latin transliteration of an Indic language — use the native script.
+{{/if}}
 {{/if}}
 
 INSTRUCTIONS:
@@ -87,7 +154,7 @@ Audio Input: {{media url=audioDataUri}}
 Output strictly valid JSON matching the schema.`,
 });
 
-function buildPromptInput(input: VoiceToTextInput) {
+function buildPromptInput(input: VoiceToTextInput, opts?: { forceScript?: boolean }) {
   const hint = input.expectedLanguage ? ISO_TO_LANG_HINT[input.expectedLanguage] : null;
   return {
     audioDataUri: input.audioDataUri,
@@ -95,7 +162,19 @@ function buildPromptInput(input: VoiceToTextInput) {
     expectedLanguageHint: hint ? 'yes' : undefined,
     expectedLanguageName: hint?.name,
     expectedLanguageScript: hint?.script,
+    forceScript: opts?.forceScript ? 'yes' : undefined,
   } as any;
+}
+
+/**
+ * Returns true if we should retry: expected lang is a retryable Indic lang,
+ * the model returned text, AND the script check failed.
+ */
+function shouldRetryForScript(text: string | undefined, expectedLanguage: string | undefined): boolean {
+  if (!expectedLanguage) return false;
+  if (!RETRYABLE_INDIC.has(expectedLanguage)) return false;
+  if (!text) return false;
+  return !scriptMatchesExpected(text, expectedLanguage);
 }
 
 export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTextOutput> {
@@ -117,10 +196,8 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
   const base64Audio = `data:${mimeType};base64,${buffer.toString('base64')}`;
 
   return runResiliently(async (config) => {
-    const { output: transcription } = await voiceToTextPrompt(
-      buildPromptInput({ audioDataUri: base64Audio, expectedLanguage }),
-      config,
-    );
+    const baseInput = { audioDataUri: base64Audio, expectedLanguage };
+    let { output: transcription } = await voiceToTextPrompt(buildPromptInput(baseInput), config);
 
     if (!transcription?.text) {
       throw new Error("Empty transcription returned from model");
@@ -128,6 +205,23 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
       throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
+    }
+
+    // Script-validation retry (max 1). Catches Gemini's habit of romanizing
+    // short / noisy / accented Indic audio even when given a language hint.
+    if (shouldRetryForScript(transcription.text, expectedLanguage)) {
+      console.info(
+        `[voiceToText.formData] script_mismatch first_attempt expectedLanguage=${expectedLanguage} sample="${transcription.text.slice(0, 60)}" — retrying with forceScript`,
+      );
+      const retry = await voiceToTextPrompt(buildPromptInput(baseInput, { forceScript: true }), config);
+      if (retry.output?.text && !isLikelyTranscriptionRefusal(retry.output.text)) {
+        transcription = retry.output;
+      }
+      if (!scriptMatchesExpected(transcription.text, expectedLanguage)) {
+        console.warn(
+          `[voiceToText.formData] script_mismatch after_retry expectedLanguage=${expectedLanguage} sample="${transcription.text.slice(0, 60)}" — returning anyway`,
+        );
+      }
     }
 
     return { text: transcription.text, language: transcription.language };
@@ -138,7 +232,7 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
   const { runResiliently } = await import('@/ai/genkit');
 
   return runResiliently(async (config) => {
-    const { output: transcription } = await voiceToTextPrompt(buildPromptInput(input), config);
+    let { output: transcription } = await voiceToTextPrompt(buildPromptInput(input), config);
 
     if (!transcription?.text) {
       throw new Error("Empty transcription returned from model");
@@ -146,6 +240,21 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
       throw new Error("Model returned a refusal instead of a transcript (empty/silent audio)");
+    }
+
+    if (shouldRetryForScript(transcription.text, input.expectedLanguage)) {
+      console.info(
+        `[voiceToText] script_mismatch first_attempt expectedLanguage=${input.expectedLanguage} sample="${transcription.text.slice(0, 60)}" — retrying with forceScript`,
+      );
+      const retry = await voiceToTextPrompt(buildPromptInput(input, { forceScript: true }), config);
+      if (retry.output?.text && !isLikelyTranscriptionRefusal(retry.output.text)) {
+        transcription = retry.output;
+      }
+      if (!scriptMatchesExpected(transcription.text, input.expectedLanguage)) {
+        console.warn(
+          `[voiceToText] script_mismatch after_retry expectedLanguage=${input.expectedLanguage} sample="${transcription.text.slice(0, 60)}" — returning anyway`,
+        );
+      }
     }
 
     return { text: transcription.text, language: transcription.language };

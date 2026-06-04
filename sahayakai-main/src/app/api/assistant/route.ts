@@ -118,8 +118,18 @@ async function _handler(req: Request) {
             chatHistory = [],
             currentScreenContext = null,
             teacherProfile = null,
+            // detectedLanguage: best-guess from the STT/speech detector. Can
+            //   be wrong (especially for Bengali/Tamil/Telugu/Malayalam/Odia).
+            // uiLanguage: explicit, from useLanguage().language on the client.
+            //   When present, treat as the source of truth for the response
+            //   language so a Bengali-UI teacher always gets a Bengali answer
+            //   even if STT misclassified their utterance as English/Hindi.
             detectedLanguage = null,
+            uiLanguage = null,
         } = body;
+        // The dispatcher's `detectedLanguage` param drives response language;
+        // honor uiLanguage when supplied so the user's explicit choice wins.
+        const responseLanguage = uiLanguage || detectedLanguage;
 
         if (!message) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -155,7 +165,10 @@ async function _handler(req: Request) {
                 chatHistory,
                 currentScreenContext,
                 teacherProfile,
-                detectedLanguage,
+                // QA Christmas-test fix: uiLanguage (when client supplied)
+                // overrides STT-detected language, so a Bengali-UI teacher
+                // always gets a Bengali answer even if STT misclassified.
+                detectedLanguage: responseLanguage,
             },
         });
 

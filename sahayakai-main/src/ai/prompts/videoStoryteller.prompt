@@ -31,3 +31,4 @@ Generate highly personalized YouTube search queries for SCHOOL TEACHERS — NOT 
 - Provide 3-5 queries per category.
 - Queries must be culturally relevant to Indian school contexts (govt schools, semi-urban, CBSE, state boards).
 - The `personalizedMessage` MUST be in the teacher's preferred language ({{{language}}}).
+- **Native Script Mandate (CRITICAL) for `personalizedMessage`**: Output in {{{language}}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Aapke liye kuch videos hain" instead of "आपके लिए कुछ वीडियो हैं" is a critical failure. (YouTube search queries themselves may stay in English/Latin.)

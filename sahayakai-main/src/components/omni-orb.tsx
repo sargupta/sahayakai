@@ -13,6 +13,7 @@ import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
@@ -79,7 +80,7 @@ export function OmniOrb() {
     const pathname = usePathname();
     const { user } = useAuth();
     const { toast } = useToast();
-    const { t } = useLanguage();
+    const { t, language: uiLanguage } = useLanguage();
     // Feature flag: vidyaGreetingSuppressor
     //   ENABLED (default) — strip redundant opening greetings ("Namaste",
     //                       "Sure", "Of course") after the first model
@@ -461,6 +462,11 @@ export function OmniOrb() {
                     teacherProfile,
                     // Pass detected speech language so VIDYA responds in the same language
                     detectedLanguage: detectedLang ?? null,
+                    // 2026-12 STT fix: also send the teacher's EXPLICIT UI
+                    // language. The server prefers this over detectedLanguage
+                    // so a Bengali-UI teacher gets a Bengali answer even if
+                    // STT misclassified the utterance script.
+                    uiLanguage: LANGUAGE_TO_ISO[uiLanguage] ?? null,
                 }),
             });
 
