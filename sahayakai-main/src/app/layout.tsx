@@ -123,6 +123,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        {/*
+          2026-12 Indic font FOUC fix: synchronous external script that reads
+          localStorage 'sahayakai-lang' and injects the matching Noto Sans
+          stylesheet link BEFORE React hydrates. Without this, the dynamic
+          ensureIndicFontLoaded() in LanguageContext only ran after mount,
+          so Bengali/Tamil/Telugu/Kannada/Malayalam/Odia/Gujarati/Punjabi/
+          Marathi/Hindi teachers saw 200-500ms of tofu boxes (▢▢▢) on initial
+          paint. External file (vs inline) keeps the layout tree clean and
+          avoids dangerouslySetInnerHTML.
+        */}
+        <script src="/indic-font-preload.js" />
         <StructuredData />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
