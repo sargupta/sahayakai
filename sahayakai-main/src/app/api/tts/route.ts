@@ -61,8 +61,30 @@ function getVoiceName(langCode: string): string {
         'gu-IN': 'gu-IN-Wavenet-A', // Wavenet, female
         'pa-IN': 'pa-IN-Wavenet-A', // Wavenet, female
         'te-IN': 'te-IN-Standard-A', // Standard, female — no Wavenet/Neural2 available for Telugu
+        // 2026-12 audit: Marathi was falling through to the implicit
+        // `${langCode}-Standard-A` default which works (mr-IN-Standard-A is
+        // a real voice) but the explicit entry makes the support matrix
+        // visible and avoids ambiguity.
+        'mr-IN': 'mr-IN-Standard-A', // Standard, female — Marathi has Standard only
     };
     return voiceMap[langCode] || `${langCode}-Standard-A`;
+}
+
+// Languages where Google Cloud TTS has NO native voice as of 2026-12.
+// For these, the route falls back to Hindi (closest Indo-Aryan voice for
+// Odia, which shares phonological roots) so the teacher at least gets
+// audible output rather than a 400 error.
+const UNSUPPORTED_TTS_LANGS = new Set(['or-IN']);
+function fallbackVoiceForUnsupported(langCode: string): { langCode: string; voiceName: string } | null {
+    if (langCode === 'or-IN') {
+        // Odia not in Google TTS catalog. Hindi (Devanagari) is closer to
+        // Odia phonology than English. The text is still in Odia script
+        // (Google TTS attempts a phonetic read which is imperfect but
+        // audible) — better than 400. Log on every call so we can track
+        // demand for a proper Odia voice (Sarvam or third-party).
+        return { langCode: 'hi-IN', voiceName: 'hi-IN-Standard-A' };
+    }
+    return null;
 }
 
 function stripMarkdown(text: string): string {
@@ -84,6 +106,20 @@ const VALID_LANG_CODE = /^[a-z]{2}-[A-Z]{2}$/;
  * Synthesise speech with Google Cloud TTS (used as fallback when Sarvam fails).
  */
 async function googleTTS(cleanText: string, langCode: string, voiceName: string): Promise<string> {
+    // 2026-12 audit: route Odia (and any future unsupported lang) through a
+    // documented voice fallback BEFORE the API call so we don't burn a
+    // round-trip on a guaranteed 400.
+    let effectiveLang = langCode;
+    let effectiveVoice = voiceName;
+    if (UNSUPPORTED_TTS_LANGS.has(langCode)) {
+        const fb = fallbackVoiceForUnsupported(langCode);
+        if (fb) {
+            console.warn(`[TTS] '${langCode}' not in Google catalog — falling back to ${fb.voiceName}. Output will be phonetically approximate.`);
+            effectiveLang = fb.langCode;
+            effectiveVoice = fb.voiceName;
+        }
+    }
+
     const token = await getGoogleAccessToken();
 
     const response = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
@@ -94,7 +130,7 @@ async function googleTTS(cleanText: string, langCode: string, voiceName: string)
         },
         body: JSON.stringify({
             input: { text: cleanText },
-            voice: { languageCode: langCode, name: voiceName },
+            voice: { languageCode: effectiveLang, name: effectiveVoice },
             audioConfig: {
                 audioEncoding: 'MP3',
                 speakingRate: 0.92,
@@ -106,6 +142,14 @@ async function googleTTS(cleanText: string, langCode: string, voiceName: string)
 
     if (!response.ok) {
         const errorText = await response.text();
+        // 2026-12: defensive second-chance fallback — if Google rejects the
+        // chosen voice (e.g. Google retires a Wavenet model, or our table is
+        // stale), retry once with hi-IN Standard-A rather than failing the
+        // teacher's request.
+        if (response.status >= 400 && effectiveLang !== 'hi-IN') {
+            console.warn(`[TTS] ${effectiveVoice} failed (${response.status}). Retrying with hi-IN-Standard-A.`);
+            return googleTTS(cleanText, 'hi-IN', 'hi-IN-Standard-A');
+        }
         throw new Error(`Google TTS ${response.status}: ${errorText.slice(0, 200)}`);
     }
 
