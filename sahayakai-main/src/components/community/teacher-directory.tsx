@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus, Search, Mic, MicOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useLanguage } from "@/context/language-context";
+import { useLanguage, BCP47_MAP } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { getAllTeachersAction } from "@/app/actions/community";
 import {
@@ -32,7 +32,7 @@ interface TeacherConnState {
 
 export function TeacherDirectory() {
     const router = useRouter();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { toast } = useToast();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
@@ -171,7 +171,10 @@ export function TeacherDirectory() {
         if (!SR) return;
         if (isListening) { recRef.current?.stop(); setIsListening(false); return; }
         const rec = new SR();
-        rec.lang = navigator.language;
+        // 2026-12 STT fix: use the app's UI language (BCP-47), not the
+        // browser locale. A Bengali teacher on a Chrome set to en-US would
+        // otherwise get an English recognizer for a Bengali utterance.
+        rec.lang = BCP47_MAP[language] ?? 'en-IN';
         rec.interimResults = false;
         rec.maxAlternatives = 1;
         rec.onresult = (e: any) => { const t = e.results[0]?.[0]?.transcript ?? ''; if (t) setSearchQuery(t); };

@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
-import { useLanguage } from '@/context/language-context';
+import { useLanguage, BCP47_MAP } from '@/context/language-context';
 import {
   getLibraryResources,
   likeResourceAction,
@@ -77,6 +77,7 @@ const TYPE_CHIPS: { value: string; label: string; fileType?: FileType }[] = [
 // ── Voice search hook ─────────────────────────────────────────────────────────
 
 function useVoiceSearch(onResult: (text: string) => void, lang: string) {
+  const { language: uiLanguage } = useLanguage();
   const [isListening, setIsListening] = useState(false);
   const recRef = useRef<any>(null);
 
@@ -91,7 +92,10 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
     }
 
     const rec = new SR();
-    rec.lang = lang !== 'all' ? lang : navigator.language;
+    // 2026-12 STT fix: fall back to the UI language's BCP-47 code, not
+    // navigator.language (browser locale). Bengali on a en-US Chrome was
+    // otherwise transcribed as English.
+    rec.lang = lang !== 'all' ? lang : (BCP47_MAP[uiLanguage] ?? 'en-IN');
     rec.interimResults = false;
     rec.maxAlternatives = 1;
 
@@ -105,7 +109,7 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
     recRef.current = rec;
     rec.start();
     setIsListening(true);
-  }, [isListening, lang, onResult]);
+  }, [isListening, lang, onResult, uiLanguage]);
 
   return { isListening, toggle };
 }
