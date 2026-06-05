@@ -3,7 +3,7 @@
 import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import { requireAuth } from '@/lib/auth-helpers';
-import { createNotification } from './notifications';
+import { createTypedNotification } from './notifications';
 import type { ConnectionRequest, Connection, MyConnectionData } from '@/types';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -51,11 +51,10 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
     try {
         const userSnap = await db.collection('users').doc(fromUid).get();
         const sender = userSnap.data();
-        await createNotification({
-            recipientId: toUid,
+        await createTypedNotification({
             type: 'CONNECT_REQUEST',
-            title: 'New connection request',
-            message: `${sender?.displayName ?? 'A teacher'} wants to connect with you.`,
+            recipientId: toUid,
+            placeholders: { senderName: sender?.displayName ?? 'A teacher' },
             senderId: fromUid,
             senderName: sender?.displayName,
             senderPhotoURL: sender?.photoURL,
@@ -103,11 +102,10 @@ export async function acceptConnectionRequestAction(requestId: string): Promise<
     try {
         const userSnap = await db.collection('users').doc(callerId).get();
         const accepter = userSnap.data();
-        await createNotification({
-            recipientId: req.fromUid,
+        await createTypedNotification({
             type: 'CONNECT_ACCEPTED',
-            title: 'Connection accepted',
-            message: `${accepter?.displayName ?? 'A teacher'} accepted your connection request.`,
+            recipientId: req.fromUid,
+            placeholders: { senderName: accepter?.displayName ?? 'A teacher' },
             senderId: callerId,
             senderName: accepter?.displayName,
             senderPhotoURL: accepter?.photoURL,

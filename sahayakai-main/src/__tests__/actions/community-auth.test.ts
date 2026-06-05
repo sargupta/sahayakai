@@ -49,6 +49,7 @@ jest.mock('@/lib/aggregator', () => ({
 
 jest.mock('@/app/actions/notifications', () => ({
     createNotification: jest.fn(async () => {}),
+    createTypedNotification: jest.fn(async () => {}),
 }));
 
 import * as community from '@/app/actions/community';

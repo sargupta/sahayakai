@@ -4,7 +4,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { buildDirectConversationId, SharedResource } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
-import { createNotification } from './notifications';
+import { createTypedNotification } from './notifications';
 import { sendPushToUser } from '@/lib/fcm-server';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -255,16 +255,20 @@ export async function sendMessageAction({
         ? convData.name
         : senderSnap?.displayName ?? 'Teacher';
 
+    const previewText = type === 'resource'
+        ? `📎 ${resource?.title ?? 'Shared a resource'}`
+        : type === 'audio'
+        ? 'Voice message'
+        : trimmed.slice(0, 80);
+
     for (const recipientId of recipients) {
-        createNotification({
+        createTypedNotification({
+            type: 'MESSAGE',
             recipientId,
-            type: 'SYSTEM',
-            title: `New message from ${conversationName}`,
-            message: type === 'resource'
-                ? `📎 ${resource?.title ?? 'Shared a resource'}`
-                : type === 'audio'
-                ? 'Voice message'
-                : trimmed.slice(0, 80),
+            placeholders: {
+                senderName: conversationName ?? 'Teacher',
+                preview: previewText,
+            },
             senderId,
             senderName: senderSnap?.displayName ?? 'Teacher',
             senderPhotoURL: senderSnap?.photoURL ?? undefined,
