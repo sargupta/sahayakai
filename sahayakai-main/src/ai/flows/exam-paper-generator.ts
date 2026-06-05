@@ -452,7 +452,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.0-flash',
+            modelUsed: 'gemini-2.5-flash',
             input: `${input.board} ${input.gradeLevel} ${input.subject}`
           }
         );

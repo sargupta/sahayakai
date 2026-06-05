@@ -177,7 +177,7 @@ const instantAnswerFlow = ai.defineFlow(
         if (normalizedInput.userId) {
           const usage = (result as any).usage;
           if (usage) {
-            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
           }
           // Since this prompt has googleSearch tool, we count it as a grounding call
           UsageTracker.trackGrounding(normalizedInput.userId, normalizedInput.question);
@@ -206,7 +206,7 @@ const instantAnswerFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.0-flash',
+            modelUsed: 'gemini-2.5-flash',
             input: input.question
           }
         );

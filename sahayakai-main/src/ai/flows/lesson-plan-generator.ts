@@ -117,7 +117,7 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
 
     const auditResult = await runResiliently(async (resilienceConfig) => {
       return await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
+        model: 'googleai/gemini-2.5-flash',
         prompt: `You are a lesson plan auditor.
   
   Materials Listed: ${materialsText}
@@ -472,7 +472,7 @@ const lessonPlanFlow = ai.defineFlow(
         });
 
         if (normalizedInput.userId && usage) {
-          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.0-flash');
+          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
         }
         genTimer.stop();
 
@@ -480,7 +480,7 @@ const lessonPlanFlow = ai.defineFlow(
           throw new FlowExecutionError(
             'AI model returned null output',
             {
-              modelUsed: 'gemini-2.0-flash',
+              modelUsed: 'gemini-2.5-flash',
               input: input.topic
             }
           );
