@@ -25,8 +25,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
         }
     } catch (err) {
+        // Any throw from signature verification (malformed signature, secret missing,
+        // crypto error) is treated as invalid signature — return 401 so Razorpay
+        // does NOT retry. 5xx would trigger retry storms on permanently-bad input.
         console.error('[Webhook] Signature verification error:', err);
-        return NextResponse.json({ error: 'Signature verification failed' }, { status: 500 });
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const event = JSON.parse(body);

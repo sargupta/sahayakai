@@ -140,8 +140,17 @@ export async function GET(req: NextRequest) {
 // ── POST: Handle parent's speech/DTMF → generate AI reply → respond ─────────
 
 export async function POST(req: NextRequest) {
-    // Clone the request to read body twice (once for validation, once for parsing)
-    const formData = await req.formData();
+    // Clone the request to read body twice (once for validation, once for parsing).
+    // Wrap formData parsing in try/catch: malformed/non-form bodies previously
+    // surfaced as 500 (and triggered Twilio retries). Treat as a signature-reject
+    // (403) — we cannot validate an unparseable body, so refuse it the same way.
+    let formData: FormData;
+    try {
+        formData = await req.formData();
+    } catch (parseErr) {
+        console.warn('[twiml] Failed to parse form-data — rejecting POST:', parseErr);
+        return new NextResponse(hangupXml(), { status: 403, headers: XML_HEADERS });
+    }
     const params: Record<string, string> = {};
     formData.forEach((v, k) => { params[k] = v.toString(); });
 
