@@ -101,6 +101,13 @@ export interface DispatchedVoiceToText extends VoiceToTextOutput {
 export interface VoiceToTextDispatchInput {
     audioDataUri: string;
     userId: string;
+    /**
+     * Optional 2-letter ISO language hint forwarded from the client. Lets the
+     * sidecar bias detection and trigger the script-mismatch retry path for
+     * short / noisy Indic audio. Mirrors `expectedLanguage` in the Genkit TS
+     * flow (`src/ai/flows/voice-to-text.ts`).
+     */
+    expectedLanguage?: string;
 }
 
 function inputToSidecarRequest(
@@ -109,6 +116,7 @@ function inputToSidecarRequest(
     return {
         audioDataUri: input.audioDataUri,
         userId: input.userId,
+        expectedLanguage: input.expectedLanguage ?? null,
     };
 }
 
@@ -140,7 +148,7 @@ function genkitToDispatched(
 async function runGenkitSafe(input: VoiceToTextDispatchInput) {
     try {
         const out = await withTimeout(
-            voiceToText({ audioDataUri: input.audioDataUri }),
+            voiceToText({ audioDataUri: input.audioDataUri, expectedLanguage: input.expectedLanguage }),
             FALLBACK_TIMEOUT_MS,
             'voice-to-text genkit fallback',
         );
@@ -188,7 +196,7 @@ export async function dispatchVoiceToText(
 
     if (decision.mode === 'off') {
         const out = await withTimeout(
-            voiceToText({ audioDataUri: input.audioDataUri }),
+            voiceToText({ audioDataUri: input.audioDataUri, expectedLanguage: input.expectedLanguage }),
             FALLBACK_TIMEOUT_MS,
             'voice-to-text genkit fallback',
         );
@@ -253,7 +261,7 @@ export async function dispatchVoiceToText(
     });
 
     const out = await withTimeout(
-        voiceToText({ audioDataUri: input.audioDataUri }),
+        voiceToText({ audioDataUri: input.audioDataUri, expectedLanguage: input.expectedLanguage }),
         FALLBACK_TIMEOUT_MS,
         'voice-to-text genkit fallback',
     );

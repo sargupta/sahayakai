@@ -19,6 +19,15 @@ async function _handler(request: NextRequest) {
             return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
         }
 
+        // Optional 2-letter ISO language hint from the client (e.g. "bn", "ta").
+        // Forwarded through dispatcher → sidecar so the script-mismatch retry
+        // path can fire. Mirrors the `uiLanguage` plumbing in /api/assistant.
+        const rawExpectedLanguage = formData.get('expectedLanguage');
+        const expectedLanguage =
+            typeof rawExpectedLanguage === 'string' && /^[a-z]{2}$/i.test(rawExpectedLanguage)
+                ? rawExpectedLanguage.toLowerCase()
+                : undefined;
+
         // Wave 2: cap audio at 10 MB. STT cost scales with duration, and a
         // 10 MB Opus file is already ~30 minutes — far longer than any
         // legitimate teacher voice note or chat dictation.
@@ -57,6 +66,7 @@ async function _handler(request: NextRequest) {
         const dispatched = await dispatchVoiceToText({
             audioDataUri,
             userId,
+            expectedLanguage,
         });
         return NextResponse.json({
             text: dispatched.text,
