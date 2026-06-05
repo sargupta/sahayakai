@@ -81,6 +81,16 @@ class LessonPlanRequest(BaseModel):
     resourceLevel: ResourceLevel | None = None
     difficultyLevel: DifficultyLevel | None = None
     subject: str | None = Field(default=None, max_length=100)
+    # Hyperlocal fields (Phase localisation) — forwarded by the
+    # sahayakai-main dispatcher when the teacher's profile has a
+    # state/district. `regionalContextBlock` is a pre-rendered prompt
+    # snippet (crops/festivals/geography) computed server-side in the
+    # Genkit flow; the ADK writer consumes it verbatim for parity.
+    # Optional; `extra="forbid"` is retained so genuine schema drift
+    # still surfaces as a 422.
+    state: str | None = Field(default=None, max_length=100)
+    district: str | None = Field(default=None, max_length=100)
+    regionalContextBlock: str | None = Field(default=None, max_length=4000)
 
 
 # --- Output (model contract) --------------------------------------------

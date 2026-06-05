@@ -87,12 +87,12 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
     // 11-way union the sidecar enforces. The route normalises before
     // reaching here, so the cast is sound.
     // Hyperlocal fields (state, district, regionalContextBlock) are
-    // populated on the Genkit-side `LessonPlanInput`. The sidecar's
-    // generated wire schema does not yet declare them, so they would
-    // be stripped during JSON serialization on the Python side — but
-    // forwarding them costs nothing and lets a future sidecar release
-    // pick them up without another TS change. The `as unknown` cast
-    // keeps the strict generated type happy without a schema bump.
+    // populated on the Genkit-side `LessonPlanInput`. As of the
+    // schema bump that added these as Optional[str] on the Pydantic
+    // `LessonPlanRequest`, they are declared on the generated wire
+    // schema too — the writer prompt consumes them for parity with
+    // the Genkit lesson-plan flow. `extra="forbid"` is retained on
+    // the sidecar side so genuine schema drift still 422s.
     const extended = {
         topic: input.topic,
         language: input.language as SidecarLessonPlanRequest['language'],
