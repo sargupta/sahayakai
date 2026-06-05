@@ -32,11 +32,11 @@ import {
     ASSESSMENT_SUPPORTED_SUBJECTS,
     AssessmentScannerInputSchema,
 } from '@/ai/schemas/assessment-scanner-schemas';
-import { gradeAssessment } from '@/ai/flows/assessment-scanner';
 import { handleAIError } from '@/lib/ai-error-response';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
+import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
 
@@ -158,7 +158,13 @@ async function _handler(request: Request) {
         // error messages.
         const body = AssessmentScannerInputSchema.parse({ ...candidate, userId });
 
-        const result = await gradeAssessment(body);
+        // Phase W.alpha — dispatcher routes to Genkit (legacy) or the
+        // Python ADK sidecar based on `assessmentScannerSidecarMode`.
+        // Default is "off" so existing prod traffic is unchanged; shadow
+        // mode runs both in parallel and persists the diff for offline
+        // parity scoring. The flag is flipped per-rollout-step from the
+        // Firestore feature_flags doc.
+        const result = await dispatchAssessmentScanner(body);
         return NextResponse.json(result);
     } catch (error) {
         // BUG #3 hardening: map KNOWN, user-fixable failure causes to a
