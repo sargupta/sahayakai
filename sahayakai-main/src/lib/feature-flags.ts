@@ -425,9 +425,15 @@ export async function isFeatureEnabled(featureName: string, uid: string): Promis
     return { enabled: true, reason: 'billing_kill_switch_all_free' };
   }
 
-  const toggle = cfg.features[featureName];
+  // Defensive: legacy Firestore docs (e.g. preview env) may omit the
+  // `features` map entirely. Treat a missing map as "no entries
+  // configured" — every feature defaults ON. Without this guard, a
+  // bare-bones `system_config/feature_flags` doc throws
+  // "Cannot read properties of undefined (reading '<name>')" at every
+  // callsite (e.g. /api/assistant, /api/community/persona-pulse).
+  const toggle = cfg.features?.[featureName];
 
-  // Feature not listed → enabled by default
+  // Feature map missing OR specific entry missing → enabled by default
   if (!toggle) {
     return { enabled: true, reason: 'not_configured_default_on' };
   }
@@ -632,7 +638,8 @@ export async function evaluateAllFlags(uid: string): Promise<{
   const sub = await isSubscriptionEnabled(uid);
   const featureResults: Record<string, FlagEvaluation> = {};
 
-  for (const [name] of Object.entries(cfg.features)) {
+  // Defensive: `features` may be undefined on legacy docs.
+  for (const [name] of Object.entries(cfg.features ?? {})) {
     featureResults[name] = await isFeatureEnabled(name, uid);
   }
 
