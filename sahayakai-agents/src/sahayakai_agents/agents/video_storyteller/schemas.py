@@ -6,21 +6,20 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 # Phase J.4 hot-fix (forensic P1 #20): bound search-query strings.
-# YouTube's actual search-query cap is ~100 chars; 300 is a generous
-# ceiling for natural-language queries the model emits.
+# Phase 1a: bounds kept on REQUEST elements only.
 _SearchQuery = Annotated[str, StringConstraints(max_length=300)]
 
 
 class VideoStorytellerCategories(BaseModel):
-    """Five search-query categories."""
+    """Five search-query categories (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    pedagogy: list[_SearchQuery] = Field(min_length=1, max_length=10)
-    storytelling: list[_SearchQuery] = Field(min_length=1, max_length=10)
-    govtUpdates: list[_SearchQuery] = Field(min_length=1, max_length=10)
-    courses: list[_SearchQuery] = Field(min_length=1, max_length=10)
-    topRecommended: list[_SearchQuery] = Field(min_length=1, max_length=10)
+    pedagogy: list[str]
+    storytelling: list[str]
+    govtUpdates: list[str]
+    courses: list[str]
+    topRecommended: list[str]
 
 
 class VideoStorytellerRequest(BaseModel):
@@ -34,9 +33,8 @@ class VideoStorytellerRequest(BaseModel):
     language: str | None = Field(default=None, max_length=20)
     state: str | None = Field(default=None, max_length=100)
     educationBoard: str | None = Field(default=None, max_length=100)
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class VideoStorytellerCore(BaseModel):
@@ -45,7 +43,7 @@ class VideoStorytellerCore(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     categories: VideoStorytellerCategories
-    personalizedMessage: str = Field(min_length=10, max_length=1500)
+    personalizedMessage: str
 
 
 class VideoStorytellerResponse(BaseModel):
@@ -54,7 +52,7 @@ class VideoStorytellerResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     categories: VideoStorytellerCategories
-    personalizedMessage: str = Field(min_length=10, max_length=1500)
+    personalizedMessage: str
 
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)

@@ -5,13 +5,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TeacherTrainingAdvicePoint(BaseModel):
-    """One advice point with explicit pedagogical grounding."""
+    """One advice point (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    strategy: str = Field(min_length=10, max_length=1000)
-    pedagogy: str = Field(min_length=2, max_length=200)
-    explanation: str = Field(min_length=20, max_length=2000)
+    strategy: str
+    pedagogy: str
+    explanation: str
 
 
 class TeacherTrainingRequest(BaseModel):
@@ -22,11 +22,8 @@ class TeacherTrainingRequest(BaseModel):
     question: str = Field(min_length=5, max_length=4000)
     language: str | None = Field(default=None, max_length=20)
     subject: str | None = Field(default=None, max_length=100)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class TeacherTrainingCore(BaseModel):
@@ -34,11 +31,11 @@ class TeacherTrainingCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    introduction: str = Field(min_length=20, max_length=1500)
-    advice: list[TeacherTrainingAdvicePoint] = Field(min_length=2, max_length=8)
-    conclusion: str = Field(min_length=10, max_length=1500)
-    gradeLevel: str | None = Field(max_length=50)
-    subject: str | None = Field(max_length=100)
+    introduction: str
+    advice: list[TeacherTrainingAdvicePoint]
+    conclusion: str
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 class TeacherTrainingResponse(BaseModel):
@@ -46,11 +43,11 @@ class TeacherTrainingResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    introduction: str = Field(min_length=20, max_length=1500)
-    advice: list[TeacherTrainingAdvicePoint] = Field(min_length=2, max_length=8)
-    conclusion: str = Field(min_length=10, max_length=1500)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    introduction: str
+    advice: list[TeacherTrainingAdvicePoint]
+    conclusion: str
+    gradeLevel: str | None = None
+    subject: str | None = None
 
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)

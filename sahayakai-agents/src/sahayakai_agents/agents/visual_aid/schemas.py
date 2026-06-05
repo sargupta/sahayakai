@@ -13,19 +13,21 @@ class VisualAidRequest(BaseModel):
     language: str | None = Field(default=None, max_length=20)
     gradeLevel: str | None = Field(default=None, max_length=50)
     subject: str | None = Field(default=None, max_length=100)
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class VisualAidMetadata(BaseModel):
-    """Metadata produced by the second (text) call."""
+    """Metadata produced by the second (text) call.
+
+    Phase 1a: this is the actual `response_schema` Gemini sees.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    pedagogicalContext: str = Field(min_length=10, max_length=2000)
-    discussionSpark: str = Field(min_length=5, max_length=1000)
-    subject: str = Field(min_length=1, max_length=100)
+    pedagogicalContext: str
+    discussionSpark: str
+    subject: str
 
 
 class VisualAidResponse(BaseModel):
@@ -38,9 +40,9 @@ class VisualAidResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     imageDataUri: str = Field(min_length=20, max_length=20 * 1024 * 1024)
-    pedagogicalContext: str = Field(min_length=10, max_length=2000)
-    discussionSpark: str = Field(min_length=5, max_length=1000)
-    subject: str = Field(min_length=1, max_length=100)
+    pedagogicalContext: str
+    discussionSpark: str
+    subject: str
 
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)

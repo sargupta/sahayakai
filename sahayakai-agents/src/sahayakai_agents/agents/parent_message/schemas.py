@@ -95,13 +95,8 @@ class ParentMessageRequest(BaseModel):
     schoolName: str | None = Field(default=None, max_length=300)
     performanceContext: PerformanceContext | None = None
     performanceSummary: str | None = Field(default=None, max_length=2000)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        # Same alphanumeric pattern as instant-answer for path-injection
-        # defence on any downstream Firestore document IDs.
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Output (model contract) --------------------------------------------
@@ -116,15 +111,9 @@ class ParentMessageCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    message: str = Field(min_length=10, max_length=2500)
-    # `languageCode` is overwritten server-side from the hardcoded
-    # LANGUAGE_TO_BCP47 map (defending against model hallucination —
-    # exactly what the existing Genkit flow does too). Cap at 32
-    # chars so the model's hallucinated `WHATEVER-LONG-LANG` codes
-    # still parse — we ignore them anyway, and a stricter cap would
-    # break parsing before the router can do its overwrite.
-    languageCode: str = Field(min_length=2, max_length=32)
-    wordCount: int = Field(ge=1, le=500)
+    message: str
+    languageCode: str
+    wordCount: int = Field(ge=1)
 
 
 # --- Wire response ------------------------------------------------------
@@ -140,11 +129,7 @@ class ParentMessageResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Parity fields — MUST match TS shape.
-    message: str = Field(min_length=10, max_length=2500)
-    # 5-12 chars is the typical BCP-47 range. The wire response value
-    # is ALWAYS canonical (router overwrites from the hardcoded map)
-    # so we keep a strict cap here — clients can rely on `xx-XX`
-    # shape on the wire.
+    message: str
     languageCode: str = Field(min_length=5, max_length=12)
     wordCount: int = Field(ge=1, le=500)
 

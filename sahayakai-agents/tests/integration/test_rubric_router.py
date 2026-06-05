@@ -177,17 +177,19 @@ class TestRubricRouter:
         res = client.post("/v1/rubric/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
 
-    def test_too_few_criteria_in_response_returns_502(
+    def test_missing_required_field_returns_502(
         self,
         client: TestClient,
         fake_pipeline: _QueueFake,
     ) -> None:
-        # Schema requires min 3 criteria. Model returns 2 → schema parse fail.
+        # Phase 1a: min_length=3 array bounds dropped on output to match
+        # Genkit Zod baseline (no minItems/maxItems on criteria). The
+        # remaining structural guard is required-field presence — drop
+        # `criteria` entirely and the schema parse still fails.
         fake_pipeline.queue = [
             json.dumps({
                 "title": "Sparse Rubric",
-                "description": "Only two criteria.",
-                "criteria": [_good_criterion("C1"), _good_criterion("C2")],
+                "description": "Missing criteria field entirely.",
                 "gradeLevel": "Class 5",
                 "subject": "Science",
             })

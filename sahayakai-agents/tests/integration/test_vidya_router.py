@@ -577,15 +577,15 @@ class TestVidyaRouter:
         # No model call should have been attempted.
         assert fake_genai.queue == []
 
-    def test_invalid_user_id_pattern_returns_422(
+    def test_empty_user_id_returns_422(
         self,
         client: TestClient,
         fake_genai: _QueueFake,
     ) -> None:
-        """Phase L.2: userId pattern matches the same alphanumeric +
-        underscore + hyphen rule as every other agent. A path-injection
-        attempt (e.g. `../foo`) must be rejected at the schema layer."""
-        request = {**_BASE_REQUEST, "userId": "../path/injection"}
+        """Phase 1a: opaque-ID regex dropped to match Genkit responseSchema
+        complexity budget. Length floor (min_length=1) still rejects empty
+        userIds at the schema layer."""
+        request = {**_BASE_REQUEST, "userId": ""}
         res = client.post("/v1/vidya/orchestrate", json=request)
         assert res.status_code == 422, res.text
         assert fake_genai.queue == []

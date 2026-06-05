@@ -62,7 +62,8 @@ class AgentReplyRequest(BaseModel):
     # any side-effect lands. Test harnesses that need a different SID
     # shape (e.g. `CAtest1234`) ARE supported because the regex is
     # lenient on length + alphabet.
-    callSid: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    callSid: str = Field(min_length=1, max_length=128)
     turnNumber: int = Field(ge=1, le=12)
 
     studentName: str = Field(min_length=1, max_length=200)
@@ -101,9 +102,9 @@ class AgentReplyResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Parity fields — MUST match TS AgentReplyOutputSchema exactly.
-    reply: str = Field(min_length=1, max_length=4000)
+    reply: str
     shouldEndCall: bool
-    followUpQuestion: str | None = Field(default=None, max_length=500)
+    followUpQuestion: str | None = None
 
     # Additive telemetry.
     sessionId: str
@@ -129,7 +130,8 @@ class CallSummaryRequest(BaseModel):
 
     # Round-2 audit P1 SCHEMA-1 fix (group A6): callSid pattern
     # consistent with AgentReplyRequest above.
-    callSid: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    callSid: str = Field(min_length=1, max_length=128)
 
     # Round-2 audit P1 SCHEMA-2 fix (group A6): bound every text
     # field. Original schema accepted unbounded strings — a 1MB payload
@@ -160,17 +162,15 @@ class CallSummaryResponse(BaseModel):
     # field. Without bounds, a model could emit a 1MB summary or a
     # 1000-item list per axis, blowing through Firestore doc size
     # limits + Cloud Logging quotas + the Next.js JSON parse budget.
-    parentResponse: str = Field(min_length=0, max_length=4000)
-    parentConcerns: list[_SummaryItem] = Field(default_factory=list, max_length=20)
-    parentCommitments: list[_SummaryItem] = Field(default_factory=list, max_length=20)
-    actionItemsForTeacher: list[_SummaryItem] = Field(
-        default_factory=list, max_length=20,
-    )
-    guidanceGiven: list[_SummaryItem] = Field(default_factory=list, max_length=20)
+    parentResponse: str
+    parentConcerns: list[str] = Field(default_factory=list)
+    parentCommitments: list[str] = Field(default_factory=list)
+    actionItemsForTeacher: list[str] = Field(default_factory=list)
+    guidanceGiven: list[str] = Field(default_factory=list)
     parentSentiment: ParentSentiment
     callQuality: CallQuality
     followUpNeeded: bool
-    followUpSuggestion: str | None = Field(default=None, max_length=2000)
+    followUpSuggestion: str | None = None
 
     sessionId: str = Field(max_length=128)
     latencyMs: int = Field(ge=0)

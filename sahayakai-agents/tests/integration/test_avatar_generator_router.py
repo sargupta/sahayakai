@@ -144,12 +144,13 @@ class TestAvatarGeneratorRouter:
         res = client.post("/v1/avatar-generator/generate", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
 
-    def test_invalid_userid_returns_422(
+    def test_empty_userid_returns_422(
         self,
         client: TestClient,
         fake_pipeline: _QueueFake,
     ) -> None:
-        # Pydantic schema rejects userIds outside [A-Za-z0-9_\-].
-        bad_req = dict(_BASE_REQUEST, userId="not/valid")
+        # Phase 1a: opaque-ID regex dropped. Length floor (min_length=1)
+        # still rejects empty userIds.
+        bad_req = dict(_BASE_REQUEST, userId="")
         res = client.post("/v1/avatar-generator/generate", json=bad_req)
         assert res.status_code == 422, res.text

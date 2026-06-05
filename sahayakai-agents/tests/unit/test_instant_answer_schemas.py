@@ -73,28 +73,16 @@ class TestBoundedFields:
         with pytest.raises(ValidationError):
             InstantAnswerRequest(**{**_minimal_request_kwargs(), "question": ""})
 
-    def test_answer_too_long_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            InstantAnswerCore(
-                answer="x" * 8001,
-                videoSuggestionUrl=None,
-                gradeLevel=None,
-                subject=None,
-            )
+    # Phase 1a: per-field maxLength dropped on output (Core) models to
+    # match Genkit Zod baseline; Gemini's max_output_tokens caps shape.
+    # Empty `answer` is now structurally valid at the schema layer
+    # (router rejects empties downstream via behavioural guard).
 
-    def test_answer_empty_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            InstantAnswerCore(
-                answer="",
-                videoSuggestionUrl=None,
-                gradeLevel=None,
-                subject=None,
-            )
-
-    def test_user_id_pattern_rejects_path_injection(self) -> None:
+    def test_user_id_empty_rejects(self) -> None:
+        # Phase 1a: opaque-ID regex dropped; length floor still applies.
         with pytest.raises(ValidationError):
             InstantAnswerRequest(
-                **{**_minimal_request_kwargs(), "userId": "../../etc/passwd"}
+                **{**_minimal_request_kwargs(), "userId": ""}
             )
 
     def test_user_id_alphanumeric_accepts(self) -> None:
@@ -103,18 +91,10 @@ class TestBoundedFields:
         )
 
     def test_grade_level_too_long_rejects(self) -> None:
+        # Request-side bounds retained for dispatcher hygiene.
         with pytest.raises(ValidationError):
             InstantAnswerRequest(
                 **{**_minimal_request_kwargs(), "gradeLevel": "x" * 51}
-            )
-
-    def test_video_url_too_long_in_core_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            InstantAnswerCore(
-                answer="ok",
-                videoSuggestionUrl="x" * 501,
-                gradeLevel=None,
-                subject=None,
             )
 
 
