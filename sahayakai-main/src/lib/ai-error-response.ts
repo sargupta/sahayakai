@@ -74,6 +74,23 @@ function isSafetyViolation(error: any): boolean {
     return /safety violation|blocked by safety|harmful|policy/i.test(msg);
 }
 
+/**
+ * Detects Gemini "bad input" errors that surface as `400 Bad Request` from
+ * the model API itself (not from our Zod schema). The ones we see in prod:
+ *   - "Unable to process input image" — image is corrupt, sub-minimum size,
+ *     or an unsupported format (e.g. 1×1 placeholder PNG from QA bots,
+ *     truncated uploads from flaky rural connections).
+ *   - "Invalid argument" on a media part — malformed mime / broken base64.
+ *
+ * These are CLIENT errors, not server bugs. Retrying won't help, and they
+ * shouldn't page on-call. Classify as 400 so the UI shows a clear
+ * "re-upload" message instead of a generic "AI failed" toast.
+ */
+function isBadInputMedia(error: any): boolean {
+    const msg = String(error?.message || '');
+    return /Unable to process input image|invalid argument.*image|Request contains an invalid argument/i.test(msg);
+}
+
 function isQuotaExhausted(error: any): boolean {
     if (error?.name && TRANSIENT_NAMES.has(error.name)) return true;
     const s = errorStatus(error);
@@ -103,8 +120,13 @@ export function logAIError(
         logger.warn(ctx.message, context, { ...extra, reason: 'invalid_request', zodIssues: error.issues });
         return;
     }
-    if (isQuotaExhausted(error) || isSafetyViolation(error)) {
-        logger.warn(ctx.message, context, { ...extra, reason: isSafetyViolation(error) ? 'safety' : 'quota' });
+    if (isQuotaExhausted(error) || isSafetyViolation(error) || isBadInputMedia(error)) {
+        const reason = isSafetyViolation(error)
+            ? 'safety'
+            : isBadInputMedia(error)
+                ? 'invalid_media'
+                : 'quota';
+        logger.warn(ctx.message, context, { ...extra, reason });
     } else {
         logger.error(ctx.message, error, context, extra);
     }
@@ -191,6 +213,25 @@ export function handleAIError(
                     code: i.code,
                     message: i.message,
                 })),
+            },
+            { status: 400 },
+        );
+    }
+
+    // 2a. Gemini rejected the uploaded image/media → 400, WARN. User can
+    //     re-upload a clearer photo; this isn't a server bug. Without this
+    //     branch, every QA bot stub-image hit pages on-call (see G4:
+    //     15 spurious 500s from 1×1 PNG fixtures over 4 hours).
+    if (isBadInputMedia(error)) {
+        logger.warn(`${ctx.message} — bad input media (Gemini rejected image)`, context, {
+            ...extra,
+            reason: 'invalid_media',
+            geminiMessage: String(error?.message || '').slice(0, 240),
+        });
+        return NextResponse.json(
+            {
+                error: 'The uploaded image could not be processed. Please re-upload a clearer photo.',
+                code: 'INVALID_MEDIA',
             },
             { status: 400 },
         );
