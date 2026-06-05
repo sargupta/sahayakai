@@ -59,7 +59,17 @@ export type SidecarPYQSource = GenPYQSource;
 export type SidecarExamPaperRequest = GenExamPaperRequest;
 export type SidecarExamPaperResponse = GenExamPaperResponse;
 
-const TIMEOUT_MS = 30_000; // exam paper output is large; allow generous tail
+// Track 2 (Phase 1b follow-up): Phase 1b's wire-schema simplifier removed
+// the Gemini `too many states for serving` 422 on exam-paper, but the
+// underlying call now consistently runs 40-75 s end-to-end (large
+// structured output: full paper + answer key + marking scheme + sections,
+// often multilingual). The previous 30 s budget tripped before Gemini
+// even returned. Bump to 90 s so the sidecar gets the same realistic
+// window the Genkit primary path has (`EXAM_PAPER_GENKIT_TIMEOUT_MS`
+// = 75 s upstream, + a small margin for transport + sidecar parse).
+// Stays under Cloud Run's 300 s request timeout and under the
+// dispatcher's overall budget.
+const TIMEOUT_MS = 90_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 const tokenClientByAudience = new Map<string, Promise<IdTokenClient>>();

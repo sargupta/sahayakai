@@ -56,9 +56,18 @@ exam_paper_router = APIRouter(prefix="/v1/exam-paper", tags=["exam-paper"])
 SIDECAR_VERSION = "phase-u.gamma"
 
 # Per-call timeout for run_resiliently. Exam papers are large structured
-# outputs (multiple sections + marking scheme), so 30s gives room while
-# preventing a hung Gemini call from blocking the route.
-_PER_CALL_TIMEOUT_S = 30.0
+# outputs (multiple sections + marking scheme); Phase 1b's wire-schema
+# simplifier unblocked the Gemini call but real generations routinely
+# run 40-75 s end-to-end (especially multilingual). 30 s aborted
+# otherwise-healthy calls — observed in `qa-track2-exam-paper` probe
+# 2026-06-05: 3/3 sidecar shadow runs hit `request timed out after
+# 30003ms` while the Genkit primary returned 200 in 40-75 s for the
+# same payloads. 60 s gives realistic headroom while keeping a hung
+# Gemini call from blocking the route. The dispatcher's TS client
+# carries a 90 s outer budget (`exam-paper-client.ts`), so 60 s here
+# leaves margin for a single retry inside `run_resiliently` against a
+# second API key.
+_PER_CALL_TIMEOUT_S = 60.0
 
 # ADK Runner needs an app_name for the in-memory session service.
 # This is opaque to the model — it's just a session-store key prefix.

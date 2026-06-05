@@ -232,3 +232,29 @@ class TestBuildExamPaperAgent:
             "build_exam_paper_agent must cache its result so the agent "
             "is constructed once at import time, not per request."
         )
+
+
+class TestExamPaperPerCallTimeout:
+    """Track 2 (Phase 1b follow-up) regression guard."""
+
+    def test_per_call_timeout_at_least_60s(self) -> None:
+        """Pin `_PER_CALL_TIMEOUT_S` ≥ 60 s.
+
+        Track 2 finding (2026-06-05): after Phase 1b's wire-schema
+        simplifier removed the Gemini `too many states for serving`
+        422 on exam-paper, the underlying call runs 40-75 s end-to-end
+        for realistic CBSE Class 10 / Class 8 payloads. The Track 2
+        live probe (`qa-track2-exam-paper`) saw 3/3 sidecar shadow runs
+        time out at exactly 30 s while the Genkit primary path
+        returned 200 in 40-75 s for the same payloads. Lock the
+        per-call timeout at ≥ 60 s so realistic generations have
+        headroom inside the dispatcher's 90 s outer budget
+        (`exam-paper-client.ts` `TIMEOUT_MS = 90_000`).
+        """
+        from sahayakai_agents.agents.exam_paper import router as exam_paper_router  # noqa: PLC0415
+
+        assert exam_paper_router._PER_CALL_TIMEOUT_S >= 60.0, (
+            f"Exam-paper per-call timeout regressed to "
+            f"{exam_paper_router._PER_CALL_TIMEOUT_S}s; Track 2 "
+            f"requires ≥60s for post-Phase-1b realistic generations."
+        )
