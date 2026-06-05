@@ -4,6 +4,7 @@ import { sarvamSTT } from '@/lib/sarvam';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { normalizeIsoLang, scriptMatchesExpected } from '@/ai/flows/voice-to-text';
 
 async function _handler(request: NextRequest) {
     try {
@@ -45,11 +46,28 @@ async function _handler(request: NextRequest) {
             const result = await sarvamSTT(audioFile);
 
             if (result.text && result.text.length >= 2) {
-                logger.info(`[STT] Sarvam success: ${result.text.length} chars, lang=${result.language}`, 'VOICE_TO_TEXT');
-                return NextResponse.json(result);
+                // Lane A5 fix — Sarvam ignores `expectedLanguage` for some
+                // languages (notably Punjabi: returns Devanagari labeled as
+                // `hi`). When the user asked for a specific Indic language
+                // and the transcript script doesn't match, drop the Sarvam
+                // result and fall through to the Gemini path (which honours
+                // the expectedLanguage hint and has the forceScript retry).
+                if (expectedLanguage && !scriptMatchesExpected(result.text, expectedLanguage)) {
+                    logger.warn(
+                        `[STT] Sarvam script_mismatch expectedLanguage=${expectedLanguage} sarvamLang=${result.language} sample="${result.text.slice(0, 60)}" — falling through to Gemini`,
+                        'VOICE_TO_TEXT',
+                    );
+                } else {
+                    // Normalize the detected language at the output boundary
+                    // so downstream consumers see canonical 2-letter codes
+                    // (e.g. Sarvam's `od` → `or` for Odia).
+                    const normalizedLang = normalizeIsoLang(result.language);
+                    logger.info(`[STT] Sarvam success: ${result.text.length} chars, lang=${normalizedLang}`, 'VOICE_TO_TEXT');
+                    return NextResponse.json({ text: result.text, language: normalizedLang });
+                }
+            } else {
+                logger.warn('[STT] Sarvam returned insufficient text, falling back to Gemini', 'VOICE_TO_TEXT');
             }
-
-            logger.warn('[STT] Sarvam returned insufficient text, falling back to Gemini', 'VOICE_TO_TEXT');
         } catch (sarvamErr) {
             logger.warn(`[STT] Sarvam failed: ${sarvamErr instanceof Error ? sarvamErr.message : String(sarvamErr)}, falling back to Gemini`, 'VOICE_TO_TEXT');
         }
@@ -70,7 +88,7 @@ async function _handler(request: NextRequest) {
         });
         return NextResponse.json({
             text: dispatched.text,
-            language: dispatched.language,
+            language: normalizeIsoLang(dispatched.language),
         });
     } catch (error) {
         logAIError(error, 'VOICE_TO_TEXT', { message: 'Voice-to-text API failed' });
