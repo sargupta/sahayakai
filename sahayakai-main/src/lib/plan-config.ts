@@ -33,11 +33,11 @@ export interface PlanLimits {
     instantAnswerDailyLimit: number;
     /** VIDYA assistant daily limit. -1 = no daily cap. */
     assistantDailyLimit: number;
-    /** Which Gemini model to use for AI generation. `gemini-2.0-flash-lite`
+    /** Which Gemini model to use for AI generation. `gemini-2.5-flash-lite`
      *  is deprecated by Google as of April 2026 — see logs for the upstream
      *  404 ('no longer available to new users'). All tiers now use
-     *  `gemini-2.0-flash` until we deliberately upgrade to 2.5. */
-    model: 'gemini-2.0-flash' | 'gemini-2.5-flash';
+     *  `gemini-2.5-flash` until we deliberately upgrade to 2.5. */
+    model: 'gemini-2.5-flash' | 'gemini-2.5-flash';
     /** Can export content as PDF/DOCX */
     canExport: boolean;
     /** Can view detailed impact dashboard */
@@ -75,7 +75,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         },
         instantAnswerDailyLimit: 20,
         assistantDailyLimit: 50,
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         canExport: false,
         canViewDetailedAnalytics: false,
         canAccessAbsenceRecords: false,
@@ -102,7 +102,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,
@@ -129,7 +129,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,
@@ -156,7 +156,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanLimits> = {
         },
         instantAnswerDailyLimit: -1,
         assistantDailyLimit: -1,
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         canExport: true,
         canViewDetailedAnalytics: true,
         canAccessAbsenceRecords: true,

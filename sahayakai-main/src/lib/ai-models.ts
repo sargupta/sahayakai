@@ -4,7 +4,7 @@
  * Single place that decides which Gemini model the rest of the codebase uses.
  * Today every `.prompt` file in `src/ai/prompts/*.prompt` and every
  * `ai.generate({ model: '...' })` call site has the model string
- * hardcoded — that means a quality regression on `gemini-2.0-flash`
+ * hardcoded — that means a quality regression on `gemini-2.5-flash`
  * requires editing ~20 files to revert. This resolver gives operators a
  * single Firestore flag flip to switch the whole codebase between
  * `2.0-flash` (current default, cheaper) and `2.5-pro` (slower, higher
@@ -22,7 +22,7 @@
  *   - at runtime, override via `prompt.generate({ model: await getActiveGeminiModel(uid) })`
  *
  * Flag: `geminiFlash2_0`
- *   - ENABLED (default — `features` map default): use `gemini-2.0-flash`
+ *   - ENABLED (default — `features` map default): use `gemini-2.5-flash`
  *   - DISABLED: revert to `gemini-2.5-pro`
  *
  * Toggle in Firestore at `system_config/feature_flags`:
@@ -36,7 +36,7 @@ import { isFeatureEnabled } from './feature-flags';
 /** Canonical Gemini model identifiers. Add new variants here as they roll out. */
 export const GEMINI_MODELS = {
     /** Default — fast, cheap, multimodal. Production default since 2026-05-19. */
-    FLASH_2_0: 'googleai/gemini-2.0-flash',
+    FLASH_2_0: 'googleai/gemini-2.5-flash',
     /** Higher-quality fallback. Use when 2.0-flash regresses on edge cases. */
     PRO_2_5: 'googleai/gemini-2.5-pro',
 } as const;

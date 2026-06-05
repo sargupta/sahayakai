@@ -130,14 +130,14 @@ export const quizGeneratorFlow = ai.defineFlow(
       const output = result.output;
 
       if (input.userId && (result as any).usage) {
-        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, 'gemini-2.0-flash');
+        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, 'gemini-2.5-flash');
       }
 
       if (!output) {
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.0-flash',
+            modelUsed: 'gemini-2.5-flash',
             input: input.topic
           }
         );

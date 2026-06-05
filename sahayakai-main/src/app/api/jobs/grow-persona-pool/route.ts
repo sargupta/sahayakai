@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
         const { ai, runResiliently } = await import('@/ai/genkit');
         const result = await runResiliently(async (override) => {
             return ai.generate({
-                model: 'googleai/gemini-2.0-flash',
+                model: 'googleai/gemini-2.5-flash',
                 system: 'You generate realistic Indian school teacher persona profiles for a teacher community platform. Output ONLY valid JSON. No markdown, no commentary.',
                 prompt: buildSchemaInstruction(count),
                 config: {
