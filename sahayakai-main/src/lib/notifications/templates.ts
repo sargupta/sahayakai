@@ -45,7 +45,15 @@ export interface NotificationPlaceholderMap {
 // MESSAGE is a virtual template key — persisted as type: 'SYSTEM' but rendered
 // from a localised message-flow template. The rest correspond 1:1 to
 // NotificationType members.
-export type TemplateKey = NotificationType | 'MESSAGE';
+//
+// Exclusion: NEW_TEACHER_JOINED, NEW_GROUP_POST, GROUP_POST_LIKE are
+// localised through `src/lib/notifications/i18n.ts` (groups.ts + fanout.ts
+// pipelines), not this template table. They appear in NotificationType but
+// are intentionally NOT in TemplateKey so we don't double-source their copy.
+export type TemplateKey = Exclude<
+    NotificationType,
+    'NEW_TEACHER_JOINED' | 'NEW_GROUP_POST' | 'GROUP_POST_LIKE'
+> | 'MESSAGE';
 
 interface TemplatePair {
     title: string;
