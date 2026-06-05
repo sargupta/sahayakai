@@ -47,9 +47,15 @@ virtual_field_trip_router = APIRouter(
 SIDECAR_VERSION = "phase-u.beta"
 
 # Per-call timeout for run_resiliently. Field-trip planner returns a
-# multi-stop JSON itinerary; 20s caps a hung Gemini call without
-# truncating slow but legitimate generations.
-_PER_CALL_TIMEOUT_S = 20.0
+# multi-stop JSON itinerary. Track 3 / Parallel-D parity probe: live
+# Genkit baseline runs 15-16s on the slow tail (multi-stop itinerary
+# generation with structured output). The previous 20s ceiling sat
+# right on that p99 boundary and ate the 7s `max_total_backoff_seconds`
+# budget before retry could fire, surfacing as `sidecarOk: false` in
+# shadow diffs while Genkit completed normally. Bump 20s → 35s so the
+# first attempt has headroom for real multi-stop calls; stays under the
+# 60s Cloud Run client cap. Mirrors the Phase 1b worksheet fix.
+_PER_CALL_TIMEOUT_S = 35.0
 
 # ADK Runner needs an app_name for the in-memory session service.
 _VIRTUAL_FIELD_TRIP_APP_NAME = "sahayakai-virtual-field-trip"
