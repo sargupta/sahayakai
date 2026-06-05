@@ -72,7 +72,9 @@ steps:
       - --region=asia-southeast1
       - --project=$PROJECT_ID
       - --tag=dev-$SHORT_SHA
-      - --update-env-vars=DEMO_MODE=true,NODE_ENV=production
+      # ADK shadow-mode env vars (2026-06-05). Without these the dispatchers
+      # fail-fast and parity data is never collected. See qa/REALIGNMENT.md.
+      - --update-env-vars=DEMO_MODE=true,NODE_ENV=production,NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,SAHAYAKAI_AGENTS_AUDIENCE=https://sahayakai-agents-zwydpvyuca-as.a.run.app
       - --quiet
     waitFor: [push-sha]
 
