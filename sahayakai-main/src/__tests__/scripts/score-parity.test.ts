@@ -506,3 +506,251 @@ describe('scoreCell — synthetic end-to-end', () => {
     expect(row.verdict).toBe('FAIL');
   });
 });
+
+// ---------------------------------------------------------------------------
+// (9) Recommender-mode helpers + scoreCellRecommender
+// ---------------------------------------------------------------------------
+
+describe('tokenizeQuery', () => {
+  it('lowercases and splits on whitespace/punctuation', () => {
+    expect(mod.tokenizeQuery('NCERT Class 3 Science!')).toEqual(['ncert', 'class', '3', 'science']);
+  });
+  it('drops single-char tokens', () => {
+    expect(mod.tokenizeQuery('a big cat')).toEqual(['big', 'cat']);
+  });
+  it('preserves Indic-script tokens intact', () => {
+    const tokens = mod.tokenizeQuery('जल चक्र शिक्षण');
+    expect(tokens).toEqual(['जल', 'चक्र', 'शिक्षण']);
+  });
+  it('returns [] for empty / non-string input', () => {
+    expect(mod.tokenizeQuery('')).toEqual([]);
+    expect(mod.tokenizeQuery(null)).toEqual([]);
+    expect(mod.tokenizeQuery(42)).toEqual([]);
+  });
+});
+
+describe('collectRecommenderQueries', () => {
+  it('flattens every categories.<bucket>[] string', () => {
+    const obj = {
+      categories: {
+        pedagogy: ['a', 'b'],
+        storytelling: ['c'],
+        govtUpdates: [],
+      },
+      personalizedMessage: 'msg',
+    };
+    expect(mod.collectRecommenderQueries(obj)).toEqual(['a', 'b', 'c']);
+  });
+  it('skips non-string elements and empty strings', () => {
+    const obj = { categories: { a: ['ok', '', null, 7, 'fine'] } };
+    expect(mod.collectRecommenderQueries(obj)).toEqual(['ok', 'fine']);
+  });
+  it('returns [] when categories missing', () => {
+    expect(mod.collectRecommenderQueries({})).toEqual([]);
+    expect(mod.collectRecommenderQueries(null)).toEqual([]);
+  });
+});
+
+describe('jaccardQuerySets', () => {
+  it('returns 1 for identical token sets', () => {
+    expect(mod.jaccardQuerySets(['cat dog'], ['dog cat'])).toBe(1);
+  });
+  it('returns 0 when sides disjoint', () => {
+    expect(mod.jaccardQuerySets(['cat'], ['dog'])).toBe(0);
+  });
+  it('handles partial overlap correctly', () => {
+    // A = {ncert, class, 3, math}, B = {ncert, class, 3, science}
+    // inter = 3, union = 5 → 0.6
+    const j = mod.jaccardQuerySets(['NCERT class 3 math'], ['NCERT class 3 science']);
+    expect(j).toBeCloseTo(0.6, 5);
+  });
+  it('returns 1 when both empty (vacuous match)', () => {
+    expect(mod.jaccardQuerySets([], [])).toBe(1);
+  });
+  it('returns 0 when one side empty', () => {
+    expect(mod.jaccardQuerySets(['cat dog'], [])).toBe(0);
+    expect(mod.jaccardQuerySets([], ['cat dog'])).toBe(0);
+  });
+});
+
+describe('topicKeywordsFromFilename', () => {
+  it('extracts subject+topic from canonical name', () => {
+    expect(mod.topicKeywordsFromFilename('bn-g3-hindi-kahaani.json'))
+      .toEqual(['hindi', 'kahaani']);
+  });
+  it('strips lang code and grade marker', () => {
+    expect(mod.topicKeywordsFromFilename('en-g7-math-algebra.json'))
+      .toEqual(['math', 'algebra']);
+  });
+  it('returns [] for opaque names', () => {
+    expect(mod.topicKeywordsFromFilename('whatever.json')).toEqual([]);
+  });
+});
+
+describe('topicalRelevance', () => {
+  it('returns 1 when no keywords (nothing to check)', () => {
+    expect(mod.topicalRelevance(['a', 'b'], [])).toBe(1);
+  });
+  it('returns 0 when keywords given but no queries', () => {
+    expect(mod.topicalRelevance([], ['math'])).toBe(0);
+  });
+  it('substring matches across queries', () => {
+    const queries = [
+      'Fractions storytelling for Class 3',
+      'NCERT math videos',
+      'Ministry of Education updates',
+    ];
+    expect(mod.topicalRelevance(queries, ['math', 'fractions', 'education'])).toBe(1);
+  });
+  it('counts each query at most once', () => {
+    const queries = ['math fractions class 3', 'physics waves', 'biology cells'];
+    expect(mod.topicalRelevance(queries, ['math', 'fractions'])).toBeCloseTo(1 / 3, 5);
+  });
+});
+
+describe('scoreCellRecommender — synthetic end-to-end', () => {
+  async function getEmbed() {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'parity-cache-rec-'));
+    return mod.makeEmbedder({ cacheDir: tmpDir, mock: true });
+  }
+
+  it('PASSes a realistic English cell with topical English queries', async () => {
+    const embed = await getEmbed();
+    const baseline = {
+      categories: {
+        pedagogy: ['Active learning fractions Class 3', 'NCERT fractions methods'],
+        storytelling: ['Fractions story Class 3', 'Animated fractions explainer'],
+        govtUpdates: ['Ministry of Education fractions updates'],
+        courses: ['NISHTHA math training fractions'],
+        topRecommended: ['Khan Academy fractions Class 3'],
+      },
+      personalizedMessage: 'Hello teacher, here are fractions resources for Class 3 math.',
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'en-g3-math-fractions.json',
+      lang: 'en',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: baseline,
+      validator: null,
+      embed,
+    });
+    expect(row.verdict).toBe('PASS');
+    expect(row.queryJaccard).toBe(1);
+    expect(row.topicalRelevance).toBe(1);
+    expect(row.messageCosine).toBe(1);
+  });
+
+  it('FAILs jaccard when query sets are disjoint', async () => {
+    const embed = await getEmbed();
+    const sidecar = { categories: { pedagogy: ['something unrelated about pottery'] } };
+    const row = await mod.scoreCellRecommender({
+      cell: 'en-g3-math-fractions.json',
+      lang: 'en',
+      agent: 'video-storyteller',
+      genkitResponse: {
+        categories: { pedagogy: ['Active learning fractions Class 3'] },
+      },
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.queryJaccard).toBeLessThan(mod.RECOMMENDER_THRESHOLDS.jaccard);
+    expect(row.failReasons).toContain('jaccard');
+    expect(row.failReasons).toContain('topical');
+  });
+
+  it('FAILs topical when sidecar queries do not mention the topic', async () => {
+    const embed = await getEmbed();
+    // Topic keywords from filename: math, fractions. Sidecar talks only
+    // about generic teacher updates — jaccard happens to share filler
+    // tokens like "teacher", "updates", but topical relevance is 0.
+    const baseline = {
+      categories: { pedagogy: ['fractions teacher updates', 'math teacher updates'] },
+    };
+    const sidecar = {
+      categories: { pedagogy: ['general teacher updates', 'random teacher updates'] },
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'en-g3-math-fractions.json',
+      lang: 'en',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.topicalRelevance).toBe(0);
+    expect(row.failReasons).toContain('topical');
+  });
+
+  it('FAILs message when personalizedMessage cosine below threshold (mock embedder)', async () => {
+    const embed = await getEmbed();
+    const baseline = {
+      categories: { pedagogy: ['Fractions Class 3 math NCERT'] },
+      personalizedMessage: 'A',
+    };
+    const sidecar = {
+      categories: { pedagogy: ['Fractions Class 3 math NCERT'] },
+      personalizedMessage: 'B', // hash-based mock embed gives ~uncorrelated vectors
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'en-g3-math-fractions.json',
+      lang: 'en',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.messageCosine).not.toBeNull();
+    expect(row.messageCosine).toBeLessThan(mod.RECOMMENDER_THRESHOLDS.messageCosine);
+    expect(row.failReasons).toContain('message');
+  });
+
+  it('skips messageCosine check when one side omits the message', async () => {
+    const embed = await getEmbed();
+    const baseline = {
+      categories: { pedagogy: ['Fractions Class 3 math'] },
+      personalizedMessage: 'Hello teacher.',
+    };
+    const sidecar = {
+      categories: { pedagogy: ['Fractions Class 3 math'] },
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'en-g3-math-fractions.json',
+      lang: 'en',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.messageCosine).toBeNull();
+    expect(row.failReasons).not.toContain('message');
+  });
+
+  it('still flags script-bleed (Tamil leak inside Hindi queries)', async () => {
+    const embed = await getEmbed();
+    const baseline = {
+      categories: { pedagogy: ['कक्षा 3 गणित भिन्न शिक्षण विधि'] },
+    };
+    const sidecar = {
+      categories: {
+        pedagogy: ['கணிதம் வகுப்பு 3 பின்னங்கள் கற்பித்தல் தமிழ் வழி'],
+      },
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'hi-g3-math-fractions.json',
+      lang: 'hi',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.bleed).toBe(true);
+    expect(row.bleedScripts).toContain('ta');
+    expect(row.failReasons).toContain('bleed');
+  });
+});
