@@ -62,6 +62,13 @@ const TranscriptTurnSchema = z.object({
 
 // ── Agent Reply ──────────────────────────────────────────────────────────────
 
+// 2-letter ISO codes for the 11 supported languages — matches the Py
+// sidecar's parent-call schema. Tightened from `z.string()` to surface
+// upstream callers that haven't normalised yet.
+const ParentCallLanguageEnum = z.enum([
+    'en', 'hi', 'kn', 'ta', 'te', 'mr', 'bn', 'gu', 'pa', 'ml', 'or',
+]);
+
 const AgentReplyInputSchema = z.object({
     studentName: z.string(),
     className: z.string(),
@@ -70,10 +77,14 @@ const AgentReplyInputSchema = z.object({
     teacherMessage: z.string(),
     teacherName: z.string().optional(),
     schoolName: z.string().optional(),
-    parentLanguage: z.string(),
+    parentLanguage: ParentCallLanguageEnum,
     transcript: z.array(TranscriptTurnSchema),
     parentSpeech: z.string().describe('What the parent just said (transcribed)'),
-    turnNumber: z.number(),
+    // Bounded turn counter — must match Py sidecar (1..12).
+    turnNumber: z.number().int().min(1).max(12),
+    // Twilio CallSid for the active call — required so the sidecar and
+    // shadow-mode pair logger can correlate the turn with the recording.
+    callSid: z.string(),
     /** One-line summary of recent test scores the agent can quote if the
      *  parent asks "what were his marks?". Built from PerformanceContext. */
     performanceSummary: z.string().optional(),
@@ -173,8 +184,10 @@ const CallSummaryInputSchema = z.object({
     teacherMessage: z.string(),
     teacherName: z.string().optional(),
     schoolName: z.string().optional(),
-    parentLanguage: z.string(),
+    parentLanguage: ParentCallLanguageEnum,
     transcript: z.array(TranscriptTurnSchema),
+    // Twilio CallSid — required for cross-correlation with sidecar logs.
+    callSid: z.string(),
     callDurationSeconds: z.number().optional(),
 });
 

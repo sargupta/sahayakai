@@ -59,7 +59,10 @@ const ParentMessageInputSchema = z.object({
     reason:                   z.enum(['consecutive_absences', 'poor_performance', 'behavioral_concern', 'positive_feedback']),
     reasonContext:            z.string().describe('Specific guidance for how to handle this reason'),
     teacherNote:              z.string().optional().describe('Optional note from the teacher with specific details'),
-    parentLanguage:           z.string().describe('Language to write the message in, e.g. "Hindi"'),
+    parentLanguage:           z.enum([
+        'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi',
+        'Bengali', 'Gujarati', 'Punjabi', 'Malayalam', 'Odia',
+    ]).describe('Language to write the message in, e.g. "Hindi" — must match the canonical LANGUAGES list in src/types/index.ts'),
     consecutiveAbsentDays:    z.number().optional().describe('Number of consecutive absent days (for absence reason)'),
     teacherName:              z.string().optional().describe('Teacher\'s name for the sign-off'),
     schoolName:               z.string().optional().describe('School name for context'),
@@ -167,7 +170,9 @@ export async function generateParentMessage(input: ParentMessageInput): Promise<
         // Normalise the parent's language ("en" → "English") before the prompt
         // LOCK reads it; otherwise a "hi" code could leak Hinglish into the
         // message even when the parent speaks pure Hindi.
-        parentLanguage: normalizeLanguage(input.parentLanguage),
+        // `normalizeLanguage` already returns one of the canonical 11 names;
+        // the cast is a Zod-enum tightening, not a value change.
+        parentLanguage: normalizeLanguage(input.parentLanguage) as ParentMessageInput['parentLanguage'],
         // Always resolve reasonContext here — never rely on the template to do a dynamic lookup
         reasonContext: REASON_CONTEXT[input.reason as OutreachReason] ?? REASON_CONTEXT.consecutive_absences,
     };

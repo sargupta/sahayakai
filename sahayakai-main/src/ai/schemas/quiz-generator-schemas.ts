@@ -20,7 +20,9 @@ export const QuizGeneratorInputSchema = z.object({
   gradeLevel: z.string().optional().describe('The grade level for which the quiz is intended.'),
   language: z.string().optional().describe('The language for the quiz.'),
   bloomsTaxonomyLevels: z.array(z.string()).optional().describe("A list of Bloom's Taxonomy levels to target."),
-  userId: z.string().optional().describe('The ID of the user for whom the quiz is being generated.'),
+  // Middleware always injects x-user-id from the Firebase ID token,
+  // so this is required at the schema level — matches the Py sidecar.
+  userId: z.string().describe('The ID of the user for whom the quiz is being generated.'),
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
   subject: z.string().optional().describe('The academic subject of the quiz.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
             language: "English",
             numQuestions: 3,
             questionTypes: ["multiple_choice"],
-            userId: undefined // Skip storage operations
+            userId: '' // Empty string short-circuits the storage path in generateQuiz
         });
 
         const duration = Date.now() - startTime;

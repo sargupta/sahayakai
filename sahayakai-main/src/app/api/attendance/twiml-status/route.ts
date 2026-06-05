@@ -82,6 +82,13 @@ async function generateAndSaveSummary(
 ) {
     console.log('[twiml-status] Generating call summary for outreach:', docRef.id);
 
+    // Parent-call schema requires 2-letter ISO (en/hi/bn/...). Profiles
+    // store the full Language name (`Hindi`), so map via LANGUAGE_TO_ISO.
+    const { LANGUAGE_TO_ISO } = await import('@/types/index');
+    const parentLanguageIso = (LANGUAGE_TO_ISO as Record<string, string>)[
+        data.parentLanguage ?? 'English'
+    ] ?? 'en';
+
     const summary = await generateCallSummary({
         studentName:        data.studentName,
         className:          data.className,
@@ -90,7 +97,8 @@ async function generateAndSaveSummary(
         teacherMessage:     data.generatedMessage,
         teacherName:        data.teacherName,
         schoolName:         data.schoolName,
-        parentLanguage:     data.parentLanguage,
+        parentLanguage:     parentLanguageIso as 'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
+        callSid:            data.callSid ?? docRef.id,
         transcript:         (data.transcript ?? []).map((t: { role: string; text: string }) => ({
             role: t.role,
             text: t.text,

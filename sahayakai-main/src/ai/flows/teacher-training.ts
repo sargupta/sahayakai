@@ -18,7 +18,9 @@ export const TeacherTrainingInputSchema = z.object({
   question: z.string().describe("The teacher's question or request for advice."),
   language: z.string().optional().describe('The language for the response.'),
   subject: z.string().optional().describe('The academic subject.'),
-  userId: z.string().optional().describe('The ID of the user for whom the advice is being generated.'),
+  // Middleware always injects x-user-id from the Firebase ID token,
+  // so this is required at the schema level — matches the Py sidecar.
+  userId: z.string().describe('The ID of the user for whom the advice is being generated.'),
 });
 export type TeacherTrainingInput = z.infer<typeof TeacherTrainingInputSchema>;
 

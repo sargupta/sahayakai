@@ -86,6 +86,11 @@ export async function POST(req: NextRequest) {
         const isTerminal = mergedStatus === 'completed' || mergedStatus === 'failed';
         if (isTerminal && transcript.length > 1 && !existing.callSummary) {
             const data = existing;
+            // Parent-call schema requires 2-letter ISO (en/hi/bn/...).
+            const { LANGUAGE_TO_ISO } = await import('@/types/index');
+            const parentLanguageIso = (LANGUAGE_TO_ISO as Record<string, string>)[
+                data.parentLanguage ?? 'Hindi'
+            ] ?? 'hi';
             generateCallSummary({
                 studentName: data.studentName ?? '',
                 className: data.className ?? '',
@@ -94,7 +99,8 @@ export async function POST(req: NextRequest) {
                 teacherMessage: data.generatedMessage ?? '',
                 teacherName: data.teacherName,
                 schoolName: data.schoolName,
-                parentLanguage: data.parentLanguage ?? 'Hindi',
+                parentLanguage: parentLanguageIso as 'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
+                callSid: data.callSid ?? doc.id,
                 transcript: transcript.map(t => ({ role: t.role, text: t.text })),
             }).then(async (summary) => {
                 await docRef.update({ callSummary: summary, updatedAt: new Date().toISOString() });

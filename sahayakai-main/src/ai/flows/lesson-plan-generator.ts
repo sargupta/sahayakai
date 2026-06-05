@@ -28,7 +28,9 @@ export const LessonPlanInputSchema = z.object({
   imageDataUri: z.string().optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
-  userId: z.string().optional().describe('The ID of the user for whom the lesson plan is being generated.'),
+  // Middleware always injects x-user-id from the Firebase ID token,
+  // so this is required at the schema level — matches the Py sidecar.
+  userId: z.string().describe('The ID of the user for whom the lesson plan is being generated.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
   ncertChapter: z.object({
