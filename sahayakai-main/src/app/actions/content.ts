@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase-admin/firestore';
-import { aggregateUserMetrics } from './aggregator';
+import { aggregateUserMetrics } from '@/lib/aggregator';
 import { revalidatePath } from 'next/cache';
 import { trackTeacherContent } from '@/lib/teacher-activity-tracker';
 import { requireAuth } from '@/lib/auth-helpers';

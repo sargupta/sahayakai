@@ -3,8 +3,20 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
+import { validateAdmin } from '@/lib/auth-utils';
 
 export async function POST(req: NextRequest) {
+    // Admin gate: demo-mode seeder must never be reachable by unauth callers.
+    const callerUid = req.headers.get('x-user-id');
+    if (!callerUid) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+        await validateAdmin(callerUid);
+    } catch {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     try {
         const { userId } = await req.json();
 

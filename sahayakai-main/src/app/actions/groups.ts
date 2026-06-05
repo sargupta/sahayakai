@@ -303,6 +303,7 @@ export async function getMyGroupsAction(): Promise<Group[]> {
 // ── 3. getGroupAction ─────────────────────────────────────────────────────────
 
 export async function getGroupAction(groupId: string): Promise<Group | null> {
+    await requireAuth();
     const db = await getDb();
     const doc = await db.collection('groups').doc(groupId).get();
     if (!doc.exists) return null;

@@ -17,10 +17,60 @@ interface EventBatch {
     events: AnalyticsEvent[];
 }
 
+// Allowlist of event keys we accept from the client. Anything else is stripped
+// before persistence so a hostile client cannot smuggle arbitrary fields into
+// Firestore documents via FieldValue/arrayUnion etc.
+const ALLOWED_EVENT_KEYS = new Set([
+    'event_type',
+    'user_id',
+    'session_id',
+    'timestamp',
+    'feature',
+    'content_type',
+    'success',
+    'severity',
+    'duration_ms',
+    'route',
+    'locale',
+]);
+
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB defense-in-depth against payload DoS
+const MAX_EVENTS_PER_BATCH = 50;
+
+function sanitizeEvent(raw: any): Record<string, any> | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const out: Record<string, any> = {};
+    for (const key of Object.keys(raw)) {
+        if (!ALLOWED_EVENT_KEYS.has(key)) continue;
+        const v = raw[key];
+        if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+            out[key] = v;
+        }
+    }
+    return out;
+}
+
 export async function POST(req: NextRequest) {
+    // Auth gate: must be signed in. Client-supplied user_id is ignored and
+    // overwritten with the caller's verified uid before any Firestore write.
+    const callerUid = req.headers.get('x-user-id');
+    if (!callerUid) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let raw: string;
+    try {
+        raw = await req.text();
+    } catch {
+        return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+    if (raw.length > MAX_BODY_BYTES) {
+        return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     let body: EventBatch;
     try {
-        body = await req.json();
+        body = JSON.parse(raw);
     } catch {
         return NextResponse.json(
             { error: 'Invalid JSON body' },
@@ -36,12 +86,24 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        if (body.events.length > MAX_EVENTS_PER_BATCH) {
+            return NextResponse.json(
+                { error: `Too many events (max ${MAX_EVENTS_PER_BATCH})` },
+                { status: 413 }
+            );
+        }
+
         const db = await getDb();
         const batch = db.batch();
         const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         // Log each event to Cloud Logging & Aggregation
-        for (const event of body.events) {
+        for (const rawEvent of body.events) {
+            const sanitized = sanitizeEvent(rawEvent);
+            if (!sanitized) continue;
+            // Force user_id to verified caller uid — never trust the client.
+            sanitized.user_id = callerUid;
+            const event = sanitized as AnalyticsEvent;
             const severity = getEventSeverity(event);
 
             // 1. Structured Logging (via standard logger)

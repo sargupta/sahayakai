@@ -25,7 +25,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { calculateHealthScore, type TeacherAnalytics } from '@/lib/analytics/impact-score';
-import { aggregateUserMetrics } from '@/app/actions/aggregator';
+import { aggregateUserMetrics } from '@/lib/aggregator';
+import { isAdmin } from '@/lib/auth-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,11 +39,24 @@ export async function GET(
 ) {
     let resolvedUserId: string | undefined;
     try {
+        // Auth gate: must be signed in; must be the same user OR an admin.
+        const callerUid = req.headers.get('x-user-id');
+        if (!callerUid) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { userId } = await params;
         resolvedUserId = userId;
 
         if (!userId) {
             return NextResponse.json({ error: 'userId required' }, { status: 400 });
+        }
+
+        if (callerUid !== userId) {
+            const admin = await isAdmin(callerUid);
+            if (!admin) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
         }
 
         const explicitRefresh = req.nextUrl.searchParams.get('refresh') === '1';

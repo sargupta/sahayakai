@@ -4,7 +4,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
-import { aggregateUserMetrics } from "./aggregator";
+import { aggregateUserMetrics } from "@/lib/aggregator";
 import { logger } from "@/lib/logger";
 import { requireAuth } from "@/lib/auth-helpers";
 import { checkServerRateLimit } from "@/lib/server-safety";
