@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 /** Canonical spotlight IDs -- use these constants to avoid typos across consumption sites */
 export const SPOTLIGHT_IDS = {
@@ -37,6 +38,7 @@ export function FeatureSpotlight({
     children,
     delay = 500,
 }: FeatureSpotlightProps) {
+    const { t } = useLanguage();
     const [visible, setVisible] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +92,7 @@ export function FeatureSpotlight({
                             onClick={handleDismiss}
                             className="w-full rounded-lg text-xs h-7"
                         >
-                            Got it
+                            {t("Got it")}
                         </Button>
                     </div>
 

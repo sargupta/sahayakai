@@ -1,0 +1,70 @@
+rules_version = '2';
+
+// Firebase Storage rules for SahayakAI.
+//
+// QA #13 (2026-06-02) voice-message upload fix: previously no storage.rules
+// existed in the repo, which means uploads to `voice-messages/{uid}/…` from
+// the messaging voice-recorder were rejected with `storage/unauthorized` and
+// the message never sent. This file adds an explicit ownership rule for the
+// voice-message path; reference it from `firebase.json` and deploy with
+// `firebase deploy --only storage`.
+service firebase.storage {
+    match /b/{bucket}/o {
+        // ── Voice messages (1-to-1 chat) ────────────────────────────────────
+        // Path written by src/components/messages/voice-recorder.tsx:
+        //   voice-messages/{uid}/{timestamp}.{webm|m4a}
+        // Only the signed-in owner can upload; any signed-in user can
+        // download (recipients need to play back). 5 MB cap is generous for
+        // a typical 1–2 minute opus/m4a clip and keeps abuse bounded.
+        match /voice-messages/{userId}/{fileName} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 5 * 1024 * 1024
+                         && request.resource.contentType.matches('audio/.*');
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── User uploads (resource sharing, lesson media) ────────────────────
+        // Path written by src/components/image-uploader.tsx:
+        //   users/{userId}/uploads/{uuid}_{filename}
+        // Mirrors the voice-messages owner-write / authenticated-read pattern.
+        match /users/{userId}/uploads/{fileName=**} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 10 * 1024 * 1024;
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── Profile photos / avatars ─────────────────────────────────────────
+        // Path written by src/app/settings/page.tsx (custom avatar upload):
+        //   profile-photos/{userId}/{uuid}.{ext}
+        // Authenticated-read so the photo URL works in shared resources and
+        // the community directory. 5 MB cap (avatars are tiny) + image-only.
+        match /profile-photos/{userId}/{fileName=**} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 5 * 1024 * 1024
+                         && request.resource.contentType.matches('image/.*');
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── Legacy fallback for any older /uploads/{uid}/ path ───────────────
+        // Kept in case any cached page on an older build still posts here.
+        // Safe to delete once we confirm no client traffic hits it.
+        match /uploads/{userId}/{fileName=**} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 10 * 1024 * 1024;
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // Default-deny everything else.
+        match /{allPaths=**} {
+            allow read, write: if false;
+        }
+    }
+}

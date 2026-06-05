@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import {
     Carousel,
@@ -10,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { VideoCard } from './VideoCard';
 import { YouTubeVideo } from '@/lib/youtube';
+import { useLanguage } from '@/context/language-context';
 
 interface VideoCarouselProps {
     title: string;
@@ -28,6 +31,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
     onVideoSelect,
     onViewAll
 }) => {
+    const { t } = useLanguage();
     if (!videos || videos.length === 0) return null;
 
     return (
@@ -35,7 +39,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4 text-primary shrink-0" />
-                    <h2 className="text-base sm:text-lg font-headline font-bold text-slate-900 leading-none">
+                    <h2 className="text-base sm:text-lg font-headline font-bold text-foreground leading-none">
                         {title}
                     </h2>
                 </div>
@@ -45,7 +49,7 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
                     onClick={() => onViewAll?.(categoryKey)}
                     className="text-xs text-primary hover:text-primary hover:bg-primary/5 font-semibold gap-1 h-7 px-2"
                 >
-                    View all
+                    {t("View all")}
                     <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
             </div>
@@ -61,8 +65,8 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="hidden md:flex -left-5 bg-white border-slate-200 hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
-                <CarouselNext className="hidden md:flex -right-5 bg-white border-slate-200 hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
+                <CarouselPrevious className="hidden md:flex -left-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
+                <CarouselNext className="hidden md:flex -right-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
             </Carousel>
         </div>
     );

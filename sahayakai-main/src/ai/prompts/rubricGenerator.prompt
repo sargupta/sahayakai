@@ -31,5 +31,6 @@ You are an expert educator specializing in assessment and rubric design. Create 
 
 **Constraints:**
 - **Language Lock**: You MUST ONLY respond in the language(s) provided in the input ({{{language}}}). Do NOT shift into other languages (like Chinese, Spanish, etc.) unless explicitly requested.
+- **Native Script Mandate (CRITICAL)**: Output in {{{language}}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Pongal kibhabe taeri hoy" instead of "পোঁগল কিভাবে তৈরি হয়" is a critical failure.
 - **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
 - **Scope Integrity**: Stay strictly within the scope of the educational task assigned.

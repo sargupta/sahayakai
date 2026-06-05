@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, X } from 'lucide-react';
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 import { useLanguage } from "@/context/language-context";
@@ -363,9 +364,9 @@ ${editablePlan.assessment}
   }
 
   const meta = [
-    lessonPlan.gradeLevel && { icon: <GraduationCap className="h-3.5 w-3.5" />, value: lessonPlan.gradeLevel },
-    lessonPlan.duration && { icon: <Clock className="h-3.5 w-3.5" />, value: lessonPlan.duration },
-    lessonPlan.subject && { icon: <BookOpen className="h-3.5 w-3.5" />, value: lessonPlan.subject },
+    lessonPlan.gradeLevel && { icon: <GraduationCap className="h-3.5 w-3.5" />, value: translate(lessonPlan.gradeLevel) },
+    lessonPlan.duration && { icon: <Clock className="h-3.5 w-3.5" />, value: translate(lessonPlan.duration) },
+    lessonPlan.subject && { icon: <BookOpen className="h-3.5 w-3.5" />, value: translate(lessonPlan.subject) },
   ].filter(Boolean) as any[];
 
   const proGatedCopy = () =>
@@ -397,6 +398,11 @@ ${editablePlan.assessment}
       icon={<BookText />}
       meta={meta}
       actions={actions}
+      extraActions={
+        isEditing ? null : (
+          <QuickShareButton contentType="lesson-plan" onSave={handleSave} />
+        )
+      }
       footer={
         <FeedbackDialog
           page="lesson-plan"

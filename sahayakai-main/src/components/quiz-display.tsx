@@ -14,6 +14,7 @@ import {
     X,
     Printer,
     RotateCw,
+    Loader2,
     ThumbsUp,
     ThumbsDown,
     MessageSquareQuote,
@@ -39,8 +40,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { useLanguage } from "@/context/language-context";
 
 type QuizDisplayProps = {
     quiz: QuizVariantsOutput;
@@ -72,6 +75,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
     const [includeBranding] = useState(true);
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
+    const { t: tr } = useLanguage();
 
     useEffect(() => {
         setEditState({
@@ -87,8 +91,8 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
 
     if (!currentQuiz) {
         return (
-            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-white rounded-[var(--radius)] border border-slate-200 shadow-soft">
-                No quiz generated for this difficulty level.
+            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-card rounded-[var(--radius)] border border-border shadow-soft">
+                {tr("No quiz generated for this difficulty level.")}
             </div>
         );
     }
@@ -128,7 +132,15 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
         element.style.display = "block";
         element.classList.remove("hidden");
         toast({ title: t.pdfPreparingTitle, description: t.pdfPreparingDesc });
-        const variantTitle = currentQuiz.title || "Quiz";
+        // Filenames must stay ASCII-safe. In non-Latin UI languages (e.g.
+        // Tamil) the quiz title is in a non-Latin script; stripping those
+        // characters used to collapse the slug to a bare separator dash.
+        // Fall back to "Quiz" whenever the title is empty or has no usable
+        // Latin/alphanumeric characters after sanitising.
+        const asciiTitle = (currentQuiz.title || "")
+            .replace(/[^a-zA-Z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+        const variantTitle = asciiTitle || "Quiz";
         const res = await exportElementToPdf({
             elementId: PDF_ID,
             filename: `Sahayak_Quiz_${variantTitle}_${activeTab}.pdf`,
@@ -286,6 +298,63 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
         }
     };
 
+    // Per-question "Save Edit": commits the in-progress edits for a single
+    // question. Edits already live in editState.editedVariants (local state),
+    // so this persists the whole edited quiz to the library — the same path
+    // the global Save uses — and toasts a per-question confirmation. If the
+    // quiz was already saved, this updates the saved library doc; otherwise it
+    // creates one. Network failures are reported via toast.
+    const [savingQuestion, setSavingQuestion] = useState<number | null>(null);
+
+    const handleSaveQuestion = async (idx: number) => {
+        setSavingQuestion(idx);
+        try {
+            const { auth } = await import("@/lib/firebase");
+            const user = auth.currentUser;
+            if (!user) {
+                toast({
+                    title: t.loginRequiredTitle,
+                    description: t.loginRequiredDesc,
+                    variant: "destructive",
+                });
+                return;
+            }
+            const saveTitle = currentQuiz.title || "General Quiz";
+            const payload = {
+                id: crypto.randomUUID(),
+                type: "quiz",
+                title: saveTitle,
+                gradeLevel: quiz.gradeLevel || "Class 5",
+                subject: quiz.subject || "General",
+                topic: currentQuiz.title || quiz.topic || "General",
+                language: selectedLanguage || "en",
+                data: editState.editedVariants,
+            };
+            const token = await user.getIdToken();
+            const response = await fetch("/api/content/save", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error("Server rejected save");
+            toast({
+                title: tr("Saved"),
+                description: `${tr("Question")} ${idx + 1} ${tr("saved")}`,
+            });
+        } catch {
+            toast({
+                title: t.saveFailedTitle,
+                description: t.saveFailedDesc,
+                variant: "destructive",
+            });
+        } finally {
+            setSavingQuestion(null);
+        }
+    };
+
     const handleAddQuestion = (
         idx: number,
         type:
@@ -334,25 +403,25 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                 className="w-full"
             >
                 <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
-                    <TabsList className="grid w-full sm:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-xl h-11">
+                    <TabsList className="grid w-full sm:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-md h-11">
                         <TabsTrigger
                             value="easy"
                             disabled={!quiz.easy}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyEasy}
                         </TabsTrigger>
                         <TabsTrigger
                             value="medium"
                             disabled={!quiz.medium}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyMedium}
                         </TabsTrigger>
                         <TabsTrigger
                             value="hard"
                             disabled={!quiz.hard}
-                            className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
                         >
                             {t.difficultyHard}
                         </TabsTrigger>
@@ -429,6 +498,14 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                 onClick: handleDownloadPDF,
                             },
                         ]}
+                        extraActions={
+                            editState.isEditing ? null : (
+                                <QuickShareButton
+                                    contentType="quiz"
+                                    onSave={handleSaveToLibrary}
+                                />
+                            )
+                        }
                         footer={
                             <FeedbackDialog
                                 page="quiz-generator"
@@ -451,7 +528,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                             {currentQuiz.questions.map((q, idx) => (
                                 <div
                                     key={idx}
-                                    className="relative p-4 sm:p-5 rounded-xl border border-border bg-muted/30"
+                                    className="relative p-4 sm:p-5 rounded-md border border-border bg-muted/30"
                                 >
                                     <div className="flex justify-between items-start gap-2 mb-3">
                                         <div className="flex-1 min-w-0">
@@ -476,7 +553,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             idx,
                                                         )
                                                     }
-                                                    className="font-semibold text-base bg-white border-border min-h-[56px]"
+                                                    className="font-semibold text-base bg-card border-border min-h-[56px]"
                                                 />
                                             ) : (
                                                 <p className="font-semibold text-base sm:text-lg leading-snug break-words">
@@ -504,13 +581,44 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                                         idx &&
                                                                         "animate-spin",
                                                                 )}
-                                                                aria-label="Refine"
+                                                                aria-label={tr("Refine")}
                                                             >
                                                                 <RotateCw className="h-3.5 w-3.5" />
                                                             </Button>
                                                         </TooltipTrigger>
                                                         <TooltipContent className="text-xs">
-                                                            Refine
+                                                            {tr("Refine")}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    handleSaveQuestion(
+                                                                        idx,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    savingQuestion ===
+                                                                    idx
+                                                                }
+                                                                className="h-8 w-8 text-blue-600"
+                                                                aria-label={tr(
+                                                                    "Save Edit",
+                                                                )}
+                                                            >
+                                                                {savingQuestion ===
+                                                                idx ? (
+                                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                ) : (
+                                                                    <Check className="h-3.5 w-3.5" />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="text-xs">
+                                                            {tr("Save Edit")}
                                                         </TooltipContent>
                                                     </Tooltip>
                                                     <DropdownMenu>
@@ -521,7 +629,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="h-8 w-8 text-emerald-600"
-                                                                aria-label="Add question"
+                                                                aria-label={tr("Add question")}
                                                             >
                                                                 <Plus className="h-3.5 w-3.5" />
                                                             </Button>
@@ -618,7 +726,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                     (opt, optIdx) => (
                                                         <div
                                                             key={optIdx}
-                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border border-border bg-white"
+                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-sm border border-border bg-card"
                                                         >
                                                             <div className="w-6 h-6 rounded-md border border-border flex items-center justify-center text-[10px] font-black text-muted-foreground bg-muted flex-shrink-0">
                                                                 {String.fromCharCode(
@@ -656,7 +764,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                         {(q.questionType === "short_answer" ||
                                             q.questionType ===
                                                 "fill_in_the_blanks") && (
-                                            <div className="w-full h-20 border-2 border-dashed border-border rounded-lg bg-muted/20 flex items-center justify-center text-muted-foreground/70 text-xs sm:text-sm">
+                                            <div className="w-full h-20 border border-dashed border-border rounded-md bg-muted/20 flex items-center justify-center text-muted-foreground/70 text-xs sm:text-sm">
                                                 {t.studentAnswerArea}
                                             </div>
                                         )}
@@ -670,7 +778,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                 : "opacity-0 max-h-0 py-0 border-none",
                                         )}
                                     >
-                                        <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 text-sm space-y-2">
+                                        <div className="bg-primary/5 p-3 rounded-md border border-primary/10 text-sm space-y-2">
                                             <div className="flex items-center gap-2">
                                                 <Check className="h-4 w-4 text-green-600" />
                                                 <span className="font-bold uppercase text-[10px] tracking-wider">
@@ -687,10 +795,10 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             idx,
                                                         )
                                                     }
-                                                    className="h-9 bg-white border-border"
+                                                    className="h-9 bg-card border-border"
                                                 />
                                             ) : (
-                                                <span className="font-bold bg-white px-2 py-1 rounded border border-border inline-block">
+                                                <span className="font-bold bg-card px-2 py-1 rounded border border-border inline-block">
                                                     {q.correctAnswer}
                                                 </span>
                                             )}
@@ -748,7 +856,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                 </div>
                 {includeBranding && (
                     <div className="print-footer mt-12 pt-4 border-t text-center text-xs text-muted-foreground/70">
-                        Generated by SahayakAI
+                        {tr("Generated by SahayakAI")}
                     </div>
                 )}
                 <div className="page-break-before-always mt-12 pt-12 border-t-2 border-black">

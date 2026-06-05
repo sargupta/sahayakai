@@ -12,6 +12,7 @@ import { Logo } from "@/components/logo";
 import { AuthButton } from "@/components/auth/auth-button";
 import { GlobalHooks } from "@/components/global-hooks";
 import { OmniOrb } from "@/components/omni-orb";
+import { TamilKeyboard } from "@/components/tamil-keyboard";
 import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
 import { VoiceQuotaToastListener } from "@/components/voice-quota-toast-listener";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -19,6 +20,7 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { CommandPalette, openCommandPalette } from "@/components/command-palette";
 import { LanguagePill } from "@/components/language-pill";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
@@ -96,6 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ⌘K
                 </kbd>
               </button>
+              <ThemeToggle />
               <LanguagePill />
               <AuthButton />
             </div>
@@ -114,6 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           to clear it on mobile). */}
       <GlobalHooks />
       <OmniOrb />
+      <TamilKeyboard />
       <MotherTongueGreeting />
       <CommandPalette />
       <MobileBottomNav />

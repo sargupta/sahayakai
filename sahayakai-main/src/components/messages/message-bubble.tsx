@@ -83,14 +83,14 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                         <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                             isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
                         )}>
-                            {resource.gradeLevel}
+                            {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
                         </span>
                     )}
                     {resource.subject && (
                         <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                             isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
                         )}>
-                            {resource.subject}
+                            {resource.subject ? t(resource.subject) : resource.subject}
                         </span>
                     )}
                 </div>
@@ -102,7 +102,7 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                     "h-7 w-full text-[11px] font-bold gap-1 rounded-lg",
                     isOwn
                         ? "bg-white/20 hover:bg-white/30 text-white border border-white/30"
-                        : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
+                        : "bg-background hover:bg-muted text-foreground border border-border"
                 )}
                 variant="outline"
             >
@@ -138,7 +138,7 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
                 style={{ colorScheme: "normal" }}
             />
             {duration && (
-                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-slate-500")}>
+                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-muted-foreground")}>
                     {formatDuration(duration)}
                 </span>
             )}
@@ -219,14 +219,14 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
             {/* Bubble */}
             <div className={cn("max-w-[72%] space-y-0.5", isOwn && "items-end flex flex-col")}>
                 {showAvatar && !isOwn && (
-                    <p className="text-[10px] font-bold text-slate-500 px-1">{message.senderName}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground px-1">{message.senderName}</p>
                 )}
 
                 <div className={cn(
                     "px-3.5 py-2.5 rounded-2xl",
                     isOwn
                         ? "bg-orange-500 text-white rounded-br-sm"
-                        : "bg-slate-100 text-slate-800 rounded-bl-sm border border-border/40",
+                        : "bg-muted text-foreground rounded-bl-sm border border-border/40",
                     message.deliveryStatus === 'sending' && "opacity-70",
                     message.deliveryStatus === 'failed' && "ring-1 ring-red-400/60",
                 )}>
@@ -248,7 +248,7 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
 
                 {/* Timestamp + read receipt */}
                 <div className={cn("flex items-center gap-1 px-1", isOwn && "flex-row-reverse")}>
-                    <p className="text-[10px] text-slate-400">{formatTime(message.createdAt)}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatTime(message.createdAt)}</p>
                     {isOwn && <DeliveryStatus message={message} participantIds={participantIds} onRetry={onRetry} />}
                 </div>
             </div>

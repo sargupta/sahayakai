@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from 'react';
+import { useLanguage } from '@/context/language-context';
 import {
   Select,
   SelectContent,
@@ -32,13 +33,14 @@ const languages = [
 ];
 
 export const LanguageSelector: FC<LanguageSelectorProps> = ({ onValueChange, defaultValue, value }) => {
+  const { t } = useLanguage();
   // If defaultValue is not in the list (like on first load of community page where it could be 'en'), use it. Otherwise, if it's not a valid lang, default to 'all'
   const finalDefaultValue = languages.some(l => l.value === defaultValue) ? defaultValue : "all";
 
   return (
     <Select onValueChange={onValueChange} defaultValue={finalDefaultValue} value={value}>
-      <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm">
-        <SelectValue placeholder="Select a language" />
+      <SelectTrigger className="w-full bg-card/50 backdrop-blur-sm">
+        <SelectValue placeholder={t("Select a language")} />
       </SelectTrigger>
       <SelectContent>
         {languages.map((lang) => (

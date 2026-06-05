@@ -20,6 +20,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import { useJarvisStore } from "@/store/jarvisStore";
@@ -199,7 +200,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 function VirtualFieldTripContent() {
   const { requireAuth, openAuthModal } = useAuth();
-  const { t: translate } = useLanguage();
+  const { t: translate, language: uiLanguage } = useLanguage();
   const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -210,7 +211,7 @@ function VirtualFieldTripContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 8",
       subject: "General",
     },
@@ -229,7 +230,11 @@ function VirtualFieldTripContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const t = translations[selectedLanguage] || translations.en;
+  // UI chrome (taglines, placeholders, labels) follows the global UI language,
+  // NOT the AI-output language form field. Without this, switching the app
+  // language leaves chrome in the previous language until a hard refresh.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
+  const t = translations[uiLangCode] || translations.en;
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present
@@ -425,7 +430,7 @@ function VirtualFieldTripContent() {
               />
 
               <div className="p-3 bg-accent/20 rounded-lg">
-                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="virtual-field-trip" />
+                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="virtual-field-trip" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">

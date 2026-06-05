@@ -157,24 +157,24 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
             ...prev,
             sentRequestUids: [...prev.sentRequestUids, targetUid],
           }));
-          toast({ title: 'Connection request sent' });
+          toast({ title: t('Connection request sent') });
         } else if (result.status === 'already_pending') {
           setConnData((prev) =>
             prev.sentRequestUids.includes(targetUid)
               ? prev
               : { ...prev, sentRequestUids: [...prev.sentRequestUids, targetUid] },
           );
-          toast({ title: 'Request already pending' });
+          toast({ title: t('Request already pending') });
         } else if (result.status === 'already_connected') {
           setConnData((prev) =>
             prev.connectedUids.includes(targetUid)
               ? prev
               : { ...prev, connectedUids: [...prev.connectedUids, targetUid] },
           );
-          toast({ title: 'Already connected' });
+          toast({ title: t('Already connected') });
         }
       } catch {
-        toast({ title: "Could not send request", variant: "destructive" });
+        toast({ title: t("Could not send request"), variant: "destructive" });
       }
     },
     [toast],
@@ -268,8 +268,8 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
             }}
           >
             <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground/60" />
-            <p className="text-sm font-medium text-slate-700">
-              Join this group to share, post, and chat with members
+            <p className="text-sm font-medium text-foreground">
+              {t("Join this group to share, post, and chat with members")}
             </p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">
               {group.memberCount} teachers are already here
@@ -282,9 +282,9 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
                 try {
                   await onJoinGroup(group.id);
                   setMemberState(true);
-                  toast({ title: "Joined group" });
+                  toast({ title: t("Joined group") });
                 } catch {
-                  toast({ title: "Could not join group", variant: "destructive" });
+                  toast({ title: t("Could not join group"), variant: "destructive" });
                 } finally {
                   setJoining(false);
                 }
@@ -303,7 +303,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
         <Card className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <FileText className="h-10 w-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground">
-            No posts yet. Be the first to share something!
+            {t("No posts yet. Be the first to share something!")}
           </p>
         </Card>
       ) : (

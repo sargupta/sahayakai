@@ -20,6 +20,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { SubjectSelector } from "@/components/subject-selector";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
 import { useJarvisStore } from "@/store/jarvisStore";
@@ -228,7 +229,7 @@ function InstantAnswerContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedToLib, setSavedToLib] = useState(false);
   const { toast } = useToast();
-  const { t: translate } = useLanguage();
+  const { t: translate, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -236,7 +237,7 @@ function InstantAnswerContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 6",
       subject: "General",
     },
@@ -256,7 +257,11 @@ function InstantAnswerContent() {
 
   /* Translations Helper */
   const selectedLanguage = form.watch("language") || 'en';
-  const t = translations[selectedLanguage] || translations.en;
+  // UI chrome (taglines, placeholders, labels) follows the global UI language,
+  // NOT the AI-output language form field. Without this, switching the app
+  // language leaves chrome in the previous language until a hard refresh.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
+  const t = translations[uiLangCode] || translations.en;
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present
@@ -471,7 +476,7 @@ function InstantAnswerContent() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">Subject</FormLabel>
+                      <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{translate("Subject")}</FormLabel>
                       <FormControl>
                         <SubjectSelector
                           onValueChange={field.onChange}

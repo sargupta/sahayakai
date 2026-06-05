@@ -17,6 +17,7 @@ import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, L
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { SectionCard } from "@/components/layout";
 import { SampleOutputSection } from "@/components/landing/sample-output-section";
 import { useCommunityIntro } from "@/hooks/use-community-intro";
@@ -38,20 +39,23 @@ type FormValues = z.infer<typeof formSchema>;
 
 
 
-const SuggestionCard = ({ suggestion }: { suggestion: ContextualSuggestion }) => (
-  <Link href={suggestion.toolHref} className="group">
-    <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
-      <CardContent className="p-4 flex flex-col gap-2">
-        <span className="type-caption text-primary/70">{suggestion.toolLabel}</span>
-        <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
-        <p className="text-xs text-muted-foreground">{suggestion.subject} &middot; {suggestion.gradeLevel}</p>
-        <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-          Start <ArrowRight className="h-3 w-3" />
-        </div>
-      </CardContent>
-    </Card>
-  </Link>
-);
+const SuggestionCard = ({ suggestion, startLabel }: { suggestion: ContextualSuggestion; startLabel: string }) => {
+  const { t } = useLanguage();
+  return (
+    <Link href={suggestion.toolHref} className="group">
+      <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
+        <CardContent className="p-4 flex flex-col gap-2">
+          <span className="type-caption text-primary/70">{suggestion.toolLabel}</span>
+          <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
+          <p className="text-xs text-muted-foreground">{suggestion.subject ? t(suggestion.subject) : suggestion.subject} &middot; {suggestion.gradeLevel ? t(suggestion.gradeLevel) : suggestion.gradeLevel}</p>
+          <div className="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {startLabel} <ArrowRight className="h-3 w-3" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 export function DashboardHome() {
   const { requireAuth, openAuthModal } = useAuth();
@@ -119,7 +123,14 @@ export function DashboardHome() {
       const res = await fetch("/api/ai/intent", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify({ prompt: values.topic, language: userLanguage })
+        // Send the current UI language (as an ISO code, the agent/route
+        // contract) so the assistant answers in the teacher's chosen
+        // language even when the spoken/typed prompt is in another script.
+        body: JSON.stringify({
+          prompt: values.topic,
+          language: LANGUAGE_TO_ISO[userLanguage] ?? "en",
+          uiLanguage: LANGUAGE_TO_ISO[userLanguage] ?? "en",
+        })
       });
 
       if (!res.ok) {
@@ -145,8 +156,8 @@ export function DashboardHome() {
       } else {
         // Fallback or error
         toast({
-          title: "Not sure how to help",
-          description: result?.error || "Please try asking to create a lesson plan, quiz, or visual aid.",
+          title: t("Not sure how to help"),
+          description: result?.error || t("Please try asking to create a lesson plan, quiz, or visual aid."),
           variant: "destructive"
         });
         setIsThinking(false);
@@ -154,8 +165,8 @@ export function DashboardHome() {
     } catch (error) {
       console.error("Router Error:", error);
       toast({
-        title: "Connection Error",
-        description: "Could not reach Sahayak. Please try again.",
+        title: t("Connection Error"),
+        description: t("Could not reach Sahayak. Please try again."),
         variant: "destructive"
       });
       setIsThinking(false);
@@ -179,7 +190,7 @@ export function DashboardHome() {
             <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
           </div>
           <div className="mt-auto pt-2 md:pt-4 text-primary font-medium text-xs md:text-sm flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            Start <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
+            {t("Start")} <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
           </div>
         </CardContent>
       </Card>
@@ -203,15 +214,15 @@ export function DashboardHome() {
           <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
           <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
         </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-slate-900 tracking-tight indic-text leading-[1.1]">
+        <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight indic-text leading-[1.1]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("Ideas for your classes")}
           </p>
         ) : (
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
           </p>
         )}
@@ -265,7 +276,7 @@ export function DashboardHome() {
                     type="submit"
                     size="icon"
                     className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all active:scale-95"
-                    aria-label="Generate Lesson Plan"
+                    aria-label={t("Generate Lesson Plan")}
                   >
                     <ArrowRight className="h-5 w-5" />
                   </Button>
@@ -290,7 +301,7 @@ export function DashboardHome() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
-                <span className="ml-2">Thinking</span>
+                <span className="ml-2">{t("Thinking")}</span>
               </span>
             </div>
           )}
@@ -305,17 +316,17 @@ export function DashboardHome() {
                   size="icon"
                   className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
                   onClick={() => setAnswer(null)}
-                  aria-label="Close answer"
+                  aria-label={t("Close answer")}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               }
             >
               <div className="prose prose-sm max-w-none text-foreground">
-                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />Answer</h3>
+                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
                 <div className="whitespace-pre-wrap">{answer}</div>
                 <p className="text-xs text-muted-foreground mt-3 not-prose">
-                  Sahayak can make mistakes. Please review generated content.
+                  {t("Sahayak can make mistakes. Please review generated content.")}
                 </p>
               </div>
             </SectionCard>
@@ -345,7 +356,7 @@ export function DashboardHome() {
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             {suggestions.map(s => (
-              <SuggestionCard key={s.id} suggestion={s} />
+              <SuggestionCard key={s.id} suggestion={s} startLabel={t("Start")} />
             ))}
           </div>
           <div className="flex items-center justify-center gap-4">
@@ -353,7 +364,7 @@ export function DashboardHome() {
               onClick={refreshSuggestions}
               className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
             >
-              <RefreshCw className="h-3 w-3" /> Show different ideas
+              <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
             </button>
             {!showAllToolsOnPage && (
               <button
@@ -366,82 +377,82 @@ export function DashboardHome() {
           </div>
           {showAllToolsOnPage && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in duration-300">
-              <QuickActionCard title="Lesson Plan" icon={BookOpen} href="/lesson-plan" color="" description="NCERT-aligned plans." />
-              <QuickActionCard title="Quiz Generator" icon={BrainCircuit} href="/quiz-generator" color="" description="Instant quizzes & worksheets." />
-              <QuickActionCard title="Exam Paper" icon={FileText} href="/exam-paper" color="" description="Board-aligned papers." />
-              <QuickActionCard title="Worksheet Wizard" icon={ClipboardList} href="/worksheet-wizard" color="" description="Practice worksheets." />
-              <QuickActionCard title="Assess Work" icon={ScanEye} href="/assess-assignment" color="" description="Grade handwritten work from a photo." />
-              <QuickActionCard title="Visual Aid" icon={Image} href="/visual-aid-designer" color="" description="Diagrams & illustrations." />
-              <QuickActionCard title="Content Creator" icon={PenTool} href="/content-creator" color="" description="Stories & visual aids." />
-              <QuickActionCard title="Instant Answer" icon={Lightbulb} href="/instant-answer" color="" description="Quick answers to questions." />
-              <QuickActionCard title="Teacher Training" icon={GraduationCap} href="/teacher-training" color="" description="Professional development." />
+              <QuickActionCard title={t("Lesson Plan")} icon={BookOpen} href="/lesson-plan" color="" description={t("NCERT-aligned plans.")} />
+              <QuickActionCard title={t("Quiz Generator")} icon={BrainCircuit} href="/quiz-generator" color="" description={t("Instant quizzes & worksheets.")} />
+              <QuickActionCard title={t("Exam Paper")} icon={FileText} href="/exam-paper" color="" description={t("Board-aligned papers.")} />
+              <QuickActionCard title={t("Worksheet Wizard")} icon={ClipboardList} href="/worksheet-wizard" color="" description={t("Practice worksheets.")} />
+              <QuickActionCard title={t("Assess Work")} icon={ScanEye} href="/assess-assignment" color="" description={t("Grade handwritten work from a photo.")} />
+              <QuickActionCard title={t("Visual Aid")} icon={Image} href="/visual-aid-designer" color="" description={t("Diagrams & illustrations.")} />
+              <QuickActionCard title={t("Content Creator")} icon={PenTool} href="/content-creator" color="" description={t("Stories & visual aids.")} />
+              <QuickActionCard title={t("Instant Answer")} icon={Lightbulb} href="/instant-answer" color="" description={t("Quick answers to questions.")} />
+              <QuickActionCard title={t("Teacher Training")} icon={GraduationCap} href="/teacher-training" color="" description={t("Professional development.")} />
             </div>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
           <QuickActionCard
-            title="Lesson Plan"
+            title={t("Lesson Plan")}
             icon={BookOpen}
             href="/lesson-plan"
             color=""
-            description="NCERT-aligned plans."
+            description={t("NCERT-aligned plans.")}
           />
           <QuickActionCard
-            title="Quiz Generator"
+            title={t("Quiz Generator")}
             icon={BrainCircuit}
             href="/quiz-generator"
             color=""
-            description="Instant quizzes & worksheets."
+            description={t("Instant quizzes & worksheets.")}
           />
           <QuickActionCard
-            title="Exam Paper"
+            title={t("Exam Paper")}
             icon={FileText}
             href="/exam-paper"
             color=""
-            description="Board-aligned papers."
+            description={t("Board-aligned papers.")}
           />
           <QuickActionCard
-            title="Worksheet Wizard"
+            title={t("Worksheet Wizard")}
             icon={ClipboardList}
             href="/worksheet-wizard"
             color=""
-            description="Practice worksheets."
+            description={t("Practice worksheets.")}
           />
           <QuickActionCard
-            title="Assess Work"
+            title={t("Assess Work")}
             icon={ScanEye}
             href="/assess-assignment"
             color=""
-            description="Grade handwritten work from a photo."
+            description={t("Grade handwritten work from a photo.")}
           />
           <QuickActionCard
-            title="Visual Aid"
+            title={t("Visual Aid")}
             icon={Image}
             href="/visual-aid-designer"
             color=""
-            description="Diagrams & illustrations."
+            description={t("Diagrams & illustrations.")}
           />
           <QuickActionCard
-            title="Content Creator"
+            title={t("Content Creator")}
             icon={PenTool}
             href="/content-creator"
             color=""
-            description="Stories & visual aids."
+            description={t("Stories & visual aids.")}
           />
           <QuickActionCard
-            title="Instant Answer"
+            title={t("Instant Answer")}
             icon={Lightbulb}
             href="/instant-answer"
             color=""
-            description="Quick answers to questions."
+            description={t("Quick answers to questions.")}
           />
           <QuickActionCard
-            title="Teacher Training"
+            title={t("Teacher Training")}
             icon={GraduationCap}
             href="/teacher-training"
             color=""
-            description="Professional development."
+            description={t("Professional development.")}
           />
         </div>
       )}

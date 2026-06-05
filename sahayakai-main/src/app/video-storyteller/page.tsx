@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import {
-  Video, Loader2, Sparkles, RefreshCw, ArrowLeft,
+  Video, Loader2, Sparkles, RefreshCw,
   Star, BookOpen, GraduationCap, Bell, School, type LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { VideoCard } from "@/components/video-storyteller/VideoCard";
 import { VideoCarousel } from "@/components/video-storyteller/VideoCarousel";
 import { YouTubeVideo } from "@/lib/youtube";
@@ -105,8 +106,8 @@ function VideoStorytellerPageInner() {
         categorizedVideos: mergeCuratedVideos({}),
       });
       toast({
-        title: "Showing curated content",
-        description: "Personalization is loading. Showing recommended Indian educational videos.",
+        title: t("Showing curated content"),
+        description: t("Personalization is loading. Showing recommended Indian educational videos."),
       });
     } finally {
       setLoading(false);
@@ -173,15 +174,7 @@ function VideoStorytellerPageInner() {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setExpandedCategory(null)}
-            className="rounded-xl gap-1.5 h-8 text-xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </Button>
+          <BackButton onBack={() => setExpandedCategory(null)} />
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4 text-primary" />
@@ -210,10 +203,10 @@ function VideoStorytellerPageInner() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-headline tracking-tight font-bold text-foreground leading-tight">
-              Video Storyteller
+              {t("Video Storyteller")}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Curated educational videos for Indian classrooms
+              {t("Curated educational videos for Indian classrooms")}
             </p>
           </div>
         </div>
@@ -253,8 +246,8 @@ function VideoStorytellerPageInner() {
             <Sparkles className="w-4 h-4 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">Curating your videos…</p>
-            <p className="text-xs text-muted-foreground mt-1">Finding Bharat-first content for your classroom</p>
+            <p className="text-sm font-semibold text-foreground">{t("Curating your videos…")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("Finding Bharat-first content for your classroom")}</p>
           </div>
         </div>
       )}
@@ -293,8 +286,8 @@ function VideoStorytellerPageInner() {
             <Video className="w-6 h-6 text-muted-foreground/40" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">Ready to explore?</p>
-            <p className="text-xs text-muted-foreground mt-1">Use the filters above to find videos for your classroom.</p>
+            <p className="text-sm font-semibold text-foreground">{t("Ready to explore?")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("Use the filters above to find videos for your classroom.")}</p>
           </div>
           <Button
             size="sm"
@@ -303,7 +296,7 @@ function VideoStorytellerPageInner() {
             className="rounded-xl gap-1.5 h-8 text-xs mt-1"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Load Recommendations
+            {t("Load Recommendations")}
           </Button>
         </div>
       )}

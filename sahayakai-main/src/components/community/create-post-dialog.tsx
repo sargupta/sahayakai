@@ -54,7 +54,7 @@ export function CreatePostDialog({ onPostCreated, trigger, open: controlledOpen,
 
     async function onSubmit(data: FormValues) {
         if (!user) {
-            toast({ title: "Please sign in", description: "You need to be signed in to post.", variant: "destructive" });
+            toast({ title: t("Please sign in"), description: t("You need to be signed in to post."), variant: "destructive" });
             return;
         }
 
@@ -64,16 +64,16 @@ export function CreatePostDialog({ onPostCreated, trigger, open: controlledOpen,
             await createPostAction(data.content, 'public', data.imageUrl || undefined);
 
             toast({
-                title: "Post created!",
-                description: "Your post has been shared with the community.",
+                title: t("Post created!"),
+                description: t("Your post has been shared with the community."),
             });
             form.reset();
             setOpen(false);
             onPostCreated?.();
         } catch (error) {
             toast({
-                title: "Error",
-                description: "Failed to create post. Please try again.",
+                title: t("Error"),
+                description: t("Failed to create post. Please try again."),
                 variant: "destructive",
             });
         } finally {
@@ -90,7 +90,7 @@ export function CreatePostDialog({ onPostCreated, trigger, open: controlledOpen,
                     {trigger ?? (
                         <Button className="gap-2">
                             <Plus className="h-4 w-4" />
-                            Create Post
+                            {t("Create Post")}
                         </Button>
                     )}
                 </DialogTrigger>
@@ -99,7 +99,7 @@ export function CreatePostDialog({ onPostCreated, trigger, open: controlledOpen,
                 <DialogHeader>
                     <DialogTitle>{t("Create a Post")}</DialogTitle>
                     <DialogDescription>
-                        Share your classroom activities, ask questions, or just say hi!
+                        {t("Share your classroom activities, ask questions, or just say hi!")}
                     </DialogDescription>
                 </DialogHeader>
 

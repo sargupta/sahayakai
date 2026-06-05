@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, BookOpen, BrainCircuit, FolderOpen, UserCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useLanguage } from "@/context/language-context";
 
 interface OnboardingChecklistProps {
     items: Record<string, boolean>;
@@ -20,6 +21,7 @@ const CHECKLIST_CONFIG = [
 ] as const;
 
 export function OnboardingChecklist({ items, onDismiss, className }: OnboardingChecklistProps) {
+    const { t } = useLanguage();
     const [collapsed, setCollapsed] = useState(false);
 
     const completedCount = CHECKLIST_CONFIG.filter(c => items[c.id]).length;
@@ -62,7 +64,7 @@ export function OnboardingChecklist({ items, onDismiss, className }: OnboardingC
         )}>
             <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-headline text-sm font-bold text-foreground">Getting Started</h3>
+                    <h3 className="font-headline text-sm font-bold text-foreground">{t("Getting Started")}</h3>
                     <div className="flex items-center gap-0.5">
                         <button
                             onClick={() => setCollapsed(true)}
@@ -74,7 +76,7 @@ export function OnboardingChecklist({ items, onDismiss, className }: OnboardingC
                             <button
                                 onClick={onDismiss}
                                 className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                                aria-label="Dismiss checklist"
+                                aria-label={t("Dismiss checklist")}
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>

@@ -68,9 +68,24 @@ export async function POST(req: NextRequest) {
 
         await docRef.update(update);
 
-        // Generate call summary when call completes (non-blocking)
-        if (callStatus === 'completed' && transcript.length > 1) {
-            const data = doc.data()!;
+        // Generate call summary when call completes (non-blocking).
+        //
+        // QA #5 (2026-05-28) webhook-race fix: previously this required the
+        // INCOMING callStatus to be 'completed'. But Twilio's status callback
+        // (twiml-status) often delivers the terminal 'completed' BEFORE the
+        // final transcript syncs here — and when the transcript then arrives
+        // via this endpoint it may carry no callStatus, so neither webhook
+        // ever generated the summary and the modal spun forever.
+        //
+        // New rule: generate when (a) we have a real transcript, (b) the call
+        // is terminal either from this request OR from the doc Twilio already
+        // wrote, and (c) no summary exists yet. Idempotent — safe if both
+        // webhooks race.
+        const existing = doc.data()!;
+        const mergedStatus = callStatus ?? existing.callStatus;
+        const isTerminal = mergedStatus === 'completed' || mergedStatus === 'failed';
+        if (isTerminal && transcript.length > 1 && !existing.callSummary) {
+            const data = existing;
             generateCallSummary({
                 studentName: data.studentName ?? '',
                 className: data.className ?? '',

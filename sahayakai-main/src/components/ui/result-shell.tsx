@@ -57,6 +57,14 @@ export interface ResultShellProps {
     /** Buttons rendered top-right (top-of-card on mobile). */
     actions?: ResultShellAction[];
     /**
+     * Extra custom nodes rendered in the action row, after `actions`. Use this
+     * for action buttons that own their own state (e.g. a Share button that
+     * tracks loading/shared status) and can't be expressed as a stateless
+     * `ResultShellAction`. Rendered inside the same flex row so they align with
+     * the standard action buttons.
+     */
+    extraActions?: React.ReactNode;
+    /**
      * Max-width of the card. `default` = `max-w-4xl` (forms, lesson plans,
      * quizzes), `compact` = `max-w-2xl` (image-heavy or list-style outputs
      * like visual aids, field trips, teacher advice).
@@ -86,8 +94,8 @@ const sizeClass: Record<ResultShellSize, string> = {
 };
 
 const variantCardClass: Record<ResultShellVariant, string> = {
-    solid: "bg-white",
-    glass: "bg-white/70 backdrop-blur-lg border-white/60",
+    solid: "bg-card",
+    glass: "bg-card/70 backdrop-blur-lg border-border/60",
 };
 
 const variantHeaderClass: Record<ResultShellVariant, string> = {
@@ -102,6 +110,7 @@ export function ResultShell({
     icon,
     meta,
     actions,
+    extraActions,
     size = "default",
     variant = "solid",
     children,
@@ -164,9 +173,9 @@ export function ResultShell({
                     ) : null}
                 </div>
 
-                {actions && actions.length > 0 ? (
+                {(actions && actions.length > 0) || extraActions ? (
                     <div className="no-print flex flex-wrap items-center gap-2 sm:ml-4 sm:flex-shrink-0">
-                        {actions.map((a, i) => (
+                        {actions?.map((a, i) => (
                             <Button
                                 key={i}
                                 type="button"
@@ -189,6 +198,7 @@ export function ResultShell({
                                 {a.label}
                             </Button>
                         ))}
+                        {extraActions}
                     </div>
                 ) : null}
             </CardHeader>

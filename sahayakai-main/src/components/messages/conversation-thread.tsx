@@ -12,8 +12,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Send, Loader2, ArrowLeft, Paperclip, X, BookOpen,
     ClipboardCheck, FileSignature, Images, Globe2, GraduationCap, Wand2,
+    Library,
 } from "lucide-react";
 import { VoiceRecorder } from "./voice-recorder";
+import { LibraryPickerDialog } from "./library-picker-dialog";
 import { useMessageOutbox } from "@/hooks/use-message-outbox";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { TypingIndicator } from "./typing-indicator";
@@ -23,6 +25,7 @@ import {
     Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLanguage } from "@/context/language-context";
+import { BackButton } from "@/components/ui/back-button";
 
 // ── Resource type picker (what teacher can share) ─────────────────────────────
 
@@ -185,6 +188,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     const { messages, loading, loadingMore, hasMore, loadMore } = usePaginatedMessages(conversation.id);
     const [input, setInput] = useState("");
     const [resourceOpen, setResourceOpen] = useState(false);
+    const [libraryOpen, setLibraryOpen] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -204,10 +208,16 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [displayMessages]);
 
-    // Mark read when conversation opens
+    // Mark read when conversation opens. We swallow errors but log them at
+    // debug level so DevTools shows whether the action actually ran on the
+    // QA's click-thread-from-list path. This clears both the per-conversation
+    // unreadCount AND the sidebar Bell badge ("N messages").
     useEffect(() => {
         if (!user) return;
-        markConversationReadAction(conversation.id, user.uid).catch(() => {});
+        console.debug('[ConversationThread] marking read', { conversationId: conversation.id, uid: user.uid });
+        markConversationReadAction(conversation.id, user.uid)
+            .then(() => console.debug('[ConversationThread] mark read OK', conversation.id))
+            .catch((err) => console.error('[ConversationThread] mark read failed', err));
     }, [conversation.id, user]);
 
     const handleSend = useCallback(async (
@@ -245,14 +255,16 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
         handleSend(caption || `Check out this ${resource.type.replace("-", " ")}!`, "resource", resource);
     };
 
+    const handleLibraryAttach = (resource: SharedResource) => {
+        handleResourceShare(resource, "");
+    };
+
     return (
         <div className="flex flex-col h-full bg-card">
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0 shadow-soft">
                 {onBack && (
-                    <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors mr-1">
-                        <ArrowLeft className="h-5 w-5" />
-                    </button>
+                    <BackButton onBack={onBack} className="mr-1" />
                 )}
                 <div className="relative">
                     <Avatar className="h-9 w-9 ring-2 ring-border">
@@ -354,6 +366,17 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             </PopoverContent>
                         </Popover>
 
+                        {/* Attach from My Library */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setLibraryOpen(true)}
+                            className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 shrink-0"
+                            title={t("Attach from My Library")}
+                        >
+                            <Library className="h-4 w-4" />
+                        </Button>
+
                         {/* Text input */}
                         <Textarea
                             ref={textareaRef}
@@ -385,6 +408,13 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                     <p className="text-center text-xs text-muted-foreground font-medium py-1">{t("Sign in to send messages.")}</p>
                 )}
             </div>
+
+            {/* Attach-from-library picker */}
+            <LibraryPickerDialog
+                open={libraryOpen}
+                onOpenChange={setLibraryOpen}
+                onSelect={handleLibraryAttach}
+            />
         </div>
     );
 }

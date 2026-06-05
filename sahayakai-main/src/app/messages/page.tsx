@@ -46,6 +46,7 @@ function NoConversationSelected() {
 
 function MessagesPageContent() {
     const { user, loading: authLoading } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -128,8 +129,8 @@ function MessagesPageContent() {
         return (
             <AuthGate
                 icon={MessageCircle}
-                title="Sign in to see your messages"
-                description="Sign in with Google to chat with other teachers and get notified of new replies."
+                title={t("Sign in to see your messages")}
+                description={t("Sign in with Google to chat with other teachers and get notified of new replies.")}
             >
                 {null}
             </AuthGate>
@@ -139,7 +140,7 @@ function MessagesPageContent() {
     return (
         <div className="w-full space-y-0">
         <PushPermissionBanner />
-        <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-white rounded-2xl overflow-hidden border border-border/50 shadow-soft">
+        <div className="flex w-full h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-4rem)] bg-card rounded-2xl overflow-hidden border border-border/50 shadow-soft">
             {/* ── Conversation List (Inbox) ─────────────────────────── */}
             <div className={cn(
                 "w-full lg:w-80 xl:w-96 shrink-0 lg:block",

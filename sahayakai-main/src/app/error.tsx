@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { logger } from '@/lib/client-logger';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/context/language-context';
 
 export default function Error({
     error,
@@ -12,6 +13,7 @@ export default function Error({
     error: Error & { digest?: string };
     reset: () => void;
 }) {
+    const { t } = useLanguage();
     useEffect(() => {
         // Log the error to our logging service
         logger.error('Global Error Boundary caught an error', error, 'ERROR_BOUNDARY', {
@@ -22,15 +24,15 @@ export default function Error({
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-soft max-w-md w-full text-center space-y-6">
+            <div className="bg-card p-8 rounded-2xl shadow-soft max-w-md w-full text-center space-y-6">
                 <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                     <AlertCircle className="w-8 h-8 text-red-600" />
                 </div>
 
                 <div className="space-y-2">
-                    <h2 className="text-2xl font-headline tracking-tight text-foreground">Something went wrong!</h2>
+                    <h2 className="text-2xl font-headline tracking-tight text-foreground">{t("Something went wrong!")}</h2>
                     <p className="text-muted-foreground">
-                        We apologize for the inconvenience. An unexpected error has occurred.
+                        {t("We apologize for the inconvenience. An unexpected error has occurred.")}
                     </p>
                 </div>
 
@@ -40,14 +42,14 @@ export default function Error({
                         variant="default"
                         className="w-full sm:w-auto rounded-xl bg-primary hover:bg-primary/90"
                     >
-                        Try Again
+                        {t("Try Again")}
                     </Button>
                     <Button
                         onClick={() => window.location.href = '/'}
                         variant="outline"
                         className="w-full sm:w-auto rounded-xl"
                     >
-                        Go Home
+                        {t("Go Home")}
                     </Button>
                 </div>
 

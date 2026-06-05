@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
-import { useLanguage } from '@/context/language-context';
+import { useLanguage, BCP47_MAP } from '@/context/language-context';
 import {
   getLibraryResources,
   likeResourceAction,
@@ -77,6 +77,7 @@ const TYPE_CHIPS: { value: string; label: string; fileType?: FileType }[] = [
 // ── Voice search hook ─────────────────────────────────────────────────────────
 
 function useVoiceSearch(onResult: (text: string) => void, lang: string) {
+  const { language: uiLanguage } = useLanguage();
   const [isListening, setIsListening] = useState(false);
   const recRef = useRef<any>(null);
 
@@ -91,7 +92,10 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
     }
 
     const rec = new SR();
-    rec.lang = lang !== 'all' ? lang : navigator.language;
+    // 2026-12 STT fix: fall back to the UI language's BCP-47 code, not
+    // navigator.language (browser locale). Bengali on a en-US Chrome was
+    // otherwise transcribed as English.
+    rec.lang = lang !== 'all' ? lang : (BCP47_MAP[uiLanguage] ?? 'en-IN');
     rec.interimResults = false;
     rec.maxAlternatives = 1;
 
@@ -105,7 +109,7 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
     recRef.current = rec;
     rec.start();
     setIsListening(true);
-  }, [isListening, lang, onResult]);
+  }, [isListening, lang, onResult, uiLanguage]);
 
   return { isListening, toggle };
 }
@@ -154,6 +158,7 @@ const ResourceCard = ({
   onSave: (r: Resource) => void;
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const c = cfg(resource.type);
 
   const handleUseThis = () => {
@@ -221,12 +226,12 @@ const ResourceCard = ({
           <div className="flex flex-wrap gap-1.5 pt-1">
             {resource.gradeLevel && (
               <Badge className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground font-semibold border-0 rounded-full">
-                {resource.gradeLevel}
+                {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
               </Badge>
             )}
             {resource.subject && (
               <Badge className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 font-semibold border-0 rounded-full">
-                {resource.subject}
+                {resource.subject ? t(resource.subject) : resource.subject}
               </Badge>
             )}
             <Badge className={cn('text-[10px] px-2 py-0.5 font-semibold border-0 rounded-full', c.bg, c.text)}>
@@ -311,6 +316,7 @@ const ResourceList = ({
   onLike: (r: Resource) => void;
   onSave: (r: Resource) => void;
 }) => {
+  const { t } = useLanguage();
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   useEffect(() => { setVisibleCount(INITIAL_VISIBLE); }, [resources.length]);
@@ -330,9 +336,9 @@ const ResourceList = ({
           <Library className="h-8 w-8 text-primary" />
         </div>
         <div className="max-w-sm space-y-1.5">
-          <h3 className="text-base font-bold text-foreground font-headline">No resources yet</h3>
+          <h3 className="text-base font-bold text-foreground font-headline">{t("No resources yet")}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.
+            {t("Be the first to share a lesson plan or quiz. Your contribution helps teachers across Bharat.")}
           </p>
         </div>
       </div>
@@ -448,8 +454,8 @@ export function ResourceFeed() {
         setResources(unique);
       } catch {
         toast({
-          title: "Couldn't load resources",
-          description: 'Please check your connection and try again.',
+          title: t("Couldn't load resources"),
+          description: t('Please check your connection and try again.'),
           variant: 'destructive',
         });
       } finally {
@@ -474,7 +480,7 @@ export function ResourceFeed() {
 
   const handleLike = async (resource: Resource) => {
     if (!user) {
-      toast({ title: 'Sign in to like resources', variant: 'destructive' });
+      toast({ title: t('Sign in to like resources'), variant: 'destructive' });
       return;
     }
     // Capture pre-toggle state so the rollback path can revert BOTH the Set
@@ -509,13 +515,13 @@ export function ResourceFeed() {
           r.id === resource.id ? { ...r, likes: r.likes - delta } : r,
         ),
       );
-      toast({ title: 'Could not update like', variant: 'destructive' });
+      toast({ title: t('Could not update like'), variant: 'destructive' });
     }
   };
 
   const handleSave = async (resource: Resource) => {
     if (!user) {
-      toast({ title: 'Sign in to save resources', variant: 'destructive' });
+      toast({ title: t('Sign in to save resources'), variant: 'destructive' });
       return;
     }
     setSavedIds((prev) => new Set(prev).add(resource.id));
@@ -537,7 +543,7 @@ export function ResourceFeed() {
       });
     } catch {
       setSavedIds((prev) => { const next = new Set(prev); next.delete(resource.id); return next; });
-      toast({ title: 'Could not save resource', variant: 'destructive' });
+      toast({ title: t('Could not save resource'), variant: 'destructive' });
     }
   };
 

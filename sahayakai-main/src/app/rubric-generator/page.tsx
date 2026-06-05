@@ -28,6 +28,7 @@ import {
 import { MicrophoneInput } from "@/components/microphone-input";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { useNetworkAware } from "@/hooks/use-network-aware";
@@ -50,7 +51,7 @@ function RubricGeneratorContent() {
   const [rubric, setRubric] = useState<RubricGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t: translate } = useLanguage();
+  const { t: translate, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const searchParams = useSearchParams();
   const hasLoaded = useRef(false);
@@ -60,7 +61,7 @@ function RubricGeneratorContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       assignmentDescription: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 7",
       subject: "General",
     },
@@ -91,6 +92,11 @@ function RubricGeneratorContent() {
   }, []); // runs once on mount only
 
   const selectedLanguage = form.watch("language") || 'en';
+  // Example queries should follow the UI language, not the (possibly stale)
+  // output-language form field. On first render the form default can lock to
+  // 'en' before the UI language hydrates from storage, which left the sample
+  // prompts in English even in Tamil mode.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
 
   useEffect(() => {
     if (!user || hasLoaded.current) return;
@@ -281,7 +287,7 @@ function RubricGeneratorContent() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="rubric" />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="rubric" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Clock, UserMinus, Search, Mic, MicOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useLanguage } from "@/context/language-context";
+import { useLanguage, BCP47_MAP } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { getAllTeachersAction } from "@/app/actions/community";
 import {
@@ -32,7 +32,7 @@ interface TeacherConnState {
 
 export function TeacherDirectory() {
     const router = useRouter();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { toast } = useToast();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [connState, setConnState] = useState<Record<string, TeacherConnState>>({});
@@ -96,7 +96,7 @@ export function TeacherDirectory() {
             // hits, and Firestore quota errors as "no other teachers registered yet".
             if (myToken === loadTokenRef.current) {
                 console.error('TeacherDirectory: loadData failed', error);
-                toast({ title: 'Could not load teachers', description: 'Pull to refresh or try again later.', variant: 'destructive' });
+                toast({ title: t('Could not load teachers'), description: t('Pull to refresh or try again later.'), variant: 'destructive' });
             }
         } finally {
             if (myToken === loadTokenRef.current) setLoading(false);
@@ -171,7 +171,10 @@ export function TeacherDirectory() {
         if (!SR) return;
         if (isListening) { recRef.current?.stop(); setIsListening(false); return; }
         const rec = new SR();
-        rec.lang = navigator.language;
+        // 2026-12 STT fix: use the app's UI language (BCP-47), not the
+        // browser locale. A Bengali teacher on a Chrome set to en-US would
+        // otherwise get an English recognizer for a Bengali utterance.
+        rec.lang = BCP47_MAP[language] ?? 'en-IN';
         rec.interimResults = false;
         rec.maxAlternatives = 1;
         rec.onresult = (e: any) => { const t = e.results[0]?.[0]?.transcript ?? ''; if (t) setSearchQuery(t); };
@@ -196,14 +199,14 @@ export function TeacherDirectory() {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-muted-foreground font-medium font-body">Populating teacher directory...</p>
+            <p className="text-muted-foreground font-medium font-body">{t("Populating teacher directory...")}</p>
         </div>
     );
 
     if (teachers.length === 0) return (
         <div className="text-center py-20 bg-muted/50 rounded-xl border-2 border-dashed border-border">
             <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground font-medium">No other teachers registered yet.</p>
+            <p className="text-muted-foreground font-medium">{t("No other teachers registered yet.")}</p>
         </div>
     );
 
@@ -243,7 +246,7 @@ export function TeacherDirectory() {
                         onClick={() => handleConnect(teacher.uid)}
                     >
                         <UserPlus className="h-3 w-3 mr-1" />
-                        Connect
+                        {t("Connect")}
                     </Button>
                 );
 
@@ -257,7 +260,7 @@ export function TeacherDirectory() {
                         title={t("Withdraw request")}
                     >
                         <Clock className="h-3 w-3 mr-1" />
-                        Pending
+                        {t("Pending")}
                     </Button>
                 );
 
@@ -269,7 +272,7 @@ export function TeacherDirectory() {
                             className="rounded-full px-3 h-8 text-[11px] font-bold bg-emerald-500 hover:bg-emerald-600 text-white active:scale-95 transition-all"
                             onClick={() => handleAccept(teacher.uid)}
                         >
-                            Accept
+                            {t("Accept")}
                         </Button>
                         <Button
                             variant="ghost"
@@ -277,7 +280,7 @@ export function TeacherDirectory() {
                             className="rounded-full px-3 h-8 text-[11px] font-bold text-muted-foreground/70 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
                             onClick={() => handleDecline(teacher.uid)}
                         >
-                            Decline
+                            {t("Decline")}
                         </Button>
                     </div>
                 );
@@ -293,8 +296,8 @@ export function TeacherDirectory() {
                     >
                         <UserCheck className="h-3 w-3 mr-1 group-hover/conn:hidden" />
                         <UserMinus className="h-3 w-3 mr-1 hidden group-hover/conn:inline-block" />
-                        <span className="group-hover/conn:hidden">Connected</span>
-                        <span className="hidden group-hover/conn:inline">Disconnect</span>
+                        <span className="group-hover/conn:hidden">{t("Connected")}</span>
+                        <span className="hidden group-hover/conn:inline">{t("Disconnect")}</span>
                     </Button>
                 );
 
@@ -385,11 +388,11 @@ export function TeacherDirectory() {
                         <div className="flex items-center gap-4 text-muted-foreground">
                             <div className="flex flex-col">
                                 <span className="text-sm font-black text-foreground leading-none">{teacher.followersCount || 0}</span>
-                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">Followers</span>
+                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">{t("Followers")}</span>
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-sm font-black text-foreground leading-none">{teacher.impactScore || 0}</span>
-                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">Impact</span>
+                                <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider mt-0.5">{t("Impact")}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
@@ -399,7 +402,7 @@ export function TeacherDirectory() {
                                 className="h-7 text-[10px] text-primary font-bold hover:text-primary/80 hover:bg-primary/8 rounded-lg px-2 transition-all"
                                 onClick={() => router.push(`/profile/${teacher.uid}`)}
                             >
-                                Profile
+                                {t("Profile")}
                             </Button>
                             {userId && userId !== teacher.uid && connState[teacher.uid]?.status === 'connected' && (
                                 <Button

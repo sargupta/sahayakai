@@ -6,6 +6,7 @@ import { storage, auth } from "@/lib/firebase";
 import { Mic, Square, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface VoiceRecorderProps {
     onSend: (audioUrl: string, duration: number) => void;
@@ -16,6 +17,7 @@ type RecorderState = "idle" | "recording" | "uploading";
 
 export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
     const { t } = useLanguage();
+    const { toast } = useToast();
     const [state, setState] = useState<RecorderState>("idle");
     const [elapsed, setElapsed] = useState(0);
 
@@ -33,25 +35,72 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
 
     const startRecording = useCallback(async () => {
         if (disabled) return;
+        if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+            toast({
+                title: t("Recording not supported"),
+                description: t("Your browser does not support voice recording."),
+                variant: "destructive",
+            });
+            return;
+        }
+        let stream: MediaStream;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-                ? "audio/webm;codecs=opus"
-                : "audio/mp4";
-            const recorder = new MediaRecorder(stream, { mimeType });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch {
+            // getUserMedia rejects on permission-denied or no mic — surface it instead of swallowing.
+            toast({
+                title: t("Microphone unavailable"),
+                description: t("Please allow microphone access to record a voice message."),
+                variant: "destructive",
+            });
+            return;
+        }
+        try {
+            // Pick the first MIME the browser actually supports. Chrome/Android → webm/opus,
+            // Safari/iOS → mp4. Falling back to "" lets the browser choose its own default.
+            const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"];
+            const mimeType = candidates.find((c) => MediaRecorder.isTypeSupported(c)) ?? "";
+            const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            // The actual container the browser writes (may differ from our requested mimeType).
+            const effectiveMime = recorder.mimeType || mimeType || "audio/webm";
             chunksRef.current = [];
 
             recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksRef.current.push(e.data);
+                if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
             };
 
             recorder.onstop = async () => {
-                stream.getTracks().forEach((t) => t.stop());
-                const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-                const blob = new Blob(chunksRef.current, { type: mimeType });
-                await uploadAudio(blob, mimeType, duration);
+                stream.getTracks().forEach((tr) => tr.stop());
+                const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+                const blob = new Blob(chunksRef.current, { type: effectiveMime });
+                if (blob.size === 0) {
+                    // No audio captured — don't upload an empty file or send a broken message.
+                    setState("idle");
+                    setElapsed(0);
+                    toast({
+                        title: t("Nothing recorded"),
+                        description: t("No audio was captured. Please try again."),
+                        variant: "destructive",
+                    });
+                    return;
+                }
+                await uploadAudio(blob, effectiveMime, duration);
             };
 
+            recorder.onerror = () => {
+                stream.getTracks().forEach((tr) => tr.stop());
+                stopTimer();
+                setState("idle");
+                setElapsed(0);
+                toast({
+                    title: t("Recording failed"),
+                    description: t("Something went wrong while recording. Please try again."),
+                    variant: "destructive",
+                });
+            };
+
+            // Timeslice fires ondataavailable periodically so the blob is never empty
+            // even if stop() is called immediately on a very short clip.
             recorder.start(250);
             mediaRecorderRef.current = recorder;
             startTimeRef.current = Date.now();
@@ -62,15 +111,24 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
                 setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
             }, 1000);
         } catch {
-            // Microphone access denied or not available — fail silently
+            stream.getTracks().forEach((tr) => tr.stop());
+            toast({
+                title: t("Recording failed"),
+                description: t("Could not start recording. Please try again."),
+                variant: "destructive",
+            });
         }
-    }, [disabled]);
+    }, [disabled, t, toast]);
 
     const stopRecording = useCallback(() => {
         stopTimer();
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        const recorder = mediaRecorderRef.current;
+        if (recorder && recorder.state !== "inactive") {
             setState("uploading");
-            mediaRecorderRef.current.stop();
+            // Flush any buffered data before stopping so the final chunk isn't lost
+            // on browsers that only emit on the timeslice boundary.
+            try { if (recorder.state === "recording") recorder.requestData(); } catch { /* not all browsers support requestData */ }
+            recorder.stop();
         }
     }, []);
 
@@ -92,21 +150,51 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
 
     const uploadAudio = async (blob: Blob, mimeType: string, duration: number) => {
         const user = auth.currentUser;
-        if (!user) { setState("idle"); return; }
+        if (!user) {
+            setState("idle");
+            toast({
+                title: t("Sign in required"),
+                description: t("Please sign in to send a voice message."),
+                variant: "destructive",
+            });
+            return;
+        }
 
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        const ext = mimeType.includes("mp4") || mimeType.includes("mpeg") || mimeType.includes("aac")
+            ? "m4a"
+            : "webm";
+        // Firestore storage expects a content type without the codecs= suffix.
+        const contentType = mimeType.split(";")[0] || "audio/webm";
         const path = `voice-messages/${user.uid}/${Date.now()}.${ext}`;
         const storageRef = ref(storage, path);
 
         try {
-            const task = uploadBytesResumable(storageRef, blob, { contentType: mimeType });
+            const task = uploadBytesResumable(storageRef, blob, { contentType });
             await new Promise<void>((resolve, reject) => {
                 task.on("state_changed", null, reject, resolve);
             });
             const url = await getDownloadURL(storageRef);
             onSend(url, duration);
-        } catch {
-            // Upload failed — reset silently
+        } catch (err: any) {
+            // Surface upload failures (most commonly Storage rules denying the
+            // voice-messages/{uid}/ path, or a network error) instead of failing silently.
+            // QA #13 (2026-06-02): split the permission-denied case so we tell
+            // the user it's a server-side config issue, not their connection —
+            // before storage.rules landed, every upload returned this code and
+            // we were misattributing it to flaky internet.
+            const code = err?.code ?? '';
+            const isPermissionDenied =
+                code === 'storage/unauthorized' ||
+                code === 'storage/unauthenticated' ||
+                /unauthorized|permission|denied/i.test(err?.message ?? '');
+            console.error('[voice-recorder] upload failed', { code, message: err?.message });
+            toast({
+                title: t("Could not send voice message"),
+                description: isPermissionDenied
+                    ? t("Voice messages are not enabled on this account yet. Please try again later or contact support.")
+                    : t("Upload failed. Please check your connection and try again."),
+                variant: "destructive",
+            });
         } finally {
             setState("idle");
             setElapsed(0);

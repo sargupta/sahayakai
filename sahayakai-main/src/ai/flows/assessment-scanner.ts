@@ -47,6 +47,45 @@ import { letterGradeFor } from '@/ai/schemas/assessment-scanner-utils';
 import { z } from 'genkit';
 
 // ───────────────────────────────────────────────────────────────────────────
+// Typed failure boundaries — let the route map a known cause to a specific,
+// actionable user message instead of a generic "AI generation failed".
+// ───────────────────────────────────────────────────────────────────────────
+
+/**
+ * Thrown when a page's Storage/HTTPS URL could not be fetched + decoded (404,
+ * expired download token, network error, etc.). Names the 1-based page number
+ * so the teacher knows exactly which upload to re-take.
+ */
+export class AssessmentPageUnreadableError extends Error {
+    readonly pageNumber: number;
+    readonly code = 'PAGE_UNREADABLE' as const;
+    constructor(pageNumber: number, cause?: unknown) {
+        super(
+            `Could not read uploaded page ${pageNumber} — re-upload that page and try again.`,
+        );
+        this.name = 'AssessmentPageUnreadableError';
+        this.pageNumber = pageNumber;
+        if (cause !== undefined) (this as { cause?: unknown }).cause = cause;
+    }
+}
+
+/**
+ * Thrown when grading produced zero gradable questions across all pages
+ * (e.g. Pass-1 extracted nothing readable, or Pass-2 returned an empty/parse-
+ * failed result). Distinguishes "we ran but found nothing to grade" from a
+ * provider outage.
+ */
+export class AssessmentEmptyExtractionError extends Error {
+    readonly code = 'EMPTY_EXTRACTION' as const;
+    constructor() {
+        super(
+            'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
+        );
+        this.name = 'AssessmentEmptyExtractionError';
+    }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // PASS 1 prompt — extraction only, NO grading
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -210,6 +249,8 @@ const scoringPrompt = ai.definePrompt({
 
 **Output language for ALL feedback:** {{language}}.
 
+**Native Script Mandate (CRITICAL):** All teacher-facing and student-facing feedback fields MUST be in {{language}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Tumi bhalo korecho" instead of "তুমি ভালো করেছ" is a critical failure. (English-only metadata fields like \`mistakePattern\` enum values stay in English.)
+
 ## Inputs
 
 ### Extracted student work (from Pass 1, do not re-extract)
@@ -363,7 +404,35 @@ async function extractPage(
     pageCount: number,
     input: AssessmentScannerInput,
 ): Promise<PageScan> {
-    const imageDataUri = pageUrl.startsWith('data:') ? pageUrl : await fetchImageAsBase64(pageUrl);
+    // BUG #3 hardening: a fetch failure here (404, expired Storage download
+    // token, network error) is a *known, actionable* failure — the teacher
+    // needs to re-upload that specific page. Wrap it so it surfaces as a typed
+    // AssessmentPageUnreadableError naming the 1-based page number, rather than
+    // being silently swallowed into an "unreadable" placeholder by the
+    // Promise.allSettled boundary below (which would drop the page with no
+    // signal to the teacher about why).
+    let imageDataUri: string;
+    if (pageUrl.startsWith('data:')) {
+        imageDataUri = pageUrl;
+    } else {
+        try {
+            imageDataUri = await fetchImageAsBase64(pageUrl);
+        } catch (fetchErr) {
+            const { logger } = await import('@/lib/logger');
+            logger.error(
+                `Assessment Scanner: failed to fetch page ${pageIndex + 1}`,
+                fetchErr,
+                'ASSESSMENT',
+                {
+                    userId: input.userId,
+                    assessmentId: input.assessmentId,
+                    pageNumber: pageIndex + 1,
+                    reason: 'page_fetch_failed',
+                },
+            );
+            throw new AssessmentPageUnreadableError(pageIndex + 1, fetchErr);
+        }
+    }
 
     const { output } = await runResiliently(
         async (resilienceConfig) =>
@@ -415,24 +484,69 @@ async function scoreAssessment(
     const subjectRubric = rubricFor(family);
     const confidenceGuidance = confidenceGuidanceFor(family);
 
-    const { output } = await runResiliently(
-        async (resilienceConfig) =>
-            scoringPrompt(
-                {
-                    subject: input.subject,
-                    gradeLevel: input.gradeLevel,
-                    language: input.language,
-                    extractedPages: JSON.stringify(pages, null, 2),
-                    ncertContext,
-                    teacherAnswerKeyText: input.teacherAnswerKeyText,
-                    educationBoard: input.educationBoard,
-                    subjectRubric,
-                    confidenceGuidance,
-                },
-                resilienceConfig,
-            ),
-        `assessmentScanner.pass2.${family}`,
-    );
+    let pass2Result;
+    try {
+        pass2Result = await runResiliently(
+            async (resilienceConfig) =>
+                scoringPrompt(
+                    {
+                        subject: input.subject,
+                        gradeLevel: input.gradeLevel,
+                        language: input.language,
+                        extractedPages: JSON.stringify(pages, null, 2),
+                        ncertContext,
+                        teacherAnswerKeyText: input.teacherAnswerKeyText,
+                        educationBoard: input.educationBoard,
+                        subjectRubric,
+                        confidenceGuidance,
+                    },
+                    resilienceConfig,
+                ),
+            `assessmentScanner.pass2.${family}`,
+        );
+    } catch (pass2Err) {
+        // BUG #3 hardening: Pass-2 scoring failed — most commonly because the
+        // model returned items that don't satisfy Pass2OutputSchema (Genkit
+        // re-throws a ZodError-shaped error here). Log the raw model output +
+        // parse errors at ERROR with context "ASSESSMENT" so the malformed
+        // shape is diagnosable from Cloud Logging without a repro. We surface
+        // the failure (re-throw) so the route returns a real error rather than
+        // silently grading nothing.
+        const { logger } = await import('@/lib/logger');
+        const e = pass2Err as {
+            message?: string;
+            issues?: unknown;
+            detail?: { response?: { text?: () => string; output?: unknown } };
+        };
+        // Genkit attaches the raw model response on `.detail.response` for
+        // structured-output parse failures; fall back to the message.
+        let rawModelOutput: unknown = null;
+        try {
+            const resp = e?.detail?.response;
+            rawModelOutput = resp?.output ?? (typeof resp?.text === 'function' ? resp.text() : null);
+        } catch {
+            rawModelOutput = null;
+        }
+        logger.error(
+            'Assessment Scanner Pass-2 scoring failed',
+            pass2Err,
+            'ASSESSMENT',
+            {
+                userId: input.userId,
+                assessmentId: input.assessmentId,
+                family,
+                reason: 'pass2_failed',
+                parseErrors: e?.issues ?? e?.message,
+                rawModelOutput:
+                    typeof rawModelOutput === 'string'
+                        ? rawModelOutput
+                        : JSON.stringify(rawModelOutput ?? null),
+            },
+        );
+        throw pass2Err;
+    }
+
+    const { output } = pass2Result;
 
     if (!output) {
         return { questions: [], recommendedNextSteps: [], studentRecommendations: [] };
@@ -582,10 +696,25 @@ export async function gradeAssessment(
         ),
     );
 
+    // BUG #3 hardening: distinguish an *unreachable page URL* (a known, fixable
+    // problem — re-upload that page) from a transient per-page model error
+    // (where degrading to a placeholder and grading the rest is the right call).
+    // If ANY page failed because its URL could not be fetched, surface the
+    // first such error so the route can tell the teacher exactly which page to
+    // re-upload, instead of silently grading a partial scan.
+    const unreadablePage = pageResults.find(
+        (r): r is PromiseRejectedResult =>
+            r.status === 'rejected' && r.reason instanceof AssessmentPageUnreadableError,
+    );
+    if (unreadablePage) {
+        throw unreadablePage.reason as AssessmentPageUnreadableError;
+    }
+
     const pages: PageScan[] = pageResults.map((r, i) => {
         if (r.status === 'fulfilled') return r.value;
-        // One page failed — substitute an unreadable placeholder so Pass 2
-        // can continue with the rest. Better partial result than total failure.
+        // One page failed (non-fetch — e.g. a transient model/extraction error)
+        // — substitute an unreadable placeholder so Pass 2 can continue with
+        // the rest. Better partial result than total failure.
         return {
             pageIndex: i,
             pageType: 'unreadable',
@@ -598,6 +727,29 @@ export async function gradeAssessment(
 
     // PASS 2: score against rubric + NCERT context
     const pass2 = await scoreAssessment(pages, input);
+
+    // BUG #3 hardening: if every page came back unreadable AND Pass-2 produced
+    // no gradable questions, the scan extracted nothing — surface a specific,
+    // actionable "re-upload clearer photos" message rather than returning a
+    // hollow 200 (empty questions array) that the UI can't render, or letting
+    // the route fall through to a generic "AI generation failed".
+    const allPagesUnreadable =
+        pages.length > 0 && pages.every((p) => p.pageType === 'unreadable');
+    if (pass2.questions.length === 0 && allPagesUnreadable) {
+        const { logger } = await import('@/lib/logger');
+        logger.error(
+            'Assessment Scanner: no readable content extracted from any page',
+            undefined,
+            'ASSESSMENT',
+            {
+                userId: input.userId,
+                assessmentId: input.assessmentId,
+                pageCount: pages.length,
+                reason: 'empty_extraction',
+            },
+        );
+        throw new AssessmentEmptyExtractionError();
+    }
 
     // Aggregate + validate
     const output = AssessmentScannerOutputSchema.parse(aggregate(input, pages, pass2));

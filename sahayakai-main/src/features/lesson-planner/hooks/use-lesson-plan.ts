@@ -61,8 +61,12 @@ export function useLessonPlan() {
 
     const selectedLanguage = form.watch("language") || 'en';
     const selectedGradeLevels = form.watch("gradeLevels");
-    const topicPlaceholder = topicPlaceholderTranslations[selectedLanguage] || topicPlaceholderTranslations.en;
-    const messages = loadingMessages[selectedLanguage] || loadingMessages.en;
+    // UI chrome (topic placeholder, loading messages) follows the global UI
+    // language, NOT the AI-output language form field. Without this, switching
+    // the app language leaves chrome in the previous language until refresh.
+    const uiLangCode = LANGUAGE_TO_ISO[userLanguage] || 'en';
+    const topicPlaceholder = topicPlaceholderTranslations[uiLangCode] || topicPlaceholderTranslations.en;
+    const messages = loadingMessages[uiLangCode] || loadingMessages.en;
 
     const getNumericGrade = (grades?: string[]) => {
         if (!grades || grades.length === 0) return undefined;

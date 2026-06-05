@@ -15,7 +15,13 @@ import { hasAdvancedPlan } from '@/lib/plan-utils';
 async function getAuthUserId(): Promise<string> {
     const h = await headers();
     const uid = h.get('x-user-id');
-    if (!uid) throw new Error('Unauthorized');
+    if (!uid) {
+        // Defense-in-depth — middleware should have caught this. If it fires
+        // we want visibility, not a silent 500.
+        // eslint-disable-next-line no-console
+        console.warn('[attendance] getAuthUserId() rejected — no x-user-id header (middleware bypassed?)');
+        throw new Error('Unauthorized');
+    }
     return uid;
 }
 
@@ -23,8 +29,17 @@ async function getAuthUserId(): Promise<string> {
 
 async function requireProPlan(uid: string): Promise<void> {
     const profile = await dbAdapter.getUser(uid);
-    if (!profile) throw new Error('User not found');
+    if (!profile) {
+        // eslint-disable-next-line no-console
+        console.warn(`[attendance] requireProPlan() — user not found: ${uid}`);
+        throw new Error('User not found');
+    }
     if (!hasAdvancedPlan(profile.planType)) {
+        // Expected business case (free user on a pro-only feature). Log as
+        // WARN so it shows up in audits but doesn't trip the prod-error-rate
+        // alert. The client surfaces this as an upsell, not an error.
+        // eslint-disable-next-line no-console
+        console.warn(`[attendance] PREMIUM_REQUIRED — uid: ${uid}, plan: ${profile.planType}`);
         throw new Error('PREMIUM_REQUIRED');
     }
 }

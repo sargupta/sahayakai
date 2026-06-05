@@ -96,7 +96,7 @@ export default function AssessmentScannerPage() {
 
 function AssessmentScannerPageInner() {
     const { user, requireAuth, openAuthModal } = useAuth();
-    const { t } = useLanguage();
+    const { t, language: uiLanguage } = useLanguage();
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const savedAssessmentId = searchParams?.get("id") ?? null;
@@ -113,7 +113,7 @@ function AssessmentScannerPageInner() {
             pageUrls: [],
             subject: "Mathematics",
             gradeLevel: "Class 10",
-            language: "English",
+            language: uiLanguage,
         },
     });
 

@@ -419,7 +419,11 @@ async function enrichInputWithProfile(
             const profile = await dbAdapter.getUser(input.userId);
             if (profile) {
                 subject = subject || profile.subjects?.[0] || 'General';
-                gradeLevel = gradeLevel || profile.teachingGradeLevels?.[0] || 'Class 5';
+                // Use teacher's stored preference, but DO NOT hardcode 'Class 5'
+                // as the universal fallback — that misled QA into seeing
+                // "Class 5" messages on every request even when teachers picked
+                // "All Classes" with no preferredGrade saved on their profile.
+                gradeLevel = gradeLevel || profile.teachingGradeLevels?.[0] || '';
                 language = language || profile.preferredLanguage || 'English';
                 state = state || (profile as any).state;
                 educationBoard = educationBoard || (profile as any).educationBoard;
@@ -429,9 +433,14 @@ async function enrichInputWithProfile(
         }
     }
 
+    // Final fallback: honour the teacher's "All Classes" intent (or an
+    // unauthenticated/profile-less caller) by using a literal "all grades"
+    // string. The prompt + ranking treat this as "no grade filter" instead
+    // of silently defaulting to Class 5 and producing Class-5-flavoured
+    // personalisedMessage / topRecommended results.
     return {
         subject: subject || 'General',
-        gradeLevel: gradeLevel || 'Class 5',
+        gradeLevel: gradeLevel || 'all grades',
         language,
         state,
         educationBoard,
@@ -505,7 +514,7 @@ export async function getVideoCategorySearchResults(
     // We fold the supplied aiResult.categories (if any) on top of the
     // cache result so the response shape is stable for downstream
     // consumers that read `categories`.
-    const cachedResult = await getCachedVideos(subject, gradeLevel);
+    const cachedResult = await getCachedVideos(subject, gradeLevel, language, state, educationBoard, input.topic);
     if (cachedResult) {
         StructuredLogger.info('Video Storyteller served from cache', {
             metadata: { subject, gradeLevel },
@@ -580,9 +589,12 @@ export async function getVideoCategorySearchResults(
         educationBoard,
     );
 
+    // Fallback message — only mention a specific grade when the teacher
+    // actually picked one. "all grades" is the sentinel for "All Classes".
+    const gradePhrase = gradeLevel && gradeLevel !== 'all grades' ? `${gradeLevel} students` : 'students across grades';
     const personalizedMessage =
         aiResult?.personalizedMessage ||
-        `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradeLevel} students, and important government updates.`;
+        `Namaste Adhyapak! Here are thoughtfully curated resources for your ${subject} class. These videos blend pedagogy guidance from NEP 2020, engaging storytelling for ${gradePhrase}, and important government updates.`;
 
     // 5. Build final result with curated fallback for empty categories
     const finalVideos = mergeCuratedVideos(rankedVideos);
@@ -594,7 +606,7 @@ export async function getVideoCategorySearchResults(
         duration,
     });
 
-    void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage);
+    void setCachedVideos(subject, gradeLevel, finalVideos, personalizedMessage, language, state, educationBoard, input.topic);
 
     return {
         categories: aiResult?.categories || {},

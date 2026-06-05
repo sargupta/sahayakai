@@ -23,10 +23,21 @@ import {
     Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getProfileData, getPublicProfileAction } from "@/app/actions/profile";
+import { getProfileData, getPublicProfileAction, addCertificationAction } from "@/app/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
@@ -52,10 +63,12 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
     const [certs, setCerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddCertOpen, setIsAddCertOpen] = useState(false);
     const [connStatus, setConnStatus] = useState<ConnectionStatus>('none');
     const [connRequestId, setConnRequestId] = useState<string | undefined>();
     const [connLoading, setConnLoading] = useState(false);
     const { t } = useLanguage();
+    const { toast } = useToast();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -118,6 +131,19 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
         ? isOwnProfileManual
         : (firebaseUser?.uid === (targetUid || firebaseUser?.uid) || !targetUid);
 
+    // Reload the caller's certifications after adding one. Only meaningful on
+    // own profile (addCertificationAction is self-only on the server).
+    const reloadCerts = async () => {
+        const uidToLoad = targetUid || firebaseUser?.uid;
+        if (!uidToLoad) return;
+        try {
+            const { certifications } = await getProfileData(uidToLoad);
+            setCerts(certifications || []);
+        } catch {
+            // Non-fatal — the new cert still landed; it'll appear on next load.
+        }
+    };
+
     const getAvatarGradient = (name: string) => {
         const colors = [
             'from-indigo-500 to-purple-500',
@@ -172,7 +198,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <h1 className="text-2xl font-bold font-headline">{t("Profile Not Found")}</h1>
                     <p className="text-muted-foreground">{t("The teacher profile you are looking for does not exist or has been removed.")}</p>
                 </div>
-                <Button onClick={() => window.history.back()} variant="outline" className="w-full">
+                <Button onClick={() => router.push('/community')} variant="outline" className="w-full">
                     {t("Go Back")}
                 </Button>
             </div>
@@ -181,14 +207,15 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            {/* Profile Header - Premium Glassmorphic Card */}
-            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-gradient-to-b from-primary/5 to-transparent backdrop-blur-xl p-6 md:p-10 rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden group">
-                <div className="absolute -top-12 -right-12 opacity-[0.05] transition-transform duration-1000 group-hover:scale-125 group-hover:rotate-12 pointer-events-none">
-                    <GraduationCap className="h-64 w-64 text-foreground" />
-                </div>
+            {/* Back affordance for non-own profiles is now rendered by the
+                route's ProfileBackBar (sticky top bar) — guarantees visibility.
+                Own profile (/my-profile) renders ProfileView directly without
+                that wrapper, so no back button there. */}
 
+            {/* Profile Header */}
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-card p-6 md:p-10 rounded-lg border border-border shadow-soft relative overflow-hidden">
                 <div className="relative">
-                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 ring-8 ring-white/80 shadow-2xl transition-transform duration-500">
+                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 ring-4 ring-background shadow-soft transition-transform duration-500">
                         <AvatarImage
                             src={(isOwnProfile ? firebaseUser?.photoURL : profile?.photoURL) || ""}
                             referrerPolicy="no-referrer"
@@ -202,15 +229,15 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                         </AvatarFallback>
                     </Avatar>
                     {profile?.verifiedStatus === 'verified' && (
-                        <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-2 rounded-full shadow-lg border-4 border-white">
-                            <BadgeCheck className="h-5 w-5" />
+                        <div className="absolute -bottom-1 -right-1 bg-green-600 text-white p-1.5 rounded-full shadow-soft border-2 border-background">
+                            <BadgeCheck className="h-4 w-4" />
                         </div>
                     )}
                 </div>
 
                 <div className="text-center md:text-left space-y-4 flex-1">
                     <div className="space-y-2">
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-foreground font-headline tracking-tighter leading-tight line-clamp-2">
+                        <h1 className="type-h1 text-foreground line-clamp-2">
                             {(isOwnProfile ? firebaseUser?.displayName : profile?.displayName) || t("Educator")}
                         </h1>
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground font-medium">
@@ -231,22 +258,22 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     </div>
 
                     {profile?.bio && (
-                        <p className="text-foreground/70 max-w-xl italic text-base sm:text-lg leading-relaxed border-l-4 border-primary/20 pl-4 py-1">
-                            "{profile.bio}"
+                        <p className="text-muted-foreground max-w-xl text-sm sm:text-base leading-relaxed border-l-2 border-border pl-4 py-1">
+                            {profile.bio}
                         </p>
                     )}
 
-                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full ring-2 ring-white">
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        <Badge variant="secondary" className="px-3 py-1 text-xs font-medium rounded-full">
                             {t("Verified Educator")}
                         </Badge>
                         {profile?.department && (
-                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full ring-2 ring-white">
+                            <Badge variant="secondary" className="px-3 py-1 text-xs font-medium rounded-full">
                                 {profile.department}
                             </Badge>
                         )}
                         {profile?.schoolName && (
-                            <Badge variant="outline" className="text-foreground/70 border-border bg-white/50 px-4 py-1.5 text-xs font-semibold rounded-full backdrop-blur-sm">
+                            <Badge variant="outline" className="px-3 py-1 text-xs font-medium rounded-full">
                                 {profile.schoolName}
                             </Badge>
                         )}
@@ -257,10 +284,10 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     <div className="flex flex-col gap-3 w-full sm:min-w-40 sm:w-auto">
                         <Button
                             variant="default"
-                            className="rounded-2xl shadow-lg shadow-primary/20 hover:shadow-elevated transition-all gap-2 h-12 text-base font-bold"
+                            className="rounded-md shadow-soft hover:shadow-elevated transition-all gap-2 h-11 text-sm font-semibold"
                             onClick={() => setIsEditModalOpen(true)}
                         >
-                            <Settings className="h-5 w-5" />
+                            <Settings className="h-4 w-4" />
                             {t("Edit Profile")}
                         </Button>
                     </div>
@@ -274,7 +301,7 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             </Button>
                         ) : connStatus === 'none' ? (
                             <Button
-                                className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center gap-2 h-12"
+                                className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft flex items-center justify-center gap-2 h-12"
                                 onClick={async () => {
                                     if (!targetUid) return;
                                     setConnLoading(true);
@@ -381,37 +408,63 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 />
             )}
 
-            <div className="grid gap-10 md:grid-cols-12">
-                <Card className="md:col-span-8 bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
-                    <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-8 border-b border-border">
+            {firebaseUser && isOwnProfile && (
+                <AddCertificationDialog
+                    isOpen={isAddCertOpen}
+                    onClose={() => setIsAddCertOpen(false)}
+                    onAdded={async () => {
+                        setIsAddCertOpen(false);
+                        await reloadCerts();
+                        toast({
+                            title: t("Certification submitted"),
+                            description: t("Your credential was added and is pending verification."),
+                        });
+                    }}
+                    onError={() =>
+                        toast({
+                            title: t("Could not add certification"),
+                            description: t("Please try again."),
+                            variant: "destructive",
+                        })
+                    }
+                />
+            )}
+
+            <div className="grid gap-6 md:grid-cols-12">
+                <Card className="md:col-span-8 bg-card border-border shadow-soft rounded-md overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 border-b border-border">
                         <div className="space-y-1">
-                            <CardTitle className="flex items-center gap-2 text-2xl font-black text-foreground">
-                                <ShieldCheck className="h-7 w-7 text-primary" />
+                            <CardTitle className="flex items-center gap-2 type-h3 text-foreground">
+                                <ShieldCheck className="h-5 w-5 text-primary" />
                                 {t("Professional Certifications")}
                             </CardTitle>
-                            <CardDescription className="text-base text-muted-foreground">{t("Government and institutional recognized records.")}</CardDescription>
+                            <CardDescription className="text-sm text-muted-foreground">{t("Government and institutional recognized records.")}</CardDescription>
                         </div>
                         {isOwnProfile && (
-                            <Button size="sm" className="gap-2 h-10 rounded-xl px-4 font-bold shadow-soft transition-transform">
+                            <Button
+                                size="sm"
+                                className="gap-2 h-9 rounded-md px-3 font-semibold shadow-soft transition-transform"
+                                onClick={() => setIsAddCertOpen(true)}
+                            >
                                 <Plus className="h-4 w-4" /> {t("Add New")}
                             </Button>
                         )}
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-8 space-y-6">
+                    <CardContent className="p-4 sm:p-6 space-y-3">
                         {certs.length > 0 ? (
                             certs.map((cert) => (
-                                <div key={cert.id} className="group flex items-center justify-between p-3 sm:p-5 border border-border rounded-2xl hover:bg-muted/40 transition-all hover:shadow-soft hover:-translate-y-0.5">
-                                    <div className="flex items-start gap-3 sm:gap-5">
-                                        <div className="mt-1 p-3 bg-background rounded-xl shadow-soft group-hover:bg-primary/5 transition-colors">
-                                            <BadgeCheck className={cert.status === 'verified' ? "h-6 w-6 text-green-600" : "h-6 w-6 text-muted-foreground/30"} />
+                                <div key={cert.id} className="group flex items-center justify-between p-3 sm:p-4 border border-border rounded-md hover:bg-muted/50 transition-colors">
+                                    <div className="flex items-start gap-3 sm:gap-4">
+                                        <div className="mt-0.5 p-2 bg-muted rounded-md">
+                                            <BadgeCheck className={cert.status === 'verified' ? "h-5 w-5 text-green-600" : "h-5 w-5 text-muted-foreground/40"} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-foreground text-lg group-hover:text-primary transition-colors">{cert.certName}</h4>
-                                            <p className="text-muted-foreground font-medium">{cert.issuingBody} • {new Date(cert.issueDate).getFullYear()}</p>
+                                            <h4 className="font-semibold text-foreground text-base">{cert.certName}</h4>
+                                            <p className="text-sm text-muted-foreground">{cert.issuingBody} • {new Date(cert.issueDate).getFullYear()}</p>
                                         </div>
                                     </div>
                                     <Badge variant="outline" className={cn(
-                                        "capitalize px-3 py-1 text-xs font-bold rounded-xl",
+                                        "capitalize px-2.5 py-0.5 text-xs font-medium rounded-full",
                                         cert.status === 'verified' ? "bg-green-50 text-green-700 border-green-200" : "bg-muted text-muted-foreground border-border"
                                     )}>
                                         {cert.status}
@@ -419,12 +472,16 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-10 sm:py-20 bg-muted/30 rounded-2xl border-2 border-dashed border-border">
-                                <Clock className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4 opacity-50" />
-                                <p className="text-foreground/70 text-lg font-bold">{t("No verified certifications found")}</p>
-                                <p className="text-muted-foreground mt-2 max-w-xs mx-auto">{t("Verified educator credentials build trust in the community.")}</p>
+                            <div className="text-center py-10 sm:py-16 bg-muted/30 rounded-md border border-dashed border-border">
+                                <Clock className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                                <p className="text-foreground font-semibold">{t("No verified certifications found")}</p>
+                                <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">{t("Verified educator credentials build trust in the community.")}</p>
                                 {isOwnProfile && (
-                                    <Button variant="outline" className="mt-6 rounded-xl border-border hover:bg-background transition-all">
+                                    <Button
+                                        variant="outline"
+                                        className="mt-5 rounded-md"
+                                        onClick={() => setIsAddCertOpen(true)}
+                                    >
                                         {t("Start Verification")}
                                     </Button>
                                 )}
@@ -433,38 +490,39 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                     </CardContent>
                 </Card>
 
-                <div className="md:col-span-4 space-y-8">
-                    <Card className="bg-white/80 backdrop-blur-sm border-border shadow-soft rounded-2xl overflow-hidden">
-                        <CardHeader className="p-4 sm:p-8 pb-4 border-b border-border">
-                            <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
-                                <History className="h-6 w-6 text-blue-500" />
+                <div className="md:col-span-4 space-y-6">
+                    <Card className="bg-card border-border shadow-soft rounded-md overflow-hidden">
+                        <CardHeader className="p-4 sm:p-6 pb-3 border-b border-border">
+                            <CardTitle className="flex items-center gap-2 type-h3 text-foreground">
+                                <History className="h-5 w-5 text-muted-foreground" />
                                 {t("Recent Activity")}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-8">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="space-y-6 relative">
                                 <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
-                                <div className="relative pl-8 space-y-1 group">
-                                    <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-blue-500 bg-background group-hover:bg-blue-500 transition-colors" />
-                                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t("Recently")}</span>
-                                    <p className="font-bold text-foreground/80">{t("Participated in Educator Hub")}</p>
+                                <div className="relative pl-8 space-y-1">
+                                    <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-primary bg-background" />
+                                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{t("Recently")}</span>
+                                    <p className="font-medium text-foreground">{t("Participated in Educator Hub")}</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {isOwnProfile && (
-                        <Card className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-none shadow-2xl rounded-2xl p-4 sm:p-8 space-y-6 relative overflow-hidden group">
-                            <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12">
-                                <GraduationCap className="h-40 w-40" />
-                            </div>
-                            <div className="relative space-y-2">
-                                <h3 className="font-black text-2xl tracking-tighter">{t("Help others grow!")}</h3>
-                                <p className="text-indigo-100 text-sm font-medium leading-relaxed opacity-90">
+                        <Card className="bg-card border-border shadow-soft rounded-md p-4 sm:p-6 space-y-4">
+                            <div className="space-y-2">
+                                <h3 className="type-h3 text-foreground">{t("Help others grow")}</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
                                     {t("Your teaching experience is invaluable. Join the TeacherConnect network to share your lesson plans.")}
                                 </p>
                             </div>
-                            <Button variant="secondary" className="relative w-full bg-white text-indigo-600 hover:bg-white/90 border-none font-bold h-12 rounded-xl text-base shadow-soft transition-all active:scale-95">
+                            <Button
+                                variant="default"
+                                className="w-full font-semibold h-11 rounded-md shadow-soft transition-all active:scale-95"
+                                onClick={() => router.push('/community')}
+                            >
                                 {t("Enable Activity Feed")}
                             </Button>
                         </Card>
@@ -472,5 +530,107 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                 </div>
             </div>
         </div>
+    );
+}
+
+// ── AddCertificationDialog ──────────────────────────────────────────────────
+// Collects a credential and submits it via the existing addCertificationAction
+// (self-only on the server). New certifications land with status 'pending'.
+
+interface AddCertificationDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onAdded: () => void | Promise<void>;
+    onError: () => void;
+}
+
+function AddCertificationDialog({ isOpen, onClose, onAdded, onError }: AddCertificationDialogProps) {
+    const { t } = useLanguage();
+    const [certName, setCertName] = useState("");
+    const [issuingBody, setIssuingBody] = useState("");
+    const [issueDate, setIssueDate] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const reset = () => {
+        setCertName("");
+        setIssuingBody("");
+        setIssueDate("");
+    };
+
+    const handleSubmit = async () => {
+        if (!certName.trim()) return;
+        setSubmitting(true);
+        try {
+            const fd = new FormData();
+            fd.append("certName", certName.trim());
+            fd.append("issuingBody", issuingBody.trim());
+            fd.append("issueDate", issueDate);
+            await addCertificationAction(fd);
+            reset();
+            await onAdded();
+        } catch {
+            onError();
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="sm:max-w-[440px] rounded-md p-6 border border-border shadow-elevated">
+                <DialogHeader>
+                    <DialogTitle className="type-h3">
+                        {t("Add Certification")}
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                        {t("Add a professional credential. It will be marked pending until verified.")}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-5 py-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="certName" className="font-bold text-foreground">{t("Certification Name")}</Label>
+                        <Input
+                            id="certName"
+                            value={certName}
+                            onChange={(e) => setCertName(e.target.value)}
+                            className="rounded-md border-border focus:ring-primary"
+                            placeholder={t("e.g. B.Ed, CTET, Diploma in Education")}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="issuingBody" className="font-bold text-foreground">{t("Issuing Body")}</Label>
+                        <Input
+                            id="issuingBody"
+                            value={issuingBody}
+                            onChange={(e) => setIssuingBody(e.target.value)}
+                            className="rounded-md border-border focus:ring-primary"
+                            placeholder={t("e.g. NCTE, State Board, University")}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="issueDate" className="font-bold text-foreground">{t("Issue Date")}</Label>
+                        <Input
+                            id="issueDate"
+                            type="date"
+                            value={issueDate}
+                            onChange={(e) => setIssueDate(e.target.value)}
+                            className="rounded-md border-border focus:ring-primary"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="ghost" onClick={onClose} className="rounded-md font-semibold">{t("Cancel")}</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={submitting || !certName.trim()}
+                        className="rounded-md font-semibold px-6 shadow-soft"
+                    >
+                        {submitting ? t("Saving...") : t("Add Certification")}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

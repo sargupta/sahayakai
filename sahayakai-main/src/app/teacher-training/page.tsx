@@ -25,6 +25,7 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { saveToLibrary } from "@/app/actions/content";
 import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Removed (audit 2026-04-27): VoiceAssistant import. The global OmniOrb
@@ -108,33 +109,37 @@ function TeacherTrainingContent() {
   const [savedToLib, setSavedToLib] = useState(false);
   const [lastQuestion, setLastQuestion] = useState<string | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot, teacherProfile } = useJarvisStore();
   const proTipKey = PRO_TIP_KEYS[new Date().getDate() % PRO_TIP_KEYS.length];
 
   // UX audit #13: load last question on mount so teacher can pick up
   // where they left off. Only show if it's recent (within 7 days).
+  // Cross-language guard (2026-05-27): only restore if the saved question
+  // was typed in the same UI language as the current session, otherwise
+  // a Hindi-typed question bleeds into Bengali UI and renders mixed scripts.
   useEffect(() => {
     try {
       const raw = localStorage.getItem("tt-last-question");
       if (!raw) return;
-      const { q, ts } = JSON.parse(raw);
+      const { q, ts, uiLang } = JSON.parse(raw);
       const ageMs = Date.now() - (ts ?? 0);
       const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-      if (q && typeof q === "string" && ageMs < SEVEN_DAYS) {
+      const sameLang = (uiLang ?? 'English') === uiLanguage;
+      if (q && typeof q === "string" && ageMs < SEVEN_DAYS && sameLang) {
         setLastQuestion(q);
       }
     } catch {
       // ignore parse errors / localStorage unavailable
     }
-  }, []);
+  }, [uiLanguage]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       subject: "General",
     },
   });
@@ -150,8 +155,12 @@ function TeacherTrainingContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const descriptionLines = descriptionTranslations[selectedLanguage] || descriptionTranslations.en;
-  const placeholder = placeholderTranslations[selectedLanguage] || placeholderTranslations.en;
+  // UI chrome (tagline, placeholder) follows the global UI language, NOT the
+  // AI-output language form field. Without this, switching the app to Bengali
+  // leaves the chrome English until a hard refresh re-initialises the form.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
+  const descriptionLines = descriptionTranslations[uiLangCode] || descriptionTranslations.en;
+  const placeholder = placeholderTranslations[uiLangCode] || placeholderTranslations.en;
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present
@@ -270,7 +279,7 @@ function TeacherTrainingContent() {
       try {
         localStorage.setItem(
           "tt-last-question",
-          JSON.stringify({ q: values.question, ts: Date.now() }),
+          JSON.stringify({ q: values.question, ts: Date.now(), uiLang: uiLanguage }),
         );
       } catch {
         // localStorage may be unavailable (private mode, restricted webview)
@@ -459,17 +468,17 @@ function TeacherTrainingContent() {
                   {teacherProfile.preferredGrade && teacherProfile.preferredSubject && (
                     <div className="space-y-2">
                       <FormLabel className="font-headline flex items-center gap-2">
-                        {t("For your")} {teacherProfile.preferredGrade} {teacherProfile.preferredSubject} {t("students")}
+                        {t("For your")} {t(teacherProfile.preferredGrade)} {t(teacherProfile.preferredSubject)} {t("students")}
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wide">
                           {t("Personalised")}
                         </span>
                       </FormLabel>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {[
-                          `${t("How do I keep")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("students focused for the full period?")}`,
-                          `${t("Best way to introduce a new")} ${teacherProfile.preferredSubject} ${t("chapter to")} ${teacherProfile.preferredGrade}?`,
-                          `${t("How do I assess")} ${teacherProfile.preferredGrade} ${teacherProfile.preferredSubject} ${t("understanding without a formal test?")}`,
-                          `${t("Common")} ${teacherProfile.preferredSubject} ${t("misconceptions in")} ${teacherProfile.preferredGrade} ${t("and how to fix them?")}`,
+                          `${t("How do I keep")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("students focused for the full period?")}`,
+                          `${t("Best way to introduce a new")} ${t(teacherProfile.preferredSubject)} ${t("chapter to")} ${t(teacherProfile.preferredGrade)}?`,
+                          `${t("How do I assess")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("understanding without a formal test?")}`,
+                          `${t("Common")} ${t(teacherProfile.preferredSubject)} ${t("misconceptions in")} ${t(teacherProfile.preferredGrade)} ${t("and how to fix them?")}`,
                         ].map((prompt, i) => (
                           <button
                             key={i}
@@ -598,6 +607,7 @@ function TeacherTrainingContent() {
 }
 
 export default function TeacherTrainingPage() {
+  const { t } = useLanguage();
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
       {/* Bug #6 (audit 2026-04-27): the form was rendering for unauthenticated
@@ -606,8 +616,8 @@ export default function TeacherTrainingPage() {
           a form that silently breaks. */}
       <AuthGate
         icon={GraduationCap}
-        title="Sign in to ask the AI Coach"
-        description="Get advice grounded in pedagogical principles — sign in to ask anything about teaching."
+        title={t("Sign in to ask the AI Coach")}
+        description={t("Get advice grounded in pedagogical principles — sign in to ask anything about teaching.")}
       >
         <TeacherTrainingContent />
       </AuthGate>

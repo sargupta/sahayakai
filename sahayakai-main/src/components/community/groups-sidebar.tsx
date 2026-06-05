@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/context/language-context";
 
 interface GroupsSidebarProps {
   myGroups: Group[];
@@ -51,6 +52,7 @@ export function GroupsSidebar({
   onConnectTeacher,
 }: GroupsSidebarProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [joiningGroups, setJoiningGroups] = useState<Set<string>>(new Set());
   // joinedGroups was previously a local Set that lived alongside myGroups and
   // could drift (e.g. user leaves a group elsewhere). Derive from myGroups
@@ -122,14 +124,14 @@ export function GroupsSidebar({
       {/* People You May Know (moved above groups per UX feedback — social first, then structure) */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            People You May Know
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            {t("People You May Know")}
           </h3>
           <button
             onClick={onOpenTeacherDirectory}
             className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
           >
-            View All
+            {t("View All")}
           </button>
         </div>
         <Card className="p-4">
@@ -157,7 +159,7 @@ export function GroupsSidebar({
                       >
                         {teacher.displayName}
                       </button>
-                      <p className="text-xs text-slate-500 truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {teacher.recommendationReason}
                       </p>
                     </div>
@@ -167,7 +169,7 @@ export function GroupsSidebar({
                       <UserCheck className="h-3.5 w-3.5" />
                     </Button>
                   ) : sentRequestUids.includes(teacher.uid) || connectingTeachers.has(teacher.uid) ? (
-                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-slate-400" disabled>
+                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-muted-foreground" disabled>
                       <Clock className="h-3.5 w-3.5" />
                     </Button>
                   ) : (
@@ -182,8 +184,8 @@ export function GroupsSidebar({
                   )}
                 </div>
               )) : (
-              <p className="text-xs text-slate-400 text-center py-2">
-                No suggestions yet
+              <p className="text-xs text-muted-foreground text-center py-2">
+                {t("No suggestions yet")}
               </p>
             )}
           </div>
@@ -191,7 +193,7 @@ export function GroupsSidebar({
             onClick={onOpenTeacherDirectory}
             className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
           >
-            Browse All Teachers
+            {t("Browse All Teachers")}
           </button>
         </Card>
       </div>
@@ -202,9 +204,9 @@ export function GroupsSidebar({
         onClick={onOpenStaffRoom}
       >
         <div className="flex items-center gap-3">
-          <MessageCircle className="h-5 w-5 text-slate-600 shrink-0" />
+          <MessageCircle className="h-5 w-5 text-muted-foreground shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Staff Room</p>
+            <p className="text-sm font-medium">{t("Staff Room")}</p>
             <div className="flex items-center gap-1.5">
               {/* Pulse only when a message landed in the last 5 minutes — the
                   decorative-always pulse was misleading. */}
@@ -215,24 +217,24 @@ export function GroupsSidebar({
                 <span
                   className={cn(
                     "relative inline-flex rounded-full h-2 w-2",
-                    staffRoomIsLive ? "bg-green-500" : "bg-slate-300",
+                    staffRoomIsLive ? "bg-green-500" : "bg-muted-foreground/40",
                   )}
                 />
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {staffRoomIsLive ? "Live" : "Quiet"}
               </span>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
         </div>
       </Card>
 
       {/* My Groups — collapsed after 5 rows to keep sidebar scannable */}
       {myGroups.length > 0 && (
         <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            My Groups
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+            {t("My Groups")}
           </h3>
           <Card className="p-4">
             <div className="space-y-1">
@@ -250,7 +252,7 @@ export function GroupsSidebar({
                     <p className="text-sm font-medium truncate">
                       {group.name}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
                     </p>
                   </div>
@@ -273,15 +275,15 @@ export function GroupsSidebar({
       {suggestedGroups.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Discover Groups
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              {t("Discover Groups")}
             </h3>
             {onViewAllGroups && suggestedGroups.length > 5 && (
               <button
                 onClick={onViewAllGroups}
                 className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
               >
-                View All
+                {t("View All")}
               </button>
             )}
           </div>
@@ -299,7 +301,7 @@ export function GroupsSidebar({
                     <p className="text-sm font-medium truncate hover:underline">
                       {group.name}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
                     </p>
                   </button>
@@ -327,7 +329,7 @@ export function GroupsSidebar({
                 onClick={onViewAllGroups}
                 className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
               >
-                Browse all groups
+                {t("Browse all groups")}
               </button>
             )}
           </Card>

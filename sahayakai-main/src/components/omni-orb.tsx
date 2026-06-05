@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
@@ -78,6 +80,7 @@ export function OmniOrb() {
     const pathname = usePathname();
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t, language: uiLanguage } = useLanguage();
     // Feature flag: vidyaGreetingSuppressor
     //   ENABLED (default) — strip redundant opening greetings ("Namaste",
     //                       "Sure", "Of course") after the first model
@@ -160,36 +163,80 @@ export function OmniOrb() {
         });
     }, [pathname, clearStructuredDataIfStale, setScreenContext, structuredData]);
 
-    // ── Auto-hide on scroll-down, restore on scroll-up ───────────────────
-    // Audited in outputs/ux_review_2026_04_21/FLOATING_CHROME_AUDIT.md §6.
-    // Near-top always shows. A 24 px delta absorbs trackpad micro-scroll
-    // and iOS rubber-band; anything further triggers the transition.
+    // ── Aggressive auto-hide (2026-05-27 rewrite) ────────────────────────
+    // Previous behaviour was "hide on scroll-down only" but most teachers
+    // reported the orb felt persistent on read-heavy pages because short
+    // pages never crossed the 120px threshold and trackpad inertia kept
+    // re-triggering scroll-up which restored it.
+    //
+    // New behaviour:
+    //   • Hide on ANY scroll (either direction) — even 1px of scrolling
+    //     dismisses the orb while the teacher reads.
+    //   • Restore after IDLE_DELAY ms of no scroll activity (no scroll
+    //     events for ~1.4s).
+    //   • Also hide after 6s of full inactivity (no scroll, no pointer
+    //     movement) on read-heavy pages — those pages added to the
+    //     READ_HEAVY_PATHS allowlist below. Pointer movement restores.
+    //   • Listens to BOTH window.scroll and the captured-scroll event so
+    //     pages mounted inside an internal overflow-auto container also
+    //     trigger hide.
     useEffect(() => {
         if (!isClient) return;
-        let lastY = window.scrollY;
-        let ticking = false;
-        const NEAR_TOP = 120;
-        const DELTA = 24;
-        const onScroll = () => {
-            if (ticking) return;
-            ticking = true;
-            requestAnimationFrame(() => {
-                const y = window.scrollY;
-                const delta = y - lastY;
-                if (y < NEAR_TOP) {
-                    setHiddenByScroll(false);
-                } else if (delta > DELTA) {
-                    setHiddenByScroll(true);
-                } else if (delta < -DELTA) {
-                    setHiddenByScroll(false);
-                }
-                lastY = y;
-                ticking = false;
-            });
+        const IDLE_AFTER_SCROLL_MS = 1400;
+        const READ_HEAVY_PATHS = [
+            '/lesson-plan',
+            '/teacher-training',
+            '/instant-answer',
+            '/community',
+            '/community-library',
+            '/library',
+            '/messages',
+            '/privacy-for-teachers',
+        ];
+        const READ_HEAVY_IDLE_MS = 6000;
+        let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null;
+        let pointerIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+        const isReadHeavy = READ_HEAVY_PATHS.some(p => pathname?.startsWith(p));
+
+        const hide = () => setHiddenByScroll(true);
+        const restoreSoon = (ms: number) => {
+            if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
+            scrollIdleTimer = setTimeout(() => setHiddenByScroll(false), ms);
         };
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-    }, [isClient]);
+
+        const onScroll = () => {
+            hide();
+            restoreSoon(IDLE_AFTER_SCROLL_MS);
+        };
+
+        const onPointerActivity = () => {
+            // Pointer activity = teacher engaged. Restore immediately.
+            setHiddenByScroll(false);
+            if (pointerIdleTimer) clearTimeout(pointerIdleTimer);
+            if (isReadHeavy) {
+                pointerIdleTimer = setTimeout(() => setHiddenByScroll(true), READ_HEAVY_IDLE_MS);
+            }
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+        window.addEventListener("pointermove", onPointerActivity, { passive: true });
+        window.addEventListener("touchstart", onPointerActivity, { passive: true });
+
+        // On read-heavy pages, start in idle countdown so the orb hides
+        // 6s after page load if the teacher doesn't interact.
+        if (isReadHeavy) {
+            pointerIdleTimer = setTimeout(() => setHiddenByScroll(true), READ_HEAVY_IDLE_MS);
+        }
+
+        return () => {
+            window.removeEventListener("scroll", onScroll, { capture: true } as any);
+            window.removeEventListener("pointermove", onPointerActivity);
+            window.removeEventListener("touchstart", onPointerActivity);
+            if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
+            if (pointerIdleTimer) clearTimeout(pointerIdleTimer);
+        };
+    }, [isClient, pathname]);
 
     // ── Respect prefers-reduced-motion: when user wants less motion, the
     // orb still hides on scroll but without the slide/opacity transition.
@@ -213,9 +260,10 @@ export function OmniOrb() {
         if (!preferredGrade && !preferredSubject) return; // no profile yet
 
         const hour = new Date().getHours();
-        const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-        const context = [preferredGrade, preferredSubject].filter(Boolean).join(" · ");
-        const tip = `${greeting}! Ready to prep your ${context} class? Just ask me to generate anything.`;
+        const greeting = hour < 12 ? t("Good Morning") : hour < 17 ? t("Good Afternoon") : t("Good Evening");
+        // Translate grade + subject tokens individually so each side of the · resolves correctly in the active UI language.
+        const context = [preferredGrade, preferredSubject].filter(Boolean).map(s => t(s as string)).join(" · ");
+        const tip = `${greeting}! ${t("Ready to prep your")} ${context} ${t("class? Just ask me to generate anything.")}`;
 
         setProactiveTip(tip);
         proactiveShown.current = true;
@@ -414,6 +462,11 @@ export function OmniOrb() {
                     teacherProfile,
                     // Pass detected speech language so VIDYA responds in the same language
                     detectedLanguage: detectedLang ?? null,
+                    // 2026-12 STT fix: also send the teacher's EXPLICIT UI
+                    // language. The server prefers this over detectedLanguage
+                    // so a Bengali-UI teacher gets a Bengali answer even if
+                    // STT misclassified the utterance script.
+                    uiLanguage: LANGUAGE_TO_ISO[uiLanguage] ?? null,
                 }),
             });
 
@@ -471,8 +524,8 @@ export function OmniOrb() {
                 console.warn('[VIDYA OmniOrb] empty response from assistant', { action, plannedActions });
                 if (!action && !(plannedActions && plannedActions.length > 0)) {
                     toast({
-                        title: 'VIDYA had nothing to say',
-                        description: 'Try rephrasing your question.',
+                        title: t('VIDYA had nothing to say'),
+                        description: t('Try rephrasing your question.'),
                         variant: 'default',
                     });
                 }
@@ -553,7 +606,7 @@ export function OmniOrb() {
                 // eslint-disable-next-line no-console
                 console.error('[VIDYA OmniOrb] action with unknown flow', action.flow);
                 toast({
-                    title: 'VIDYA picked a tool I do not recognise',
+                    title: t('VIDYA picked a tool I do not recognise'),
                     description: `Flow "${action.flow}" is not available. Please rephrase your request.`,
                     variant: 'destructive',
                 });
@@ -574,7 +627,7 @@ export function OmniOrb() {
             // diagnose live. Now the teacher sees the actual reason on
             // demo day instead of just hearing an apology.
             toast({
-                title: 'VIDYA could not act on that',
+                title: t('VIDYA could not act on that'),
                 description: errMsg.slice(0, 200),
                 variant: 'destructive',
             });
@@ -718,11 +771,11 @@ export function OmniOrb() {
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (
-                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-bottom-5">
+                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-3xl shadow-2xl border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
-                            VIDYA Memory
+                            {t("VIDYA Memory")}
                         </h3>
                         <Button
                             variant="ghost"
@@ -737,7 +790,7 @@ export function OmniOrb() {
                                 setPendingActions([]);
                                 setOrbOpen(false);
                             }}
-                            title="Clear Context"
+                            title={t("Clear Context")}
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -746,13 +799,13 @@ export function OmniOrb() {
                     {/* Teacher profile summary */}
                     {(teacherProfile.preferredGrade || teacherProfile.preferredSubject) && (
                         <div className="mb-3 p-2 bg-primary/5 rounded-xl text-xs text-primary border border-primary/10">
-                            <span className="font-semibold">Your profile: </span>
+                            <span className="font-semibold">{t("Your profile:")} </span>
                             {[teacherProfile.preferredGrade, teacherProfile.preferredSubject, teacherProfile.schoolContext]
                                 .filter(Boolean).join(" · ")}
                             {user && (
                                 <Cloud
                                     className="ml-1 inline-block h-3 w-3 opacity-60 align-middle"
-                                    aria-label="Synced to cloud"
+                                    aria-label={t("Synced to cloud")}
                                 />
                             )}
                         </div>
@@ -760,10 +813,10 @@ export function OmniOrb() {
 
                     <div className="max-h-60 overflow-y-auto flex flex-col gap-3 text-sm">
                         {chatHistory.length === 0 ? (
-                            <p className="text-slate-500 italic text-center py-4">Memory is clear. I have no context of prior conversations.</p>
+                            <p className="text-muted-foreground italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
                         ) : (
                             chatHistory.map((msg, i) => (
-                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-slate-100 self-end ml-4" : "bg-primary/10 self-start mr-4")}>
+                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
                                     {msg.parts.map((p) => p.text).join("")}
                                 </div>
                             ))
@@ -778,7 +831,7 @@ export function OmniOrb() {
                     {pendingActions.length > 1 && (
                         <div className="mt-3 pt-3 border-t border-border">
                             <p className="text-xs font-semibold text-muted-foreground mb-2">
-                                Pick what to generate next:
+                                {t("Pick what to generate next:")}
                             </p>
                             <div className="flex flex-wrap gap-2" data-testid="planned-action-chips">
                                 {pendingActions.map((a, idx) => (
@@ -810,7 +863,7 @@ export function OmniOrb() {
                 {/* Proactive daily-inspiration tip */}
                 {proactiveTip && (
                     <div
-                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-white border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-slate-700 animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
+                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
                     >
                         <div className="flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -835,9 +888,9 @@ export function OmniOrb() {
                                 style={{ animationDuration: "2.4s" }}
                             />
                         )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
                             <BrainCircuit className="h-3 w-3" />
-                            Tap to reply
+                            {t("Tap to reply")}
                         </div>
                     </>
                 )}
@@ -857,9 +910,9 @@ export function OmniOrb() {
                         e.stopPropagation();
                         if (!isDragging) setOrbOpen(!orbOpen);
                     }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-white text-primary hover:bg-slate-100 border pointer-events-auto"
+                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
                     size="icon"
-                    title="View Memory"
+                    title={t("View Memory")}
                 >
                     <BrainCircuit className="h-5 w-5" />
                 </Button>

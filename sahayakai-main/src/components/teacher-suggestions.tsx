@@ -9,8 +9,10 @@ import { getRecommendedTeachersAction, followTeacherAction, getFollowingIdsActio
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useLanguage } from "@/context/language-context";
 
 export function TeacherSuggestions() {
+    const { t } = useLanguage();
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -64,12 +66,12 @@ export function TeacherSuggestions() {
     };
 
     if (loading) return (
-        <Card className="border-slate-200">
+        <Card className="border-border">
             <CardHeader>
-                <CardTitle className="text-sm font-semibold">Suggested for You</CardTitle>
+                <CardTitle className="text-sm font-semibold">{t("Suggested for You")}</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center py-6">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/60" />
             </CardContent>
         </Card>
     );
@@ -77,9 +79,9 @@ export function TeacherSuggestions() {
     if (suggestions.length === 0) return null;
 
     return (
-        <Card className="border-slate-200 shadow-sm sticky top-4">
+        <Card className="border-border shadow-sm sticky top-4">
             <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold text-slate-800">Suggested for You</CardTitle>
+                <CardTitle className="text-sm font-bold text-foreground">{t("Suggested for You")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {suggestions.map((teacher) => (
@@ -92,11 +94,11 @@ export function TeacherSuggestions() {
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-semibold text-slate-900 truncate">
+                                <span className="text-sm font-semibold text-foreground truncate">
                                     {teacher.displayName}
                                 </span>
                                 <div className="flex items-center gap-1">
-                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-600 font-medium">
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground font-medium">
                                         {teacher.recommendationReason || teacher.subject || "Teacher"}
                                     </Badge>
                                 </div>

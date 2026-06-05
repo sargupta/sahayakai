@@ -24,9 +24,10 @@ import {
 import {
   Globe, CreditCard, Shield, Download, Trash2, Loader2,
   Crown, ArrowRight, ChevronRight, GraduationCap,
-  Settings as SettingsIcon,
+  Settings as SettingsIcon, Sun, Moon,
 } from 'lucide-react';
-import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification } from '@/types';
+import { useTheme } from 'next-themes';
+import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification, EDUCATION_BOARDS, type EducationBoard } from '@/types';
 import { AuthGate } from '@/components/auth/auth-gate';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,7 @@ interface ConsentPrefs {
 export default function SettingsPage() {
   const { user } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const { plan, isPro, loading: planLoading } = useSubscription();
   const getIdToken = useCallback(async () => {
     if (!user) throw new Error('Not authenticated');
@@ -71,11 +73,16 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  // next-themes only knows the resolved theme on the client; guard the
+  // Select value so SSR markup stays stable and there's no hydration warning.
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
 
   // Professional Profile state
   const [profYears, setProfYears] = useState<string>('');
   const [profRole, setProfRole] = useState<AdministrativeRole | ''>('');
   const [profQuals, setProfQuals] = useState<Qualification[]>([]);
+  const [profBoard, setProfBoard] = useState<EducationBoard | ''>('');
   const [profSaving, setProfSaving] = useState(false);
   const [profSaved, setProfSaved] = useState(false);
   const [profError, setProfError] = useState<string | null>(null);
@@ -181,6 +188,12 @@ export default function SettingsPage() {
       if (Array.isArray(profile.qualifications) && profile.qualifications.length > 0) {
         setProfQuals(profile.qualifications as Qualification[]);
       }
+      // QA #9 — prefer the typed preferredBoard, fall back to the legacy
+      // free-string educationBoard so existing teachers see their board.
+      const board = profile.preferredBoard ?? profile.educationBoard;
+      if (board && (EDUCATION_BOARDS as readonly string[]).includes(board)) {
+        setProfBoard(board as EducationBoard);
+      }
     } catch {
       // Non-blocking — form stays blank, user can fill manually
     }
@@ -213,12 +226,19 @@ export default function SettingsPage() {
   const handleExport = async () => {
     if (!user) return;
     setExporting(true);
+    // BUG #31 (2026-05-28): Defense-in-depth client timeout so the spinner can
+    // never spin forever even if the request stalls. The server-side hang
+    // (archiver back-pressure deadlock) is fixed in /api/export, but a slow
+    // network or proxy could still leave fetch pending; abort after 100s.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 100_000);
     try {
       const token = await getIdToken();
       const res = await fetch('/api/export', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ includeProfile: true, includeAnalytics: true }),
+        signal: controller.signal,
       });
       if (res.headers.get('content-type')?.includes('application/zip')) {
         const blob = await res.blob();
@@ -229,14 +249,19 @@ export default function SettingsPage() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        const data = await res.json();
-        if (data.jobId) {
+        // Non-ZIP response: either an async-job acknowledgement, or an error.
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.jobId) {
           alert(t('Large export started. You will be notified when it is ready.'));
+        } else {
+          // Surface server errors (e.g. 500) instead of silently doing nothing.
+          alert(t('Export failed. Please try again.'));
         }
       }
     } catch {
       alert(t('Export failed. Please try again.'));
     } finally {
+      clearTimeout(timeout);
       setExporting(false);
     }
   };
@@ -277,6 +302,7 @@ export default function SettingsPage() {
       };
       if (profYears !== '') body.yearsOfExperience = Number(profYears);
       if (profRole !== '') body.administrativeRole = profRole;
+      if (profBoard !== '') body.preferredBoard = profBoard;
 
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
@@ -308,8 +334,8 @@ export default function SettingsPage() {
     return (
       <AuthGate
         icon={SettingsIcon}
-        title="Sign in to manage settings"
-        description="Sign in to customise your language, plan preferences, and notification settings."
+        title={t("Sign in to manage settings")}
+        description={t("Sign in to customise your language, plan preferences, and notification settings.")}
       >
         {null}
       </AuthGate>
@@ -328,10 +354,10 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
-      <div className="card-accent-bar rounded-t-xl" />
+      <div className="card-accent-bar rounded-t-md" />
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your preferences, plan, and data</p>
+        <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">{t("Settings")}</h1>
+        <p className="text-sm text-muted-foreground">{t("Manage your preferences, plan, and data")}</p>
       </div>
 
       {/* ─── Profile Photo ─── */}
@@ -339,11 +365,10 @@ export default function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-headline">
             <UserCircle className="h-5 w-5" />
-            Profile Photo
+            {t("Profile Photo")}
           </CardTitle>
           <CardDescription>
-            Your photo appears on your library, community posts, and profile.
-            By default we use your Google account photo — upload a custom one to override it.
+            {t("Your photo appears on your library, community posts, and profile. By default we use your Google account photo — upload a custom one to override it.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -379,15 +404,15 @@ export default function SettingsPage() {
                   disabled={photoUploading}
                 >
                   {photoUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
-                  {photoUrl ? 'Change photo' : 'Upload photo'}
+                  {photoUrl ? t('Change photo') : t('Upload photo')}
                 </Button>
                 {photoUrl && (
                   <Button type="button" size="sm" variant="ghost" onClick={handleRemovePhoto} disabled={photoUploading}>
-                    Remove custom photo
+                    {t("Remove custom photo")}
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">JPG, PNG, or WebP. Max 4MB.</p>
+              <p className="text-xs text-muted-foreground">{t("JPG, PNG, or WebP. Max 4MB.")}</p>
               {photoError && <p className="text-xs text-destructive">{photoError}</p>}
             </div>
           </div>
@@ -399,32 +424,50 @@ export default function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-headline">
             <GraduationCap className="h-5 w-5" />
-            Professional Profile
+            {t("Professional Profile")}
           </CardTitle>
-          <CardDescription>Help AI tailor responses to your experience level</CardDescription>
+          <CardDescription>{t("Help AI tailor responses to your experience level")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Years of Experience */}
           <div className="space-y-1.5">
-            <Label htmlFor="prof-years" className="text-sm font-medium">Years of Experience</Label>
+            <Label htmlFor="prof-years" className="text-sm font-medium">{t("Years of Experience")}</Label>
             <Input
               id="prof-years"
               type="number"
               min={0}
               max={60}
-              placeholder="e.g. 8"
+              placeholder={t("e.g. 8")}
               value={profYears}
               onChange={(e) => setProfYears(e.target.value)}
               className="max-w-[160px]"
             />
           </div>
 
+          {/* Education Board (QA #9) — board-aligned AI content */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("Education Board")}</Label>
+            <Select value={profBoard} onValueChange={(v) => setProfBoard(v as EducationBoard)}>
+              <SelectTrigger className="max-w-[320px]">
+                <SelectValue placeholder={t("Select your board")} />
+              </SelectTrigger>
+              <SelectContent>
+                {EDUCATION_BOARDS.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {t(b)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("We use your board to align AI-generated papers, quizzes and lessons.")}</p>
+          </div>
+
           {/* Administrative Role */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Administrative Role</Label>
+            <Label className="text-sm font-medium">{t("Administrative Role")}</Label>
             <Select value={profRole} onValueChange={(v) => setProfRole(v as AdministrativeRole)}>
               <SelectTrigger className="max-w-[260px]">
-                <SelectValue placeholder="Select role" />
+                <SelectValue placeholder={t("Select role")} />
               </SelectTrigger>
               <SelectContent>
                 {ADMINISTRATIVE_ROLES.map((role) => (
@@ -438,7 +481,7 @@ export default function SettingsPage() {
 
           {/* Qualifications */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Qualifications</Label>
+            <Label className="text-sm font-medium">{t("Qualifications")}</Label>
             <div className="card-section">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {QUALIFICATIONS.map((q) => (
@@ -460,9 +503,9 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <Button size="sm" onClick={handleSaveProfProfile} disabled={profSaving}>
                 {profSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                Save Profile
+                {t("Save Profile")}
               </Button>
-              {profSaved && <span className="text-sm text-green-600 font-medium">Saved</span>}
+              {profSaved && <span className="text-sm text-green-600 font-medium">{t("Saved")}</span>}
             </div>
             {profError && <p className="text-sm text-destructive">{profError}</p>}
           </div>
@@ -475,8 +518,8 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-sm font-medium">Language</p>
-              <p className="text-xs text-muted-foreground">App interface & AI output language</p>
+              <p className="text-sm font-medium">{t("Language")}</p>
+              <p className="text-xs text-muted-foreground">{t("App interface & AI output language")}</p>
             </div>
           </div>
           <Select
@@ -495,6 +538,33 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* ─── Appearance ─── */}
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            {themeMounted && theme === 'dark'
+              ? <Moon className="h-5 w-5 text-muted-foreground shrink-0" />
+              : <Sun className="h-5 w-5 text-muted-foreground shrink-0" />}
+            <div>
+              <p className="text-sm font-medium">{t("Theme")}</p>
+              <p className="text-xs text-muted-foreground">{t("Appearance")}</p>
+            </div>
+          </div>
+          <Select
+            value={themeMounted ? (theme === 'dark' ? 'dark' : 'light') : 'light'}
+            onValueChange={(val) => setTheme(val)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">{t("Light")}</SelectItem>
+              <SelectItem value="dark">{t("Dark")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       {/* ─── Plan & Billing ─── */}
       <Card>
         <CardContent className="py-4 space-y-4">
@@ -502,14 +572,14 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <CreditCard className="h-5 w-5 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-sm font-medium">Plan & Billing</p>
-                <p className="text-xs text-muted-foreground">Manage your subscription</p>
+                <p className="text-sm font-medium">{t("Plan & Billing")}</p>
+                <p className="text-xs text-muted-foreground">{t("Manage your subscription")}</p>
               </div>
             </div>
             <Badge
               variant="outline"
               className={isPro
-                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                ? 'bg-primary/10 text-primary border-primary/20'
                 : 'bg-muted/40 text-muted-foreground border-border'
               }
             >
@@ -521,19 +591,19 @@ export default function SettingsPage() {
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" asChild className="flex-1">
               <Link href="/usage">
-                View Usage <ChevronRight className="h-4 w-4 ml-1" />
+                {t("View Usage")} <ChevronRight className="h-4 w-4 ml-1" />
               </Link>
             </Button>
             {!isPro ? (
-              <Button size="sm" asChild className="flex-1 bg-amber-600 hover:bg-amber-700">
+              <Button size="sm" asChild className="flex-1">
                 <Link href="/pricing">
-                  Upgrade to Pro <ArrowRight className="h-4 w-4 ml-1" />
+                  {t("Upgrade to Pro")} <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
             ) : (
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <Link href="/pricing">
-                  Manage Plan <ChevronRight className="h-4 w-4 ml-1" />
+                  {t("Manage Plan")} <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
             )}
@@ -546,35 +616,35 @@ export default function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-headline">
             <Shield className="h-5 w-5" />
-            Privacy & Data
+            {t("Privacy & Data")}
           </CardTitle>
-          <CardDescription>Control how your data is used</CardDescription>
+          <CardDescription>{t("Control how your data is used")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <ConsentRow
-            label="Usage Analytics"
-            description="Help improve SahayakAI with anonymized usage patterns"
+            label={t("Usage Analytics")}
+            description={t("Help improve SahayakAI with anonymized usage patterns")}
             checked={consent?.analytics ?? true}
             onChange={(v) => updateConsent('analytics', v)}
             disabled={saving}
           />
           <ConsentRow
-            label="Community Visibility"
-            description="Make your profile visible to other teachers"
+            label={t("Community Visibility")}
+            description={t("Make your profile visible to other teachers")}
             checked={consent?.communityVisibility ?? true}
             onChange={(v) => updateConsent('communityVisibility', v)}
             disabled={saving}
           />
           <ConsentRow
-            label="Product Updates"
-            description="Receive notifications about new features"
+            label={t("Product Updates")}
+            description={t("Receive notifications about new features")}
             checked={consent?.productUpdates ?? true}
             onChange={(v) => updateConsent('productUpdates', v)}
             disabled={saving}
           />
           <ConsentRow
-            label="AI Training Data"
-            description="Allow anonymized content to improve AI models"
+            label={t("AI Training Data")}
+            description={t("Allow anonymized content to improve AI models")}
             checked={consent?.aiTrainingData ?? false}
             onChange={(v) => updateConsent('aiTrainingData', v)}
             disabled={saving}
@@ -588,12 +658,12 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <Download className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-sm font-medium">Export Your Data</p>
-              <p className="text-xs text-muted-foreground">Download all content as ZIP</p>
+              <p className="text-sm font-medium">{t("Export Your Data")}</p>
+              <p className="text-xs text-muted-foreground">{t("Download all content as ZIP")}</p>
             </div>
           </div>
           <Button onClick={handleExport} disabled={exporting} variant="outline" size="sm">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Export'}
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('Export')}
           </Button>
         </CardContent>
       </Card>

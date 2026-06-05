@@ -75,7 +75,7 @@ export const ProfileCard: FC<ProfileCardProps> = ({ name, avatarUrl, stats, lang
   const t = translations[language] || translations.en;
 
   return (
-    <Card className="w-full bg-white/30 backdrop-blur-lg border-white/40 shadow-xl overflow-hidden">
+    <Card className="w-full bg-card/30 backdrop-blur-lg border-border/40 shadow-xl overflow-hidden">
       <div className="h-24 bg-gradient-to-r from-primary/50 to-accent/50" />
       <CardContent className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-6 pt-0">
         <Avatar className="-mt-12 h-24 w-24 border-4 border-background">

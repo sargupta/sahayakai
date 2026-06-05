@@ -28,6 +28,71 @@
   .container-wide    { @apply max-w-7xl mx-auto px-4 md:px-10; }
 
   /* ========================================
+     FORCE-LIGHT — MARKETING / PUBLIC PAGES (2026-05-28)
+     The marketing/landing pages are intentionally branded light and
+     have no theme toggle. A logged-in teacher who toggled global dark
+     mode (next-themes adds `.dark` on <html>) would otherwise inherit
+     the dark palette and break these pages (~80 hardcoded light-only
+     colors). Rather than fight the html class, we re-declare every
+     token the `.dark` scope overrides, restoring the `:root` light
+     values for this subtree only. Apply `className="force-light"` on
+     the root wrapper of any marketing/public page or layout.
+
+     Token values are copied verbatim from the `:root` light block
+     below — keep them in sync if the light palette ever changes.
+     ======================================== */
+  .force-light {
+    --background: 40 20% 99.5%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 28 70% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 123 37% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 240 100% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 93%;
+    --input: 220 16% 90%;
+    --ring: 28 70% 59%;
+
+    --chart-1: 28 70% 59%;
+    --chart-2: 123 37% 25%;
+    --chart-3: 240 100% 25%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 340 82% 52%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 28 70% 95%;
+    --sidebar-accent-foreground: 28 70% 59%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 28 70% 59%;
+
+    /* Paint this subtree's own surface light too, so any element that
+       relies on inherited body background (not an explicit bg-*) reads
+       correctly. */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* ========================================
      NCERT DEMO POLISH (2026-05-19)
      Indic-script readability utility — applies generous line-height,
      subtle letter-tracking, and word-wrap rules that work across the
@@ -204,57 +269,62 @@
   }
 
   .dark {
-    /* Dark mode with Saffron accents */
-    --background: 222 47% 11%;
-    /* Dark Gray */
-    --foreground: 210 40% 98%;
-    /* Off-white */
+    /* Dark mode — refined neutral-warm scale with Saffron accents.
+       Layered elevation: background < card < muted < border so surfaces
+       read with depth instead of a single flat navy. Lower saturation than
+       the old 47%/33% values for a softer, premium near-black (Linear/
+       Vercel register) rather than a harsh cold navy. */
+    --background: 222 18% 9%;
+    /* Soft near-black base */
+    --foreground: 210 30% 96%;
+    /* Off-white, slightly warmer */
 
-    --card: 217 33% 17%;
-    /* Dark Card */
-    --card-foreground: 210 40% 98%;
+    --card: 222 16% 13%;
+    /* Elevated surface — clearly above background */
+    --card-foreground: 210 30% 96%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 16% 14%;
+    --popover-foreground: 210 30% 96%;
 
-    --primary: 28 70% 59%;
-    /* Keep Saffron bright */
+    --primary: 28 80% 60%;
+    /* Saffron, a touch brighter so it pops on the darker base */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 123 37% 35%;
+    --secondary: 123 33% 40%;
     /* Lighter green for dark mode */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 222 14% 17%;
+    --muted-foreground: 215 16% 64%;
 
-    --accent: 240 100% 35%;
-    /* Lighter navy */
-    --accent-foreground: 0 0% 100%;
+    --accent: 222 15% 20%;
+    /* Subtle elevated hover surface (was a jarring bright navy) */
+    --accent-foreground: 210 30% 96%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 28 70% 59%;
+    --border: 222 13% 22%;
+    /* Visible separators — lighter than card so edges show */
+    --input: 222 13% 22%;
+    --ring: 28 80% 60%;
     /* Saffron focus ring */
 
-    --chart-1: 28 70% 59%;
-    --chart-2: 123 37% 45%;
-    --chart-3: 240 100% 45%;
-    --chart-4: 43 96% 66%;
-    --chart-5: 340 82% 62%;
+    --chart-1: 28 80% 60%;
+    --chart-2: 123 37% 50%;
+    --chart-3: 217 60% 60%;
+    --chart-4: 43 90% 66%;
+    --chart-5: 340 70% 64%;
 
-    /* Sidebar - Dark Mode */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 28 70% 59%;
+    /* Sidebar - Dark Mode (one step darker than content for separation) */
+    --sidebar-background: 222 20% 7%;
+    --sidebar-foreground: 210 30% 96%;
+    --sidebar-primary: 28 80% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 28 70% 59%;
+    --sidebar-accent: 222 15% 16%;
+    --sidebar-accent-foreground: 210 30% 96%;
+    --sidebar-border: 222 13% 18%;
+    --sidebar-ring: 28 80% 60%;
   }
 }
 

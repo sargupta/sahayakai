@@ -55,7 +55,7 @@ export function EditProfileDialog({ userId, isOpen, onClose, initialData }: Edit
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] rounded-[2rem] p-8 border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto rounded-[2rem] p-8 border-none shadow-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-black font-headline tracking-tight">{t("Edit Professional Profile")}</DialogTitle>
                     <DialogDescription className="text-muted-foreground font-medium">

@@ -23,6 +23,28 @@ import { Writable } from 'stream';
 
 export type ExportFormat = 'json' | 'csv' | 'html'; // HTML is print-to-PDF ready
 
+/**
+ * Build an ASCII-safe document <title> for print-to-PDF HTML.
+ *
+ * The browser's "Save as PDF" dialog suggests a filename derived from the
+ * document <title>. Non-Latin scripts (e.g. Tamil, Hindi) get stripped by the
+ * OS file picker, so a title like "வினா - Quiz" collapses to a bare " - Quiz",
+ * producing a filename that begins with a dash. We sanitise to ASCII and fall
+ * back to a generic label whenever nothing usable survives, so the suggested
+ * filename is always clean (e.g. "Quiz", never "- Quiz").
+ */
+function pdfDocTitle(rawTitle: string | undefined | null, fallback: string, suffix?: string): string {
+  const ascii = (rawTitle || '')
+    .replace(/[^a-zA-Z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Only append the suffix when a real (Latin) title survived sanitising.
+  // Otherwise return the bare fallback so the suggested filename never begins
+  // with a dash (e.g. "Quiz", not "- Quiz" or "Quiz - Quiz").
+  if (!ascii) return fallback;
+  return suffix ? `${ascii} ${suffix}` : ascii;
+}
+
 export interface ExportRequest {
   userId: string;
   /** If set, export only these content types. Empty = all. */
@@ -321,7 +343,7 @@ export const dataExportService = {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>${metadata.title || plan.title}</title>
+  <title>${pdfDocTitle(metadata.title || plan.title, 'Lesson Plan')}</title>
   <style>
     body { font-family: 'Noto Sans', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
     h1 { color: #1B5E20; border-bottom: 2px solid #4CAF50; padding-bottom: 8px; }
@@ -404,7 +426,7 @@ export const dataExportService = {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>${metadata.title || metadata.topic} - Quiz</title>
+  <title>${pdfDocTitle(metadata.title || metadata.topic, 'Quiz', '- Quiz')}</title>
   <style>
     body { font-family: 'Noto Sans', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
     h1 { color: #1B5E20; }

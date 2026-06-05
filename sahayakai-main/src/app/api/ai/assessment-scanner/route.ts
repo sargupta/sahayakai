@@ -36,6 +36,7 @@ import { gradeAssessment } from '@/ai/flows/assessment-scanner';
 import { handleAIError } from '@/lib/ai-error-response';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { dbAdapter } from '@/lib/db/adapter';
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
 
@@ -140,6 +141,19 @@ async function _handler(request: Request) {
             );
         }
 
+        // QA #9 — default the education board to the teacher's saved board so
+        // grading rubrics are board-aligned, without requiring a board field
+        // in the scanner UI. Only fills the gap; an explicit client value wins.
+        if (!candidate.educationBoard) {
+            try {
+                const profile = await dbAdapter.getUser(userId) as { preferredBoard?: string; educationBoard?: string } | null;
+                const board = profile?.preferredBoard ?? profile?.educationBoard;
+                if (board) candidate.educationBoard = board;
+            } catch {
+                // Non-fatal — proceed without a board hint.
+            }
+        }
+
         // Schema parse runs LAST so the targeted guards above own their own
         // error messages.
         const body = AssessmentScannerInputSchema.parse({ ...candidate, userId });
@@ -147,9 +161,84 @@ async function _handler(request: Request) {
         const result = await gradeAssessment(body);
         return NextResponse.json(result);
     } catch (error) {
+        // BUG #3 hardening: map KNOWN, user-fixable failure causes to a
+        // specific 422 with an actionable message, instead of letting them
+        // fall through to handleAIError's generic "AI generation failed" 500.
+        // Detect by `.code` (duck-typed) so we don't couple the route bundle
+        // to the flow's error classes / a possibly-divergent zod identity.
+        const code = (error as { code?: string } | null)?.code;
+
+        if (code === 'PAGE_UNREADABLE') {
+            // Already logged at ERROR inside the flow with the raw fetch error.
+            return NextResponse.json(
+                {
+                    error: 'page_unreadable',
+                    code: 'PAGE_UNREADABLE',
+                    message:
+                        (error as { message?: string }).message ??
+                        'One of the uploaded pages could not be read. Please re-upload it and try again.',
+                    pageNumber: (error as { pageNumber?: number }).pageNumber,
+                },
+                { status: 422 },
+            );
+        }
+
+        if (code === 'EMPTY_EXTRACTION') {
+            return NextResponse.json(
+                {
+                    error: 'empty_extraction',
+                    code: 'EMPTY_EXTRACTION',
+                    message:
+                        (error as { message?: string }).message ??
+                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
+                },
+                { status: 422 },
+            );
+        }
+
+        // BUG #23 hardening: Pass-2 frequently throws a ZodError-shaped
+        // failure when the Gemini structured output doesn't satisfy the
+        // graded-question schema (e.g. missing `marksAwarded`, malformed
+        // `partialCreditBreakdown`). The flow logs the raw output at ERROR
+        // already; here we surface a specific 422 with an actionable
+        // message instead of leaking `handleAIError`'s 400 "Request body
+        // failed schema validation" (which is wrong — the body was fine,
+        // the *output* didn't validate) or its generic 500 "AI generation
+        // failed". `ZodError.name === 'ZodError'` AND a populated `issues`
+        // array is the duck-type Genkit re-throws here.
+        const errName = (error as { name?: string } | null)?.name;
+        const hasIssues = Array.isArray((error as { issues?: unknown } | null)?.issues);
+        if (errName === 'ZodError' && hasIssues) {
+            // Distinguish: input-body Zod errors come from `AssessmentScannerInputSchema.parse`
+            // and have `issues[].path` rooted at request fields (subject, pageUrls, etc.).
+            // Output-shape Zod errors come from Pass-2 / aggregate validation.
+            const issues = (error as { issues: Array<{ path: (string | number)[] }> }).issues;
+            const inputFields = new Set([
+                'subject', 'pageUrls', 'pageUrl', 'gradeLevel', 'language',
+                'assessmentId', 'studentId', 'classId', 'ncertChapterIds',
+                'totalMaxMarks', 'teacherAnswerKeyText', 'educationBoard', 'userId',
+            ]);
+            const isInputError = issues.some(i => inputFields.has(String(i.path?.[0] ?? '')));
+            if (!isInputError) {
+                return NextResponse.json(
+                    {
+                        error: 'scan_unstructured',
+                        code: 'SCAN_OUTPUT_MALFORMED',
+                        message:
+                            "We couldn't structure the scan results — please re-upload clearer photos or try again in a moment.",
+                    },
+                    { status: 422 },
+                );
+            }
+        }
+
         return handleAIError(error, 'ASSESSMENT_SCANNER', {
             message: `Assessment Scanner API failed for assessmentId: "${assessmentId}"`,
             userId: request.headers.get('x-user-id'),
+            extra: {
+                assessmentId,
+                errorType: errName,
+            },
         });
     }
 }

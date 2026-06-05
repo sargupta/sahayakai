@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ResultShell } from "@/components/ui/result-shell";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
@@ -36,49 +37,13 @@ import {
 import type { AssessAssignmentOutput } from "@/ai/flows/assignment-assessor";
 import { useEffect, useRef, useState } from "react";
 
-type Translations = Record<string, Record<string, string>>;
-
-const translations: Translations = {
-  en: {
-    title: "Assessment result",
-    subtitle: "AI-graded against the rubric below.",
-    verifyBanner: "AI-generated grade. Please verify the transcript and feedback before sharing with the student or parent.",
-    overall: "Overall",
-    pointsLabel: "{{earned}} of {{total}} points",
-    criteriaHeading: "Per-criterion scores",
-    criteriaColCriterion: "Criterion",
-    criteriaColLevel: "Level",
-    criteriaColPoints: "Points",
-    criteriaColFeedback: "Feedback",
-    criteriaColConfidence: "Confidence",
-    strengthsHeading: "Strengths",
-    improvementsHeading: "Things to improve",
-    nextStepsHeading: "Next steps",
-    teacherNoteHeading: "Note for the student",
-    transcriptHeading: "What the AI read",
-    transcriptHelp: "Edit if any line looks wrong, then save to keep your version.",
-    saveTranscript: "Save edited transcript",
-    saved: "Saved",
-    modelConfidence: "Model confidence",
-    playAudio: "Play feedback",
-    stopAudio: "Stop playback",
-    audioLoading: "Loading audio…",
-    audioFailed: "Could not play feedback. Please try again.",
-    download: "Download PDF",
-    downloading: "Preparing PDF…",
-    downloadFailed: "PDF download failed.",
-    save: "Saved to library",
-    share: "Share",
-    shareCopied: "Copied feedback to clipboard.",
-    shareFailed: "Share failed.",
-    comingSoon: "Coming in the next update",
-    warning_page_appears_blank: "The page looked blank or unreadable. Score set to 0.",
-    warning_low_contrast: "Low-contrast photo — accuracy may be reduced.",
-    warning_partial_writing: "Some regions of the page were partial or unclear.",
-    warning_blank_transcript_hallucination_repaired: "AI's grade was contradicted by a blank transcript and was reset to 0.",
-    warning_language_mismatch: "Feedback language did not match the requested language.",
-    warningTitle: "Heads up",
-  },
+// Local `translations` removed (Wave 6 cleanup). All strings now via global useLanguage().
+const WARNING_STRINGS: Record<string, string> = {
+  page_appears_blank: "The page looked blank or unreadable. Score set to 0.",
+  low_contrast: "Low-contrast photo — accuracy may be reduced.",
+  partial_writing: "Some regions of the page were partial or unclear.",
+  blank_transcript_hallucination_repaired: "AI's grade was contradicted by a blank transcript and was reset to 0.",
+  language_mismatch: "Feedback language did not match the requested language.",
 };
 
 export interface AssessmentResultProps {
@@ -95,7 +60,7 @@ export function AssessmentResult({
   onTranscriptSave,
   getAuthToken,
 }: AssessmentResultProps) {
-  const t = translations[language] || translations.en;
+  const { t } = useLanguage();
   const [editedTranscript, setEditedTranscript] = useState(
     result.editedTranscript ?? result.rawTranscript ?? "",
   );
@@ -122,7 +87,7 @@ export function AssessmentResult({
       return;
     }
     if (!getAuthToken) {
-      toast({ title: t.audioFailed, variant: "destructive" });
+      toast({ title: t("Could not play feedback. Please try again."), variant: "destructive" });
       return;
     }
     setAudioLoading(true);
@@ -145,7 +110,7 @@ export function AssessmentResult({
       audio.onended = () => setAudioPlaying(false);
       audio.onerror = () => {
         setAudioPlaying(false);
-        toast({ title: t.audioFailed, variant: "destructive" });
+        toast({ title: t("Could not play feedback. Please try again."), variant: "destructive" });
       };
       audioRef.current?.pause();
       audioRef.current = audio;
@@ -153,7 +118,7 @@ export function AssessmentResult({
       setAudioPlaying(true);
     } catch (err) {
       console.error("[AssessmentResult] TTS failed", err);
-      toast({ title: t.audioFailed, variant: "destructive" });
+      toast({ title: t("Could not play feedback. Please try again."), variant: "destructive" });
     } finally {
       setAudioLoading(false);
     }
@@ -171,11 +136,11 @@ export function AssessmentResult({
       });
       if (!out.ok) {
         console.error("[AssessmentResult] PDF failed", out.error);
-        toast({ title: t.downloadFailed, variant: "destructive" });
+        toast({ title: t("PDF download failed."), variant: "destructive" });
       }
     } catch (err) {
       console.error("[AssessmentResult] PDF threw", err);
-      toast({ title: t.downloadFailed, variant: "destructive" });
+      toast({ title: t("PDF download failed."), variant: "destructive" });
     } finally {
       setPdfBusy(false);
     }
@@ -188,26 +153,26 @@ export function AssessmentResult({
         share?: (data: { title: string; text: string }) => Promise<void>;
       }) : null;
       if (nav?.share) {
-        await nav.share({ title: "SahayakAI Assessment", text: summary });
+        await nav.share({ title: t("SahayakAI Assessment"), text: summary });
         return;
       }
       if (nav?.clipboard?.writeText) {
         await nav.clipboard.writeText(summary);
-        toast({ title: t.shareCopied });
+        toast({ title: t("Copied feedback to clipboard.") });
         return;
       }
       throw new Error("share-and-clipboard-unavailable");
     } catch (err) {
       console.error("[AssessmentResult] share failed", err);
-      toast({ title: t.shareFailed, variant: "destructive" });
+      toast({ title: t("Share failed."), variant: "destructive" });
     }
   }
 
   return (
     <ResultShell
       id="assessment-pdf"
-      title={t.title}
-      description={t.subtitle}
+      title={t("Assessment result")}
+      description={t("AI-graded against the rubric below.")}
       icon={<ClipboardCheck className="h-6 w-6 text-primary" />}
       meta={[
         { value: result.rubricSnapshot.title || "Rubric" },
@@ -216,7 +181,7 @@ export function AssessmentResult({
       ]}
       actions={[
         {
-          label: audioPlaying ? t.stopAudio : audioLoading ? t.audioLoading : t.playAudio,
+          label: audioPlaying ? t("Stop playback") : audioLoading ? t("Loading audio…") : t("Play feedback"),
           icon: audioLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : audioPlaying ? (
@@ -229,7 +194,7 @@ export function AssessmentResult({
           variant: "default",
         },
         {
-          label: pdfBusy ? t.downloading : t.download,
+          label: pdfBusy ? t("Preparing PDF…") : t("Download PDF"),
           icon: pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />,
           onClick: handleDownloadPdf,
           disabled: pdfBusy,
@@ -237,8 +202,8 @@ export function AssessmentResult({
         },
         // Save is always-on: the assessment flow auto-persists to the user's
         // library, so this is a confirmation chip rather than an action.
-        { label: t.save, icon: <CheckCircle className="h-4 w-4" />, onClick: () => undefined, disabled: true, variant: "outline" },
-        { label: t.share, icon: <Share2 className="h-4 w-4" />, onClick: handleShare, variant: "outline" },
+        { label: t("Saved to library"), icon: <CheckCircle className="h-4 w-4" />, onClick: () => undefined, disabled: true, variant: "outline" },
+        { label: t("Share"), icon: <Share2 className="h-4 w-4" />, onClick: handleShare, variant: "outline" },
       ]}
     >
       <div className="space-y-6">
@@ -248,18 +213,18 @@ export function AssessmentResult({
           className="flex items-start gap-3 rounded-xl border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-900"
         >
           <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-600" />
-          <p>{t.verifyBanner}</p>
+          <p>{t("AI-generated grade. Please verify the transcript and feedback before sharing with the student or parent.")}</p>
         </div>
 
         {result.warnings.length > 0 && (
           <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-3 space-y-2">
             <p className="flex items-center gap-2 text-sm font-semibold text-orange-900">
               <AlertTriangle className="h-4 w-4" />
-              {t.warningTitle}
+              {t("Heads up")}
             </p>
             <ul className="text-sm text-orange-900 list-disc pl-6">
               {result.warnings.map((w) => (
-                <li key={w}>{t[`warning_${w}`] || w}</li>
+                <li key={w}>{WARNING_STRINGS[w] ? t(WARNING_STRINGS[w]) : w}</li>
               ))}
             </ul>
           </div>
@@ -271,9 +236,9 @@ export function AssessmentResult({
           earned={result.pointsEarned}
           total={result.pointsPossible}
           confidence={result.confidenceOverall}
-          labelOverall={t.overall}
-          labelConfidence={t.modelConfidence}
-          labelPoints={t.pointsLabel
+          labelOverall={t("Overall")}
+          labelConfidence={t("Model confidence")}
+          labelPoints={t("{{earned}} of {{total}} points")
             .replace("{{earned}}", String(result.pointsEarned))
             .replace("{{total}}", String(result.pointsPossible))}
         />
@@ -281,17 +246,17 @@ export function AssessmentResult({
         {/* Per-criterion table */}
         <section className="space-y-2">
           <h3 className="font-headline text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t.criteriaHeading}
+            {t("Per-criterion scores")}
           </h3>
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
             <table className="w-full text-sm border-collapse min-w-[640px]">
               <thead>
                 <tr className="text-left bg-primary/10">
-                  <th className="px-3 py-2 font-semibold rounded-tl-lg">{t.criteriaColCriterion}</th>
-                  <th className="px-3 py-2 font-semibold">{t.criteriaColLevel}</th>
-                  <th className="px-3 py-2 font-semibold">{t.criteriaColPoints}</th>
-                  <th className="px-3 py-2 font-semibold">{t.criteriaColFeedback}</th>
-                  <th className="px-3 py-2 font-semibold rounded-tr-lg">{t.criteriaColConfidence}</th>
+                  <th className="px-3 py-2 font-semibold rounded-tl-lg">{t("Criterion")}</th>
+                  <th className="px-3 py-2 font-semibold">{t("Level")}</th>
+                  <th className="px-3 py-2 font-semibold">{t("Points")}</th>
+                  <th className="px-3 py-2 font-semibold">{t("Feedback")}</th>
+                  <th className="px-3 py-2 font-semibold rounded-tr-lg">{t("Confidence")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -319,19 +284,19 @@ export function AssessmentResult({
         {/* Strengths / improvements / next steps */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FeedbackList
-            heading={t.strengthsHeading}
+            heading={t("Strengths")}
             icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
             items={result.strengths}
             tint="emerald"
           />
           <FeedbackList
-            heading={t.improvementsHeading}
+            heading={t("Things to improve")}
             icon={<TrendingUp className="h-4 w-4 text-orange-600" />}
             items={result.improvements}
             tint="orange"
           />
           <FeedbackList
-            heading={t.nextStepsHeading}
+            heading={t("Next steps")}
             icon={<Sparkles className="h-4 w-4 text-violet-600" />}
             items={result.nextSteps}
             tint="violet"
@@ -342,7 +307,7 @@ export function AssessmentResult({
         <section className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
           <h3 className="flex items-center gap-2 font-headline text-sm font-semibold mb-2">
             <Lightbulb className="h-4 w-4 text-primary" />
-            {t.teacherNoteHeading}
+            {t("Note for the student")}
           </h3>
           <p className="text-sm leading-relaxed">{result.teacherNote}</p>
         </section>
@@ -350,9 +315,9 @@ export function AssessmentResult({
         {/* Transcript (editable) */}
         <section className="space-y-2">
           <h3 className="font-headline text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t.transcriptHeading}
+            {t("What the AI read")}
           </h3>
-          <p className="text-xs text-muted-foreground">{t.transcriptHelp}</p>
+          <p className="text-xs text-muted-foreground">{t("Edit if any line looks wrong, then save to keep your version.")}</p>
           <Textarea
             value={editedTranscript}
             onChange={(e) => {
@@ -375,9 +340,9 @@ export function AssessmentResult({
                   setTranscriptSaved(true);
                 }}
               >
-                {t.saveTranscript}
+                {t("Save edited transcript")}
               </Button>
-              {transcriptSaved && <span className="text-xs text-emerald-700">{t.saved}</span>}
+              {transcriptSaved && <span className="text-xs text-emerald-700">{t("Saved")}</span>}
             </div>
           )}
         </section>
@@ -549,19 +514,19 @@ function bcp47FromIso(language: string | undefined | null): string | undefined {
 
 function buildFeedbackSpeech(
   result: AssessAssignmentOutput,
-  t: Record<string, string>,
+  t: (key: string) => string,
 ): string {
   const lines: string[] = [];
-  lines.push(`${t.overall} ${Math.round(result.overallScore)} percent.`);
+  lines.push(`${t("Overall")} ${Math.round(result.overallScore)} percent.`);
   if (result.teacherNote) lines.push(result.teacherNote);
   for (const c of result.perCriterionScores) {
     lines.push(`${c.criterionName}: ${c.feedback}`);
   }
   if (result.improvements.length) {
-    lines.push(`${t.improvementsHeading}: ${result.improvements.join(". ")}`);
+    lines.push(`${t("Things to improve")}: ${result.improvements.join(". ")}`);
   }
   if (result.nextSteps.length) {
-    lines.push(`${t.nextStepsHeading}: ${result.nextSteps.join(". ")}`);
+    lines.push(`${t("Next steps")}: ${result.nextSteps.join(". ")}`);
   }
   return lines.join(" \n");
 }

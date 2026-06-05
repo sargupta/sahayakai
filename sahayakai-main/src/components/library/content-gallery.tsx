@@ -298,10 +298,10 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 <body>
     <h1>${content.title || content.topic || 'Content'}</h1>
     <div class="metadata">
-        <p><strong>Type:</strong> ${type}</p>
-        ${content.grade_level ? `<p><strong>Class:</strong> ${content.grade_level}</p>` : ''}
-        ${content.language ? `<p><strong>Language:</strong> ${content.language}</p>` : ''}
-        ${content.subject ? `<p><strong>Subject:</strong> ${content.subject}</p>` : ''}
+        <p><strong>${t("Type:")}</strong> ${type}</p>
+        ${content.grade_level ? `<p><strong>${t("Class:")}</strong> ${content.grade_level}</p>` : ''}
+        ${content.language ? `<p><strong>${t("Language:")}</strong> ${content.language}</p>` : ''}
+        ${content.subject ? `<p><strong>${t("Subject:")}</strong> ${content.subject}</p>` : ''}
     </div>
     <div class="content">
         ${formatContentByType(content, type)}
@@ -355,7 +355,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                     html += '</ul>';
                 }
                 if (q.answer) {
-                    html += `<p><strong>Answer:</strong> ${q.answer}</p>`;
+                    html += `<p><strong>${t("Answer:")}</strong> ${q.answer}</p>`;
                 }
             });
         }
@@ -372,7 +372,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         let html = '<div>';
         if (content.criteria && Array.isArray(content.criteria)) {
             html += '<table border="1" cellpadding="10" style="width:100%; border-collapse: collapse;">';
-            html += '<thead><tr><th>Criteria</th><th>Description</th></tr></thead><tbody>';
+            html += `<thead><tr><th>${t("Criteria")}</th><th>${t("Description")}</th></tr></thead><tbody>`;
             content.criteria.forEach((criterion: any) => {
                 html += `<tr><td>${criterion.name || criterion.title}</td><td>${criterion.description || ''}</td></tr>`;
             });
@@ -384,41 +384,41 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white/40 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-card p-4 rounded-md border border-border shadow-soft">
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search your library..."
-                        className="pl-10 bg-white border-slate-200"
+                        placeholder={t("Search your library...")}
+                        className="pl-10 bg-card border-border"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        aria-label="Search your library"
+                        aria-label={t("Search your library")}
                     />
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="w-full md:w-48 bg-white border-slate-200">
-                            <SelectValue placeholder="All types" />
+                        <SelectTrigger className="w-full md:w-48 bg-card border-border">
+                            <SelectValue placeholder={t("All types")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Resources</SelectItem>
-                            <SelectItem value="lesson-plan">Lesson Plans</SelectItem>
-                            <SelectItem value="quiz">Quizzes</SelectItem>
-                            <SelectItem value="worksheet">Worksheets</SelectItem>
-                            <SelectItem value="visual-aid">Visual Aids</SelectItem>
-                            <SelectItem value="rubric">Rubrics</SelectItem>
-                            <SelectItem value="virtual-field-trip">Field Trips</SelectItem>
+                            <SelectItem value="all">{t("All Resources")}</SelectItem>
+                            <SelectItem value="lesson-plan">{t("Lesson Plans")}</SelectItem>
+                            <SelectItem value="quiz">{t("Quizzes")}</SelectItem>
+                            <SelectItem value="worksheet">{t("Worksheets")}</SelectItem>
+                            <SelectItem value="visual-aid">{t("Visual Aids")}</SelectItem>
+                            <SelectItem value="rubric">{t("Rubrics")}</SelectItem>
+                            <SelectItem value="virtual-field-trip">{t("Field Trips")}</SelectItem>
                         </SelectContent>
                     </Select>
 
-                    <div className="flex items-center border border-slate-200 rounded-lg p-1 bg-white">
+                    <div className="flex items-center border border-border rounded-md p-1 bg-card">
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
                             className="h-10 w-10 p-0"
                             onClick={() => setViewMode("grid")}
-                            aria-label="Grid view"
+                            aria-label={t("Grid view")}
                         >
                             <Grid className="h-4 w-4" />
                         </Button>
@@ -427,7 +427,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             size="sm"
                             className="h-10 w-10 p-0"
                             onClick={() => setViewMode("list")}
-                            aria-label="List view"
+                            aria-label={t("List view")}
                         >
                             <ListIcon className="h-4 w-4" />
                         </Button>
@@ -438,7 +438,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-32 gap-4">
                     <Loader2 className="h-12 w-12 animate-spin text-primary/60" />
-                    <p className="text-slate-500 font-medium animate-pulse">Fetching your creative workspace...</p>
+                    <p className="text-muted-foreground font-medium animate-pulse">{t("Fetching your creative workspace...")}</p>
                 </div>
             ) : filteredItems.length > 0 ? (
                 <div className="space-y-6">

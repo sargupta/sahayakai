@@ -8,6 +8,7 @@ import { getAuthToken } from "@/lib/get-auth-token";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
+import { getProfileData } from "@/app/actions/profile";
 import {
   FileText,
   BookOpen,
@@ -133,10 +134,29 @@ function ExamPaperPageInner() {
   const [markingSchemeOpen, setMarkingSchemeOpen] = useState(false);
 
   // ── Auth guard ─────────────────────────────────────────────────────────
+  // Guard so the teacher's preferred board is applied only once, on first
+  // load — never re-applied after they manually pick a different board.
+  const boardDefaultedRef = React.useRef(false);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setAuthed(!!user);
       setLoading(false);
+      // QA #9 — default the board field to the teacher's preferred board so
+      // generated papers are board-aligned out of the box. Falls back to the
+      // hardcoded "CBSE" default when no board is saved or it's unknown.
+      if (user && !boardDefaultedRef.current) {
+        getProfileData(user.uid)
+          .then(({ profile }) => {
+            const saved = (profile as { preferredBoard?: string; educationBoard?: string } | null);
+            const board = saved?.preferredBoard ?? saved?.educationBoard;
+            if (board && (EDUCATION_BOARDS as readonly string[]).includes(board) && !boardDefaultedRef.current) {
+              boardDefaultedRef.current = true;
+              setBoard(board);
+            }
+          })
+          .catch(() => { /* non-fatal — keep the CBSE default */ });
+      }
     });
     return () => unsub();
   }, []);
@@ -218,18 +238,18 @@ function ExamPaperPageInner() {
 
   const formatSectionPreview = useCallback((section: SectionBlueprint) => {
     const typeLabels: Record<string, string> = {
-      mcq: "MCQ",
-      very_short: "VSA",
-      short: "SA",
-      long: "LA",
-      case_study: "Case Study",
-      assertion_reason: "A-R",
-      map_based: "Map",
-      source_based: "Source",
+      mcq: t("MCQ"),
+      very_short: t("VSA"),
+      short: t("SA"),
+      long: t("LA"),
+      case_study: t("Case Study"),
+      assertion_reason: t("A-R"),
+      map_based: t("Map"),
+      source_based: t("Source"),
     };
     const typeLabel = typeLabels[section.questionType.type] || section.questionType.type;
     return `${section.questionCount} ${typeLabel} x ${section.questionType.marksPerQuestion}m`;
-  }, []);
+  }, [t]);
 
   // ── Generate paper ─────────────────────────────────────────────────────
 
@@ -237,6 +257,23 @@ function ExamPaperPageInner() {
     setError(null);
     setPaper(null);
     setSaved(false);
+
+    // BUG #21 guard: when there is no official blueprint for the chosen
+    // board/grade/subject, the AI route requires at least one chapter to
+    // anchor the paper (otherwise Gemini gets two open-ended constraints
+    // and either times out or returns a malformed paper). Mirror the
+    // server-side 400 here so the teacher gets a clear inline toast
+    // instead of submitting an empty form and seeing a generic API error.
+    const chapterListFromInput = chapters.length > 0
+      ? chapters
+      : chaptersInput.split(",").map((c) => c.trim()).filter(Boolean);
+    if (!matchedBlueprint && chapterListFromInput.length === 0) {
+      setError(
+        t("Please add at least one chapter for this board / grade / subject. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science."),
+      );
+      return;
+    }
+
     setGenerating(true);
 
     try {
@@ -352,7 +389,7 @@ function ExamPaperPageInner() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
         <AlertCircle className="w-12 h-12 text-muted-foreground" />
         <p className="text-muted-foreground text-center">
-          Please log in to generate exam papers.
+          {t("Please log in to generate exam papers.")}
         </p>
       </div>
     );
@@ -389,7 +426,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {EDUCATION_BOARDS.map((b) => (
                       <SelectItem key={b} value={b}>
-                        {b}
+                        {t(b)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -405,7 +442,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {GRADE_OPTIONS.map((g) => (
                       <SelectItem key={g} value={g}>
-                        {g}
+                        {t(g)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -424,7 +461,7 @@ function ExamPaperPageInner() {
                   <SelectContent>
                     {availableSubjects.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {s}
+                        {t(s)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -439,7 +476,7 @@ function ExamPaperPageInner() {
                   />
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Info className="w-3.5 h-3.5 shrink-0" />
-                    {t("No blueprint for")} {board} {gradeLevel} — {t("AI will generate a standard pattern.")}
+                    {t("No blueprint for")} {t(board)} {t(gradeLevel)} — {t("AI will generate a standard pattern.")}
                   </p>
                 </div>
               )}
@@ -452,11 +489,11 @@ function ExamPaperPageInner() {
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  {matchedBlueprint.duration} min
+                  {matchedBlueprint.duration} {t("min")}
                 </span>
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Award className="w-4 h-4" />
-                  {matchedBlueprint.maxMarks} marks
+                  {matchedBlueprint.maxMarks} {t("marks")}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -540,7 +577,7 @@ function ExamPaperPageInner() {
                 <SelectContent>
                   {DIFFICULTY_OPTIONS.map((d) => (
                     <SelectItem key={d} value={d}>
-                      {d.charAt(0).toUpperCase() + d.slice(1)}
+                      {t(d.charAt(0).toUpperCase() + d.slice(1))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -556,7 +593,7 @@ function ExamPaperPageInner() {
                 <SelectContent>
                   {LANGUAGES.map((l) => (
                     <SelectItem key={l} value={l}>
-                      {l}
+                      {t(l)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -642,16 +679,16 @@ function ExamPaperPageInner() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="font-headline text-lg text-center">
-                {paper.title || `${paper.board} ${paper.gradeLevel} ${paper.subject}`}
+                {paper.title || `${t(paper.board)} ${t(paper.gradeLevel)} ${t(paper.subject)}`}
               </CardTitle>
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
-                  {typeof paper.duration === 'number' ? `${paper.duration} min` : paper.duration}
+                  {typeof paper.duration === 'number' ? `${paper.duration} ${t("min")}` : paper.duration}
                 </span>
                 <span className="flex items-center gap-1">
                   <Award className="w-3.5 h-3.5" />
-                  {paper.maxMarks} marks
+                  {paper.maxMarks} {t("marks")}
                 </span>
               </div>
             </CardHeader>
@@ -694,7 +731,7 @@ function ExamPaperPageInner() {
                     )}
                   </span>
                   <Badge variant="outline" className="text-xs">
-                    {section.totalMarks} marks
+                    {section.totalMarks} {t("marks")}
                   </Badge>
                 </CardTitle>
                 {section.instructions && (

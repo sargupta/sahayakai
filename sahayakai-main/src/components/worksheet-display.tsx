@@ -9,6 +9,7 @@ import "katex/dist/katex.min.css";
 import { useToast } from "@/hooks/use-toast";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { ResultShell } from "@/components/ui/result-shell";
+import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 
@@ -115,6 +116,9 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
                 { label: t.save, icon: <Save />, onClick: handleSave },
                 { label: t.pdf, icon: <Download />, onClick: handleDownload },
             ]}
+            extraActions={
+                <QuickShareButton contentType="worksheet" onSave={handleSave} />
+            }
             contentClassName="p-4 sm:p-6 md:p-8 prose prose-slate max-w-none prose-sm sm:prose-base prose-headings:font-headline prose-h1:text-2xl sm:prose-h1:text-3xl prose-h2:text-xl sm:prose-h2:text-2xl prose-h3:text-lg sm:prose-h3:text-xl"
             footer={
                 <FeedbackDialog

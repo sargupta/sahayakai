@@ -48,7 +48,7 @@ const COMMITMENTS: Commitment[] = [
 
 export default function PrivacyForTeachersPage() {
     return (
-        <div className="min-h-[calc(100vh-4rem)] bg-background">
+        <div className="force-light min-h-[calc(100vh-4rem)] bg-background text-foreground">
             <div
                 className="relative"
                 style={{

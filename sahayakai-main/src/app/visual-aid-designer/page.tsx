@@ -19,6 +19,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { VisualAidDisplay } from "@/components/visual-aid-display";
 import { SubjectSelector } from "@/components/subject-selector";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
@@ -212,7 +213,7 @@ function VisualAidContent() {
   const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t: translate } = useLanguage();
+  const { t: translate, language: uiLanguage } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const { clearFormSnapshot } = useJarvisStore();
 
@@ -220,7 +221,7 @@ function VisualAidContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      language: "en",
+      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
       gradeLevel: "Class 6",
       subject: "General",
     },
@@ -239,7 +240,11 @@ function VisualAidContent() {
   });
 
   const selectedLanguage = form.watch("language") || 'en';
-  const t = translations[selectedLanguage] || translations.en;
+  // UI chrome (taglines, placeholders, labels) follows the global UI language,
+  // NOT the AI-output language form field. Without this, switching the app
+  // language leaves chrome in the previous language until a hard refresh.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
+  const t = translations[uiLangCode] || translations.en;
   const searchParams = useSearchParams();
 
   // Ref to prevent double-submission in StrictMode or re-renders

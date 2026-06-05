@@ -92,11 +92,12 @@ const PREMIUM_ADDITIONS: Feature[] = [
 const inr = (n: number) => n.toLocaleString('en-IN');
 
 export default function PricingPage() {
+    const { t } = useLanguage();
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center">
-                    <p className="text-neutral-500 text-sm">Loading pricing…</p>
+                <div className="force-light min-h-screen flex items-center justify-center bg-background">
+                    <p className="text-neutral-500 text-sm">{t("Loading pricing…")}</p>
                 </div>
             }
         >
@@ -238,7 +239,7 @@ function PricingContent() {
     const proPlanKey = billingPeriod === 'monthly' ? 'pro_monthly' : 'pro_annual';
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="force-light flex flex-col min-h-screen bg-background text-foreground">
             <LandingNav onAuthClick={openAuthModal} />
 
             <div
@@ -540,18 +541,18 @@ function PricingContent() {
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Just your email to continue</DialogTitle>
+                        <DialogTitle>{t("Just your email to continue")}</DialogTitle>
                         <DialogDescription>
                             We&apos;ll email you a one-click sign-in link after payment. No password to remember.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-2 py-2">
-                        <Label htmlFor="checkout-email">Email address</Label>
+                        <Label htmlFor="checkout-email">{t("Email address")}</Label>
                         <Input
                             id="checkout-email"
                             type="email"
                             autoComplete="email"
-                            placeholder="you@example.com"
+                            placeholder={t("you@example.com")}
                             value={emailInput}
                             onChange={(e) => setEmailInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -576,7 +577,7 @@ function PricingContent() {
                             }}
                             disabled={creating}
                         >
-                            Cancel
+                            {t("Cancel")}
                         </Button>
                         <Button
                             onClick={handlePublicCheckout}
@@ -586,11 +587,11 @@ function PricingContent() {
                             {creating ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Starting…
+                                    {t("Starting…")}
                                 </>
                             ) : (
                                 <>
-                                    Continue to payment
+                                    {t("Continue to payment")}
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </>
                             )}

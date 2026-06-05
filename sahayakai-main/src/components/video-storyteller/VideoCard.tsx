@@ -1,7 +1,10 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlayCircle, Clock, Eye, BookOpen } from 'lucide-react';
 import { YouTubeVideo } from '@/lib/youtube';
+import { useLanguage } from '@/context/language-context';
 
 interface VideoCardProps {
     video: YouTubeVideo;
@@ -22,6 +25,7 @@ function getThumbnailUrl(video: YouTubeVideo): string {
 }
 
 export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
+    const { t } = useLanguage();
     const [imgError, setImgError] = useState(false);
     const [imgSrc, setImgSrc] = useState(getThumbnailUrl(video));
 
@@ -42,12 +46,12 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
 
     return (
         <Card
-            className="group overflow-hidden border-border hover:border-primary/40 hover:shadow-elevated transition-all duration-500 cursor-pointer bg-white rounded-xl active:scale-[0.98]"
+            className="group overflow-hidden border-border hover:border-primary/40 hover:shadow-elevated transition-all duration-500 cursor-pointer bg-card text-card-foreground rounded-xl active:scale-[0.98]"
             onClick={() => onSelect?.(video)}
         >
             <div className="relative aspect-video overflow-hidden bg-muted">
                 {imgError ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-white gap-2">
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-card gap-2">
                         <BookOpen className="w-8 h-8 text-primary/30" />
                         <span className="text-[10px] text-primary/40 font-semibold tracking-wider uppercase text-center px-4">
                             {video.channelTitle}
@@ -67,7 +71,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 {isOfficial && (
                     <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-soft border border-primary/10">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-tight">Official source</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-tight">{t("Official source")}</span>
                     </div>
                 )}
 
@@ -86,7 +90,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 )}
             </div>
 
-            <CardContent className="p-4 bg-gradient-to-b from-white to-muted/30">
+            <CardContent className="p-4 bg-gradient-to-b from-card to-muted/30">
                 <h3 className="font-headline font-semibold text-sm leading-tight line-clamp-2 mb-2 group-hover:text-primary transition-colors min-h-[2.5rem] tracking-tight">
                     {video.title}
                 </h3>

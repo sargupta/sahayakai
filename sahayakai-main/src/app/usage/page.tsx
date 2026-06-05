@@ -91,14 +91,14 @@ export default function UsagePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                    <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">Usage</h1>
-                    <p className="text-xs text-muted-foreground">Resets {resetLabel}</p>
+                    <h1 className="text-xl sm:text-2xl font-headline font-bold tracking-tight">{t("Usage")}</h1>
+                    <p className="text-xs text-muted-foreground">{t("Resets {date}").replace("{date}", resetLabel)}</p>
                 </div>
                 <Badge
                     variant="outline"
                     className={isPro
                         ? 'bg-amber-100 text-amber-700 border-amber-200'
-                        : 'bg-gray-100 text-gray-600 border-gray-200'
+                        : 'bg-muted text-muted-foreground border-border'
                     }
                 >
                     {isPro && <Crown className="h-3 w-3 mr-1" />}
@@ -122,7 +122,7 @@ export default function UsagePage() {
                                     <div className="p-1.5 rounded-lg bg-muted/50">
                                         <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
                                     </div>
-                                    {meta?.label ?? f.key}
+                                    {meta?.label ? t(meta.label) : f.key}
                                 </Link>
                                 <span className="text-lg font-semibold tabular-nums">
                                     {f.used}<span className="text-muted-foreground text-sm font-normal">/{f.limit}</span>
@@ -136,10 +136,10 @@ export default function UsagePage() {
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {remaining <= 0
-                                    ? <span className="text-red-600 font-medium">Limit reached — resets {resetLabel}</span>
+                                    ? <span className="text-red-600 font-medium">{t("Limit reached, resets {date}").replace("{date}", resetLabel)}</span>
                                     : remaining <= 2
-                                        ? <span className="text-amber-600">{remaining} remaining</span>
-                                        : `${remaining} remaining`
+                                        ? <span className="text-amber-600">{t("{count} remaining").replace("{count}", String(remaining))}</span>
+                                        : t("{count} remaining").replace("{count}", String(remaining))
                                 }
                             </p>
                         </CardContent>
@@ -151,7 +151,7 @@ export default function UsagePage() {
             {unlimited.length > 0 && (
                 <Card>
                     <CardContent className="py-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Unlimited on your plan</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{t("Unlimited on your plan")}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {unlimited.map((f) => {
                                 const meta = FEATURE_META[f.key];
@@ -159,7 +159,7 @@ export default function UsagePage() {
                                 return (
                                     <div key={f.key} className="flex items-center gap-2.5 text-sm">
                                         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                                        <span className="truncate">{meta?.label ?? f.key}</span>
+                                        <span className="truncate">{meta?.label ? t(meta.label) : f.key}</span>
                                         <Infinity className="h-3.5 w-3.5 ml-auto text-emerald-500 shrink-0" />
                                     </div>
                                 );
@@ -174,14 +174,14 @@ export default function UsagePage() {
                 <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/50">
                     <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-5">
                         <div>
-                            <p className="text-sm font-semibold">Need more?</p>
+                            <p className="text-sm font-semibold">{t("Need more?")}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Higher limits, better AI, export, parent messaging
+                                {t("Higher limits, better AI, export, parent messaging")}
                             </p>
                         </div>
                         <Button asChild size="sm" className="bg-amber-600 hover:bg-amber-700 shrink-0">
                             <Link href="/pricing">
-                                View Plans <ArrowRight className="h-4 w-4 ml-1" />
+                                {t("View Plans")} <ArrowRight className="h-4 w-4 ml-1" />
                             </Link>
                         </Button>
                     </CardContent>
