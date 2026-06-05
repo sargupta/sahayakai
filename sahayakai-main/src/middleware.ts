@@ -142,6 +142,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
         pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
         pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
+        pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/');  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
 
     if (isPublicApi) {
