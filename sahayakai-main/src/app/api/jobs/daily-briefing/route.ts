@@ -426,6 +426,10 @@ Example: [{"headline":"...","summary":"...","sourceLabel":"...","url":"...","cat
       return await ai.generate({
         prompt,
         ...resilienceConfig,
+        // Pin the model explicitly so this job does not silently drift
+        // when the Genkit default changes. gemini-2.5-flash is the
+        // intended cost/latency tier for batch curation.
+        model: 'googleai/gemini-2.5-flash',
         output: { format: 'json' },
       });
     }, 'dailyBriefing.curate');
@@ -532,6 +536,8 @@ Example: {"Hindi": "...", "Kannada": "...", "Tamil": "..."}`;
       return await ai.generate({
         prompt,
         ...resilienceConfig,
+        // Pin the model explicitly — see `curateWithGemini` above.
+        model: 'googleai/gemini-2.5-flash',
         output: { format: 'json' },
       });
     }, 'dailyBriefing.translate');
@@ -608,6 +614,8 @@ Respond with a JSON array of 1-2 objects. No markdown.`;
         return await ai.generate({
           prompt,
           ...resilienceConfig,
+          // Pin the model explicitly — see `curateWithGemini` above.
+          model: 'googleai/gemini-2.5-flash',
           output: { format: 'json' },
         });
       }, `dailyBriefing.stateNews.${normalizeKey(state)}`);
@@ -645,6 +653,16 @@ Respond with a JSON array of 1-2 objects. No markdown.`;
 // ─── Main Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
+  // Auth gate: CRON_SECRET required.
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 });
+  }
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const startTime = Date.now();
 
   try {

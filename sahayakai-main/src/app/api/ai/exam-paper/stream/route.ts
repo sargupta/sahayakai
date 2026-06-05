@@ -1,5 +1,5 @@
 
-import { generateExamPaper } from '@/ai/flows/exam-paper-generator';
+import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
 import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { logAIError, classifyAIError } from '@/lib/ai-error-response';
@@ -116,10 +116,20 @@ async function _handler(request: Request) {
           // --- Phase 2: AI generation ---
           send({ type: 'status', message: 'Generating exam paper...' });
 
-          const output = await generateExamPaper({
+          // Route through dispatcher to match the non-stream sibling
+          // (`/api/ai/exam-paper`). Previously this branch called the
+          // raw Genkit flow and bypassed the dispatcher entirely.
+          // TODO: this is a progress-event stream, not a token stream.
+          // When the sidecar ADK agent gains a true streaming endpoint,
+          // wire it here as a `stream: true` mode and pipe its events
+          // through the SSE `controller`. For now the dispatcher's
+          // single-shot result is fine — the SSE channel only sends
+          // coarse phase markers ("Loading blueprint", "Generating",
+          // "Validating") which we keep around the awaited call below.
+          const output = await dispatchExamPaper({
             ...body,
             userId,
-          } as Parameters<typeof generateExamPaper>[0]);
+          } as Parameters<typeof dispatchExamPaper>[0]);
 
           // --- Phase 3: Validation ---
           send({ type: 'status', message: 'Validating marks...' });
@@ -129,7 +139,23 @@ async function _handler(request: Request) {
           await new Promise((r) => setTimeout(r, 50));
 
           // --- Phase 4: Done ---
-          send({ type: 'complete', data: output });
+          // Strip dispatcher-only metadata to keep the SSE payload
+          // wire-compatible with what the legacy raw-Genkit path emitted.
+          send({
+            type: 'complete',
+            data: {
+              title: output.title,
+              board: output.board,
+              subject: output.subject,
+              gradeLevel: output.gradeLevel,
+              duration: output.duration,
+              maxMarks: output.maxMarks,
+              generalInstructions: output.generalInstructions,
+              sections: output.sections,
+              blueprintSummary: output.blueprintSummary,
+              pyqSources: output.pyqSources,
+            },
+          });
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
