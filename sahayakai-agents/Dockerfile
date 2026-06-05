@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 # hatch wheel-builder reads pyproject; we skip any lockfile for Phase 1 and
 # let pip resolve the pinned versions. Swap to uv lockfile in G1.
 COPY src ./src
