@@ -153,3 +153,22 @@ class TestBuildWorksheetAgent:
             f"Agent name should reference worksheet. "
             f"Got: {agent.name!r}"
         )
+
+
+def test_per_call_timeout_is_at_least_30s_for_multimodal() -> None:
+    """Phase 1b regression guard.
+
+    Live shadow traffic on rev `00015-vgg` showed multimodal worksheet
+    calls running 19-22s on the slow tail. The previous 20s ceiling
+    clipped legitimate long-tail calls AND ate the 7s
+    `max_total_backoff_seconds` budget before retry could fire. Lock the
+    per-call timeout at ≥30s so the worksheet wizard has headroom for
+    real multimodal Gemini calls without falling back to 502.
+    """
+    from sahayakai_agents.agents.worksheet import router as worksheet_router  # noqa: PLC0415
+
+    assert worksheet_router._PER_CALL_TIMEOUT_S >= 30.0, (
+        f"Worksheet per-call timeout regressed to "
+        f"{worksheet_router._PER_CALL_TIMEOUT_S}s; Phase 1b requires ≥30s "
+        f"for multimodal calls."
+    )

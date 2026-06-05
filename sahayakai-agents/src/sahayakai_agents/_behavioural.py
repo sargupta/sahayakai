@@ -328,7 +328,15 @@ def assert_all_rules(*, reply: str, parent_language: str, turn_number: int) -> N
 # 5 activities × ~200 words = ~1000 words; the prose blob can be 2000-
 # 4000 words including metadata). The sentence-count rule from
 # parent-call doesn't apply.
-LESSON_PLAN_MIN_WORDS = 200
+# Phase 1b: floor lowered from 200 → 100. Live shadow traffic showed
+# the writer producing legitimate ~197-word plans for short topics
+# (Class 2 EVS, single-period lessons) that the previous 200-word floor
+# rejected as too short — but those plans were structurally complete
+# (title + objectives + 3 activities + assessment + homework). Genkit
+# has no equivalent floor; the LessonPlanCore Pydantic shape already
+# requires all five sections, so the floor is now only defending against
+# the model returning a single sentence stub. Ceiling unchanged.
+LESSON_PLAN_MIN_WORDS = 100
 LESSON_PLAN_MAX_WORDS = 5000
 
 

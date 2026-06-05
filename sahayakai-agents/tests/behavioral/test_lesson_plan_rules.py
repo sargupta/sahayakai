@@ -70,6 +70,19 @@ class TestLessonPlanLength:
         with pytest.raises(AssertionError):
             assert_lesson_plan_length(plan)
 
+    def test_phase_1b_floor_accepts_real_short_plans(self) -> None:
+        """Phase 1b regression guard.
+
+        Live shadow traffic on rev `00015-vgg` produced legitimate
+        ~197-word Class 7 Hindi plans that the previous 200-word floor
+        rejected. Those plans had all five required sections — they
+        were short because the writer prompt produced concise prose
+        for short topics, not because the output was incomplete. Lock
+        in the floor at ≤197 words so that class of plan passes.
+        """
+        plan = " ".join(["word"] * 197)
+        assert_lesson_plan_length(plan)  # must not raise post-Phase 1b
+
 
 class TestLessonPlanRules:
     def test_clean_english_plan_passes(self) -> None:
