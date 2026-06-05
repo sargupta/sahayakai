@@ -12,26 +12,23 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RubricLevel(BaseModel):
-    """One performance level for a criterion (e.g. Exemplary / 4 pts)."""
+    """One performance level for a criterion (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(min_length=1, max_length=100)
-    description: str = Field(min_length=10, max_length=2000)
-    points: int = Field(ge=0, le=10)
+    name: str
+    description: str
+    points: int = Field(ge=0)
 
 
 class RubricCriterion(BaseModel):
-    """One evaluation criterion + its 4 performance levels."""
+    """One evaluation criterion + its performance levels (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=10, max_length=1000)
-    # Prompt mandates exactly 4 levels (Exemplary / Proficient / Developing
-    # / Beginning) but we accept 3-5 for forward-compatibility (e.g. a
-    # finer-grained 5-band rubric).
-    levels: list[RubricLevel] = Field(min_length=3, max_length=5)
+    name: str
+    description: str
+    levels: list[RubricLevel]
 
 
 # --- Wire request -------------------------------------------------------
@@ -47,11 +44,8 @@ class RubricGeneratorRequest(BaseModel):
     subject: str | None = Field(default=None, max_length=100)
     language: str | None = Field(default=None, max_length=20)
     teacherContext: str | None = Field(default=None, max_length=1000)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Output (model contract) --------------------------------------------
@@ -62,11 +56,11 @@ class RubricGeneratorCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    description: str = Field(min_length=10, max_length=1000)
-    criteria: list[RubricCriterion] = Field(min_length=3, max_length=8)
-    gradeLevel: str | None = Field(max_length=50)
-    subject: str | None = Field(max_length=100)
+    title: str
+    description: str
+    criteria: list[RubricCriterion]
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 # --- Wire response ------------------------------------------------------
@@ -77,11 +71,11 @@ class RubricGeneratorResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    description: str = Field(min_length=10, max_length=1000)
-    criteria: list[RubricCriterion] = Field(min_length=3, max_length=8)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    title: str
+    description: str
+    criteria: list[RubricCriterion]
+    gradeLevel: str | None = None
+    subject: str | None = None
 
     # Additive telemetry.
     sidecarVersion: str = Field(min_length=1, max_length=64)

@@ -44,11 +44,8 @@ class CommunityPersonaMessageRequest(BaseModel):
         default_factory=list, max_length=5,
     )
     mode: PersonaMode = "auto"
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Wire response -------------------------------------------------------
@@ -64,10 +61,7 @@ class CommunityPersonaMessageResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Parity field — MUST match TS shape.
-    # Cap matches the post-cleanup hard cap in the TS flow (240 chars
-    # + ellipsis worst case). Floor of 5 matches the TS post-cleanup
-    # "too short" assert.
-    message: str = Field(min_length=5, max_length=260)
+    message: str
 
     # Additive telemetry.
     sidecarVersion: str = Field(min_length=1, max_length=64)

@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 # Phase J.4 hot-fix (forensic P1 #20): bound list[str] elements.
+# Phase 1a: bounds kept on REQUEST elements only (dispatcher hygiene).
 _LearningObjective = Annotated[str, StringConstraints(max_length=300)]
 
 # 10 MB cap on the data URI (base64-encoded image, after URL prefix).
@@ -24,23 +25,23 @@ WorksheetActivityType = Literal["question", "puzzle", "creative_task"]
 
 
 class WorksheetActivity(BaseModel):
-    """One activity in the worksheet."""
+    """One activity in the worksheet (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
     type: WorksheetActivityType
-    content: str = Field(min_length=1, max_length=4000)
-    explanation: str = Field(min_length=10, max_length=2000)
-    chalkboardNote: str | None = Field(default=None, max_length=1000)
+    content: str
+    explanation: str
+    chalkboardNote: str | None = None
 
 
 class WorksheetAnswerKeyEntry(BaseModel):
-    """One answer-key entry."""
+    """One answer-key entry (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    activityIndex: int = Field(ge=0, le=50)
-    answer: str = Field(min_length=1, max_length=2000)
+    activityIndex: int = Field(ge=0)
+    answer: str
 
 
 class WorksheetRequest(BaseModel):
@@ -54,23 +55,25 @@ class WorksheetRequest(BaseModel):
     gradeLevel: str | None = Field(default=None, max_length=50)
     subject: str | None = Field(default=None, max_length=100)
     teacherContext: str | None = Field(default=None, max_length=1000)
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class WorksheetCore(BaseModel):
-    """What the model MUST return."""
+    """What the model MUST return.
+
+    Phase 1a: bounds dropped to match Genkit Zod baseline.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    gradeLevel: str = Field(min_length=1, max_length=50)
-    subject: str = Field(min_length=1, max_length=100)
-    learningObjectives: list[_LearningObjective] = Field(min_length=1, max_length=10)
-    studentInstructions: str = Field(min_length=10, max_length=2000)
-    activities: list[WorksheetActivity] = Field(min_length=1, max_length=20)
-    answerKey: list[WorksheetAnswerKeyEntry] = Field(min_length=1, max_length=20)
+    title: str
+    gradeLevel: str
+    subject: str
+    learningObjectives: list[str]
+    studentInstructions: str
+    activities: list[WorksheetActivity]
+    answerKey: list[WorksheetAnswerKeyEntry]
 
 
 class WorksheetResponse(BaseModel):
@@ -78,13 +81,13 @@ class WorksheetResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    gradeLevel: str = Field(min_length=1, max_length=50)
-    subject: str = Field(min_length=1, max_length=100)
-    learningObjectives: list[_LearningObjective] = Field(min_length=1, max_length=10)
-    studentInstructions: str = Field(min_length=10, max_length=2000)
-    activities: list[WorksheetActivity] = Field(min_length=1, max_length=20)
-    answerKey: list[WorksheetAnswerKeyEntry] = Field(min_length=1, max_length=20)
+    title: str
+    gradeLevel: str
+    subject: str
+    learningObjectives: list[str]
+    studentInstructions: str
+    activities: list[WorksheetActivity]
+    answerKey: list[WorksheetAnswerKeyEntry]
 
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)

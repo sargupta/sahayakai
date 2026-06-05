@@ -108,9 +108,13 @@ class TestLessonPlanRequestGradeLevelsBounds:
 
 
 class TestLessonPlanCoreObjectivesBounds:
-    """Bound on `objectives` element strings (300 chars each)."""
+    """Phase 1a: output-side element bounds dropped to match Genkit Zod
+    baseline. Gemini's max_output_tokens caps total shape; routers
+    enforce semantic length checks downstream."""
 
-    def test_objective_at_max_passes(self) -> None:
+    def test_objective_at_previous_max_still_passes(self) -> None:
+        # Sanity: long objective strings still validate (the only
+        # thing we removed was the upper bound, not min_length=1).
         plan = LessonPlanCore(
             title="Title",
             gradeLevel="Class 5",
@@ -126,42 +130,28 @@ class TestLessonPlanCoreObjectivesBounds:
         )
         assert len(plan.objectives[0]) == 300
 
-    def test_objective_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            LessonPlanCore(
-                title="Title",
-                gradeLevel="Class 5",
-                duration="45 min",
-                subject="Science",
-                objectives=["O" * 301],
-                keyVocabulary=None,
-                materials=[],
-                activities=[_activity_dict()],
-                assessment=None,
-                homework=None,
-                language="en",
-            )
-
 
 class TestLessonPlanCoreMaterialsBounds:
-    """The headline attack: a single material element of 5MB chars
-    used to validate cleanly. Now capped at 500."""
+    """Phase 1a: list-element maxLength dropped on output (matches
+    Genkit). Request-side bounds retained — see
+    `TestLessonPlanRequestGradeLevelsBounds`."""
 
-    def test_material_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            LessonPlanCore(
-                title="Title",
-                gradeLevel="Class 5",
-                duration="45 min",
-                subject="Science",
-                objectives=["short"],
-                keyVocabulary=None,
-                materials=["M" * 501],
-                activities=[_activity_dict()],
-                assessment=None,
-                homework=None,
-                language="en",
-            )
+    def test_long_material_now_passes(self) -> None:
+        # Previously rejected; now accepted (Genkit-parity).
+        plan = LessonPlanCore(
+            title="Title",
+            gradeLevel="Class 5",
+            duration="45 min",
+            subject="Science",
+            objectives=["short"],
+            keyVocabulary=None,
+            materials=["M" * 501],
+            activities=[_activity_dict()],
+            assessment=None,
+            homework=None,
+            language="en",
+        )
+        assert len(plan.materials[0]) == 501
 
 
 class TestNcertChapterLearningOutcomesBounds:
@@ -179,24 +169,24 @@ class TestNcertChapterLearningOutcomesBounds:
 
 
 class TestEvaluatorVerdictFailReasonsBounds:
-    """Bound on `fail_reasons` element strings (500 chars each)."""
+    """Phase 1a: `fail_reasons` element bound dropped (output schema)."""
 
-    def test_fail_reason_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            EvaluatorVerdict(
-                scores=RubricScores(
-                    grade_level_alignment=0.5,
-                    objective_assessment_match=0.5,
-                    resource_level_realism=0.5,
-                    language_naturalness=0.5,
-                    scaffolding_present=0.5,
-                    inclusion_signals=0.5,
-                    cultural_appropriateness=0.5,
-                ),
-                safety=False,
-                rationale="r",
-                fail_reasons=["F" * 501],
-            )
+    def test_long_fail_reason_now_passes(self) -> None:
+        verdict = EvaluatorVerdict(
+            scores=RubricScores(
+                grade_level_alignment=0.5,
+                objective_assessment_match=0.5,
+                resource_level_realism=0.5,
+                language_naturalness=0.5,
+                scaffolding_present=0.5,
+                inclusion_signals=0.5,
+                cultural_appropriateness=0.5,
+            ),
+            safety=False,
+            rationale="r",
+            fail_reasons=["F" * 501],
+        )
+        assert len(verdict.fail_reasons[0]) == 501
 
 
 # ── parent-call summary ───────────────────────────────────────────────────
@@ -228,13 +218,14 @@ class TestParentCallSummaryElementBounds:
         base.update(overrides)
         return base
 
-    def test_parent_concern_at_max_passes(self) -> None:
+    def test_parent_concern_at_previous_max_passes(self) -> None:
         resp = CallSummaryResponse(**self._kwargs(parentConcerns=["C" * 1000]))
         assert len(resp.parentConcerns[0]) == 1000
 
-    def test_parent_concern_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            CallSummaryResponse(**self._kwargs(parentConcerns=["C" * 1001]))
+    def test_long_parent_concern_now_passes(self) -> None:
+        # Phase 1a: output-side element bound dropped (Genkit-parity).
+        resp = CallSummaryResponse(**self._kwargs(parentConcerns=["C" * 1001]))
+        assert len(resp.parentConcerns[0]) == 1001
 
 
 # ── video-storyteller ─────────────────────────────────────────────────────
@@ -256,15 +247,16 @@ class TestVideoStorytellerElementBounds:
         )
         assert cats.pedagogy == ["P" * 300]
 
-    def test_search_query_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            VideoStorytellerCategories(
-                pedagogy=["P" * 301],
-                storytelling=["x"],
-                govtUpdates=["x"],
-                courses=["x"],
-                topRecommended=["x"],
-            )
+    def test_long_search_query_now_passes(self) -> None:
+        # Phase 1a: output element bound dropped (Genkit-parity).
+        cats = VideoStorytellerCategories(
+            pedagogy=["P" * 301],
+            storytelling=["x"],
+            govtUpdates=["x"],
+            courses=["x"],
+            topRecommended=["x"],
+        )
+        assert len(cats.pedagogy[0]) == 301
 
 
 # ── vidya NcertChapterRef ─────────────────────────────────────────────────
@@ -274,13 +266,14 @@ class TestVidyaNcertChapterRefBounds:
     """Bound on `learningOutcomes` element strings inside vidya's
     NCERT chapter reference (300 chars each)."""
 
-    def test_learning_outcome_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            NcertChapterRef(
-                number=1,
-                title="Photosynthesis",
-                learningOutcomes=["L" * 301],
-            )
+    def test_long_learning_outcome_now_passes(self) -> None:
+        # Phase 1a: output element bound dropped (Genkit-parity).
+        ref = NcertChapterRef(
+            number=1,
+            title="Photosynthesis",
+            learningOutcomes=["L" * 301],
+        )
+        assert len(ref.learningOutcomes[0]) == 301
 
 
 # ── exam-paper ────────────────────────────────────────────────────────────
@@ -326,13 +319,14 @@ class TestQuizElementBounds:
                 userId="teacher-uid-1",
             )
 
-    def test_mcq_option_above_max_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            QuizQuestion(
-                questionText="Sample?",
-                questionType="multiple_choice",
-                options=["O" * 1001, "B", "C", "D"],
-                correctAnswer="B",
-                explanation="because B is correct.",
-                difficultyLevel="easy",
-            )
+    def test_long_mcq_option_now_passes(self) -> None:
+        # Phase 1a: output element bound dropped (Genkit-parity).
+        q = QuizQuestion(
+            questionText="Sample?",
+            questionType="multiple_choice",
+            options=["O" * 1001, "B", "C", "D"],
+            correctAnswer="B",
+            explanation="because B is correct.",
+            difficultyLevel="easy",
+        )
+        assert len(q.options[0]) == 1001

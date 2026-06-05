@@ -8,46 +8,46 @@ truth — TS wire types regenerated from these models.
 """
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field
 
 # 10 MB cap on the image data URI body.
 _DATA_URI_MAX_LEN = 10 * 1024 * 1024
 
 
 # --- Rubric snapshot (mirrors rubric/schemas.py shape) ------------------
+# Phase 1a: this snapshot is BOTH echoed in the response AND accepted
+# in the request. To avoid leaking maxLength/maxItems into the
+# response_schema we relax it (matches rubric agent baseline).
 
 
 class RubricLevel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(min_length=1, max_length=100)
-    description: str = Field(min_length=1, max_length=2000)
-    points: int = Field(ge=0, le=10)
+    name: str
+    description: str
+    points: int = Field(ge=0)
 
 
 class RubricCriterion(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=1, max_length=1000)
-    # The TS flow allows 3-5 levels; mirrored here.
-    levels: list[RubricLevel] = Field(min_length=3, max_length=5)
+    name: str
+    description: str
+    levels: list[RubricLevel]
 
 
 class RubricSnapshot(BaseModel):
-    """Rubric to grade against. Optional in the wire request; the router
-    falls back to `DEFAULT_RUBRIC` when omitted or when `criteria` is
-    empty."""
+    """Rubric to grade against."""
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=1, max_length=300)
-    description: str = Field(min_length=1, max_length=2000)
-    criteria: list[RubricCriterion] = Field(min_length=1, max_length=8)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    title: str
+    description: str
+    criteria: list[RubricCriterion]
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 # --- Wire request --------------------------------------------------------
@@ -56,11 +56,7 @@ AssessMode = Literal["full", "transcribe", "score"]
 
 
 class AssessAssignmentRequest(BaseModel):
-    """Request body for `POST /v1/assignment-assessor/assess`.
-
-    Mirrors `AssessAssignmentInputSchema` in TS verbatim. The
-    `imageDataUri` pattern matches the TS regex.
-    """
+    """Request body for `POST /v1/assignment-assessor/assess`."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -77,27 +73,21 @@ class AssessAssignmentRequest(BaseModel):
     editedTranscript: str | None = Field(default=None, max_length=20_000)
     mode: AssessMode = "full"
     teacherContext: str | None = Field(default=None, max_length=2000)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Output sub-types ---------------------------------------------------
 
 
-_WarningTag = Annotated[str, StringConstraints(max_length=100)]
-
-
 class PerCriterionScore(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    criterionName: str = Field(min_length=1, max_length=200)
-    level: str = Field(min_length=1, max_length=100)
+    criterionName: str
+    level: str
     points: float = Field(ge=0)
     maxPoints: float = Field(ge=0)
-    feedback: str = Field(min_length=1, max_length=4000)
+    feedback: str
     confidence: float = Field(ge=0, le=1)
 
 
@@ -105,65 +95,55 @@ class PerCriterionScore(BaseModel):
 
 
 class AssessAssignmentCore(BaseModel):
-    """What the model MUST return. The router enriches a few fields
-    server-side (`assessmentId`, `createdAtIso`, `language`,
-    `rubricSnapshot` echo, `studentId`, `editedTranscript`) before the
-    wire response is built."""
+    """What the model MUST return."""
 
     model_config = ConfigDict(extra="forbid")
 
-    assessmentId: str = Field(max_length=64)
-    rawTranscript: str = Field(max_length=50_000)
-    editedTranscript: str | None = Field(default=None, max_length=50_000)
-    language: str = Field(min_length=1, max_length=50)
+    assessmentId: str
+    rawTranscript: str
+    editedTranscript: str | None = None
+    language: str
     overallScore: float = Field(ge=0, le=100)
-    pointsEarned: float = Field(ge=0)
-    pointsPossible: float = Field(ge=0)
-    perCriterionScores: list[PerCriterionScore] = Field(
-        min_length=0, max_length=20,
-    )
+    pointsEarned: float
+    pointsPossible: float
+    perCriterionScores: list[PerCriterionScore]
+    # Genkit Zod baseline keeps min/max on these arrays — match exactly.
     strengths: list[str] = Field(min_length=1, max_length=5)
     improvements: list[str] = Field(min_length=1, max_length=5)
     nextSteps: list[str] = Field(min_length=1, max_length=3)
-    teacherNote: str = Field(min_length=1, max_length=4000)
+    teacherNote: str
     confidenceOverall: float = Field(ge=0, le=1)
-    warnings: list[_WarningTag] = Field(default_factory=list, max_length=20)
+    warnings: list[str] = Field(default_factory=list)
     rubricSnapshot: RubricSnapshot
-    studentId: str | None = Field(default=None, max_length=64)
-    createdAtIso: str = Field(max_length=64)
+    studentId: str | None = None
+    createdAtIso: str
 
 
 # --- Wire response ------------------------------------------------------
 
 
 class AssessAssignmentResponse(BaseModel):
-    """Wire response for `POST /v1/assignment-assessor/assess`.
-
-    Parity fields match the TS `AssessAssignmentOutputSchema`; additive
-    sidecar telemetry follows.
-    """
+    """Wire response for `POST /v1/assignment-assessor/assess`."""
 
     model_config = ConfigDict(extra="forbid")
 
-    assessmentId: str = Field(min_length=1, max_length=64)
-    rawTranscript: str = Field(max_length=50_000)
-    editedTranscript: str | None = Field(default=None, max_length=50_000)
-    language: str = Field(min_length=1, max_length=50)
+    assessmentId: str
+    rawTranscript: str
+    editedTranscript: str | None = None
+    language: str
     overallScore: float = Field(ge=0, le=100)
-    pointsEarned: float = Field(ge=0)
-    pointsPossible: float = Field(ge=0)
-    perCriterionScores: list[PerCriterionScore] = Field(
-        min_length=0, max_length=20,
-    )
+    pointsEarned: float
+    pointsPossible: float
+    perCriterionScores: list[PerCriterionScore]
     strengths: list[str] = Field(min_length=1, max_length=5)
     improvements: list[str] = Field(min_length=1, max_length=5)
     nextSteps: list[str] = Field(min_length=1, max_length=3)
-    teacherNote: str = Field(min_length=1, max_length=4000)
+    teacherNote: str
     confidenceOverall: float = Field(ge=0, le=1)
-    warnings: list[_WarningTag] = Field(default_factory=list, max_length=20)
+    warnings: list[str] = Field(default_factory=list)
     rubricSnapshot: RubricSnapshot
-    studentId: str | None = Field(default=None, max_length=64)
-    createdAtIso: str = Field(min_length=1, max_length=64)
+    studentId: str | None = None
+    createdAtIso: str
 
     # Additive telemetry.
     sidecarVersion: str = Field(min_length=1, max_length=64)

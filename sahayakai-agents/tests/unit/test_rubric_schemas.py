@@ -67,11 +67,12 @@ class TestExtraForbid:
 
 
 class TestBoundedFields:
-    def test_userId_pattern_rejects_path_injection(self) -> None:
+    def test_userId_empty_rejects(self) -> None:
+        # Phase 1a: opaque-ID regex dropped. Length floor still applies.
         with pytest.raises(ValidationError):
             RubricGeneratorRequest(
                 assignmentDescription="A reasonably described project.",
-                userId="../../etc/passwd",
+                userId="",
             )
 
     def test_assignmentDescription_too_short_rejects(self) -> None:
@@ -81,31 +82,27 @@ class TestBoundedFields:
                 userId="teacher-uid-1",
             )
 
-    def test_levels_too_few_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            RubricCriterion(
-                name="X",
-                description="A reasonably long description.",
-                levels=[_level("Only", 1), _level("Two", 2)],
-            )
+    # Phase 1a: rubric output array bounds (levels min=3/max=5,
+    # criteria min=3/max=8) dropped to match Genkit Zod baseline.
+    # Routers enforce semantic shape downstream.
 
-    def test_levels_too_many_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            RubricCriterion(
-                name="X",
-                description="A reasonably long description.",
-                levels=[_level(f"L{i}", i) for i in range(1, 7)],
-            )
+    def test_levels_two_now_passes(self) -> None:
+        crit = RubricCriterion(
+            name="X",
+            description="A reasonably long description.",
+            levels=[_level("Only", 1), _level("Two", 2)],
+        )
+        assert len(crit.levels) == 2
 
-    def test_criteria_too_few_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            RubricGeneratorCore(
-                title="Title",
-                description="A reasonably long description here.",
-                criteria=[_criterion(), _criterion("X2")],
-                gradeLevel=None,
-                subject=None,
-            )
+    def test_criteria_two_now_passes(self) -> None:
+        core = RubricGeneratorCore(
+            title="Title",
+            description="A reasonably long description here.",
+            criteria=[_criterion(), _criterion("X2")],
+            gradeLevel=None,
+            subject=None,
+        )
+        assert len(core.criteria) == 2
 
 
 class TestRoundTrip:

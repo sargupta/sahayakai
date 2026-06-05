@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 # Phase J.4 hot-fix (forensic P1 #20): list[str] elements bounded.
+# Phase 1a: bounds kept on REQUEST elements only (dispatcher hygiene);
+# response/output models use plain `str` to match Genkit Zod baseline.
 _McqOption = Annotated[str, StringConstraints(max_length=1000)]
 _BloomsLevel = Annotated[str, StringConstraints(max_length=50)]
 
@@ -20,15 +22,15 @@ QuizDifficulty = Literal["easy", "medium", "hard"]
 
 
 class QuizQuestion(BaseModel):
-    """One quiz question."""
+    """One quiz question (response model — Gemini structured-output shape)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    questionText: str = Field(min_length=3, max_length=2000)
+    questionText: str
     questionType: QuizQuestionType
-    options: list[_McqOption] | None = Field(default=None, max_length=10)
-    correctAnswer: str = Field(min_length=1, max_length=2000)
-    explanation: str = Field(min_length=10, max_length=3000)
+    options: list[str] | None = None
+    correctAnswer: str
+    explanation: str
     difficultyLevel: QuizDifficulty
 
 
@@ -51,21 +53,24 @@ class QuizGeneratorRequest(BaseModel):
     targetDifficulty: QuizDifficulty | None = None
     subject: str | None = Field(default=None, max_length=100)
     teacherContext: str | None = Field(default=None, max_length=1000)
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern; dispatcher enforces auth.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class QuizGeneratorCore(BaseModel):
-    """One difficulty variant of the quiz."""
+    """One difficulty variant of the quiz (Gemini responseSchema shape).
+
+    Phase 1a Fix 2/3: bounds dropped to match Genkit Zod baseline
+    (no per-field maxLength; no questions[] max_items).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    questions: list[QuizQuestion] = Field(min_length=1, max_length=30)
-    teacherInstructions: str | None = Field(default=None, max_length=2000)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    title: str
+    questions: list[QuizQuestion] = Field(min_length=1)
+    teacherInstructions: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 class QuizGeneratorResponse(BaseModel):
@@ -74,11 +79,11 @@ class QuizGeneratorResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    questions: list[QuizQuestion] = Field(min_length=1, max_length=30)
-    teacherInstructions: str | None = Field(default=None, max_length=2000)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    title: str
+    questions: list[QuizQuestion] = Field(min_length=1)
+    teacherInstructions: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 class QuizVariantsResponse(BaseModel):

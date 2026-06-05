@@ -34,9 +34,8 @@ class VoiceToTextRequest(BaseModel):
     audioDataUri: str = Field(
         min_length=32, max_length=MAX_DATA_URI_CHARS,
     )
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
     # Optional 2-letter ISO language hint from the client (e.g. "bn", "ta").
     # Mirrors the Genkit TS `VoiceToTextInputSchema.expectedLanguage` field
     # — passed into the prompt to strongly bias detection and script choice
@@ -57,8 +56,8 @@ class VoiceToTextCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    text: str = Field(min_length=1, max_length=20000)
-    language: str | None = Field(max_length=10)
+    text: str
+    language: str | None = None
 
 
 class VoiceToTextResponse(BaseModel):
@@ -66,7 +65,7 @@ class VoiceToTextResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    text: str = Field(min_length=1, max_length=20000)
+    text: str
     language: str | None = None
 
     sidecarVersion: str = Field(min_length=1, max_length=64)

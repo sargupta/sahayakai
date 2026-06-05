@@ -74,7 +74,8 @@ class LessonPlanRequest(BaseModel):
     # required. Making LessonPlanRequest consistent. Authenticated
     # callers always have a uid; the Next.js dispatcher injects it
     # before forwarding to the sidecar.
-    userId: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$")
+    # Phase 1a Fix 1: drop opaque-ID regex pattern; dispatcher enforces auth.
+    userId: str = Field(min_length=1, max_length=128)
     teacherContext: str | None = Field(default=None, max_length=2000)
     useRuralContext: bool | None = None
     ncertChapter: NcertChapter | None = None
@@ -99,42 +100,44 @@ class LessonPlanRequest(BaseModel):
 class KeyVocabulary(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    term: str = Field(min_length=1, max_length=100)
-    meaning: str = Field(min_length=1, max_length=500)
+    term: str
+    meaning: str
 
 
 class Activity(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     phase: ActivityPhase
-    name: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=1, max_length=4000)
-    duration: str = Field(min_length=1, max_length=50)
-    teacherTips: str | None = Field(default=None, max_length=2000)
-    understandingCheck: str | None = Field(default=None, max_length=1000)
+    name: str
+    description: str
+    duration: str
+    teacherTips: str | None = None
+    understandingCheck: str | None = None
 
 
 class LessonPlanCore(BaseModel):
     """Model output schema — what the writer agent MUST return.
 
     Phase 3 §3.1: same field set as `LessonPlanOutputSchema` in TS.
-    No defaults on optional fields per google-genai issue #699 (same
-    workaround as parent-call's `AgentReplyCore`).
+    Phase 1a Fix 2/3: bounds dropped to match Genkit Zod baseline (no
+    per-field maxLength; no array max_items). min_length=1 retained
+    only where Genkit's required-field semantics imply at least one
+    element.
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=1, max_length=300)
-    gradeLevel: str | None = Field(max_length=50)
-    duration: str | None = Field(max_length=50)
-    subject: str | None = Field(max_length=100)
-    objectives: list[_Objective] = Field(min_length=1, max_length=15)
-    keyVocabulary: list[KeyVocabulary] | None = Field(max_length=20)
-    materials: list[_Material] = Field(default_factory=list, max_length=30)
-    activities: list[Activity] = Field(min_length=1, max_length=10)
-    assessment: str | None = Field(max_length=2000)
-    homework: str | None = Field(max_length=2000)
-    language: str | None = Field(max_length=10)
+    title: str
+    gradeLevel: str | None = None
+    duration: str | None = None
+    subject: str | None = None
+    objectives: list[str]
+    keyVocabulary: list[KeyVocabulary] | None = None
+    materials: list[str] = Field(default_factory=list)
+    activities: list[Activity]
+    assessment: str | None = None
+    homework: str | None = None
+    language: str | None = None
 
 
 # --- Evaluator output (rubric) ------------------------------------------
@@ -169,8 +172,8 @@ class EvaluatorVerdict(BaseModel):
 
     scores: RubricScores
     safety: bool
-    rationale: str = Field(min_length=1, max_length=2000)
-    fail_reasons: list[_FailReason] = Field(default_factory=list, max_length=10)
+    rationale: str
+    fail_reasons: list[str] = Field(default_factory=list)
 
 
 # --- Wire response ------------------------------------------------------
@@ -186,17 +189,17 @@ class LessonPlanResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Parity fields — MUST match TS LessonPlanOutputSchema.
-    title: str = Field(max_length=300)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    duration: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
-    objectives: list[_Objective] = Field(min_length=1, max_length=15)
-    keyVocabulary: list[KeyVocabulary] | None = Field(default=None, max_length=20)
-    materials: list[_Material] = Field(default_factory=list, max_length=30)
-    activities: list[Activity] = Field(min_length=1, max_length=10)
-    assessment: str | None = Field(default=None, max_length=2000)
-    homework: str | None = Field(default=None, max_length=2000)
-    language: str | None = Field(default=None, max_length=10)
+    title: str
+    gradeLevel: str | None = None
+    duration: str | None = None
+    subject: str | None = None
+    objectives: list[str]
+    keyVocabulary: list[KeyVocabulary] | None = None
+    materials: list[str] = Field(default_factory=list)
+    activities: list[Activity]
+    assessment: str | None = None
+    homework: str | None = None
+    language: str | None = None
 
     # Additive telemetry.
     sidecarVersion: str = Field(max_length=64)

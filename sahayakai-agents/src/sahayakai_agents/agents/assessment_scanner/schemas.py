@@ -112,24 +112,24 @@ _LongStr = Annotated[str, StringConstraints(max_length=10000)]
 
 
 class ExtractedQuestion(BaseModel):
-    """One extracted question + the student's handwritten answer."""
+    """One extracted question + the student's handwritten answer (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    questionId: str = Field(min_length=1, max_length=64)
+    questionId: str
     questionType: QuestionType
-    questionText: _ShortStr
+    questionText: str
     questionTextConfidence: float = Field(ge=0.0, le=1.0)
-    studentAnswerRaw: _ShortStr
-    studentAnswerInterpreted: _ShortStr
+    studentAnswerRaw: str
+    studentAnswerInterpreted: str
     answerConfidence: float = Field(ge=0.0, le=1.0)
     isAttempted: bool
-    workShown: _ShortStr | None = None
+    workShown: str | None = None
     marksAvailable: float | None = None
 
 
 class PageScan(BaseModel):
-    """Result of Pass-1 extraction for ONE page."""
+    """Result of Pass-1 extraction for ONE page (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -137,8 +137,8 @@ class PageScan(BaseModel):
     pageType: PageType
     handwritingConfidence: float = Field(ge=0.0, le=1.0)
     imageQualityIssues: list[ImageQualityIssue] = Field(min_length=1)
-    detectedLanguage: str = Field(min_length=1, max_length=20)
-    questions: list[ExtractedQuestion] = Field(default_factory=list, max_length=50)
+    detectedLanguage: str
+    questions: list[ExtractedQuestion] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -149,37 +149,37 @@ class PageScan(BaseModel):
 class PartialCreditStep(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    step: _ShortStr
+    step: str
     earned: float = Field(ge=0.0)
     max: float = Field(ge=0.0)
 
 
 class TeacherOverrides(BaseModel):
-    """Teacher corrections layered on the AI grade."""
+    """Teacher corrections layered on the AI grade (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
     marksAwarded: float | None = Field(default=None, ge=0.0)
-    feedback: _ShortStr | None = None
-    studentFacingFeedback: _ShortStr | None = None
-    studentAnswer: _ShortStr | None = None
-    editedAt: str | None = Field(default=None, max_length=64)
+    feedback: str | None = None
+    studentFacingFeedback: str | None = None
+    studentAnswer: str | None = None
+    editedAt: str | None = None
 
 
 class GradedQuestion(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    questionId: str = Field(min_length=1, max_length=64)
+    questionId: str
     pageIndex: int = Field(ge=0)
-    questionText: _ShortStr
-    studentAnswer: _ShortStr
-    expectedAnswer: _LongStr
+    questionText: str
+    studentAnswer: str
+    expectedAnswer: str
     marksAwarded: float = Field(ge=0.0)
     marksMax: float = Field(ge=0.0)
     partialCreditBreakdown: list[PartialCreditStep] = Field(default_factory=list)
-    feedback: _ShortStr
-    studentFacingFeedback: _ShortStr
-    conceptTested: _ShortStr
+    feedback: str
+    studentFacingFeedback: str
+    conceptTested: str
     ncertChapterId: str | None = None
     mistakePattern: MistakePattern | None = None
     needsTeacherReview: bool
@@ -190,8 +190,8 @@ class GradedQuestion(BaseModel):
 class ConceptMastery(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    chapterId: str = Field(min_length=1, max_length=128)
-    chapterTitle: _ShortStr
+    chapterId: str
+    chapterTitle: str
     masteryPct: float = Field(ge=0.0, le=100.0)
     weakestConcept: str | None = None
 
@@ -207,8 +207,8 @@ class Pass2Output(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     questions: list[GradedQuestion] = Field(default_factory=list)
-    recommendedNextSteps: list[_ShortStr] = Field(default_factory=list, max_length=20)
-    studentRecommendations: list[_ShortStr] = Field(default_factory=list, max_length=20)
+    recommendedNextSteps: list[str] = Field(default_factory=list)
+    studentRecommendations: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -245,11 +245,8 @@ class AssessmentScannerRequest(BaseModel):
     # rendered Markdown block here. When omitted, Pass-2 uses a
     # "general knowledge" fallback string.
     ncertContext: str | None = Field(default=None, max_length=50000)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class AssessmentScannerResponse(BaseModel):
@@ -263,7 +260,7 @@ class AssessmentScannerResponse(BaseModel):
     totalAwardedMarks: float = Field(ge=0.0)
     totalMaxMarks: float = Field(ge=0.0)
     scorePct: float = Field(ge=0.0, le=100.0)
-    letterGrade: str = Field(min_length=1, max_length=4)
+    letterGrade: str
     questions: list[GradedQuestion]
     classAverageAtScan: float | None = None
     conceptMastery: list[ConceptMastery] = Field(default_factory=list)
