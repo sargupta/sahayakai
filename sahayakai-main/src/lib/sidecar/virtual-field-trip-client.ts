@@ -60,7 +60,13 @@ export type SidecarVirtualFieldTripStop = GenVirtualFieldTripStop;
 export type SidecarVirtualFieldTripRequest = GenVirtualFieldTripRequest;
 export type SidecarVirtualFieldTripResponse = GenVirtualFieldTripResponse;
 
-const TIMEOUT_MS = 15_000;
+// Track 3 (2026-06-05): bumped 15s -> 35s after Parallel-D parity probe
+// showed Genkit baseline runs 15-16s on multi-stop itinerary generation,
+// causing the sidecar shadow call to abort at 15s and write
+// `sidecarOk:false` for every legitimate run. Matches the sidecar's own
+// 35s per-call ceiling so the client never wins the race. Stays under
+// the 45s dispatcher (`VFT_TIMEOUT_MS`) so Genkit remains primary.
+const TIMEOUT_MS = 35_000;
 const AUDIENCE_ENV = 'SAHAYAKAI_AGENTS_AUDIENCE';
 const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
 
