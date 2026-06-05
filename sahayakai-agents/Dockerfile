@@ -50,4 +50,4 @@ EXPOSE 8080
 # us a single container per request concurrency level and autoscales
 # horizontally. Multiple workers in one container doubles memory for no
 # throughput gain at our request profile.
-CMD ["uvicorn", "sahayakai_agents.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-config", "/dev/null"]
+CMD ["uvicorn", "sahayakai_agents.main:app", "--host", "0.0.0.0", "--port", "8080"]
