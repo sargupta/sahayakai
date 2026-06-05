@@ -365,7 +365,7 @@ describe('group notification fanout', () => {
                 likerUid: 'liker-uid',
             });
             expect(first).toEqual({ sent: true });
-            // Stamp the recorded createdAt on the persisted doc so the dedup
+            // Stamp recorded createdAt on the persisted doc so the dedup
             // probe sees a recent timestamp (the in-memory store doesn't run
             // server-side createdAt resolution).
             for (const [docId, data] of Object.entries(getCol('notifications'))) {
