@@ -180,6 +180,17 @@ export interface FeatureFlagsConfig {
   avatarSidecarPercent: number;
   voiceToTextSidecarMode: SidecarMode;
   voiceToTextSidecarPercent: number;
+  assessmentScannerSidecarMode: SidecarMode;
+  assessmentScannerSidecarPercent: number;
+  // Community persona message (demo seeder + persona-pulse loop).
+  communityPersonaMessageSidecarMode: SidecarMode;
+  communityPersonaMessageSidecarPercent: number;
+  // Assignment assessor (vision + reasoning grading agent). The Genkit
+  // dispatcher at `src/lib/sidecar/assignment-assessor-dispatch.ts`
+  // previously ignored these flags; now it reads them to gate
+  // shadow/canary/full dispatch to the Python sidecar.
+  assignmentAssessorSidecarMode: SidecarMode;
+  assignmentAssessorSidecarPercent: number;
 
   /**
    * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
@@ -254,6 +265,19 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   avatarSidecarPercent: 0,
   voiceToTextSidecarMode: 'off',
   voiceToTextSidecarPercent: 0,
+  // Assessment scanner sidecar OFF on fallback -- 2-pass multimodal flow
+  // (vision OCR + rubric-grounded scoring); a Firestore outage must not
+  // redirect teacher grading requests to an undeployed sidecar.
+  assessmentScannerSidecarMode: 'off',
+  assessmentScannerSidecarPercent: 0,
+  // Community persona message + assignment assessor sidecars OFF on
+  // fallback — same safety reasoning as the rest of the Phase J.5
+  // cohort. A Firestore outage MUST NOT redirect grading or community
+  // chat traffic to an undeployed sidecar.
+  communityPersonaMessageSidecarMode: 'off',
+  communityPersonaMessageSidecarPercent: 0,
+  assignmentAssessorSidecarMode: 'off',
+  assignmentAssessorSidecarPercent: 0,
   // Consent prologue OFF until 11-language translations land. Operator
   // flips when ready. See `.claude/plans/dpdp-compliance.md`.
   consentNoticeEnabled: false,

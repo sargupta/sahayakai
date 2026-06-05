@@ -111,6 +111,9 @@ const VoiceToTextInputSchema = z.object({
   expectedLanguage: z.string().optional().describe(
     '2-letter ISO of the user\'s app language (en, hi, bn, ta, te, kn, mr, gu, pa, ml, or). Strong hint to the model.'
   ),
+  // Middleware always injects x-user-id from the Firebase ID token,
+  // so this is required at the schema level — matches the Py sidecar.
+  userId: z.string().optional().describe('The ID of the user invoking the transcription.'),
 });
 export type VoiceToTextInput = z.infer<typeof VoiceToTextInputSchema>;
 

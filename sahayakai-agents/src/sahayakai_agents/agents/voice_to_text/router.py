@@ -33,6 +33,7 @@ from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ._guard import assert_voice_to_text_response_rules
 from .agent import (
+    build_prompt_context,
     build_voice_to_text_agent,
     get_transcriber_model,
     render_transcriber_prompt,
@@ -244,7 +245,9 @@ async def _run_transcriber(
     settings: Any,
 ) -> VoiceToTextCore:
     audio_bytes, audio_mime = _decode_audio_data_uri(payload.audioDataUri)
-    prompt_text = render_transcriber_prompt({})
+    prompt_text = render_transcriber_prompt(
+        build_prompt_context(payload.expectedLanguage),
+    )
 
     async def _do(api_key: str) -> VoiceToTextCore:
         return await _run_pipeline_via_runner(

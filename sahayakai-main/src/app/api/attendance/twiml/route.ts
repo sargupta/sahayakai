@@ -7,6 +7,7 @@ import { dispatchParentCallReply } from '@/lib/sidecar/dispatch';
 import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
+import { LANGUAGE_TO_ISO } from '@/types/index';
 
 const MAX_TURNS = 6;
 const SPEECH_TIMEOUT = 'auto'; // Twilio auto-detects end of speech
@@ -238,7 +239,9 @@ export async function POST(req: NextRequest) {
             teacherMessage: data.generatedMessage,
             teacherName: data.teacherName,
             schoolName: data.schoolName,
-            parentLanguage: language,
+            // Parent-call schema now requires 2-letter ISO; `language` is the
+            // full Language name (`Hindi`), so map via LANGUAGE_TO_ISO.
+            parentLanguage: ((LANGUAGE_TO_ISO as Record<string, string>)[language] ?? 'en') as 'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
             transcript: transcript.map(t => ({ role: t.role, text: t.text })),
             parentSpeech,
             turnNumber: newTurnCount,

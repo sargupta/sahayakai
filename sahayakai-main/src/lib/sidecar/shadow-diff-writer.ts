@@ -51,7 +51,10 @@ export type AgentShadowAgent =
     | 'voice-to-text'
     | 'worksheet'
     | 'parent-message'
-    | 'avatar-generator';
+    | 'avatar-generator'
+    | 'assessment-scanner'
+    | 'assignment-assessor'
+    | 'community-persona-message';
 
 /**
  * Genkit + sidecar payloads are typed independently — the dispatcher

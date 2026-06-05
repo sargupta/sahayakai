@@ -15,6 +15,8 @@ Language: {{#if language}}{{language}}{{else}}English{{/if}}
 
 **LANGUAGE LOCK (CRITICAL):** write `pedagogicalContext` and `discussionSpark` ENTIRELY in {{#if language}}{{language}}{{else}}English{{/if}}. Do NOT mix languages. The `subject` field stays in English (e.g. "Science", "Mathematics") regardless of `language` so taxonomies remain consistent.
 
+**Native Script Mandate (CRITICAL):** Output `pedagogicalContext` and `discussionSpark` in {{#if language}}{{language}}{{else}}English{{/if}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Pongal kibhabe taeri hoy" instead of "পোঁগল কিভাবে তৈরি হয়" is a critical failure.
+
 Provide three fields:
 
 1. **`pedagogicalContext`** — how a teacher should use a blackboard drawing of this topic to explain it. Concrete, classroom-actionable. 2-4 sentences.

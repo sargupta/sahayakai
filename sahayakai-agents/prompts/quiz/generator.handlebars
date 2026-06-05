@@ -17,6 +17,8 @@
 
 {{/if}}**ABSOLUTE LANGUAGE LOCK:** the entire quiz MUST be in `{{language}}`. Every field — title, questionText, options, correctAnswer, explanation, AND teacherInstructions. No mixing. No transliteration leakage.
 
+**Native Script Mandate (CRITICAL):** Output in {{language}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Pongal kibhabe taeri hoy" instead of "পোঁগল কিভাবে তৈরি হয়" is a critical failure.
+
 You are an expert educator. Generate a quiz at the **{{targetDifficulty}}** difficulty level based on the inputs.
 
 **Bharat-First contextualisation:** every question and explanation MUST use Indian rural / cultural context — agriculture, monsoons, mandis, neem trees, the Ganga, etc. Avoid westernisms (elevators, snowing in non-Himalayan settings, dollars).

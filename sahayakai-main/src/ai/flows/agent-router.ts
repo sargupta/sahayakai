@@ -130,11 +130,13 @@ export async function processAgentRequest(input: AgentRouterInput): Promise<Agen
       result = { action: 'NAVIGATE', url: `/video-storyteller?${queryString}` };
       break;
     case 'instantAnswer':
-      // Direct call to instantAnswer
+      // Direct call to instantAnswer. instantAnswer enforces a non-empty
+      // userId itself (throws 401) — but the Zod schema now requires it,
+      // so default to an empty string to keep the type contract intact.
       const answer = await instantAnswer({
         question: input.prompt,
         language: finalLanguage,
-        userId: input.userId,
+        userId: input.userId ?? '',
       });
       result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };
       break;

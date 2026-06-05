@@ -95,6 +95,48 @@ class AuthorizationError(AgentError):
         super().__init__(code="FORBIDDEN", message=message, http_status=403)
 
 
+class AssessmentPageUnreadableError(AgentError):
+    """Page's Storage/HTTPS URL could not be fetched + decoded.
+
+    Mirrors the TS-side `AssessmentPageUnreadableError` in
+    `sahayakai-main/src/ai/flows/assessment-scanner.ts`. Names the
+    1-based page number so the teacher knows exactly which upload
+    to re-take. Surfaces as HTTP 422 (unprocessable input) since the
+    input artefact itself is the problem -- not the sidecar.
+    """
+
+    def __init__(self, page_number: int, cause: Exception | None = None) -> None:
+        super().__init__(
+            code="INVALID_INPUT",
+            message=(
+                f"Could not read uploaded page {page_number} -- "
+                "re-upload that page and try again."
+            ),
+            http_status=422,
+        )
+        self.page_number = page_number
+        if cause is not None:
+            self.__cause__ = cause
+
+
+class AssessmentEmptyExtractionError(AgentError):
+    """Grading produced zero gradable questions across all pages.
+
+    Mirrors the TS-side `AssessmentEmptyExtractionError`. Distinguishes
+    "we ran but found nothing to grade" from a provider outage.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="INVALID_INPUT",
+            message=(
+                "We could not read any questions or answers from the "
+                "uploaded pages. Please re-upload clearer photos and try again."
+            ),
+            http_status=422,
+        )
+
+
 class NotImplementedAgentError(AgentError):
     """Scaffold endpoints that intentionally return 501.
 

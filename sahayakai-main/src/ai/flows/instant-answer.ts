@@ -21,7 +21,9 @@ export const InstantAnswerInputSchema = z.object({
   language: z.string().optional().describe('The language for the answer (e.g. English, Hindi).'),
   gradeLevel: z.string().optional().describe('The grade level the answer should be tailored for.'),
   subject: z.string().optional().describe('The academic subject.'),
-  userId: z.string().optional().describe('The ID of the user for whom the answer is being generated.'),
+  // Middleware always injects x-user-id from the Firebase ID token,
+  // so this is required at the schema level — matches the Py sidecar.
+  userId: z.string().describe('The ID of the user for whom the answer is being generated.'),
 });
 
 // Helper for normalizing inputs
