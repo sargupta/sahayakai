@@ -65,6 +65,103 @@ describe('makeValidator (ajv structural check)', () => {
     const validate = mod.makeValidator(schema.output);
     expect(validate({ title: 't', objectives: ['o'] })).toBe(true);
   });
+
+  it('tolerates extra telemetry properties (drops additionalProperties:false)', () => {
+    // Sidecar adds telemetry fields like cacheHitRatio/revisionsRun/rubric
+    // that don't exist on the Zod-dumped baseline schema. The harness must
+    // treat these as benign — they're not a correctness regression.
+    const strictSchema = {
+      output: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          objectives: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['title', 'objectives'],
+        additionalProperties: false,
+      },
+    };
+    const validate = mod.makeValidator(strictSchema);
+    expect(
+      validate({
+        title: 't',
+        objectives: ['o'],
+        cacheHitRatio: 0.7,
+        revisionsRun: 1,
+        rubric: { criterion: 'clarity' },
+      }),
+    ).toBe(true);
+  });
+
+  it('allows explicit null on optional scalar fields', () => {
+    // Sidecar emits `chalkboardNote: null` where Genkit might omit it.
+    // Both shapes mean "field not present"; relax to accept null.
+    const ws = {
+      output: {
+        type: 'object',
+        properties: {
+          chalkboardNote: { type: 'string' },
+        },
+      },
+    };
+    const validate = mod.makeValidator(ws);
+    expect(validate({ chalkboardNote: null })).toBe(true);
+  });
+
+  it('validates variant-envelope quiz response per inner schema', () => {
+    // Quiz schema describes ONE variant; actual response wraps as
+    // {easy, medium, hard}. Harness must auto-detect and validate each.
+    const quizSchema = {
+      output: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          questions: { type: 'array', items: { type: 'object' } },
+        },
+        required: ['title', 'questions'],
+      },
+    };
+    const validate = mod.makeValidator(quizSchema);
+    const variant = { title: 'Q', questions: [{}] };
+    expect(
+      validate({ easy: variant, medium: variant, hard: variant, gradeLevel: '3' }),
+    ).toBe(true);
+
+    // One bad variant fails the whole envelope.
+    expect(
+      validate({ easy: variant, medium: variant, hard: { questions: [{}] } /* missing title */ }),
+    ).toBe(false);
+    expect(validate.errors?.[0].instancePath).toMatch(/^\/hard/);
+  });
+});
+
+describe('relaxSchema', () => {
+  it('drops additionalProperties:false recursively', () => {
+    const input = {
+      type: 'object',
+      properties: { nested: { type: 'object', additionalProperties: false } },
+      additionalProperties: false,
+    };
+    const out = mod.relaxSchema(input);
+    expect(out.additionalProperties).toBeUndefined();
+    expect(out.properties.nested.additionalProperties).toBeUndefined();
+  });
+
+  it('preserves additionalProperties when it is a schema (not false)', () => {
+    const input = { type: 'object', additionalProperties: { type: 'string' } };
+    const out = mod.relaxSchema(input);
+    expect(out.additionalProperties).toEqual({ type: ['string', 'null'] });
+  });
+
+  it('widens scalar type to include null', () => {
+    const out = mod.relaxSchema({ type: 'string' });
+    expect(out.type).toEqual(['string', 'null']);
+  });
+
+  it('does not double-add null to type arrays already containing it', () => {
+    const out = mod.relaxSchema({ type: ['string', 'null'] });
+    expect(out.type).toEqual(['string', 'null']);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -256,18 +353,22 @@ describe('extractPrimaryText', () => {
     expect(out).not.toContain('X');
   });
 
-  it('expands [*] across arrays for quiz', () => {
-    const obj = {
+  it('expands [*] across arrays for quiz (variant envelope)', () => {
+    // Real quiz responses wrap as {easy, medium, hard}, each with a
+    // questions[] array of {questionText, explanation, options...}.
+    const variant = {
+      title: 'Fractions quiz',
       questions: [
-        { question: 'Q1?', options: ['o1', 'o2'] },
-        { question: 'Q2?', options: ['o3'] },
+        { questionText: 'Q1?', explanation: 'because reasons' },
+        { questionText: 'Q2?', explanation: 'so' },
       ],
     };
+    const obj = { easy: variant, medium: variant, hard: variant };
     const out = mod.extractPrimaryText(obj, 'quiz');
     expect(out).toContain('Q1?');
     expect(out).toContain('Q2?');
-    expect(out).toContain('o1');
-    expect(out).toContain('o3');
+    expect(out).toContain('Fractions quiz');
+    expect(out).toContain('because reasons');
   });
 
   it('returns empty string for unknown agent', () => {
