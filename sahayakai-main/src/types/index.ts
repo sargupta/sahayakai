@@ -380,7 +380,9 @@ export type NotificationType =
     | 'COMMENT'         // future: someone commented on your resource
     | 'CONNECT_REQUEST' // someone sent a connection request — carries metadata.requestId
     | 'CONNECT_ACCEPTED' // your request was accepted
-    | 'NEW_TEACHER_JOINED'; // a teacher in your district + subject just joined SahayakAI
+    | 'NEW_TEACHER_JOINED' // a teacher in your district + subject just joined SahayakAI
+    | 'NEW_GROUP_POST'   // someone posted in a group you belong to (metadata: groupId, postId, authorUid)
+    | 'GROUP_POST_LIKE'; // someone liked your group post (metadata: groupId, postId, likerUid)
 
 export interface Notification {
     id: string;
