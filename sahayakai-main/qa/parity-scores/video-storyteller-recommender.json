@@ -1,0 +1,858 @@
+{
+  "agent": "video-storyteller",
+  "scoringMode": "recommender",
+  "passRate": 0.6190476190476191,
+  "ready": false,
+  "results": [
+    {
+      "cell": "bn-g3-hindi-kahaani.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.15,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8701831875016033,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.21914008321775313,
+      "bleed": true,
+      "bleedScripts": [
+        "hi"
+      ],
+      "verdict": "FAIL",
+      "failReasons": [
+        "topical",
+        "script",
+        "bleed"
+      ],
+      "baselineTopicalRelevance": 0.68
+    },
+    {
+      "cell": "bn-g3-math-fractions.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.34177215189873417,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8953158937874217,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 23
+      },
+      "script": 0.9346666666666666,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "bn-g3-science-watercycle.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.4177215189873418,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9323553898636292,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9353846153846154,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "bn-g7-math-algebra.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.2857142857142857,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8939457321416109,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9955357142857143,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "en-g3-hindi-kahaani.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.43373493975903615,
+      "topicalRelevance": 0.8571428571428571,
+      "messageCosine": 0.9117597004145133,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 21
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0.52
+    },
+    {
+      "cell": "en-g3-math-fractions.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.5432098765432098,
+      "topicalRelevance": 0.96,
+      "messageCosine": 0.913133419628643,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0.76
+    },
+    {
+      "cell": "en-g3-science-watercycle.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.4875,
+      "topicalRelevance": 0.5,
+      "messageCosine": 0.8970520545657381,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 22
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0.52
+    },
+    {
+      "cell": "en-g7-math-algebra.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.40625,
+      "topicalRelevance": 0.88,
+      "messageCosine": 0.9076374544640515,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0.72
+    },
+    {
+      "cell": "gu-g3-hindi-kahaani.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.2261904761904762,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8672549920481423,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 21
+      },
+      "script": 0.8813008130081301,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "gu-g3-math-fractions.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3333333333333333,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8835041177457723,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9173693086003373,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "gu-g3-science-watercycle.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.058333333333333334,
+      "topicalRelevance": 0.52,
+      "messageCosine": 0.8988191389859175,
+      "queryCounts": {
+        "genkit": 20,
+        "sidecar": 25
+      },
+      "script": 0.16666666666666666,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "gu-g7-math-algebra.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3493975903614458,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8703350497658715,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 24
+      },
+      "script": 0.9058663028649386,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "hi-g3-hindi-kahaani.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.47368421052631576,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8542093188097882,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "hi-g3-math-fractions.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3026315789473684,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8302318989976544,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 17
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "hi-g3-science-watercycle.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3258426966292135,
+      "topicalRelevance": 0,
+      "messageCosine": 0.91013052105673,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.9928057553956835,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "hi-g7-math-algebra.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3855421686746988,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9163146408034258,
+      "queryCounts": {
+        "genkit": 20,
+        "sidecar": 25
+      },
+      "script": 0.9502762430939227,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "kn-g3-hindi-kahaani.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.05263157894736842,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9033826027073177,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.17541613316261204,
+      "bleed": true,
+      "bleedScripts": [
+        "hi"
+      ],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "script",
+        "bleed"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "kn-g3-math-fractions.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.24770642201834864,
+      "topicalRelevance": 0.24,
+      "messageCosine": 0.853478251414807,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.7222884386174017,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "kn-g3-science-watercycle.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.10344827586206896,
+      "topicalRelevance": 0.48,
+      "messageCosine": 0.9054248182455173,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.24358974358974358,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "kn-g7-math-algebra.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.34177215189873417,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8937057057877784,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9259776536312849,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g3-hindi-kahaani.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.06422018348623854,
+      "topicalRelevance": 0,
+      "messageCosine": 0.910340347773864,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9398907103825137,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "topical"
+      ],
+      "baselineTopicalRelevance": 0.68
+    },
+    {
+      "cell": "ml-g3-math-fractions.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.12264150943396226,
+      "topicalRelevance": 0.6818181818181818,
+      "messageCosine": 0.8558428006402385,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 22
+      },
+      "script": 0.4317673378076063,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g3-science-watercycle.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.225,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9035776425608824,
+      "queryCounts": {
+        "genkit": 21,
+        "sidecar": 20
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g7-math-algebra.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3291139240506329,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8812205186146483,
+      "queryCounts": {
+        "genkit": 21,
+        "sidecar": 20
+      },
+      "script": 0.9389110225763613,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "mr-g3-hindi-kahaani.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3522727272727273,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8823532835209603,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.916267942583732,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "mr-g3-math-fractions.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9368027603353744,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 23
+      },
+      "script": 0.970554926387316,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "mr-g3-science-watercycle.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.36363636363636365,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8863860941474624,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.9361702127659575,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "mr-g7-math-algebra.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.410958904109589,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9056041128042831,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 21
+      },
+      "script": 0.9544846050870147,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "or-g3-hindi-kahaani.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.10619469026548672,
+      "topicalRelevance": 0.84,
+      "messageCosine": 0.9077219379920155,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.2014475271411339,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "or-g3-math-fractions.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.08333333333333333,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.7646203823018276,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.2108695652173913,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "or-g3-science-watercycle.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.5119047619047619,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.898437852738509,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.14363438520130578,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0.48
+    },
+    {
+      "cell": "pa-g3-hindi-kahaani.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.10309278350515463,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9137438835946214,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.22311827956989247,
+      "bleed": true,
+      "bleedScripts": [
+        "hi"
+      ],
+      "verdict": "FAIL",
+      "failReasons": [
+        "topical",
+        "script",
+        "bleed"
+      ],
+      "baselineTopicalRelevance": 0.44
+    },
+    {
+      "cell": "pa-g3-math-fractions.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.5238095238095238,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.864443101129541,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.15137614678899083,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0.76
+    },
+    {
+      "cell": "pa-g3-science-watercycle.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.10679611650485436,
+      "topicalRelevance": 0.48,
+      "messageCosine": 0.9204264242025354,
+      "queryCounts": {
+        "genkit": 20,
+        "sidecar": 25
+      },
+      "script": 0.21144859813084113,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "script"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ta-g3-hindi-kahaani.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.024193548387096774,
+      "topicalRelevance": 0,
+      "messageCosine": 0.897998248643139,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.28492239467849223,
+      "bleed": true,
+      "bleedScripts": [
+        "hi"
+      ],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "script",
+        "bleed"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ta-g3-math-fractions.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3372093023255814,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8990548643150662,
+      "queryCounts": {
+        "genkit": 21,
+        "sidecar": 23
+      },
+      "script": 0.9476439790575916,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ta-g3-science-watercycle.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3780487804878049,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9426496028970018,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9342969776609724,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ta-g7-math-algebra.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3068181818181818,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8042643753518749,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 23
+      },
+      "script": 0.9453924914675768,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "te-g3-hindi-kahaani.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.040983606557377046,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9181880491067618,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard",
+        "topical"
+      ],
+      "baselineTopicalRelevance": 0.56
+    },
+    {
+      "cell": "te-g3-math-fractions.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3522727272727273,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9161680964860123,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 23
+      },
+      "script": 0.9873096446700508,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "te-g3-science-watercycle.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.2696629213483146,
+      "topicalRelevance": 0,
+      "messageCosine": 0.8846817509979384,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 0.9282700421940928,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "te-g7-math-algebra.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.3625,
+      "topicalRelevance": 0,
+      "messageCosine": 0.9194788529332634,
+      "queryCounts": {
+        "genkit": 22,
+        "sidecar": 20
+      },
+      "script": 0.9328467153284672,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0
+    }
+  ]
+}
