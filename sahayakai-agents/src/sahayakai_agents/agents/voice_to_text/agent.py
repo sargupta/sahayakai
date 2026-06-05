@@ -65,6 +65,44 @@ def _compile_transcriber_template() -> Any:
     return _compiler.compile(load_transcriber_prompt())
 
 
+# 2-letter ISO → (display name, native script name). Mirrors the
+# ISO_TO_LANG_HINT map in `src/ai/flows/voice-to-text.ts` so the Py
+# sidecar produces the same hint block as the Genkit TS path.
+_ISO_TO_LANG_HINT: dict[str, dict[str, str]] = {
+    "en": {"name": "English",   "script": "Latin"},
+    "hi": {"name": "Hindi",     "script": "Devanagari"},
+    "bn": {"name": "Bengali",   "script": "Bengali"},
+    "ta": {"name": "Tamil",     "script": "Tamil"},
+    "te": {"name": "Telugu",    "script": "Telugu"},
+    "kn": {"name": "Kannada",   "script": "Kannada"},
+    "mr": {"name": "Marathi",   "script": "Devanagari"},
+    "gu": {"name": "Gujarati",  "script": "Gujarati"},
+    "pa": {"name": "Punjabi",   "script": "Gurmukhi"},
+    "ml": {"name": "Malayalam", "script": "Malayalam"},
+    "or": {"name": "Odia",      "script": "Odia"},
+}
+
+
+def build_prompt_context(expected_language: str | None) -> dict[str, Any]:
+    """Build the Handlebars context for the transcriber template.
+
+    Mirrors `buildPromptInput()` in the TS Genkit flow: if a known
+    2-letter ISO hint is supplied, expose `expectedLanguageHint`,
+    `expectedLanguageName`, and `expectedLanguageScript` to the
+    template's `{{#if expectedLanguageHint}}` block.
+    """
+    if not expected_language:
+        return {}
+    hint = _ISO_TO_LANG_HINT.get(expected_language.lower())
+    if not hint:
+        return {}
+    return {
+        "expectedLanguageHint": "yes",
+        "expectedLanguageName": hint["name"],
+        "expectedLanguageScript": hint["script"],
+    }
+
+
 def render_transcriber_prompt(context: dict[str, Any]) -> str:
     return str(_compile_transcriber_template()(context))
 
@@ -132,6 +170,7 @@ def build_voice_to_text_agent() -> SequentialAgent:
 
 
 __all__ = [
+    "build_prompt_context",
     "build_transcriber_agent",
     "build_voice_to_text_agent",
     "get_transcriber_model",

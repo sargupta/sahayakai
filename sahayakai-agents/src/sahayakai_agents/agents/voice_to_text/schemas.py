@@ -37,6 +37,16 @@ class VoiceToTextRequest(BaseModel):
     userId: str = Field(
         min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
     )
+    # Optional 2-letter ISO language hint from the client (e.g. "bn", "ta").
+    # Mirrors the Genkit TS `VoiceToTextInputSchema.expectedLanguage` field
+    # — passed into the prompt to strongly bias detection and script choice
+    # for short/noisy Indic audio. Field name preserved in TS-style camelCase
+    # to match the Zod schema exactly (no alias translation in shadow mode).
+    expectedLanguage: str | None = Field(
+        default=None,
+        max_length=8,
+        description="2-letter ISO language hint from client",
+    )
 
 
 class VoiceToTextCore(BaseModel):

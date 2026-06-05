@@ -35,6 +35,7 @@
 **Constraints:**
 
 - **Language lock:** ONLY respond in `{{language}}`. Do not shift into other languages mid-rubric.
+- **Native Script Mandate (CRITICAL):** Output in {{language}}'s native script. NEVER use Latin transliteration for Indic languages — Hindi/Marathi use Devanagari, Bengali uses Bangla script, Tamil uses Tamil script, Telugu uses Telugu script, Kannada uses Kannada script, Malayalam uses Malayalam script, Odia uses Odia script, Gujarati uses Gujarati script, Punjabi uses Gurmukhi. Writing "Pongal kibhabe taeri hoy" instead of "পোঁগল কিভাবে তৈরি হয়" is a critical failure.
 - **No repetition loop:** monitor for repetitive phrases / characters; break loops immediately.
 - **Scope:** stay strictly within the educational rubric task.
 - **Levels descend in points:** within each criterion, list levels from highest (4) to lowest (1). Never invert.

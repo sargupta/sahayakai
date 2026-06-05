@@ -53,7 +53,12 @@ class BlueprintDifficultyEntry(BaseModel):
 
 class BlueprintSummary(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    chapterWise: list[BlueprintChapterEntry] = Field(min_length=1, max_length=30)
+    # Parity with Zod `.default([])`: Genkit may emit an empty array when the
+    # model has no chapter-level breakdown to report. Tightening to >=1 here
+    # was rejecting otherwise-valid responses in shadow mode.
+    chapterWise: list[BlueprintChapterEntry] = Field(
+        default_factory=list, max_length=30,
+    )
     difficultyWise: list[BlueprintDifficultyEntry] = Field(min_length=1, max_length=10)
 
 

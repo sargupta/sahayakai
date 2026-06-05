@@ -23,7 +23,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from .agent_card import build_agent_card
+from .agents.assessment_scanner.router import assessment_scanner_router
+from .agents.assignment_assessor.router import assignment_assessor_router
 from .agents.avatar_generator.router import avatar_generator_router
+from .agents.community_persona_message.router import (
+    community_persona_message_router,
+)
 from .agents.exam_paper.router import exam_paper_router
 from .agents.instant_answer.router import instant_answer_router
 from .agents.lesson_plan.router import router as lesson_plan_router
@@ -222,3 +227,7 @@ app.include_router(voice_to_text_router)
 # Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
 # `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
 app.include_router(vidya_voice_router)
+# Assessment scanner — multimodal OCR + grading (phase-w.alpha).
+app.include_router(assessment_scanner_router)
+app.include_router(assignment_assessor_router)
+app.include_router(community_persona_message_router)
