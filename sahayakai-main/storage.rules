@@ -25,11 +25,35 @@ service firebase.storage {
             allow delete: if request.auth != null && request.auth.uid == userId;
         }
 
-        // ── Image uploads (resource sharing, avatars, lesson media) ─────────
-        // Mirrors the voice-messages owner-write / authenticated-read pattern
-        // for any image uploaded under a user-scoped prefix. Add additional
-        // explicit matches above this one for stricter feature-specific
-        // limits as those features go to GA.
+        // ── User uploads (resource sharing, lesson media) ────────────────────
+        // Path written by src/components/image-uploader.tsx:
+        //   users/{userId}/uploads/{uuid}_{filename}
+        // Mirrors the voice-messages owner-write / authenticated-read pattern.
+        match /users/{userId}/uploads/{fileName=**} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 10 * 1024 * 1024;
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── Profile photos / avatars ─────────────────────────────────────────
+        // Path written by src/app/settings/page.tsx (custom avatar upload):
+        //   profile-photos/{userId}/{uuid}.{ext}
+        // Authenticated-read so the photo URL works in shared resources and
+        // the community directory. 5 MB cap (avatars are tiny) + image-only.
+        match /profile-photos/{userId}/{fileName=**} {
+            allow read: if request.auth != null;
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 5 * 1024 * 1024
+                         && request.resource.contentType.matches('image/.*');
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── Legacy fallback for any older /uploads/{uid}/ path ───────────────
+        // Kept in case any cached page on an older build still posts here.
+        // Safe to delete once we confirm no client traffic hits it.
         match /uploads/{userId}/{fileName=**} {
             allow read: if request.auth != null;
             allow write: if request.auth != null
