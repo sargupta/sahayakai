@@ -28,6 +28,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout, WithTimeoutError } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // NCERT demo hot-fix (2026-05-19): bumped from 15s to 45s after demo run
 // observed Kannada Mysore Palace itineraries completing at ~6s past the
@@ -127,7 +128,8 @@ function inputToSidecarRequest(
 ): SidecarVirtualFieldTripRequest {
     return {
         topic: input.topic,
-        language: input.language ?? null,
+        // Normalise language display label → ISO for uniform wire shape.
+        language: input.language ? toIsoLanguage(input.language) : null,
         gradeLevel: input.gradeLevel ?? null,
         userId: input.userId,
     };

@@ -49,6 +49,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -93,9 +94,12 @@ function toSidecarRequest(input: LessonPlanDispatchInput): SidecarLessonPlanRequ
     // schema too — the writer prompt consumes them for parity with
     // the Genkit lesson-plan flow. `extra="forbid"` is retained on
     // the sidecar side so genuine schema drift still 422s.
+    // Python `LessonPlanLanguage` is a strict Literal of 2-letter ISO
+    // codes. The TS Genkit flow normalises to a display name ("English")
+    // via `normalizeLanguage`; emit ISO ("en") here so Pydantic accepts.
     const extended = {
         topic: input.topic,
-        language: input.language as SidecarLessonPlanRequest['language'],
+        language: toIsoLanguage(input.language) as SidecarLessonPlanRequest['language'],
         gradeLevels: input.gradeLevels,
         useRuralContext: input.useRuralContext,
         ncertChapter: input.ncertChapter,

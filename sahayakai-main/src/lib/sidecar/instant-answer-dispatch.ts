@@ -48,6 +48,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { WithTimeoutError, withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Bumped from 10s — instant-answer uses Google Search grounding which
 // adds 2-5s of latency on top of the model call. 10s caused 500s when the
@@ -150,9 +151,13 @@ export interface InstantAnswerDispatchInput extends InstantAnswerInput {
 function inputToSidecarRequest(
     input: InstantAnswerDispatchInput,
 ): SidecarInstantAnswerRequest {
+    // Python `language` field is bounded max_length=10. Display names
+    // ("Malayalam"=9) still fit but ISO codes are the canonical form
+    // documented in the Python contract; emit ISO so downstream telemetry
+    // is uniform across agents.
     return {
         question: input.question,
-        language: input.language ?? null,
+        language: input.language ? toIsoLanguage(input.language) : null,
         gradeLevel: input.gradeLevel ?? null,
         subject: input.subject ?? null,
         userId: input.userId,

@@ -32,6 +32,7 @@ import {
 import { persistSidecarImage } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Mirrors `TIMEOUT_MS` in visual-aid-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -93,7 +94,8 @@ export interface VisualAidDispatchInput extends VisualAidInput {
 function inputToSidecarRequest(input: VisualAidDispatchInput): SidecarVisualAidRequest {
     return {
         prompt: input.prompt,
-        language: input.language ?? null,
+        // Normalise language display label → ISO for uniform wire shape.
+        language: input.language ? toIsoLanguage(input.language) : null,
         gradeLevel: input.gradeLevel ?? null,
         subject: input.subject ?? null,
         userId: input.userId,

@@ -20,6 +20,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { WithTimeoutError, withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Bumped from 12s — the Genkit rubric flow legitimately takes 11–13s for the
 // model call alone, and persistContent adds another ~2s. The previous 12s cap
@@ -94,7 +95,8 @@ function inputToSidecarRequest(input: RubricDispatchInput): SidecarRubricRequest
         assignmentDescription: input.assignmentDescription,
         gradeLevel: input.gradeLevel ?? null,
         subject: input.subject ?? null,
-        language: input.language ?? null,
+        // Normalise language display label → ISO for uniform wire shape.
+        language: input.language ? toIsoLanguage(input.language) : null,
         teacherContext: input.teacherContext ?? null,
         userId: input.userId,
     };

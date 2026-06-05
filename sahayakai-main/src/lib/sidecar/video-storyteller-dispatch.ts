@@ -52,6 +52,7 @@ import {
 } from './video-storyteller-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { WithTimeoutError, withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Mirrors `TIMEOUT_MS` in video-storyteller-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -142,11 +143,23 @@ export interface VideoStorytellerDispatchInput
 function inputToSidecarRequest(
     input: VideoStorytellerDispatchInput,
 ): SidecarVideoStorytellerRequest {
+    // Python `VideoStorytellerRequest` requires `subject` + `gradeLevel`.
+    // The TS Genkit Zod schema mirrors this but the API route forwards
+    // the body unvalidated, and legacy clients (and some QA payloads)
+    // send `grade` or omit `subject`. Derive safe defaults so the
+    // sidecar contract is always satisfied — the alternative is a 422
+    // that ends in a Genkit fallback anyway.
+    const rawInput = input as unknown as Record<string, unknown>;
+    const fallbackGrade =
+        input.gradeLevel ??
+        (typeof rawInput.grade === 'string' ? (rawInput.grade as string) : undefined) ??
+        'Class 5';
+    const fallbackSubject = input.subject ?? 'General';
     return {
-        subject: input.subject,
-        gradeLevel: input.gradeLevel,
+        subject: fallbackSubject,
+        gradeLevel: fallbackGrade,
         topic: input.topic ?? undefined,
-        language: input.language ?? undefined,
+        language: input.language ? toIsoLanguage(input.language) : undefined,
         state: input.state ?? undefined,
         educationBoard: input.educationBoard ?? undefined,
         userId: input.userId ?? 'anon',
