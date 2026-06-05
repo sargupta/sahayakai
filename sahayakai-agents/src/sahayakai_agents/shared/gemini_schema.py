@@ -118,6 +118,14 @@ def gemini_response_schema(source: type[BaseModel] | dict[str, Any]) -> dict[str
     cleaned = _strip(inlined)
     if not isinstance(cleaned, dict):  # pragma: no cover — _strip preserves shape
         raise ValueError("schema root must be a JSON object")
+    # Phase 1b: apply the same wire-only simplifications the SDK monkey-patch
+    # applies (collapse `anyOf[T, null]` → T, drop length/numeric/pattern
+    # bounds). Direct google-genai callers (lesson-plan writer/evaluator/
+    # reviser, instant-answer, etc.) go through this helper instead of the
+    # ADK LlmAgent pipeline, so they need the same envelope.
+    from .genai_patch import _simplify_schema_for_gemini  # noqa: PLC0415
+
+    _simplify_schema_for_gemini(cleaned)
     return cleaned
 
 

@@ -47,9 +47,14 @@ worksheet_router = APIRouter(prefix="/v1/worksheet", tags=["worksheet"])
 SIDECAR_VERSION = "phase-u.beta"
 
 # Per-call timeout for run_resiliently. Worksheet wizard does a
-# multimodal call (image + prompt) and emits structured JSON; 20s
-# accommodates slow attempts while preventing hung calls.
-_PER_CALL_TIMEOUT_S = 20.0
+# multimodal call (image + prompt) and emits structured JSON. Phase 1b:
+# bumped 20s → 35s after live shadow traffic showed legitimate p99
+# multimodal latencies of 19-22s for textbook-page worksheets — the
+# previous 20s ceiling clipped the long tail and exhausted the
+# `max_total_backoff_seconds` budget (7s default) before a retry could
+# even start. 35s gives the first attempt enough room to succeed on
+# slow Vertex paths while staying under the 60s Cloud Run client cap.
+_PER_CALL_TIMEOUT_S = 35.0
 
 # ADK Runner needs an app_name for the in-memory session service.
 _WORKSHEET_APP_NAME = "sahayakai-worksheet"
