@@ -1,7 +1,7 @@
 {
   "agent": "video-storyteller",
   "scoringMode": "recommender",
-  "passRate": 0.6190476190476191,
+  "passRate": 0.40476190476190477,
   "ready": false,
   "results": [
     {
@@ -9,24 +9,18 @@
       "lang": "bn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.15,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8701831875016033,
+      "queryJaccard": 0.5866666666666667,
+      "topicalRelevance": 0.68,
+      "messageCosine": 0.8918767346876862,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.21914008321775313,
-      "bleed": true,
-      "bleedScripts": [
-        "hi"
-      ],
-      "verdict": "FAIL",
-      "failReasons": [
-        "topical",
-        "script",
-        "bleed"
-      ],
+      "script": 0.9476439790575916,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0.68
     },
     {
@@ -34,18 +28,20 @@
       "lang": "bn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.34177215189873417,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8953158937874217,
+      "queryJaccard": 0.047619047619047616,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.8396651353611579,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 23
+        "sidecar": 25
       },
-      "script": 0.9346666666666666,
+      "script": 0.9820359281437125,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -53,18 +49,20 @@
       "lang": "bn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.4177215189873418,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9323553898636292,
+      "queryJaccard": 0.06837606837606838,
+      "topicalRelevance": 0.64,
+      "messageCosine": 0.901620563254159,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 20
+        "sidecar": 25
       },
-      "script": 0.9353846153846154,
+      "script": 0.9513274336283186,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -72,18 +70,20 @@
       "lang": "bn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.2857142857142857,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8939457321416109,
+      "queryJaccard": 0.06140350877192982,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.8855967438835862,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 20
+        "sidecar": 25
       },
-      "script": 0.9955357142857143,
+      "script": 0.9841269841269841,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -91,12 +91,12 @@
       "lang": "en",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.43373493975903615,
-      "topicalRelevance": 0.8571428571428571,
-      "messageCosine": 0.9117597004145133,
+      "queryJaccard": 0.45555555555555555,
+      "topicalRelevance": 0.88,
+      "messageCosine": 0.9051967820219833,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 21
+        "sidecar": 25
       },
       "script": 1,
       "bleed": false,
@@ -110,9 +110,9 @@
       "lang": "en",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.5432098765432098,
-      "topicalRelevance": 0.96,
-      "messageCosine": 0.913133419628643,
+      "queryJaccard": 0.45348837209302323,
+      "topicalRelevance": 0.76,
+      "messageCosine": 0.9025276355468986,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
@@ -129,12 +129,12 @@
       "lang": "en",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.4875,
-      "topicalRelevance": 0.5,
-      "messageCosine": 0.8970520545657381,
+      "queryJaccard": 0.4367816091954023,
+      "topicalRelevance": 0.64,
+      "messageCosine": 0.8945574786527605,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 22
+        "sidecar": 25
       },
       "script": 1,
       "bleed": false,
@@ -148,9 +148,9 @@
       "lang": "en",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.40625,
-      "topicalRelevance": 0.88,
-      "messageCosine": 0.9076374544640515,
+      "queryJaccard": 0.4479166666666667,
+      "topicalRelevance": 0.92,
+      "messageCosine": 0.907149733256156,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
@@ -167,19 +167,19 @@
       "lang": "gu",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.2261904761904762,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8672549920481423,
+      "queryJaccard": 0.043859649122807015,
+      "topicalRelevance": 0.76,
+      "messageCosine": 0.8650609322047639,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 21
+        "sidecar": 25
       },
-      "script": 0.8813008130081301,
+      "script": 0.9658536585365853,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "script"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -188,18 +188,20 @@
       "lang": "gu",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3333333333333333,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8835041177457723,
+      "queryJaccard": 0.08108108108108109,
+      "topicalRelevance": 0.88,
+      "messageCosine": 0.9371989276974578,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 20
+        "sidecar": 25
       },
-      "script": 0.9173693086003373,
+      "script": 0.9672897196261683,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -207,20 +209,19 @@
       "lang": "gu",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.058333333333333334,
-      "topicalRelevance": 0.52,
-      "messageCosine": 0.8988191389859175,
+      "queryJaccard": 0.06140350877192982,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.8888944464831486,
       "queryCounts": {
         "genkit": 20,
         "sidecar": 25
       },
-      "script": 0.16666666666666666,
+      "script": 0.9473684210526315,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "jaccard",
-        "script"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -229,18 +230,20 @@
       "lang": "gu",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3493975903614458,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8703350497658715,
+      "queryJaccard": 0.02702702702702703,
+      "topicalRelevance": 0.75,
+      "messageCosine": 0.9427954622327813,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 24
+        "sidecar": 20
       },
-      "script": 0.9058663028649386,
+      "script": 0.9580838323353293,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -248,18 +251,20 @@
       "lang": "hi",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.47368421052631576,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8542093188097882,
+      "queryJaccard": 0.06862745098039216,
+      "topicalRelevance": 0.9,
+      "messageCosine": 0.8000439207287261,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 25
+        "sidecar": 20
       },
       "script": 1,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -267,14 +272,14 @@
       "lang": "hi",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3026315789473684,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8302318989976544,
+      "queryJaccard": 0.14,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.8644075338896698,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 17
+        "sidecar": 25
       },
-      "script": 1,
+      "script": 0.9047619047619048,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "PASS",
@@ -286,18 +291,20 @@
       "lang": "hi",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3258426966292135,
-      "topicalRelevance": 0,
-      "messageCosine": 0.91013052105673,
+      "queryJaccard": 0.05982905982905983,
+      "topicalRelevance": 0.68,
+      "messageCosine": 0.9264040010383934,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.9928057553956835,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -305,18 +312,20 @@
       "lang": "hi",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3855421686746988,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9163146408034258,
+      "queryJaccard": 0.0625,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.875349119202315,
       "queryCounts": {
         "genkit": 20,
         "sidecar": 25
       },
-      "script": 0.9502762430939227,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -324,23 +333,19 @@
       "lang": "kn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.05263157894736842,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9033826027073177,
+      "queryJaccard": 0.06837606837606838,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.9281012919103597,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.17541613316261204,
-      "bleed": true,
-      "bleedScripts": [
-        "hi"
-      ],
+      "script": 0.9718875502008032,
+      "bleed": false,
+      "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "jaccard",
-        "script",
-        "bleed"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -349,19 +354,19 @@
       "lang": "kn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.24770642201834864,
-      "topicalRelevance": 0.24,
-      "messageCosine": 0.853478251414807,
+      "queryJaccard": 0.05454545454545454,
+      "topicalRelevance": 0.95,
+      "messageCosine": 0.8879284009183281,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 25
+        "sidecar": 20
       },
-      "script": 0.7222884386174017,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "script"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -370,95 +375,12 @@
       "lang": "kn",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.10344827586206896,
-      "topicalRelevance": 0.48,
-      "messageCosine": 0.9054248182455173,
+      "queryJaccard": 0.1,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.8759574486834877,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
-      },
-      "script": 0.24358974358974358,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "script"
-      ],
-      "baselineTopicalRelevance": 0
-    },
-    {
-      "cell": "kn-g7-math-algebra.json",
-      "lang": "kn",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.34177215189873417,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8937057057877784,
-      "queryCounts": {
-        "genkit": 25,
-        "sidecar": 20
-      },
-      "script": 0.9259776536312849,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
-      "baselineTopicalRelevance": 0
-    },
-    {
-      "cell": "ml-g3-hindi-kahaani.json",
-      "lang": "ml",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.06422018348623854,
-      "topicalRelevance": 0,
-      "messageCosine": 0.910340347773864,
-      "queryCounts": {
-        "genkit": 25,
-        "sidecar": 20
-      },
-      "script": 0.9398907103825137,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "jaccard",
-        "topical"
-      ],
-      "baselineTopicalRelevance": 0.68
-    },
-    {
-      "cell": "ml-g3-math-fractions.json",
-      "lang": "ml",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.12264150943396226,
-      "topicalRelevance": 0.6818181818181818,
-      "messageCosine": 0.8558428006402385,
-      "queryCounts": {
-        "genkit": 25,
-        "sidecar": 22
-      },
-      "script": 0.4317673378076063,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "script"
-      ],
-      "baselineTopicalRelevance": 0
-    },
-    {
-      "cell": "ml-g3-science-watercycle.json",
-      "lang": "ml",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.225,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9035776425608824,
-      "queryCounts": {
-        "genkit": 21,
-        "sidecar": 20
       },
       "script": 1,
       "bleed": false,
@@ -468,22 +390,106 @@
       "baselineTopicalRelevance": 0
     },
     {
-      "cell": "ml-g7-math-algebra.json",
+      "cell": "kn-g7-math-algebra.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.08771929824561403,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.882017357881169,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.9695652173913043,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g3-hindi-kahaani.json",
       "lang": "ml",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3291139240506329,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8812205186146483,
+      "queryJaccard": 0.5316455696202531,
+      "topicalRelevance": 0.9565217391304348,
+      "messageCosine": 0.9184521149268122,
       "queryCounts": {
-        "genkit": 21,
-        "sidecar": 20
+        "genkit": 25,
+        "sidecar": 23
       },
-      "script": 0.9389110225763613,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "PASS",
       "failReasons": [],
+      "baselineTopicalRelevance": 0.68
+    },
+    {
+      "cell": "ml-g3-math-fractions.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.07692307692307693,
+      "topicalRelevance": 0.96,
+      "messageCosine": 0.8698968653441231,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 25
+      },
+      "script": 0.9717741935483871,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g3-science-watercycle.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.07766990291262135,
+      "topicalRelevance": 0.48,
+      "messageCosine": 0.8908422671714545,
+      "queryCounts": {
+        "genkit": 21,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "ml-g7-math-algebra.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.06722689075630252,
+      "topicalRelevance": 0.72,
+      "messageCosine": 0.891415554626128,
+      "queryCounts": {
+        "genkit": 21,
+        "sidecar": 25
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -491,14 +497,14 @@
       "lang": "mr",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3522727272727273,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8823532835209603,
+      "queryJaccard": 0.10619469026548672,
+      "topicalRelevance": 0.52,
+      "messageCosine": 0.9127209790911539,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.916267942583732,
+      "script": 0.9711934156378601,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "PASS",
@@ -510,14 +516,14 @@
       "lang": "mr",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9368027603353744,
+      "queryJaccard": 0.1308411214953271,
+      "topicalRelevance": 0.68,
+      "messageCosine": 0.8996482379711974,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 23
+        "sidecar": 25
       },
-      "script": 0.970554926387316,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "PASS",
@@ -529,14 +535,14 @@
       "lang": "mr",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.36363636363636365,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8863860941474624,
+      "queryJaccard": 0.13861386138613863,
+      "topicalRelevance": 0.45,
+      "messageCosine": 0.8819311361595121,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 25
+        "sidecar": 20
       },
-      "script": 0.9361702127659575,
+      "script": 0.9653465346534653,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "PASS",
@@ -548,18 +554,20 @@
       "lang": "mr",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.410958904109589,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9056041128042831,
+      "queryJaccard": 0.06666666666666667,
+      "topicalRelevance": 0.85,
+      "messageCosine": 0.9250896662962163,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 21
+        "sidecar": 20
       },
-      "script": 0.9544846050870147,
+      "script": 0.9156626506024096,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -567,19 +575,19 @@
       "lang": "or",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.10619469026548672,
-      "topicalRelevance": 0.84,
-      "messageCosine": 0.9077219379920155,
+      "queryJaccard": 0.09243697478991597,
+      "topicalRelevance": 0.68,
+      "messageCosine": 0.906224102292369,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.2014475271411339,
+      "script": 0.98989898989899,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "script"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -588,20 +596,19 @@
       "lang": "or",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.08333333333333333,
-      "topicalRelevance": 0.72,
-      "messageCosine": 0.7646203823018276,
+      "queryJaccard": 0.0625,
+      "topicalRelevance": 0.76,
+      "messageCosine": 0.8208079187394236,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.2108695652173913,
+      "script": 0.9383561643835616,
       "bleed": false,
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "jaccard",
-        "script"
+        "jaccard"
       ],
       "baselineTopicalRelevance": 0
     },
@@ -610,20 +617,18 @@
       "lang": "or",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.5119047619047619,
-      "topicalRelevance": 0.72,
-      "messageCosine": 0.898437852738509,
+      "queryJaccard": 0.46835443037974683,
+      "topicalRelevance": 0.6363636363636364,
+      "messageCosine": 0.8747917066844813,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 25
+        "sidecar": 22
       },
-      "script": 0.14363438520130578,
+      "script": 0.987012987012987,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "script"
-      ],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0.48
     },
     {
@@ -631,24 +636,18 @@
       "lang": "pa",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.10309278350515463,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9137438835946214,
+      "queryJaccard": 0.46987951807228917,
+      "topicalRelevance": 0.76,
+      "messageCosine": 0.8704723601679459,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.22311827956989247,
-      "bleed": true,
-      "bleedScripts": [
-        "hi"
-      ],
-      "verdict": "FAIL",
-      "failReasons": [
-        "topical",
-        "script",
-        "bleed"
-      ],
+      "script": 0.9806451612903225,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0.44
     },
     {
@@ -656,20 +655,18 @@
       "lang": "pa",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.5238095238095238,
-      "topicalRelevance": 0.72,
-      "messageCosine": 0.864443101129541,
+      "queryJaccard": 0.5411764705882353,
+      "topicalRelevance": 0.8,
+      "messageCosine": 0.8460661906154122,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.15137614678899083,
+      "script": 0.9805825242718447,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "script"
-      ],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0.76
     },
     {
@@ -677,20 +674,18 @@
       "lang": "pa",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.10679611650485436,
-      "topicalRelevance": 0.48,
-      "messageCosine": 0.9204264242025354,
+      "queryJaccard": 0.11538461538461539,
+      "topicalRelevance": 0.56,
+      "messageCosine": 0.933809766539083,
       "queryCounts": {
         "genkit": 20,
         "sidecar": 25
       },
-      "script": 0.21144859813084113,
+      "script": 0.9842931937172775,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "FAIL",
-      "failReasons": [
-        "script"
-      ],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0
     },
     {
@@ -698,24 +693,18 @@
       "lang": "ta",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.024193548387096774,
-      "topicalRelevance": 0,
-      "messageCosine": 0.897998248643139,
+      "queryJaccard": 0.10483870967741936,
+      "topicalRelevance": 0.92,
+      "messageCosine": 0.8945559170943471,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
       },
-      "script": 0.28492239467849223,
-      "bleed": true,
-      "bleedScripts": [
-        "hi"
-      ],
-      "verdict": "FAIL",
-      "failReasons": [
-        "jaccard",
-        "script",
-        "bleed"
-      ],
+      "script": 0.9705882352941176,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
       "baselineTopicalRelevance": 0
     },
     {
@@ -723,18 +712,20 @@
       "lang": "ta",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3372093023255814,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8990548643150662,
+      "queryJaccard": 0.06306306306306306,
+      "topicalRelevance": 0.84,
+      "messageCosine": 0.9010076394270954,
       "queryCounts": {
         "genkit": 21,
-        "sidecar": 23
+        "sidecar": 25
       },
-      "script": 0.9476439790575916,
+      "script": 0.9694323144104804,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -742,18 +733,20 @@
       "lang": "ta",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3780487804878049,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9426496028970018,
+      "queryJaccard": 0.06306306306306306,
+      "topicalRelevance": 0.6,
+      "messageCosine": 0.9459082528984922,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 20
+        "sidecar": 25
       },
-      "script": 0.9342969776609724,
+      "script": 0.9750889679715302,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -761,18 +754,20 @@
       "lang": "ta",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3068181818181818,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8042643753518749,
+      "queryJaccard": 0.07476635514018691,
+      "topicalRelevance": 0.7,
+      "messageCosine": 0.7817927429475363,
       "queryCounts": {
         "genkit": 25,
-        "sidecar": 23
+        "sidecar": 20
       },
-      "script": 0.9453924914675768,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     },
     {
@@ -780,9 +775,49 @@
       "lang": "te",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.040983606557377046,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9181880491067618,
+      "queryJaccard": 0.38636363636363635,
+      "topicalRelevance": 0.95,
+      "messageCosine": 0.9085710510816191,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": [],
+      "baselineTopicalRelevance": 0.56
+    },
+    {
+      "cell": "te-g3-math-fractions.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.06481481481481481,
+      "topicalRelevance": 1,
+      "messageCosine": 0.8956828535232915,
+      "queryCounts": {
+        "genkit": 25,
+        "sidecar": 20
+      },
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
+      "baselineTopicalRelevance": 0
+    },
+    {
+      "cell": "te-g3-science-watercycle.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "queryJaccard": 0.01694915254237288,
+      "topicalRelevance": 0.64,
+      "messageCosine": 0.9063658256962459,
       "queryCounts": {
         "genkit": 25,
         "sidecar": 25
@@ -792,47 +827,8 @@
       "bleedScripts": [],
       "verdict": "FAIL",
       "failReasons": [
-        "jaccard",
-        "topical"
+        "jaccard"
       ],
-      "baselineTopicalRelevance": 0.56
-    },
-    {
-      "cell": "te-g3-math-fractions.json",
-      "lang": "te",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.3522727272727273,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9161680964860123,
-      "queryCounts": {
-        "genkit": 25,
-        "sidecar": 23
-      },
-      "script": 0.9873096446700508,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
-      "baselineTopicalRelevance": 0
-    },
-    {
-      "cell": "te-g3-science-watercycle.json",
-      "lang": "te",
-      "structural": 1,
-      "structuralErrors": [],
-      "queryJaccard": 0.2696629213483146,
-      "topicalRelevance": 0,
-      "messageCosine": 0.8846817509979384,
-      "queryCounts": {
-        "genkit": 25,
-        "sidecar": 20
-      },
-      "script": 0.9282700421940928,
-      "bleed": false,
-      "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
       "baselineTopicalRelevance": 0
     },
     {
@@ -840,18 +836,20 @@
       "lang": "te",
       "structural": 1,
       "structuralErrors": [],
-      "queryJaccard": 0.3625,
-      "topicalRelevance": 0,
-      "messageCosine": 0.9194788529332634,
+      "queryJaccard": 0.06422018348623854,
+      "topicalRelevance": 0.88,
+      "messageCosine": 0.9021477383666753,
       "queryCounts": {
         "genkit": 22,
-        "sidecar": 20
+        "sidecar": 25
       },
-      "script": 0.9328467153284672,
+      "script": 1,
       "bleed": false,
       "bleedScripts": [],
-      "verdict": "PASS",
-      "failReasons": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "jaccard"
+      ],
       "baselineTopicalRelevance": 0
     }
   ]

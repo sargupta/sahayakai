@@ -840,16 +840,21 @@ export async function scoreCellRecommender({
     }
   }
 
-  // (5) Native-script coverage on the union of the message + every query.
-  //     A Bengali ask should produce Bengali queries — even though queries
-  //     are short, the aggregate signal is strong.
-  const primary = [sMsg, ...sQueries].filter(Boolean).join('\n');
-  const { coverage } = scriptCoverage(primary, lang);
+  // (5) Native-script coverage on `personalizedMessage` only. YouTube
+  //     search queries are intentionally Latin (English idiom) per the
+  //     Native Script Mandate in both Genkit and Python prompts — only
+  //     the prose message is required in the requested language. Scoring
+  //     the union dragged genuine native-script messages below threshold
+  //     simply because their accompanying English queries dominated the
+  //     character count.
+  const { coverage } = scriptCoverage(sMsg, lang);
   out.script = coverage;
   if (coverage < 0.90) out.failReasons.push('script');
 
-  // (6) Cross-script bleed on the same aggregate.
-  const bleed = detectBleed(primary, lang);
+  // (6) Cross-script bleed on the message only — same rationale as (5):
+  //     English queries shouldn't trip a "Devanagari leaked into bn"
+  //     heuristic when the message is correctly in Bengali.
+  const bleed = detectBleed(sMsg, lang);
   out.bleed = bleed.bleed;
   out.bleedScripts = bleed.scripts;
   if (bleed.bleed) out.failReasons.push('bleed');
