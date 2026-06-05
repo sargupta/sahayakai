@@ -22,7 +22,11 @@
     "api:all": "npm run api:validate && npm run api:test",
     "metrics:check": "node scripts/check-metrics.js",
     "teacher:lookup": "node scripts/lookup-teacher.js",
-    "record:parent-call-fixtures": "tsx scripts/record-parent-call-fixtures.ts"
+    "record:parent-call-fixtures": "tsx scripts/record-parent-call-fixtures.ts",
+    "qa:provision": "node scripts/qa/provision-test-user.mjs",
+    "qa:cleanup": "node scripts/qa/cleanup-test-users.mjs",
+    "qa:storage-state": "node scripts/qa/playwright-storage-state.mjs",
+    "qa:e2e": "playwright test --config=qa/playwright.config.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.28.0",
@@ -128,6 +132,7 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
-    "whatwg-fetch": "^3.6.20"
+    "whatwg-fetch": "^3.6.20",
+    "@playwright/test": "^1.51.1"
   }
 }
