@@ -51,7 +51,8 @@ async function _handler(request: Request) {
         const json = await request.json();
         questionText = json.question || 'Unknown Question';
 
-        const body = InstantAnswerInputSchema.parse(json);
+        // Schema requires userId, inject from session before parse (mirrors teacher-training fix).
+        const body = InstantAnswerInputSchema.parse({ ...json, userId });
 
         // Phase B §B.6: dispatcher routes Genkit vs ADK sidecar based
         // on `SAHAYAKAI_INSTANT_ANSWER_MODE` env (default: off → Genkit
@@ -61,10 +62,7 @@ async function _handler(request: Request) {
         // shape plus optional `source / decision / sidecarTelemetry`
         // fields that we strip before responding to keep the wire shape
         // backward-compatible.
-        const dispatched = await dispatchInstantAnswer({
-            ...body,
-            userId,
-        });
+        const dispatched = await dispatchInstantAnswer(body);
 
         // Strip dispatcher-only metadata; legacy clients only know
         // `{answer, videoSuggestionUrl, gradeLevel, subject}`.

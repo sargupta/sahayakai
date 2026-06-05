@@ -68,16 +68,14 @@ async function _handler(request: Request) {
 
         // Pre-validate input so schema errors return 400 via handleAIError
         // rather than crashing inside Genkit's own validator as a 500.
-        const body = LessonPlanInputSchema.parse(json);
+        // Schema requires userId, inject from session before parse (mirrors teacher-training fix).
+        const body = LessonPlanInputSchema.parse({ ...json, userId });
 
         // Phase 3 §3.4: dispatcher routes to Genkit (legacy) or the
         // Python ADK sidecar based on `lessonPlanSidecarMode`. Default
         // is "off" so existing prod traffic is unchanged. The flag is
         // flipped per-rollout-step from the Firestore feature_flags doc.
-        const output = await dispatchLessonPlan({
-            ...body,
-            userId: userId,
-        });
+        const output = await dispatchLessonPlan(body);
 
         return NextResponse.json(output);
 
