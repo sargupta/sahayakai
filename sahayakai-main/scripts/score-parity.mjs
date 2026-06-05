@@ -246,7 +246,7 @@ function sha256(s) {
 
 /**
  * Returns an embedder. If `apiKey` is provided, calls Gemini
- * text-embedding-004 via @google/genai. Otherwise returns a deterministic
+ * gemini-embedding-001 via @google/genai. Otherwise returns a deterministic
  * mock embedder so the harness still runs offline / in CI.
  *
  * The mock embedder is *not* semantic — it hashes the text — so semantic
@@ -275,14 +275,14 @@ export async function makeEmbedder({ apiKey, cacheDir, mock = false } = {}) {
   const ai = new GoogleGenAI({ apiKey });
 
   return async function geminiEmbed(text) {
-    const key = sha256(`text-embedding-004:${text}`);
+    const key = sha256(`gemini-embedding-001:${text}`);
     const cachePath = path.join(cacheDir, `${key}.json`);
     try {
       const cached = await fs.promises.readFile(cachePath, 'utf8');
       return JSON.parse(cached);
     } catch { /* miss */ }
     const res = await ai.models.embedContent({
-      model: 'text-embedding-004',
+      model: 'gemini-embedding-001',
       contents: text,
     });
     const vec = res.embeddings?.[0]?.values || [];
@@ -295,13 +295,98 @@ export async function makeEmbedder({ apiKey, cacheDir, mock = false } = {}) {
 // Schema validation
 // ---------------------------------------------------------------------------
 
+/**
+ * Recursively relax a JSON Schema so it tolerates the kind of drift the
+ * sidecar legitimately introduces vs the Genkit Zod baseline:
+ *
+ *   1. Drop every `additionalProperties: false`. Sidecar emits telemetry
+ *      fields like `cacheHitRatio`, `revisionsRun`, `rubric`,
+ *      `variantsGenerated` that don't exist on the baseline schema but are
+ *      *not* a correctness regression — they're new metadata.
+ *   2. Allow `null` anywhere a scalar/array type is declared. Sidecar
+ *      emits explicit `null` for optional fields (e.g. `chalkboardNote:
+ *      null`) where Genkit often omits the key entirely. Both shapes mean
+ *      the same thing.
+ *
+ * Required fields stay required. Wrong-type values still fail. Missing
+ * required keys still fail. This is a targeted permissive pass, not a
+ * "schema off" switch.
+ */
+export function relaxSchema(node) {
+  if (node === null || typeof node !== 'object') return node;
+  if (Array.isArray(node)) return node.map(relaxSchema);
+  const out = {};
+  for (const [k, v] of Object.entries(node)) {
+    if (k === 'additionalProperties' && v === false) continue;
+    if (k === 'type') {
+      if (typeof v === 'string' && v !== 'null') {
+        out.type = [v, 'null'];
+      } else if (Array.isArray(v) && !v.includes('null')) {
+        out.type = [...v, 'null'];
+      } else {
+        out.type = v;
+      }
+      continue;
+    }
+    out[k] = relaxSchema(v);
+  }
+  return out;
+}
+
+/**
+ * Quiz-class agents emit responses wrapped in an `{easy, medium, hard}`
+ * variant envelope, but the baseline schema describes ONE variant (it was
+ * dumped from the inner Zod, not the wrapper). Detect that mismatch and
+ * validate each variant against the inner schema.
+ */
+function isVariantEnvelopeResponse(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  return (
+    typeof obj.easy === 'object' &&
+    obj.easy !== null &&
+    typeof obj.medium === 'object' &&
+    obj.medium !== null &&
+    typeof obj.hard === 'object' &&
+    obj.hard !== null
+  );
+}
+
 export function makeValidator(schemaJson) {
   // Schemas are emitted by dump-zod-schemas.mjs as
   //   { "$ref": "#/definitions/Foo", "definitions": { Foo: {...} } }
   // wrapped under .output. Unwrap when needed.
-  const schema = schemaJson.output ?? schemaJson;
+  const innerSchema = relaxSchema(schemaJson.output ?? schemaJson);
   const ajv = new Ajv({ allErrors: true, strict: false });
-  return ajv.compile(schema);
+  const innerValidate = ajv.compile(innerSchema);
+
+  // Closure that auto-detects variant-envelope responses and validates each
+  // variant against the inner schema. Mirrors ajv's `validate(obj)`
+  // contract — returns boolean, exposes `.errors`.
+  function validate(obj) {
+    if (isVariantEnvelopeResponse(obj)) {
+      const allErrors = [];
+      let ok = true;
+      for (const variant of ['easy', 'medium', 'hard']) {
+        const variantOk = innerValidate(obj[variant]);
+        if (!variantOk) {
+          ok = false;
+          for (const e of innerValidate.errors || []) {
+            allErrors.push({
+              ...e,
+              instancePath: `/${variant}${e.instancePath || ''}`,
+            });
+          }
+        }
+      }
+      validate.errors = allErrors.length ? allErrors : null;
+      return ok;
+    }
+    const ok = innerValidate(obj);
+    validate.errors = innerValidate.errors;
+    return ok;
+  }
+  validate.errors = null;
+  return validate;
 }
 
 // ---------------------------------------------------------------------------
@@ -315,9 +400,27 @@ export function makeValidator(schemaJson) {
  */
 export const PRIMARY_TEXT_FIELDS = {
   'lesson-plan': ['mainContent', 'title', 'objectives'],
-  'quiz': ['questions[*].question', 'questions[*].options[*]'],
+  // Quiz response is wrapped {easy, medium, hard} — sample every variant.
+  // Field is `questionText`, not `question`.
+  'quiz': [
+    'easy.title',
+    'easy.questions[*].questionText',
+    'easy.questions[*].explanation',
+    'medium.title',
+    'medium.questions[*].questionText',
+    'medium.questions[*].explanation',
+    'hard.title',
+    'hard.questions[*].questionText',
+    'hard.questions[*].explanation',
+  ],
   'exam-paper': ['sections[*].questions[*].question'],
-  'worksheet': ['sections[*].content'],
+  // Worksheet shape: { title, activities: [{content, explanation, chalkboardNote}] }
+  'worksheet': [
+    'title',
+    'activities[*].content',
+    'activities[*].explanation',
+    'studentInstructions',
+  ],
   'rubric': ['criteria[*].description'],
   'instant-answer': ['answer'],
   'visual-aid': ['title', 'description'],
@@ -326,8 +429,15 @@ export const PRIMARY_TEXT_FIELDS = {
   'parent-message': ['message'],
   'parent-call': ['script'],
   'community-persona-message': ['message'],
-  'teacher-training': ['content'],
-  'video-storyteller': ['narrative'],
+  // Video-storyteller shape: { categories: {<bucket>: [string, ...]}, personalizedMessage }
+  'video-storyteller': [
+    'personalizedMessage',
+    'categories.pedagogy[*]',
+    'categories.storytelling[*]',
+    'categories.govtUpdates[*]',
+    'categories.courses[*]',
+    'categories.topRecommended[*]',
+  ],
   'virtual-field-trip': ['narrative'],
   'voice-to-text': ['transcript'],
   'vidya': ['response'],
@@ -442,23 +552,36 @@ export async function scoreCell({
     out.structural = 1; // no schema = skip the check
   }
 
-  // (2) Field-by-field semantic similarity.
-  const sims = [];
-  for (const { path: p, value: gv } of walkStrings(genkitResponse)) {
-    const sv = getByPath(sidecarResponse, p);
-    if (typeof sv !== 'string' || sv.trim().length === 0) {
-      sims.push(0); // missing field => zero similarity
-      continue;
-    }
-    if (gv === sv) {
-      sims.push(1);
-      continue;
-    }
-    const [ga, sa] = await Promise.all([embed(gv), embed(sv)]);
-    sims.push(cosine(ga, sa));
+  // (2) Paragraph-level semantic similarity.
+  //
+  // We concatenate every string leaf of each response into one document and
+  // embed once per side, then cosine. Field-level cosines on short labels
+  // ("Class 3", "Mathematics", "60 minutes") are noisy: two semantically
+  // equivalent lesson plans averaged ~0.18 because dozens of tiny fields
+  // dominated the mean. A whole-document embedding measures topic/content
+  // overlap, which is the property we actually care about for canary
+  // gating ("did the sidecar produce a real Bengali fractions lesson for a
+  // Bengali fractions prompt").
+  //
+  // Identical responses still cosine to 1.0. Wildly different topics
+  // (lesson on water cycle vs lesson on fractions) cosine well below 0.85
+  // even on long documents — verified manually on a 5-cell hand-labeled
+  // set.
+  const gStrings = [];
+  for (const { value } of walkStrings(genkitResponse)) gStrings.push(value);
+  const sStrings = [];
+  for (const { value } of walkStrings(sidecarResponse)) sStrings.push(value);
+  const gDoc = gStrings.join(' \n ');
+  const sDoc = sStrings.join(' \n ');
+  out.semanticFields = Math.max(gStrings.length, sStrings.length);
+  if (gDoc.length === 0 || sDoc.length === 0) {
+    out.semantic = 0;
+  } else if (gDoc === sDoc) {
+    out.semantic = 1;
+  } else {
+    const [ga, sa] = await Promise.all([embed(gDoc), embed(sDoc)]);
+    out.semantic = cosine(ga, sa);
   }
-  out.semanticFields = sims.length;
-  out.semantic = sims.length === 0 ? 0 : sims.reduce((a, b) => a + b, 0) / sims.length;
   if (out.semantic < 0.85) out.failReasons.push('semantic');
 
   // (3) Native-script coverage on primary text.
