@@ -326,7 +326,13 @@ const _recommendedTeachersFor = cachedPerUser(
         // 2. Fetch all teachers (excluding self and already followed)
         const excludeIds = [uid, ...followingIds];
 
-        const snapshot = await db.collection('users').limit(100).get();
+        // 2026-12 directory-visibility bug: the previous .limit(100) silently
+        // dropped any teacher whose UID sorted past the first 100 (Firestore's
+        // default ordering is by document ID). With 138+ user docs, ~38 real
+        // teachers were INVISIBLE from recommendations — exactly the complaint
+        // teachers reported. Bumped to 1000; cross that and we need indexed
+        // queries (school / district / subjects) instead of an in-memory scan.
+        const snapshot = await db.collection('users').limit(1000).get();
 
         const candidates = snapshot.docs
             .map(doc => ({ uid: doc.id, ...doc.data() } as any))
@@ -367,8 +373,17 @@ const _recommendedTeachersFor = cachedPerUser(
             return { ...teacher, score, recommendationReason: reasons[0] || "Active Educator" };
         });
 
+        // 2026-12 directory-visibility bug part 2: the previous `t.score > 1`
+        // gate dropped every teacher who didn't share a school, district,
+        // subject, OR grade with the viewer (impactScore alone yields 0).
+        // A brand-new teacher who hasn't filled in their profile yet was
+        // INVISIBLE to everyone they didn't already overlap with. Lowered
+        // the floor to `t.score >= 0 && t.displayName` so legitimate new
+        // joiners surface — they sort to the bottom of the recs list but
+        // they appear. Hidden-from-discovery / no-displayName cases are
+        // already filtered above.
         const recommendations: TeacherSuggestion[] = scored
-            .filter(t => t.score > 1 && t.displayName)
+            .filter(t => t.score >= 0 && t.displayName)
             .sort((a, b) => b.score - a.score)
             .slice(0, 5)
             .map(t => ({
@@ -384,7 +399,10 @@ const _recommendedTeachersFor = cachedPerUser(
 
         return dbAdapter.serialize(recommendations);
     },
-    { key: 'recs', ttlSeconds: 300 }, // 5-minute TTL — stale enough to feel fresh, frequent enough to absorb peak traffic
+    // 2026-12: lowered from 300 → 60 so a new teacher's profile reflects
+    // in recommendations within a minute instead of taking up to 5 min to
+    // surface. Directory list (_allTeachersFor) was already at 60.
+    { key: 'recs', ttlSeconds: 60 },
 );
 
 export async function getRecommendedTeachersAction(userId?: string): Promise<TeacherSuggestion[]> {
@@ -404,7 +422,9 @@ const _allTeachersFor = cachedPerUser(
     async (selfUid: string): Promise<TeacherSuggestion[]> => {
         const db = await getDb();
 
-        const snapshot = await db.collection('users').limit(100).get();
+        // 2026-12 directory-visibility bug: was .limit(100) — dropped any
+        // teacher whose UID sorted past the first 100. Bumped to 1000.
+        const snapshot = await db.collection('users').limit(1000).get();
 
         const teachers = snapshot.docs
             .map(doc => ({ uid: doc.id, ...doc.data() } as any))
