@@ -135,25 +135,82 @@ export async function addCertificationAction(formData: FormData) {
 // client cannot escalate privileges (e.g. set `role:'admin'`, flip plan tier,
 // award badges, mint impactScore, etc.). Privileged or server-derived fields
 // must be written through dedicated, auth-checked code paths.
+// Allowlist categories:
+//   1. Identity / profile basics — user-typed strings shown on the profile card
+//   2. Teaching context — subjects, grades, board, school, location
+//   3. Preferences — language, notification/voice prefs
+//   4. Onboarding state machine — phase, checklist, spotlights, counters
+//   5. Privacy / consent — timestamps + version stamps the user clicks to set
+//   6. Community intro state — first-visit nudge tracking
+//
+// NEVER in the allowlist (privilege escalation surface):
+//   - adminRoles / isAdmin / superadmin / role / customClaims
+//   - plan / planTier / planExpiresAt / subscriptionId / razorpaySubscriptionId / billing*
+//   - email / emailVerified / uid / createdAt (auth identity / immutable)
+//   - fcmTokens (handled by a dedicated push-token action)
+//   - referralCode (server-issued)
+//   - impactScore / badges / verifiedStatus / followersCount / followingCount /
+//     contentSharedCount — these are SERVER-COMPUTED aggregates. They are
+//     initialized server-side in POST /api/user/profile for new users; the
+//     onboarding step was passing zero-values for them, which is harmless but
+//     pointless (the adapter-level allowlist also rejects them). They are now
+//     dropped from the onboarding payload, so the client never tries to write
+//     them through this action.
 const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
+    // 1. Identity / profile basics
     'displayName',
     'bio',
-    'subjects',
-    'grades',
-    'boards',
-    'region',
-    'phoneNumber',
-    'preferredLanguage',
-    'preferredBoard',
-    'experienceYears',
-    'schoolName',
-    'school',
     'photoURL',
     'customAvatarUrl',
+    'phoneNumber',
+    'designation',
+    'department',
+    'qualifications',
+    'yearsOfExperience',
+    'experienceYears', // legacy alias
     'administrativeRole',
+
+    // 2. Teaching context
+    'subjects',
+    'grades',
+    'gradeLevels',
+    'boards',
+    'educationBoard',
+    'preferredBoard',
+    'schoolName',
+    'school', // legacy alias
+    'schoolNormalized',
     'udise',
     'organizationId',
     'interests',
+
+    // Location
+    'state',
+    'district',
+    'region',
+
+    // 3. Preferences
+    'preferredLanguage',
+
+    // 4. Onboarding state machine
+    'onboardingPhase',
+    'onboardingCompletedAt',
+    'onboardingChecklistItems',
+    'checklistDismissedAt',
+    'featureSpotlightsSeen',
+    'profileCompletionLevel',
+    'profileCompletionDismissCount',
+    'firstGenerationContentId',
+    'firstGenerationTool',
+    'aiGenerationCount',
+    'hasHeardGreeting',
+
+    // 5. Privacy / consent
+    'privacyAcceptedAt',
+    'privacyVersion',
+
+    // 6. Community intro state
+    'communityIntroState',
 ]);
 
 export async function updateProfileAction(_userId: string, data: any) {
