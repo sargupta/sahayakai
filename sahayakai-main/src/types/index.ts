@@ -379,7 +379,8 @@ export type NotificationType =
     | 'RESOURCE_USED'   // someone clicked "Use This" on your resource (routed to a tool)
     | 'COMMENT'         // future: someone commented on your resource
     | 'CONNECT_REQUEST' // someone sent a connection request — carries metadata.requestId
-    | 'CONNECT_ACCEPTED'; // your request was accepted
+    | 'CONNECT_ACCEPTED' // your request was accepted
+    | 'NEW_TEACHER_JOINED'; // a teacher in your district + subject just joined SahayakAI
 
 export interface Notification {
     id: string;

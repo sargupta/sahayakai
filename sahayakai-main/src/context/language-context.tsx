@@ -7303,6 +7303,20 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Help others grow": {
         "English": "Help others grow", "Hindi": "दूसरों को आगे बढ़ाने में मदद करें", "Kannada": "ಇತರರ ಬೆಳವಣಿಗೆಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಿ", "Tamil": "மற்றவர்களின் வளர்ச்சிக்கு உதவுங்கள்", "Telugu": "ఇతరుల ఎదుగుదలకు సహాయపడండి", "Marathi": "इतरांना वाढण्यास मदत करा", "Bengali": "অন্যদের বৃদ্ধিতে সাহায্য করুন", "Gujarati": "બીજાઓને આગળ વધવામાં મદદ કરો", "Punjabi": "ਦੂਜਿਆਂ ਨੂੰ ਅੱਗੇ ਵਧਣ ਵਿੱਚ ਮਦਦ ਕਰੋ", "Malayalam": "മറ്റുള്ളവരുടെ വളർച്ചയ്ക്ക് സഹായിക്കുക", "Odia": "ଅନ୍ୟମାନଙ୍କୁ ବଢ଼ିବାରେ ସାହାଯ୍ୟ କରନ୍ତୁ"
     },
+    // Used by fanoutNewTeacherJoinedNotification — {name} and {school} substituted server-side.
+    "{name} joined SahayakAI from {school}": {
+        "English": "{name} joined SahayakAI from {school}",
+        "Hindi": "{name} ने {school} से SahayakAI जॉइन किया",
+        "Kannada": "{name} ಅವರು {school} ನಿಂದ SahayakAI ಸೇರಿದರು",
+        "Tamil": "{name} {school} இலிருந்து SahayakAI இல் சேர்ந்தார்",
+        "Telugu": "{name} {school} నుండి SahayakAI లో చేరారు",
+        "Marathi": "{name} यांनी {school} मधून SahayakAI जॉइन केले",
+        "Bengali": "{name} {school} থেকে SahayakAI-তে যোগ দিয়েছেন",
+        "Gujarati": "{name} એ {school} માંથી SahayakAI જોઈન કર્યું",
+        "Punjabi": "{name} ਨੇ {school} ਤੋਂ SahayakAI ਜੁਆਇਨ ਕੀਤਾ",
+        "Malayalam": "{name} {school} ൽ നിന്ന് SahayakAI യിൽ ചേർന്നു",
+        "Odia": "{name} {school} ରୁ SahayakAI ରେ ଯୋଗ ଦେଲେ"
+    },
 };
 
 // BCP-47 language tags for each Language. Used for:

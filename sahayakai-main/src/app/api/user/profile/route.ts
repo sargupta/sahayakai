@@ -4,6 +4,7 @@ import { dbAdapter } from '@/lib/db/adapter';
 import { UserProfileSchema } from '@/ai/schemas/content-schemas';
 import { UserProfile, ADMINISTRATIVE_ROLES, QUALIFICATIONS, EDUCATION_BOARDS } from '@/types';
 import { logger } from '@/lib/logger';
+import { fanoutNewTeacherJoinedNotification } from '@/lib/notifications/fanout';
 
 /**
  * @swagger
@@ -117,6 +118,15 @@ export async function POST(request: Request) {
 
         // createUser uses set(merge:true), safe for upsert
         await dbAdapter.createUser(profile);
+
+        // Fan-out: notify nearby teachers (same district + primary subject)
+        // when a new teacher completes their first profile save. Fire-and-
+        // forget — never block the response and never throw on failure.
+        if (isNewUser) {
+            void fanoutNewTeacherJoinedNotification(profile.uid).catch((err) => {
+                logger.error('fanoutNewTeacherJoined dispatch failed', err, 'PROFILE', { uid: profile.uid });
+            });
+        }
 
         return NextResponse.json({ success: true, uid: profile.uid });
 
