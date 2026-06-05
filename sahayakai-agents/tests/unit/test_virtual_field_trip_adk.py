@@ -170,3 +170,23 @@ class TestBuildVirtualFieldTripAgent:
             f"Agent name should reference virtual_field_trip. "
             f"Got: {agent.name!r}"
         )
+
+
+def test_per_call_timeout_is_at_least_30s_for_itinerary() -> None:
+    """Track 3 regression guard.
+
+    Parallel-D parity probe showed virtual-field-trip Genkit runs 15-16s
+    end-to-end on multi-stop itinerary generation. The previous 20s
+    sidecar ceiling sat right on that p99 boundary and ate the 7s
+    `max_total_backoff_seconds` budget before retry could fire,
+    producing `sidecarOk: false` in shadow diffs while Genkit
+    completed. Lock the per-call timeout at >=30s so the planner has
+    headroom on slow Vertex paths.
+    """
+    from sahayakai_agents.agents.virtual_field_trip import router as vft_router  # noqa: PLC0415
+
+    assert vft_router._PER_CALL_TIMEOUT_S >= 30.0, (
+        f"VFT per-call timeout regressed to "
+        f"{vft_router._PER_CALL_TIMEOUT_S}s; Track 3 requires >=30s "
+        f"for multi-stop itinerary calls."
+    )
