@@ -4,6 +4,10 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import { logger } from '@/lib/logger';
 import { requireAuth, requireGroupMember } from '@/lib/auth-helpers';
+import { createNotification } from './notifications';
+import { NEW_GROUP_POST, GROUP_POST_LIKE } from '@/lib/notifications/types';
+import { formatNotificationMessage } from '@/lib/notifications/i18n';
+import type { Language } from '@/types';
 import type {
     Group,
     GroupPost,
@@ -501,6 +505,24 @@ export async function createGroupPostAction(
     });
 
     logger.info(`createGroupPost: uid=${uid}, groupId=${groupId}, postId=${postRef.id}`);
+
+    // Fire-and-forget notification fanout. Do NOT await — this can touch up
+    // to GROUP_POST_FANOUT_CAP recipient docs and we don't want the post
+    // create to block on it. Errors are swallowed (logged) so a fanout
+    // failure can never cause the post itself to roll back from the
+    // caller's POV.
+    void fanoutGroupPostNotifications({
+        groupId,
+        postId: postRef.id,
+        authorUid: uid,
+        authorName,
+    }).catch((err) => {
+        logger.error('createGroupPost: fanout failed', err, 'COMMUNITY', {
+            groupId,
+            postId: postRef.id,
+        });
+    });
+
     return postRef.id;
 }
 
@@ -542,6 +564,26 @@ export async function likeGroupPostAction(
 
     const updatedPost = await postRef.get();
     const newCount = updatedPost.data()?.likesCount ?? 0;
+
+    // Fire-and-forget like notification (only on transition to liked, not unlike).
+    // Skips self-likes and dedup-suppressed events inside the helper.
+    if (isLiked) {
+        const post = updatedPost.data() ?? {};
+        const authorUid = post.authorUid as string | undefined;
+        if (authorUid && authorUid !== uid) {
+            void notifyGroupPostLike({
+                groupId,
+                postId,
+                postAuthorUid: authorUid,
+                likerUid: uid,
+            }).catch((err) => {
+                logger.error('likeGroupPost: notify failed', err, 'COMMUNITY', {
+                    groupId,
+                    postId,
+                });
+            });
+        }
+    }
 
     return { isLiked, newCount };
 }
@@ -734,3 +776,224 @@ export async function getUnifiedFeedAction(
 
     return dbAdapter.serialize(feedItems);
 }
+
+// ── Notification fanout helpers ──────────────────────────────────────────────
+
+/**
+ * Max recipients we'll fan a single group-post notification out to. Above
+ * this threshold we'd be writing thousands of notification docs per post
+ * for popular groups (e.g. `community_general`, `daily_briefing`), which
+ * pummels Firestore write quota AND fills the recipient inbox UI with
+ * near-duplicate items. The over-cap path falls back to a coarser
+ * "X new posts in <group>" digest notification (TODO: hook into the
+ * scheduled digest job once that lands; for now we trim + log a metric).
+ */
+const GROUP_POST_FANOUT_CAP = 200;
+
+/** Skip a like notification if the author already got one for this post
+ *  within this window. Prevents notification spam from like-storms. */
+const GROUP_POST_LIKE_DEDUP_MS = 60 * 60 * 1000; // 1 hour
+
+interface GroupPostFanoutArgs {
+    groupId: string;
+    postId: string;
+    authorUid: string;
+    authorName: string;
+}
+
+/**
+ * Fan a NEW_GROUP_POST notification out to every member of the group
+ * (except the author). Uses the `groups/{groupId}/members` subcollection
+ * as the canonical store — `users.groupIds` is a denormalized cache and
+ * may lag the membership doc by a transaction boundary.
+ *
+ * Per-recipient i18n: we read each recipient's `preferredLanguage` from
+ * their user doc and pick the template from `notifications/i18n.ts`.
+ *
+ * Exported for unit testing only — call sites should go through
+ * `createGroupPostAction`.
+ */
+export async function fanoutGroupPostNotifications(
+    args: GroupPostFanoutArgs,
+): Promise<{ recipients: number; capped: boolean }> {
+    const { groupId, postId, authorUid, authorName } = args;
+    const db = await getDb();
+
+    const groupDoc = await db.collection('groups').doc(groupId).get();
+    if (!groupDoc.exists) {
+        logger.warn(`fanoutGroupPost: group not found groupId=${groupId}`);
+        return { recipients: 0, capped: false };
+    }
+    const groupName = (groupDoc.data()?.name as string) ?? groupId;
+
+    // Pull up to CAP+1 members so we can detect over-cap. We don't have a
+    // cheap "most-active" signal at write-time, so for now we take the
+    // first CAP returned by the members subcollection (insertion ≈ join
+    // order). When CAP+ shows up we log a metric so we can later wire the
+    // digest fallback.
+    const membersSnap = await db
+        .collection('groups')
+        .doc(groupId)
+        .collection('members')
+        .limit(GROUP_POST_FANOUT_CAP + 1)
+        .get();
+
+    const memberIds = membersSnap.docs
+        .map((d) => d.id)
+        .filter((id) => id !== authorUid);
+
+    const capped = memberIds.length > GROUP_POST_FANOUT_CAP;
+    const recipients = capped
+        ? memberIds.slice(0, GROUP_POST_FANOUT_CAP)
+        : memberIds;
+
+    if (capped) {
+        logger.warn(
+            `fanoutGroupPost: cap hit groupId=${groupId} memberCount=${memberIds.length} cap=${GROUP_POST_FANOUT_CAP}`,
+        );
+    }
+
+    if (recipients.length === 0) {
+        return { recipients: 0, capped };
+    }
+
+    // Per-recipient language lookup, chunked at Firestore `in` limit of 10.
+    const langByUid = new Map<string, Language | undefined>();
+    for (let i = 0; i < recipients.length; i += 10) {
+        const chunk = recipients.slice(i, i + 10);
+        try {
+            const userSnap = await db
+                .collection('users')
+                .where('__name__', 'in', chunk)
+                .get();
+            for (const doc of userSnap.docs) {
+                const data = doc.data();
+                langByUid.set(doc.id, data?.preferredLanguage as Language | undefined);
+            }
+        } catch (err) {
+            logger.warn(
+                `fanoutGroupPost: user lookup chunk failed groupId=${groupId} err=${(err as Error)?.message ?? err}`,
+            );
+        }
+    }
+
+    const link = `/groups/${groupId}?post=${postId}`;
+    const metadata = { groupId, postId, authorUid };
+
+    let written = 0;
+    for (const recipientId of recipients) {
+        const lang = langByUid.get(recipientId);
+        const message = formatNotificationMessage('group_post', lang, {
+            name: authorName,
+            group: groupName,
+        });
+        try {
+            await createNotification({
+                recipientId,
+                type: NEW_GROUP_POST,
+                title: groupName,
+                message,
+                senderId: authorUid,
+                senderName: authorName,
+                link,
+                metadata,
+            });
+            written++;
+        } catch (err) {
+            logger.error(
+                'fanoutGroupPost: createNotification failed',
+                err,
+                'COMMUNITY',
+                { recipientId, groupId, postId },
+            );
+        }
+    }
+
+    logger.info(
+        `fanoutGroupPost: groupId=${groupId} postId=${postId} written=${written}/${recipients.length} capped=${capped}`,
+    );
+
+    return { recipients: written, capped };
+}
+
+interface GroupPostLikeNotifyArgs {
+    groupId: string;
+    postId: string;
+    postAuthorUid: string;
+    likerUid: string;
+}
+
+/**
+ * Send a GROUP_POST_LIKE notification to the post author. Skips:
+ *   - self-likes
+ *   - dedup: any like notification on the same post sent to the same
+ *     recipient within GROUP_POST_LIKE_DEDUP_MS (1 hour)
+ *
+ * Per-recipient i18n: reads the author's preferredLanguage; falls back
+ * to English.
+ *
+ * Exported for unit testing only — call sites should go through
+ * `likeGroupPostAction`.
+ */
+export async function notifyGroupPostLike(
+    args: GroupPostLikeNotifyArgs,
+): Promise<{ sent: boolean; reason?: 'self' | 'deduped' }> {
+    const { groupId, postId, postAuthorUid, likerUid } = args;
+    if (likerUid === postAuthorUid) return { sent: false, reason: 'self' };
+
+    const db = await getDb();
+
+    // Dedup probe — small bounded scan, in-memory postId filter so we
+    // don't depend on a metadata-field composite index.
+    try {
+        const recent = await db
+            .collection('notifications')
+            .where('recipientId', '==', postAuthorUid)
+            .where('type', '==', GROUP_POST_LIKE)
+            .limit(20)
+            .get();
+        const cutoff = Date.now() - GROUP_POST_LIKE_DEDUP_MS;
+        for (const doc of recent.docs) {
+            const data = doc.data() ?? {};
+            const mdPostId = data.metadata?.postId;
+            if (mdPostId !== postId) continue;
+            const createdAt = Date.parse(data.createdAt ?? '');
+            if (Number.isFinite(createdAt) && createdAt >= cutoff) {
+                return { sent: false, reason: 'deduped' };
+            }
+        }
+    } catch (err) {
+        // Don't block notification on probe failure — over-notifying is a
+        // softer failure than under-notifying.
+        logger.warn(
+            `notifyGroupPostLike: dedup probe failed groupId=${groupId} err=${(err as Error)?.message ?? err}`,
+        );
+    }
+
+    const [likerDoc, authorDoc] = await Promise.all([
+        db.collection('users').doc(likerUid).get(),
+        db.collection('users').doc(postAuthorUid).get(),
+    ]);
+    const likerName = (likerDoc.data()?.displayName as string) ?? 'A teacher';
+    const likerPhotoURL = (likerDoc.data()?.photoURL as string) ?? undefined;
+    const recipientLang = authorDoc.data()?.preferredLanguage as Language | undefined;
+
+    const message = formatNotificationMessage('group_post_like', recipientLang, {
+        name: likerName,
+    });
+
+    await createNotification({
+        recipientId: postAuthorUid,
+        type: GROUP_POST_LIKE,
+        title: likerName,
+        message,
+        senderId: likerUid,
+        senderName: likerName,
+        senderPhotoURL: likerPhotoURL,
+        link: `/groups/${groupId}?post=${postId}`,
+        metadata: { groupId, postId, likerUid },
+    });
+
+    return { sent: true };
+}
+

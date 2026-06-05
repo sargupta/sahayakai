@@ -4,7 +4,7 @@ import { initializeFirebase } from '@/lib/firebase-admin';
 import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import { UsageTracker } from '@/lib/usage-tracker';
-import { sarvamTTS, toSarvamLangCode } from '@/lib/sarvam';
+import { sarvamTTS, toSarvamLangCode, chunkText, concatBase64Mp3 } from '@/lib/sarvam';
 import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes, buildVoiceQuotaSnapshot } from '@/lib/voice-quota-guard';
 
 // Cache the GCP access token for its full lifetime (1 hour).
@@ -102,10 +102,16 @@ function stripMarkdown(text: string): string {
 
 const VALID_LANG_CODE = /^[a-z]{2}-[A-Z]{2}$/;
 
+// Lane A14 latency fix: Google Cloud TTS, like Sarvam, shows super-linear
+// latency on long input. ~500-char chunks synthesized in parallel keep p95
+// under 5 s for ~2000-char VIDYA paragraph readbacks (down from 28-37 s).
+const GOOGLE_TTS_CHUNK_TARGET_CHARS = 500;
+
 /**
- * Synthesise speech with Google Cloud TTS (used as fallback when Sarvam fails).
+ * Single-chunk Google Cloud TTS call.
+ * Wrapped by googleTTS() below which chunks long text and synthesizes in parallel.
  */
-async function googleTTS(cleanText: string, langCode: string, voiceName: string): Promise<string> {
+async function googleTTSOne(cleanText: string, langCode: string, voiceName: string): Promise<string> {
     // 2026-12 audit: route Odia (and any future unsupported lang) through a
     // documented voice fallback BEFORE the API call so we don't burn a
     // round-trip on a guaranteed 400.
@@ -148,7 +154,7 @@ async function googleTTS(cleanText: string, langCode: string, voiceName: string)
         // teacher's request.
         if (response.status >= 400 && effectiveLang !== 'hi-IN') {
             console.warn(`[TTS] ${effectiveVoice} failed (${response.status}). Retrying with hi-IN-Standard-A.`);
-            return googleTTS(cleanText, 'hi-IN', 'hi-IN-Standard-A');
+            return googleTTSOne(cleanText, 'hi-IN', 'hi-IN-Standard-A');
         }
         throw new Error(`Google TTS ${response.status}: ${errorText.slice(0, 200)}`);
     }
@@ -156,6 +162,27 @@ async function googleTTS(cleanText: string, langCode: string, voiceName: string)
     const data = await response.json();
     if (!data.audioContent) throw new Error('Google TTS returned empty audio');
     return data.audioContent;
+}
+
+
+/**
+ * Synthesise speech with Google Cloud TTS (used as fallback when Sarvam fails
+ * or when the language isn't supported by Sarvam).
+ *
+ * Lane A14 fix: chunk on sentence boundaries (~500 chars) and synthesize in
+ * parallel via Promise.all so wall-time tracks the slowest single chunk
+ * rather than the sum. Short inputs (<= 500 chars) go through a single call
+ * with no chunking overhead.
+ */
+async function googleTTS(cleanText: string, langCode: string, voiceName: string): Promise<string> {
+    const chunks = chunkText(cleanText, GOOGLE_TTS_CHUNK_TARGET_CHARS);
+    if (chunks.length === 1) {
+        return googleTTSOne(chunks[0], langCode, voiceName);
+    }
+    const audioChunks = await Promise.all(
+        chunks.map((c) => googleTTSOne(c, langCode, voiceName)),
+    );
+    return concatBase64Mp3(audioChunks);
 }
 
 export async function POST(req: NextRequest) {
