@@ -109,6 +109,7 @@ jest.mock('@/lib/db/adapter', () => ({
 
 jest.mock('@/app/actions/notifications', () => ({
     createNotification: jest.fn(async () => {}),
+    createTypedNotification: jest.fn(async () => {}),
 }));
 
 // ── Import actions under test ───────────────────────────────────────────────
