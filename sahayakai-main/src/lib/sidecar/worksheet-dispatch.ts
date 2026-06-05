@@ -19,6 +19,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Mirrors `TIMEOUT_MS` in worksheet-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -76,7 +77,8 @@ function inputToSidecarRequest(input: WorksheetDispatchInput): SidecarWorksheetR
     return {
         imageDataUri: input.imageDataUri,
         prompt: input.prompt,
-        language: input.language ?? null,
+        // Normalise language display label → ISO for uniform wire shape.
+        language: input.language ? toIsoLanguage(input.language) : null,
         gradeLevel: input.gradeLevel ?? null,
         subject: input.subject ?? null,
         teacherContext: input.teacherContext ?? null,

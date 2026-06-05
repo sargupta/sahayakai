@@ -28,6 +28,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { withTimeout, WithTimeoutError } from './with-timeout';
+import { toLanguageLabel } from './lang';
 
 // NCERT demo hot-fix (2026-05-19): exam-paper is the most token-heavy
 // flow we run (full paper + answer key + marking scheme + sections).
@@ -121,7 +122,10 @@ function inputToSidecarRequest(input: ExamPaperDispatchInput): SidecarExamPaperR
         chapters: input.chapters ?? [],
         duration: input.duration ?? null,
         maxMarks: input.maxMarks ?? null,
-        language: input.language ?? 'English',
+        // Exam-paper Python schema defaults to "English" (display name);
+        // keep the wire shape display-name-form to match the prompt
+        // templates the agent renders server-side.
+        language: toLanguageLabel(input.language ?? 'English'),
         difficulty: input.difficulty ?? 'mixed',
         includeAnswerKey: input.includeAnswerKey ?? true,
         includeMarkingScheme: input.includeMarkingScheme ?? true,
