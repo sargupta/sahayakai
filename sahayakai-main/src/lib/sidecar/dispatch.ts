@@ -254,10 +254,11 @@ export async function dispatchParentCallReply(input: DispatchInput): Promise<Dis
                 : {
                       type: sidecar.error.name,
                       message: sidecar.error.message,
-                      elapsedMs:
-                          sidecar.error instanceof SidecarTimeoutError
-                              ? sidecar.error.elapsedMs
-                              : undefined,
+                      // Firestore rejects `undefined`; only include elapsedMs
+                      // when it's a real number (timeout error path).
+                      ...(sidecar.error instanceof SidecarTimeoutError
+                          ? { elapsedMs: sidecar.error.elapsedMs }
+                          : {}),
                   },
             sidecarLatencyMs: sidecar.latencyMs,
         });

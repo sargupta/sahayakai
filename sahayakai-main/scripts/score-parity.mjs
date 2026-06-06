@@ -413,7 +413,24 @@ export const PRIMARY_TEXT_FIELDS = {
     'hard.questions[*].questionText',
     'hard.questions[*].explanation',
   ],
-  'exam-paper': ['sections[*].questions[*].question'],
+  // Exam-paper questions use field `text` (not `question`). Title carries
+  // language signal too. We deliberately SKIP `sections[*].name` and
+  // `sections[*].label` because those fields are structural identifiers
+  // ("Section A" / "ವಿಭಾಗ A" / "Short Answer Questions") — sidecar
+  // legitimately emits them with mixed Latin glosses ("Multiple Choice
+  // Questions") even on non-Latin locales because that's the literal CBSE
+  // section-header style. Pedagogical signal lives in the question text.
+  'exam-paper': [
+    'title',
+    'sections[*].questions[*].text',
+  ],
+  // Teacher-training shape: { introduction, advice: [{strategy, pedagogy, explanation}], conclusion, gradeLevel, subject }
+  'teacher-training': [
+    'introduction',
+    'conclusion',
+    'advice[*].strategy',
+    'advice[*].explanation',
+  ],
   // Worksheet shape: { title, activities: [{content, explanation, chalkboardNote}] }
   'worksheet': [
     'title',
