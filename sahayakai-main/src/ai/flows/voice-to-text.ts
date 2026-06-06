@@ -260,7 +260,13 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
     let { output: transcription } = await voiceToTextPrompt(buildPromptInput(baseInput), config);
 
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      // Soft-empty: short / silent / sub-threshold audio produces no
+      // text. Returning a 500 here triggers the client's retry loop and
+      // burns 3× the cost on guaranteed-empty audio. Instead return an
+      // empty-text response so the UI can render "I didn't catch that".
+      // See qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2.
+      console.warn('[voiceToText.formData] empty transcription — returning soft-empty');
+      return { text: '', language: normalizeIsoLang(expectedLanguage) };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
@@ -295,7 +301,11 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
     let { output: transcription } = await voiceToTextPrompt(buildPromptInput(input), config);
 
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      // Soft-empty: see voiceToTextFormData above. Return empty text + the
+      // caller's expected language hint so the UI shows a graceful
+      // "I didn't catch that" instead of a 500 crash toast.
+      console.warn('[voiceToText] empty transcription — returning soft-empty');
+      return { text: '', language: normalizeIsoLang(input.expectedLanguage) };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {

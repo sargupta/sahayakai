@@ -41,7 +41,23 @@ async function _handler(request: NextRequest) {
         }
 
         // --- Try Sarvam STT first (cheaper, purpose-built for Indian languages) ---
-        try {
+        // Sarvam Saaras v3 only accepts mpeg/mp3/wav. Browser MediaRecorder
+        // defaults to `audio/webm;codecs=opus` (Chrome) or `audio/ogg;codecs=opus`
+        // (Firefox) — Sarvam rejects both with HTTP 400. Skip the call entirely
+        // for unsupported MIMEs so we don't waste ~1s + log noise per request.
+        // See qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2.
+        const sarvamSupportedMime = /^audio\/(mpeg|mp3|mpeg3|x-mpeg-3|x-mp3|wav|wave|x-wav)/i;
+        const audioMime = audioFile.type || '';
+        const sarvamCanHandle = sarvamSupportedMime.test(audioMime);
+
+        if (!sarvamCanHandle) {
+            logger.info(
+                `[STT] Skipping Sarvam (unsupported MIME: "${audioMime || 'unknown'}"), going straight to Gemini`,
+                'VOICE_TO_TEXT',
+            );
+        }
+
+        if (sarvamCanHandle) try {
             logger.info('[STT] Trying Sarvam Saaras v3', 'VOICE_TO_TEXT');
             const result = await sarvamSTT(audioFile);
 
