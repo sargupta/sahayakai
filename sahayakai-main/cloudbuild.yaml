@@ -84,7 +84,20 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
-      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest
+      # Sidecar URL — pinned to PROD service so a fresh deploy cannot
+      # silently inherit a staging URL from a previous ad-hoc env override.
+      # 2026-06-06 (parent-call attendance diagnosis): the live revision was
+      # serving with NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL pointing at the staging
+      # sidecar — every parent-call turn fired the shadow-diff pair via
+      # Promise.all and the sidecar leg burned its full timeout against
+      # staging from prod before the dispatcher gave up, slowing the call.
+      # The audience secret (verified at the sidecar) was also pointing at
+      # staging. Both are now pinned at the deploy step. If you really need
+      # to point preview/staging deploys at the staging sidecar, do that in
+      # a SEPARATE Cloud Build trigger — never as an ad-hoc env override on
+      # the prod service.
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app
       - --quiet
     waitFor: [push-sha]
 
