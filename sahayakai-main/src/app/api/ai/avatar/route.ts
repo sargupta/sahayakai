@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dispatchAvatar } from '@/lib/sidecar/avatar-generator-dispatch';
 import { checkImageRateLimit } from '@/lib/server-safety';
+import { checkUsage, PlanLimitExceededError } from '@/lib/usage-tracker';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
@@ -13,6 +14,8 @@ async function _handler(request: NextRequest) {
         }
         const body = await request.json();
         await checkImageRateLimit(userId);
+        // F14-003 — per-user image budget enforcement.
+        await checkUsage(userId, 'image_generation');
         // Phase F.2: dispatcher routes Genkit vs ADK sidecar based on
         // SAHAYAKAI_AVATAR_MODE env (default: off → Genkit only).
         // Sidecar generates only the image; Storage write happens in
@@ -24,6 +27,9 @@ async function _handler(request: NextRequest) {
     } catch (error) {
         logAIError(error, 'AVATAR', { message: 'Avatar generation API failed' });
         const message = error instanceof Error ? error.message : String(error);
+        if (error instanceof PlanLimitExceededError) {
+            return NextResponse.json({ error: error.message, code: 'PLAN_LIMIT_EXCEEDED', type: error.type, used: error.used, limit: error.limit }, { status: 429 });
+        }
         if (message.includes('Daily image limit reached')) {
             return NextResponse.json({ error: message }, { status: 429 });
         }

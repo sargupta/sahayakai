@@ -36,7 +36,7 @@ import {
 } from '@/lib/feature-flags';
 
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
+import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import {
     callSidecarVidya,
     VidyaSidecarBehaviouralError,
@@ -303,7 +303,7 @@ export async function dispatchVidya(
         // sidecar in the background and write a shadow_diff so the
         // promotion gate has a non-zero denominator.
         if (
-            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            shouldRunCanaryShadowDiff() &&
             decision.configuredMode === 'canary'
         ) {
             // Mint App Check token for the background sidecar call so
@@ -390,7 +390,7 @@ export async function dispatchVidya(
         // a live (genkit, sidecar) parity signal during the rollout.
         // 2x Gemini cost while observation is on; toggle the constant
         // off post-promotion to reclaim it.
-        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+        if (shouldRunCanaryShadowDiff()) {
             const __q4cGenkitStartedAt = Date.now();
             void runGenkitSafe(input.request).then((gk) => {
                 void writeAgentShadowDiff({

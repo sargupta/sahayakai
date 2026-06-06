@@ -5,6 +5,45 @@ const IMAGE_RATE_LIMIT = {
     MAX_PER_DAY: 10,
 };
 
+/** Public — readers (e.g. Q4C peek gate) need the cap to compare against. */
+export const IMAGE_RATE_LIMIT_MAX_PER_DAY = IMAGE_RATE_LIMIT.MAX_PER_DAY;
+
+/**
+ * Non-throwing, non-incrementing read of the current day's image counter.
+ * Returns `true` when there is at least one image of budget remaining
+ * for the user, `false` when the user is at or above the cap. Fails OPEN
+ * (returns `true`) on infrastructure errors so the read path can never
+ * suppress a legitimate user-facing image, only the OPTIONAL Q4C
+ * background observation call.
+ *
+ * F14-002 (2026-06-06): the Q4C canary-observation block in
+ * `visual-aid-dispatch.ts` and `avatar-generator-dispatch.ts` fires a
+ * second `$0.04` image-gen in the background after the user-served call.
+ * That second call previously double-decremented the daily image
+ * counter when `generateVisualAid` / `generateAvatar` ran (each calls
+ * `checkImageRateLimit` internally). At canary@10 a user requesting 5
+ * images would consume 10 quota slots and rack up $0.40 of compute.
+ * The dispatcher now `peek`s before firing the Q4C call and skips it
+ * when the user is at the cap; the served primary call is unaffected.
+ */
+export async function peekImageRateLimit(userId: string): Promise<boolean> {
+    try {
+        const { getDb } = await import('./firebase-admin');
+        const db = await getDb();
+        const limitRef = db.collection('rate_limits').doc(`${userId}_image`);
+        const today = getTodayIST();
+        const doc = await limitRef.get();
+        if (!doc.exists) return true;
+        const data = doc.data();
+        const count = data?.date === today ? (data?.count ?? 0) : 0;
+        return count < IMAGE_RATE_LIMIT.MAX_PER_DAY;
+    } catch (error: any) {
+        // Fail open: never break the user path because of a peek.
+        console.error('[Image Rate Limit Peek] failing open:', error?.message);
+        return true;
+    }
+}
+
 /** Get today's date string in IST (UTC+5:30) — resets at midnight India time. */
 function getTodayIST(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD

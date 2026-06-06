@@ -117,7 +117,14 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         // sidecarOk=true cells despite Cloud Run logs showing 200s.
         // Coerce undefined to null at the boundary so success rows
         // actually land.
-        const payload: Record<string, unknown> = { createdAt: new Date() };
+        // F14 P1-4 (2026-06-06): write `expiresAt` 90 days out so the
+        // Firestore TTL policy on each agent subcollection auto-deletes
+        // stale parity samples. Without this the collections grow
+        // unbounded (~2 GB/month Firestore storage at canary scale +
+        // linear read-cost ballooning for the promotion aggregator).
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+        const payload: Record<string, unknown> = { createdAt: now, expiresAt };
         for (const [k, v] of Object.entries(sample)) {
             payload[k] = v === undefined ? null : v;
         }
