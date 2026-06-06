@@ -4,9 +4,18 @@ import { dbAdapter } from "@/lib/db/adapter";
 import { certificationService } from "@/lib/services/certification-service";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
-import { validateAdmin } from "@/lib/auth-utils";
+import { validateAdmin, isAdmin } from "@/lib/auth-utils";
 import { headers } from "next/headers";
 import { requireAuth } from "@/lib/auth-helpers";
+
+/**
+ * Deterministic pair ID for a connection between two users. Sorted so
+ * the same key is produced regardless of direction. Matches the
+ * convention used in src/app/actions/connections.ts.
+ */
+function buildConnectionPairId(uid1: string, uid2: string): string {
+    return [uid1, uid2].sort().join('_');
+}
 
 /**
  * Read a user's profile data.
@@ -51,11 +60,38 @@ export async function getProfileData(_userId?: string) {
  * rendered "Profile Not Found".
  */
 export async function getPublicProfileAction(targetUid: string) {
-    await requireAuth(); // any signed-in teacher can view another teacher
+    const callerUid = await requireAuth(); // any signed-in teacher can view another teacher
     if (!targetUid || typeof targetUid !== 'string') {
         throw new Error('Invalid targetUid');
     }
     try {
+        // F10-02: email is PII. Only surface it when the caller is the same
+        // user, an admin, or has an accepted connection with the target.
+        // Anyone else (any signed-in teacher) must not see email — that
+        // exposes the whole user table to spam/phishing harvesting.
+        let canSeeEmail = callerUid === targetUid;
+        if (!canSeeEmail) {
+            // Admin override
+            try {
+                canSeeEmail = await isAdmin(callerUid);
+            } catch {
+                canSeeEmail = false;
+            }
+        }
+        if (!canSeeEmail) {
+            // Accepted-connection check. connections/{pairId} where
+            // pairId = sorted([callerUid, targetUid]).join('_').
+            try {
+                const { getDb } = await import("@/lib/firebase-admin");
+                const db = await getDb();
+                const pairId = buildConnectionPairId(callerUid, targetUid);
+                const connSnap = await db.collection('connections').doc(pairId).get();
+                canSeeEmail = connSnap.exists;
+            } catch {
+                canSeeEmail = false;
+            }
+        }
+
         const [profile, certifications] = await Promise.all([
             dbAdapter.getUser(targetUid),
             certificationService.getCertificationsByUser(targetUid),
@@ -67,11 +103,10 @@ export async function getPublicProfileAction(targetUid: string) {
 
         // Strip private fields that other teachers shouldn't see.
         // Whitelist approach — only return known-safe fields.
-        const publicProfile = {
+        const publicProfile: Record<string, any> = {
             id: (profile as any).id ?? targetUid,
             displayName: (profile as any).displayName,
             photoURL: (profile as any).photoURL,
-            email: (profile as any).email, // public for connection (already shown elsewhere)
             bio: (profile as any).bio,
             state: (profile as any).state,
             district: (profile as any).district,
@@ -87,6 +122,11 @@ export async function getPublicProfileAction(targetUid: string) {
             // intentionally excluded: phoneNumber, fcmTokens, adminRoles,
             // billing/usage fields, communityIntroState, onboarding flags
         };
+
+        // F10-02: email only included when caller is self, admin, or connected.
+        if (canSeeEmail) {
+            publicProfile.email = (profile as any).email;
+        }
 
         return dbAdapter.serialize({ profile: publicProfile, certifications });
     } catch (error) {
