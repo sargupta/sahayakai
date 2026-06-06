@@ -52,13 +52,26 @@ export async function POST(request: Request) {
     } catch (err: any) {
         // Doc already exists — check if previous attempt failed (retry allowed) or succeeded (skip)
         if (err.code === 6 /* ALREADY_EXISTS */) {
-            const existing = await eventRef.get();
-            const existingStatus = existing.data()?.status;
-            // Allow retry for previously failed events (e.g. transient Firestore error)
-            if (existingStatus === 'failed') {
-                await eventRef.update({ status: 'processing', retriedAt: new Date() });
-            } else {
+            // F5-005 fix: atomic compare-and-set on the status flip.
+            // Without the transaction, two concurrent Razorpay retries of
+            // the same failed event could both observe `status === 'failed'`,
+            // both flip to 'processing', and both run the side-effect
+            // pipeline (subscription update, custom-claim set, fan-out).
+            // Today's effects are idempotent, but this is a latent risk —
+            // any future non-idempotent step (e.g. a credit grant) would
+            // double up. The transaction guarantees exactly one retrier
+            // wins the flip; everyone else gets `already_processed`.
+            const wonTheFlip = await db.runTransaction(async (tx) => {
+                const existing = await tx.get(eventRef);
+                const existingStatus = existing.data()?.status;
+                if (existingStatus === 'failed') {
+                    tx.update(eventRef, { status: 'processing', retriedAt: new Date() });
+                    return true;
+                }
                 // 'processing' or 'completed' — safe to skip
+                return false;
+            });
+            if (!wonTheFlip) {
                 return NextResponse.json({ status: 'already_processed' });
             }
         } else {
