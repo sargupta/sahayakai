@@ -8,6 +8,9 @@ import {
     ExamPaperGenerationInProgressError,
 } from '@/lib/sidecar/exam-paper-dispatch';
 
+// Allow up to 120s for AI generation (hot path can be slow under load)
+export const maxDuration = 120;
+
 /**
  * @swagger
  * /api/ai/exam-paper:

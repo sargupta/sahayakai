@@ -3,6 +3,9 @@ import { dispatchVideoStoryteller } from '@/lib/sidecar/video-storyteller-dispat
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 
+// Allow up to 120s for video storyteller generation (multi-step orchestration)
+export const maxDuration = 120;
+
 /**
  * @swagger
  * /api/ai/video-storyteller:

@@ -38,6 +38,9 @@ import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
 import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
 
+// Allow up to 120s for AI scanning (multi-page OCR + grading can be slow)
+export const maxDuration = 120;
+
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
 
 /**
