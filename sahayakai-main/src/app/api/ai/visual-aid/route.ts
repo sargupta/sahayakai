@@ -7,6 +7,7 @@ import { VisualAidInputSchema } from '@/ai/flows/visual-aid-designer';
 import { dispatchVisualAid } from '@/lib/sidecar/visual-aid-dispatch';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { checkUsage, PlanLimitExceededError } from '@/lib/usage-tracker';
 
 /**
  * @swagger
@@ -57,6 +58,9 @@ async function _handler(request: Request) {
 
         const body = VisualAidInputSchema.parse(json);
 
+        // F14-003 — per-user image budget enforcement.
+        await checkUsage(userId, 'image_generation');
+
         // Phase E.3: dispatcher routes Genkit vs ADK sidecar based on
         // SAHAYAKAI_VISUAL_AID_MODE env (default: off → Genkit only).
         // checkImageRateLimit lives inside the Genkit flow's
@@ -95,6 +99,10 @@ async function _handler(request: Request) {
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
+
+        if (error instanceof PlanLimitExceededError) {
+            return NextResponse.json({ error: error.message, code: 'PLAN_LIMIT_EXCEEDED', type: error.type, used: error.used, limit: error.limit }, { status: 429 });
+        }
 
         if (errorMessage.includes('Daily image limit reached')) {
             return NextResponse.json({ error: errorMessage }, { status: 429 });

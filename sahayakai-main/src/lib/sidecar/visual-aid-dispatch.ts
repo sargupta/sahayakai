@@ -31,7 +31,7 @@ import {
 } from './visual-aid-client';
 import { persistSidecarImage } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
+import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
 
@@ -190,22 +190,29 @@ export async function dispatchVisualAid(
         // bucket landed >=percent (mode collapsed to 'off'), fire the
         // sidecar in the background and write a shadow_diff so the
         // promotion gate has a non-zero denominator.
+        // F14-002: sidecar observation call still costs $0.04. Peek
+        // budget; user already received the Genkit primary image.
         if (
-            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
-            decision.configuredMode === 'canary'
+            shouldRunCanaryShadowDiff() &&
+            decision.configuredMode === 'canary' &&
+            input.userId
         ) {
-            void runSidecarSafe(sidecarRequest).then((sc) => {
-                void writeAgentShadowDiff({
-                    agent: 'visual-aid',
-                    uid: input.userId,
-                    genkit: out,
-                    sidecar: sc.ok ? sc.res : null,
-                    genkitLatencyMs: 0,
-                    sidecarLatencyMs: sc.latencyMs,
-                    sidecarOk: sc.ok,
-                    sidecarError: sc.ok ? undefined : sc.error.message,
+            const { peekImageRateLimit } = await import('@/lib/server-safety');
+            const hasBudget = await peekImageRateLimit(input.userId);
+            if (hasBudget) {
+                void runSidecarSafe(sidecarRequest).then((sc) => {
+                    void writeAgentShadowDiff({
+                        agent: 'visual-aid',
+                        uid: input.userId,
+                        genkit: out,
+                        sidecar: sc.ok ? sc.res : null,
+                        genkitLatencyMs: 0,
+                        sidecarLatencyMs: sc.latencyMs,
+                        sidecarOk: sc.ok,
+                        sidecarError: sc.ok ? undefined : sc.error.message,
+                    });
                 });
-            });
+            }
         }
                 return genkitToDispatched(out, 'genkit', decision);
     }
@@ -280,21 +287,34 @@ export async function dispatchVisualAid(
         // Q4C — canary/full observation: fire Genkit in the background
         // and write a shadow_diff so the promotion-gate aggregator has
         // a live (genkit, sidecar) parity signal during the rollout.
-        // 2x Gemini cost while observation is on; toggle the constant
-        // off post-promotion to reclaim it.
-        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
-            const __q4cGenkitStartedAt = Date.now();
-            void runGenkitSafe(input).then((gk) => {
-                void writeAgentShadowDiff({
-                    agent: 'visual-aid',
-                    uid: input.userId,
-                    genkit: gk.ok ? gk.out : null,
-                    sidecar: sidecar.res,
-                    genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
-                    sidecarLatencyMs: sidecar.latencyMs,
-                    sidecarOk: true,
+        // F14-002 (2026-06-06): peek the daily image cap before firing
+        // the background Genkit call. The served sidecar primary already
+        // shipped above; observation is best-effort and MUST NOT consume
+        // budget beyond what the served path already decremented.
+        if (shouldRunCanaryShadowDiff() && input.userId) {
+            const { peekImageRateLimit } = await import('@/lib/server-safety');
+            const hasBudget = await peekImageRateLimit(input.userId);
+            if (hasBudget) {
+                const __q4cGenkitStartedAt = Date.now();
+                void runGenkitSafe(input).then((gk) => {
+                    void writeAgentShadowDiff({
+                        agent: 'visual-aid',
+                        uid: input.userId,
+                        genkit: gk.ok ? gk.out : null,
+                        sidecar: sidecar.res,
+                        genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
+                        sidecarLatencyMs: sidecar.latencyMs,
+                        sidecarOk: true,
+                    });
                 });
-            });
+            } else {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                    event: 'visual_aid.dispatch.q4c_skipped_quota',
+                    uid: input.userId,
+                    reason: 'image_rate_limit_at_cap',
+                }));
+            }
         }
                 return sidecarToDispatched(sidecar.res, decision);
     }
