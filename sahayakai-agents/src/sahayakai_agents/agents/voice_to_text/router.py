@@ -39,6 +39,7 @@ from .agent import (
     render_transcriber_prompt,
 )
 from .schemas import (
+    ALLOWED_LANGUAGE_ISO_CODES,
     MAX_AUDIO_BYTES,
     VoiceToTextCore,
     VoiceToTextRequest,
@@ -156,12 +157,29 @@ def _build_pinned_pipeline(api_key: str) -> Any:
     return template.clone(update={"sub_agents": pinned_subs})
 
 
+def _normalize_expected_language(expected_language: str | None) -> str | None:
+    """Return the lowercase ISO hint if it's in the supported set, else None.
+
+    Mirrors the TS `normalizeIsoLang(expectedLanguage)` helper used by
+    the Genkit flow's soft-empty return path. Keeping this strict means
+    the behavioural guard's `assert_language_iso_allowed` check never
+    rejects a soft-empty response.
+    """
+    if not expected_language:
+        return None
+    code = expected_language.strip().lower()
+    if code in ALLOWED_LANGUAGE_ISO_CODES:
+        return code
+    return None
+
+
 async def _run_pipeline_via_runner(
     *,
     prompt_text: str,
     audio_bytes: bytes,
     audio_mime: str,
     api_key: str,
+    expected_language: str | None,
 ) -> VoiceToTextCore:
     """One ADK Runner invocation against the voice-to-text SequentialAgent.
 
@@ -216,10 +234,21 @@ async def _run_pipeline_via_runner(
                 final_text += str(text)
 
     if not final_text.strip():
-        raise AgentError(
-            code="INTERNAL",
-            message="Voice-to-text returned empty response",
-            http_status=502,
+        # Soft-empty: short / silent / sub-threshold audio produces no
+        # transcript. Returning a 502 here triggers the client's retry
+        # loop (3x cost on guaranteed-empty audio) and surfaces as a
+        # destructive HTTP 500 toast. Return an empty-text response
+        # with the caller's expected language hint so the UI can render
+        # a graceful "I didn't catch that" state. Mirrors the TS
+        # voice-to-text soft-empty fix shipped in commit 727522140
+        # (see qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2).
+        log.warning(
+            "voice_to_text.transcriber.soft_empty",
+            expected_language=expected_language,
+        )
+        return VoiceToTextCore(
+            text="",
+            language=_normalize_expected_language(expected_language),
         )
 
     try:
@@ -255,6 +284,7 @@ async def _run_transcriber(
             audio_bytes=audio_bytes,
             audio_mime=audio_mime,
             api_key=api_key,
+            expected_language=payload.expectedLanguage,
         )
 
     try:
