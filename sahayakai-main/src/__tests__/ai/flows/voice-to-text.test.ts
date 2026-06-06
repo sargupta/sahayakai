@@ -21,12 +21,23 @@
 
 // Mock @/ai/genkit so the module is loadable in a node test env (the prompt
 // builder pulls in Google AI bindings we don't want in unit tests).
-jest.mock('@/ai/genkit', () => ({
-  ai: {
-    definePrompt: jest.fn().mockReturnValue(jest.fn()),
-  },
-  runResiliently: jest.fn(),
-}));
+// The `mock` prefix is required so Jest's hoisting allows references inside
+// the factory before the variable is initialised.
+jest.mock('@/ai/genkit', () => {
+  const promptFn = jest.fn();
+  return {
+    __mockPromptFn: promptFn,
+    ai: {
+      definePrompt: jest.fn().mockImplementation(() => promptFn),
+    },
+    runResiliently: jest.fn().mockImplementation(
+      async (fn: (config: unknown) => Promise<unknown>) => fn({}),
+    ),
+  };
+});
+// Pull the mock prompt fn out via require so tests can drive its return value.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mockPromptFn = (require('@/ai/genkit') as { __mockPromptFn: jest.Mock }).__mockPromptFn;
 
 import {
   normalizeIsoLang,
@@ -124,5 +135,55 @@ describe('scriptMatchesExpected — Punjabi/Devanagari mismatch (Lane A5)', () =
   it('passes when expected language is English or undefined', () => {
     expect(scriptMatchesExpected(PUNJABI_AUDIO_AS_DEVANAGARI, 'en')).toBe(true);
     expect(scriptMatchesExpected(PUNJABI_AUDIO_AS_DEVANAGARI, undefined)).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bug 2b regression — empty Gemini transcription returns soft-empty, not throw
+// See qa/results/lane-F/VIDYA_VOICE_DEBUG.md and VIDYA_VOICE_FIX.md.
+//
+// Prior behaviour: on silent / sub-threshold audio Gemini returns an empty
+// string and the flow threw "Empty transcription returned from model" → 500.
+// The client retried 3× (microphone-input.tsx), burning cost and crashing the
+// UI to a destructive toast.
+//
+// Fixed behaviour: return `{ text: '', language: <expected> }` so the route
+// returns HTTP 200 and the UI renders a friendly "I didn't catch that".
+// ─────────────────────────────────────────────────────────────────────────────
+describe('voiceToText soft-empty handling', () => {
+  beforeEach(() => {
+    mockPromptFn.mockReset();
+  });
+
+  it('returns soft-empty (no throw) when Gemini returns empty text — voiceToText', async () => {
+    mockPromptFn.mockResolvedValue({ output: { text: '', language: '' } });
+    const { voiceToText } = await import('@/ai/flows/voice-to-text');
+    const result = await voiceToText({
+      audioDataUri: 'data:audio/webm;base64,AAAA',
+      expectedLanguage: 'hi',
+    });
+    expect(result).toEqual({ text: '', language: 'hi' });
+  });
+
+  it('returns soft-empty (no throw) when Gemini returns empty text — voiceToTextFormData', async () => {
+    mockPromptFn.mockResolvedValue({ output: { text: '', language: '' } });
+    const { voiceToTextFormData } = await import('@/ai/flows/voice-to-text');
+    const fd = new FormData();
+    const blob = new Blob([new Uint8Array([0, 0, 0, 0])], { type: 'audio/webm;codecs=opus' });
+    fd.set('audio', blob as unknown as File, 'voice.webm');
+    fd.set('language', 'bn');
+    const result = await voiceToTextFormData(fd);
+    expect(result.text).toBe('');
+    expect(result.language).toBe('bn');
+  });
+
+  it('also handles null output from the prompt — voiceToText', async () => {
+    mockPromptFn.mockResolvedValue({ output: null });
+    const { voiceToText } = await import('@/ai/flows/voice-to-text');
+    const result = await voiceToText({
+      audioDataUri: 'data:audio/webm;base64,AAAA',
+      expectedLanguage: 'en',
+    });
+    expect(result).toEqual({ text: '', language: 'en' });
   });
 });

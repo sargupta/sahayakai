@@ -33,6 +33,7 @@ const KNOWN_FLOWS = new Set<VidyaAction['flow']>([
     'rubric-generator',
     'exam-paper',
     'video-storyteller',
+    'instant-answer',
 ]);
 
 // Phase N.1 + P5: when the supervisor authors >1 actions for a compound
@@ -52,6 +53,7 @@ const FLOW_LABEL: Record<VidyaAction['flow'], string> = {
     'rubric-generator': 'Rubric',
     'exam-paper': 'Exam paper',
     'video-storyteller': 'Video',
+    'instant-answer': 'Instant Answer',
 };
 
 // ── Authenticated fetch helper ────────────────────────────────────────────────

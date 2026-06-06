@@ -349,7 +349,7 @@ export interface LiveSessionConfig {
 export interface LiveToolDefinition {
   name: string;
   description: string;
-  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller';
+  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller' | 'instant-answer';
 }
 
 /**
@@ -734,7 +734,7 @@ export interface VideoStorytellerResponse {
  */
 export interface VidyaAction {
   type: 'NAVIGATE_AND_FILL';
-  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller';
+  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller' | 'instant-answer';
   params: VidyaActionParams;
 }
 
