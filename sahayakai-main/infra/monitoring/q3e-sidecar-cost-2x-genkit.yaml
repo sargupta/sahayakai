@@ -1,0 +1,59 @@
+# Q3E Alert: weekly sidecar token spend > 2× weekly Genkit token spend.
+#
+# This is a BigQuery-backed alert (not a Cloud Monitoring MQL alert)
+# because the source data lives in the `dispatch_cost` BigQuery dataset
+# populated by the Logging sink (infra/billing/dispatch-cost-log-sink.sh).
+#
+# Mechanism:
+#   1. A scheduled BigQuery query runs every Monday 06:00 IST.
+#   2. The query writes a row into `dispatch_cost.weekly_ratio_alerts`
+#      when sidecar > 2× genkit for the previous ISO week.
+#   3. A Cloud Logging log-based alert watches BigQuery audit logs for
+#      that table-write and fires an email to ops@ when a row lands.
+#
+# See qa/docs/COST_TELEMETRY.md §5 for the manual setup steps (the
+# scheduled query is created via the BigQuery Console; it cannot be
+# expressed declaratively without bq DDL + IAM bootstrap).
+#
+# Severity: WARN (not PAGE). Sidecar > 2× Genkit during rollout is
+# expected (shadow mode doubles every dispatch). The alert is intended
+# to catch the *steady-state* drift after sidecar is at 100% canary.
+
+displayName: "Q3E sidecar tokens > 2× Genkit (weekly) [WARN]"
+combiner: OR
+enabled: true
+
+alertStrategy:
+  autoClose: 604800s   # 7 days
+
+documentation:
+  mimeType: text/markdown
+  content: |
+    **WARN.** Sidecar token spend exceeded 2× Genkit token spend for
+    the previous ISO week.
+
+    Investigate before promoting any more agents to canary/full:
+
+    1. Open Looker Studio dashboard "Q3E — Sidecar vs Genkit".
+       Identify which agent drives the ratio.
+    2. Pull the agent's prompt/response from `agent_shadow_diffs` for
+       a 10-row sample. Compare prompt sizes.
+    3. If sidecar is producing materially longer outputs vs Genkit,
+       tighten the system prompt; if the input prompt is larger,
+       investigate why the sidecar's prompt assembly is verbose.
+    4. If the ratio is driven by `genkit_fallback` count drop (less
+       Genkit denominator, not more sidecar numerator) the alert is
+       benign — sidecar is winning. Suppress this week.
+
+    Linked dashboards:
+    - Looker Studio: <add URL after first publish>
+    - Source query: `infra/billing/per-agent-tokens-daily.sql` §2
+
+conditions:
+  - displayName: "weekly_ratio_alerts has a new row"
+    conditionMatchedLog:
+      filter: |
+        resource.type="bigquery_resource"
+        protoPayload.methodName="jobservice.jobcompleted"
+        protoPayload.serviceData.jobCompletedEvent.job.jobConfiguration.query.destinationTable.tableId="weekly_ratio_alerts"
+        protoPayload.serviceData.jobCompletedEvent.job.jobStatistics.queryStatistics.outputRowCount!="0"
