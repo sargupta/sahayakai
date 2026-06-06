@@ -48,6 +48,7 @@ import {
 } from './lesson-plan-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
 

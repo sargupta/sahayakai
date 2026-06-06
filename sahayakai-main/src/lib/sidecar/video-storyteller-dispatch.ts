@@ -51,6 +51,7 @@ import {
     type SidecarVideoStorytellerResponse,
 } from './video-storyteller-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
 
@@ -332,7 +333,30 @@ async function _dispatchVideoStorytellerInner(
         });
         // eslint-disable-next-line no-console
         console.log('[video_storyteller.dispatch] complete', { durationMs, source: 'genkit' });
-        return genkitToDispatched(out, 'genkit', decision);
+
+        // Q4C — canary "bucket-overshoot" observation. When the agent
+        // is mid-canary (configuredMode==='canary') but THIS teacher's
+        // bucket landed >=percent (mode collapsed to 'off'), fire the
+        // sidecar in the background and write a shadow_diff so the
+        // promotion gate has a non-zero denominator.
+        if (
+            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            decision.configuredMode === 'canary'
+        ) {
+            void runSidecarSafe(sidecarRequest).then((sc) => {
+                void writeAgentShadowDiff({
+                    agent: 'video-storyteller',
+                    uid: input.userId,
+                    genkit: out,
+                    sidecar: sc.ok ? sc.res : null,
+                    genkitLatencyMs: 0,
+                    sidecarLatencyMs: sc.latencyMs,
+                    sidecarOk: sc.ok,
+                    sidecarError: sc.ok ? undefined : sc.error.message,
+                });
+            });
+        }
+                return genkitToDispatched(out, 'genkit', decision);
     }
 
     if (decision.mode === 'shadow') {

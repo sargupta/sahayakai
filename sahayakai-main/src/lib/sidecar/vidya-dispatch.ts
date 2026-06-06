@@ -36,6 +36,7 @@ import {
 } from '@/lib/feature-flags';
 
 import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
 import {
     callSidecarVidya,
     VidyaSidecarBehaviouralError,
@@ -295,7 +296,30 @@ export async function dispatchVidya(
             'vidya genkit fallback',
         );
         logDispatch(decision, { source: 'genkit', uid: input.uid });
-        return genkitToDispatched(out, 'genkit', decision);
+
+        // Q4C — canary "bucket-overshoot" observation. When the agent
+        // is mid-canary (configuredMode==='canary') but THIS teacher's
+        // bucket landed >=percent (mode collapsed to 'off'), fire the
+        // sidecar in the background and write a shadow_diff so the
+        // promotion gate has a non-zero denominator.
+        if (
+            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            decision.configuredMode === 'canary'
+        ) {
+            void runSidecarSafe(sidecarRequest, appCheckToken).then((sc) => {
+                void writeAgentShadowDiff({
+                    agent: 'vidya',
+                    uid: input.userId,
+                    genkit: out,
+                    sidecar: sc.ok ? sc.res : null,
+                    genkitLatencyMs: 0,
+                    sidecarLatencyMs: sc.latencyMs,
+                    sidecarOk: sc.ok,
+                    sidecarError: sc.ok ? undefined : sc.error.message,
+                });
+            });
+        }
+                return genkitToDispatched(out, 'genkit', decision);
     }
 
     // Phase R.2 + Phase U.delta: resolve App Check token ONCE per
@@ -353,7 +377,27 @@ export async function dispatchVidya(
             intent: sidecar.res.intent,
             sidecarVersion: sidecar.res.sidecarVersion,
         });
-        return sidecarToDispatched(sidecar.res, decision);
+
+        // Q4C — canary/full observation: fire Genkit in the background
+        // and write a shadow_diff so the promotion-gate aggregator has
+        // a live (genkit, sidecar) parity signal during the rollout.
+        // 2x Gemini cost while observation is on; toggle the constant
+        // off post-promotion to reclaim it.
+        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+            const __q4cGenkitStartedAt = Date.now();
+            void runGenkitSafe(input.request).then((gk) => {
+                void writeAgentShadowDiff({
+                    agent: 'vidya',
+                    uid: input.userId,
+                    genkit: gk.ok ? gk.out : null,
+                    sidecar: sidecar.res,
+                    genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
+                    sidecarLatencyMs: sidecar.latencyMs,
+                    sidecarOk: true,
+                });
+            });
+        }
+                return sidecarToDispatched(sidecar.res, decision);
     }
 
     // Sidecar failed — fall back to Genkit. Behavioural-fail also

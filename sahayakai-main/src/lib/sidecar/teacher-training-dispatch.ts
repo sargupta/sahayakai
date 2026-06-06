@@ -18,6 +18,7 @@ import {
 } from './teacher-training-client';
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
 
@@ -232,7 +233,30 @@ async function _dispatchTeacherTrainingInner(
         logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
         // eslint-disable-next-line no-console
         console.log('[teacher_training.dispatch] complete', { durationMs, source: 'genkit' });
-        return genkitToDispatched(out, 'genkit', decision);
+
+        // Q4C — canary "bucket-overshoot" observation. When the agent
+        // is mid-canary (configuredMode==='canary') but THIS teacher's
+        // bucket landed >=percent (mode collapsed to 'off'), fire the
+        // sidecar in the background and write a shadow_diff so the
+        // promotion gate has a non-zero denominator.
+        if (
+            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            decision.configuredMode === 'canary'
+        ) {
+            void runSidecarSafe(sidecarRequest).then((sc) => {
+                void writeAgentShadowDiff({
+                    agent: 'teacher-training',
+                    uid: input.userId,
+                    genkit: out,
+                    sidecar: sc.ok ? sc.res : null,
+                    genkitLatencyMs: 0,
+                    sidecarLatencyMs: sc.latencyMs,
+                    sidecarOk: sc.ok,
+                    sidecarError: sc.ok ? undefined : sc.error.message,
+                });
+            });
+        }
+                return genkitToDispatched(out, 'genkit', decision);
     }
 
     if (decision.mode === 'shadow') {
@@ -313,7 +337,27 @@ async function _dispatchTeacherTrainingInner(
                 error: persistErr instanceof Error ? persistErr.message : String(persistErr),
             }));
         }
-        return dispatched;
+
+        // Q4C — canary/full observation: fire Genkit in the background
+        // and write a shadow_diff so the promotion-gate aggregator has
+        // a live (genkit, sidecar) parity signal during the rollout.
+        // 2x Gemini cost while observation is on; toggle the constant
+        // off post-promotion to reclaim it.
+        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+            const __q4cGenkitStartedAt = Date.now();
+            void runGenkitSafe(input).then((gk) => {
+                void writeAgentShadowDiff({
+                    agent: 'teacher-training',
+                    uid: input.userId,
+                    genkit: gk.ok ? gk.out : null,
+                    sidecar: sidecar.res,
+                    genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
+                    sidecarLatencyMs: sidecar.latencyMs,
+                    sidecarOk: true,
+                });
+            });
+        }
+                return dispatched;
     }
 
     const errorClass =
