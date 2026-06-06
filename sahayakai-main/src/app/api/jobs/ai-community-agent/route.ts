@@ -111,12 +111,14 @@ async function postStaffRoomChat(
 
     const message = await generateContent(systemPrompt, userPrompt);
 
+    // F12-P1-08: standardise on `createdAt` so ai-reactive-reply cooldown query
+    // (which orderBy('createdAt')) sees these messages and respects the cooldown.
     await db.collection('community_chat').add({
         text: message,
         authorId: persona.uid,
         authorName: persona.displayName,
         authorPhotoURL: null,
-        timestamp: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
     });
 
     // Update memory: record what we sent + what we saw
@@ -367,9 +369,10 @@ async function collectEngagementSignals(
     }
 
     // Also learn from staff room — extract opinions from real teachers
+    // F12-P1-08: order by `createdAt` (standardised schema).
     const recentChat = await db
         .collection('community_chat')
-        .orderBy('timestamp', 'desc')
+        .orderBy('createdAt', 'desc')
         .limit(20)
         .get();
 
@@ -426,9 +429,10 @@ export async function POST(request: Request) {
         ].filter(Boolean) as string[])[0];
 
         // Step 2: Get recent staff room messages for context
+        // F12-P1-08: order by `createdAt` (standardised schema).
         const recentChat = await db
             .collection('community_chat')
-            .orderBy('timestamp', 'desc')
+            .orderBy('createdAt', 'desc')
             .limit(10)
             .get();
         const recentMessages = recentChat.docs

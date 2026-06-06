@@ -40,13 +40,14 @@ function sleep(ms: number) {
 
 export async function POST(req: NextRequest) {
     try {
-        // ── Auth: internal secret check ─────────────────────────────────
+        // ── Auth: internal secret check (fail-closed — F12-P1-02) ───────
         const secret = process.env.AI_INTERNAL_SECRET;
-        if (secret) {
-            const provided = req.headers.get('x-internal-secret');
-            if (provided !== secret) {
-                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-            }
+        if (!secret) {
+            return NextResponse.json({ error: 'AI_INTERNAL_SECRET not configured' }, { status: 503 });
+        }
+        const provided = req.headers.get('x-internal-secret');
+        if (provided !== secret) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await req.json();

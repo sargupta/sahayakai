@@ -41,9 +41,12 @@ export async function POST(request: Request) {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
 
+        // F12-P1-08: schema migrated to `createdAt` (Timestamp). Query by `createdAt`
+        // using a Date cutoff. Legacy docs that only have `timestamp` are handled by
+        // the backfill script: scripts/migrate-community-chat-timestamp-to-createdat.ts
         const snapshot = await db
             .collection('community_chat')
-            .where('timestamp', '<', cutoff.toISOString())
+            .where('createdAt', '<', cutoff)
             .limit(500) // Firestore batch delete limit
             .get();
 
