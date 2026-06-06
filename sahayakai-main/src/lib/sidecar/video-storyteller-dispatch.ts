@@ -346,7 +346,7 @@ async function _dispatchVideoStorytellerInner(
             void runSidecarSafe(sidecarRequest).then((sc) => {
                 void writeAgentShadowDiff({
                     agent: 'video-storyteller',
-                    uid: input.userId,
+                    uid: input.userId ?? 'anon',
                     genkit: out,
                     sidecar: sc.ok ? sc.res : null,
                     genkitLatencyMs: 0,
@@ -445,6 +445,26 @@ async function _dispatchVideoStorytellerInner(
                 durationMs,
                 source: 'sidecar+genkit_videos',
             });
+            // Q4C — canary/full observation. Fire Genkit in the
+            // background and write a shadow_diff so the promotion-gate
+            // aggregator has a live (genkit, sidecar) parity signal
+            // during the rollout. 2x Gemini cost while observation is
+            // on; toggle SHADOW_DIFF_IN_CANARY_OBSERVATION off
+            // post-promotion to reclaim it.
+            if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+                const __q4cGenkitStartedAt = Date.now();
+                void runGenkitSafe(input).then((gk) => {
+                    void writeAgentShadowDiff({
+                        agent: 'video-storyteller',
+                        uid: input.userId ?? 'anon',
+                        genkit: gk.ok ? gk.out : null,
+                        sidecar: sidecar.res,
+                        genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
+                        sidecarLatencyMs: sidecar.latencyMs,
+                        sidecarOk: true,
+                    });
+                });
+            }
             return mergedToDispatched(sidecar.res, videos.out, decision);
         }
 
