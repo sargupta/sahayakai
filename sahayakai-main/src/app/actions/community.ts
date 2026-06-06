@@ -11,9 +11,51 @@ import { checkServerRateLimit } from "@/lib/server-safety";
 import { cachedPerUser, invalidateUserCache } from "@/lib/server-cache";
 import type { TeacherSuggestion } from "@/types/community";
 
+// F2-01 (P0 PII leak): the previous implementation returned raw Firestore
+// user docs to any signed-in caller, leaking phoneNumber, fcmTokens,
+// adminRoles, planType, razorpaySubscriptionId, creditsUsed, email. We now
+// strip to the same public allowlist that getPublicProfileAction uses.
+//
+// Allowlist mirrors src/app/actions/profile.ts::getPublicProfileAction.
+const PUBLIC_PROFILE_FIELDS = [
+    'id',
+    'uid',
+    'displayName',
+    'photoURL',
+    'email', // already shown elsewhere in connection flows
+    'bio',
+    'state',
+    'district',
+    'schoolType',
+    'schoolName',
+    'resourceLevel',
+    'subjects',
+    'languages',
+    'gradeLevels',
+    'qualifications',
+    'yearsOfExperience',
+    'verifiedStatus',
+    'careerStage',
+] as const;
+
+function stripToPublicProfile(user: any): any {
+    if (!user || typeof user !== 'object') return user;
+    const out: Record<string, any> = {};
+    for (const key of PUBLIC_PROFILE_FIELDS) {
+        if (key in user) out[key] = (user as any)[key];
+    }
+    // Preserve uid even if not present in the source object (some adapters
+    // attach it as the doc id rather than a field).
+    if (!('uid' in out) && (user as any).uid) out.uid = (user as any).uid;
+    if (!('id' in out) && (user as any).id) out.id = (user as any).id;
+    return out;
+}
+
 export async function getProfilesAction(uids: string[]) {
     await requireAuth();
-    return await dbAdapter.getUsers(uids);
+    const users = await dbAdapter.getUsers(uids);
+    if (!Array.isArray(users)) return users;
+    return users.map(stripToPublicProfile);
 }
 
 /**

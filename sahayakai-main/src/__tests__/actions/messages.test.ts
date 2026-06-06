@@ -120,6 +120,7 @@ import {
     markConversationReadAction,
     getTotalUnreadCountAction,
     createGroupConversationAction,
+    acknowledgeDeliveryAction,
 } from '@/app/actions/messages';
 
 // ── Tests ───────────────────────────────────────────────────────────────────
@@ -236,13 +237,37 @@ describe('messages server actions', () => {
     });
 
     describe('markConversationReadAction', () => {
-        it('completes without error', async () => {
-            getCol('conversations')['conv-1'] = { unreadCount: { 'user-a': 5 } };
+        it('completes without error when caller is a participant', async () => {
+            getCol('conversations')['conv-1'] = {
+                participantIds: ['user-a', 'user-b'],
+                unreadCount: { 'user-a': 5 },
+            };
             await expect(markConversationReadAction('conv-1', 'user-a')).resolves.toBeUndefined();
         });
 
         it('throws when caller !== userId', async () => {
+            getCol('conversations')['conv-1'] = {
+                participantIds: ['user-a', 'user-b'],
+                unreadCount: { 'user-a': 5 },
+            };
             await expect(markConversationReadAction('conv-1', 'user-b')).rejects.toThrow('Unauthorized');
+        });
+
+        // F2-02 (P1): IDOR. Previously any signed-in caller could mark read on
+        // any conversation whose id they could guess.
+        it('throws Forbidden when caller is not a participant', async () => {
+            getCol('conversations')['conv-strangers'] = {
+                participantIds: ['user-x', 'user-y'],
+                unreadCount: { 'user-x': 1, 'user-y': 2 },
+            };
+            mockHeadersMap.set('x-user-id', 'user-a');
+            await expect(markConversationReadAction('conv-strangers', 'user-a'))
+                .rejects.toThrow(/Forbidden|not a participant/);
+        });
+
+        it('throws Conversation not found when conversation does not exist', async () => {
+            await expect(markConversationReadAction('conv-missing', 'user-a'))
+                .rejects.toThrow(/Conversation not found/);
         });
     });
 
@@ -261,6 +286,35 @@ describe('messages server actions', () => {
 
         it('throws when caller !== userId', async () => {
             await expect(getTotalUnreadCountAction('user-b')).rejects.toThrow('Unauthorized');
+        });
+    });
+
+    describe('acknowledgeDeliveryAction', () => {
+        it('writes deliveredTo when caller is a participant', async () => {
+            getCol('conversations')['conv-1'] = {
+                participantIds: ['user-a', 'user-b'],
+            };
+            await expect(acknowledgeDeliveryAction('conv-1', ['m1', 'm2'])).resolves.toBeUndefined();
+        });
+
+        // F2-03 (P2): IDOR — previously no participant check at all.
+        it('throws Forbidden when caller is not a participant', async () => {
+            getCol('conversations')['conv-strangers'] = {
+                participantIds: ['user-x', 'user-y'],
+            };
+            // record batch creations so we can assert none happened
+            const batchSpy = jest.spyOn(mockDb, 'batch');
+            const callsBefore = batchSpy.mock.calls.length;
+            await expect(acknowledgeDeliveryAction('conv-strangers', ['m1']))
+                .rejects.toThrow(/Forbidden|not a participant/);
+            // no batch should have been committed
+            expect(batchSpy.mock.calls.length).toBe(callsBefore);
+            batchSpy.mockRestore();
+        });
+
+        it('throws Conversation not found when conversation does not exist', async () => {
+            await expect(acknowledgeDeliveryAction('conv-missing', ['m1']))
+                .rejects.toThrow(/Conversation not found/);
         });
     });
 
