@@ -139,25 +139,18 @@ class TestBoundedFields:
         with pytest.raises(ValidationError):
             ScreenContext(path="/x", uiState=ui_state)
 
-    def test_response_too_long_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            VidyaResponse(
-                response="x" * 1001,
-                action=None,
-                intent="unknown",
-                sidecarVersion="phase-5",
-                latencyMs=10,
-            )
+    # Phase 1a: per-field maxLength/minLength dropped on VidyaResponse
+    # to match Genkit responseSchema complexity budget.
 
-    def test_response_empty_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            VidyaResponse(
-                response="",
-                action=None,
-                intent="unknown",
-                sidecarVersion="phase-5",
-                latencyMs=10,
-            )
+    def test_long_response_now_passes(self) -> None:
+        resp = VidyaResponse(
+            response="x" * 1001,
+            action=None,
+            intent="unknown",
+            sidecarVersion="phase-5",
+            latencyMs=10,
+        )
+        assert len(resp.response) == 1001
 
 
 # ── AllowedFlow enforcement on action ─────────────────────────────────────
@@ -183,6 +176,7 @@ class TestActionFlowEnum:
             "rubric-generator",
             "exam-paper",
             "video-storyteller",
+            "instant-answer",
         ]:
             action = VidyaAction(
                 type="NAVIGATE_AND_FILL",
@@ -190,6 +184,22 @@ class TestActionFlowEnum:
                 params=VidyaActionParams(),
             )
             assert action.flow == flow
+
+    def test_instant_answer_is_in_allowed_flow_literal(self) -> None:
+        """CI guard — see `tests/unit/test_action_flow_ts_parity.py` for
+        the full Python↔TS parity test. This one fails loudly the moment
+        someone removes `instant-answer` from the wire enum, before any
+        cross-stack regeneration is even considered."""
+        from typing import get_args
+
+        from sahayakai_agents.agents.vidya.schemas import AllowedFlow
+
+        assert "instant-answer" in get_args(AllowedFlow), (
+            "'instant-answer' must remain in AllowedFlow — the supervisor "
+            "(sahayakai-main/src/ai/soul.ts) emits it as a navigable flow "
+            "and the TS wire validator depends on it. See "
+            "qa/results/lane-F/PYDANTIC_ENUM_SYNC.md."
+        )
 
     def test_invalid_action_type_rejects(self) -> None:
         with pytest.raises(ValidationError):
@@ -230,17 +240,18 @@ class TestPlannedActionsBounds:
         )
         assert len(intent.plannedActions) == 3
 
-    def test_intent_planned_actions_rejects_four(self) -> None:
+    def test_intent_planned_actions_four_now_passes(self) -> None:
+        # Phase 1a: max_items=3 dropped on output (Genkit-parity).
         actions = [_minimal_action() for _ in range(4)]
-        with pytest.raises(ValidationError):
-            IntentClassification(
-                type="lesson-plan",
-                topic=None,
-                gradeLevel=None,
-                subject=None,
-                language=None,
-                plannedActions=actions,
-            )
+        intent = IntentClassification(
+            type="lesson-plan",
+            topic=None,
+            gradeLevel=None,
+            subject=None,
+            language=None,
+            plannedActions=actions,
+        )
+        assert len(intent.plannedActions) == 4
 
     def test_response_planned_actions_default_empty(self) -> None:
         response = VidyaResponse(
@@ -252,17 +263,18 @@ class TestPlannedActionsBounds:
         )
         assert response.plannedActions == []
 
-    def test_response_planned_actions_rejects_four(self) -> None:
+    def test_response_planned_actions_four_now_passes(self) -> None:
+        # Phase 1a: max_items=3 dropped on output (Genkit-parity).
         actions = [_minimal_action() for _ in range(4)]
-        with pytest.raises(ValidationError):
-            VidyaResponse(
-                response="ok",
-                action=actions[0],
-                intent="lesson-plan",
-                sidecarVersion="phase-n.1",
-                latencyMs=10,
-                plannedActions=actions,
-            )
+        resp = VidyaResponse(
+            response="ok",
+            action=actions[0],
+            intent="lesson-plan",
+            sidecarVersion="phase-n.1",
+            latencyMs=10,
+            plannedActions=actions,
+        )
+        assert len(resp.plannedActions) == 4
 
 
 class TestDependsOnBounds:
@@ -277,9 +289,10 @@ class TestDependsOnBounds:
         params = VidyaActionParams(dependsOn=[0, 1])
         assert params.dependsOn == [0, 1]
 
-    def test_depends_on_rejects_three(self) -> None:
-        with pytest.raises(ValidationError):
-            VidyaActionParams(dependsOn=[0, 1, 2])
+    def test_depends_on_three_now_passes(self) -> None:
+        # Phase 1a: max_items=2 dropped on output (Genkit-parity).
+        params = VidyaActionParams(dependsOn=[0, 1, 2])
+        assert params.dependsOn == [0, 1, 2]
 
     def test_action_carries_depends_on_through_params(self) -> None:
         action = VidyaAction(

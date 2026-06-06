@@ -88,6 +88,18 @@ async function verifyIdToken(token: string) {
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // SECURITY: Strip any client-supplied identity headers BEFORE any branch.
+    // `x-user-id` / `x-user-plan` are trusted by every downstream route
+    // handler as the verified-from-token identity. A client that sets them
+    // on its outbound request would otherwise be able to impersonate any
+    // user. Only this middleware — after successfully verifying a Firebase
+    // ID token — is allowed to set them. We strip on ALL requests
+    // (public + private + static) so there is no path where a forged
+    // header survives. (P0 fix, 2026-06-05.)
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.delete('x-user-id');
+    requestHeaders.delete('x-user-plan');
+
     // Skip static assets entirely
     if (
         pathname.startsWith('/_next') ||
@@ -102,29 +114,40 @@ export async function middleware(request: NextRequest) {
         // the iframe the Firebase SDK loads at /__/auth/iframe).
         pathname.startsWith('/__/')
     ) {
-        return NextResponse.next();
+        return NextResponse.next({ request: { headers: requestHeaders } });
     }
 
     // Public API routes — skip auth
+    //
+    // SECURITY NOTE (P0 fix, 2026-06-05): /api/analytics/* and
+    // /api/teacher-activity were previously here. They are NOT actually
+    // public — their handlers trust `x-user-id` from the request headers
+    // for write authorization. Leaving them in this list let any anon
+    // caller spoof the header and write to any victim's analytics
+    // documents. They are now authenticated like every other private
+    // route below.
+    //
+    // /api/metrics stays public because anon visitors (logged-out
+    // landing pages) emit web-vital telemetry; the route does not use
+    // `x-user-id` and only logs a client-supplied id label.
+    // /api/auth/profile-check stays public because it runs pre-login
+    // (the client doesn't have a token yet at that moment).
     const isPublicApi =
         pathname.startsWith('/api/health') ||
         pathname.startsWith('/api/ai/quiz/health') ||
         pathname.startsWith('/api-docs') ||
-        pathname.startsWith('/api/teacher-activity') ||
         pathname.startsWith('/api/metrics') ||
-        pathname.startsWith('/api/analytics') ||
         pathname.startsWith('/api/auth/') ||
         pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
         pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
         pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
         pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
+        pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/');  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
 
     if (isPublicApi) {
-        return NextResponse.next();
+        return NextResponse.next({ request: { headers: requestHeaders } });
     }
-
-    const requestHeaders = new Headers(request.headers);
 
     // --- Phase R.2: Firebase App Check verification ---
     // The browser attaches `X-Firebase-AppCheck` on outbound API calls

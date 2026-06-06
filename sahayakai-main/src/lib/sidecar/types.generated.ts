@@ -289,6 +289,9 @@ export interface LessonPlanRequest {
   resourceLevel?: 'low' | 'medium' | 'high' | null;
   difficultyLevel?: 'remedial' | 'standard' | 'advanced' | null;
   subject?: string | null;
+  state?: string | null;
+  district?: string | null;
+  regionalContextBlock?: string | null;
 }
 
 /**
@@ -346,7 +349,7 @@ export interface LiveSessionConfig {
 export interface LiveToolDefinition {
   name: string;
   description: string;
-  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller';
+  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller' | 'instant-answer';
 }
 
 /**
@@ -731,7 +734,7 @@ export interface VideoStorytellerResponse {
  */
 export interface VidyaAction {
   type: 'NAVIGATE_AND_FILL';
-  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller';
+  flow: 'lesson-plan' | 'quiz-generator' | 'visual-aid-designer' | 'worksheet-wizard' | 'virtual-field-trip' | 'teacher-training' | 'rubric-generator' | 'exam-paper' | 'video-storyteller' | 'instant-answer';
   params: VidyaActionParams;
 }
 
@@ -873,6 +876,13 @@ export interface VisualAidResponse {
 export interface VoiceToTextRequest {
   audioDataUri: string;
   userId: string;
+  /**
+   * Optional 2-letter ISO language hint from the client (e.g. "bn", "ta").
+   * Mirrors `expectedLanguage` on the Pydantic `VoiceToTextRequest` model in
+   * `sahayakai-agents/.../voice_to_text/schemas.py` — used to bias detection
+   * and trigger the script-mismatch retry path for short / noisy Indic audio.
+   */
+  expectedLanguage?: string | null;
 }
 
 /**

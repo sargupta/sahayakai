@@ -19,28 +19,67 @@ const CONTENT_COLLECTION = 'content';
  * extend the corresponding test in src/__tests__/lib/adapter-allowlist.test.ts.
  */
 const CLIENT_EDITABLE_USER_FIELDS = new Set<string>([
+    // Identity / profile basics
     'displayName',
     'photoURL',
     'avatarUrl',
+    'customAvatarUrl',
     'bio',
+    'phone',
+    'phoneNumber',
+    'designation',
+    'department',
+    'qualifications',
+    'yearsOfExperience',
+    'experienceYears',
+    'administrativeRole',
+
+    // Teaching context
     'schoolName',
+    'school',
     'schoolNormalized',
     'subjects',
     'gradeLevels',
+    'grades',
     'teachingGradeLevels',
     'educationBoard',
+    'preferredBoard',
+    'boards',
+    'udise',
+    'organizationId',
+    'interests',
     'state',
     'district',
+    'region',
+
+    // Preferences
     'preferredLanguage',
-    'phone',
-    'communityIntroState',
-    'onboardingChecklistItems',
-    'onboardingComplete',
-    'consentGivenAt',
-    'consentVersion',
     'lastLessonPlanLanguage',
     'notificationPreferences',
     'voicePreferences',
+
+    // Onboarding state machine
+    'communityIntroState',
+    'onboardingPhase',
+    'onboardingCompletedAt',
+    'onboardingChecklistItems',
+    'onboardingComplete',
+    'checklistDismissedAt',
+    'featureSpotlightsSeen',
+    'profileCompletionLevel',
+    'profileCompletionDismissCount',
+    'firstGenerationContentId',
+    'firstGenerationTool',
+    'aiGenerationCount',
+    'hasHeardGreeting',
+
+    // Privacy / consent
+    'privacyAcceptedAt',
+    'privacyVersion',
+    'consentGivenAt',
+    'consentVersion',
+
+    // System flags users may force-rerun
     'groupsInitialized', // server marks true after auto-join, but client may force-rerun
 ]);
 

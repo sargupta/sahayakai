@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 # hatch wheel-builder reads pyproject; we skip any lockfile for Phase 1 and
 # let pip resolve the pinned versions. Swap to uv lockfile in G1.
 COPY src ./src
@@ -50,4 +50,4 @@ EXPOSE 8080
 # us a single container per request concurrency level and autoscales
 # horizontally. Multiple workers in one container doubles memory for no
 # throughput gain at our request profile.
-CMD ["uvicorn", "sahayakai_agents.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-config", "/dev/null"]
+CMD ["uvicorn", "sahayakai_agents.main:app", "--host", "0.0.0.0", "--port", "8080"]

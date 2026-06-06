@@ -29,10 +29,8 @@ import {
   pickRandomPersona,
   getPersonaById,
 } from '@/ai/data/community-personas';
-import {
-  generateCommunityPersonaMessage,
-  type RecentMessageContext,
-} from '@/ai/flows/community-persona-message';
+import type { RecentMessageContext } from '@/ai/flows/community-persona-message';
+import { dispatchCommunityPersonaMessage } from '@/lib/sidecar/community-persona-message-dispatch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -92,8 +90,24 @@ export async function POST(req: NextRequest) {
     }));
 
   // 5. Generate + write.
+  //
+  // Routes through the sidecar dispatcher so the
+  // `communityPersonaMessageSidecarMode` flag controls shadow/canary/full
+  // routing (and shadow_diffs land in Firestore for parity scoring).
+  // The dispatcher always returns the Genkit response on the user-facing
+  // path in `off`/`shadow` modes — same behaviour as the previous
+  // direct-call code — but additionally fires the sidecar in shadow so
+  // we can score parity. In `off` mode the dispatcher just proxies to
+  // `generateCommunityPersonaMessage`, so this remains a strict
+  // superset of the original behaviour.
   try {
-    const out = await generateCommunityPersonaMessage(persona, recent, body.mode ?? 'auto');
+    const dispatched = await dispatchCommunityPersonaMessage({
+      persona,
+      recentMessages: recent,
+      mode: body.mode ?? 'auto',
+      userId,
+    });
+    const out = { message: dispatched.message };
 
     const db = await getDb();
     const docId = `persona_live_${Date.now()}_${persona.id.replace('persona_', '')}`;

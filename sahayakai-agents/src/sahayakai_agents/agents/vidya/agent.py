@@ -98,10 +98,29 @@ def build_vidya_agent() -> LlmAgent:
     """
     from google.adk.agents import LlmAgent  # noqa: PLC0415 — lazy import
 
+    # IMPORTANT — `instruction=""` is intentional, not a stub.
+    #
+    # ADK's basic LLM flow runs `inject_session_state()` on the agent's
+    # `instruction` field (see google/adk/flows/llm_flows/instructions.py
+    # + utils/instructions_utils.py). That pass scans the string for any
+    # `{var}` pattern (regex `{+[^{}]*}+`) and tries to resolve `var`
+    # against the in-memory session state, raising
+    # `KeyError("Context variable not found: var")` when not found.
+    # Our orchestrator Handlebars template contains `{{capabilityIndex}}`,
+    # `{{teacher.preferredGrade}}`, etc. — every one of those matched
+    # ADK's regex and blew up the call with a 502 "VIDYA orchestrator
+    # failed to classify intent" on every request.
+    #
+    # The router (`_run_orchestrator_via_runner`) already renders the
+    # full prompt via pybars3 and passes the rendered string as the
+    # `new_message` user content. Empty `instruction` skips the ADK
+    # substitution pass entirely — same effective behaviour as the
+    # previous hand-rolled `google.genai` path that worked on prod
+    # before the L.1 ADK migration.
     return LlmAgent(
         name="vidya_supervisor",
         model=get_orchestrator_model(),
-        instruction=load_orchestrator_prompt(),
+        instruction="",
         sub_agents=[],
         tools=[],  # See docstring: output_schema + tools is unsafe on the Gemini API path.
         output_schema=IntentClassification,

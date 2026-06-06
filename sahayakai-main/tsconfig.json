@@ -38,6 +38,7 @@
     "node_modules",
     "scripts",
     "src/__tests__",
+    "qa",
     "sargvision-seo-package",
     "sargvision-seo-package-v2",
     "sargvision-seo-package-v3",

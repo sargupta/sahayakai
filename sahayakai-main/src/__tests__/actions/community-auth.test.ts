@@ -43,12 +43,13 @@ jest.mock('@/lib/ai-reactive-trigger', () => ({
     triggerAIReactiveReply: jest.fn(),
 }));
 
-jest.mock('@/app/actions/aggregator', () => ({
+jest.mock('@/lib/aggregator', () => ({
     aggregateUserMetrics: jest.fn(async () => {}),
 }));
 
 jest.mock('@/app/actions/notifications', () => ({
     createNotification: jest.fn(async () => {}),
+    createTypedNotification: jest.fn(async () => {}),
 }));
 
 import * as community from '@/app/actions/community';

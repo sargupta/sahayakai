@@ -59,6 +59,45 @@ function isLatin(cp: number): boolean {
   return (cp >= 0x0041 && cp <= 0x005a) || (cp >= 0x0061 && cp <= 0x007a);
 }
 
+// Lane A5 fix — providers return non-canonical ISO codes for some languages
+// (Sarvam returns `od` for Odia where ISO 639-1 is `or`, occasional `pun` for
+// Punjabi, `mar` for Marathi, etc.). Normalise everything at the output
+// boundary so downstream consumers (TTS, language-detect, agent-router) see
+// a single canonical 2-letter code per language.
+const ISO_LANG_ALIASES: Record<string, string> = {
+  od: 'or',
+  ori: 'or',
+  pun: 'pa',
+  pnb: 'pa',
+  mar: 'mr',
+  hin: 'hi',
+  ben: 'bn',
+  bng: 'bn',
+  tam: 'ta',
+  tel: 'te',
+  kan: 'kn',
+  mal: 'ml',
+  guj: 'gu',
+  eng: 'en',
+};
+
+/**
+ * Normalise a raw ISO language tag from any STT provider into our canonical
+ * 2-letter code. Strips region suffixes (e.g. `hi-IN` → `hi`), lowercases,
+ * and applies the alias map (e.g. `od` → `or`, `pun` → `pa`).
+ *
+ * Returns undefined for empty input; otherwise returns the normalised tag
+ * (passes unknown 2-letter codes through unchanged).
+ */
+export function normalizeIsoLang(code: string | null | undefined): string | undefined {
+  if (!code) return undefined;
+  const lower = String(code).toLowerCase().trim();
+  if (!lower) return undefined;
+  const base = lower.split(/[-_]/)[0];
+  if (!base) return undefined;
+  return ISO_LANG_ALIASES[base] ?? base;
+}
+
 /**
  * Returns true if the output text's script is consistent with the expected
  * language. Code-switching with English (Latin chars) is allowed — we only
@@ -79,6 +118,7 @@ export function scriptMatchesExpected(text: string, isoLang: string | undefined)
 
   let inExpected = 0;
   let nonLatinLetters = 0;
+  let devanagariLetters = 0;
   for (const ch of text) {
     const cp = ch.codePointAt(0) ?? 0;
     // skip whitespace, digits, ASCII punct, common symbols
@@ -87,12 +127,29 @@ export function scriptMatchesExpected(text: string, isoLang: string | undefined)
     // letter-ish — any non-Latin, non-ASCII codepoint
     nonLatinLetters++;
     if (range.test(cp)) inExpected++;
+    // Track Devanagari separately for the Sarvam Punjabi→Devanagari mismatch.
+    if (cp >= 0x0900 && cp <= 0x097f) devanagariLetters++;
   }
 
   // Pure Latin or near-pure Latin output. If the user's UI lang is Indic but
   // they genuinely spoke English, we should NOT keep retrying. Treat <=5
   // non-Latin chars as "looks English" and pass.
   if (nonLatinLetters <= 5) return true;
+
+  // Lane A5 explicit Devanagari-mismatch fast path. Sarvam STT ignores the
+  // `expectedLanguage` hint for some languages (notably Punjabi) and returns
+  // the transcript in Devanagari script labeled as Hindi. Only applies when
+  // the user asked for a NON-Devanagari Indic script — Hindi/Marathi both
+  // use Devanagari, so they intentionally fall through to the ratio check.
+  if (
+    (isoLang === 'pa' || isoLang === 'gu' || isoLang === 'bn' ||
+     isoLang === 'ta' || isoLang === 'te' || isoLang === 'kn' ||
+     isoLang === 'ml' || isoLang === 'or') &&
+    devanagariLetters >= 5 &&
+    inExpected === 0
+  ) {
+    return false;
+  }
 
   // Need at least 30% of non-Latin letters to be in the expected script.
   return inExpected / nonLatinLetters >= 0.3;
@@ -203,7 +260,13 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
     let { output: transcription } = await voiceToTextPrompt(buildPromptInput(baseInput), config);
 
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      // Soft-empty: short / silent / sub-threshold audio produces no
+      // text. Returning a 500 here triggers the client's retry loop and
+      // burns 3× the cost on guaranteed-empty audio. Instead return an
+      // empty-text response so the UI can render "I didn't catch that".
+      // See qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2.
+      console.warn('[voiceToText.formData] empty transcription — returning soft-empty');
+      return { text: '', language: normalizeIsoLang(expectedLanguage) };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
@@ -227,7 +290,7 @@ export async function voiceToTextFormData(formData: FormData): Promise<VoiceToTe
       }
     }
 
-    return { text: transcription.text, language: transcription.language };
+    return { text: transcription.text, language: normalizeIsoLang(transcription.language) };
   }, 'voiceToText.sarvam');
 }
 
@@ -238,7 +301,11 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
     let { output: transcription } = await voiceToTextPrompt(buildPromptInput(input), config);
 
     if (!transcription?.text) {
-      throw new Error("Empty transcription returned from model");
+      // Soft-empty: see voiceToTextFormData above. Return empty text + the
+      // caller's expected language hint so the UI shows a graceful
+      // "I didn't catch that" instead of a 500 crash toast.
+      console.warn('[voiceToText] empty transcription — returning soft-empty');
+      return { text: '', language: normalizeIsoLang(input.expectedLanguage) };
     }
 
     if (isLikelyTranscriptionRefusal(transcription.text)) {
@@ -260,6 +327,6 @@ export async function voiceToText(input: VoiceToTextInput): Promise<VoiceToTextO
       }
     }
 
-    return { text: transcription.text, language: transcription.language };
+    return { text: transcription.text, language: normalizeIsoLang(transcription.language) };
   }, 'voiceToText.gemini');
 }

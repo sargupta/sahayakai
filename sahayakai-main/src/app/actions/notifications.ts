@@ -2,9 +2,16 @@
 
 import { getDb } from "@/lib/firebase-admin";
 import { dbAdapter } from "@/lib/db/adapter";
-import { Notification } from "@/types";
+import { Notification, NotificationType } from "@/types";
 import { revalidatePath } from "next/cache";
 import { requireAuth, getAuthUserIdOrNull } from "@/lib/auth-helpers";
+import {
+    NotificationPlaceholderMap,
+    TemplateKey,
+    renderNotification,
+    DEFAULT_NOTIFICATION_LANGUAGE,
+    NotificationLanguage,
+} from "@/lib/notifications/templates";
 
 /**
  * Server-only helper called from other server actions (community.ts,
@@ -31,6 +38,63 @@ export async function createNotification(notification: Omit<Notification, 'id' |
 
     const docRef = await db.collection('notifications').add(newNotification);
     return docRef.id;
+}
+
+/**
+ * Resolve the recipient's preferred UI language. Falls back to English on
+ * any read failure (Firestore down, doc missing, no preference set).
+ */
+async function resolveRecipientLanguage(recipientId: string): Promise<NotificationLanguage> {
+    try {
+        const db = await getDb();
+        const snap = await db.collection('users').doc(recipientId).get();
+        const lang = snap.data()?.preferredLanguage;
+        if (typeof lang === 'string' && lang.length > 0) {
+            return lang as NotificationLanguage;
+        }
+    } catch {
+        // swallow — fall back below
+    }
+    return DEFAULT_NOTIFICATION_LANGUAGE;
+}
+
+/**
+ * Lane A13: localised notification writer. Resolves the recipient's
+ * preferredLanguage from `users/{recipientId}.preferredLanguage` and renders
+ * the template before persisting. This is what every new call site should use
+ * instead of `createNotification`.
+ *
+ * The persisted `type` is the real NotificationType. We never store the
+ * virtual MESSAGE key — MESSAGE renders down to a SYSTEM doc with localised
+ * title/message so existing Bell-badge and notifications-list queries keep
+ * working unchanged.
+ */
+export async function createTypedNotification<K extends TemplateKey>(args: {
+    type: K;
+    recipientId: string;
+    placeholders: K extends keyof NotificationPlaceholderMap ? NotificationPlaceholderMap[K] : Record<string, string>;
+    senderId?: string;
+    senderName?: string;
+    senderPhotoURL?: string;
+    link?: string;
+    metadata?: Record<string, string>;
+}): Promise<string> {
+    const language = await resolveRecipientLanguage(args.recipientId);
+    const { title, message } = renderNotification(args.type, language, args.placeholders);
+
+    const persistedType: NotificationType = args.type === 'MESSAGE' ? 'SYSTEM' : (args.type as NotificationType);
+
+    return createNotification({
+        recipientId: args.recipientId,
+        type: persistedType,
+        title,
+        message,
+        senderId: args.senderId,
+        senderName: args.senderName,
+        senderPhotoURL: args.senderPhotoURL,
+        link: args.link,
+        metadata: args.metadata,
+    });
 }
 
 /**

@@ -174,11 +174,14 @@ async def _run_recommender(
     settings: Any,
 ) -> VideoStorytellerCore:
     # Phase J §J.3 — sanitize user-controlled strings before render.
+    lang_name = sanitize(payload.language or "English", max_length=20)
     context = {
         "subject": sanitize(payload.subject, max_length=100),
         "gradeLevel": sanitize(payload.gradeLevel, max_length=50),
         "topic": sanitize(payload.topic or "", max_length=300),
-        "language": sanitize(payload.language or "English", max_length=20),
+        "language": lang_name,
+        "languageName": lang_name,
+        "languageCode": _iso_for_lang(lang_name),
         "state": sanitize(payload.state or "", max_length=100),
         "educationBoard": sanitize(
             payload.educationBoard or "", max_length=100,

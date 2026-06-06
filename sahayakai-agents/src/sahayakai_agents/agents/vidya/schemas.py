@@ -74,11 +74,22 @@ class TeacherProfile(BaseModel):
     schoolContext: str | None = Field(default=None, max_length=2000)
 
 
-# --- Allowed flow enum (kept in sync with `agent.ALLOWED_FLOWS`) -------
+# --- Allowed flow enum (wire-level; superset of `agent.ALLOWED_FLOWS`) -
 
-# `instantAnswer` is intentionally NOT in this Literal — it's handled
-# inline by the sidecar without a navigation action. `unknown` is also
-# not here because it never produces an action.
+# This Literal is the WIRE contract — every value a `VidyaAction.flow`
+# field may carry. The TS sidecar client regenerates its literal union
+# from this enum (see `scripts/codegen_ts.py`).
+#
+# `instant-answer` (hyphenated) was added when the supervisor
+# (`sahayakai-main/src/ai/soul.ts`, commit e119fc10e) started emitting
+# it as a navigable flow. Route is `/instant-answer?question=...`. It
+# stays distinct from the classifier's `instantAnswer` intent label
+# (camelCase, NOT in `ALLOWED_FLOWS` in `prompts.py`) — the classifier
+# still produces inline answers without ever building a `VidyaAction`.
+# Two separate concerns, on purpose; the comment block in
+# `classify_action` explains the routing.
+#
+# `unknown` is intentionally NOT here — `unknown` produces no action.
 AllowedFlow = Literal[
     "lesson-plan",
     "quiz-generator",
@@ -89,6 +100,7 @@ AllowedFlow = Literal[
     "rubric-generator",
     "exam-paper",
     "video-storyteller",
+    "instant-answer",
 ]
 
 
@@ -103,11 +115,9 @@ class NcertChapterRef(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    number: int = Field(ge=1, le=30)
-    title: str = Field(min_length=1, max_length=300)
-    learningOutcomes: list[_LearningOutcome] = Field(
-        default_factory=list, max_length=20,
-    )
+    number: int = Field(ge=1)
+    title: str
+    learningOutcomes: list[str] = Field(default_factory=list)
 
 
 class VidyaActionParams(BaseModel):
@@ -129,17 +139,12 @@ class VidyaActionParams(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    topic: str | None = Field(default=None, max_length=500)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
-    language: str | None = Field(default=None, max_length=10)
+    topic: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
+    language: str | None = None
     ncertChapter: NcertChapterRef | None = None
-    # Phase N.1 — index pointers into the parent `plannedActions` list.
-    # Each int is the position of an earlier action whose output feeds
-    # this one (e.g. rubric `dependsOn=[0]` means "use the lesson plan
-    # at index 0"). Bounded at 2 entries — compound requests deeper
-    # than that should split into separate teacher-confirmed sessions.
-    dependsOn: list[int] = Field(default_factory=list, max_length=2)
+    dependsOn: list[int] = Field(default_factory=list)
 
 
 class VidyaAction(BaseModel):
@@ -191,11 +196,8 @@ class VidyaRequest(BaseModel):
     # so path-injection defences in downstream Firestore document IDs
     # still hold. The Next.js dispatcher injects this from the
     # `x-user-id` header that auth middleware writes.
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Internal classifier output ----------------------------------------
@@ -221,11 +223,11 @@ class IntentClassification(BaseModel):
     # return any of the 11 labels and we validate downstream in
     # `classify_action`. A Literal here would force a regex-match
     # validation error path on every typo, swallowing useful telemetry.
-    type: str = Field(min_length=1, max_length=64)
-    topic: str | None = Field(max_length=500)
-    gradeLevel: str | None = Field(max_length=50)
-    subject: str | None = Field(max_length=100)
-    language: str | None = Field(max_length=10)
+    type: str
+    topic: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
+    language: str | None = None
     # Phase N.1 — typed planned-action list (replaces Phase G's
     # `followUpSuggestion: str | None`, which was a 300-char prose blob
     # the OmniOrb rendered as a chip).
@@ -243,9 +245,7 @@ class IntentClassification(BaseModel):
     # the rest as the queue of follow-ups. Cap at 3 — beyond that
     # teacher-confirmed sessions handle the depth (matches the
     # `dependsOn` cap of 2 on `VidyaActionParams`).
-    plannedActions: list[VidyaAction] = Field(
-        default_factory=list, max_length=3,
-    )
+    plannedActions: list[VidyaAction] = Field(default_factory=list)
 
 
 # --- Wire response ------------------------------------------------------
@@ -261,9 +261,9 @@ class VidyaResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    response: str = Field(min_length=1, max_length=1000)
+    response: str
     action: VidyaAction | None = None
-    intent: str = Field(min_length=1, max_length=64)
+    intent: str
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)
     # Phase N.1 — typed planned-action queue (replaces Phase G's
@@ -280,6 +280,4 @@ class VidyaResponse(BaseModel):
     # one-tap chip the teacher can opt into. The supervisor still does
     # NOT execute follow-ups automatically — every entry is a teacher-
     # confirmed dispatch.
-    plannedActions: list[VidyaAction] = Field(
-        default_factory=list, max_length=3,
-    )
+    plannedActions: list[VidyaAction] = Field(default_factory=list)

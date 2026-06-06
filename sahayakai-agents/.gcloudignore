@@ -1,0 +1,27 @@
+# Mirror .dockerignore but ensure README.md IS uploaded (hatchling needs it
+# when running `pip install --prefix=/install .` from the Dockerfile).
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+env/
+.tox/
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.local
+.env.*.local
+.github/
+.git/
+*.md
+!README.md
+.gitignore
+node_modules/

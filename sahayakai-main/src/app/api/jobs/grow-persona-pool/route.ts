@@ -173,6 +173,16 @@ function extractJsonArray(raw: string): any[] | null {
 }
 
 export async function POST(request: NextRequest) {
+    // Auth gate: CRON_SECRET required.
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+        return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 });
+    }
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const url = new URL(request.url);
     const requested = Number(url.searchParams.get('count') ?? '5');
     const count = Math.max(1, Math.min(MAX_PER_RUN, Math.floor(requested)));

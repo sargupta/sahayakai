@@ -4,7 +4,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { publishEvent } from "@/lib/pubsub";
 import { dbAdapter } from "@/lib/db/adapter";
-import { aggregateUserMetrics } from "./aggregator";
+import { aggregateUserMetrics } from "@/lib/aggregator";
 import { logger } from "@/lib/logger";
 import { requireAuth } from "@/lib/auth-helpers";
 import { checkServerRateLimit } from "@/lib/server-safety";
@@ -134,7 +134,7 @@ export async function getPosts(filters: { language?: string, limit?: number, gra
     })));
 }
 
-import { createNotification } from "./notifications";
+import { createTypedNotification } from "./notifications";
 
 export async function followTeacherAction(followingId: string) {
     const followerId = await requireAuth();
@@ -160,15 +160,14 @@ export async function followTeacherAction(followingId: string) {
             const followerDoc = await db.collection('users').doc(followerId).get();
             const followerData = followerDoc.data();
 
-            await createNotification({
-                recipientId: followingId,
+            await createTypedNotification({
                 type: 'FOLLOW',
-                title: 'New Follower',
-                message: `${followerData?.displayName || 'A teacher'} started following you`,
+                recipientId: followingId,
+                placeholders: { senderName: followerData?.displayName || 'A teacher' },
                 senderId: followerId,
                 senderName: followerData?.displayName,
                 senderPhotoURL: followerData?.photoURL,
-                link: `/community` // Could link to follower's profile if available
+                link: `/community`, // Could link to follower's profile if available
             });
         } catch (e) {
             logger.error("Failed to send follow notification", e, 'COMMUNITY', { followerId, followingId });
@@ -531,11 +530,13 @@ export async function likeResourceAction(
             try {
                 const likerDoc = await db.collection('users').doc(userId).get();
                 const liker = likerDoc.data();
-                await createNotification({
-                    recipientId: resData.authorId,
+                await createTypedNotification({
                     type: 'LIKE',
-                    title: 'Someone liked your resource',
-                    message: `${liker?.displayName || 'A teacher'} liked "${resData.title}"`,
+                    recipientId: resData.authorId,
+                    placeholders: {
+                        senderName: liker?.displayName || 'A teacher',
+                        resourceTitle: resData.title ?? '',
+                    },
                     senderId: userId,
                     senderName: liker?.displayName,
                     senderPhotoURL: liker?.photoURL,
@@ -627,11 +628,13 @@ export async function saveResourceToLibraryAction(
         try {
             const saverDoc = await db.collection('users').doc(saverId).get();
             const saver = saverDoc.data();
-            await createNotification({
-                recipientId: resource.authorId,
+            await createTypedNotification({
                 type: 'RESOURCE_SAVED',
-                title: 'Resource saved',
-                message: `${saver?.displayName || 'A teacher'} saved your "${resource.title}" to their library`,
+                recipientId: resource.authorId,
+                placeholders: {
+                    senderName: saver?.displayName || 'A teacher',
+                    resourceTitle: resource.title,
+                },
                 senderId: saverId,
                 senderName: saver?.displayName,
                 senderPhotoURL: saver?.photoURL,

@@ -339,6 +339,13 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       const headers: Record<string, string> = {};
       const token = await auth.currentUser?.getIdToken();
       if (token) headers['Authorization'] = `Bearer ${token}`;
+      // Forward the user's preferred UI language as a 2-letter ISO hint so the
+      // sidecar can bias detection + trigger the script-mismatch retry path.
+      // Mirrors the `uiLanguage` plumbing in /api/assistant.
+      const expectedLanguage = LANGUAGE_TO_ISO[language] ?? null;
+      if (expectedLanguage && !formData.has('expectedLanguage')) {
+        formData.set('expectedLanguage', expectedLanguage);
+      }
       const res = await fetch('/api/ai/voice-to-text', { method: 'POST', headers, body: formData, signal: abortControllerRef.current?.signal });
       if (!res.ok) throw new Error((await res.json()).error || 'Transcription failed');
       const result = await res.json();

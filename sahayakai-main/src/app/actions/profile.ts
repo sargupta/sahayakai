@@ -130,13 +130,110 @@ export async function addCertificationAction(formData: FormData) {
  * derived from session and the supplied `_userId` is rejected if it doesn't
  * match.
  */
+// Allowlist of fields a teacher may set on their own profile via this action.
+// Anything else is silently stripped before the Firestore write so a hostile
+// client cannot escalate privileges (e.g. set `role:'admin'`, flip plan tier,
+// award badges, mint impactScore, etc.). Privileged or server-derived fields
+// must be written through dedicated, auth-checked code paths.
+// Allowlist categories:
+//   1. Identity / profile basics — user-typed strings shown on the profile card
+//   2. Teaching context — subjects, grades, board, school, location
+//   3. Preferences — language, notification/voice prefs
+//   4. Onboarding state machine — phase, checklist, spotlights, counters
+//   5. Privacy / consent — timestamps + version stamps the user clicks to set
+//   6. Community intro state — first-visit nudge tracking
+//
+// NEVER in the allowlist (privilege escalation surface):
+//   - adminRoles / isAdmin / superadmin / role / customClaims
+//   - plan / planTier / planExpiresAt / subscriptionId / razorpaySubscriptionId / billing*
+//   - email / emailVerified / uid / createdAt (auth identity / immutable)
+//   - fcmTokens (handled by a dedicated push-token action)
+//   - referralCode (server-issued)
+//   - impactScore / badges / verifiedStatus / followersCount / followingCount /
+//     contentSharedCount — these are SERVER-COMPUTED aggregates. They are
+//     initialized server-side in POST /api/user/profile for new users; the
+//     onboarding step was passing zero-values for them, which is harmless but
+//     pointless (the adapter-level allowlist also rejects them). They are now
+//     dropped from the onboarding payload, so the client never tries to write
+//     them through this action.
+const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
+    // 1. Identity / profile basics
+    'displayName',
+    'bio',
+    'photoURL',
+    'customAvatarUrl',
+    'phoneNumber',
+    'designation',
+    'department',
+    'qualifications',
+    'yearsOfExperience',
+    'experienceYears', // legacy alias
+    'administrativeRole',
+
+    // 2. Teaching context
+    'subjects',
+    'grades',
+    'gradeLevels',
+    'boards',
+    'educationBoard',
+    'preferredBoard',
+    'schoolName',
+    'school', // legacy alias
+    'schoolNormalized',
+    'udise',
+    'organizationId',
+    'interests',
+
+    // Location
+    'state',
+    'district',
+    'region',
+
+    // 3. Preferences
+    'preferredLanguage',
+
+    // 4. Onboarding state machine
+    'onboardingPhase',
+    'onboardingCompletedAt',
+    'onboardingChecklistItems',
+    'checklistDismissedAt',
+    'featureSpotlightsSeen',
+    'profileCompletionLevel',
+    'profileCompletionDismissCount',
+    'firstGenerationContentId',
+    'firstGenerationTool',
+    'aiGenerationCount',
+    'hasHeardGreeting',
+
+    // 5. Privacy / consent
+    'privacyAcceptedAt',
+    'privacyVersion',
+
+    // 6. Community intro state
+    'communityIntroState',
+]);
+
 export async function updateProfileAction(_userId: string, data: any) {
     const userId = await requireAuth();
     if (_userId !== userId) {
         throw new Error('Forbidden: cannot update another user\'s profile');
     }
 
-    await dbAdapter.updateUser(userId, data);
+    // Strip everything not in the allowlist BEFORE the write.
+    const sanitized: Record<string, any> = {};
+    if (data && typeof data === 'object') {
+        for (const key of Object.keys(data)) {
+            if (PROFILE_WRITABLE_FIELDS.has(key)) {
+                sanitized[key] = data[key];
+            }
+        }
+    }
+
+    if (Object.keys(sanitized).length === 0) {
+        throw new Error('No writable fields in update payload');
+    }
+
+    await dbAdapter.updateUser(userId, sanitized);
 
     revalidatePath("/my-profile");
 }
@@ -146,8 +243,13 @@ export async function updateProfileAction(_userId: string, data: any) {
  *
  * Wave 1: dropped trust-the-client uid. Same spoof attack as updateProfileAction.
  */
+const CHECKLIST_ITEM_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+
 export async function markChecklistItemAction(_userId: string, itemId: string) {
     if (!itemId) return;
+    if (!CHECKLIST_ITEM_ID_RE.test(itemId)) {
+        throw new Error('Invalid checklist item id');
+    }
     const userId = await requireAuth();
     if (_userId !== userId) {
         throw new Error('Forbidden: cannot update another user\'s checklist');

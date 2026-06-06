@@ -52,14 +52,12 @@ async function _handler(request: Request) {
         // Validate input up-front so schema mismatches return HTTP 400 via
         // handleAIError instead of falling through to the generic 500 path
         // when Genkit's internal schema validator throws.
-        const body = TeacherTrainingInputSchema.parse(json);
+        // QA Lane A4 fix: schema requires userId, inject from session before parse.
+        const body = TeacherTrainingInputSchema.parse({ ...json, userId });
 
         // Phase D.2: dispatcher routes Genkit vs ADK sidecar based on
         // SAHAYAKAI_TEACHER_TRAINING_MODE env (default: off).
-        const dispatched = await dispatchTeacherTraining({
-            ...body,
-            userId,
-        });
+        const dispatched = await dispatchTeacherTraining(body);
         return NextResponse.json({
             introduction: dispatched.introduction,
             advice: dispatched.advice,

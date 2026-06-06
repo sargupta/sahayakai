@@ -118,10 +118,12 @@ class TestEnumValidation:
 
 
 class TestBoundedFields:
-    def test_userId_pattern_rejects_path_injection(self) -> None:
+    def test_userId_empty_rejects(self) -> None:
+        # Phase 1a: opaque-ID regex dropped to match Genkit. Length
+        # floor still rejects empty userIds.
         with pytest.raises(ValidationError):
             ParentMessageRequest(
-                **{**_minimal_request_kwargs(), "userId": "../../etc/passwd"},
+                **{**_minimal_request_kwargs(), "userId": ""},
             )
 
     def test_studentName_too_long_rejects(self) -> None:
@@ -136,21 +138,9 @@ class TestBoundedFields:
                 **{**_minimal_request_kwargs(), "consecutiveAbsentDays": -1},
             )
 
-    def test_message_too_long_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            ParentMessageCore(
-                message="x" * 2501,
-                languageCode="en-IN",
-                wordCount=400,
-            )
-
-    def test_message_too_short_rejects(self) -> None:
-        with pytest.raises(ValidationError):
-            ParentMessageCore(
-                message="hi",
-                languageCode="en-IN",
-                wordCount=1,
-            )
+    # Phase 1a: per-field maxLength / minLength dropped on ParentMessageCore
+    # to match Genkit Zod baseline. Gemini's max_output_tokens caps shape;
+    # the router's post-parse cleanup enforces semantic length checks.
 
 
 class TestRoundTrip:

@@ -1,0 +1,271 @@
+{
+  "uid": "qa-lane-f-run4",
+  "start": "2026-06-05T12:23:36.139Z",
+  "end": "2026-06-05T12:26:32.991Z",
+  "results": [
+    {
+      "route": "lesson-plan",
+      "path": "/api/ai/lesson-plan",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 1507,
+      "sample": "{\"title\":\"ಪ್ರಜಾಪ್ರಭುತ್ವದ ಫಲಿತಾಂಶಗಳು\",\"objectives\":[\"ವಿದ್ಯಾರ್ಥಿಗಳು ಪ್ರಜಾಪ್ರಭುತ್ವದ ವಿವಿಧ ಫಲಿತಾಂಶಗಳನ್ನು ಗುರುತಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತದೆ.\",\"ವಿದ್ಯಾರ್ಥಿಗಳು ಪ್ರಜಾಪ್ರಭುತ್ವ ಸರ್ಕಾರಗಳ ಕಾರ್ಯಕ್ಷಮತೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತದೆ.\",\"ವಿದ್ಯಾರ್ಥಿಗಳು ಪ್ರಜಾಪ್ರಭುತ್ವದ ಸಕಾರಾತ್ಮಕ ಮತ್ತು ನಕಾರಾತ್ಮಕ ಅಂಶಗಳನ್ನು ಚರ್ಚಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತದ"
+    },
+    {
+      "route": "lesson-plan",
+      "path": "/api/ai/lesson-plan",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 2451,
+      "sample": "{\"title\":\"Sharing and Dividing: Understanding Fractions\",\"objectives\":[\"SWBAT identify equal parts of a whole.\",\"SWBAT define a fraction as a part of a whole.\",\"SWBAT represent simple fractions (like 1/2, 1/3, 1/4) using objects and drawings.\",\"SWBAT identify the numerator and denominator in a fract"
+    },
+    {
+      "route": "lesson-plan",
+      "path": "/api/ai/lesson-plan",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 4002,
+      "sample": "{\"title\":\"प्रकाश संश्लेषण: पौधों का भोजन बनाने की अद्भुत प्रक्रिया\",\"objectives\":[\"छात्र प्रकाश संश्लेषण की प्रक्रिया को परिभाषित कर सकेंगे।\",\"छात्र प्रकाश संश्लेषण के लिए आवश्यक घटकों (सूर्य का प्रकाश, पानी, कार्बन डाइऑक्साइड, क्लोरोफिल) की पहचान कर सकेंगे।\",\"छात्र प्रकाश संश्लेषण के उत्पादों (ग्लू"
+    },
+    {
+      "route": "quiz",
+      "path": "/api/ai/quiz",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 12941,
+      "sample": "{\"easy\":{\"title\":\"Fun with Fractions: Dividing & Sharing Equally\",\"questions\":[{\"questionText\":\"A mother divides a roti into 2 equal pieces for her two children. What fraction of the roti does each child get?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"1/2\",\"explanation\":\"When something, like"
+    },
+    {
+      "route": "quiz",
+      "path": "/api/ai/quiz",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 18534,
+      "sample": "{\"easy\":{\"title\":\"प्रकाश संश्लेषण: पौधों का भोजन बनाने का रहस्य\",\"questions\":[{\"questionText\":\"पौधे अपना भोजन बनाने के लिए किन चीजों का उपयोग करते हैं?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"उपरोक्त सभी\",\"explanation\":\"जैसे एक किसान को अच्छी मिट्टी, पानी और बीज की आवश्यकता होती है फसल उग"
+    },
+    {
+      "route": "quiz",
+      "path": "/api/ai/quiz",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 19475,
+      "sample": "{\"easy\":{\"title\":\"Understanding India's Economic Sectors: A Class 10 Quiz\",\"questions\":[{\"questionText\":\"Which sector of the Indian economy is primarily involved in extracting and producing natural resources, much like a farmer works the land?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"Prima"
+    },
+    {
+      "route": "worksheet",
+      "path": "/api/ai/worksheet",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 14334,
+      "sample": "{\"title\":\"Understanding Fractions: Sharing Equally!\",\"gradeLevel\":\"Class 3\",\"subject\":\"Mathematics\",\"learningObjectives\":[\"To understand fractions as parts of a whole.\",\"To identify the numerator and denominator for simple fractions.\",\"To represent simple fractions visually.\",\"To apply the concept o"
+    },
+    {
+      "route": "worksheet",
+      "path": "/api/ai/worksheet",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 15389,
+      "sample": "{\"title\":\"प्रकाश संश्लेषण: पौधों का भोजन बनाने का रहस्य\",\"gradeLevel\":\"Class 7\",\"subject\":\"Science\",\"learningObjectives\":[\"छात्र प्रकाश संश्लेषण की प्रक्रिया को परिभाषित कर पाएंगे।\",\"छात्र प्रकाश संश्लेषण के लिए आवश्यक घटकों की पहचान कर पाएंगे।\",\"छात्र प्रकाश संश्लेषण के उत्पादों को समझ पाएंगे।\",\"छा"
+    },
+    {
+      "route": "rubric",
+      "path": "/api/ai/rubric",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 9829,
+      "sample": "{\"title\":\"Water Cycle Essay Rubric\",\"description\":\"This rubric evaluates a Class 5 essay on the water cycle, focusing on content accuracy, organization, vocabulary, and grammar.\",\"criteria\":[{\"name\":\"Content Accuracy and Understanding\",\"description\":\"Evaluates the factual correctness and depth of un"
+    },
+    {
+      "route": "worksheet",
+      "path": "/api/ai/worksheet",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 23633,
+      "sample": "{\"title\":\"ಪ್ರಜಾಪ್ರಭುತ್ವ: ತಿಳುವಳಿಕೆ ಮತ್ತು ಸವಾಲುಗಳು\",\"gradeLevel\":\"Class 10\",\"subject\":\"Social Science\",\"learningObjectives\":[\"ಪ್ರಜಾಪ್ರಭುತ್ವದ ಅರ್ಥ ಮತ್ತು ಮೂಲಭೂತ ಲಕ್ಷಣಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು.\",\"ಪ್ರಜಾಪ್ರಭುತ್ವದ ವಿವಿಧ ರೂಪಗಳು ಮತ್ತು ಅದರ ಮಹತ್ವವನ್ನು ವಿಶ್ಲೇಷಿಸುವುದು.\",\"ಭಾರತದಲ್ಲಿ ಪ್ರಜಾಪ್ರಭುತ್ವ ಎದುರಿಸುತ್ತಿರುವ ಸವ"
+    },
+    {
+      "route": "rubric",
+      "path": "/api/ai/rubric",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 15961,
+      "sample": "{\"title\":\"Plant Growth Lab Report Rubric\",\"description\":\"This rubric evaluates a Class 8 science lab report detailing an experiment on plant growth.\",\"criteria\":[{\"name\":\"Scientific Method Application\",\"description\":\"Evaluates the clarity and correctness of the hypothesis, experimental design, varia"
+    },
+    {
+      "route": "rubric",
+      "path": "/api/ai/rubric",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 18042,
+      "sample": "{\"title\":\"ग्राम मेले की लघु कथा के लिए रूब्रिक\",\"description\":\"यह रूब्रिक छात्रों द्वारा ग्राम मेले पर लिखी गई लघु कथाओं का मूल्यांकन करने के लिए है।\",\"criteria\":[{\"name\":\"कहानी का विकास और संरचना\",\"description\":\"कहानी की शुरुआत, मध्य, अंत, कथानक की सुसंगतता और घटनाओं का तार्किक क्रम।\",\"levels\":[{\"n"
+    },
+    {
+      "route": "exam-paper",
+      "path": "/api/ai/exam-paper",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 48558,
+      "sample": "{\"title\":\"CBSE Class 8 Mathematics Sample Paper\",\"board\":\"CBSE\",\"subject\":\"Mathematics\",\"gradeLevel\":\"Class 8\",\"duration\":\"3 Hours\",\"maxMarks\":80,\"generalInstructions\":[\"All questions are compulsory.\",\"The question paper consists of 30 questions divided into five sections A, B, C, D and E.\",\"Section"
+    },
+    {
+      "route": "exam-paper",
+      "path": "/api/ai/exam-paper",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 43306,
+      "sample": "{\"title\":\"CBSE कक्षा 7 सामाजिक विज्ञान प्रतिदर्श प्रश्न पत्र (मध्यकालीन भारत)\",\"board\":\"CBSE\",\"subject\":\"Social Science\",\"gradeLevel\":\"Class 7\",\"duration\":\"3 Hours\",\"maxMarks\":80,\"generalInstructions\":[\"सभी प्रश्न अनिवार्य हैं।\",\"प्रश्न पत्र में पाँच खंड अ, ब, स, द और य हैं।\",\"खंड अ में बहुविकल्पीय "
+    },
+    {
+      "route": "visual-aid",
+      "path": "/api/ai/visual-aid",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 27804,
+      "sample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeISlAAAQAAAAEAABd+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1hqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjIxZTc5Zjg0LWQ3OWYtZjJiYi0yNGZmLTRjMTNlMWZiNDIxNAAAABMBanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy"
+    },
+    {
+      "route": "visual-aid",
+      "path": "/api/ai/visual-aid",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 25493,
+      "sample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeISlAAAQAAAAEAABd+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1hqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmEwOTU4Y2Q5LWZhNmEtNDcwNi1iZWFmLTQyNGU1NTFiZDMzOAAAABMBanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy"
+    },
+    {
+      "route": "exam-paper",
+      "path": "/api/ai/exam-paper",
+      "payloadIdx": 1,
+      "status": 500,
+      "ms": 75486,
+      "sample": "{\"error\":\"AI generation failed. Please try again.\"}"
+    },
+    {
+      "route": "virtual-field-trip",
+      "path": "/api/ai/virtual-field-trip",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 15253,
+      "sample": "{\"title\":\"Journey to the Jewel of India: A Virtual Tour of the Taj Mahal\",\"stops\":[{\"name\":\"The Majestic Taj Mahal Mausoleum\",\"description\":\"Our first stop brings us to the breathtaking white marble mausoleum, the heart of the Taj Mahal complex. Marvel at its perfect symmetry, intricate carvings, an"
+    },
+    {
+      "route": "virtual-field-trip",
+      "path": "/api/ai/virtual-field-trip",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 13890,
+      "sample": "{\"title\":\"Journey Through Time: Unveiling the Secrets of Hampi\",\"stops\":[{\"name\":\"Virupaksha Temple\",\"description\":\"Step into the heart of Hampi's living heritage, the Virupaksha Temple, dedicated to Lord Shiva. This ancient temple, still in active worship, stands as a testament to the continuous sp"
+    },
+    {
+      "route": "visual-aid",
+      "path": "/api/ai/visual-aid",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 29199,
+      "sample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeISlAAAQAAAAEAABd+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1hqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmQxODk5Njk3LWU0ZjAtMGJmMC1lZjNlLTQ1NzMyMGVhZmZiYQAAABMBanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy"
+    },
+    {
+      "route": "teacher-training",
+      "path": "/api/ai/teacher-training",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 10977,
+      "sample": "{\"introduction\":\"Managing discipline with 40 students is indeed a significant challenge, a testament to the demands placed on dedicated educators like you. This requires not just rules, but a deeply embedded pedagogical approach to create a thriving, orderly learning environment.\",\"advice\":[{\"strate"
+    },
+    {
+      "route": "virtual-field-trip",
+      "path": "/api/ai/virtual-field-trip",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 16893,
+      "sample": "{\"title\":\"সুন্দরবনের রহস্যময় ভ্রমণ: ম্যানগ্রোভের দুনিয়া আবিষ্কার\",\"stops\":[{\"name\":\"সুন্দরবন জাতীয় উদ্যান (মূল অঞ্চল)\",\"description\":\"বিশ্বের বৃহত্তম ম্যানগ্রোভ বনের প্রবেশদ্বারে আমরা এসেছি, যেখানে রয়্যাল বেঙ্গল টাইগার তার রাজত্ব করে। এর প্রাকৃতিক সৌন্দর্য ও বিশালতা শিক্ষার্থীদের মুগ্ধ করবে।\",\"e"
+    },
+    {
+      "route": "instant-answer",
+      "path": "/api/ai/instant-answer",
+      "payloadIdx": 0,
+      "status": 503,
+      "ms": 511,
+      "sample": "{\"error\":\"AI service is temporarily overloaded. Please try again in a minute.\",\"code\":\"AI_SERVICE_BUSY\",\"retryAfterSeconds\":60}"
+    },
+    {
+      "route": "instant-answer",
+      "path": "/api/ai/instant-answer",
+      "payloadIdx": 1,
+      "status": 503,
+      "ms": 612,
+      "sample": "{\"error\":\"AI service is temporarily overloaded. Please try again in a minute.\",\"code\":\"AI_SERVICE_BUSY\",\"retryAfterSeconds\":60}"
+    },
+    {
+      "route": "instant-answer",
+      "path": "/api/ai/instant-answer",
+      "payloadIdx": 2,
+      "status": 503,
+      "ms": 514,
+      "sample": "{\"error\":\"AI service is temporarily overloaded. Please try again in a minute.\",\"code\":\"AI_SERVICE_BUSY\",\"retryAfterSeconds\":60}"
+    },
+    {
+      "route": "teacher-training",
+      "path": "/api/ai/teacher-training",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 9447,
+      "sample": "{\"introduction\":\"नमस्ते, यह जानकर बहुत खुशी हुई कि आप गणित शिक्षण में गतिविधि-आधारित दृष्टिकोण अपनाना चाहते हैं। यह बच्चों के लिए गणित को अधिक आकर्षक और समझने योग्य बनाने का एक उत्कृष्ट तरीका है, जो उनकी नींव को मजबूत करेगा।\",\"advice\":[{\"strategy\":\"स्थानीय संसाधनों और वास्तविक जीवन की वस्तुओं का उपय"
+    },
+    {
+      "route": "parent-message",
+      "path": "/api/ai/parent-message",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 5121,
+      "sample": "{\"message\":\"Dear Ravi's Parent/Guardian,I am writing to you from school regarding Ravi from Class 6A. We have noticed that Ravi has been absent from school for several consecutive days, and we are quite concerned about his well-being.We hope everything is alright at home. We value Ravi's presence in"
+    },
+    {
+      "route": "parent-message",
+      "path": "/api/ai/parent-message",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 4885,
+      "sample": "{\"message\":\"Dear Anita's Parent,I hope this message finds you well. I wanted to share some wonderful news about Anita. She has been doing exceptionally well in Mathematics, especially with complex problem-solving in Class 7B. Her enthusiasm and quick understanding during our recent geometry lessons "
+    },
+    {
+      "route": "teacher-training",
+      "path": "/api/ai/teacher-training",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 15268,
+      "sample": "{\"introduction\":\"Teaching first-generation learners inclusively is a profound responsibility and a testament to your commitment to equitable education. It requires a nuanced understanding of their unique learning journeys and a strategic application of pedagogical principles to bridge gaps and foste"
+    },
+    {
+      "route": "parent-message",
+      "path": "/api/ai/parent-message",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 6828,
+      "sample": "{\"message\":\"नमस्ते, सुरेश के माता-पिता। मैं कक्षा 5C के गणित का शिक्षक हूँ। मैं आपसे सुरेश की पढ़ाई के संबंध में बात करना चाहता हूँ। हाल ही में हमने देखा है कि गणित में उसका प्रदर्शन थोड़ा कम हो गया है। हम जानते हैं कि कभी-कभी बच्चों को किसी विषय में थोड़ी अधिक सहायता की आवश्यकता हो सकती है, और यह ब"
+    },
+    {
+      "route": "video-storyteller",
+      "path": "/api/ai/video-storyteller",
+      "payloadIdx": 0,
+      "status": 200,
+      "ms": 6992,
+      "sample": "{\"categories\":{\"pedagogy\":[\"NEP 2020 water cycle teaching Class 5\",\"Active learning water cycle primary school\",\"NISHTHA methods science Class 5\",\"Child-centred water cycle activities\",\"DIKSHA water cycle lesson plans\"],\"storytelling\":[\"Animated water cycle story Class 5\",\"NCERT Class 5 water cycle "
+    },
+    {
+      "route": "video-storyteller",
+      "path": "/api/ai/video-storyteller",
+      "payloadIdx": 1,
+      "status": 200,
+      "ms": 7365,
+      "sample": "{\"categories\":{\"pedagogy\":[\"NEP 2020 history teaching Class 7\",\"Active learning Mughal Empire Class 7\",\"NCF Social Studies pedagogy India\",\"Child-centred history lessons Mughal\",\"DIKSHA teaching history Class 7\"],\"storytelling\":[\"Animated history Mughal Empire Class 7\",\"Mughal era storytelling for s"
+    },
+    {
+      "route": "video-storyteller",
+      "path": "/api/ai/video-storyteller",
+      "payloadIdx": 2,
+      "status": 200,
+      "ms": 5661,
+      "sample": "{\"categories\":{\"pedagogy\":[\"कक्षा 3 भिन्न पढ़ाने की विधियाँ\",\"NEP 2020 प्राथमिक गणित शिक्षण\",\"NISHTHA कक्षा 3 गणित\",\"NCF 2023 भिन्नों का शिक्षण\",\"बाल केंद्रित भिन्न सिखाना\"],\"storytelling\":[\"भिन्न का कॉन्सेप्ट कहानी से\",\"कक्षा 3 भिन्न की एनिमेशन\",\"गणित भिन्न आसान कहानी\",\"भिन्नों पर मजेदार वीडियो\",\"प"
+    }
+  ]
+}

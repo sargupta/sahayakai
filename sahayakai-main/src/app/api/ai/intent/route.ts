@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { agentRouterFlow } from '@/ai/flows/agent-definitions';
-import { instantAnswer } from '@/ai/flows/instant-answer';
+import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 
@@ -164,7 +164,12 @@ export async function POST(request: Request) {
                 // broken. Treat any unclassified-but-non-empty prompt as an
                 // instant-answer question instead of erroring out. The teacher
                 // gets a useful answer + video rather than a dead end.
-                const answer = await instantAnswer({
+                // Route through the dispatcher so this intent path
+                // honours the same Genkit/sidecar mode flags as
+                // `/api/ai/instant-answer`. Previously this branch
+                // called `instantAnswer` directly and bypassed the
+                // dispatcher entirely.
+                const answer = await dispatchInstantAnswer({
                     question: prompt,
                     language: answerLanguage,
                     userId: userId,

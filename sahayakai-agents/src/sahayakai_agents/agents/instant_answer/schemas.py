@@ -36,14 +36,8 @@ class InstantAnswerRequest(BaseModel):
     language: str | None = Field(default=None, max_length=10)
     gradeLevel: str | None = Field(default=None, max_length=50)
     subject: str | None = Field(default=None, max_length=100)
-    userId: str = Field(
-        min_length=1,
-        max_length=128,
-        # Same userId pattern as parent-call / lesson-plan: alphanumeric
-        # plus underscore / hyphen. Defends against path-injection in
-        # any downstream Firestore document IDs.
-        pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern; dispatcher enforces auth.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 # --- Wire response ------------------------------------------------------
@@ -58,10 +52,10 @@ class InstantAnswerCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    answer: str = Field(min_length=1, max_length=8000)
-    videoSuggestionUrl: str | None = Field(max_length=500)
-    gradeLevel: str | None = Field(max_length=50)
-    subject: str | None = Field(max_length=100)
+    answer: str
+    videoSuggestionUrl: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
 
 
 class InstantAnswerResponse(BaseModel):
@@ -74,10 +68,10 @@ class InstantAnswerResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Parity fields — MUST match TS InstantAnswerOutputSchema.
-    answer: str = Field(min_length=1, max_length=8000)
-    videoSuggestionUrl: str | None = Field(default=None, max_length=500)
-    gradeLevel: str | None = Field(default=None, max_length=50)
-    subject: str | None = Field(default=None, max_length=100)
+    answer: str
+    videoSuggestionUrl: str | None = None
+    gradeLevel: str | None = None
+    subject: str | None = None
 
     # Additive telemetry.
     sidecarVersion: str = Field(min_length=1, max_length=64)

@@ -289,6 +289,9 @@ export interface LessonPlanRequest {
   resourceLevel?: 'low' | 'medium' | 'high' | null;
   difficultyLevel?: 'remedial' | 'standard' | 'advanced' | null;
   subject?: string | null;
+  state?: string | null;
+  district?: string | null;
+  regionalContextBlock?: string | null;
 }
 
 /**

@@ -22,7 +22,8 @@ export type PersonaLanguage =
   | 'Malayalam'
   | 'Marathi'
   | 'Gujarati'
-  | 'Punjabi';
+  | 'Punjabi'
+  | 'Odia';
 
 export interface PersonaDef {
   /** Firestore authorId. Prefixed `persona_` so they're filterable. */
@@ -165,6 +166,42 @@ export const COMMUNITY_PERSONAS: PersonaDef[] = [
     preferredLanguage: 'Kannada',
     avatarSeed: 'vasanta-ka',
     yearsExperience: 26,
+  },
+  {
+    id: 'persona_padma_rao',
+    displayName: 'Padma Rao',
+    state: 'Andhra Pradesh',
+    subject: 'Science',
+    gradeLevel: '7',
+    voiceTone:
+      'Cheerful Telugu government-school teacher. Loves sharing classroom experiments and small wins. Polite, encouraging tone toward colleagues.',
+    preferredLanguage: 'Telugu',
+    avatarSeed: 'padma-ap',
+    yearsExperience: 9,
+  },
+  {
+    id: 'persona_bhavna_shah',
+    displayName: 'Bhavna Shah',
+    state: 'Gujarat',
+    subject: 'Mathematics',
+    gradeLevel: '8',
+    voiceTone:
+      'Practical Gujarati-medium teacher. Direct, helpful, often shares quick mental-maths tips. Warm but no-nonsense.',
+    preferredLanguage: 'Gujarati',
+    avatarSeed: 'bhavna-gj',
+    yearsExperience: 11,
+  },
+  {
+    id: 'persona_sanjukta_mohanty',
+    displayName: 'Sanjukta Mohanty',
+    state: 'Odisha',
+    subject: 'Social Science',
+    gradeLevel: '6',
+    voiceTone:
+      'Soft-spoken Odia teacher. Shares NCERT-aligned tips with quiet confidence; respectful, brief, often references local culture and history.',
+    preferredLanguage: 'Odia',
+    avatarSeed: 'sanjukta-od',
+    yearsExperience: 13,
   },
 ];
 

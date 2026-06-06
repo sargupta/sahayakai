@@ -16,14 +16,12 @@ async function _handler(request: Request) {
         topicText = json.topic || 'Unknown Topic';
 
         // SECURITY: Validate input against schema
-        const body = QuizGeneratorInputSchema.parse(json);
+        // Schema requires userId, inject from session before parse (mirrors teacher-training fix).
+        const body = QuizGeneratorInputSchema.parse({ ...json, userId });
 
         // Phase E.1: dispatcher routes Genkit vs ADK sidecar based on
         // SAHAYAKAI_QUIZ_MODE env (default: off → Genkit only).
-        const dispatched = await dispatchQuiz({
-            ...body,
-            userId,
-        });
+        const dispatched = await dispatchQuiz(body);
         return NextResponse.json({
             easy: dispatched.easy,
             medium: dispatched.medium,

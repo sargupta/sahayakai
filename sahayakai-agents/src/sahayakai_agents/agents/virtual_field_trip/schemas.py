@@ -5,17 +5,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class VirtualFieldTripStop(BaseModel):
-    """One stop on the virtual field trip."""
+    """One stop on the virtual field trip (response model)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=20, max_length=1500)
-    educationalFact: str = Field(min_length=10, max_length=1000)
-    reflectionPrompt: str = Field(min_length=10, max_length=500)
-    googleEarthUrl: str = Field(min_length=10, max_length=500)
-    culturalAnalogy: str = Field(min_length=10, max_length=500)
-    explanation: str = Field(min_length=10, max_length=1000)
+    name: str
+    description: str
+    educationalFact: str
+    reflectionPrompt: str
+    googleEarthUrl: str
+    culturalAnalogy: str
+    explanation: str
 
 
 class VirtualFieldTripRequest(BaseModel):
@@ -26,9 +26,8 @@ class VirtualFieldTripRequest(BaseModel):
     topic: str = Field(min_length=3, max_length=300)
     language: str | None = Field(default=None, max_length=20)
     gradeLevel: str | None = Field(default=None, max_length=50)
-    userId: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_\-]+$",
-    )
+    # Phase 1a Fix 1: drop opaque-ID regex pattern.
+    userId: str = Field(min_length=1, max_length=128)
 
 
 class VirtualFieldTripCore(BaseModel):
@@ -36,10 +35,10 @@ class VirtualFieldTripCore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    stops: list[VirtualFieldTripStop] = Field(min_length=3, max_length=8)
-    gradeLevel: str = Field(min_length=1, max_length=50)
-    subject: str = Field(min_length=1, max_length=100)
+    title: str
+    stops: list[VirtualFieldTripStop]
+    gradeLevel: str
+    subject: str
 
 
 class VirtualFieldTripResponse(BaseModel):
@@ -47,10 +46,10 @@ class VirtualFieldTripResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=3, max_length=300)
-    stops: list[VirtualFieldTripStop] = Field(min_length=3, max_length=8)
-    gradeLevel: str = Field(min_length=1, max_length=50)
-    subject: str = Field(min_length=1, max_length=100)
+    title: str
+    stops: list[VirtualFieldTripStop]
+    gradeLevel: str
+    subject: str
 
     sidecarVersion: str = Field(min_length=1, max_length=64)
     latencyMs: int = Field(ge=0)

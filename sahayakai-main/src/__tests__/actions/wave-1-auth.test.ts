@@ -54,7 +54,7 @@ jest.mock('@/lib/teacher-activity-tracker', () => ({
     trackTeacherContent: jest.fn(),
 }));
 
-jest.mock('@/app/actions/aggregator', () => ({
+jest.mock('@/lib/aggregator', () => ({
     aggregateUserMetrics: jest.fn(async () => {}),
 }));
 

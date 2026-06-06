@@ -264,12 +264,12 @@ export default function OnboardingPage() {
                 gradeLevels: formData.gradeLevels,
                 preferredLanguage: formData.preferredLanguage,
                 communityIntroState: 'none',
-                impactScore: 0,
-                contentSharedCount: 0,
-                followersCount: 0,
-                followingCount: 0,
-                verifiedStatus: 'none',
-                badges: ["New Member"],
+                // NOTE: impactScore / contentSharedCount / followersCount /
+                // followingCount / verifiedStatus / badges are SERVER-COMPUTED
+                // aggregates. New-user defaults are initialized in
+                // POST /api/user/profile (see route.ts isNewUser branch). They
+                // are intentionally not written from the client and are not
+                // in the PROFILE_WRITABLE_FIELDS allowlist.
                 onboardingPhase: 'first-generation',
                 profileCompletionLevel: 'basic',
             };

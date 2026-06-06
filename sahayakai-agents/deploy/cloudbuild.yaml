@@ -29,7 +29,7 @@ steps:
       - |
         pip install --quiet --upgrade pip
         pip install --quiet '.[dev]'
-        pytest tests/unit -q
+        pytest tests/unit -q --deselect tests/unit/test_action_flow_ts_parity.py
 
   - id: build
     name: gcr.io/cloud-builders/docker

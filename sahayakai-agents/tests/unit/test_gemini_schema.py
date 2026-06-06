@@ -12,6 +12,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from sahayakai_agents.shared.gemini_schema import gemini_response_schema
 from sahayakai_agents.shared.genai_patch import (
+    _collapse_nullable_anyof,
+    _drop_bounds,
+    _simplify_schema_for_gemini,
     _strip_additional_properties,
     apply_genai_schema_patch,
 )
@@ -198,3 +201,214 @@ def test_genai_patch_strips_after_process_schema_runs() -> None:
     assert schema["type"] == "object"
     assert schema["properties"]["x"]["properties"]["y"]["type"] == "string"
     assert schema["properties"]["ys"]["items"]["properties"]["z"]["type"] == "integer"
+
+
+# ─── Phase 1b: `anyOf [T, null]` collapse + bounds stripping ────────────────
+
+
+def test_collapse_nullable_anyof_flattens_string_or_null() -> None:
+    node = {
+        "title": "TeacherInstructions",
+        "anyOf": [{"type": "string"}, {"type": "null"}],
+    }
+    _collapse_nullable_anyof(node)
+    assert node["type"] == "string"
+    # Title preserved as an annotation sibling.
+    assert node["title"] == "TeacherInstructions"
+    assert "anyOf" not in node
+
+
+def test_collapse_nullable_anyof_handles_either_order() -> None:
+    node = {"anyOf": [{"type": "null"}, {"type": "integer"}]}
+    _collapse_nullable_anyof(node)
+    assert node["type"] == "integer"
+    assert "anyOf" not in node
+
+
+def test_collapse_nullable_anyof_flattens_nested_object_branch() -> None:
+    node = {
+        "anyOf": [
+            {"type": "object", "properties": {"x": {"type": "string"}}},
+            {"type": "null"},
+        ],
+    }
+    _collapse_nullable_anyof(node)
+    assert node["type"] == "object"
+    assert node["properties"]["x"]["type"] == "string"
+    assert "anyOf" not in node
+
+
+def test_collapse_nullable_anyof_leaves_multi_branch_union_alone() -> None:
+    """`anyOf` with 3+ branches or non-null branches is a real union — keep it."""
+    node = {
+        "anyOf": [
+            {"type": "string"},
+            {"type": "integer"},
+            {"type": "null"},
+        ],
+    }
+    _collapse_nullable_anyof(node)
+    # Untouched — collapsing this would change semantics.
+    assert "anyOf" in node
+    assert len(node["anyOf"]) == 3
+
+
+def test_collapse_nullable_anyof_recurses_into_properties_and_items() -> None:
+    node = {
+        "type": "object",
+        "properties": {
+            "nullable_str": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+            "list_of_objects": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "nullable_int": {
+                            "anyOf": [{"type": "integer"}, {"type": "null"}],
+                        },
+                    },
+                },
+            },
+        },
+    }
+    _collapse_nullable_anyof(node)
+    assert node["properties"]["nullable_str"]["type"] == "string"
+    assert "anyOf" not in node["properties"]["nullable_str"]
+    items = node["properties"]["list_of_objects"]["items"]
+    assert items["properties"]["nullable_int"]["type"] == "integer"
+    assert "anyOf" not in items["properties"]["nullable_int"]
+
+
+def test_drop_bounds_strips_array_and_string_limits() -> None:
+    node = {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 10,
+        "items": {"type": "string", "minLength": 1, "maxLength": 500},
+    }
+    _drop_bounds(node)
+    assert "minItems" not in node
+    assert "maxItems" not in node
+    assert "minLength" not in node["items"]
+    assert "maxLength" not in node["items"]
+    # Core shape preserved.
+    assert node["type"] == "array"
+    assert node["items"]["type"] == "string"
+
+
+def test_drop_bounds_strips_numeric_and_pattern_constraints() -> None:
+    node = {
+        "type": "object",
+        "properties": {
+            "score": {"type": "integer", "minimum": 0, "maximum": 100},
+            "code": {"type": "string", "pattern": "^[A-Z]+$"},
+        },
+    }
+    _drop_bounds(node)
+    assert "minimum" not in node["properties"]["score"]
+    assert "maximum" not in node["properties"]["score"]
+    assert "pattern" not in node["properties"]["code"]
+    assert node["properties"]["score"]["type"] == "integer"
+    assert node["properties"]["code"]["type"] == "string"
+
+
+def test_simplify_schema_for_gemini_is_idempotent() -> None:
+    node = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "x": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+            "ys": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "maxLength": 100},
+            },
+        },
+    }
+    _simplify_schema_for_gemini(node)
+    snapshot = {
+        "additional": "additionalProperties" in node,
+        "anyof_x": "anyOf" in node["properties"]["x"],
+        "x_type": node["properties"]["x"].get("type"),
+        "minItems": "minItems" in node["properties"]["ys"],
+        "maxLength": "maxLength" in node["properties"]["ys"]["items"],
+    }
+    _simplify_schema_for_gemini(node)
+    assert snapshot == {
+        "additional": False,
+        "anyof_x": False,
+        "x_type": "string",
+        "minItems": False,
+        "maxLength": False,
+    }
+
+
+def test_gemini_response_schema_collapses_pydantic_optional_fields() -> None:
+    """End-to-end: a Pydantic model with `T | None = None` fields emits
+    `anyOf [T, null]`. After `gemini_response_schema`, those must be
+    flattened so Gemini's state compiler doesn't see them as forks.
+    """
+    from pydantic import BaseModel, ConfigDict
+
+    class _OptionalShape(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        required: str
+        maybe: str | None = None
+
+    schema = gemini_response_schema(_OptionalShape)
+    assert schema["properties"]["maybe"]["type"] == "string"
+    assert "anyOf" not in schema["properties"]["maybe"]
+
+
+def test_gemini_response_schema_drops_min_items_on_arrays() -> None:
+    from pydantic import BaseModel, ConfigDict, Field
+
+    class _ArrayShape(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        items: list[str] = Field(min_length=1)
+
+    schema = gemini_response_schema(_ArrayShape)
+    items_field = schema["properties"]["items"]
+    assert items_field["type"] == "array"
+    assert "minItems" not in items_field
+    assert "min_items" not in items_field
+
+
+def test_quiz_generator_core_schema_has_no_anyof_null_branches() -> None:
+    """Live-bug guard for the Phase 1b root cause.
+
+    `QuizGeneratorCore` has three nullable top-level fields
+    (`teacherInstructions`, `gradeLevel`, `subject`) plus one nullable
+    field inside `QuizQuestion.options`. Together with the two enum
+    fields per question and the unbounded `questions[]` array, those
+    `anyOf [T, null]` forks were what tipped Gemini's constraint
+    compiler past `too many states for serving`. This test pins the
+    Phase 1b fix: every wire schema fed to Gemini for the quiz output
+    must be free of `anyOf [..., null]` branches.
+    """
+    from sahayakai_agents.agents.quiz.schemas import QuizGeneratorCore
+
+    schema = gemini_response_schema(QuizGeneratorCore)
+
+    def _walk_for_null_anyof(node: object, path: str = "$") -> list[str]:
+        found: list[str] = []
+        if isinstance(node, dict):
+            any_of = node.get("anyOf")
+            if isinstance(any_of, list):
+                has_null = any(
+                    isinstance(b, dict) and b.get("type") == "null"
+                    for b in any_of
+                )
+                if has_null:
+                    found.append(path)
+            for k, v in node.items():
+                found.extend(_walk_for_null_anyof(v, f"{path}.{k}"))
+        elif isinstance(node, list):
+            for i, item in enumerate(node):
+                found.extend(_walk_for_null_anyof(item, f"{path}[{i}]"))
+        return found
+
+    leftovers = _walk_for_null_anyof(schema)
+    assert leftovers == [], (
+        f"QuizGeneratorCore wire schema still has anyOf[null] branches: {leftovers}"
+    )

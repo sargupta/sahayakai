@@ -1,0 +1,481 @@
+{
+  "agent": "community-persona-message",
+  "scoringMode": "standard",
+  "passRate": 0.3333333333333333,
+  "ready": false,
+  "results": [
+    {
+      "cell": "bn-anjali_banerjee-fresh.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8536647940526557,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "bn-anjali_banerjee-ncert.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6366059268830597,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "bn-anjali_banerjee-tip.json",
+      "lang": "bn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7589411773511425,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "en-sneha_reddy-fresh.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.59690056951989,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "en-sneha_reddy-ncert.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.864189056695793,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "en-sneha_reddy-tip.json",
+      "lang": "en",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.939736840543841,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "gu-bhavna_shah-fresh.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7971711260934864,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "gu-bhavna_shah-ncert.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8300015659121085,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "gu-bhavna_shah-tip.json",
+      "lang": "gu",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7140626896744414,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "hi-rajesh_kumar-fresh.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8643494681152745,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "hi-rajesh_kumar-ncert.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7038759152397996,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "hi-rajesh_kumar-tip.json",
+      "lang": "hi",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.630054607829757,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "kn-vasanta_devi-fresh.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.9901455930576484,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "kn-vasanta_devi-ncert.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6897039362730163,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "kn-vasanta_devi-tip.json",
+      "lang": "kn",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6892636350830303,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "ml-reshma_pillai-fresh.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6308405674805381,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "ml-reshma_pillai-ncert.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7523556790576269,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "ml-reshma_pillai-tip.json",
+      "lang": "ml",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7147021947936996,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "mr-sushma_patil-fresh.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8996343098345868,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "mr-sushma_patil-ncert.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7977033820017708,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "mr-sushma_patil-tip.json",
+      "lang": "mr",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8802782273448118,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "or-sanjukta_mohanty-fresh.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.9906759665704905,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "or-sanjukta_mohanty-ncert.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6610957702002719,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "or-sanjukta_mohanty-tip.json",
+      "lang": "or",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7241142290745407,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "pa-gurpreet_singh-fresh.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8132344736264457,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "pa-gurpreet_singh-ncert.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8989867853021857,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "pa-gurpreet_singh-tip.json",
+      "lang": "pa",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.6284082721394293,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "ta-lakshmi_iyer-fresh.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7519179735373132,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "ta-lakshmi_iyer-ncert.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.9353181290521486,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "ta-lakshmi_iyer-tip.json",
+      "lang": "ta",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8530877920224333,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "PASS",
+      "failReasons": []
+    },
+    {
+      "cell": "te-padma_rao-fresh.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.8436939903613768,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "te-padma_rao-ncert.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7875528158708005,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    },
+    {
+      "cell": "te-padma_rao-tip.json",
+      "lang": "te",
+      "structural": 1,
+      "structuralErrors": [],
+      "semantic": 0.7160262367495774,
+      "semanticFields": 1,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ]
+    }
+  ]
+}

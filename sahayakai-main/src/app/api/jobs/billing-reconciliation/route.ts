@@ -23,15 +23,14 @@ import { logger } from '@/lib/logger';
 export const maxDuration = 300; // 5 minutes — enough for 10K+ subscriptions
 
 export async function POST(request: NextRequest) {
-  // Auth: verify CRON_SECRET (Cloud Scheduler sets this as a header)
+  // Auth gate first: unauth probes should get 401, never 500.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  } else if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 });
+  }
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const mode = request.nextUrl.searchParams.get('mode') || 'reconcile';
@@ -111,6 +110,16 @@ export async function POST(request: NextRequest) {
  * Returns the last reconciliation run result for dashboard display.
  */
 export async function GET(request: NextRequest) {
+  // Auth gate first: unauth probes should get 401, never 500.
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 });
+  }
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { getDb } = await import('@/lib/firebase-admin');
     const db = await getDb();

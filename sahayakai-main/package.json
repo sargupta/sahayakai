@@ -22,7 +22,11 @@
     "api:all": "npm run api:validate && npm run api:test",
     "metrics:check": "node scripts/check-metrics.js",
     "teacher:lookup": "node scripts/lookup-teacher.js",
-    "record:parent-call-fixtures": "tsx scripts/record-parent-call-fixtures.ts"
+    "record:parent-call-fixtures": "tsx scripts/record-parent-call-fixtures.ts",
+    "qa:provision": "node scripts/qa/provision-test-user.mjs",
+    "qa:cleanup": "node scripts/qa/cleanup-test-users.mjs",
+    "qa:storage-state": "node scripts/qa/playwright-storage-state.mjs",
+    "qa:e2e": "playwright test --config=qa/playwright.config.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.28.0",
@@ -103,6 +107,8 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
+    "@google/genai": "^2.8.0",
+    "@playwright/test": "^1.51.1",
     "@surma/rollup-plugin-off-main-thread": "^2.2.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -116,6 +122,7 @@
     "@types/react-dom": "18",
     "@types/swagger-ui-react": "^5.18.0",
     "@types/uuid": "^10.0.0",
+    "ajv": "^8.20.0",
     "autoprefixer": "^10.4.24",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",

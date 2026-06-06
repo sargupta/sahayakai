@@ -27,6 +27,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { WithTimeoutError, withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Mirrors `TIMEOUT_MS` in quiz-client.ts. Phase J.2 hot-fix (P0 #7) —
 // caps the Genkit fallback to the same budget as the sidecar.
@@ -100,7 +101,9 @@ function inputToSidecarRequest(input: QuizDispatchInput): SidecarQuizRequest {
         numQuestions: input.numQuestions,
         questionTypes: input.questionTypes,
         gradeLevel: input.gradeLevel ?? null,
-        language: input.language ?? null,
+        // Normalise language display label ("English") → ISO ("en") for
+        // a uniform wire contract across all sidecar agents.
+        language: input.language ? toIsoLanguage(input.language) : null,
         bloomsTaxonomyLevels: input.bloomsTaxonomyLevels ?? null,
         targetDifficulty: input.targetDifficulty ?? null,
         subject: input.subject ?? null,

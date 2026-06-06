@@ -99,15 +99,23 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         const date = format(new Date(), 'yyyy-MM-dd');
         const id = `${sample.uid}__${Date.now()}`;
         const db = await getDb();
+        // Phase 1a / Parallel-D fix (2026-06-05): Firestore rejects
+        // `undefined` field values. Every SUCCESSFUL sidecar call has
+        // `sidecarError === undefined`, so every success was silently
+        // dropped — explaining why shadow-diff queries returned 0
+        // sidecarOk=true cells despite Cloud Run logs showing 200s.
+        // Coerce undefined to null at the boundary so success rows
+        // actually land.
+        const payload: Record<string, unknown> = { createdAt: new Date() };
+        for (const [k, v] of Object.entries(sample)) {
+            payload[k] = v === undefined ? null : v;
+        }
         await db
             .collection(COLLECTION_ROOT)
             .doc(date)
             .collection(sample.agent)
             .doc(id)
-            .set({
-                ...sample,
-                createdAt: new Date(),
-            });
+            .set(payload);
     } catch (err) {
         // Fail-soft: shadow logging must never break the user-visible
         // response. Same policy as the parent-call shadow-diff writer.

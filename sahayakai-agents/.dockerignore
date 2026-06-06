@@ -22,6 +22,10 @@ deploy/
 .github/
 .git/
 *.md
+# hatchling reads pyproject.toml `readme = "README.md"` when building the wheel.
+# Without this exception the install step inside Docker fails with
+#   OSError: Readme file does not exist: README.md
+!README.md
 Dockerfile
 .dockerignore
 .gitignore

@@ -9,8 +9,15 @@ import { logger } from '@/lib/logger';
 
 const SARVAM_BASE_URL = 'https://api.sarvam.ai';
 
-// Bulbul v3 hard limit — requests > 2500 chars are rejected
+// Bulbul v3 hard limit — requests > 2500 chars are rejected.
+// Lane A14 root cause: Sarvam single-call latency is super-linear in input
+// size (one ~2000-char chunk = 28-37 s p95 vs ~2-3 s for ~500-char chunks).
+// We now chunk at TTS_CHUNK_TARGET_CHARS (well under the hard cap) and
+// synthesize chunks in parallel via Promise.all, so total wall time tracks
+// the slowest single chunk rather than the sum. TTS_MAX_CHARS is preserved
+// as the documented Bulbul ceiling.
 const TTS_MAX_CHARS = 2500;
+const TTS_CHUNK_TARGET_CHARS = 500;
 const TTS_TIMEOUT_MS = 8_000;
 const STT_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 2;
@@ -109,7 +116,7 @@ async function fetchWithRetry(
  * Split text into chunks ≤ maxLen on sentence boundaries.
  * Handles English (.), Hindi/Devanagari (।), and pipe separator (|).
  */
-function chunkText(text: string, maxLen: number): string[] {
+export function chunkText(text: string, maxLen: number): string[] {
     if (text.length <= maxLen) return [text];
 
     const chunks: string[] = [];
@@ -150,7 +157,7 @@ function chunkText(text: string, maxLen: number): string[] {
  * Concatenate multiple base64-encoded MP3 chunks into one.
  * MP3 frames are independently decodable, so simple concatenation works.
  */
-function concatBase64Mp3(chunks: string[]): string {
+export function concatBase64Mp3(chunks: string[]): string {
     if (chunks.length === 1) return chunks[0];
     const buffers = chunks.map(c => Buffer.from(c, 'base64'));
     return Buffer.concat(buffers).toString('base64');
@@ -174,11 +181,12 @@ export async function sarvamTTS(
     options?: SarvamTTSOptions,
 ): Promise<{ audioContent: string }> {
     const apiKey = await getApiKey();
-    const chunks = chunkText(text, TTS_MAX_CHARS);
+    // Reference TTS_MAX_CHARS so the documented Bulbul ceiling can't be
+    // silently dropped by an unused-const lint rule.
+    void TTS_MAX_CHARS;
+    const chunks = chunkText(text, TTS_CHUNK_TARGET_CHARS);
 
-    const audioChunks: string[] = [];
-
-    for (const chunk of chunks) {
+    const synthOne = async (chunk: string): Promise<string> => {
         const res = await fetchWithRetry(
             `${SARVAM_BASE_URL}/text-to-speech`,
             {
@@ -204,9 +212,10 @@ export async function sarvamTTS(
         if (!data.audios?.[0]) {
             throw new Error('Sarvam TTS returned empty audio');
         }
-        audioChunks.push(data.audios[0]);
-    }
+        return data.audios[0] as string;
+    };
 
+    const audioChunks = await Promise.all(chunks.map(synthOne));
     return { audioContent: concatBase64Mp3(audioChunks) };
 }
 

@@ -19,6 +19,7 @@ import {
 import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { WithTimeoutError, withTimeout } from './with-timeout';
+import { toIsoLanguage } from './lang';
 
 // Bumped from 12s — comparator runs across 11 languages showed Genkit
 // teacher-training latency p95 ~11s, with persist + post-processing
@@ -99,7 +100,8 @@ function inputToSidecarRequest(
 ): SidecarTeacherTrainingRequest {
     return {
         question: input.question,
-        language: input.language ?? null,
+        // Normalise language display label → ISO for uniform wire shape.
+        language: input.language ? toIsoLanguage(input.language) : null,
         subject: input.subject ?? null,
         userId: input.userId,
     };
