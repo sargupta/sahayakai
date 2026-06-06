@@ -43,11 +43,11 @@ jest.mock('@/lib/auth-helpers', () => ({
     requireAuth: async () => mockHeadersMap.get('x-user-id') || (() => { throw new Error('Unauthorized'); })(),
 }));
 
+import { updateProfileAction } from '@/app/actions/profile';
 import {
-    updateProfileAction,
     computeProfileCompletion,
     PROFILE_COMPLETE_THRESHOLD,
-} from '@/app/actions/profile';
+} from '@/lib/profile-completion';
 
 beforeEach(() => {
     mockHeadersMap.clear();

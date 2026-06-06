@@ -7,6 +7,11 @@ import { logger } from "@/lib/logger";
 import { validateAdmin, isAdmin } from "@/lib/auth-utils";
 import { headers } from "next/headers";
 import { requireAuth } from "@/lib/auth-helpers";
+import {
+    computeProfileCompletion,
+    PROFILE_COMPLETE_THRESHOLD,
+    hasValue,
+} from "@/lib/profile-completion";
 
 /**
  * Deterministic pair ID for a connection between two users. Sorted so
@@ -305,49 +310,11 @@ const ONBOARDING_PHASE_PREREQUISITES: Record<string, readonly string[]> = {
     'completed': FULL_PROFILE_PREREQUISITES,
 };
 
-function hasValue(v: any): boolean {
-    if (v === undefined || v === null) return false;
-    if (typeof v === 'string') return v.trim().length > 0;
-    if (Array.isArray(v)) return v.length > 0;
-    return true;
-}
-
-/**
- * Compute a 0-100 profile completion score from the merged profile.
- * Weights agreed in the onboarding-hardening plan:
- *   displayName 10, state 15, schoolName 15, subjects 15, gradeLevels 15,
- *   preferredLanguage 10, educationBoard 5, phone 10, photoURL 5.
- */
-export function computeProfileCompletion(profile: Record<string, any>): number {
-    const weights: Array<[string, number]> = [
-        ['displayName', 10],
-        ['state', 15],
-        ['schoolName', 15],
-        ['subjects', 15],
-        ['gradeLevels', 15],
-        ['preferredLanguage', 10],
-        ['educationBoard', 5],
-        ['phoneNumber', 10],
-        ['photoURL', 5],
-    ];
-    let score = 0;
-    for (const [field, weight] of weights) {
-        // Accept phoneNumber OR phone alias
-        if (field === 'phoneNumber') {
-            if (hasValue(profile.phoneNumber) || hasValue(profile.phone)) score += weight;
-            continue;
-        }
-        // photoURL OR avatarUrl OR customAvatarUrl
-        if (field === 'photoURL') {
-            if (hasValue(profile.photoURL) || hasValue(profile.avatarUrl) || hasValue(profile.customAvatarUrl)) score += weight;
-            continue;
-        }
-        if (hasValue(profile[field])) score += weight;
-    }
-    return Math.min(100, Math.max(0, score));
-}
-
-export const PROFILE_COMPLETE_THRESHOLD = 80;
+// computeProfileCompletion / PROFILE_COMPLETE_THRESHOLD / hasValue moved
+// to @/lib/profile-completion. Next.js 15 Server Action files (carrying
+// `"use server"`) may only EXPORT async functions, so the helpers had to
+// live in a plain module. Imports at the top of this file pull them in
+// for internal use; they are NOT re-exported.
 
 export async function updateProfileAction(_userId: string, data: any) {
     const userId = await requireAuth();

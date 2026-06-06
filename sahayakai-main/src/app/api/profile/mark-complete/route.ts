@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 import {
     computeProfileCompletion,
     PROFILE_COMPLETE_THRESHOLD,
-} from '@/app/actions/profile';
+} from '@/lib/profile-completion';
 import {
     PROFILE_COMPLETE_COOKIE,
     PROFILE_COMPLETE_COOKIE_MAX_AGE,
