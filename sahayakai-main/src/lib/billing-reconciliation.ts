@@ -374,7 +374,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
               details: {
                 rzpPlanId: rzpSub.plan_id,
                 rzpStatus: 'active',
-                fsPlan: fsUser?.plan || 'not_found',
+                fsPlan: fsUser?.planType || 'not_found',
                 note: 'PLAN_NAME_MAP missing entry — add env var RAZORPAY_PLAN_* before next run',
               },
             });
