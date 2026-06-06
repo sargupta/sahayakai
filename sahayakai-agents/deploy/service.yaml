@@ -62,7 +62,7 @@ spec:
             - name: GOOGLE_CLOUD_REGION
               value: asia-southeast1
             # Audience claim that ID-token verification compares against.
-            # Hydrated post-deploy by `scripts/hydrate-audience-secret.sh`,
+            # PROD: hydrated post-deploy by `scripts/hydrate-audience-secret.sh`,
             # which writes the resolved Cloud Run URL into Secret Manager
             # as a new version of SAHAYAKAI_AGENTS_AUDIENCE. The secret is
             # mounted with `key: latest` so a redeploy after rotation
@@ -70,6 +70,13 @@ spec:
             # secret mount does NOT auto-refresh on version add, so any
             # rotation needs a `gcloud run services update-traffic` to
             # take effect.
+            # STAGING: the 5-line secretKeyRef block below is rewritten by
+            # deploy/cloudbuild.yaml (render-staging-service step) into a
+            # plain `value: ${_STAGING_AUDIENCE_URL}` so staging does not
+            # inherit the prod URL audience and cause a 401 cascade. Do
+            # NOT change the indentation or the literal "key: latest"
+            # line — the sed range pattern matches them exactly. See
+            # qa/results/lane-F/Q4_B_AUDIENCE_FIX.md.
             - name: SAHAYAKAI_AGENTS_AUDIENCE
               valueFrom:
                 secretKeyRef:

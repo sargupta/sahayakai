@@ -1,0 +1,50 @@
+# Policy 1: Sidecar 5xx rate > 1% over 5 min — PAGE on-call.
+#
+# Uses MQL to compute a true ratio: 5xx requests / total requests over 5 min.
+# Service: sahayakai-agents (Cloud Run, asia-southeast1).
+#
+# Verify firing:
+#   - Inject synthetic 5xx via a temporary failing handler, OR
+#   - During canary, briefly point traffic at a known-broken revision.
+#   - Alert should fire within ~5–6 min and auto-close 24h after recovery.
+displayName: "sahayakai-agents sidecar — 5xx ratio > 1% (5m) [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE on-call.** Sidecar 5xx ratio exceeded 1% of total requests over 5 min.
+
+    Runbook:
+    1. `gcloud run revisions list --service sahayakai-agents --region asia-southeast1 --limit 5`
+    2. If recent deploy → roll back: `gcloud run services update-traffic sahayakai-agents --region asia-southeast1 --to-revisions <previous>=100`
+    3. Logs: `gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.service_name=sahayakai-agents AND httpRequest.status>=500' --limit=50 --freshness=10m`
+    4. Auto-abort Cloud Function should demote sidecar percent — verify Remote Config `parentCallSidecarPercent`.
+conditions:
+  - displayName: "5xx ratio > 1%"
+    conditionMonitoringQueryLanguage:
+      query: |
+        { t_0:
+            fetch cloud_run_revision
+            | metric 'run.googleapis.com/request_count'
+            | filter resource.service_name == 'sahayakai-agents'
+                  && metric.response_code_class == '5xx'
+            | align rate(1m)
+            | every 1m
+            | group_by [], sum(value.request_count)
+        ; t_1:
+            fetch cloud_run_revision
+            | metric 'run.googleapis.com/request_count'
+            | filter resource.service_name == 'sahayakai-agents'
+            | align rate(1m)
+            | every 1m
+            | group_by [], sum(value.request_count)
+        }
+        | ratio
+        | window 5m
+        | condition val() > 0.01 '1'
+      duration: 300s
+      trigger:
+        count: 1

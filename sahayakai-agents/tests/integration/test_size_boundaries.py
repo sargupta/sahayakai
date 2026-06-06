@@ -136,6 +136,7 @@ def fake_vtt_pipeline(monkeypatch: pytest.MonkeyPatch) -> _AudioFakeQueue:
         audio_bytes: bytes,
         audio_mime: str,
         api_key: str,
+        expected_language: str | None = None,
     ) -> VoiceToTextCore:
         nxt = fake.pop()
         if isinstance(nxt, Exception):

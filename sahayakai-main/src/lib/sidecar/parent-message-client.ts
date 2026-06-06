@@ -15,7 +15,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+import { getServerAppCheckTokenOrNull } from '@/lib/sidecar/app-check-mint';
 
 import { newRequestId, signRequest } from './signing';
 
@@ -155,7 +155,7 @@ export async function callSidecarParentMessage(
   // server / SSR — pure-server callers silently omit the header.
   const appCheckToken =
     options.appCheckToken === undefined
-      ? await getFirebaseAppCheckToken()
+      ? await getServerAppCheckTokenOrNull()
       : options.appCheckToken;
   const headers: Record<string, string> = {
     ...authHeaders,

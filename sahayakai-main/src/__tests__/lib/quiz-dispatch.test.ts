@@ -335,12 +335,78 @@ describe('dispatchQuiz — full mode (Phase K persistence)', () => {
         setMode('full');
         mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockPersist.mockResolvedValue({ contentId: 'cid-full', storagePath: 'p' });
+        // Q4C: full-mode now ALSO fires Genkit fire-and-forget for the
+        // shadow_diff write. Stub it so the background call resolves
+        // cleanly during the test.
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
 
         const out = await dispatchQuiz(BASE_INPUT);
 
         expect(out.source).toBe('sidecar');
         expect(mockPersist).toHaveBeenCalledTimes(1);
-        expect(mockGenerateQuiz).not.toHaveBeenCalled();
         expect(out.id).toBe('cid-full');
+    });
+
+    // Q4C — observation shadow-diff writes during full mode.
+    it('Q4C: also writes a shadow_diff for the (sidecar, genkit) pair in full mode', async () => {
+        setMode('full');
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue({ contentId: 'cid-full', storagePath: 'p' });
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+
+        await dispatchQuiz(BASE_INPUT);
+        // Background Genkit + shadow_diff are fire-and-forget; flush
+        // the microtask queue so the .then chains run before assertion.
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(mockGenerateQuiz).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('quiz');
+        expect(sample.sidecarOk).toBe(true);
+        expect(sample.sidecar).toEqual(SIDECAR_OUTPUT);
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+    });
+});
+
+// Q4C — canary mode observation: writes shadow_diff on the
+// sidecar-route AND the bucket-overshoot Genkit-route.
+describe('dispatchQuiz — canary mode Q4C observation', () => {
+    it('sidecar route: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        setMode('canary', 100);
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockPersist.mockResolvedValue({ contentId: 'cid-q4c', storagePath: 'p' });
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchQuiz(BASE_INPUT);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(out.source).toBe('sidecar');
+        expect(mockGenerateQuiz).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.sidecarOk).toBe(true);
+    });
+
+    it('Genkit route (bucket-overshoot): fires sidecar fire-and-forget and writes shadow_diff', async () => {
+        // percent=0 → bucket>=percent → mode collapses to 'off', but
+        // configuredMode stays 'canary'. Dispatcher must still observe.
+        setMode('canary', 0);
+        mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
+        mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchQuiz(BASE_INPUT);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(out.source).toBe('genkit');
+        expect(mockCallSidecar).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+        const sample = mockShadowDiff.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(sample.agent).toBe('quiz');
+        expect(sample.genkit).toEqual(GENKIT_OUTPUT);
+        expect(sample.sidecar).toEqual(SIDECAR_OUTPUT);
     });
 });
