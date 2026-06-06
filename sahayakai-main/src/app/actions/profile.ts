@@ -237,8 +237,10 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
 
     // 4. Onboarding state machine
     'onboardingPhase',
+    'onboardingCompleted', // server-set when phase=completed AND score≥80
     'onboardingCompletedAt',
     'onboardingComplete', // F11-2: reconcile with adapter allowlist
+    'pincode', // optional location hint, added in onboarding-hardening
     'onboardingChecklistItems',
     'checklistDismissedAt',
     'featureSpotlightsSeen',
@@ -283,10 +285,24 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
  * a district (some teachers don't list it). District is treated as
  * desirable-but-optional.
  */
-const ONBOARDING_PHASE_PREREQUISITES: Record<string, string[]> = {
-    'first-generation': ['state', 'schoolName', 'subjects', 'gradeLevels'],
-    'exploring': ['state', 'schoolName', 'subjects', 'gradeLevels'],
-    'completed': ['state', 'schoolName', 'subjects', 'gradeLevels'],
+// Onboarding hardening (2026-06-06): extended prereqs to include
+// displayName + preferredLanguage so we never let a doc transition past
+// `welcome` without the must-have fields for content generation and UI.
+// `educationBoard` is filled with a default downstream (state_board if state
+// is known, CBSE otherwise), so it is NOT a hard prereq.
+const FULL_PROFILE_PREREQUISITES = [
+    'displayName',
+    'state',
+    'schoolName',
+    'subjects',
+    'gradeLevels',
+    'preferredLanguage',
+] as const;
+
+const ONBOARDING_PHASE_PREREQUISITES: Record<string, readonly string[]> = {
+    'first-generation': FULL_PROFILE_PREREQUISITES,
+    'exploring': FULL_PROFILE_PREREQUISITES,
+    'completed': FULL_PROFILE_PREREQUISITES,
 };
 
 function hasValue(v: any): boolean {
@@ -295,6 +311,43 @@ function hasValue(v: any): boolean {
     if (Array.isArray(v)) return v.length > 0;
     return true;
 }
+
+/**
+ * Compute a 0-100 profile completion score from the merged profile.
+ * Weights agreed in the onboarding-hardening plan:
+ *   displayName 10, state 15, schoolName 15, subjects 15, gradeLevels 15,
+ *   preferredLanguage 10, educationBoard 5, phone 10, photoURL 5.
+ */
+export function computeProfileCompletion(profile: Record<string, any>): number {
+    const weights: Array<[string, number]> = [
+        ['displayName', 10],
+        ['state', 15],
+        ['schoolName', 15],
+        ['subjects', 15],
+        ['gradeLevels', 15],
+        ['preferredLanguage', 10],
+        ['educationBoard', 5],
+        ['phoneNumber', 10],
+        ['photoURL', 5],
+    ];
+    let score = 0;
+    for (const [field, weight] of weights) {
+        // Accept phoneNumber OR phone alias
+        if (field === 'phoneNumber') {
+            if (hasValue(profile.phoneNumber) || hasValue(profile.phone)) score += weight;
+            continue;
+        }
+        // photoURL OR avatarUrl OR customAvatarUrl
+        if (field === 'photoURL') {
+            if (hasValue(profile.photoURL) || hasValue(profile.avatarUrl) || hasValue(profile.customAvatarUrl)) score += weight;
+            continue;
+        }
+        if (hasValue(profile[field])) score += weight;
+    }
+    return Math.min(100, Math.max(0, score));
+}
+
+export const PROFILE_COMPLETE_THRESHOLD = 80;
 
 export async function updateProfileAction(_userId: string, data: any) {
     const userId = await requireAuth();
@@ -316,11 +369,41 @@ export async function updateProfileAction(_userId: string, data: any) {
         throw new Error('No writable fields in update payload');
     }
 
+    // Onboarding hardening (2026-06-06):
+    //  - When state is set but educationBoard is not (and it isn't being set
+    //    in this patch), default the board so the field is never null after
+    //    the first onboarding write. Mirrors the cascading picker behaviour.
+    //  - Recompute profileCompletionLevel on every write (server-derived;
+    //    clients used to send a string like 'basic' which we ignore).
+    //
+    // We need the existing doc for both the prereq check below AND the
+    // completion calc, so fetch once and reuse.
+    const existingProfile = await dbAdapter.getUser(userId).catch(() => null);
+
+    // Default educationBoard
+    if (!hasValue(sanitized.educationBoard) && !hasValue(existingProfile?.educationBoard)) {
+        const effectiveState = hasValue(sanitized.state)
+            ? sanitized.state
+            : existingProfile?.state;
+        if (hasValue(effectiveState)) {
+            try {
+                const { STATE_BOARD_MAP } = await import('@/types');
+                const mapped = STATE_BOARD_MAP[effectiveState as string];
+                sanitized.educationBoard = mapped || 'CBSE';
+            } catch {
+                sanitized.educationBoard = 'CBSE';
+            }
+        } else {
+            sanitized.educationBoard = 'CBSE';
+        }
+    }
+
     // F11-3: Block onboardingPhase escalation when prerequisites aren't met.
     // Onboarding-phase is in the writable allowlist so legitimate flow can
     // advance it — but writing `exploring` (or `first-generation`, etc.)
     // directly without ever capturing state/subjects/grades was a bypass
     // exploited by malformed clients (and possibly hostile ones).
+    const mergedProfile: Record<string, any> = { ...(existingProfile ?? {}), ...sanitized };
     if (sanitized.onboardingPhase && ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase]) {
         const required = ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase];
         // Build the effective state = existing profile MERGED with the
@@ -328,9 +411,7 @@ export async function updateProfileAction(_userId: string, data: any) {
         // prerequisites and phase is accepted (the legitimate onboarding
         // flow's "save all in one call" pattern works), but a phase-only
         // patch without prerequisites is rejected.
-        const existing = await dbAdapter.getUser(userId).catch(() => null);
-        const merged: Record<string, any> = { ...(existing ?? {}), ...sanitized };
-        const missing = required.filter(field => !hasValue(merged[field]));
+        const missing = required.filter(field => !hasValue(mergedProfile[field]));
         if (missing.length > 0) {
             logger.warn(
                 'Rejected onboardingPhase advance: prerequisites missing',
@@ -343,9 +424,27 @@ export async function updateProfileAction(_userId: string, data: any) {
         }
     }
 
+    // Always recompute the completion level server-side (overrides any
+    // client-supplied value — old code paths passed strings like 'basic').
+    const completionScore = computeProfileCompletion(mergedProfile);
+    sanitized.profileCompletionLevel = completionScore;
+
+    // When the client advances onboardingPhase to `completed` AND the merged
+    // profile is ≥ threshold, stamp the completion timestamp + flag.
+    if (
+        sanitized.onboardingPhase === 'completed' &&
+        completionScore >= PROFILE_COMPLETE_THRESHOLD
+    ) {
+        sanitized.onboardingCompleted = true;
+        if (!hasValue(existingProfile?.onboardingCompletedAt)) {
+            sanitized.onboardingCompletedAt = new Date();
+        }
+    }
+
     await dbAdapter.updateUser(userId, sanitized);
 
     revalidatePath("/my-profile");
+    return { profileCompletionLevel: completionScore };
 }
 
 /**
@@ -373,6 +472,63 @@ export async function markChecklistItemAction(_userId: string, itemId: string) {
     } catch (error) {
         // Non-fatal: checklist tracking is UX-only
         logger.warn(`Failed to mark checklist item ${itemId} for ${userId}`, String(error));
+    }
+}
+
+/**
+ * Look up the dominant `state` + `district` for a given (normalized) school
+ * name. Used by the onboarding form to pre-fill location once the teacher
+ * types a school name that ≥ 3 other teachers already share.
+ *
+ * Requires auth (don't expose the directory anonymously) but does NOT
+ * reveal any individual teacher's identity — only the aggregate.
+ */
+export async function lookupSchoolDominantLocationAction(
+    schoolName: string,
+): Promise<{ state?: string; district?: string; matchCount: number } | null> {
+    await requireAuth();
+    if (!schoolName || typeof schoolName !== 'string') return null;
+    const normalized = schoolName.toUpperCase().trim();
+    if (normalized.length < 4) return null;
+    try {
+        const { getDb } = await import('@/lib/firebase-admin');
+        const db = await getDb();
+        const snap = await db
+            .collection('users')
+            .where('schoolNormalized', '==', normalized)
+            .limit(20)
+            .get();
+        if (snap.size < 3) return { matchCount: snap.size };
+        const stateCounts: Record<string, number> = {};
+        const districtCounts: Record<string, number> = {};
+        snap.forEach(doc => {
+            const d = doc.data() as Record<string, any>;
+            if (typeof d.state === 'string' && d.state) {
+                stateCounts[d.state] = (stateCounts[d.state] || 0) + 1;
+            }
+            if (typeof d.district === 'string' && d.district) {
+                districtCounts[d.district] = (districtCounts[d.district] || 0) + 1;
+            }
+        });
+        const pickDominant = (counts: Record<string, number>) => {
+            let best: string | undefined;
+            let bestN = 0;
+            for (const [k, n] of Object.entries(counts)) {
+                if (n > bestN) {
+                    best = k;
+                    bestN = n;
+                }
+            }
+            return best;
+        };
+        return {
+            state: pickDominant(stateCounts),
+            district: pickDominant(districtCounts),
+            matchCount: snap.size,
+        };
+    } catch (err) {
+        logger.warn('lookupSchoolDominantLocation failed', String(err));
+        return null;
     }
 }
 

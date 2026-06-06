@@ -79,23 +79,34 @@ describe('updateProfileAction — onboardingPhase prerequisite check (F11-3)', (
     });
 
     it('ACCEPTS onboardingPhase=exploring when prerequisites exist on profile', async () => {
+        // Onboarding hardening (2026-06-06) extended the prereq list to
+        // include displayName + preferredLanguage. Existing profile now
+        // needs all of those to be considered onboarded enough to advance.
         getUserMock.mockResolvedValue({
+            displayName: 'Anita',
             state: 'Karnataka',
             schoolName: 'KV',
             subjects: ['Maths'],
             gradeLevels: ['Class 7'],
+            preferredLanguage: 'Hindi',
         });
         await updateProfileAction('user-1', { onboardingPhase: 'exploring' });
-        expect(updateUserMock).toHaveBeenCalledWith('user-1', { onboardingPhase: 'exploring' });
+        // Server-side write now also includes a recomputed
+        // profileCompletionLevel; only assert the phase key made it.
+        const [uid, written] = updateUserMock.mock.calls[0] as [string, Record<string, any>];
+        expect(uid).toBe('user-1');
+        expect(written.onboardingPhase).toBe('exploring');
     });
 
     it('ACCEPTS onboardingPhase=exploring when patch includes the prerequisites', async () => {
         getUserMock.mockResolvedValue(null);
         await updateProfileAction('user-1', {
+            displayName: 'Anita',
             state: 'Karnataka',
             schoolName: 'KV',
             subjects: ['Maths'],
             gradeLevels: ['Class 7'],
+            preferredLanguage: 'Hindi',
             onboardingPhase: 'first-generation',
         });
         expect(updateUserMock).toHaveBeenCalled();
