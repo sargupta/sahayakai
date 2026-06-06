@@ -362,36 +362,54 @@ export async function markConversationReadAction(
     // exists, the sidebar listener uses the same shape) and filter in code by
     // matching either metadata.conversationId OR the link querystring.
     try {
-        const notifSnap = await db
-            .collection('notifications')
-            .where('recipientId', '==', userId)
-            .where('isRead', '==', false)
-            .limit(200)
-            .get();
-
+        // F6-09 fix: previously this scan was hard-capped at 200 unread notifs
+        // (without orderBy → the kept set was non-deterministic). A user who
+        // had accumulated >200 unread notifications never cleared the message
+        // notification for this conversation, so the Bell badge stayed pinned.
+        //
+        // We now page through ALL unread notifications for the recipient using
+        // a cursor on doc-id (__name__). The existing (recipientId + isRead)
+        // index handles the where clauses and __name__ is a free sort. We cap
+        // at MAX_PAGES * PAGE_SIZE = 20 * 500 = 10k of safety — well above any
+        // realistic unread count, but bounded so a runaway can never hang.
         const linkNeedle = `open=${conversationId}`;
-        const matching = notifSnap.docs.filter((d) => {
-            const data = d.data() ?? {};
-            const metaMatch = data.metadata?.conversationId === conversationId;
-            const linkMatch = typeof data.link === 'string' && data.link.includes(linkNeedle);
-            return metaMatch || linkMatch;
-        });
-
+        const PAGE_SIZE = 500; // Firestore batch.update() per-batch limit
+        const MAX_PAGES = 20;
+        let scanned = 0;
+        let cleared = 0;
+        let cursor: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+        for (let page = 0; page < MAX_PAGES; page++) {
+            let q = db
+                .collection('notifications')
+                .where('recipientId', '==', userId)
+                .where('isRead', '==', false)
+                .orderBy('__name__')
+                .limit(PAGE_SIZE);
+            if (cursor) q = q.startAfter(cursor);
+            const snap = await q.get();
+            if (snap.empty) break;
+            scanned += snap.size;
+            const matching = snap.docs.filter((d) => {
+                const data = d.data() ?? {};
+                const metaMatch = data.metadata?.conversationId === conversationId;
+                const linkMatch = typeof data.link === 'string' && data.link.includes(linkNeedle);
+                return metaMatch || linkMatch;
+            });
+            if (matching.length > 0) {
+                const notifBatch = db.batch();
+                matching.forEach((doc) => notifBatch.update(doc.ref, { isRead: true }));
+                await notifBatch.commit();
+                cleared += matching.length;
+            }
+            if (snap.size < PAGE_SIZE) break; // last page reached
+            cursor = snap.docs[snap.docs.length - 1];
+        }
         console.debug(
-            '[markConversationReadAction] scanned %d unread notifs, %d match conv %s',
-            notifSnap.size,
-            matching.length,
+            '[markConversationReadAction] scanned %d unread notifs, cleared %d match conv %s',
+            scanned,
+            cleared,
             conversationId,
         );
-
-        if (matching.length > 0) {
-            const notifBatch = db.batch();
-            matching.forEach((doc) => {
-                notifBatch.update(doc.ref, { isRead: true });
-            });
-            await notifBatch.commit();
-            console.debug('[markConversationReadAction] cleared %d message notifications', matching.length);
-        }
     } catch (err) {
         // Non-fatal: log loudly so we can spot it in Cloud Logging. The
         // conversation badge still clears; only the notification badge lingers.

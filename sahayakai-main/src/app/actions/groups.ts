@@ -7,6 +7,7 @@ import { requireAuth, requireGroupMember } from '@/lib/auth-helpers';
 import { createNotification } from './notifications';
 import { NEW_GROUP_POST, GROUP_POST_LIKE } from '@/lib/notifications/types';
 import { formatNotificationMessage } from '@/lib/notifications/i18n';
+import { sendPushToUser } from '@/lib/fcm-server';
 import type { Language } from '@/types';
 import type {
     Group,
@@ -842,16 +843,16 @@ export async function fanoutGroupPostNotifications(
     }
     const groupName = (groupDoc.data()?.name as string) ?? groupId;
 
-    // Pull up to CAP+1 members so we can detect over-cap. We don't have a
-    // cheap "most-active" signal at write-time, so for now we take the
-    // first CAP returned by the members subcollection (insertion ≈ join
-    // order). When CAP+ shows up we log a metric so we can later wire the
-    // digest fallback.
+    // F6-06 fix: previously we did `.limit(CAP+1)` without orderBy and sliced
+    // the first CAP. Firestore returned by __name__ (uid) order, so the bottom
+    // of the alphabet was systemically starved in big groups. We now pull the
+    // full member list (cost is bounded — a Firestore `members` subcollection
+    // for one group is small enough to scan), JS-shuffle, then slice to CAP.
+    // Each over-cap fan-out is now a uniform sample of group members.
     const membersSnap = await db
         .collection('groups')
         .doc(groupId)
         .collection('members')
-        .limit(GROUP_POST_FANOUT_CAP + 1)
         .get();
 
     const memberIds = membersSnap.docs
@@ -859,9 +860,16 @@ export async function fanoutGroupPostNotifications(
         .filter((id) => id !== authorUid);
 
     const capped = memberIds.length > GROUP_POST_FANOUT_CAP;
-    const recipients = capped
-        ? memberIds.slice(0, GROUP_POST_FANOUT_CAP)
-        : memberIds;
+    let recipients = memberIds;
+    if (capped) {
+        // Fisher-Yates shuffle then slice.
+        const shuffled = [...memberIds];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        recipients = shuffled.slice(0, GROUP_POST_FANOUT_CAP);
+    }
 
     if (capped) {
         logger.warn(
@@ -896,8 +904,18 @@ export async function fanoutGroupPostNotifications(
     const link = `/groups/${groupId}?post=${postId}`;
     const metadata = { groupId, postId, authorUid };
 
+    // F6-07 fix: previously a serial `for...await` made ~200 Firestore
+    // round-trips before the action returned. We now run writes in parallel
+    // with a small concurrency cap so the post-action latency is ~O(CAP/conc)
+    // round-trips instead of O(CAP). Cap 25 keeps us well under any per-uid
+    // burst quota and matches what messages.ts uses elsewhere.
+    //
+    // F6-13 fix: each recipient also gets an FCM push (fire-and-forget) so
+    // backgrounded apps surface the notification at OS level — bringing this
+    // type to parity with 1:1 messages.
+    const CONCURRENCY = 25;
     let written = 0;
-    for (const recipientId of recipients) {
+    const writeOne = async (recipientId: string): Promise<void> => {
         const lang = langByUid.get(recipientId);
         const message = formatNotificationMessage('group_post', lang, {
             name: authorName,
@@ -915,6 +933,11 @@ export async function fanoutGroupPostNotifications(
                 metadata,
             });
             written++;
+            void sendPushToUser(
+                recipientId,
+                { title: groupName, body: message },
+                { link, type: NEW_GROUP_POST, groupId, postId },
+            );
         } catch (err) {
             logger.error(
                 'fanoutGroupPost: createNotification failed',
@@ -923,6 +946,11 @@ export async function fanoutGroupPostNotifications(
                 { recipientId, groupId, postId },
             );
         }
+    };
+    // Process in waves of CONCURRENCY using Promise.all on each chunk.
+    for (let i = 0; i < recipients.length; i += CONCURRENCY) {
+        const chunk = recipients.slice(i, i + CONCURRENCY);
+        await Promise.all(chunk.map(writeOne));
     }
 
     logger.info(
@@ -959,20 +987,25 @@ export async function notifyGroupPostLike(
 
     const db = await getDb();
 
-    // Dedup probe — small bounded scan, in-memory postId filter so we
-    // don't depend on a metadata-field composite index.
+    // F6-08 fix: previously this probe scanned the recipient's last 20 likes
+    // of any post and filtered in-memory by postId. A prolific author with
+    // >20 likes/hour across other posts would push the relevant postId out of
+    // the probe window, so genuine duplicate likes on the SAME post got
+    // through. We now query directly on `metadata.postId` so the probe is
+    // post-scoped (composite index recipientId + type + metadata.postId is
+    // optional — without it Firestore falls through to the catch and we
+    // gracefully default to over-deliver, which matches the dedup contract).
     try {
         const recent = await db
             .collection('notifications')
             .where('recipientId', '==', postAuthorUid)
             .where('type', '==', GROUP_POST_LIKE)
+            .where('metadata.postId', '==', postId)
             .limit(20)
             .get();
         const cutoff = Date.now() - GROUP_POST_LIKE_DEDUP_MS;
         for (const doc of recent.docs) {
             const data = doc.data() ?? {};
-            const mdPostId = data.metadata?.postId;
-            if (mdPostId !== postId) continue;
             const createdAt = Date.parse(data.createdAt ?? '');
             if (Number.isFinite(createdAt) && createdAt >= cutoff) {
                 return { sent: false, reason: 'deduped' };
@@ -998,6 +1031,7 @@ export async function notifyGroupPostLike(
         name: likerName,
     });
 
+    const likeLink = `/groups/${groupId}?post=${postId}`;
     await createNotification({
         recipientId: postAuthorUid,
         type: GROUP_POST_LIKE,
@@ -1006,9 +1040,17 @@ export async function notifyGroupPostLike(
         senderId: likerUid,
         senderName: likerName,
         senderPhotoURL: likerPhotoURL,
-        link: `/groups/${groupId}?post=${postId}`,
+        link: likeLink,
         metadata: { groupId, postId, likerUid },
     });
+
+    // F6-13 fix: also FCM-push so the post author sees the like at OS level
+    // (fire-and-forget; fcm-server swallows internal errors).
+    void sendPushToUser(
+        postAuthorUid,
+        { title: likerName, body: message },
+        { link: likeLink, type: GROUP_POST_LIKE, groupId, postId },
+    );
 
     return { sent: true };
 }

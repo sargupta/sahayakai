@@ -16,6 +16,34 @@
 
 import type { Language } from '@/types';
 
+/**
+ * F6-14 fix: canonicalize a user's preferredLanguage string to the dict key.
+ * Previously the lookup was direct (NOTIFICATION_DICTS[language]) which meant
+ * 'hi', 'Hindi', 'HINDI', 'hindi', 'en', 'english' all silently fell back to
+ * English. We accept the canonical Language values AND ISO-639-1 codes AND
+ * any-case variants and normalise to the canonical Language key.
+ */
+const LANGUAGE_ALIASES: Record<string, Language> = {
+    en: 'English', english: 'English',
+    hi: 'Hindi', hindi: 'Hindi',
+    kn: 'Kannada', kannada: 'Kannada',
+    ta: 'Tamil', tamil: 'Tamil',
+    te: 'Telugu', telugu: 'Telugu',
+    mr: 'Marathi', marathi: 'Marathi',
+    bn: 'Bengali', bengali: 'Bengali',
+    gu: 'Gujarati', gujarati: 'Gujarati',
+    pa: 'Punjabi', punjabi: 'Punjabi',
+    ml: 'Malayalam', malayalam: 'Malayalam',
+    or: 'Odia', od: 'Odia', odia: 'Odia',
+};
+
+export function resolveLanguage(input: Language | string | undefined | null): Language | undefined {
+    if (!input) return undefined;
+    const key = String(input).trim().toLowerCase();
+    if (!key) return undefined;
+    return LANGUAGE_ALIASES[key];
+}
+
 export type NotificationDictKey = 'group_post' | 'group_post_like';
 
 type Dict = Record<NotificationDictKey, string>;
@@ -77,10 +105,8 @@ export function formatNotificationMessage(
     language: Language | string | undefined | null,
     vars: { name: string; group?: string },
 ): string {
-    const lookup = language
-        ? (NOTIFICATION_DICTS as Record<string, Dict>)[language as string]
-        : undefined;
-    const dict: Dict = lookup ?? NOTIFICATION_DICTS.English;
+    const canonical = resolveLanguage(language);
+    const dict: Dict = canonical ? NOTIFICATION_DICTS[canonical] : NOTIFICATION_DICTS.English;
     const template = dict[key] ?? NOTIFICATION_DICTS.English[key];
     return template
         .replace('{name}', vars.name ?? '')
