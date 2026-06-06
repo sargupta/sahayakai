@@ -60,14 +60,19 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
 
 async function ensureAITeacherProfiles(db: FirebaseFirestore.Firestore, personas: AITeacherPersona[]) {
     // Ensure all AI teacher user docs exist (static + runtime).
+    // Batched read via db.getAll() to avoid N+1 sequential round-trips.
+    if (personas.length === 0) return;
+
+    const userRefs = personas.map((p) => db.collection('users').doc(p.uid));
+    const userSnaps = await db.getAll(...userRefs);
+
     const batch = db.batch();
     let created = 0;
 
-    for (const persona of personas) {
-        const userRef = db.collection('users').doc(persona.uid);
-        const userSnap = await userRef.get();
+    for (let i = 0; i < personas.length; i++) {
+        const userSnap = userSnaps[i];
         if (!userSnap.exists) {
-            batch.set(userRef, getPersonaUserDoc(persona));
+            batch.set(userRefs[i], getPersonaUserDoc(personas[i]));
             created++;
         }
     }

@@ -936,13 +936,25 @@ export async function POST(request: Request) {
     // ── 11. Post state-level briefings to state groups ──────────────
     let statePostCount = 0;
 
-    for (const [state, items] of curatedStateNews) {
+    // Batch-read all state group docs in a single round-trip to avoid N+1
+    // sequential get()s (one per state, up to 28).
+    const stateEntries = Array.from(curatedStateNews);
+    const stateRefs = stateEntries.map(
+      ([state]) => db.doc(`groups/state_${normalizeKey(state)}`),
+    );
+    const stateSnaps = stateRefs.length > 0 ? await db.getAll(...stateRefs) : [];
+    const existingStateGroups = new Set<string>();
+    stateSnaps.forEach((snap, idx) => {
+      if (snap.exists) existingStateGroups.add(stateRefs[idx].path);
+    });
+
+    for (let i = 0; i < stateEntries.length; i++) {
+      const [state, items] = stateEntries[i];
       const stateGroupId = `state_${normalizeKey(state)}`;
-      const stateGroupRef = db.doc(`groups/${stateGroupId}`);
-      const stateGroupSnap = await stateGroupRef.get();
+      const stateGroupRef = stateRefs[i];
 
       // Only post to groups that already exist (created by auto-join)
-      if (!stateGroupSnap.exists) continue;
+      if (!existingStateGroups.has(stateGroupRef.path)) continue;
 
       const stateContent = [
         `🗓 ${state} Update — ${today}`,
