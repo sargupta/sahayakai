@@ -15,6 +15,12 @@ substitutions:
   _REPO: sahayakai
   _SERVICE: sahayakai-agents
   _STAGING_SUFFIX: -staging
+  # Audience claim the staging sidecar's ID-token verifier compares against.
+  # Set as a PLAIN env var (not a secret mount) for staging so the prod
+  # SAHAYAKAI_AGENTS_AUDIENCE secret — which holds the PROD sidecar URL —
+  # does not leak into staging and produce a 401 cascade. See
+  # qa/results/lane-F/Q4_B_AUDIENCE_FIX.md for the root-cause writeup.
+  _STAGING_AUDIENCE_URL: https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -62,6 +68,28 @@ steps:
         # Staging suffix applied to the Knative Service metadata.name so
         # staging and prod coexist.
         sed -i "s/^  name: ${_SERVICE}$/  name: ${_SERVICE}${_STAGING_SUFFIX}/" /workspace/service.rendered.yaml
+        # Audience-secret drift fix: the SAHAYAKAI_AGENTS_AUDIENCE secret
+        # holds the PROD sidecar URL. For staging, replace the env block
+        # with a plain `value:` pointing at the staging URL so the staging
+        # sidecar's ID-token verifier accepts tokens minted for itself
+        # (the prod next.js dispatcher uses NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL
+        # to choose audience; mismatched audience -> 401 -> silent Genkit
+        # fallback). Skipped when _STAGING_SUFFIX is empty (prod deploy).
+        # See qa/results/lane-F/Q4_B_AUDIENCE_FIX.md.
+        if [ -n "${_STAGING_SUFFIX}" ]; then
+          sed -i -e '/^            - name: SAHAYAKAI_AGENTS_AUDIENCE$/,/^                  key: latest$/c\
+            - name: SAHAYAKAI_AGENTS_AUDIENCE\
+              value: "${_STAGING_AUDIENCE_URL}"' /workspace/service.rendered.yaml
+          if grep -q '^                  name: SAHAYAKAI_AGENTS_AUDIENCE$' /workspace/service.rendered.yaml; then
+            echo "ERROR: SAHAYAKAI_AGENTS_AUDIENCE secretKeyRef still present after staging override" >&2
+            exit 1
+          fi
+          if ! grep -q "value: \"${_STAGING_AUDIENCE_URL}\"" /workspace/service.rendered.yaml; then
+            echo "ERROR: staging audience plain value not injected" >&2
+            exit 1
+          fi
+          echo "Staging audience override applied: ${_STAGING_AUDIENCE_URL}"
+        fi
         cat /workspace/service.rendered.yaml
 
   - id: deploy-staging
