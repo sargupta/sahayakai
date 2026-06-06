@@ -1,16 +1,23 @@
 #!/usr/bin/env node
 /**
- * CI gate: reject PRs whose commit messages reference --no-verify
+ * CI gate: reject PRs whose commit messages reference `--no-verify`
  * (a strong signal that pre-commit hooks were bypassed).
  *
- * Usage: node scripts/ci/check-no-verify-bypass.mjs <base-sha> <head-sha>
- * Env fallback: BASE_SHA, HEAD_SHA
+ * Scans commit messages between $BASE_SHA..$HEAD_SHA and exits 1 if any
+ * contain the forbidden substring in body / trailers.
+ *
+ * Usage:
+ *   node scripts/ci/check-no-verify-bypass.mjs <base-sha> <head-sha>
+ *
+ * Env fallback:
+ *   BASE_SHA, HEAD_SHA  (set by the workflow from github.event.pull_request)
  */
 import { execFileSync } from 'node:child_process';
 
 const baseSha = process.argv[2] || process.env.BASE_SHA;
 const headSha = process.argv[3] || process.env.HEAD_SHA || 'HEAD';
 
+// Validate SHAs / refs to avoid passing weird strings to git.
 const SHA_RE = /^[A-Za-z0-9_./-]+$/;
 function safeRef(ref, label) {
   if (!ref) return null;
@@ -25,7 +32,7 @@ const base = safeRef(baseSha, 'BASE_SHA');
 const head = safeRef(headSha, 'HEAD_SHA') || 'HEAD';
 
 if (!base) {
-  console.error('[no-verify-check] BASE_SHA missing — skipping (treat as pass).');
+  console.error('[no-verify-check] BASE_SHA missing — pass as argv or env. Skipping (treat as pass).');
   process.exit(0);
 }
 

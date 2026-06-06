@@ -1,11 +1,11 @@
 name: Quality Gates
 
-# Prevents the corner-cutting patterns from 2026-06-06:
-#   * commits with --no-verify
+# Prevents the corner-cutting that surfaced on 2026-06-06:
+#   * commits authored with `--no-verify`
 #   * Zod/Pydantic schema drift between Genkit + sidecar
-#   * Cloud Run service.yaml drift vs lane-F spec
-#   * post-deploy dispatcher falling back to genkit_fallback
-#   * console.log leaks
+#   * Cloud Run service.yaml drift vs the spec in lane-F
+#   * post-deploy regression where dispatcher falls back to genkit_fallback
+#   * `console.log` leaks
 #   * typecheck bypass
 #   * AppCheck-disabled regressions (warn-only today)
 
@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       run_live_checks:
-        description: 'Run live Cloud Run drift + post-deploy checks (requires GCP_SA_READ_ONLY_KEY)'
+        description: 'Run live Cloud Run drift + post-deploy checks (requires GCP_SA_KEY)'
         type: boolean
         default: false
 
@@ -88,7 +88,9 @@ jobs:
     name: 'Gate 3: Cloud Run service.yaml drift'
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
-    permissions: { contents: read, id-token: write }
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: 'google-github-actions/auth@v2'
@@ -96,10 +98,12 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_READ_ONLY_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Compare prod sidecar against spec
-        env: { SERVICE: sahayakai-agents }
+        env:
+          SERVICE: sahayakai-agents
         run: bash scripts/ci/check-service-yaml-drift.sh
       - name: Compare staging sidecar against spec
-        env: { SERVICE: sahayakai-agents-staging }
+        env:
+          SERVICE: sahayakai-agents-staging
         run: bash scripts/ci/check-service-yaml-drift.sh
 
   post-deploy-smoke:
@@ -109,7 +113,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
       - name: Probe /api/health + per-agent canaries
         env:
           APP_BASE_URL: ${{ secrets.SMOKE_APP_BASE_URL }}
@@ -129,7 +134,7 @@ jobs:
           cache-dependency-path: sahayakai-main/package-lock.json
       - name: Install deps
         run: npm ci
-      - name: Scan src/ for stray console.log
+      - name: Scan src/ for stray console.log (excluding tests + scripts)
         run: |
           set -e
           hits=$(grep -rEn 'console\.log\b' src \
@@ -161,7 +166,9 @@ jobs:
     name: 'Gate 7: AppCheck env (warn-only)'
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
-    permissions: { contents: read, id-token: write }
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: 'google-github-actions/auth@v2'
@@ -169,7 +176,8 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_READ_ONLY_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Check SAHAYAKAI_REQUIRE_APP_CHECK on both sidecars
-        env: { MODE: warn }
+        env:
+          MODE: warn
         run: bash scripts/ci/check-appcheck-env.sh
 
   test-ci-scripts:

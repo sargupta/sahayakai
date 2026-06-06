@@ -32,7 +32,7 @@
 
 import { GoogleAuth, type IdTokenClient } from 'google-auth-library';
 
-import { getFirebaseAppCheckToken } from '@/lib/firebase-app-check';
+import { getServerAppCheckTokenOrNull } from '@/lib/sidecar/app-check-mint';
 
 import { newRequestId, signRequest } from './signing';
 
@@ -208,7 +208,7 @@ export async function callSidecarReply(
   // `appCheckToken: null` opts out explicitly (e.g. tests).
   const appCheckToken =
     options.appCheckToken === undefined
-      ? await getFirebaseAppCheckToken()
+      ? await getServerAppCheckTokenOrNull()
       : options.appCheckToken;
   const headers: Record<string, string> = {
     ...authHeaders,

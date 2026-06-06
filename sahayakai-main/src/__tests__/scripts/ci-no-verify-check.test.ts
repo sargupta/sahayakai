@@ -1,6 +1,10 @@
 /**
  * Tests for scripts/ci/check-no-verify-bypass.mjs and
  * scripts/ci/check-schema-drift.mjs.
+ *
+ * The no-verify check is exercised against a throwaway git repo with a
+ * commit body containing `--no-verify` — we assert exit code 1.
+ * The schema-drift check is exercised against two on-disk fixture dirs.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
@@ -27,7 +31,10 @@ function commit(dir: string, message: string, filename: string) {
 
 describe('check-no-verify-bypass', () => {
   let dir: string;
-  beforeEach(() => { dir = mkdtempSync(path.join(tmpdir(), 'noverify-')); gitInit(dir); });
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'noverify-'));
+    gitInit(dir);
+  });
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
   it('passes on clean commits', () => {
@@ -67,29 +74,37 @@ describe('check-schema-drift', () => {
     mkdirSync(path.join(dir, 'qa', 'baseline-schemas-fresh'), { recursive: true });
     mkdirSync(path.join(dir, 'qa', 'sidecar-schemas'), { recursive: true });
     mkdirSync(path.join(dir, 'qa', 'sidecar-schemas-fresh'), { recursive: true });
-    mkdirSync(path.join(dir, 'scripts', 'ci'), { recursive: true });
-    execFileSync('cp', [DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')]);
   });
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-  function write(rel: string, obj: unknown) { writeFileSync(path.join(dir, rel), JSON.stringify(obj)); }
+  function write(rel: string, obj: unknown) {
+    writeFileSync(path.join(dir, rel), JSON.stringify(obj));
+  }
 
   it('passes when fresh matches committed', () => {
     const schema = { type: 'object', properties: { x: { type: 'string', minLength: 1, maxLength: 10 } } };
     write('qa/baseline-schemas/lesson-plan.json', schema);
     write('qa/baseline-schemas-fresh/lesson-plan.json', schema);
+    // Copy DRIFT_SCRIPT into the fake repo so relative paths resolve.
+    const fakeScript = path.join(dir, 'check-schema-drift.mjs');
+    execFileSync('cp', [DRIFT_SCRIPT, fakeScript]);
+    mkdirSync(path.join(dir, 'scripts', 'ci'), { recursive: true });
+    execFileSync('cp', [DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')]);
     const res = spawnSync('node', [path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')], { cwd: dir, encoding: 'utf8' });
     expect(res.status).toBe(0);
     expect(res.stdout).toMatch(/PASS/);
   });
 
   it('fails when drift exceeds threshold', () => {
+    // Build a baseline with many constraints and a fresh schema with none.
     const big: { type: string; properties: Record<string, unknown> } = { type: 'object', properties: {} };
     for (let i = 0; i < 20; i++) {
       big.properties[`f${i}`] = { type: 'string', enum: ['a', 'b'], minLength: 1, maxLength: 5, pattern: '^x' };
     }
     write('qa/baseline-schemas/lesson-plan.json', big);
     write('qa/baseline-schemas-fresh/lesson-plan.json', { type: 'object' });
+    mkdirSync(path.join(dir, 'scripts', 'ci'), { recursive: true });
+    execFileSync('cp', [DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')]);
     const res = spawnSync('node', [path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs'), '--threshold=10'], { cwd: dir, encoding: 'utf8' });
     expect(res.status).toBe(1);
     expect(res.stderr + res.stdout).toMatch(/FAIL/);
