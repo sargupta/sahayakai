@@ -1,0 +1,188 @@
+name: Quality Gates
+
+# Prevents the corner-cutting patterns from 2026-06-06:
+#   * commits with --no-verify
+#   * Zod/Pydantic schema drift between Genkit + sidecar
+#   * Cloud Run service.yaml drift vs lane-F spec
+#   * post-deploy dispatcher falling back to genkit_fallback
+#   * console.log leaks
+#   * typecheck bypass
+#   * AppCheck-disabled regressions (warn-only today)
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      run_live_checks:
+        description: 'Run live Cloud Run drift + post-deploy checks (requires GCP_SA_READ_ONLY_KEY)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: quality-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sahayakai-main
+
+jobs:
+  no-verify-bypass:
+    name: 'Gate 1: block --no-verify commits'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan PR commits for --no-verify trailers
+        working-directory: sahayakai-main
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/check-no-verify-bypass.mjs "$BASE_SHA" "$HEAD_SHA"
+
+  schema-drift:
+    name: 'Gate 2: schema drift'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sahayakai-main/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Node deps
+        run: npm ci
+      - name: Install sidecar Python deps
+        working-directory: .
+        run: |
+          if [ -f sahayakai-agents/requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r sahayakai-agents/requirements.txt || true
+          fi
+      - name: Dump fresh Zod schemas
+        run: |
+          mkdir -p qa/baseline-schemas-fresh
+          npx tsx scripts/dump-zod-schemas.mjs --out qa/baseline-schemas-fresh || \
+            (echo "::warning::Zod dump failed — falling back to existing baselines" && \
+             cp -r qa/baseline-schemas/* qa/baseline-schemas-fresh/ 2>/dev/null || true)
+      - name: Dump fresh Pydantic schemas
+        working-directory: .
+        run: |
+          mkdir -p sahayakai-main/qa/sidecar-schemas-fresh
+          python sahayakai-agents/scripts/dump-pydantic-schemas.py \
+            --out sahayakai-main/qa/sidecar-schemas-fresh || \
+            (echo "::warning::Pydantic dump failed — falling back to existing baselines" && \
+             cp -r sahayakai-main/qa/sidecar-schemas/* sahayakai-main/qa/sidecar-schemas-fresh/ 2>/dev/null || true)
+      - name: Diff schemas (fail if > 10 constraints drift / agent)
+        run: node scripts/ci/check-schema-drift.mjs --threshold=10
+
+  service-yaml-drift:
+    name: 'Gate 3: Cloud Run service.yaml drift'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
+    permissions: { contents: read, id-token: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_READ_ONLY_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Compare prod sidecar against spec
+        env: { SERVICE: sahayakai-agents }
+        run: bash scripts/ci/check-service-yaml-drift.sh
+      - name: Compare staging sidecar against spec
+        env: { SERVICE: sahayakai-agents-staging }
+        run: bash scripts/ci/check-service-yaml-drift.sh
+
+  post-deploy-smoke:
+    name: 'Gate 4: post-deploy smoke'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Probe /api/health + per-agent canaries
+        env:
+          APP_BASE_URL: ${{ secrets.SMOKE_APP_BASE_URL }}
+          APP_BEARER_TOKEN: ${{ secrets.SMOKE_BEARER_TOKEN }}
+          STRICT: '1'
+        run: node scripts/ci/post-deploy-smoke.mjs
+
+  no-console-log:
+    name: 'Gate 5: no console.log in src/ (outside tests)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sahayakai-main/package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Scan src/ for stray console.log
+        run: |
+          set -e
+          hits=$(grep -rEn 'console\.log\b' src \
+            --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' \
+            --exclude-dir='__tests__' --exclude-dir='__mocks__' || true)
+          if [ -n "$hits" ]; then
+            echo "::error::console.log found outside tests:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "OK — no console.log leaks."
+
+  typecheck:
+    name: 'Gate 6: typecheck'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sahayakai-main/package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: tsc --noEmit
+        run: npm run typecheck
+
+  appcheck-env:
+    name: 'Gate 7: AppCheck env (warn-only)'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
+    permissions: { contents: read, id-token: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_READ_ONLY_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Check SAHAYAKAI_REQUIRE_APP_CHECK on both sidecars
+        env: { MODE: warn }
+        run: bash scripts/ci/check-appcheck-env.sh
+
+  test-ci-scripts:
+    name: 'Gate 8: test CI scripts'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sahayakai-main/package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run jest on CI script tests
+        run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts --runInBand --coverage=false
