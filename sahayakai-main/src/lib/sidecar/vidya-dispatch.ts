@@ -306,18 +306,25 @@ export async function dispatchVidya(
             SHADOW_DIFF_IN_CANARY_OBSERVATION &&
             decision.configuredMode === 'canary'
         ) {
-            void runSidecarSafe(sidecarRequest, appCheckToken).then((sc) => {
-                void writeAgentShadowDiff({
-                    agent: 'vidya',
-                    uid: input.userId,
-                    genkit: out,
-                    sidecar: sc.ok ? sc.res : null,
-                    genkitLatencyMs: 0,
-                    sidecarLatencyMs: sc.latencyMs,
-                    sidecarOk: sc.ok,
-                    sidecarError: sc.ok ? undefined : sc.error.message,
-                });
-            });
+            // Mint App Check token for the background sidecar call so
+            // the canary-overshoot observation isn't blocked at the
+            // sidecar's App Check guard. We can't reuse the
+            // `appCheckToken` declared lower because the off branch
+            // returns before it's resolved.
+            void getFirebaseAppCheckToken().then((tok) =>
+                runSidecarSafe(sidecarRequest, tok).then((sc) => {
+                    void writeAgentShadowDiff({
+                        agent: 'vidya',
+                        uid: input.uid,
+                        genkit: out,
+                        sidecar: sc.ok ? sc.res : null,
+                        genkitLatencyMs: 0,
+                        sidecarLatencyMs: sc.latencyMs,
+                        sidecarOk: sc.ok,
+                        sidecarError: sc.ok ? undefined : sc.error.message,
+                    });
+                }),
+            );
         }
                 return genkitToDispatched(out, 'genkit', decision);
     }
@@ -388,7 +395,7 @@ export async function dispatchVidya(
             void runGenkitSafe(input.request).then((gk) => {
                 void writeAgentShadowDiff({
                     agent: 'vidya',
-                    uid: input.userId,
+                    uid: input.uid,
                     genkit: gk.ok ? gk.out : null,
                     sidecar: sidecar.res,
                     genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
