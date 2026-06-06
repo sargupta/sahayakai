@@ -74,11 +74,22 @@ class TeacherProfile(BaseModel):
     schoolContext: str | None = Field(default=None, max_length=2000)
 
 
-# --- Allowed flow enum (kept in sync with `agent.ALLOWED_FLOWS`) -------
+# --- Allowed flow enum (wire-level; superset of `agent.ALLOWED_FLOWS`) -
 
-# `instantAnswer` is intentionally NOT in this Literal — it's handled
-# inline by the sidecar without a navigation action. `unknown` is also
-# not here because it never produces an action.
+# This Literal is the WIRE contract — every value a `VidyaAction.flow`
+# field may carry. The TS sidecar client regenerates its literal union
+# from this enum (see `scripts/codegen_ts.py`).
+#
+# `instant-answer` (hyphenated) was added when the supervisor
+# (`sahayakai-main/src/ai/soul.ts`, commit e119fc10e) started emitting
+# it as a navigable flow. Route is `/instant-answer?question=...`. It
+# stays distinct from the classifier's `instantAnswer` intent label
+# (camelCase, NOT in `ALLOWED_FLOWS` in `prompts.py`) — the classifier
+# still produces inline answers without ever building a `VidyaAction`.
+# Two separate concerns, on purpose; the comment block in
+# `classify_action` explains the routing.
+#
+# `unknown` is intentionally NOT here — `unknown` produces no action.
 AllowedFlow = Literal[
     "lesson-plan",
     "quiz-generator",
@@ -89,6 +100,7 @@ AllowedFlow = Literal[
     "rubric-generator",
     "exam-paper",
     "video-storyteller",
+    "instant-answer",
 ]
 
 

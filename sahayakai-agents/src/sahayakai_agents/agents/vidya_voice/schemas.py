@@ -18,10 +18,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # ---- Allowed flow enum (must stay in sync with vidya/schemas.py) ---------
 
-# The Live API's tool definitions surface the same 9 routable flows as
+# The Live API's tool definitions surface the same routable flows as
 # the typed VIDYA path. Re-declared here (not imported) so this package
 # can ship as a self-contained spike — if/when the migration lands the
 # two enums become a single shared module.
+#
+# `instant-answer` is included to match `vidya.schemas.AllowedFlow`
+# (the wire contract the TS client validates against). The Live tool
+# surface itself does NOT register an `instant-answer` tool today —
+# `_TOOL_DEFINITIONS` in `agent.py` only lists the 9 navigation flows
+# — but keeping the Literal union aligned avoids drift between the
+# two `flow` validators when generated TS types are consumed by
+# `LiveToolDefinition` and `VidyaAction` simultaneously.
 LiveAllowedFlow = Literal[
     "lesson-plan",
     "quiz-generator",
@@ -32,6 +40,7 @@ LiveAllowedFlow = Literal[
     "rubric-generator",
     "exam-paper",
     "video-storyteller",
+    "instant-answer",
 ]
 
 
