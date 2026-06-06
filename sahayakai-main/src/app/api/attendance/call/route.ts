@@ -76,6 +76,22 @@ export async function POST(req: NextRequest) {
                     To:                  callTo,
                     From:                TWILIO_PHONE_NUMBER,
                     Url:                 twimlUrl,
+                    // The initial TwiML URL MUST be fetched with GET — our route's
+                    // GET handler delivers the greeting + teacher message + first
+                    // <Gather>. Without this, Twilio defaults to POST, hits our
+                    // POST branch which expects a SpeechResult, sees nothing, and
+                    // plays the "didn't catch that" prompt (e.g. Marathi
+                    // "क्षमा करा, मला ऐकू आले नाही") as the first thing the parent
+                    // hears — instead of the actual greeting.
+                    //
+                    // History: this regression was first reported + fixed in May
+                    // 2026 on a stale claude/* branch (db2312735) that never
+                    // merged to main. The 2026-06-06 forensic-wave rewrite of the
+                    // calls.create body using `URLSearchParams({...})` literal
+                    // form dropped the param again. User-reported symptom both
+                    // times: "started saying 'i don't understand'... not started
+                    // with greeting".
+                    Method:              'GET',
                     StatusCallback:      statusCallbackUrl,
                     StatusCallbackEvent: 'initiated ringing answered completed',
                     StatusCallbackMethod:'POST',
