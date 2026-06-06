@@ -195,7 +195,15 @@ describe('dispatchAvatar — canary mode (sidecar serves)', () => {
 
         expect(out.source).toBe('sidecar');
         expect(out.imageDataUri).toBe(TINY_PNG_DATA_URI);
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
         expect(out.sidecarTelemetry).toBeDefined();
         expect(out.sidecarTelemetry?.sidecarVersion).toBe('phase-f.2.0');
     });
@@ -263,6 +271,14 @@ describe('dispatchAvatar — full mode', () => {
         const out = await dispatchAvatar(BASE_INPUT);
 
         expect(out.source).toBe('sidecar');
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
     });
 });
