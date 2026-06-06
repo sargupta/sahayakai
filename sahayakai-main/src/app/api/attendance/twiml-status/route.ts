@@ -58,22 +58,20 @@ export async function POST(req: NextRequest) {
 
         await docRef.update(update);
 
-        // F8-03 fix (P0): idempotency guard. Twilio retries the completed-status
-        // callback on transient failures (and load balancers occasionally
-        // double-deliver). Without this guard we re-ran the LLM summary on
-        // every retry, multiplying cost and churning the saved summary doc.
-        //
-        // We use a Firestore transaction to atomically check `callSummary`
-        // absence AND claim a `_summaryGenerating` flag — only one webhook
-        // call can hold the claim at a time. Subsequent retries see the
-        // flag (or the persisted summary) and short-circuit. Mirrors the
-        // pattern in transcript-sync/route.ts:87.
+        // F8-03 / F9-002 fix (P0): idempotency guard + atomic summary-generation
+        // lock. Twilio retries the completed-status callback on transient
+        // failures (and load balancers occasionally double-deliver). Without
+        // this guard we re-ran the LLM summary on every retry, multiplying
+        // cost and churning the saved summary doc. transcript-sync may have
+        // already claimed the lock or written the summary; we only proceed
+        // if we successfully claim it here. Mirrors transcript-sync/route.ts:87.
         if (callStatus === 'completed' && data.transcript?.length > 1) {
             const claimed = await db.runTransaction(async (tx) => {
-                const snap = await tx.get(docRef);
-                const d = snap.data() ?? {};
-                if (d.callSummary) return false;          // already generated
-                if (d._summaryGenerating) return false;   // another worker holds the claim
+                const fresh = await tx.get(docRef);
+                if (!fresh.exists) return false;
+                const fd = fresh.data()!;
+                if (fd.callSummary) return false;          // already generated
+                if (fd._summaryGenerating) return false;   // another worker holds the claim
                 tx.update(docRef, {
                     _summaryGenerating: true,
                     _summaryGeneratingAt: new Date().toISOString(),
@@ -138,7 +136,7 @@ async function generateAndSaveSummary(
             ...summary,
             generatedAt: new Date().toISOString(),
         },
-        _summaryGenerating: false, // F8-03: release idempotency claim
+        _summaryGenerating: false, // F8-03/F9-002: release idempotency claim
         updatedAt: new Date().toISOString(),
     });
 
