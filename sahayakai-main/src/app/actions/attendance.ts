@@ -175,14 +175,10 @@ export async function addStudentAction(classId: string, data: {
     await requireProPlan(uid);
     const db = await getDb();
 
-    const classDoc = await db.collection('classes').doc(classId).get();
+    const classRef = db.collection('classes').doc(classId);
+    const classDoc = await classRef.get();
     if (!classDoc.exists) throw new Error('Class not found');
     if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
-
-    // Enforce 40-student limit via COUNT aggregation
-    const countSnap = await db.collection('classes').doc(classId)
-        .collection('students').count().get();
-    if (countSnap.data().count >= 40) throw new Error('Maximum 40 students per class');
 
     if (!data.name.trim()) throw new Error('Student name is required');
     if (data.name.length > 80) throw new Error('Student name too long (max 80 chars)');
@@ -196,7 +192,8 @@ export async function addStudentAction(classId: string, data: {
     const phone = normalizeToE164(data.parentPhone);
     const now = new Date().toISOString();
 
-    const ref = db.collection('classes').doc(classId).collection('students').doc();
+    const studentsCol = classRef.collection('students');
+    const ref = studentsCol.doc();
     const student: Omit<Student, 'id'> = {
         classId,
         name: data.name.trim(),
@@ -207,14 +204,24 @@ export async function addStudentAction(classId: string, data: {
         updatedAt: now,
     };
 
+    // F9-006 fix: enforce 40-student limit inside a transaction so concurrent
+    // adds can't both pass the count check and end up creating the 41st row.
+    // Read the class doc's `studentCount` (kept in sync by the writes below)
+    // inside the txn; reject and increment atomically.
     const { FieldValue } = await import('firebase-admin/firestore');
-    const batch = db.batch();
-    batch.set(ref, student);
-    batch.update(db.collection('classes').doc(classId), {
-        studentCount: FieldValue.increment(1),
-        updatedAt: now,
+    await db.runTransaction(async (tx) => {
+        const freshClass = await tx.get(classRef);
+        if (!freshClass.exists) throw new Error('Class not found');
+        if (freshClass.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+        const currentCount = (freshClass.data()!.studentCount as number | undefined) ?? 0;
+        if (currentCount >= 40) throw new Error('Maximum 40 students per class');
+
+        tx.set(ref, student);
+        tx.update(classRef, {
+            studentCount: FieldValue.increment(1),
+            updatedAt: now,
+        });
     });
-    await batch.commit();
 
     return { studentId: ref.id };
 }
@@ -287,13 +294,24 @@ export async function saveAttendanceAction(
     await requireProPlan(uid);
     const db = await getDb();
 
-    // Validate date as strings to avoid UTC-vs-local issues with new Date('YYYY-MM-DD').
-    // YYYY-MM-DD strings sort lexicographically in the same order as dates.
-    const todayStr = new Date().toLocaleDateString('sv'); // 'sv' locale gives YYYY-MM-DD in local tz
+    // F9-004 fix: validate against IST, not server-UTC. Cloud Run runs in UTC,
+    // so between 18:30Z–24:00Z (00:00–05:30 IST) the server's `today` is one
+    // day BEHIND the teacher's IST calendar. A teacher marking attendance at
+    // 00:30 IST hit "Cannot mark attendance for future dates" because the
+    // server still thought it was yesterday. Compute today/seven-days-ago in
+    // Asia/Kolkata explicitly via Intl rather than relying on the host TZ.
+    const istFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    const istDateString = (d: Date) => istFormatter.format(d); // YYYY-MM-DD in IST
+    const todayStr = istDateString(new Date());
     const sevenDaysAgoStr = (() => {
         const d = new Date();
-        d.setDate(d.getDate() - 7);
-        return d.toLocaleDateString('sv');
+        d.setUTCDate(d.getUTCDate() - 7);
+        return istDateString(d);
     })();
 
     if (date > todayStr) throw new Error('Cannot mark attendance for future dates');

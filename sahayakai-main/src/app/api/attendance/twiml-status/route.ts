@@ -58,12 +58,31 @@ export async function POST(req: NextRequest) {
 
         await docRef.update(update);
 
-        // Generate call summary asynchronously if call completed and has a conversation
+        // ── F9-002 fix: atomic summary-generation lock ────────────────────
+        // Mirrors transcript-sync. transcript-sync may have already claimed the
+        // lock or written the summary; we only proceed if we successfully
+        // claim it here.
         if (callStatus === 'completed' && data.transcript?.length > 1) {
-            // Fire-and-forget: don't block the 200 response to Twilio
-            generateAndSaveSummary(docRef, data, callDuration).catch((err) => {
-                console.error('[twiml-status] Summary generation failed:', err);
+            const claimed = await db.runTransaction(async (tx) => {
+                const fresh = await tx.get(docRef);
+                if (!fresh.exists) return false;
+                const fd = fresh.data()!;
+                if (fd.callSummary) return false;
+                if (fd._summaryGenerating) return false;
+                tx.update(docRef, {
+                    _summaryGenerating: true,
+                    _summaryGeneratingAt: new Date().toISOString(),
+                });
+                return true;
             });
+
+            if (claimed) {
+                // Fire-and-forget: don't block the 200 response to Twilio
+                generateAndSaveSummary(docRef, data, callDuration).catch(async (err) => {
+                    console.error('[twiml-status] Summary generation failed:', err);
+                    await docRef.update({ _summaryGenerating: false }).catch(() => {});
+                });
+            }
         }
 
         return new NextResponse('OK', { status: 200 });
@@ -111,6 +130,7 @@ async function generateAndSaveSummary(
             ...summary,
             generatedAt: new Date().toISOString(),
         },
+        _summaryGenerating: false,
         updatedAt: new Date().toISOString(),
     });
 
