@@ -306,6 +306,16 @@ export async function getMyGroupsAction(): Promise<Group[]> {
 
 // ── 3. getGroupAction ─────────────────────────────────────────────────────────
 
+/**
+ * F10-06 (design choice, 2026-06-06): non-members CAN read group metadata via
+ * this action. This is intentional — group discovery (browse/join) needs to
+ * surface name, description, member count, and topics to teachers who are not
+ * yet members. Anything sensitive (chat messages, member email list, draft
+ * posts) lives in subcollections that are gated by separate per-collection
+ * action handlers + Firestore rules requiring `requireGroupMember`. If at any
+ * point the top-level `groups/{groupId}` doc starts carrying member-only data,
+ * add a `requireGroupMember` check here.
+ */
 export async function getGroupAction(groupId: string): Promise<Group | null> {
     await requireAuth();
     const db = await getDb();

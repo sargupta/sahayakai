@@ -129,6 +129,14 @@ export async function toggleLikeAction(postId: string) {
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
 
+    // F10-05: forbid self-like. Inflates vanity counters and pollutes ranking.
+    const postSnap = await postRef.get();
+    if (!postSnap.exists) throw new Error('Post not found');
+    const postData = postSnap.data() ?? {};
+    if (postData.authorId && postData.authorId === userId) {
+        throw new Error('Cannot like your own post');
+    }
+
     const likeDoc = await likeRef.get();
 
     // Wave 2b: replaced read-modify-write with FieldValue.increment so two
@@ -180,6 +188,11 @@ import { createTypedNotification } from "./notifications";
 
 export async function followTeacherAction(followingId: string) {
     const followerId = await requireAuth();
+    // F10-04: forbid self-follow. Inflates the follower graph and gives
+    // social-proof to the wrong account.
+    if (followingId === followerId) {
+        throw new Error('Cannot follow yourself');
+    }
     // Invalidate this user's cached recommendations — their following list
     // just changed, so the exclusion set is stale.
     invalidateUserCache('recs', followerId);
@@ -548,6 +561,11 @@ export async function likeResourceAction(
     if (!resDoc.exists) throw new Error('Resource not found');
     const resData = resDoc.data()!;
 
+    // F10-05: forbid self-like on library resources too.
+    if (resData.authorId && resData.authorId === userId) {
+        throw new Error('Cannot like your own resource');
+    }
+
     let isLiked: boolean;
 
     if (likeDoc.exists) {
@@ -815,6 +833,25 @@ export async function sendChatMessageAction(text: string, audioUrl?: string) {
     const trimmed = text?.trim();
     if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
     if (trimmed && trimmed.length > 500) throw new Error("Message too long");
+
+    // F10-03: audioUrl must point at Firebase Storage. Without this guard a
+    // hostile client could plant a tracking-pixel URL that fires every time
+    // a chat viewer's <audio> element preloads metadata, leaking which users
+    // opened the chat. Mirrors sendGroupChatMessageAction's validation.
+    if (audioUrl) {
+        if (typeof audioUrl !== 'string' || audioUrl.length > 1024) {
+            throw new Error('Invalid audio URL');
+        }
+        let parsed: URL;
+        try {
+            parsed = new URL(audioUrl);
+        } catch {
+            throw new Error('Invalid audio URL');
+        }
+        if (parsed.protocol !== 'https:' || parsed.host !== 'firebasestorage.googleapis.com') {
+            throw new Error('Invalid audio URL');
+        }
+    }
 
     // 3. Rate limit (already imported at top of file)
     await checkServerRateLimit(authorId);
