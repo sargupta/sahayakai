@@ -41,12 +41,16 @@ export async function syncUserAction(user: { uid: string; email: string | null; 
     }
 
     try {
-        const profileData: Partial<UserProfile> = {
-            uid: callerUid,
-            email: user.email || "",
-            displayName: user.displayName || "",
-            photoURL: user.photoURL || "",
-        };
+        // F11-5: Only patch fields the provider actually populated. Phone-only
+        // re-sign-in (Firebase Phone Auth) leaves displayName/photoURL as
+        // null on the user object — writing an empty string would clobber
+        // the values the teacher set during onboarding (e.g. uploaded photo,
+        // chosen display name). F11-4 already does this for `email`; we now
+        // mirror that pattern for displayName and photoURL.
+        const profileData: Partial<UserProfile> = { uid: callerUid };
+        if (user.email) profileData.email = user.email;
+        if (user.displayName) profileData.displayName = user.displayName;
+        if (user.photoURL) profileData.photoURL = user.photoURL;
 
         // This uses dbAdapter.updateUser which performs a set({ ... }, { merge: true })
         // effectively acting as an upsert (create if not exists)

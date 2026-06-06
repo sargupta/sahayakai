@@ -12,6 +12,7 @@ import { quizGeneratorFlow } from './quiz-definitions';
 import { logger } from '@/lib/logger';
 import { AIQuotaExhaustedError } from '@/ai/genkit';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
+import { defaultNumQuestionsForGrade, getGradeBand, getBandDisplayLabel } from '@/lib/grade-bands';
 
 /**
  * True when the error is (or wraps) an AIQuotaExhaustedError, or surfaces a
@@ -34,6 +35,23 @@ export type { QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-
 export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVariantsOutput> {
   const uid = input.userId;
   let localizedInput = { ...input };
+
+  // F18-01: Grade-aware numQuestions default. The Zod schema's
+  // `default(5)` is a one-size-fits-all fallback that is wrong for
+  // every band except primary. We override BEFORE schema validation so
+  // the caller's explicit value still wins.
+  // - Primary (1-5)   → 5
+  // - Middle  (6-8)   → 10
+  // - Secondary (9-10)→ 15
+  // - Senior (11-12)  → 20
+  if (input.numQuestions === undefined || input.numQuestions === null) {
+    localizedInput.numQuestions = defaultNumQuestionsForGrade(localizedInput.gradeLevel);
+  }
+
+  // F18-03: Derive gradeBandLabel ("Primary (Class 1-5)" etc.) for the
+  // prompt's vocabulary-age constraint — prevents Class 3 quizzes from
+  // leaking Class 9 vocabulary.
+  localizedInput.gradeBandLabel = getBandDisplayLabel(getGradeBand(localizedInput.gradeLevel));
 
   if (uid) {
     // Fetch user's preferred language if not provided

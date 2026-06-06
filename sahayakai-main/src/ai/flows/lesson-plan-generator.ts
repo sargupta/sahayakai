@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
+import { getGradeBand, getPedagogyFrameworkBlock, getBandDisplayLabel } from '@/lib/grade-bands';
 
 export const LessonPlanInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a lesson plan.'),
@@ -50,6 +51,13 @@ export const LessonPlanInputSchema = z.object({
   schoolType: z.string().optional().describe('Type of school (government / private / chain) — currently informational; may inform resource-level inference in future.'),
   teacherMotherTongue: z.string().optional().describe('Teacher\'s primary language preference, distinct from the output language when bilingual code-switching matters.'),
   regionalContextBlock: z.string().optional().describe('Pre-rendered prompt block listing local crops/festivals/geography for the prompt template. Computed server-side; ignored if absent.'),
+  // F18-02: Band-derived pedagogy block + label. The lesson plan template
+  // previously hard-applied the 5E model to every grade — age-inappropriate
+  // for Primary (too abstract) and missing exam-prep awareness for
+  // Secondary / Senior. These fields are populated server-side from
+  // gradeLevels[0]; never user-supplied.
+  pedagogyFrameworkBlock: z.string().optional().describe('Pre-rendered Markdown block describing the pedagogy framework for the chosen grade band.'),
+  gradeBandLabel: z.string().optional().describe('Human-readable grade band label injected into the prompt.'),
 });
 
 function normalizeInput(input: LessonPlanInput): LessonPlanInput {
@@ -86,7 +94,7 @@ const LessonPlanOutputSchema = z.object({
   })).nullable().optional().describe('Key terms with meanings.'),
   materials: z.array(z.string()).describe('A list of materials needed for the lesson.'),
   activities: z.array(z.object({
-    phase: z.enum(['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate']).describe('The 5E model phase.'),
+    phase: z.enum(['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate']).describe('The 5E model phase. The pedagogy-framework block tailors the meaning of each phase to the grade band (Primary uses story/play; Secondary uses board-exam prep; Senior adds competitive-exam strategy).'),
     name: z.string().describe('The name of the activity.'),
     description: z.string().describe('A detailed description of the activity.'),
     duration: z.string().describe('The estimated duration (e.g., "15 minutes").'),
@@ -244,6 +252,15 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
     localizedInput.subject,
   );
 
+  // F18-02: Derive the pedagogy framework block from gradeLevels[0]. The
+  // template now switches between Primary (story-based), Middle (5E),
+  // Secondary (exam-prep), and Senior (deep analysis + competitive exam)
+  // instead of hard-applying 5E to every band.
+  const primaryGrade = localizedInput.gradeLevels?.[0];
+  const band = getGradeBand(primaryGrade);
+  localizedInput.pedagogyFrameworkBlock = getPedagogyFrameworkBlock(band);
+  localizedInput.gradeBandLabel = getBandDisplayLabel(band);
+
   return lessonPlanFlow(localizedInput);
 }
 
@@ -268,6 +285,11 @@ You are an expert teacher who creates highly precise, balanced, and pedagogicall
 - **If topic mentions a grade** (e.g., "for grade 7 students"), that grade takes absolute priority
 - **If no grade mentioned in topic**, use the gradeLevels parameter provided above
 
+{{#if gradeBandLabel}}**Grade Band:** {{{gradeBandLabel}}}{{/if}}
+
+{{#if pedagogyFrameworkBlock}}
+{{{pedagogyFrameworkBlock}}}
+{{else}}
 **Structural Instructions (5E Model):**
 You MUST organize the activities into the 5E Instructional Model:
 1. **Engage**: Catch student interest, connect to prior knowledge (e.g., a story, a riddle, or a real-life scenario).
@@ -275,6 +297,7 @@ You MUST organize the activities into the 5E Instructional Model:
 3. **Explain**: Direct instruction where the core concept is clarified.
 4. **Elaborate**: Applying the concept to new situations or connecting to local Indian context.
 5. **Evaluate**: Check for understanding (formative).
+{{/if}}
 
 **Metadata Requirements:**
 - **gradeLevel**: MUST be one of: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (use EXACTLY as shown - do NOT invent a different grade!)

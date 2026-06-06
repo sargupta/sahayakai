@@ -231,10 +231,14 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
 
     // 3. Preferences
     'preferredLanguage',
+    'lastLessonPlanLanguage', // F11-2: reconcile with adapter allowlist
+    'notificationPreferences', // F11-2
+    'voicePreferences', // F11-2
 
     // 4. Onboarding state machine
     'onboardingPhase',
     'onboardingCompletedAt',
+    'onboardingComplete', // F11-2: reconcile with adapter allowlist
     'onboardingChecklistItems',
     'checklistDismissedAt',
     'featureSpotlightsSeen',
@@ -248,10 +252,49 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
     // 5. Privacy / consent
     'privacyAcceptedAt',
     'privacyVersion',
+    'consentGivenAt', // F11-2: reconcile with adapter allowlist
+    'consentVersion', // F11-2
 
     // 6. Community intro state
     'communityIntroState',
+
+    // 7. Legacy field aliases / misc system flags
+    'avatarUrl', // F11-2: photoURL alias used by some client paths
+    'phone', // F11-2: phoneNumber alias
+    'teachingGradeLevels', // F11-2: gradeLevels alias
+    'groupsInitialized', // F11-2: server marks true; client may force-rerun
 ]);
+
+/**
+ * F11-3: Phases beyond `language-picked` require that prerequisites are
+ * already persisted on the user document. Without this check, a hostile
+ * client could POST `{ onboardingPhase: 'exploring' }` and skip the
+ * profile-setup screen entirely (then the AI flows fall back to bogus
+ * defaults because state/subjects/grades are missing).
+ *
+ * Rules:
+ *  - `language-picked` (Step 0 done): no prerequisites.
+ *  - `first-generation` (Step 1 done): requires state, schoolName,
+ *     subjects.length > 0, gradeLevels.length > 0.
+ *  - `exploring` / `completed` (Step 2 done): same as first-generation.
+ *
+ * `district` is intentionally NOT in the prerequisite list — the UI's
+ * Step 1 captures state, schoolName, subjects, grades but does not require
+ * a district (some teachers don't list it). District is treated as
+ * desirable-but-optional.
+ */
+const ONBOARDING_PHASE_PREREQUISITES: Record<string, string[]> = {
+    'first-generation': ['state', 'schoolName', 'subjects', 'gradeLevels'],
+    'exploring': ['state', 'schoolName', 'subjects', 'gradeLevels'],
+    'completed': ['state', 'schoolName', 'subjects', 'gradeLevels'],
+};
+
+function hasValue(v: any): boolean {
+    if (v === undefined || v === null) return false;
+    if (typeof v === 'string') return v.trim().length > 0;
+    if (Array.isArray(v)) return v.length > 0;
+    return true;
+}
 
 export async function updateProfileAction(_userId: string, data: any) {
     const userId = await requireAuth();
@@ -271,6 +314,33 @@ export async function updateProfileAction(_userId: string, data: any) {
 
     if (Object.keys(sanitized).length === 0) {
         throw new Error('No writable fields in update payload');
+    }
+
+    // F11-3: Block onboardingPhase escalation when prerequisites aren't met.
+    // Onboarding-phase is in the writable allowlist so legitimate flow can
+    // advance it — but writing `exploring` (or `first-generation`, etc.)
+    // directly without ever capturing state/subjects/grades was a bypass
+    // exploited by malformed clients (and possibly hostile ones).
+    if (sanitized.onboardingPhase && ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase]) {
+        const required = ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase];
+        // Build the effective state = existing profile MERGED with the
+        // incoming patch. This way a single PATCH that includes both
+        // prerequisites and phase is accepted (the legitimate onboarding
+        // flow's "save all in one call" pattern works), but a phase-only
+        // patch without prerequisites is rejected.
+        const existing = await dbAdapter.getUser(userId).catch(() => null);
+        const merged: Record<string, any> = { ...(existing ?? {}), ...sanitized };
+        const missing = required.filter(field => !hasValue(merged[field]));
+        if (missing.length > 0) {
+            logger.warn(
+                'Rejected onboardingPhase advance: prerequisites missing',
+                'PROFILE',
+                { userId, phase: sanitized.onboardingPhase, missing },
+            );
+            throw new Error(
+                `Cannot advance onboardingPhase to '${sanitized.onboardingPhase}' — missing prerequisites: ${missing.join(', ')}`
+            );
+        }
     }
 
     await dbAdapter.updateUser(userId, sanitized);

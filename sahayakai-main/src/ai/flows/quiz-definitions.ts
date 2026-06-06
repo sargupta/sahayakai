@@ -62,6 +62,9 @@ When analyzing the topic input, users may correct themselves during voice input.
 10. **Context**: Maintain the specified \`gradeLevel\` (use "Class" terminology) and \`language\`.
 11. **Metadata**: Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
 12. **Descriptive Title**: You MUST generate a descriptive, engaging title for the quiz based on the topic or chapter provided (e.g., "Photosynthesis & Plant Life Quiz" instead of "Chapter Two Quiz"). Do NOT use generic titles like "Chapter [Number] Quiz" or just "Quiz".
+{{#if gradeBandLabel}}
+13. **Vocabulary Age Constraint**: Use vocabulary appropriate for {{{gradeBandLabel}}}. A Class 3 student should NOT see Class 9 vocabulary in question text, options, correct answers, or explanations. For Primary (Class 1-5): short, concrete words from daily life (mango, cow, pot, school, mother). For Middle (Class 6-8): standard textbook vocabulary with simple compound words. For Secondary (Class 9-10): board-exam terminology, technical terms defined inline if first introduced. For Senior Secondary (Class 11-12): full academic and competitive-exam vocabulary including derivations and technical jargon. Re-read every question before finalising and downgrade any word that exceeds the band.
+{{/if}}
 
 **Inputs:**
 {{#if imageDataUri}}
