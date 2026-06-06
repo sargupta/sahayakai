@@ -17,7 +17,12 @@ kind: Service
 metadata:
   name: sahayakai-agents
   annotations:
-    run.googleapis.com/ingress: internal-and-cloud-load-balancing
+    # Ingress is `all` (not `internal-and-cloud-load-balancing`) because the
+    # Next.js prod runtime calls the sidecar via the public Google front-end
+    # over its `*.run.app` URL. Auth at the app layer (OIDC ID token + HMAC
+    # body digest + App Check) makes public ingress safe; tightening this to
+    # internal-only causes 403/403-ingress errors from prod next.js.
+    run.googleapis.com/ingress: all
 spec:
   template:
     metadata:
@@ -70,8 +75,12 @@ spec:
                 secretKeyRef:
                   name: SAHAYAKAI_AGENTS_AUDIENCE
                   key: latest
+            # Allowed invoker SAs (comma-separated). The default Compute SA
+            # is the actual prod next.js runtime today; the named
+            # `sahayakai-hotfix-resilience-runtime` SA does not exist yet
+            # but is retained so a future SA rename is a no-op.
             - name: SAHAYAKAI_AGENTS_ALLOWED_INVOKERS
-              value: sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
+              value: 640589855975-compute@developer.gserviceaccount.com,sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
             - name: GOOGLE_GENAI_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -87,6 +96,20 @@ spec:
                 secretKeyRef:
                   name: SAHAYAKAI_REQUEST_SIGNING_KEY
                   key: latest
+            # Prompt directory baked into the container image at
+            # /srv/prompts. Without this, the writer's `_load_prompt`
+            # falls back to the source-tree default which is missing in
+            # the slim runtime image, raising FileNotFoundError on every
+            # request.
+            - name: SAHAYAKAI_PROMPTS_DIR
+              value: /srv/prompts
+            # App Check enforcement. The Next.js dispatchers in
+            # sahayakai-main/src/lib/sidecar/*-client.ts already attach
+            # the X-Firebase-AppCheck header server-side via
+            # `getFirebaseAppCheckToken()`, so `true` matches the
+            # currently-working prod config.
+            - name: SAHAYAKAI_REQUIRE_APP_CHECK
+              value: "true"
           startupProbe:
             httpGet:
               path: /readyz

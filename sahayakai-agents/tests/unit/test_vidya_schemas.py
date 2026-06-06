@@ -176,6 +176,7 @@ class TestActionFlowEnum:
             "rubric-generator",
             "exam-paper",
             "video-storyteller",
+            "instant-answer",
         ]:
             action = VidyaAction(
                 type="NAVIGATE_AND_FILL",
@@ -183,6 +184,22 @@ class TestActionFlowEnum:
                 params=VidyaActionParams(),
             )
             assert action.flow == flow
+
+    def test_instant_answer_is_in_allowed_flow_literal(self) -> None:
+        """CI guard — see `tests/unit/test_action_flow_ts_parity.py` for
+        the full Python↔TS parity test. This one fails loudly the moment
+        someone removes `instant-answer` from the wire enum, before any
+        cross-stack regeneration is even considered."""
+        from typing import get_args
+
+        from sahayakai_agents.agents.vidya.schemas import AllowedFlow
+
+        assert "instant-answer" in get_args(AllowedFlow), (
+            "'instant-answer' must remain in AllowedFlow — the supervisor "
+            "(sahayakai-main/src/ai/soul.ts) emits it as a navigable flow "
+            "and the TS wire validator depends on it. See "
+            "qa/results/lane-F/PYDANTIC_ENUM_SYNC.md."
+        )
 
     def test_invalid_action_type_rejects(self) -> None:
         with pytest.raises(ValidationError):
