@@ -58,12 +58,39 @@ export async function POST(req: NextRequest) {
 
         await docRef.update(update);
 
-        // Generate call summary asynchronously if call completed and has a conversation
+        // F8-03 fix (P0): idempotency guard. Twilio retries the completed-status
+        // callback on transient failures (and load balancers occasionally
+        // double-deliver). Without this guard we re-ran the LLM summary on
+        // every retry, multiplying cost and churning the saved summary doc.
+        //
+        // We use a Firestore transaction to atomically check `callSummary`
+        // absence AND claim a `_summaryGenerating` flag — only one webhook
+        // call can hold the claim at a time. Subsequent retries see the
+        // flag (or the persisted summary) and short-circuit. Mirrors the
+        // pattern in transcript-sync/route.ts:87.
         if (callStatus === 'completed' && data.transcript?.length > 1) {
-            // Fire-and-forget: don't block the 200 response to Twilio
-            generateAndSaveSummary(docRef, data, callDuration).catch((err) => {
-                console.error('[twiml-status] Summary generation failed:', err);
+            const claimed = await db.runTransaction(async (tx) => {
+                const snap = await tx.get(docRef);
+                const d = snap.data() ?? {};
+                if (d.callSummary) return false;          // already generated
+                if (d._summaryGenerating) return false;   // another worker holds the claim
+                tx.update(docRef, {
+                    _summaryGenerating: true,
+                    _summaryGeneratingAt: new Date().toISOString(),
+                });
+                return true;
             });
+
+            if (claimed) {
+                // Fire-and-forget: don't block the 200 response to Twilio
+                generateAndSaveSummary(docRef, data, callDuration).catch((err) => {
+                    console.error('[twiml-status] Summary generation failed:', err);
+                    // Release the claim so a future retry can attempt it.
+                    docRef.update({ _summaryGenerating: false }).catch(() => {});
+                });
+            } else {
+                console.log('[twiml-status] Summary already generated or in-flight — skipping (idempotent)');
+            }
         }
 
         return new NextResponse('OK', { status: 200 });
@@ -111,6 +138,7 @@ async function generateAndSaveSummary(
             ...summary,
             generatedAt: new Date().toISOString(),
         },
+        _summaryGenerating: false, // F8-03: release idempotency claim
         updatedAt: new Date().toISOString(),
     });
 

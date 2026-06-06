@@ -14,14 +14,16 @@ import type { Language } from '@/types';
 
 describe('Attendance Call Types', () => {
     describe('TWILIO_LANGUAGE_MAP', () => {
-        it('supports 10 languages (all except Odia)', () => {
+        it('supports all 11 languages (Odia via hi-IN fallback)', () => {
             const supported = Object.entries(TWILIO_LANGUAGE_MAP)
                 .filter(([, v]) => v !== null);
-            expect(supported).toHaveLength(10);
+            expect(supported).toHaveLength(11);
         });
 
-        it('returns null for Odia', () => {
-            expect(TWILIO_LANGUAGE_MAP['Odia' as Language]).toBeNull();
+        it('F8-02: Odia falls back to hi-IN (no native Twilio voice)', () => {
+            // Previously null → English Neural2 rendered Odia text. Now uses
+            // Hindi voice which is the standard regional substitution.
+            expect(TWILIO_LANGUAGE_MAP['Odia' as Language]).toBe('hi-IN');
         });
 
         it('maps Hindi to hi-IN', () => {
