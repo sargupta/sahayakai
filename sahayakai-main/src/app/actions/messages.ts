@@ -315,6 +315,16 @@ export async function markConversationReadAction(
 
     const convRef = db.collection('conversations').doc(conversationId);
 
+    // F2-02 (P1): verify the caller is actually a participant before mutating
+    // any messages. Without this check, knowing a conversation id was enough
+    // to taint the readBy audit trail on up to 50 messages of any
+    // conversation. Mirrors the check in sendMessageAction.
+    const convAuthDoc = await convRef.get();
+    if (!convAuthDoc.exists) throw new Error('Conversation not found');
+    const convAuthData = convAuthDoc.data()!;
+    const participantIds: string[] = convAuthData.participantIds ?? [];
+    if (!participantIds.includes(callerId)) throw new Error('Forbidden: not a participant');
+
     // Reset unread badge
     await convRef.update({ [`unreadCount.${userId}`]: 0 });
 
@@ -426,6 +436,16 @@ export async function acknowledgeDeliveryAction(
     const { FieldValue } = await import('firebase-admin/firestore');
 
     const convRef = db.collection('conversations').doc(conversationId);
+
+    // F2-03 (P2): verify the caller is a participant before stamping
+    // `deliveredTo`. Without this check, any signed-in caller could write
+    // their uid onto any conversation's messages.
+    const convAuthDoc = await convRef.get();
+    if (!convAuthDoc.exists) throw new Error('Conversation not found');
+    const convAuthData = convAuthDoc.data()!;
+    const participantIds: string[] = convAuthData.participantIds ?? [];
+    if (!participantIds.includes(userId)) throw new Error('Forbidden: not a participant');
+
     const batch = db.batch();
 
     for (const msgId of messageIds.slice(0, 50)) {  // cap at 50 per batch
