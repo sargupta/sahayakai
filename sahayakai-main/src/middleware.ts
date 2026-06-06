@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify, importX509, createRemoteJWKSet } from 'jose';
+import {
+    PROFILE_COMPLETE_COOKIE,
+    verifyProfileCompleteCookie,
+} from '@/lib/profile-complete-cookie';
 
 // Firebase Project ID
 const PROJECT_ID = 'sahayakai-b4248';
@@ -267,6 +271,54 @@ export async function middleware(request: NextRequest) {
         }
         // Page GETs without a token: pass through, x-user-id simply not set.
         // The page can decide whether to render a public version or redirect.
+    }
+
+    // --- Onboarding completion gate (2026-06-06) ---
+    // If the user is authenticated and trying to GET a page route that is
+    // NOT in the allowlist below, AND we don't have a valid signed
+    // profile-completion cookie, push them to /onboarding. The completion
+    // cookie is issued by POST /api/profile/mark-complete after the server
+    // confirms the profile is ≥ 80% complete.
+    //
+    // We deliberately gate on the cookie rather than a Firestore read so
+    // every page request stays cheap. Worst case: a cookie loss
+    // (cleared browser data, signed out elsewhere, secret rotation) sends
+    // the user through onboarding once — they will only enter the missing
+    // fields, and the mark-complete route re-issues the cookie.
+    const isAuthenticatedPageGet =
+        requestHeaders.has('x-user-id') &&
+        !isApiOrAdmin &&
+        request.method === 'GET' &&
+        !pathname.startsWith('/__/');
+    if (isAuthenticatedPageGet) {
+        const onboardingAllowlist = [
+            '/onboarding',
+            '/login',
+            '/signup',
+            '/auth',
+            '/logout',
+            '/privacy',
+            '/terms',
+            '/sw.js',
+            '/manifest',
+            '/robots.txt',
+            '/sitemap.xml',
+        ];
+        const inAllowlist = onboardingAllowlist.some(p => pathname === p || pathname.startsWith(`${p}/`) || pathname.startsWith(`${p}.`));
+        // Also skip public marketing pages (landing) so logged-in users
+        // visiting the homepage aren't bounced. The homepage IS the
+        // dashboard for authenticated teachers, so it MUST be gated.
+        // We allow only the explicit-allowlist set above.
+        if (!inAllowlist) {
+            const cookieVal = request.cookies.get(PROFILE_COMPLETE_COOKIE)?.value;
+            const verifiedUid = await verifyProfileCompleteCookie(cookieVal);
+            const sessionUid = requestHeaders.get('x-user-id');
+            if (!verifiedUid || verifiedUid !== sessionUid) {
+                const redirectUrl = new URL('/onboarding', request.url);
+                redirectUrl.searchParams.set('next', pathname);
+                return NextResponse.redirect(redirectUrl);
+            }
+        }
     }
 
     // Security headers for all non-static responses
