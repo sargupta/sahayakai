@@ -54,7 +54,7 @@ const ALLOWED_PREFIXES: Array<{ prefix: string; uidScoped: boolean }> = [
 ];
 
 /** Returns null if storagePath is allowed, otherwise a rejection reason. */
-export function validateStoragePath(storagePath: string, verifiedUid: string | null): string | null {
+function validateStoragePath(storagePath: string, verifiedUid: string | null): string | null {
     if (typeof storagePath !== 'string' || storagePath.length === 0) {
         return 'empty_path';
     }
