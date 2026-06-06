@@ -84,7 +84,7 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
-      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest
       # Sidecar URL — pinned to PROD service so a fresh deploy cannot
       # silently inherit a staging URL from a previous ad-hoc env override.
       # 2026-06-06 (parent-call attendance diagnosis): the live revision was
