@@ -87,25 +87,25 @@ export async function toggleLikeAction(postId: string) {
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
 
-    const likeDoc = await likeRef.get();
-
-    // Wave 2b: replaced read-modify-write with FieldValue.increment so two
-    // concurrent toggles can't read the same value, both write +1, and lose
-    // a count. The likeRef.get is only used to decide direction — the actual
-    // counter mutation is now atomic at the Firestore level.
-    if (likeDoc.exists) {
-        // Unlike
-        await Promise.all([
-            likeRef.delete(),
-            postRef.update({ likesCount: FieldValue.increment(-1) }),
-        ]);
-    } else {
-        // Like
-        await Promise.all([
-            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
-            postRef.update({ likesCount: FieldValue.increment(1) }),
-        ]);
-    }
+    // F5-002 fix: wrap the entire toggle in a Firestore transaction. The
+    // previous implementation pre-read `likeRef.exists` and decided the
+    // direction OUTSIDE the write — concurrent toggles from the same user
+    // could both observe `!exists`, both write the like-doc (idempotent
+    // set), and both fire `FieldValue.increment(+1)`, inflating
+    // `likesCount` by N while only one like-doc actually exists. The
+    // transaction makes the read+decide+write atomic: Firestore retries
+    // the closure if another writer modified `likeRef` in between, so the
+    // final state is always one like-doc and a counter delta of +1 or 0.
+    await db.runTransaction(async (tx) => {
+        const likeDoc = await tx.get(likeRef);
+        if (likeDoc.exists) {
+            tx.delete(likeRef);
+            tx.update(postRef, { likesCount: FieldValue.increment(-1) });
+        } else {
+            tx.set(likeRef, { uid: userId, createdAt: new Date().toISOString() });
+            tx.update(postRef, { likesCount: FieldValue.increment(1) });
+        }
+    });
 
     revalidatePath("/community");
 }
@@ -589,18 +589,29 @@ export async function saveResourceToLibraryAction(
     const resRef  = db.collection('library_resources').doc(resource.id);
     const saveRef = resRef.collection('saves').doc(saverId);
 
-    const saveDoc = await saveRef.get();
+    // F5-003 fix: same TOCTOU pattern as F5-002. Pre-reading `saveRef.exists`
+    // and then running the save-doc set + stats.saves increment as separate
+    // writes meant two concurrent saves from the same user could both observe
+    // `!exists`, both set the save-doc (idempotent), and both fire
+    // `FieldValue.increment(+1)` — inflating `stats.saves` by N. Wrap the
+    // existence check + counter increment in a transaction; the closure
+    // returns `true` if the save was already recorded (so we short-circuit
+    // the rest of the side-effects below: library copy, notification,
+    // metrics, pubsub).
+    const alreadySaved = await db.runTransaction(async (tx) => {
+        const saveDoc = await tx.get(saveRef);
+        if (saveDoc.exists) {
+            return true;
+        }
+        tx.set(saveRef, { createdAt: new Date().toISOString() });
+        tx.update(resRef, { 'stats.saves': FieldValue.increment(1) });
+        return false;
+    });
 
-    if (saveDoc.exists) {
+    if (alreadySaved) {
         // Already saved — silently succeed
         return { alreadySaved: true };
     }
-
-    // 1. Mark the save in the subcollection (idempotency guard)
-    await saveRef.set({ createdAt: new Date().toISOString() });
-
-    // 2. Increment community stats
-    await resRef.update({ 'stats.saves': FieldValue.increment(1) });
 
     // 3. Copy into saver's personal library (subcollection)
     const contentId = `saved_${resource.id}_${saverId.slice(0, 8)}`;

@@ -29,6 +29,8 @@
  * Phase M.5 §M.5.
  */
 
+import { randomUUID } from 'crypto';
+
 import { format } from 'date-fns';
 
 import { getDb } from '@/lib/firebase-admin';
@@ -97,7 +99,16 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         // is local-tz; we want UTC so daily-rollup boundaries are
         // deterministic across regions).
         const date = format(new Date(), 'yyyy-MM-dd');
-        const id = `${sample.uid}__${Date.now()}`;
+        // F5-001 fix: append an 8-char random suffix so same-millisecond
+        // bursts from the same uid don't collide. The previous
+        // `${uid}__${Date.now()}` doc-id silently overwrote 199 of 200
+        // same-ms calls under load (Firestore .set() is upsert), causing
+        // lossy Q4C parity rollups and breaking the canary→full promotion
+        // gate. The suffix is drawn from `crypto.randomUUID()` for
+        // collision-resistance — 8 hex chars = 4 bytes of entropy, which
+        // is comfortably enough to disambiguate even thousand-per-ms bursts.
+        const suffix = randomUUID().replace(/-/g, '').slice(0, 8);
+        const id = `${sample.uid}__${Date.now()}__${suffix}`;
         const db = await getDb();
         // Phase 1a / Parallel-D fix (2026-06-05): Firestore rejects
         // `undefined` field values. Every SUCCESSFUL sidecar call has

@@ -547,20 +547,26 @@ export async function likeGroupPostAction(
         .doc(postId);
 
     const likeRef = postRef.collection('likes').doc(uid);
-    const likeDoc = await likeRef.get();
 
-    let isLiked: boolean;
-    if (likeDoc.exists) {
-        // Unlike
-        await likeRef.delete();
-        await postRef.update({ likesCount: FieldValue.increment(-1) });
-        isLiked = false;
-    } else {
-        // Like
-        await likeRef.set({ uid, likedAt: new Date().toISOString() });
-        await postRef.update({ likesCount: FieldValue.increment(1) });
-        isLiked = true;
-    }
+    // F5-002 fix: wrap the read-decide-write in a transaction. The previous
+    // implementation pre-read `likeRef.exists` outside the write — concurrent
+    // double-taps from the same client (or retried RPCs) could both observe
+    // `!exists`, both set the like-doc (idempotent), and both fire
+    // `FieldValue.increment(+1)`, inflating `likesCount` by N while only one
+    // like-doc lands. The transaction retries on contention so the final
+    // counter delta is always +1 or 0.
+    const isLiked = await db.runTransaction(async (tx) => {
+        const likeDoc = await tx.get(likeRef);
+        if (likeDoc.exists) {
+            tx.delete(likeRef);
+            tx.update(postRef, { likesCount: FieldValue.increment(-1) });
+            return false;
+        } else {
+            tx.set(likeRef, { uid, likedAt: new Date().toISOString() });
+            tx.update(postRef, { likesCount: FieldValue.increment(1) });
+            return true;
+        }
+    });
 
     const updatedPost = await postRef.get();
     const newCount = updatedPost.data()?.likesCount ?? 0;

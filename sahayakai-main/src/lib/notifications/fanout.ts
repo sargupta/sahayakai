@@ -74,17 +74,39 @@ export async function fanoutNewTeacherJoinedNotification(
     const result: FanoutResult = { sent: 0, skippedDedup: 0, skippedHidden: 0, capped: false };
     try {
         const db = await getDb();
-        const newTeacherSnap = await db.collection('users').doc(newTeacherUid).get();
-        if (!newTeacherSnap.exists) {
+        const userRef = db.collection('users').doc(newTeacherUid);
+
+        // F5-004 fix: atomic check-and-set on a `newTeacherFanoutCompleted`
+        // marker. The profile route POST handler is called from `useEffect`
+        // hooks and form-submit handlers; a double-submit (or a duplicate
+        // request from network retry) used to fire fan-out N times, sending
+        // duplicate "<name> joined SahayakAI" FCM to every nearby teacher.
+        // We now read the marker and set it to `true` in a single Firestore
+        // transaction — the second caller observes `marker === true` and
+        // returns before the candidate query / batch write runs.
+        const teacher = await db.runTransaction(async (tx) => {
+            const snap = await tx.get(userRef);
+            if (!snap.exists) return null;
+            const data = snap.data() as {
+                displayName?: string;
+                schoolName?: string;
+                state?: string;
+                district?: string;
+                subjects?: string[];
+                newTeacherFanoutCompleted?: boolean;
+            };
+            if (data.newTeacherFanoutCompleted) return undefined; // already fanned out
+            tx.update(userRef, { newTeacherFanoutCompleted: true });
+            return data;
+        });
+
+        if (teacher === null) {
             return { ...result, reason: 'missing_profile' };
         }
-        const teacher = newTeacherSnap.data() as {
-            displayName?: string;
-            schoolName?: string;
-            state?: string;
-            district?: string;
-            subjects?: string[];
-        };
+        if (teacher === undefined) {
+            // Marker was already set by a concurrent caller — silently no-op.
+            return result;
+        }
 
         if (looksLikeTestAccount(teacher.displayName)) {
             return { ...result, reason: 'test_account' };
