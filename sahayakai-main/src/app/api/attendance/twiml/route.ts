@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP, TWILIO_VOICE_MAP, CALL_MENU_PROMPTS } from '@/types/attendance';
@@ -23,7 +24,7 @@ const SPEECH_LANGUAGE_MAP: Record<string, string> = {
     'bn-IN': 'bn-IN',
     'mr-IN': 'mr-IN',
     'gu-IN': 'gu-IN',
-    'pa-IN': 'pa-Guru-IN', // Twilio uses this for Punjabi speech recognition
+    'pa-IN': 'pa-IN', // F8-05 fix (P2): Twilio expects 'pa-IN', not 'pa-Guru-IN'
 };
 
 // ── GET: Initial call pickup — deliver greeting + teacher message + first <Gather> ──
@@ -207,6 +208,51 @@ export async function POST(req: NextRequest) {
 </Response>`);
         }
 
+        // F8-04 fix (P1): per-turn dedup. Twilio retries Gather webhooks on
+        // network blips and occasionally double-delivers them — without a
+        // fingerprint guard we appended duplicate parent turns and re-ran
+        // the LLM. Fingerprint = (callSid, turnNumber, sha1(SpeechResult)).
+        // We atomically check-and-set against `processedTurns` (array of
+        // fingerprints) inside a Firestore transaction. If the fingerprint
+        // is already present, we return the previously-cached TwiML reply
+        // for that fingerprint (stored in `processedTurnReplies`), keeping
+        // the user-visible behavior identical to the first delivery.
+        const callSidForDedup = (formData.get('CallSid') as string | null) ?? outreachId;
+        const speechHash = crypto.createHash('sha1').update(parentSpeech).digest('hex').slice(0, 12);
+        const fingerprint = `${callSidForDedup}:${turnCount + 1}:${speechHash}`;
+
+        const dedup = await db.runTransaction(async (tx) => {
+            const snap = await tx.get(doc.ref);
+            const d = snap.data() ?? {};
+            const processed: string[] = Array.isArray(d.processedTurns) ? d.processedTurns : [];
+            const replies: Record<string, string> = d.processedTurnReplies ?? {};
+            if (processed.includes(fingerprint)) {
+                return { duplicate: true as const, cachedReply: replies[fingerprint] ?? null };
+            }
+            tx.update(doc.ref, {
+                processedTurns: [...processed, fingerprint].slice(-32), // bound growth
+            });
+            return { duplicate: false as const, cachedReply: null };
+        });
+
+        if (dedup.duplicate) {
+            console.log('[twiml] Duplicate turn detected — returning cached reply for', fingerprint);
+            if (dedup.cachedReply) {
+                return twimlResponse(dedup.cachedReply);
+            }
+            // No cached reply (race: first call still in flight). Return a
+            // benign keep-listening prompt so Twilio doesn't hang up.
+            const esc = escapeXml;
+            return twimlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Pause length="2"/>
+  <Gather input="speech dtmf" action="/api/attendance/twiml?outreachId=${outreachId}" method="POST" language="${speechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="10" numDigits="1">
+    <Say language="${langCode}" voice="${voice}">${esc(prompts.waitingPrompt)}</Say>
+  </Gather>
+  <Hangup/>
+</Response>`);
+        }
+
         // Record parent's speech in transcript
         transcript.push({
             role: 'parent',
@@ -225,12 +271,12 @@ export async function POST(req: NextRequest) {
                 + (typeof pc.latestPercentage === 'number' ? ` · overall ${Math.round(pc.latestPercentage)}%` : '')
             : undefined;
 
-        // Twilio includes `CallSid` on every webhook hit; it is stable
-        // for the lifetime of one call, which makes it the right input
-        // to the sidecar dispatcher's hash bucket. Falling back to
+        // Reuse the CallSid we already resolved for dedup (F8-04). It is
+        // stable for the lifetime of one call, which makes it the right
+        // input to the sidecar dispatcher's hash bucket. Falling back to
         // `outreachId` keeps callers without a CallSid (mock test
         // harnesses) on a deterministic path.
-        const callSid = (formData.get('CallSid') as string | null) ?? outreachId;
+        const callSid = callSidForDedup;
 
         // Generate AI agent reply via the sidecar dispatcher. Defaults
         // to Genkit only (`parentCallSidecarMode: 'off'`); shadow /
@@ -266,29 +312,22 @@ export async function POST(req: NextRequest) {
             timestamp: new Date().toISOString(),
         });
 
-        // Update Firestore with latest transcript
-        await doc.ref.update({
-            transcript,
-            turnCount: newTurnCount,
-            updatedAt: new Date().toISOString(),
-        });
-
         const esc = escapeXml;
 
-        // If agent says end call or max turns reached → closing
+        // Build the TwiML reply once so we can both return it and cache it
+        // for F8-04 dedup replay.
+        let replyXml: string;
         if (agentResult.shouldEndCall || newTurnCount >= MAX_TURNS) {
-            return twimlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+            replyXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say language="${langCode}" voice="${voice}">${esc(agentReply)}</Say>
   <Pause length="1"/>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.thanks)}</Say>
   <Hangup/>
-</Response>`);
-        }
-
-        // Continue conversation — say reply + gather next speech
-        const gatherUrl = `/api/attendance/twiml?outreachId=${outreachId}`;
-        return twimlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+</Response>`;
+        } else {
+            const gatherUrl = `/api/attendance/twiml?outreachId=${outreachId}`;
+            replyXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say language="${langCode}" voice="${voice}">${esc(agentReply)}</Say>
   <Pause length="1"/>
@@ -297,7 +336,18 @@ export async function POST(req: NextRequest) {
   </Gather>
   <Say language="${langCode}" voice="${voice}">${esc(prompts.noResponseGoodbye)}</Say>
   <Hangup/>
-</Response>`);
+</Response>`;
+        }
+
+        // Update Firestore with latest transcript + cache reply XML for dedup
+        await doc.ref.update({
+            transcript,
+            turnCount: newTurnCount,
+            [`processedTurnReplies.${fingerprint}`]: replyXml,
+            updatedAt: new Date().toISOString(),
+        });
+
+        return twimlResponse(replyXml);
     } catch (error) {
         console.error('[twiml] POST Error:', error);
         // On AI failure, gracefully end the call rather than hanging up abruptly
