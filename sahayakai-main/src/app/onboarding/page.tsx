@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS } from "@/types";
+import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS, LANGUAGE_CODE_MAP } from "@/types";
 import type { AdministrativeRole, EducationBoard } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
-import { updateProfileAction, getProfileData } from "@/app/actions/profile";
+import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction } from "@/app/actions/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users, Briefcase } from "lucide-react";
@@ -88,15 +88,23 @@ export default function OnboardingPage() {
 
     // Form state — all fields on ONE screen
     const [formData, setFormData] = useState({
+        displayName: "",
         schoolName: "",
         educationBoard: "",
         boardCategory: "",
         state: "",
+        district: "",
         subjects: [] as string[],
         gradeLevels: [] as string[],
         preferredLanguage: "English" as Language,
         administrativeRole: undefined as AdministrativeRole | undefined,
+        phoneNumber: "",
+        pincode: "",
     });
+    const [detectingLocation, setDetectingLocation] = useState(false);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
+    const [pincodeError, setPincodeError] = useState<string | null>(null);
+    const schoolLookupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // B1: Auto-advance accordion when a section is complete
     useEffect(() => {
@@ -152,7 +160,8 @@ export default function OnboardingPage() {
         // Skip the initial-mount save: only autosave once the teacher has
         // actually interacted with at least one field on Step 1.
         const hasAnyInput =
-            !!formData.schoolName.trim()
+            !!formData.displayName.trim()
+            || !!formData.schoolName.trim()
             || !!formData.state
             || !!formData.educationBoard
             || formData.subjects.length > 0
@@ -163,6 +172,7 @@ export default function OnboardingPage() {
         if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
         autosaveTimerRef.current = setTimeout(() => {
             const patch: Record<string, any> = {};
+            if (formData.displayName.trim()) patch.displayName = formData.displayName.trim();
             if (formData.schoolName.trim()) {
                 patch.schoolName = formData.schoolName;
                 patch.schoolNormalized = formData.schoolName.toUpperCase().trim();
@@ -183,6 +193,7 @@ export default function OnboardingPage() {
     }, [
         step,
         userId,
+        formData.displayName,
         formData.schoolName,
         formData.state,
         formData.educationBoard,
@@ -190,6 +201,83 @@ export default function OnboardingPage() {
         formData.gradeLevels,
         formData.administrativeRole,
     ]);
+
+    // School-name → state/district inference (A4). Debounced 500 ms.
+    // Only fires when the user has not already picked a state, so we never
+    // override their explicit choice.
+    useEffect(() => {
+        if (step !== 1) return;
+        const sn = formData.schoolName.trim();
+        if (sn.length < 4) return;
+        if (formData.state) return;
+        if (schoolLookupTimerRef.current) clearTimeout(schoolLookupTimerRef.current);
+        schoolLookupTimerRef.current = setTimeout(async () => {
+            try {
+                const result = await lookupSchoolDominantLocationAction(sn);
+                if (!result) return;
+                if (result.matchCount < 3) return;
+                setFormData(prev => {
+                    // Only fill blanks. Never clobber.
+                    if (prev.state || !result.state) return prev;
+                    return {
+                        ...prev,
+                        state: result.state ?? prev.state,
+                        district: prev.district || (result.district ?? ""),
+                        // Cascading board picker: also default the state board.
+                        educationBoard: prev.educationBoard ||
+                            (result.state ? STATE_BOARD_MAP[result.state] || "" : ""),
+                        boardCategory: prev.boardCategory ||
+                            (result.state && STATE_BOARD_MAP[result.state] ? 'state_board' : prev.boardCategory),
+                    };
+                });
+            } catch {
+                /* non-fatal */
+            }
+        }, 500);
+        return () => {
+            if (schoolLookupTimerRef.current) clearTimeout(schoolLookupTimerRef.current);
+        };
+    }, [step, formData.schoolName, formData.state]);
+
+    const detectLocation = async () => {
+        if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+        setDetectingLocation(true);
+        try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    timeout: 8000,
+                    maximumAge: 60000,
+                });
+            });
+            const token = await auth.currentUser?.getIdToken();
+            const res = await fetch('/api/geo/reverse', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.state || data.district) {
+                    setFormData(prev => ({
+                        ...prev,
+                        state: prev.state || data.state || "",
+                        district: prev.district || data.district || "",
+                        educationBoard: prev.educationBoard ||
+                            (data.state ? STATE_BOARD_MAP[data.state] || "" : ""),
+                        boardCategory: prev.boardCategory ||
+                            (data.state && STATE_BOARD_MAP[data.state] ? 'state_board' : prev.boardCategory),
+                    }));
+                }
+            }
+        } catch {
+            // Silently skip — denied permission or timeout. Teacher can fill manually.
+        } finally {
+            setDetectingLocation(false);
+        }
+    };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -202,15 +290,22 @@ export default function OnboardingPage() {
                         return;
                     }
                     if (profile) {
+                        // Pre-fill phone from Firebase Auth when present
+                        // (phone-auth signups should not have to retype).
+                        const authPhone = user.phoneNumber || profile.phoneNumber || (profile as Record<string, any>).phone || "";
                         setFormData(prev => ({
                             ...prev,
+                            displayName: profile.displayName || user.displayName || "",
                             schoolName: profile.schoolName || "",
                             educationBoard: profile.educationBoard || "",
                             state: profile.state || "",
+                            district: profile.district || "",
                             subjects: profile.subjects || [],
                             gradeLevels: profile.gradeLevels || [],
-                            preferredLanguage: (profile.preferredLanguage as Language) || "English",
+                            preferredLanguage: (profile.preferredLanguage as Language) || prev.preferredLanguage,
                             administrativeRole: (profile.administrativeRole as AdministrativeRole | undefined),
+                            phoneNumber: authPhone,
+                            pincode: profile.pincode || "",
                         }));
                         if (profile.educationBoard === 'CBSE') {
                             setFormData(prev => ({ ...prev, boardCategory: 'CBSE' }));
@@ -223,14 +318,18 @@ export default function OnboardingPage() {
                             setStep(1);
                         }
                     }
-                    // Default remains English for new teachers. We used to
-                    // auto-detect from navigator.language (e.g. hi-IN →
-                    // preSelected Hindi), but that bypassed the teacher's
-                    // explicit choice: a teacher on an Indic-locale browser
-                    // who wanted English still ended up with Hindi because
-                    // they never actively changed the pre-selected value.
-                    // The spec is "default English, teacher explicitly
-                    // changes during onboarding" — so we no longer auto-pick.
+                    // Smart default — only when the profile has no
+                    // explicit preferredLanguage yet. If `navigator.language`
+                    // reports an Indic locale we pre-select the matching
+                    // option so the teacher only confirms instead of typing.
+                    if (!profile?.preferredLanguage && typeof navigator !== 'undefined') {
+                        const nav = navigator.language || '';
+                        const prefix = nav.toLowerCase().split('-')[0];
+                        const mapped = LANGUAGE_CODE_MAP[prefix];
+                        if (mapped) {
+                            setFormData(prev => ({ ...prev, preferredLanguage: mapped }));
+                        }
+                    }
                 } catch (err) {
                     console.error("Failed to load profile for onboarding:", err);
                 }
@@ -306,6 +405,7 @@ export default function OnboardingPage() {
         setSubmitting(true);
         try {
             const profileData: Record<string, any> = {
+                displayName: formData.displayName.trim(),
                 schoolName: formData.schoolName,
                 schoolNormalized: formData.schoolName.toUpperCase().trim(),
                 educationBoard: formData.educationBoard || undefined,
@@ -316,9 +416,12 @@ export default function OnboardingPage() {
                     ? (formData.educationBoard as EducationBoard)
                     : undefined,
                 state: formData.state || undefined,
+                district: formData.district || undefined,
                 subjects: formData.subjects,
                 gradeLevels: formData.gradeLevels,
                 preferredLanguage: formData.preferredLanguage,
+                ...(formData.phoneNumber.trim() ? { phoneNumber: formData.phoneNumber.trim() } : {}),
+                ...(formData.pincode.trim() ? { pincode: formData.pincode.trim() } : {}),
                 communityIntroState: 'none',
                 // NOTE: impactScore / contentSharedCount / followersCount /
                 // followingCount / verifiedStatus / badges are SERVER-COMPUTED
@@ -327,7 +430,7 @@ export default function OnboardingPage() {
                 // are intentionally not written from the client and are not
                 // in the PROFILE_WRITABLE_FIELDS allowlist.
                 onboardingPhase: 'first-generation',
-                profileCompletionLevel: 'basic',
+                // profileCompletionLevel is server-computed in updateProfileAction.
             };
 
             // Only include administrativeRole when set; Firestore's Admin SDK rejects
@@ -398,7 +501,7 @@ export default function OnboardingPage() {
     const handleFinish = async () => {
         if (!userId) { router.push("/"); return; }
 
-        const updates: Record<string, any> = { onboardingPhase: 'exploring' };
+        const updates: Record<string, any> = { onboardingPhase: 'completed' };
 
         // B5: Save generated content to library
         if (generatedContent) {
@@ -415,6 +518,20 @@ export default function OnboardingPage() {
         }
 
         await saveStep(updates);
+
+        // Issue the profile-complete cookie so the middleware redirect
+        // guard doesn't bounce us straight back here. Server validates
+        // the actual completion ≥ 80 before setting the cookie.
+        try {
+            const token = await auth.currentUser?.getIdToken();
+            await fetch('/api/profile/mark-complete', {
+                method: 'POST',
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            });
+        } catch {
+            // Non-fatal — user just won't have the cookie and will be
+            // redirected on next page load. They'll get it on retry.
+        }
 
         const isPrincipalRole = formData.administrativeRole === 'principal' || formData.administrativeRole === 'vice_principal';
         if (isPrincipalRole) {
@@ -628,11 +745,14 @@ export default function OnboardingPage() {
     // Step 1 — Single-screen setup (Role + School + State + Board + Subjects + Grades)
     const isStep1Valid =
         formData.administrativeRole !== undefined &&
+        formData.displayName.trim().length >= 2 &&
         formData.schoolName.trim() &&
         formData.state &&
         formData.educationBoard &&
         formData.subjects.length > 0 &&
-        formData.gradeLevels.length > 0;
+        formData.gradeLevels.length > 0 &&
+        !phoneError &&
+        !pincodeError;
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
@@ -720,6 +840,16 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 1 && (
                             <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="displayName" className="text-xs">{t("Your name")}*</Label>
+                                    <Input
+                                        id="displayName"
+                                        placeholder={t("e.g. Anita Sharma")}
+                                        value={formData.displayName}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                                        className="h-11 text-sm shadow-soft"
+                                    />
+                                </div>
                                 <div className="space-y-1.5">
                                     <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
                                     <Input
@@ -917,6 +1047,81 @@ export default function OnboardingPage() {
                                         ))}
                                     </div>
                                 )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section 5: Optional — phone, pincode, detect location */}
+                    <div ref={el => { sectionRefs.current[5] = el; }} className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSection(activeSection === 5 ? -1 : 5)}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/30 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-semibold">{t("Contact & location (optional)")}</span>
+                            </div>
+                            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 5 && "rotate-180")} />
+                        </button>
+                        {activeSection === 5 && (
+                            <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="phone" className="text-xs">{t("Mobile number")}</Label>
+                                    <div className="flex gap-2 items-stretch">
+                                        <div className="flex items-center px-3 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground select-none">+91</div>
+                                        <Input
+                                            id="phone"
+                                            inputMode="tel"
+                                            placeholder="9876543210"
+                                            value={formData.phoneNumber.replace(/^\+?91/, '')}
+                                            onChange={(e) => {
+                                                const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setFormData(prev => ({ ...prev, phoneNumber: digits ? `+91${digits}` : "" }));
+                                                if (digits.length > 0 && digits.length < 10) {
+                                                    setPhoneError(t("Please enter a 10-digit number"));
+                                                } else {
+                                                    setPhoneError(null);
+                                                }
+                                            }}
+                                            className="h-11 text-sm shadow-soft flex-1"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{t("Optional. Used for parent SMS only. Never shared.")}</p>
+                                    {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="pincode" className="text-xs">{t("Pincode")}</Label>
+                                    <Input
+                                        id="pincode"
+                                        inputMode="numeric"
+                                        placeholder="560001"
+                                        value={formData.pincode}
+                                        onChange={(e) => {
+                                            const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                            setFormData(prev => ({ ...prev, pincode: digits }));
+                                            if (digits.length > 0 && digits.length < 6) {
+                                                setPincodeError(t("Please enter a 6-digit pincode"));
+                                            } else {
+                                                setPincodeError(null);
+                                            }
+                                        }}
+                                        className="h-11 text-sm shadow-soft"
+                                    />
+                                    <p className="text-xs text-muted-foreground">{t("We use this to suggest content for your region.")}</p>
+                                    {pincodeError && <p className="text-xs text-destructive">{pincodeError}</p>}
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={detectLocation}
+                                    disabled={detectingLocation}
+                                    className="rounded-xl gap-2"
+                                >
+                                    {detectingLocation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                                    {t("Detect my location")}
+                                </Button>
                             </div>
                         )}
                     </div>
