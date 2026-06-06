@@ -65,6 +65,13 @@ steps:
   # ── 3. Deploy to Cloud Run, NO traffic ────────────────────────────────────
   # Tag the revision with the short sha so it is reachable directly at
   # https://dep-<sha>---<service>-<hash>.run.app for verification.
+  # F1-04 fix (2026-06-06): Twilio credentials moved to Secret Manager.
+  # `--update-secrets` is idempotent: it (re)binds the env var to a
+  # Secret Manager version on every deploy, so the secret reference
+  # survives even if a future operator runs an ad-hoc `gcloud run deploy`
+  # that resets env. Plaintext TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN env
+  # vars MUST NOT be reintroduced — they would be readable by any
+  # principal holding `run.services.get`.
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
@@ -77,6 +84,7 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest
       - --quiet
     waitFor: [push-sha]
 

@@ -26,6 +26,10 @@ export const QuizGeneratorInputSchema = z.object({
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
   subject: z.string().optional().describe('The academic subject of the quiz.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
+  // F18-03: Pedagogically-derived band ("Primary (Class 1-5)" etc.) used by
+  // the prompt's vocabulary-age constraint so a Class 3 quiz cannot leak
+  // Class 9 vocabulary. Populated server-side in the flow — never user-supplied.
+  gradeBandLabel: z.string().optional().describe('Human-readable grade band label injected into the prompt for vocab-age control.'),
 });
 export type QuizGeneratorInput = z.infer<typeof QuizGeneratorInputSchema>;
 

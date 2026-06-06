@@ -135,6 +135,62 @@ export default function OnboardingPage() {
         }
     }, [step, activeSection]);
 
+    // F11-6: Per-section autosave for Step 1. Step 0 (language) already
+    // persists on selection; Step 1 previously only saved on "Continue".
+    // If the teacher closed the tab between sections, all Step 1 progress
+    // was lost (and could not be repopulated on re-entry — see the
+    // `getProfileData` effect above which pre-fills from Firestore).
+    //
+    // We send a single debounced patch per formData change. Only fields
+    // that are non-empty are included — the action's allowlist + the
+    // onboardingPhase prerequisite check (F11-3) will accept all of these
+    // without requiring an explicit phase advance.
+    const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (step !== 1) return;
+        if (!userId) return;
+        // Skip the initial-mount save: only autosave once the teacher has
+        // actually interacted with at least one field on Step 1.
+        const hasAnyInput =
+            !!formData.schoolName.trim()
+            || !!formData.state
+            || !!formData.educationBoard
+            || formData.subjects.length > 0
+            || formData.gradeLevels.length > 0
+            || formData.administrativeRole !== undefined;
+        if (!hasAnyInput) return;
+
+        if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = setTimeout(() => {
+            const patch: Record<string, any> = {};
+            if (formData.schoolName.trim()) {
+                patch.schoolName = formData.schoolName;
+                patch.schoolNormalized = formData.schoolName.toUpperCase().trim();
+            }
+            if (formData.state) patch.state = formData.state;
+            if (formData.educationBoard) patch.educationBoard = formData.educationBoard;
+            if (formData.subjects.length > 0) patch.subjects = formData.subjects;
+            if (formData.gradeLevels.length > 0) patch.gradeLevels = formData.gradeLevels;
+            if (formData.administrativeRole !== undefined) patch.administrativeRole = formData.administrativeRole;
+            if (Object.keys(patch).length === 0) return;
+            saveStep(patch);
+        }, 800);
+
+        return () => {
+            if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        step,
+        userId,
+        formData.schoolName,
+        formData.state,
+        formData.educationBoard,
+        formData.subjects,
+        formData.gradeLevels,
+        formData.administrativeRole,
+    ]);
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {

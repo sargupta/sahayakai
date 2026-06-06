@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const body: TranscriptSyncBody = await req.json();
-        const { outreachId, transcript, turnCount, callStatus } = body;
+        const { outreachId, transcript, callStatus } = body;
 
         if (!outreachId || !transcript) {
             return NextResponse.json({ error: 'Missing outreachId or transcript' }, { status: 400 });
@@ -56,9 +56,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Outreach record not found' }, { status: 404 });
         }
 
+        // ── F9-007 fix: derive turnCount server-side ──────────────────────
+        // Trusting the client-supplied turnCount lets the orchestrator desync
+        // from reality (or a bad actor lie about it). The transcript array is
+        // the source of truth — compute the count from it.
+        const serverTurnCount = transcript.length;
+
         const update: Record<string, unknown> = {
             transcript,
-            turnCount,
+            turnCount: serverTurnCount,
             updatedAt: new Date().toISOString(),
         };
 
@@ -68,46 +74,61 @@ export async function POST(req: NextRequest) {
 
         await docRef.update(update);
 
-        // Generate call summary when call completes (non-blocking).
-        //
-        // QA #5 (2026-05-28) webhook-race fix: previously this required the
-        // INCOMING callStatus to be 'completed'. But Twilio's status callback
-        // (twiml-status) often delivers the terminal 'completed' BEFORE the
-        // final transcript syncs here — and when the transcript then arrives
-        // via this endpoint it may carry no callStatus, so neither webhook
-        // ever generated the summary and the modal spun forever.
-        //
-        // New rule: generate when (a) we have a real transcript, (b) the call
-        // is terminal either from this request OR from the doc Twilio already
-        // wrote, and (c) no summary exists yet. Idempotent — safe if both
-        // webhooks race.
-        const existing = doc.data()!;
-        const mergedStatus = callStatus ?? existing.callStatus;
+        // ── F9-002 fix: atomic summary-generation lock ────────────────────
+        // Both this route AND twiml-status call generateCallSummary on terminal
+        // states. Without a lock, two concurrent terminal webhooks each read
+        // `!callSummary` (true) before either has written, and BOTH invoke the
+        // LLM. We use a transaction to claim the `_summaryGenerating` flag —
+        // whichever request claims it first runs the LLM call; the other
+        // request bails out cleanly.
+        const data = doc.data()!;
+        const mergedStatus = callStatus ?? data.callStatus;
         const isTerminal = mergedStatus === 'completed' || mergedStatus === 'failed';
-        if (isTerminal && transcript.length > 1 && !existing.callSummary) {
-            const data = existing;
-            // Parent-call schema requires 2-letter ISO (en/hi/bn/...).
-            const { LANGUAGE_TO_ISO } = await import('@/types/index');
-            const parentLanguageIso = (LANGUAGE_TO_ISO as Record<string, string>)[
-                data.parentLanguage ?? 'Hindi'
-            ] ?? 'hi';
-            generateCallSummary({
-                studentName: data.studentName ?? '',
-                className: data.className ?? '',
-                subject: data.subject ?? '',
-                reason: data.reason ?? '',
-                teacherMessage: data.generatedMessage ?? '',
-                teacherName: data.teacherName,
-                schoolName: data.schoolName,
-                parentLanguage: parentLanguageIso as 'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
-                callSid: data.callSid ?? doc.id,
-                transcript: transcript.map(t => ({ role: t.role, text: t.text })),
-            }).then(async (summary) => {
-                await docRef.update({ callSummary: summary, updatedAt: new Date().toISOString() });
-                console.log(`[transcript-sync] Summary generated for ${outreachId}`);
-            }).catch((err) => {
-                console.error(`[transcript-sync] Summary generation failed for ${outreachId}:`, err);
+
+        if (isTerminal && transcript.length > 1) {
+            const claimed = await db.runTransaction(async (tx) => {
+                const fresh = await tx.get(docRef);
+                if (!fresh.exists) return false;
+                const fd = fresh.data()!;
+                if (fd.callSummary) return false;            // already generated
+                if (fd._summaryGenerating) return false;     // another request is generating
+                tx.update(docRef, {
+                    _summaryGenerating: true,
+                    _summaryGeneratingAt: new Date().toISOString(),
+                });
+                return true;
             });
+
+            if (claimed) {
+                // Parent-call schema requires 2-letter ISO (en/hi/bn/...).
+                const { LANGUAGE_TO_ISO } = await import('@/types/index');
+                const parentLanguageIso = (LANGUAGE_TO_ISO as Record<string, string>)[
+                    data.parentLanguage ?? 'Hindi'
+                ] ?? 'hi';
+                generateCallSummary({
+                    studentName: data.studentName ?? '',
+                    className: data.className ?? '',
+                    subject: data.subject ?? '',
+                    reason: data.reason ?? '',
+                    teacherMessage: data.generatedMessage ?? '',
+                    teacherName: data.teacherName,
+                    schoolName: data.schoolName,
+                    parentLanguage: parentLanguageIso as 'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
+                    callSid: data.callSid ?? doc.id,
+                    transcript: transcript.map(t => ({ role: t.role, text: t.text })),
+                }).then(async (summary) => {
+                    await docRef.update({
+                        callSummary: summary,
+                        _summaryGenerating: false,
+                        updatedAt: new Date().toISOString(),
+                    });
+                    console.log(`[transcript-sync] Summary generated for ${outreachId}`);
+                }).catch(async (err) => {
+                    console.error(`[transcript-sync] Summary generation failed for ${outreachId}:`, err);
+                    // Release lock on failure so a future retry/twiml-status can claim it.
+                    await docRef.update({ _summaryGenerating: false }).catch(() => {});
+                });
+            }
         }
 
         return NextResponse.json({ ok: true });

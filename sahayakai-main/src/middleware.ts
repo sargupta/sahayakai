@@ -99,6 +99,12 @@ export async function middleware(request: NextRequest) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.delete('x-user-id');
     requestHeaders.delete('x-user-plan');
+    // F1-06 fix (2026-06-06): syncUserAction previously trusted
+    // client-supplied email/displayName. Strip these here so only the
+    // post-verify branch below can set them, derived from the verified
+    // ID-token claims (`email`, `name`).
+    requestHeaders.delete('x-user-email');
+    requestHeaders.delete('x-user-name');
 
     // Skip static assets entirely
     if (
@@ -208,10 +214,27 @@ export async function middleware(request: NextRequest) {
             // Dev bypass — inject mock UID when using the dev token placeholder
             requestHeaders.set('x-user-id', 'dev-user-123');
             requestHeaders.set('x-user-plan', 'pro');
+            requestHeaders.set('x-user-email', 'dev@sahayakai.local');
+            requestHeaders.set('x-user-name', 'Dev User');
         } else {
             const decoded = await verifyIdToken(rawToken);
             if (decoded?.sub) {
                 requestHeaders.set('x-user-id', decoded.sub);
+                // F1-06 fix (2026-06-06): inject verified-from-token email
+                // and display name. syncUserAction (and any other server
+                // surface that needs to mirror auth profile into Firestore)
+                // reads from these headers instead of trusting a
+                // client-supplied payload, so a signed-in attacker cannot
+                // pass `email: 'victim@evil.com'` to overwrite their own
+                // Firestore email and then phish via mutual contacts.
+                const tokenEmail = (decoded as Record<string, unknown>).email;
+                if (typeof tokenEmail === 'string' && tokenEmail.length > 0) {
+                    requestHeaders.set('x-user-email', tokenEmail);
+                }
+                const tokenName = (decoded as Record<string, unknown>).name;
+                if (typeof tokenName === 'string' && tokenName.length > 0) {
+                    requestHeaders.set('x-user-name', tokenName);
+                }
                 // Plan from Firebase custom claims — set via Admin SDK when plan changes
                 // Falls back to 'free' if claim not yet set (new users, pre-migration users)
                 const plan = (decoded as Record<string, unknown>).planType;
@@ -236,6 +259,8 @@ export async function middleware(request: NextRequest) {
             if (process.env.NODE_ENV === 'development') {
                 requestHeaders.set('x-user-id', 'dev-user-123');
                 requestHeaders.set('x-user-plan', 'pro');
+                requestHeaders.set('x-user-email', 'dev@sahayakai.local');
+                requestHeaders.set('x-user-name', 'Dev User');
             } else {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }

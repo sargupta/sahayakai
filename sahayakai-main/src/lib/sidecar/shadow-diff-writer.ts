@@ -29,6 +29,8 @@
  * Phase M.5 §M.5.
  */
 
+import { randomUUID } from 'crypto';
+
 import { format } from 'date-fns';
 
 import { getDb } from '@/lib/firebase-admin';
@@ -97,7 +99,16 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         // is local-tz; we want UTC so daily-rollup boundaries are
         // deterministic across regions).
         const date = format(new Date(), 'yyyy-MM-dd');
-        const id = `${sample.uid}__${Date.now()}`;
+        // F5-001 fix: append an 8-char random suffix so same-millisecond
+        // bursts from the same uid don't collide. The previous
+        // `${uid}__${Date.now()}` doc-id silently overwrote 199 of 200
+        // same-ms calls under load (Firestore .set() is upsert), causing
+        // lossy Q4C parity rollups and breaking the canary→full promotion
+        // gate. The suffix is drawn from `crypto.randomUUID()` for
+        // collision-resistance — 8 hex chars = 4 bytes of entropy, which
+        // is comfortably enough to disambiguate even thousand-per-ms bursts.
+        const suffix = randomUUID().replace(/-/g, '').slice(0, 8);
+        const id = `${sample.uid}__${Date.now()}__${suffix}`;
         const db = await getDb();
         // Phase 1a / Parallel-D fix (2026-06-05): Firestore rejects
         // `undefined` field values. Every SUCCESSFUL sidecar call has
@@ -106,7 +117,14 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         // sidecarOk=true cells despite Cloud Run logs showing 200s.
         // Coerce undefined to null at the boundary so success rows
         // actually land.
-        const payload: Record<string, unknown> = { createdAt: new Date() };
+        // F14 P1-4 (2026-06-06): write `expiresAt` 90 days out so the
+        // Firestore TTL policy on each agent subcollection auto-deletes
+        // stale parity samples. Without this the collections grow
+        // unbounded (~2 GB/month Firestore storage at canary scale +
+        // linear read-cost ballooning for the promotion aggregator).
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+        const payload: Record<string, unknown> = { createdAt: now, expiresAt };
         for (const [k, v] of Object.entries(sample)) {
             payload[k] = v === undefined ? null : v;
         }

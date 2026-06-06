@@ -33,7 +33,7 @@ import {
     type SidecarParentMessageResponse,
 } from './parent-message-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
-import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
+import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
 
 // Bumped from 8s — comparator runs showed parent-message latency p95 ~8s
@@ -237,7 +237,7 @@ export async function dispatchParentMessage(
         // sidecar in the background and write a shadow_diff so the
         // promotion gate has a non-zero denominator.
         if (
-            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            shouldRunCanaryShadowDiff() &&
             decision.configuredMode === 'canary'
         ) {
             void runSidecarSafe(sidecarRequest).then((sc) => {
@@ -311,7 +311,7 @@ export async function dispatchParentMessage(
         // a live (genkit, sidecar) parity signal during the rollout.
         // 2x Gemini cost while observation is on; toggle the constant
         // off post-promotion to reclaim it.
-        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+        if (shouldRunCanaryShadowDiff()) {
             const __q4cGenkitStartedAt = Date.now();
             void runGenkitSafe(input).then((gk) => {
                 void writeAgentShadowDiff({

@@ -1,16 +1,34 @@
 import { NextResponse } from 'next/server';
 import { createOrganization, getOrganizationWithMembers } from '@/lib/organization';
+import { isAdmin } from '@/lib/auth-utils';
 
 /**
- * POST /api/organizations — Create a new organization (school admin)
- * GET /api/organizations — Get the user's organization details
+ * POST /api/organizations — Create a new organization (admin-only).
+ *
+ * SECURITY: ADMIN-ONLY (F7-001). A self-service path would let any signed-in
+ * free user mint themselves premium with 500 seats by picking plan=premium
+ * — `createOrganization` flips `users.planType` + Firebase custom claim, so
+ * the caller would be silently upgraded without payment. Real customers
+ * upgrade through the Razorpay flow; the webhook (HMAC-verified) does the
+ * plan flip. Sales-touched orgs are provisioned here by SahayakAI admins.
+ *
+ * GET /api/organizations — Get the user's organization details (any signed-in user).
  */
 export async function POST(request: Request) {
     const userId = request.headers.get('x-user-id');
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Admin-only gate — prevents free-user privilege escalation (F7-001).
+    const callerIsAdmin = await isAdmin(userId);
+    if (!callerIsAdmin) {
+        return NextResponse.json(
+            { error: 'Forbidden. Organization plans must be provisioned by SahayakAI sales. Contact contact@sargvision.com.' },
+            { status: 403 }
+        );
+    }
+
     try {
-        const { name, type, plan, totalSeats } = await request.json();
+        const { name, type, plan, totalSeats, adminUserId, razorpayPaymentId } = await request.json();
 
         if (!name || !type || !plan || !totalSeats) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -29,12 +47,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Seats must be between 1 and 500' }, { status: 400 });
         }
 
+        // Admin may provision an org for another user (sales-assisted). Default to self.
+        const adminUid = (typeof adminUserId === 'string' && adminUserId.length > 0) ? adminUserId : userId;
+
         const orgId = await createOrganization({
             name,
             type,
-            adminUserId: userId,
+            adminUserId: adminUid,
             plan,
             totalSeats,
+            // Only flip the user's planType + custom claim if a verified payment
+            // reference is provided. Otherwise the org doc is created but the
+            // user's plan will be flipped by the webhook on payment.captured.
+            grantPlanToAdmin: typeof razorpayPaymentId === 'string' && razorpayPaymentId.length > 0,
         });
 
         return NextResponse.json({ orgId });

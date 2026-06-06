@@ -159,7 +159,12 @@ export const TWILIO_LANGUAGE_MAP: Record<Language, string | null> = {
     Marathi:   'mr-IN',
     Gujarati:  'gu-IN',
     Punjabi:   'pa-IN',
-    Odia:      null, // No Google TTS voice available for Odia
+    // F8-02 fix (P0): Odia has no native Google TTS voice on Twilio. Previously
+    // this was `null`, then `LANG_MAP[lang] ?? 'en-IN'` rendered Odia text
+    // through an English voice — completely broken outreach. We fall back to
+    // 'hi-IN' to match the Odia→Hindi TTS fallback used elsewhere in the app
+    // (Hindi voice over Odia text is the standard regional substitution we ship).
+    Odia:      'hi-IN',
 };
 
 // Female voices preferred — warmer tone for parent communication.
@@ -175,7 +180,7 @@ export const TWILIO_VOICE_MAP: Record<Language, string> = {
     Marathi:   'Google.mr-IN-Wavenet-A',   // Wavenet female
     Gujarati:  'Google.gu-IN-Wavenet-A',   // Wavenet female
     Punjabi:   'Google.pa-IN-Wavenet-A',   // Wavenet female
-    Odia:      'Google.en-IN-Neural2-A',   // Fallback (Odia not in TWILIO_LANGUAGE_MAP)
+    Odia:      'Google.hi-IN-Neural2-A',   // F8-02: Hindi fallback (no Odia voice on Twilio)
 };
 
 // ── Conversational call prompts per language ─────────────────────────────────

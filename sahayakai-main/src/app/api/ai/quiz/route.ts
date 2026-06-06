@@ -4,6 +4,9 @@ import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dispatchQuiz } from '@/lib/sidecar/quiz-dispatch';
 
+// Allow up to 120s for AI generation (hot path can be slow under load)
+export const maxDuration = 120;
+
 async function _handler(request: Request) {
     let topicText = 'Unknown Topic';
     try {

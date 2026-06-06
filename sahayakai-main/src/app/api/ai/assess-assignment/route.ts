@@ -3,6 +3,7 @@ import { AssessAssignmentInputSchema } from '@/ai/flows/assignment-assessor';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { checkImageRateLimit } from '@/lib/server-safety';
+import { checkUsage } from '@/lib/usage-tracker';
 import { dispatchAssessment } from '@/lib/sidecar/assignment-assessor-dispatch';
 
 /**
@@ -76,6 +77,11 @@ async function _handler(request: Request) {
         // an obviously-over-quota teacher gets the 429 before we even touch
         // the AI key pool.
         await checkImageRateLimit(userId);
+
+        // F14-003 — per-user daily Gemini budget. assignment-assessor
+        // uses gemini-2.5-pro (most expensive SKU); cap teachers at the
+        // free-tier token budget unless plan-service reports otherwise.
+        await checkUsage(userId, 'gemini_tokens');
 
         const body = AssessAssignmentInputSchema.parse({ ...raw, userId });
 

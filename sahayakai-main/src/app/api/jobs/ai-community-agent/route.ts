@@ -60,14 +60,19 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
 
 async function ensureAITeacherProfiles(db: FirebaseFirestore.Firestore, personas: AITeacherPersona[]) {
     // Ensure all AI teacher user docs exist (static + runtime).
+    // Batched read via db.getAll() to avoid N+1 sequential round-trips.
+    if (personas.length === 0) return;
+
+    const userRefs = personas.map((p) => db.collection('users').doc(p.uid));
+    const userSnaps = await db.getAll(...userRefs);
+
     const batch = db.batch();
     let created = 0;
 
-    for (const persona of personas) {
-        const userRef = db.collection('users').doc(persona.uid);
-        const userSnap = await userRef.get();
+    for (let i = 0; i < personas.length; i++) {
+        const userSnap = userSnaps[i];
         if (!userSnap.exists) {
-            batch.set(userRef, getPersonaUserDoc(persona));
+            batch.set(userRefs[i], getPersonaUserDoc(personas[i]));
             created++;
         }
     }
@@ -111,12 +116,14 @@ async function postStaffRoomChat(
 
     const message = await generateContent(systemPrompt, userPrompt);
 
+    // F12-P1-08: standardise on `createdAt` so ai-reactive-reply cooldown query
+    // (which orderBy('createdAt')) sees these messages and respects the cooldown.
     await db.collection('community_chat').add({
         text: message,
         authorId: persona.uid,
         authorName: persona.displayName,
         authorPhotoURL: null,
-        timestamp: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
     });
 
     // Update memory: record what we sent + what we saw
@@ -367,9 +374,10 @@ async function collectEngagementSignals(
     }
 
     // Also learn from staff room — extract opinions from real teachers
+    // F12-P1-08: order by `createdAt` (standardised schema).
     const recentChat = await db
         .collection('community_chat')
-        .orderBy('timestamp', 'desc')
+        .orderBy('createdAt', 'desc')
         .limit(20)
         .get();
 
@@ -426,9 +434,10 @@ export async function POST(request: Request) {
         ].filter(Boolean) as string[])[0];
 
         // Step 2: Get recent staff room messages for context
+        // F12-P1-08: order by `createdAt` (standardised schema).
         const recentChat = await db
             .collection('community_chat')
-            .orderBy('timestamp', 'desc')
+            .orderBy('createdAt', 'desc')
             .limit(10)
             .get();
         const recentMessages = recentChat.docs

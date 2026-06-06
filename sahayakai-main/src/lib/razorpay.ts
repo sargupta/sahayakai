@@ -30,9 +30,41 @@ export function getRazorpay(): Razorpay {
 export const RAZORPAY_PLANS = {
     pro_monthly: process.env.RAZORPAY_PLAN_PRO_MONTHLY || '',
     pro_annual: process.env.RAZORPAY_PLAN_PRO_ANNUAL || '',
+    gold_monthly: process.env.RAZORPAY_PLAN_GOLD_MONTHLY || '',
+    gold_annual: process.env.RAZORPAY_PLAN_GOLD_ANNUAL || '',
+    premium_monthly: process.env.RAZORPAY_PLAN_PREMIUM_MONTHLY || '',
+    premium_annual: process.env.RAZORPAY_PLAN_PREMIUM_ANNUAL || '',
 } as const;
 
 export type RazorpayPlanKey = keyof typeof RAZORPAY_PLANS;
+
+export type PlanType = 'pro' | 'gold' | 'premium';
+
+/**
+ * Resolve our internal plan tier strictly from a Razorpay plan_id.
+ *
+ * SECURITY: The webhook MUST derive planType from `subscription.plan_id` —
+ * NOT from `notes.planKey` (which is forgeable substring data on the
+ * subscription create call). plan_id is the immutable Razorpay reference.
+ * Returns null for unknown plan_ids — callers MUST treat that as an error
+ * and refuse to grant access (F7-003).
+ */
+export function resolvePlanTypeFromPlanId(planId: string | undefined | null): PlanType | null {
+    if (!planId) return null;
+    const map: Record<string, PlanType> = {};
+    const pairs: Array<[string, PlanType]> = [
+        [RAZORPAY_PLANS.pro_monthly, 'pro'],
+        [RAZORPAY_PLANS.pro_annual, 'pro'],
+        [RAZORPAY_PLANS.gold_monthly, 'gold'],
+        [RAZORPAY_PLANS.gold_annual, 'gold'],
+        [RAZORPAY_PLANS.premium_monthly, 'premium'],
+        [RAZORPAY_PLANS.premium_annual, 'premium'],
+    ];
+    for (const [id, tier] of pairs) {
+        if (id) map[id] = tier;
+    }
+    return map[planId] || null;
+}
 
 /** Verify Razorpay webhook signature using HMAC-SHA256. */
 export function verifyWebhookSignature(

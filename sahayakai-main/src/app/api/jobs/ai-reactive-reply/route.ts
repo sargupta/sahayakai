@@ -40,13 +40,23 @@ function sleep(ms: number) {
 
 export async function POST(req: NextRequest) {
     try {
-        // ── Auth: internal secret check ─────────────────────────────────
+        // ── Auth: internal secret check (fail-closed — F3-004 + F12-P1-02) ─
+        // Missing AI_INTERNAL_SECRET => 503 (not skip-auth). Mismatch => 401.
         const secret = process.env.AI_INTERNAL_SECRET;
-        if (secret) {
-            const provided = req.headers.get('x-internal-secret');
-            if (provided !== secret) {
-                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-            }
+        if (!secret) {
+            logger.error(
+                'AI_INTERNAL_SECRET is not configured — refusing AI reactive reply request',
+                undefined,
+                'AI_AGENT',
+            );
+            return NextResponse.json(
+                { error: 'Service unavailable: internal secret not configured' },
+                { status: 503 },
+            );
+        }
+        const provided = req.headers.get('x-internal-secret');
+        if (provided !== secret) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await req.json();

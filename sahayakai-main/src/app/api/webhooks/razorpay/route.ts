@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyWebhookSignature } from '@/lib/razorpay';
+import { verifyWebhookSignature, resolvePlanTypeFromPlanId } from '@/lib/razorpay';
 
 /**
  * POST /api/webhooks/razorpay
@@ -52,13 +52,26 @@ export async function POST(request: Request) {
     } catch (err: any) {
         // Doc already exists — check if previous attempt failed (retry allowed) or succeeded (skip)
         if (err.code === 6 /* ALREADY_EXISTS */) {
-            const existing = await eventRef.get();
-            const existingStatus = existing.data()?.status;
-            // Allow retry for previously failed events (e.g. transient Firestore error)
-            if (existingStatus === 'failed') {
-                await eventRef.update({ status: 'processing', retriedAt: new Date() });
-            } else {
+            // F5-005 fix: atomic compare-and-set on the status flip.
+            // Without the transaction, two concurrent Razorpay retries of
+            // the same failed event could both observe `status === 'failed'`,
+            // both flip to 'processing', and both run the side-effect
+            // pipeline (subscription update, custom-claim set, fan-out).
+            // Today's effects are idempotent, but this is a latent risk —
+            // any future non-idempotent step (e.g. a credit grant) would
+            // double up. The transaction guarantees exactly one retrier
+            // wins the flip; everyone else gets `already_processed`.
+            const wonTheFlip = await db.runTransaction(async (tx) => {
+                const existing = await tx.get(eventRef);
+                const existingStatus = existing.data()?.status;
+                if (existingStatus === 'failed') {
+                    tx.update(eventRef, { status: 'processing', retriedAt: new Date() });
+                    return true;
+                }
                 // 'processing' or 'completed' — safe to skip
+                return false;
+            });
+            if (!wonTheFlip) {
                 return NextResponse.json({ status: 'already_processed' });
             }
         } else {
@@ -72,18 +85,68 @@ export async function POST(request: Request) {
                 // PROVISION ACCESS — this is the only event where money has moved
                 const subscription = event.payload.subscription.entity;
                 const payment = event.payload.payment.entity;
-                const userId = subscription.notes?.userId;
+                let userId: string | undefined = subscription.notes?.userId;
                 const isPublic = subscription.notes?.isPublic === 'true';
                 const noteEmail: string | undefined = subscription.notes?.email;
+
+                // Public checkout path: if no userId in notes (F7-005 — we no
+                // longer create users pre-payment), look up or create here.
+                // Doing it here means: payment is verified by HMAC, money has
+                // moved, attacker can't squat an email by abandoning checkout.
+                if (!userId && isPublic && noteEmail) {
+                    try {
+                        const { getAuth } = await import('firebase-admin/auth');
+                        const auth = getAuth();
+                        try {
+                            const existing = await auth.getUserByEmail(noteEmail);
+                            userId = existing.uid;
+                        } catch (lookupErr: any) {
+                            if (lookupErr?.code === 'auth/user-not-found') {
+                                const created = await auth.createUser({
+                                    email: noteEmail,
+                                    emailVerified: false,
+                                    disabled: false,
+                                });
+                                userId = created.uid;
+                                await db.collection('users').doc(userId).set({
+                                    email: noteEmail,
+                                    planType: 'free',
+                                    createdAt: new Date(),
+                                    updatedAt: new Date(),
+                                    source: 'public-checkout-webhook',
+                                }, { merge: true });
+                                // Link the subscription doc to the new user
+                                await db.collection('subscriptions').doc(subscription.id).set(
+                                    { userId, updatedAt: new Date() },
+                                    { merge: true }
+                                );
+                            } else {
+                                throw lookupErr;
+                            }
+                        }
+                    } catch (createErr) {
+                        console.error('[Webhook] Failed to create public-checkout user:', createErr);
+                        throw new Error('PUBLIC_USER_CREATE_FAILED');
+                    }
+                }
 
                 if (!userId) {
                     console.error('[Webhook] subscription.charged missing userId in notes');
                     break;
                 }
 
-                // Resolve plan from subscription notes or default to pro
-                const planType = subscription.notes?.planKey?.includes('premium') ? 'premium'
-                    : subscription.notes?.planKey?.includes('gold') ? 'gold' : 'pro';
+                // Resolve plan STRICTLY from subscription.plan_id → RAZORPAY_PLANS env map.
+                // Earlier code used a substring check on `notes.planKey` ("includes('gold')")
+                // which is forgeable from any caller that creates a subscription with a
+                // crafted planKey. The plan_id, by contrast, is the immutable Razorpay
+                // plan reference. (F7-003)
+                const planType = resolvePlanTypeFromPlanId(subscription.plan_id);
+                if (!planType) {
+                    console.error(
+                        `[Webhook] Unknown plan_id ${subscription.plan_id} for subscription ${subscription.id} — refusing to grant plan.`
+                    );
+                    throw new Error(`UNKNOWN_PLAN_ID: ${subscription.plan_id}`);
+                }
 
                 // Atomically update both subscription and user docs. Previously these were
                 // two separate writes — if the users update failed, the user paid but stayed
@@ -170,23 +233,56 @@ export async function POST(request: Request) {
 
                 if (!userId) break;
 
-                // Atomic downgrade — both writes must succeed or both roll back
+                // F7-006: subscription.cancelled means user opted out for the
+                // NEXT cycle — they've already paid for the current one and
+                // are entitled to access through `current_end`. Immediate
+                // downgrade would rob them of the period they paid for.
+                // subscription.halted = payments stopped failing — downgrade now.
+                const isCancelled = event.event === 'subscription.cancelled';
+                const nowSec = Math.floor(Date.now() / 1000);
+                const paidUntilSec = typeof subscription.current_end === 'number' ? subscription.current_end : 0;
+                const stillInPaidPeriod = isCancelled && paidUntilSec > nowSec;
+
                 const subRef = db.collection('subscriptions').doc(subscription.id);
                 const userRef = db.collection('users').doc(userId);
-                await db.runTransaction(async (tx) => {
-                    tx.update(subRef, { status: subscription.status, updatedAt: new Date() });
-                    tx.update(userRef, { planType: 'free', updatedAt: new Date() });
-                });
 
-                try {
-                    const { getAuth } = await import('firebase-admin/auth');
-                    await getAuth().setCustomUserClaims(userId, { planType: 'free' });
-                } catch (claimErr) {
-                    console.error(`[Webhook] Downgrade claim failed for ${userId}:`, claimErr);
-                    throw new Error(`CLAIM_SET_FAILED: ${userId}`);
+                if (stillInPaidPeriod) {
+                    // Mark scheduled-cancel — keep paid plan until current_end.
+                    // Reconciliation cron (D2) will downgrade after paidUntil expires.
+                    await db.runTransaction(async (tx) => {
+                        tx.update(subRef, {
+                            status: subscription.status,             // 'cancelled' on Razorpay
+                            cancelledAt: new Date(),
+                            paidUntil: new Date(paidUntilSec * 1000),
+                            scheduledDowngradeAt: new Date(paidUntilSec * 1000),
+                            updatedAt: new Date(),
+                        });
+                        tx.update(userRef, {
+                            planCancelScheduled: true,
+                            planExpiresAt: new Date(paidUntilSec * 1000),
+                            updatedAt: new Date(),
+                        });
+                    });
+                    console.log(
+                        `[Webhook] subscription.cancelled honored for ${userId} — plan stays until ${new Date(paidUntilSec * 1000).toISOString()}`
+                    );
+                } else {
+                    // halted, or cancelled past current_end — downgrade now atomically.
+                    await db.runTransaction(async (tx) => {
+                        tx.update(subRef, { status: subscription.status, updatedAt: new Date() });
+                        tx.update(userRef, { planType: 'free', updatedAt: new Date() });
+                    });
+
+                    try {
+                        const { getAuth } = await import('firebase-admin/auth');
+                        await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+                    } catch (claimErr) {
+                        console.error(`[Webhook] Downgrade claim failed for ${userId}:`, claimErr);
+                        throw new Error(`CLAIM_SET_FAILED: ${userId}`);
+                    }
+
+                    console.log(`[Webhook] Downgraded user ${userId} to free (${event.event})`);
                 }
-
-                console.log(`[Webhook] Downgraded user ${userId} to free (${event.event})`);
                 break;
             }
 

@@ -11,9 +11,51 @@ import { checkServerRateLimit } from "@/lib/server-safety";
 import { cachedPerUser, invalidateUserCache } from "@/lib/server-cache";
 import type { TeacherSuggestion } from "@/types/community";
 
+// F2-01 (P0 PII leak): the previous implementation returned raw Firestore
+// user docs to any signed-in caller, leaking phoneNumber, fcmTokens,
+// adminRoles, planType, razorpaySubscriptionId, creditsUsed, email. We now
+// strip to the same public allowlist that getPublicProfileAction uses.
+//
+// Allowlist mirrors src/app/actions/profile.ts::getPublicProfileAction.
+const PUBLIC_PROFILE_FIELDS = [
+    'id',
+    'uid',
+    'displayName',
+    'photoURL',
+    'email', // already shown elsewhere in connection flows
+    'bio',
+    'state',
+    'district',
+    'schoolType',
+    'schoolName',
+    'resourceLevel',
+    'subjects',
+    'languages',
+    'gradeLevels',
+    'qualifications',
+    'yearsOfExperience',
+    'verifiedStatus',
+    'careerStage',
+] as const;
+
+function stripToPublicProfile(user: any): any {
+    if (!user || typeof user !== 'object') return user;
+    const out: Record<string, any> = {};
+    for (const key of PUBLIC_PROFILE_FIELDS) {
+        if (key in user) out[key] = (user as any)[key];
+    }
+    // Preserve uid even if not present in the source object (some adapters
+    // attach it as the doc id rather than a field).
+    if (!('uid' in out) && (user as any).uid) out.uid = (user as any).uid;
+    if (!('id' in out) && (user as any).id) out.id = (user as any).id;
+    return out;
+}
+
 export async function getProfilesAction(uids: string[]) {
     await requireAuth();
-    return await dbAdapter.getUsers(uids);
+    const users = await dbAdapter.getUsers(uids);
+    if (!Array.isArray(users)) return users;
+    return users.map(stripToPublicProfile);
 }
 
 /**
@@ -87,25 +129,28 @@ export async function toggleLikeAction(postId: string) {
     const postRef = db.collection('posts').doc(postId);
     const likeRef = postRef.collection('likes').doc(userId);
 
-    const likeDoc = await likeRef.get();
-
-    // Wave 2b: replaced read-modify-write with FieldValue.increment so two
-    // concurrent toggles can't read the same value, both write +1, and lose
-    // a count. The likeRef.get is only used to decide direction — the actual
-    // counter mutation is now atomic at the Firestore level.
-    if (likeDoc.exists) {
-        // Unlike
-        await Promise.all([
-            likeRef.delete(),
-            postRef.update({ likesCount: FieldValue.increment(-1) }),
-        ]);
-    } else {
-        // Like
-        await Promise.all([
-            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
-            postRef.update({ likesCount: FieldValue.increment(1) }),
-        ]);
+    // F10-05: forbid self-like. Inflates vanity counters and pollutes ranking.
+    const postSnap = await postRef.get();
+    if (!postSnap.exists) throw new Error('Post not found');
+    const postData = postSnap.data() ?? {};
+    if (postData.authorId && postData.authorId === userId) {
+        throw new Error('Cannot like your own post');
     }
+
+    // F5-002 fix: wrap the entire toggle in a Firestore transaction so that
+    // concurrent toggles from the same user can't both observe `!exists` and
+    // double-increment `likesCount`. Transactional read+decide+write keeps the
+    // final state at one like-doc and a counter delta of +1 or 0.
+    await db.runTransaction(async (tx) => {
+        const likeDoc = await tx.get(likeRef);
+        if (likeDoc.exists) {
+            tx.delete(likeRef);
+            tx.update(postRef, { likesCount: FieldValue.increment(-1) });
+        } else {
+            tx.set(likeRef, { uid: userId, createdAt: new Date().toISOString() });
+            tx.update(postRef, { likesCount: FieldValue.increment(1) });
+        }
+    });
 
     revalidatePath("/community");
 }
@@ -138,6 +183,11 @@ import { createTypedNotification } from "./notifications";
 
 export async function followTeacherAction(followingId: string) {
     const followerId = await requireAuth();
+    // F10-04: forbid self-follow. Inflates the follower graph and gives
+    // social-proof to the wrong account.
+    if (followingId === followerId) {
+        throw new Error('Cannot follow yourself');
+    }
     // Invalidate this user's cached recommendations — their following list
     // just changed, so the exclusion set is stale.
     invalidateUserCache('recs', followerId);
@@ -506,6 +556,11 @@ export async function likeResourceAction(
     if (!resDoc.exists) throw new Error('Resource not found');
     const resData = resDoc.data()!;
 
+    // F10-05: forbid self-like on library resources too.
+    if (resData.authorId && resData.authorId === userId) {
+        throw new Error('Cannot like your own resource');
+    }
+
     let isLiked: boolean;
 
     if (likeDoc.exists) {
@@ -589,18 +644,29 @@ export async function saveResourceToLibraryAction(
     const resRef  = db.collection('library_resources').doc(resource.id);
     const saveRef = resRef.collection('saves').doc(saverId);
 
-    const saveDoc = await saveRef.get();
+    // F5-003 fix: same TOCTOU pattern as F5-002. Pre-reading `saveRef.exists`
+    // and then running the save-doc set + stats.saves increment as separate
+    // writes meant two concurrent saves from the same user could both observe
+    // `!exists`, both set the save-doc (idempotent), and both fire
+    // `FieldValue.increment(+1)` — inflating `stats.saves` by N. Wrap the
+    // existence check + counter increment in a transaction; the closure
+    // returns `true` if the save was already recorded (so we short-circuit
+    // the rest of the side-effects below: library copy, notification,
+    // metrics, pubsub).
+    const alreadySaved = await db.runTransaction(async (tx) => {
+        const saveDoc = await tx.get(saveRef);
+        if (saveDoc.exists) {
+            return true;
+        }
+        tx.set(saveRef, { createdAt: new Date().toISOString() });
+        tx.update(resRef, { 'stats.saves': FieldValue.increment(1) });
+        return false;
+    });
 
-    if (saveDoc.exists) {
+    if (alreadySaved) {
         // Already saved — silently succeed
         return { alreadySaved: true };
     }
-
-    // 1. Mark the save in the subcollection (idempotency guard)
-    await saveRef.set({ createdAt: new Date().toISOString() });
-
-    // 2. Increment community stats
-    await resRef.update({ 'stats.saves': FieldValue.increment(1) });
 
     // 3. Copy into saver's personal library (subcollection)
     const contentId = `saved_${resource.id}_${saverId.slice(0, 8)}`;
@@ -773,6 +839,25 @@ export async function sendChatMessageAction(text: string, audioUrl?: string) {
     const trimmed = text?.trim();
     if (!trimmed && !audioUrl) throw new Error("Message cannot be empty");
     if (trimmed && trimmed.length > 500) throw new Error("Message too long");
+
+    // F10-03: audioUrl must point at Firebase Storage. Without this guard a
+    // hostile client could plant a tracking-pixel URL that fires every time
+    // a chat viewer's <audio> element preloads metadata, leaking which users
+    // opened the chat. Mirrors sendGroupChatMessageAction's validation.
+    if (audioUrl) {
+        if (typeof audioUrl !== 'string' || audioUrl.length > 1024) {
+            throw new Error('Invalid audio URL');
+        }
+        let parsed: URL;
+        try {
+            parsed = new URL(audioUrl);
+        } catch {
+            throw new Error('Invalid audio URL');
+        }
+        if (parsed.protocol !== 'https:' || parsed.host !== 'firebasestorage.googleapis.com') {
+            throw new Error('Invalid audio URL');
+        }
+    }
 
     // 3. Rate limit (already imported at top of file)
     await checkServerRateLimit(authorId);

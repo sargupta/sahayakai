@@ -69,7 +69,14 @@ function makeMockDb() {
                         filtered = filtered.filter(([id]) => ids.includes(id));
                     } else {
                         filtered = filtered.filter(([, data]: any) => {
-                            const dv = (data as any)?.[w.field];
+                            // Resolve dotted paths like 'metadata.postId' so the
+                            // post-scoped GROUP_POST_LIKE dedup query works (F6-08).
+                            const dv = w.field.includes('.')
+                                ? w.field.split('.').reduce(
+                                    (acc: any, k: string) => (acc == null ? acc : acc[k]),
+                                    data,
+                                )
+                                : (data as any)?.[w.field];
                             switch (w.op) {
                                 case '==':
                                     return dv === w.value;
