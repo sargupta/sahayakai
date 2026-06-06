@@ -1,0 +1,51 @@
+# Policy 7: Prod /api/health non-200 — PAGE.
+#
+# Uptime check against https://<prod-host>/api/health. Any non-200 over 2
+# consecutive intervals pages on-call.
+#
+# PREREQUISITE — an uptime check resource. deploy-alerts.sh creates an
+# uptime check named `sahayakai-prod-api-health` against the configured
+# PROD_HOST (default: sahayakai.com) if one with that name is missing.
+#
+# Verify firing:
+#   1. Use Cloud Monitoring → Uptime checks → "Check now" with a bad path
+#      to confirm wiring.
+#   2. Or temporarily redirect /api/health → 503 on a canary.
+displayName: "sahayakai prod — /api/health non-200 [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE on-call.** Production `/api/health` returned non-200 from at least
+    two probe regions.
+
+    Runbook:
+      1. Hit the endpoint directly: `curl -i https://<prod-host>/api/health`
+      2. Cloud Run status: `gcloud run services describe sahayakai-hotfix-resilience --region asia-southeast1`
+      3. Latest revisions + traffic split: `gcloud run revisions list --service sahayakai-hotfix-resilience --region asia-southeast1 --limit 5`
+      4. If a bad revision is serving, roll back:
+         ```
+         gcloud run services update-traffic sahayakai-hotfix-resilience --region asia-southeast1 --to-revisions <previous>=100
+         ```
+      5. Check Firestore / AppCheck / Vertex AI dependent services.
+conditions:
+  - displayName: "uptime check failed"
+    conditionThreshold:
+      filter: |
+        resource.type = "uptime_url"
+        metric.type = "monitoring.googleapis.com/uptime_check/check_passed"
+        metric.label.check_id = monitoring.regex.full_match("sahayakai-prod-api-health.*")
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_NEXT_OLDER
+          crossSeriesReducer: REDUCE_COUNT_FALSE
+          groupByFields:
+            - resource.label.host
+      comparison: COMPARISON_GT
+      thresholdValue: 1
+      duration: 60s
+      trigger:
+        count: 1

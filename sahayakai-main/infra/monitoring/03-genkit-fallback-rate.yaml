@@ -1,0 +1,65 @@
+# Policy 3: Genkit fallback rate > 5% during canary (per agent) — WARN.
+#
+# When the sidecar fails (5xx, 401 AppCheck, timeout), the dispatcher silently
+# falls back to Genkit. A spike in fallback rate means sidecar errors are being
+# masked. Per-agent so we can isolate which agent's canary is unhealthy.
+#
+# PREREQUISITE — log-based counter metrics (deploy-alerts.sh creates them):
+#   - logging.googleapis.com/user/dispatcher_complete_total
+#       label `agent` from jsonPayload.agent
+#       filter: jsonPayload.event="dispatcher.complete"
+#   - logging.googleapis.com/user/dispatcher_complete_fallback
+#       label `agent` from jsonPayload.agent
+#       filter: jsonPayload.event="dispatcher.complete" AND
+#               jsonPayload.source="genkit_fallback"
+#
+# Verify firing:
+#   1. Choose an agent currently in canary (`sidecarPercent` > 0).
+#   2. Force the sidecar to return 5xx for that agent (e.g. revoke AppCheck
+#      token in a test env). Fallback rate jumps.
+#   3. Alert fires per-agent within ~10 min.
+displayName: "dispatcher — Genkit fallback rate > 5% per agent (10m) [WARN]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **WARN.** Fallback rate to Genkit exceeded 5% for at least one agent
+    during canary over the last 10 minutes. This usually masks sidecar 5xx
+    or 401 (AppCheck) errors.
+
+    Action:
+      1. Identify the agent from the alert labels (`metric.agent`).
+      2. Check sidecar logs for that agent:
+         ```
+         gcloud logging read 'resource.labels.service_name=sahayakai-agents AND jsonPayload.agent="<AGENT>"' --limit=50 --freshness=15m
+         ```
+      3. If AppCheck 401 → see policy 4 runbook.
+      4. If 5xx → see policy 1.
+      5. Consider demoting that agent's `sidecarPercent` to 0 in Remote Config
+         while investigating.
+conditions:
+  - displayName: "fallback ratio > 5% per agent"
+    conditionMonitoringQueryLanguage:
+      query: |
+        { t_0:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_complete_fallback'
+            | align rate(1m)
+            | every 1m
+            | group_by [metric.agent], sum(value)
+        ; t_1:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_complete_total'
+            | align rate(1m)
+            | every 1m
+            | group_by [metric.agent], sum(value)
+        }
+        | ratio
+        | window 10m
+        | condition val() > 0.05 '1'
+      duration: 600s
+      trigger:
+        count: 1

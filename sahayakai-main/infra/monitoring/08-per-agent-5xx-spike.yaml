@@ -1,0 +1,64 @@
+# Policy 8: Per-agent 5xx rate > 5% over 5 min — PAGE on-call with agent name.
+#
+# Aggregates by agent label from log-based counters so the notification
+# carries the failing agent name. Uses dispatcher.complete logs to count
+# total dispatches per agent, and dispatcher.error events for 5xx.
+#
+# PREREQUISITE — log-based counter metric (deploy-alerts.sh creates it):
+#   - logging.googleapis.com/user/dispatcher_complete_total
+#       label `agent` from jsonPayload.agent
+#   - logging.googleapis.com/user/dispatcher_error_5xx
+#       label `agent` from jsonPayload.agent
+#       filter: jsonPayload.event="dispatcher.error" AND
+#               jsonPayload.status>=500
+#
+# Verify firing:
+#   1. Pick an agent; force the sidecar to 500 for that agent only
+#      (e.g. by simulating an invalid schema).
+#   2. Send sustained traffic ≥ 1 rps; alert fires within ~5 min and the
+#      notification subject includes the agent label.
+displayName: "dispatcher — per-agent 5xx > 5% (5m) [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE on-call.** A specific agent's 5xx rate exceeded 5% over 5 min.
+
+    The failing agent appears in the alert labels as `metric.agent`.
+
+    Runbook:
+      1. `AGENT=<from-alert>`
+      2. Inspect sidecar logs for that agent:
+         ```
+         gcloud logging read 'resource.labels.service_name=sahayakai-agents AND jsonPayload.agent="'$AGENT'" AND httpRequest.status>=500' --limit=50 --freshness=10m
+         ```
+      3. Demote that agent's canary:
+         Remote Config: `<agent>SidecarPercent` → 0.
+      4. If still failing on Genkit fallback, this is a global agent regression —
+         roll back the most recent web/agent deploy.
+conditions:
+  - displayName: "per-agent 5xx ratio > 5%"
+    conditionMonitoringQueryLanguage:
+      query: |
+        { t_0:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_error_5xx'
+            | align rate(1m)
+            | every 1m
+            | group_by [metric.agent], sum(value)
+        ; t_1:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_complete_total'
+            | align rate(1m)
+            | every 1m
+            | group_by [metric.agent], sum(value)
+        }
+        | ratio
+        | window 5m
+        | condition val() > 0.05 '1'
+      duration: 300s
+      trigger:
+        count: 1

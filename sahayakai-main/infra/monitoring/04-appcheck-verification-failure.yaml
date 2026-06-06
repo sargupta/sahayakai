@@ -1,0 +1,56 @@
+# Policy 4: Sidecar AppCheck verification failure > 0 per hour — CRITICAL/SECURITY.
+#
+# Any AppCheck verification failure on the sidecar is a security signal:
+# either tokens are leaking/forged, App Check config drift, or a legitimate
+# client is calling with no token (which the sidecar should reject).
+#
+# PREREQUISITE — log-based counter metric (deploy-alerts.sh creates it):
+#   - logging.googleapis.com/user/sidecar_appcheck_failed
+#       filter: resource.labels.service_name="sahayakai-agents" AND
+#               (jsonPayload.event="appcheck.verify_failed" OR
+#                httpRequest.status=401)
+#
+# Verify firing:
+#   1. Hit a sidecar endpoint with a bogus X-Firebase-AppCheck header.
+#   2. Within ~1 min the log metric increments; alert fires within 60s.
+displayName: "sahayakai-agents sidecar — AppCheck failures > 0 (1h) [CRITICAL]"
+combiner: OR
+enabled: true
+severity: CRITICAL
+alertStrategy:
+  autoClose: 3600s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **CRITICAL / SECURITY.** Sidecar received at least one request that failed
+    AppCheck verification in the last hour.
+
+    Possible causes:
+      - Leaked / forged AppCheck token attempting to reach the sidecar.
+      - AppCheck config drift between web client and sidecar.
+      - Direct calls bypassing the official client.
+      - Misconfigured QA harness (should use debug tokens, not prod).
+
+    Action:
+      1. Inspect failures:
+         ```
+         gcloud logging read 'resource.labels.service_name=sahayakai-agents AND (jsonPayload.event="appcheck.verify_failed" OR httpRequest.status=401)' --limit=20 --freshness=2h
+         ```
+      2. Capture source IPs and user-agents; check for a pattern.
+      3. If automated abuse, add Cloud Armor rule (see `scripts/cloud-armor.sh`).
+      4. If config drift, redeploy with synced AppCheck site key.
+conditions:
+  - displayName: "AppCheck failures > 0"
+    conditionThreshold:
+      filter: |
+        resource.type = "global"
+        metric.type = "logging.googleapis.com/user/sidecar_appcheck_failed"
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 0.0
+      duration: 60s
+      trigger:
+        count: 1
