@@ -132,10 +132,18 @@ async function persistSidecarAvatar(
         metadata: { contentType: 'image/png' },
     });
 
+    // Same NOT_FOUND-swallow pattern as src/ai/flows/avatar-generator.ts —
+    // do not let the avatar-persist step CREATE a user doc for synthetic
+    // callers (canary probes, QA harness). Real users always have a doc.
     const db = await getDb();
-    await db.collection('users').doc(userId).set({
-        avatarUrl: filePath,
-    }, { merge: true });
+    try {
+        await db.collection('users').doc(userId).update({ avatarUrl: filePath });
+    } catch (err) {
+        const code = (err as { code?: number | string }).code;
+        const msg = (err as { message?: string }).message ?? '';
+        const isNotFound = code === 5 || code === 'NOT_FOUND' || /not.found/i.test(msg);
+        if (!isNotFound) throw err;
+    }
 }
 
 function sidecarToDispatched(
