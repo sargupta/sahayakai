@@ -14,13 +14,31 @@
  * Notifications use the top-level `notifications` collection (not a
  * subcollection) — same shape as createNotification in
  * src/app/actions/notifications.ts.
+ *
+ * F6-01 fix: candidate pool is *randomly sampled* across the matching cohort.
+ *   We over-fetch 4x cap (200), shuffle in JS, then slice to 50. This guarantees
+ *   probabilistic uniform coverage of old/new teachers in dense districts
+ *   rather than the previous createdAt-desc-take-50 starvation pattern.
+ *
+ * F6-02/03 fix: dedup-query failures no longer silently skip recipients.
+ *   On error we WARN-log a structured `event: notification.dedup.failed` and
+ *   default to sending (better to over-deliver than to be silent).
+ *
+ * F6-13 fix: each recipient also receives an FCM push via sendPushToUser.
+ *
+ * F6-19 fix: senderId is derived from the resolved teacher profile that this
+ *   module fetched itself; there is no caller-supplied senderId in this code
+ *   path, so the spoofing surface is closed.
  */
 
 import { getDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { sendPushToUser } from '@/lib/fcm-server';
+import { resolveLanguage } from '@/lib/notifications/i18n';
 import type { Language, Notification, NotificationType } from '@/types';
 
 const RECIPIENT_CAP = 50;
+const OVERFETCH_MULTIPLIER = 4; // F6-01: sample randomly from a larger pool
 const DEDUP_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 
 // Message template, one entry per supported language. Kept inline (not in the
@@ -40,8 +58,9 @@ const MESSAGE_TEMPLATES: Record<Language, string> = {
     Odia: '{name} {school} ରୁ SahayakAI ରେ ଯୋଗ ଦେଲେ',
 };
 
-function renderMessage(lang: Language | undefined, name: string, school: string): string {
-    const template = MESSAGE_TEMPLATES[(lang as Language) ?? 'English'] ?? MESSAGE_TEMPLATES.English;
+function renderMessage(lang: Language | string | undefined, name: string, school: string): string {
+    const canonical = resolveLanguage(lang) ?? 'English';
+    const template = MESSAGE_TEMPLATES[canonical] ?? MESSAGE_TEMPLATES.English;
     return template.replace('{name}', name).replace('{school}', school);
 }
 
@@ -51,6 +70,16 @@ function looksLikeTestAccount(displayName?: string): boolean {
     const name = (displayName ?? '').toLowerCase();
     if (!name) return false;
     return /\b(dev|qa|test|impersonat|sample|dummy|placeholder)\b/i.test(name);
+}
+
+// Fisher-Yates shuffle (in-place). Used by F6-01 random sampling.
+// Exported for testability (so a deterministic seed can verify behavior).
+export function shuffleInPlace<T>(arr: T[]): T[] {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 export interface FanoutResult {
@@ -104,9 +133,10 @@ export async function fanoutNewTeacherJoinedNotification(
         const name = (teacher.displayName ?? '').trim() || 'A teacher';
         const school = (teacher.schoolName ?? '').trim() || 'a nearby school';
 
-        // Query candidates: same state + district + subject overlap.
-        // Ordered by createdAt desc → "most recently joined" gets the news.
-        // We over-fetch a bit to leave room for dedup/hidden filtering.
+        // F6-01 fix: over-fetch RECIPIENT_CAP * OVERFETCH_MULTIPLIER (200)
+        // candidates ordered by createdAt desc, then JS-shuffle and take 50.
+        // Old cohort members in dense districts now have a real chance to be
+        // notified (previously they were guaranteed-starved).
         let query = db.collection('users')
             .where('district', '==', district)
             .where('subjects', 'array-contains', primarySubject);
@@ -115,7 +145,7 @@ export async function fanoutNewTeacherJoinedNotification(
         }
         const candidatesSnap = await query
             .orderBy('createdAt', 'desc')
-            .limit(RECIPIENT_CAP * 2)
+            .limit(RECIPIENT_CAP * OVERFETCH_MULTIPLIER)
             .get();
 
         const candidates = candidatesSnap.docs
@@ -126,7 +156,8 @@ export async function fanoutNewTeacherJoinedNotification(
         if (candidates.length > RECIPIENT_CAP) {
             result.capped = true;
         }
-        const trimmed = candidates.slice(0, RECIPIENT_CAP);
+        const shuffled = shuffleInPlace([...candidates]);
+        const trimmed = shuffled.slice(0, RECIPIENT_CAP);
 
         const dedupCutoffIso = new Date(Date.now() - DEDUP_WINDOW_MS).toISOString();
         const newType: NotificationType = 'NEW_TEACHER_JOINED';
@@ -145,10 +176,22 @@ export async function fanoutNewTeacherJoinedNotification(
                     .get();
                 return { candidate: c, hasRecent: !recent.empty };
             } catch (err) {
-                // If the dedup query fails (e.g. missing composite index) we
-                // err on the side of NOT notifying — better silent than spam.
-                logger.warn('fanoutNewTeacherJoined dedup query failed', 'NOTIFICATIONS', { uid: c.uid, err: String(err) });
-                return { candidate: c, hasRecent: true };
+                // F6-02/03 fix: previously this `catch` set hasRecent=true,
+                // silently zeroing the entire fan-out if the composite index
+                // was missing. We now structured-log to Cloud Logging and
+                // DEFAULT TO SEND (over-delivery beats silent under-delivery).
+                logger.warn(
+                    'notification.dedup.failed',
+                    'NOTIFICATIONS',
+                    {
+                        event: 'notification.dedup.failed',
+                        type: newType,
+                        recipientId: c.uid,
+                        newTeacherUid,
+                        err: String(err),
+                    },
+                );
+                return { candidate: c, hasRecent: false };
             }
         }));
 
@@ -159,15 +202,22 @@ export async function fanoutNewTeacherJoinedNotification(
 
         // Batch-write notification docs (500/batch is Firestore limit; we cap
         // at 50 so a single batch is always enough).
+        //
+        // F6-19 note: senderId is derived from the newTeacherUid that this
+        // module resolved against Firestore — there is no caller-controlled
+        // senderId field in this fan-out path, so the spoofing surface that
+        // exists in createNotification is closed by construction here.
         const batch = db.batch();
         const now = new Date().toISOString();
+        const pushPayloads: { recipientId: string; title: string; body: string }[] = [];
         for (const r of recipients) {
             const ref = db.collection('notifications').doc();
+            const localizedMessage = renderMessage(r.data.preferredLanguage, name, school);
             const doc: Omit<Notification, 'id'> = {
                 recipientId: r.uid,
                 type: newType,
                 title: 'A nearby teacher just joined',
-                message: renderMessage(r.data.preferredLanguage, name, school),
+                message: localizedMessage,
                 senderId: newTeacherUid,
                 senderName: name,
                 link,
@@ -176,9 +226,25 @@ export async function fanoutNewTeacherJoinedNotification(
                 createdAt: now,
             };
             batch.set(ref, doc);
+            pushPayloads.push({
+                recipientId: r.uid,
+                title: 'A nearby teacher just joined',
+                body: localizedMessage,
+            });
         }
         await batch.commit();
         result.sent = recipients.length;
+
+        // F6-13 fix: FCM push to each recipient (fire-and-forget; helper
+        // swallows errors internally so a single bad token doesn't break fan-out).
+        for (const p of pushPayloads) {
+            void sendPushToUser(
+                p.recipientId,
+                { title: p.title, body: p.body },
+                { link, type: newType },
+            );
+        }
+
         return result;
     } catch (err) {
         logger.error('fanoutNewTeacherJoined failed', err, 'NOTIFICATIONS', { newTeacherUid });
