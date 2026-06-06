@@ -1,0 +1,44 @@
+# Policy 6: Sidecar cold-start latency > 5s — WARN.
+#
+# Cloud Run exposes container/startup_latencies. Cold starts > 5s degrade
+# every first-hit user and inflate p95 sharply (correlated with policy 2).
+#
+# Verify firing:
+#   1. Scale the service down to 0 min-instances (it should already be ≥1 in prod).
+#   2. Wait for idle scale-down, then hit a cold endpoint.
+#   3. If startup > 5s, alert fires within ~5 min.
+displayName: "sahayakai-agents sidecar — cold-start > 5s (5m) [WARN]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **WARN.** Sidecar cold-start latency exceeded 5s.
+
+    Action:
+      1. Confirm `--min-instances` ≥ 1 on the service:
+         ```
+         gcloud run services describe sahayakai-agents --region asia-southeast1 --format='value(spec.template.metadata.annotations."autoscaling.knative.dev/minScale")'
+         ```
+      2. If 0, bump to 1 via `safe-deploy.sh` with `--min-instances=1`.
+      3. Inspect cold-start path — large imports, model warm-up, blocking
+         I/O in module init. Move to lazy init.
+      4. Verify base image size; cold start scales with image pull time.
+conditions:
+  - displayName: "startup latency > 5s"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        resource.label.service_name = "sahayakai-agents"
+        metric.type = "run.googleapis.com/container/startup_latencies"
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_PERCENTILE_95
+          crossSeriesReducer: REDUCE_MAX
+      comparison: COMPARISON_GT
+      thresholdValue: 5000
+      duration: 300s
+      trigger:
+        count: 1

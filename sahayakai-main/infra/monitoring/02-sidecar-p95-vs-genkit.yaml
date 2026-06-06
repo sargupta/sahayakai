@@ -1,0 +1,65 @@
+# Policy 2: Sidecar p95 latency > 1.5× Genkit-fallback p95 over 10 min — WARN.
+#
+# Compares structured log latency from `dispatcher.complete` events, comparing
+# `source=sidecar` p95 vs `source=genkit_fallback` p95 over a 10 min rolling
+# window.
+#
+# PREREQUISITE — log-based distribution metrics (run once; deploy-alerts.sh
+# creates them if missing):
+#   - logging.googleapis.com/user/dispatcher_complete_sidecar_latency
+#   - logging.googleapis.com/user/dispatcher_complete_genkit_latency
+#
+# Both extract `jsonPayload.elapsedMs` as DISTRIBUTION, filtered by:
+#   - jsonPayload.event="dispatcher.complete" AND jsonPayload.source="sidecar"
+#   - jsonPayload.event="dispatcher.complete" AND jsonPayload.source="genkit_fallback"
+#
+# Verify firing:
+#   1. Tail logs to confirm both labels emit elapsedMs:
+#      `gcloud logging read 'jsonPayload.event="dispatcher.complete"' --limit=10`
+#   2. Force sidecar slowness in a canary (e.g. inject sleep in a debug agent).
+#   3. Alert fires when sidecar p95 sustained 1.5× above fallback p95 for 10 min.
+displayName: "sahayakai-agents sidecar — p95 > 1.5× Genkit p95 (10m) [WARN]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **WARN.** Sidecar p95 latency exceeded 1.5× the Genkit-fallback p95 over
+    10 minutes (from `dispatcher.complete` logs).
+
+    Likely causes:
+      - Sidecar cold starts (see policy 6)
+      - Model regression on Vertex AI
+      - Sidecar CPU/memory throttling (see policy 5)
+      - Network/region issue
+
+    Action:
+      1. Check policy 5 + 6 — likely correlated.
+      2. Compare per-agent p95: filter `dispatcher.complete` by `agent`.
+      3. If isolated to one agent, freeze that agent's sidecar canary in
+         Remote Config (`<agent>SidecarPercent` → 0).
+conditions:
+  - displayName: "sidecar p95 > 1.5× genkit p95"
+    conditionMonitoringQueryLanguage:
+      query: |
+        { t_0:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_complete_sidecar_latency'
+            | align delta(1m)
+            | every 1m
+            | group_by [], [val: percentile(value, 95)]
+        ; t_1:
+            fetch global
+            | metric 'logging.googleapis.com/user/dispatcher_complete_genkit_latency'
+            | align delta(1m)
+            | every 1m
+            | group_by [], [val: percentile(value, 95)]
+        }
+        | ratio
+        | window 10m
+        | condition val() > 1.5 '1'
+      duration: 600s
+      trigger:
+        count: 1

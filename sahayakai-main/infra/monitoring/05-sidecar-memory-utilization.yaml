@@ -1,0 +1,45 @@
+# Policy 5: Sidecar memory utilization > 80% sustained over 5 min — WARN.
+#
+# Cloud Run memory utilization (max across container instances).
+# Sustained > 80% means we're one bursty request away from OOM-kill.
+#
+# Verify firing:
+#   1. Temporarily lower the service's memory limit (e.g. 512Mi → 256Mi) on a
+#      canary revision.
+#   2. Send normal traffic; utilization climbs past 80%.
+#   3. Alert fires within ~5 min. Restore the original limit immediately.
+displayName: "sahayakai-agents sidecar — memory util > 80% (5m) [WARN]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **WARN.** Sidecar container memory utilization sustained above 80% for 5 min.
+
+    Action:
+      1. Identify offending revision:
+         ```
+         gcloud monitoring metrics list --filter='metric.type="run.googleapis.com/container/memory/utilizations"'
+         ```
+      2. Inspect recent code changes for memory regressions (model loading,
+         large request bodies, missing stream cleanup).
+      3. Short-term: bump memory limit on the service.
+      4. Long-term: profile via Cloud Profiler if available.
+conditions:
+  - displayName: "memory utilization > 80%"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        resource.label.service_name = "sahayakai-agents"
+        metric.type = "run.googleapis.com/container/memory/utilizations"
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_PERCENTILE_99
+          crossSeriesReducer: REDUCE_MAX
+      comparison: COMPARISON_GT
+      thresholdValue: 0.8
+      duration: 300s
+      trigger:
+        count: 1
