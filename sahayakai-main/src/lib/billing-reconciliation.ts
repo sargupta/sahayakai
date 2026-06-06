@@ -22,6 +22,7 @@ export type MismatchType =
   | 'double_charge'            // D4: 2+ captured payments in same billing cycle
   | 'admin_override'           // D5: Firestore manually changed, doesn't match Razorpay
   | 'amount_mismatch'          // D7: Plan price doesn't match charge amount
+  | 'unknown_plan_id'          // F12-P2-10: Razorpay plan_id has no entry in PLAN_NAME_MAP
   | 'orphan_firestore'         // Firestore has subscriptionId that doesn't exist in Razorpay
   | 'orphan_razorpay';         // Razorpay subscription has no matching Firestore user
 
@@ -242,11 +243,74 @@ async function fetchFirestorePaidUsers(): Promise<FirestoreUserPlan[]> {
 
 const TERMINAL_STATUSES = new Set(['cancelled', 'completed', 'expired', 'halted']);
 
+/**
+ * F12-P2-10: Firestore-based mutex. Prevents two parallel triggers (e.g. Cloud
+ * Scheduler + a manual curl) from running reconciliation simultaneously and
+ * double-auto-fixing users. Lease is 15 minutes — long enough for a normal run,
+ * short enough that a crashed run unblocks the next scheduled tick.
+ */
+const RECON_LEASE_MS = 15 * 60 * 1000;
+const LEASE_DOC_PATH = 'system_locks/billing_reconciliation';
+
+async function acquireLease(runId: string): Promise<boolean> {
+  const db = await getDb();
+  const ref = db.doc(LEASE_DOC_PATH);
+  const now = Date.now();
+  try {
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (snap.exists) {
+        const d = snap.data() as { acquiredAt?: number; runId?: string } | undefined;
+        const acquiredAt = d?.acquiredAt ?? 0;
+        if (now - acquiredAt < RECON_LEASE_MS) {
+          return false;
+        }
+      }
+      tx.set(ref, { runId, acquiredAt: now });
+      return true;
+    });
+  } catch (err) {
+    logger.warn(`Lease acquire failed for ${runId}: ${err}`, 'BILLING_RECON');
+    return false;
+  }
+}
+
+async function releaseLease(runId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    const ref = db.doc(LEASE_DOC_PATH);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (snap.exists && (snap.data() as any)?.runId === runId) {
+        tx.delete(ref);
+      }
+    });
+  } catch (err) {
+    logger.warn(`Lease release failed for ${runId}: ${err}`, 'BILLING_RECON');
+  }
+}
+
 export async function runReconciliation(): Promise<ReconciliationResult> {
   const runId = `recon_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const startedAt = new Date();
   const mismatches: Mismatch[] = [];
   const errors: string[] = [];
+
+  const acquired = await acquireLease(runId);
+  if (!acquired) {
+    logger.warn(`Reconciliation ${runId} skipped — another run holds the lease`, 'BILLING_RECON');
+    return {
+      runId,
+      startedAt,
+      completedAt: new Date(),
+      rzpSubscriptionsFetched: 0,
+      fsRecordsFetched: 0,
+      mismatches: [],
+      autoFixCount: 0,
+      flaggedCount: 0,
+      errors: ['lease_held_by_another_run'],
+    };
+  }
 
   logger.info(`Reconciliation ${runId} starting`, 'BILLING_RECON');
 
@@ -298,8 +362,24 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
             details: { rzpStatus: 'active', fsPlan: fsUser?.planType || 'not_found', adminOverride: true },
           });
         } else {
-          // AUTO-FIX: upgrade Firestore to match Razorpay
-          const expectedPlan = PLAN_NAME_MAP[rzpSub.plan_id] || 'gold';
+          // F12-P2-10: do not auto-coerce unknown plan_ids to 'gold'. Flag instead.
+          const expectedPlan = PLAN_NAME_MAP[rzpSub.plan_id];
+          if (!expectedPlan) {
+            logger.warn(`Unknown Razorpay plan_id ${rzpSub.plan_id} for user ${userId} — flagging, NOT auto-fixing`, 'BILLING_RECON');
+            mismatches.push({
+              type: 'unknown_plan_id',
+              subscriptionId: rzpSub.id,
+              userId,
+              action: 'flagged',
+              details: {
+                rzpPlanId: rzpSub.plan_id,
+                rzpStatus: 'active',
+                fsPlan: fsUser?.plan || 'not_found',
+                note: 'PLAN_NAME_MAP missing entry — add env var RAZORPAY_PLAN_* before next run',
+              },
+            });
+            continue;
+          }
           try {
             if (fsUser) {
               await db.collection('users').doc(userId).update({
@@ -512,6 +592,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
     'BILLING_RECON'
   );
 
+  await releaseLease(runId);
   return result;
 }
 

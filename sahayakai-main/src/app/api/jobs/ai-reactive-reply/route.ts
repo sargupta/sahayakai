@@ -40,11 +40,8 @@ function sleep(ms: number) {
 
 export async function POST(req: NextRequest) {
     try {
-        // ── Auth: internal secret check (fail-closed) ───────────────────
-        // F3-004 fix: previously a missing AI_INTERNAL_SECRET env var would
-        // skip the auth check entirely, leaving this endpoint completely
-        // open in any environment that forgot to set the var. We now fail
-        // closed: 503 if the secret is not configured, 401 on mismatch.
+        // ── Auth: internal secret check (fail-closed — F3-004 + F12-P1-02) ─
+        // Missing AI_INTERNAL_SECRET => 503 (not skip-auth). Mismatch => 401.
         const secret = process.env.AI_INTERNAL_SECRET;
         if (!secret) {
             logger.error(

@@ -1,38 +1,31 @@
 /**
  * POST /api/jobs/edu-news
  *
- * DEPRECATED — Replaced by /api/jobs/daily-briefing
- * which covers CBSE + ICSE + AI-in-education + state-level news
- * with Gemini curation and multilingual translation at 8 AM IST.
+ * REMOVED — replaced by /api/jobs/daily-briefing.
  *
- * This route forwards to the new pipeline so any existing
- * Cloud Scheduler jobs continue to work until migrated.
+ * F12-P1-03: the previous implementation forwarded `Object.fromEntries(request.headers)`
+ * to daily-briefing, replaying the caller's `Authorization` header. That created a
+ * header-replay surface for any attacker probing cron auth. Replaced with a single
+ * permanent redirect — Cloud Scheduler jobs that still hit /edu-news should be
+ * migrated to /daily-briefing directly.
  */
 
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 180;
+export const dynamic = 'force-dynamic';
+
+function redirectToDailyBriefing(request: Request) {
+    logger.warn('edu-news route called — deprecated, returning 301 to daily-briefing', 'EDU_NEWS');
+    const url = new URL(request.url);
+    const dest = `${url.protocol}//${url.host}/api/jobs/daily-briefing`;
+    return NextResponse.redirect(dest, 301);
+}
 
 export async function POST(request: Request) {
-    logger.info('edu-news called — forwarding to daily-briefing (deprecated route)', 'EDU_NEWS');
+    return redirectToDailyBriefing(request);
+}
 
-    try {
-        const baseUrl = request.url.replace('/api/jobs/edu-news', '/api/jobs/daily-briefing');
-        const forwardRes = await fetch(baseUrl, {
-            method: 'POST',
-            headers: Object.fromEntries(request.headers),
-        });
-        const body = await forwardRes.json();
-        return NextResponse.json(
-            { ...body, _forwardedFrom: 'edu-news (deprecated)' },
-            { status: forwardRes.status },
-        );
-    } catch (err: any) {
-        logger.error('Forward to daily-briefing failed', err, 'EDU_NEWS');
-        return NextResponse.json(
-            { error: 'Forward to daily-briefing failed', message: err?.message },
-            { status: 500 },
-        );
-    }
+export async function GET(request: Request) {
+    return redirectToDailyBriefing(request);
 }

@@ -17,13 +17,13 @@ const REMINDER_DAYS = [1, 7, 21, 28]; // Days after cancellation to send reminde
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret — require in production to prevent unauthorized triggers
+    // Verify cron secret — required regardless of NODE_ENV (F12-P1-04).
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+    if (!cronSecret) {
+      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 });
     }
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -82,6 +82,11 @@ export async function POST(request: NextRequest) {
 
     let anonymized = 0;
     for (const doc of expiredSnap.docs) {
+      // Idempotency guard (F12-P1-04): skip already-anonymized users.
+      const docData = doc.data();
+      if (docData?.cancellation?.anonymized === true) {
+        continue;
+      }
       // Anonymize profile but keep content in read-only mode
       await db.collection('users').doc(doc.id).update({
         'cancellation.anonymized': true,
