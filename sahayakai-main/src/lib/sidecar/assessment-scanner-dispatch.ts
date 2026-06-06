@@ -39,6 +39,7 @@ import {
     type SidecarAssessmentResponse,
 } from './assessment-scanner-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
+import { SHADOW_DIFF_IN_CANARY_OBSERVATION } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
 
 const FALLBACK_TIMEOUT_MS =
@@ -48,6 +49,8 @@ export interface AssessmentScannerSidecarDecision {
     mode: SidecarMode;
     reason: string;
     bucket: number;
+    /** Q4C: raw flag value pre-bucket. */
+    configuredMode?: SidecarMode;
 }
 
 function userBucket(uid: string): number {
@@ -74,13 +77,13 @@ export async function decideAssessmentScannerDispatch(
 ): Promise<AssessmentScannerSidecarDecision> {
     const mode = await readMode();
     const bucket = userBucket(uid);
-    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
-    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
+    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket, configuredMode: mode };
+    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket, configuredMode: mode };
     const percent = await readPercent();
     if (bucket < percent) {
-        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
+        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket, configuredMode: mode };
     }
-    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket, configuredMode: mode };
 }
 
 export type AssessmentScannerDispatchSource =
@@ -245,7 +248,30 @@ export async function dispatchAssessmentScanner(
             'assessment-scanner genkit fallback',
         );
         logDispatch(decision, { source: 'genkit', uid: input.userId });
-        return genkitToDispatched(out, 'genkit', decision);
+
+        // Q4C — canary "bucket-overshoot" observation. When the agent
+        // is mid-canary (configuredMode==='canary') but THIS teacher's
+        // bucket landed >=percent (mode collapsed to 'off'), fire the
+        // sidecar in the background and write a shadow_diff so the
+        // promotion gate has a non-zero denominator.
+        if (
+            SHADOW_DIFF_IN_CANARY_OBSERVATION &&
+            decision.configuredMode === 'canary'
+        ) {
+            void runSidecarSafe(sidecarRequest).then((sc) => {
+                void writeAgentShadowDiff({
+                    agent: 'assessment-scanner',
+                    uid: input.userId,
+                    genkit: out,
+                    sidecar: sc.ok ? sc.res : null,
+                    genkitLatencyMs: 0,
+                    sidecarLatencyMs: sc.latencyMs,
+                    sidecarOk: sc.ok,
+                    sidecarError: sc.ok ? undefined : sc.error.message,
+                });
+            });
+        }
+                return genkitToDispatched(out, 'genkit', decision);
     }
 
     if (decision.mode === 'shadow') {
@@ -286,7 +312,27 @@ export async function dispatchAssessmentScanner(
             uid: input.userId,
             sidecarLatencyMs: sidecar.latencyMs,
         });
-        return sidecarToDispatched(sidecar.res, decision);
+
+        // Q4C — canary/full observation: fire Genkit in the background
+        // and write a shadow_diff so the promotion-gate aggregator has
+        // a live (genkit, sidecar) parity signal during the rollout.
+        // 2x Gemini cost while observation is on; toggle the constant
+        // off post-promotion to reclaim it.
+        if (SHADOW_DIFF_IN_CANARY_OBSERVATION) {
+            const __q4cGenkitStartedAt = Date.now();
+            void runGenkitSafe(input).then((gk) => {
+                void writeAgentShadowDiff({
+                    agent: 'assessment-scanner',
+                    uid: input.userId,
+                    genkit: gk.ok ? gk.out : null,
+                    sidecar: sidecar.res,
+                    genkitLatencyMs: Date.now() - __q4cGenkitStartedAt,
+                    sidecarLatencyMs: sidecar.latencyMs,
+                    sidecarOk: true,
+                });
+            });
+        }
+                return sidecarToDispatched(sidecar.res, decision);
     }
 
     // Sidecar error: only fall back to Genkit when it's an infrastructure

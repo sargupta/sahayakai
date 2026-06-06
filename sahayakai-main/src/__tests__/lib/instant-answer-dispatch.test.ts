@@ -95,8 +95,10 @@ import {
     type SidecarInstantAnswerResponse,
 } from '@/lib/sidecar/instant-answer-client';
 import { persistSidecarJSON } from '@/lib/sidecar/persist-helpers';
+import { writeAgentShadowDiff } from '@/lib/sidecar/shadow-diff-writer';
 
 const mockGenkit = instantAnswer as jest.MockedFunction<typeof instantAnswer>;
+const mockShadowDiff = writeAgentShadowDiff as jest.MockedFunction<typeof writeAgentShadowDiff>;
 const mockSidecar = callSidecarInstantAnswer as jest.MockedFunction<typeof callSidecarInstantAnswer>;
 const mockGetFlags = getFeatureFlags as jest.MockedFunction<typeof getFeatureFlags>;
 const mockPersist = persistSidecarJSON as jest.MockedFunction<typeof persistSidecarJSON>;
@@ -237,7 +239,15 @@ describe('dispatchInstantAnswer — canary mode (sidecar serves)', () => {
 
         expect(out.source).toBe('sidecar');
         expect(out.answer).toBe(SIDECAR_OUTPUT.answer);
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
         expect(out.sidecarTelemetry).toBeDefined();
         expect(out.sidecarTelemetry?.groundingUsed).toBe(true);
         expect(out.sidecarTelemetry?.sidecarVersion).toBe('phase-6.1.0');
@@ -302,7 +312,15 @@ describe('dispatchInstantAnswer — full mode', () => {
         const out = await dispatchInstantAnswer(BASE_INPUT);
 
         expect(out.source).toBe('sidecar');
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
     });
 });
 
@@ -433,5 +451,52 @@ describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
         );
         expect(mockSidecar).not.toHaveBeenCalled();
         expect(mockPersist).not.toHaveBeenCalled();
+    });
+});
+
+// Q4C — canary/full observation: writes shadow_diff on the
+// sidecar-route AND the bucket-overshoot Genkit-route so the promotion
+// gate has a non-zero denominator.
+describe('dispatchInstantAnswer — Q4C canary/full observation', () => {
+    it('canary sidecar route: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        setMode('canary', 100);
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(out.source).toBe('sidecar');
+        expect(mockGenkit).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+    });
+
+    it('canary bucket-overshoot Genkit route: fires sidecar fire-and-forget and writes shadow_diff with sidecar pair', async () => {
+        setMode('canary', 0);
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(out.source).toBe('genkit');
+        expect(mockSidecar).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
+    });
+
+    it('full mode: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        setMode('full');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(out.source).toBe('sidecar');
+        expect(mockGenkit).toHaveBeenCalledTimes(1);
+        expect(mockShadowDiff).toHaveBeenCalledTimes(1);
     });
 });

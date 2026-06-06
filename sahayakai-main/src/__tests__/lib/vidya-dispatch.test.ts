@@ -275,7 +275,15 @@ describe('dispatchVidya — canary mode (sidecar serves)', () => {
 
         expect(out.source).toBe('sidecar');
         expect(out.response).toBe(SIDECAR_OUTPUT.response);
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
         expect(out.sidecarTelemetry).toBeDefined();
         expect(out.sidecarTelemetry?.intent).toBe('lesson-plan');
         expect(out.sidecarTelemetry?.sidecarVersion).toBe('phase-5.4.0');
@@ -334,7 +342,15 @@ describe('dispatchVidya — full mode', () => {
         const out = await dispatchVidya(BASE_INPUT);
 
         expect(out.source).toBe('sidecar');
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
     });
 });
 

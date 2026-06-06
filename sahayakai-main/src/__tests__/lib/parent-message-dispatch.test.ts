@@ -204,7 +204,15 @@ describe('dispatchParentMessage — canary mode', () => {
         expect(out.source).toBe('sidecar');
         expect(out.message).toBe(SIDECAR_OUTPUT.message);
         expect(out.sidecarTelemetry?.sidecarVersion).toBe('phase-c.1.0');
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
     });
 
     it('falls back to Genkit on timeout', async () => {

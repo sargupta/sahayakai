@@ -537,6 +537,8 @@ export interface LessonPlanSidecarDecision {
   reason: string;
   /** The 0-99 hash bucket on `uid`. */
   bucket: number;
+  /** Q4C: raw flag value BEFORE percent-bucket evaluation. */
+  configuredMode?: LessonPlanSidecarMode;
 }
 
 /**
@@ -559,12 +561,13 @@ export async function decideLessonPlanDispatch(
 ): Promise<LessonPlanSidecarDecision> {
   const cfg = await readConfig();
   const bucket = userBucket(uid);
+  const configuredMode = cfg.lessonPlanSidecarMode;
 
   if (cfg.lessonPlanSidecarMode === 'off') {
-    return { mode: 'off', reason: 'flag_off', bucket };
+    return { mode: 'off', reason: 'flag_off', bucket, configuredMode };
   }
   if (cfg.lessonPlanSidecarMode === 'full') {
-    return { mode: 'full', reason: 'flag_full', bucket };
+    return { mode: 'full', reason: 'flag_full', bucket, configuredMode };
   }
 
   // shadow or canary: percent-gated
@@ -574,9 +577,15 @@ export async function decideLessonPlanDispatch(
       mode: cfg.lessonPlanSidecarMode,
       reason: `bucket_${bucket}_under_${percent}`,
       bucket,
+      configuredMode,
     };
   }
-  return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+  return {
+    mode: 'off',
+    reason: `bucket_${bucket}_over_${percent}`,
+    bucket,
+    configuredMode,
+  };
 }
 
 // ─── VIDYA sidecar dispatch ─────────────────────────────────────────────────
@@ -588,6 +597,8 @@ export interface VidyaSidecarDecision {
   reason: string;
   /** The 0-99 hash bucket on `uid`. */
   bucket: number;
+  /** Q4C: raw flag value BEFORE percent-bucket evaluation. */
+  configuredMode?: VidyaSidecarMode;
 }
 
 /**
@@ -603,12 +614,13 @@ export async function decideVidyaDispatch(
 ): Promise<VidyaSidecarDecision> {
   const cfg = await readConfig();
   const bucket = userBucket(uid);
+  const configuredMode = cfg.vidyaSidecarMode;
 
   if (cfg.vidyaSidecarMode === 'off') {
-    return { mode: 'off', reason: 'flag_off', bucket };
+    return { mode: 'off', reason: 'flag_off', bucket, configuredMode };
   }
   if (cfg.vidyaSidecarMode === 'full') {
-    return { mode: 'full', reason: 'flag_full', bucket };
+    return { mode: 'full', reason: 'flag_full', bucket, configuredMode };
   }
 
   const percent = Math.max(0, Math.min(100, cfg.vidyaSidecarPercent));
@@ -617,9 +629,15 @@ export async function decideVidyaDispatch(
       mode: cfg.vidyaSidecarMode,
       reason: `bucket_${bucket}_under_${percent}`,
       bucket,
+      configuredMode,
     };
   }
-  return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+  return {
+    mode: 'off',
+    reason: `bucket_${bucket}_over_${percent}`,
+    bucket,
+    configuredMode,
+  };
 }
 
 // ─── Debug Helper ───────────────────────────────────────────────────────────

@@ -273,7 +273,15 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
         // `getVideoRecommendations` (which would invoke Gemini twice)
         // MUST NOT be called.
         expect(mockYouTubeOnly).toHaveBeenCalledTimes(1);
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
 
         // The YouTube-only fn receives sidecar's AI result so it doesn't
         // re-invoke Gemini.
@@ -308,7 +316,15 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
         expect(dispatchLog.source).toBe('sidecar+genkit_videos');
 
         // Sanity: full Genkit (which hides a Gemini call) was NOT called.
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
         // YouTube-only branch was called exactly once.
         expect(mockYouTubeOnly).toHaveBeenCalledTimes(1);
     });
@@ -322,7 +338,15 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
 
         expect(out.source).toBe('sidecar+genkit_videos');
         expect(mockYouTubeOnly).toHaveBeenCalledTimes(1);
-        expect(mockGenkit).not.toHaveBeenCalled();
+        // Q4C: canary/full now fires Genkit fire-and-forget for the
+
+        // shadow_diff observation write. Background call is not awaited
+
+        // so we don't assert "called" here either — the dispatcher's
+
+        // own Q4C tests cover that. The original "not called" assertion
+
+        // was the pre-Q4C contract.
     });
 
     it('returns sidecar categories + personalized message + youtube videos', async () => {
