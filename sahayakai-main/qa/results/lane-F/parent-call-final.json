@@ -1,0 +1,1739 @@
+{
+  "baseUrl": "https://sahayakai-hotfix-resilience-zwydpvyuca-as.a.run.app",
+  "ranAt": "2026-06-06T03:41:41.130Z",
+  "scoredAt": "2026-06-06T03:47:27.349Z",
+  "totalCalls": 33,
+  "cleanCalls": 0,
+  "cleanRate": 0,
+  "totalTurns": 0,
+  "sidecarSuccessPct": 0,
+  "scriptCoveragePct": 0,
+  "actionAgreePct": 0,
+  "gates": {
+    "cleanCallsTarget": 30,
+    "cleanCallsPass": false,
+    "scriptCoverageTarget": 0.9,
+    "scriptCoveragePass": false,
+    "actionAgreeTarget": 0.8,
+    "actionAgreePass": false
+  },
+  "promote": false,
+  "scored": [
+    {
+      "lang": "English",
+      "scenario": "sick",
+      "outreachId": "sim-sick-English-1780716349768-e07a7f",
+      "callSid": "CA75f2c68db7fc924bccb9a4dc51e9edf3",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 6148,
+          "parentSpeech": "Yes, hello, I am the parent."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 6453,
+          "parentSpeech": "My child has been unwell since yesterday, high fever."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 3130,
+          "parentSpeech": "We took him to the doctor, he is resting now."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2905,
+          "parentSpeech": "I will share the medical certificate tomorrow morning."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2501,
+          "parentSpeech": "Could you please share what was taught today so we can catch up?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3341,
+          "parentSpeech": "Thank you so much, goodbye."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "English",
+      "scenario": "family",
+      "outreachId": "sim-family-English-1780716376173-7bd9f3",
+      "callSid": "CA283c325954daec4d74298e7ba62f2143",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4463,
+          "parentSpeech": "Hello, yes, I am the parent."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4791,
+          "parentSpeech": "There was a family wedding out of town, we had to travel."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5515,
+          "parentSpeech": "We will return tomorrow evening."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 10202,
+          "parentSpeech": "Sorry for not informing in advance."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 5696,
+          "parentSpeech": "Will my child be marked absent for all these days?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3193,
+          "parentSpeech": "Okay, thank you, goodbye."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "English",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-English-1780716411960-05059c",
+      "callSid": "CAd4fa547b989c2c59cddac1bb58ae5541",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2674,
+          "parentSpeech": "Hello, who is this?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 3098,
+          "parentSpeech": "I am not sure, the child went to school in the morning."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 2441,
+          "parentSpeech": "Let me check with the bus driver."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 4220,
+          "parentSpeech": "Maybe he went to a friend's house, I will find out."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2951,
+          "parentSpeech": "I will call you back once I know."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2192,
+          "parentSpeech": "Yes, thank you for informing, goodbye."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Hindi",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Hindi-1780716431483-44222f",
+      "callSid": "CAef5c09cbad25ca7062e370b7f12e97e5",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 5580,
+          "parentSpeech": "जी हाँ, नमस्ते, मैं अभिभावक बोल रहा हूँ।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4321,
+          "parentSpeech": "मेरे बच्चे को कल से बुखार है, तबीयत ठीक नहीं है।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 6577,
+          "parentSpeech": "डॉक्टर को दिखाया है, अभी आराम कर रहा है।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 4955,
+          "parentSpeech": "कल सुबह मेडिकल सर्टिफिकेट भेज दूँगा।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3986,
+          "parentSpeech": "आज क्या पढ़ाया गया, कृपया बताइए ताकि बच्चा घर पर पढ़ ले?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2890,
+          "parentSpeech": "बहुत धन्यवाद, नमस्कार।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Hindi",
+      "scenario": "family",
+      "outreachId": "sim-family-Hindi-1780716461722-e59059",
+      "callSid": "CAad6e7bedb8c31f04f96222660aa6c078",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 7429,
+          "parentSpeech": "नमस्ते, हाँ मैं अभिभावक हूँ।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5863,
+          "parentSpeech": "घर में शादी थी, बाहर जाना पड़ा।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 3419,
+          "parentSpeech": "कल शाम तक लौट आएँगे।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3919,
+          "parentSpeech": "पहले से सूचित न कर पाने के लिए माफी।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3632,
+          "parentSpeech": "क्या इन सभी दिनों की अनुपस्थिति लगेगी?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2441,
+          "parentSpeech": "ठीक है, धन्यवाद, नमस्कार।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Hindi",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Hindi-1780716490369-a2a756",
+      "callSid": "CA212fa79cd43e2f8d6feadc94e608f0ec",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2419,
+          "parentSpeech": "नमस्ते, कौन बोल रहा है?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5211,
+          "parentSpeech": "मुझे पता नहीं, बच्चा सुबह स्कूल गया था।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 3922,
+          "parentSpeech": "मैं बस ड्राइवर से पूछती हूँ।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 10175,
+          "parentSpeech": "शायद किसी दोस्त के घर गया है, पता करूँगी।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4095,
+          "parentSpeech": "पता चलते ही आपको बताती हूँ।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2327,
+          "parentSpeech": "जी हाँ, सूचना देने के लिए धन्यवाद, नमस्कार।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Bengali",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Bengali-1780716520453-2c448a",
+      "callSid": "CA64a6d45a55b51c54d509b7836f2c3e75",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3790,
+          "parentSpeech": "হ্যাঁ, নমস্কার, আমি অভিভাবক বলছি।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7619,
+          "parentSpeech": "আমার বাচ্চার গতকাল থেকে জ্বর, শরীর ভালো নেই।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5617,
+          "parentSpeech": "ডাক্তার দেখিয়েছি, এখন বিশ্রাম নিচ্ছে।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2614,
+          "parentSpeech": "আগামীকাল মেডিকেল সার্টিফিকেট পাঠিয়ে দেব।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2641,
+          "parentSpeech": "আজ ক্লাসে কী পড়ানো হয়েছে দয়া করে জানাবেন?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2853,
+          "parentSpeech": "অনেক ধন্যবাদ, নমস্কার।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Bengali",
+      "scenario": "family",
+      "outreachId": "sim-family-Bengali-1780716547518-4ee814",
+      "callSid": "CA3578058a0cfcfee0691dfd45100dca7f",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3850,
+          "parentSpeech": "নমস্কার, হ্যাঁ আমি অভিভাবক।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4692,
+          "parentSpeech": "বাড়িতে বিয়ে ছিল, বাইরে যেতে হয়েছিল।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 4935,
+          "parentSpeech": "কাল সন্ধ্যায় ফিরে আসব।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3957,
+          "parentSpeech": "আগে জানাতে না পারার জন্য দুঃখিত।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2647,
+          "parentSpeech": "এই সব দিনের অনুপস্থিতি ধরা হবে কি?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 1920,
+          "parentSpeech": "ঠিক আছে, ধন্যবাদ, নমস্কার।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Bengali",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Bengali-1780716571489-58fff4",
+      "callSid": "CAd302c957b743d8f6b95c2eefffc86ab0",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3457,
+          "parentSpeech": "নমস্কার, কে বলছেন?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4792,
+          "parentSpeech": "আমি জানি না, বাচ্চা সকালে স্কুলে গিয়েছিল।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 6134,
+          "parentSpeech": "আমি বাস ড্রাইভারকে জিজ্ঞেস করব।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 4051,
+          "parentSpeech": "হয়তো বন্ধুর বাড়িতে গেছে, খোঁজ নেব।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2827,
+          "parentSpeech": "জানতে পারলেই আপনাকে জানাব।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2197,
+          "parentSpeech": "হ্যাঁ, জানানোর জন্য ধন্যবাদ, নমস্কার।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Telugu",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Telugu-1780716596869-1f89fa",
+      "callSid": "CA368e0a543bb6695015fa0f7c77f6c167",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4882,
+          "parentSpeech": "అవును, నమస్కారం, నేను తల్లిదండ్రి మాట్లాడుతున్నాను."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7333,
+          "parentSpeech": "మా అబ్బాయికి నిన్నటి నుండి జ్వరం, ఆరోగ్యం బాగాలేదు."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 8182,
+          "parentSpeech": "డాక్టర్‌కు చూపించాం, ఇప్పుడు విశ్రాంతి తీసుకుంటున్నాడు."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3512,
+          "parentSpeech": "రేపు ఉదయం మెడికల్ సర్టిఫికేట్ పంపిస్తాను."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4285,
+          "parentSpeech": "ఈరోజు ఏం పాఠం చెప్పారు దయచేసి తెలియజేయండి."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2887,
+          "parentSpeech": "చాలా ధన్యవాదాలు, నమస్కారం."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Telugu",
+      "scenario": "family",
+      "outreachId": "sim-family-Telugu-1780716629868-213d4c",
+      "callSid": "CA34440aea220cdae71b2267247bbe4c62",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3358,
+          "parentSpeech": "నమస్కారం, అవును నేను తల్లిదండ్రి."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7456,
+          "parentSpeech": "ఇంట్లో పెళ్లి ఉంది, బయటకు వెళ్లాల్సి వచ్చింది."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 10012,
+          "parentSpeech": "రేపు సాయంత్రానికి తిరిగి వస్తాం."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2558,
+          "parentSpeech": "ముందుగా తెలియజేయలేకపోయినందుకు క్షమించండి."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4367,
+          "parentSpeech": "ఈ రోజులన్నీ ఆబ్సెంట్ గా మార్క్ చేస్తారా?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2969,
+          "parentSpeech": "సరే, ధన్యవాదాలు, నమస్కారం."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Telugu",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Telugu-1780716662514-6f7866",
+      "callSid": "CAd8ea65fad20f41ef10dce7563cb287ea",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2529,
+          "parentSpeech": "నమస్కారం, ఎవరు మాట్లాడుతున్నారు?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4520,
+          "parentSpeech": "నాకు తెలియదు, పిల్లాడు ఉదయం స్కూల్‌కు వెళ్లాడు."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5376,
+          "parentSpeech": "బస్ డ్రైవర్‌ను అడుగుతాను."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 7641,
+          "parentSpeech": "బహుశా స్నేహితుని ఇంటికి వెళ్లి ఉంటాడు, చూస్తాను."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2676,
+          "parentSpeech": "తెలిసిన వెంటనే మీకు తిరిగి కాల్ చేస్తాను."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2701,
+          "parentSpeech": "అవును, తెలియజేసినందుకు ధన్యవాదాలు, నమస్కారం."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Marathi",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Marathi-1780716689869-848008",
+      "callSid": "CAe5026f1b5a6583f4ec2fd00bebb06ba9",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4177,
+          "parentSpeech": "होय, नमस्कार, मी पालक बोलत आहे."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5300,
+          "parentSpeech": "माझ्या मुलाला कालपासून ताप आहे, तब्येत बरी नाही."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 7844,
+          "parentSpeech": "डॉक्टरांना दाखवले आहे, आता आराम करत आहे."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3932,
+          "parentSpeech": "उद्या सकाळी वैद्यकीय प्रमाणपत्र पाठवतो."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3886,
+          "parentSpeech": "आज वर्गात काय शिकवले कृपया सांगाल का?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2309,
+          "parentSpeech": "खूप धन्यवाद, नमस्कार."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Marathi",
+      "scenario": "family",
+      "outreachId": "sim-family-Marathi-1780716719345-9dd65a",
+      "callSid": "CA9259c40eeb48578d7ad59c20e9d3f981",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2779,
+          "parentSpeech": "नमस्कार, होय मी पालक आहे."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 3384,
+          "parentSpeech": "घरात लग्न होते, बाहेर जावे लागले."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 10197,
+          "parentSpeech": "उद्या संध्याकाळी परत येऊ."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3524,
+          "parentSpeech": "आधी कळवू शकलो नाही त्याबद्दल माफी."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4714,
+          "parentSpeech": "या सगळ्या दिवसांची गैरहजेरी लागेल का?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2485,
+          "parentSpeech": "ठीक आहे, धन्यवाद, नमस्कार."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Marathi",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Marathi-1780716748346-c12bc9",
+      "callSid": "CA870f970e6b9768b9c7a41146b28b11d6",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2567,
+          "parentSpeech": "नमस्कार, कोण बोलत आहे?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 6765,
+          "parentSpeech": "मला माहीत नाही, मुलगा सकाळी शाळेत गेला होता."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 4932,
+          "parentSpeech": "मी बस ड्रायव्हरला विचारते."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 5393,
+          "parentSpeech": "कदाचित मित्राच्या घरी गेला असेल, शोध घेईन."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3785,
+          "parentSpeech": "समजल्यावर तुम्हाला परत कॉल करेन."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 1863,
+          "parentSpeech": "होय, कळवल्याबद्दल धन्यवाद, नमस्कार."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Tamil",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Tamil-1780716775564-f71bcb",
+      "callSid": "CAca7d11bec049db749ccdae6279a07c22",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3008,
+          "parentSpeech": "ஆம், வணக்கம், நான் பெற்றோர் பேசுகிறேன்."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 9373,
+          "parentSpeech": "என் பிள்ளைக்கு நேற்றிலிருந்து காய்ச்சல், உடல்நிலை சரியில்லை."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 7414,
+          "parentSpeech": "டாக்டரை பார்த்தோம், இப்போது ஓய்வு எடுக்கிறான்."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3735,
+          "parentSpeech": "நாளை காலை மருத்துவச் சான்றிதழ் அனுப்புகிறேன்."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2667,
+          "parentSpeech": "இன்று வகுப்பில் என்ன கற்பித்தீர்கள் என்று சொல்லுங்களா?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3758,
+          "parentSpeech": "மிக்க நன்றி, வணக்கம்."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Tamil",
+      "scenario": "family",
+      "outreachId": "sim-family-Tamil-1780716807433-a8dfe3",
+      "callSid": "CAbfda54baddc22d86008dcfb476983ada",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2659,
+          "parentSpeech": "வணக்கம், ஆம் நான் பெற்றோர்."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5043,
+          "parentSpeech": "வீட்டில் திருமணம் இருந்தது, வெளியே போக வேண்டியதாயிற்று."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 3430,
+          "parentSpeech": "நாளை மாலை திரும்பி வருவோம்."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3398,
+          "parentSpeech": "முன்பே தெரிவிக்க முடியாததற்கு மன்னிக்கவும்."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3714,
+          "parentSpeech": "இந்த எல்லா நாட்களும் வராமை எனப்படுமா?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2241,
+          "parentSpeech": "சரி, நன்றி, வணக்கம்."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Tamil",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Tamil-1780716829845-276ad0",
+      "callSid": "CAf9f4dc36fa1e74f2ddb0d6d96299ce8b",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 5380,
+          "parentSpeech": "வணக்கம், யார் பேசுகிறீர்கள்?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4041,
+          "parentSpeech": "எனக்குத் தெரியாது, பிள்ளை காலையில் பள்ளிக்குப் போனான்."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 4105,
+          "parentSpeech": "பேருந்து ஓட்டுநரிடம் கேட்கிறேன்."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3394,
+          "parentSpeech": "நண்பர் வீட்டுக்குப் போயிருக்கலாம், பார்க்கிறேன்."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3810,
+          "parentSpeech": "தெரிந்தவுடன் உங்களுக்கு மீண்டும் கூப்பிடுகிறேன்."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2416,
+          "parentSpeech": "ஆம், தெரிவித்ததற்கு நன்றி, வணக்கம்."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Gujarati",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Gujarati-1780716854914-c9d9c1",
+      "callSid": "CA3fe156b048a56c395bcd06ae7eb94eaa",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2153,
+          "parentSpeech": "હા, નમસ્તે, હું વાલી બોલું છું."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4519,
+          "parentSpeech": "મારા બાળકને ગઈકાલથી તાવ છે, તબિયત સારી નથી."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5711,
+          "parentSpeech": "ડોક્ટરને બતાવ્યું, હાલ આરામ કરી રહ્યો છે."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2619,
+          "parentSpeech": "આવતી કાલે સવારે મેડિકલ સર્ટિફિકેટ મોકલીશ."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4766,
+          "parentSpeech": "આજે વર્ગમાં શું ભણાવ્યું કૃપા કરી જણાવશો?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2461,
+          "parentSpeech": "ખૂબ આભાર, નમસ્તે."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Gujarati",
+      "scenario": "family",
+      "outreachId": "sim-family-Gujarati-1780716879088-0b1fd3",
+      "callSid": "CAe756702cd49aceb3962d047c12763191",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 6274,
+          "parentSpeech": "નમસ્તે, હા હું વાલી છું."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4136,
+          "parentSpeech": "ઘરમાં લગ્ન હતા, બહાર જવું પડ્યું."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 8811,
+          "parentSpeech": "કાલે સાંજે પાછા આવીશું."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3910,
+          "parentSpeech": "પહેલાં જાણ ન કરી શકવા બદલ માફી."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2977,
+          "parentSpeech": "આ બધા દિવસોની ગેરહાજરી ગણાશે?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3422,
+          "parentSpeech": "ઠીક છે, આભાર, નમસ્તે."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Gujarati",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Gujarati-1780716910567-a10e50",
+      "callSid": "CAff10503d073d82f63188c1a6bbe18c80",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3896,
+          "parentSpeech": "નમસ્તે, કોણ બોલે છે?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5022,
+          "parentSpeech": "મને ખબર નથી, બાળક સવારે શાળાએ ગયો હતો."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 3959,
+          "parentSpeech": "હું બસ ડ્રાઇવરને પૂછું છું."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3232,
+          "parentSpeech": "કદાચ મિત્રના ઘરે ગયો હશે, શોધ કરીશ."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2509,
+          "parentSpeech": "ખબર પડે કે તરત જ તમને કૉલ કરીશ."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3487,
+          "parentSpeech": "હા, જણાવવા બદલ આભાર, નમસ્તે."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Kannada",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Kannada-1780716934592-68c882",
+      "callSid": "CA1b05c9ed1766b6da6f0992850919e6b8",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2600,
+          "parentSpeech": "ಹೌದು, ನಮಸ್ಕಾರ, ನಾನು ಪೋಷಕ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 6905,
+          "parentSpeech": "ನನ್ನ ಮಗನಿಗೆ ನಿನ್ನೆಯಿಂದ ಜ್ವರ, ಆರೋಗ್ಯ ಸರಿಯಿಲ್ಲ."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5908,
+          "parentSpeech": "ವೈದ್ಯರಿಗೆ ತೋರಿಸಿದ್ದೇವೆ, ಈಗ ವಿಶ್ರಾಂತಿ ಪಡೆಯುತ್ತಿದ್ದಾನೆ."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 6720,
+          "parentSpeech": "ನಾಳೆ ಬೆಳಗ್ಗೆ ವೈದ್ಯಕೀಯ ಪ್ರಮಾಣಪತ್ರ ಕಳಿಸುತ್ತೇನೆ."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4480,
+          "parentSpeech": "ಇಂದು ತರಗತಿಯಲ್ಲಿ ಏನು ಕಲಿಸಿದಿರಿ ದಯವಿಟ್ಟು ಹೇಳಿ."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 1987,
+          "parentSpeech": "ತುಂಬಾ ಧನ್ಯವಾದಗಳು, ನಮಸ್ಕಾರ."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Kannada",
+      "scenario": "family",
+      "outreachId": "sim-family-Kannada-1780716965118-eb9c4a",
+      "callSid": "CA0f5ccf0eb7669e2a953b2d13c118bdd0",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3169,
+          "parentSpeech": "ನಮಸ್ಕಾರ, ಹೌದು ನಾನು ಪೋಷಕ."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5691,
+          "parentSpeech": "ಮನೆಯಲ್ಲಿ ಮದುವೆ ಇತ್ತು, ಹೊರಗೆ ಹೋಗಬೇಕಾಯಿತು."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 6256,
+          "parentSpeech": "ನಾಳೆ ಸಂಜೆ ಮರಳಿ ಬರುತ್ತೇವೆ."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3714,
+          "parentSpeech": "ಮುಂಚಿತವಾಗಿ ತಿಳಿಸಲಾಗದ್ದಕ್ಕೆ ಕ್ಷಮಿಸಿ."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3446,
+          "parentSpeech": "ಈ ಎಲ್ಲ ದಿನಗಳ ಗೈರುಹಾಜರಿ ಎಣಿಸಲ್ಪಡುತ್ತದೆಯೇ?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2944,
+          "parentSpeech": "ಸರಿ, ಧನ್ಯವಾದಗಳು, ನಮಸ್ಕಾರ."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Kannada",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Kannada-1780716992257-105730",
+      "callSid": "CA8e937bb29af09516754ef6581e221353",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 3616,
+          "parentSpeech": "ನಮಸ್ಕಾರ, ಯಾರು ಮಾತನಾಡುತ್ತಿದ್ದೀರಿ?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 8397,
+          "parentSpeech": "ನನಗೆ ತಿಳಿಯದು, ಮಗ ಬೆಳಗ್ಗೆ ಶಾಲೆಗೆ ಹೋಗಿದ್ದ."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 4714,
+          "parentSpeech": "ಬಸ್ ಚಾಲಕನಿಗೆ ಕೇಳುತ್ತೇನೆ."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2977,
+          "parentSpeech": "ಬಹುಶಃ ಸ್ನೇಹಿತನ ಮನೆಗೆ ಹೋಗಿರಬಹುದು, ನೋಡುತ್ತೇನೆ."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3770,
+          "parentSpeech": "ಗೊತ್ತಾದ ತಕ್ಷಣ ನಿಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡುತ್ತೇನೆ."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3187,
+          "parentSpeech": "ಹೌದು, ತಿಳಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು, ನಮಸ್ಕಾರ."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Punjabi",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Punjabi-1780717020902-4535dd",
+      "callSid": "CA897073137efdb8710148931220d57101",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 5412,
+          "parentSpeech": "ਹਾਂ ਜੀ, ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ ਮਾਪੇ ਬੋਲ ਰਿਹਾ ਹਾਂ।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 5150,
+          "parentSpeech": "ਮੇਰੇ ਬੱਚੇ ਨੂੰ ਕੱਲ੍ਹ ਤੋਂ ਬੁਖਾਰ ਹੈ, ਸਿਹਤ ਠੀਕ ਨਹੀਂ।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 10171,
+          "parentSpeech": "ਡਾਕਟਰ ਨੂੰ ਦਿਖਾਇਆ, ਹੁਣ ਆਰਾਮ ਕਰ ਰਿਹਾ ਹੈ।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3363,
+          "parentSpeech": "ਕੱਲ੍ਹ ਸਵੇਰੇ ਮੈਡੀਕਲ ਸਰਟੀਫਿਕੇਟ ਭੇਜਾਂਗਾ।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 8143,
+          "parentSpeech": "ਅੱਜ ਕਲਾਸ ਵਿੱਚ ਕੀ ਪੜ੍ਹਾਇਆ ਕਿਰਪਾ ਕਰਕੇ ਦੱਸੋ।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2518,
+          "parentSpeech": "ਬਹੁਤ ਧੰਨਵਾਦ, ਸਤ ਸ੍ਰੀ ਅਕਾਲ।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Punjabi",
+      "scenario": "family",
+      "outreachId": "sim-family-Punjabi-1780717057576-843130",
+      "callSid": "CA6d2ad5527b21cf52adca1d8dcd1caec0",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4573,
+          "parentSpeech": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਹਾਂ ਮੈਂ ਮਾਪੇ ਹਾਂ।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7661,
+          "parentSpeech": "ਘਰ ਵਿੱਚ ਵਿਆਹ ਸੀ, ਬਾਹਰ ਜਾਣਾ ਪਿਆ।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 6519,
+          "parentSpeech": "ਕੱਲ੍ਹ ਸ਼ਾਮ ਨੂੰ ਵਾਪਸ ਆਵਾਂਗੇ।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3723,
+          "parentSpeech": "ਪਹਿਲਾਂ ਨਾ ਦੱਸਣ ਲਈ ਮਾਫੀ।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 5606,
+          "parentSpeech": "ਇਹਨਾਂ ਸਾਰੇ ਦਿਨਾਂ ਦੀ ਗੈਰਹਾਜ਼ਰੀ ਲੱਗੇਗੀ?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2641,
+          "parentSpeech": "ਠੀਕ ਹੈ, ਧੰਨਵਾਦ, ਸਤ ਸ੍ਰੀ ਅਕਾਲ।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Punjabi",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Punjabi-1780717090214-8e417f",
+      "callSid": "CAa75edb4180ad5b89897fce81a093e845",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 6282,
+          "parentSpeech": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਕੌਣ ਬੋਲ ਰਿਹਾ ਹੈ?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7899,
+          "parentSpeech": "ਮੈਨੂੰ ਨਹੀਂ ਪਤਾ, ਬੱਚਾ ਸਵੇਰੇ ਸਕੂਲ ਗਿਆ ਸੀ।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 10254,
+          "parentSpeech": "ਮੈਂ ਬੱਸ ਡਰਾਈਵਰ ਨੂੰ ਪੁੱਛਦਾ ਹਾਂ।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3302,
+          "parentSpeech": "ਸ਼ਾਇਦ ਦੋਸਤ ਦੇ ਘਰ ਗਿਆ ਹੋਵੇ, ਪਤਾ ਕਰਾਂਗਾ।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4080,
+          "parentSpeech": "ਪਤਾ ਲੱਗਦਿਆਂ ਹੀ ਤੁਹਾਨੂੰ ਵਾਪਸ ਕਾਲ ਕਰਾਂਗਾ।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 3214,
+          "parentSpeech": "ਹਾਂ, ਦੱਸਣ ਲਈ ਧੰਨਵਾਦ, ਸਤ ਸ੍ਰੀ ਅਕਾਲ।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Malayalam",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Malayalam-1780717127165-266000",
+      "callSid": "CA8c3202be4c288b3a7d21312cbde5c1e4",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 5088,
+          "parentSpeech": "അതെ, നമസ്കാരം, ഞാൻ രക്ഷിതാവാണ്."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 3628,
+          "parentSpeech": "എന്റെ കുട്ടിക്ക് ഇന്നലെ മുതൽ പനിയാണ്, ആരോഗ്യം മോശമാണ്."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 4721,
+          "parentSpeech": "ഡോക്ടറെ കണ്ടു, ഇപ്പോൾ വിശ്രമിക്കുന്നു."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2939,
+          "parentSpeech": "നാളെ രാവിലെ മെഡിക്കൽ സർട്ടിഫിക്കറ്റ് അയക്കാം."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3385,
+          "parentSpeech": "ഇന്ന് ക്ലാസിൽ എന്ത് പഠിപ്പിച്ചു ദയവായി പറയാമോ?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2198,
+          "parentSpeech": "വളരെ നന്ദി, നമസ്കാരം."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Malayalam",
+      "scenario": "family",
+      "outreachId": "sim-family-Malayalam-1780717151070-926218",
+      "callSid": "CA70461d15ab54acbd4df43163152b393c",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4787,
+          "parentSpeech": "നമസ്കാരം, അതെ ഞാൻ രക്ഷിതാവാണ്."
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4950,
+          "parentSpeech": "വീട്ടിൽ കല്യാണം ഉണ്ടായിരുന്നു, പുറത്തു പോകേണ്ടി വന്നു."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 7778,
+          "parentSpeech": "നാളെ വൈകുന്നേരം തിരിച്ചെത്തും."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 4170,
+          "parentSpeech": "നേരത്തെ അറിയിക്കാത്തതിന് ക്ഷമിക്കണം."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3766,
+          "parentSpeech": "ഈ ദിവസങ്ങളെല്ലാം ഹാജരാകാത്തതായി കണക്കാക്കുമോ?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2028,
+          "parentSpeech": "ശരി, നന്ദി, നമസ്കാരം."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Malayalam",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Malayalam-1780717180480-1dd056",
+      "callSid": "CAa0bf4d231ae83d78111e02eef6843124",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4366,
+          "parentSpeech": "നമസ്കാരം, ആരാണ് സംസാരിക്കുന്നത്?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 3712,
+          "parentSpeech": "എനിക്കറിയില്ല, കുട്ടി രാവിലെ സ്കൂളിലേക്ക് പോയിരുന്നു."
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 5543,
+          "parentSpeech": "ഞാൻ ബസ് ഡ്രൈവറോട് ചോദിക്കാം."
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3753,
+          "parentSpeech": "ഒരുപക്ഷെ കൂട്ടുകാരന്റെ വീട്ടിൽ പോയിട്ടുണ്ടാകും, ഞാൻ അന്വേഷിക്കാം."
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 3628,
+          "parentSpeech": "അറിയുമ്പോൾ തന്നെ തിരിച്ച് വിളിക്കാം."
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2501,
+          "parentSpeech": "അതെ, അറിയിച്ചതിന് നന്ദി, നമസ്കാരം."
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Odia",
+      "scenario": "sick",
+      "outreachId": "sim-sick-Odia-1780717205897-c5652d",
+      "callSid": "CA0b217c9771a381c75ff63f6c631b83ce",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 4252,
+          "parentSpeech": "ହଁ, ନମସ୍କାର, ମୁଁ ଅଭିଭାବକ କହୁଛି।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 4920,
+          "parentSpeech": "ମୋ ପିଲାକୁ କାଲିଠାରୁ ଜ୍ୱର, ଶରୀର ଭଲ ନାହିଁ।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 9101,
+          "parentSpeech": "ଡାକ୍ତର ଦେଖାଇଛୁ, ଏବେ ବିଶ୍ରାମ ନେଉଛି।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 3726,
+          "parentSpeech": "କାଲି ସକାଳେ ମେଡିକାଲ୍ ସର୍ଟିଫିକେଟ୍ ପଠାଇବି।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 4084,
+          "parentSpeech": "ଆଜି କ୍ଲାସରେ କ’ଣ ପଢ଼ାଗଲା ଦୟାକରି କୁହନ୍ତୁ।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2687,
+          "parentSpeech": "ବହୁତ ଧନ୍ୟବାଦ, ନମସ୍କାର।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Odia",
+      "scenario": "family",
+      "outreachId": "sim-family-Odia-1780717236595-e3335a",
+      "callSid": "CA8035477643723f7e7a9384d5f3cc8551",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 5033,
+          "parentSpeech": "ନମସ୍କାର, ହଁ ମୁଁ ଅଭିଭାବକ।"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 7353,
+          "parentSpeech": "ଘରେ ବାହାଘର ଥିଲା, ବାହାରକୁ ଯିବାକୁ ପଡ଼ିଲା।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 8078,
+          "parentSpeech": "କାଲି ସନ୍ଧ୍ୟାରେ ଫେରିବୁ।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 2925,
+          "parentSpeech": "ପୂର୍ବରୁ ଜଣାଇ ନ ପାରିବା ପାଇଁ କ୍ଷମା।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 8002,
+          "parentSpeech": "ଏହି ସବୁ ଦିନର ଅନୁପସ୍ଥିତି ଗଣାଯିବ କି?"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2717,
+          "parentSpeech": "ଠିକ୍ ଅଛି, ଧନ୍ୟବାଦ, ନମସ୍କାର।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    },
+    {
+      "lang": "Odia",
+      "scenario": "unknown",
+      "outreachId": "sim-unknown-Odia-1780717272631-df1801",
+      "callSid": "CAb6511b1fe751cd0421446fe7cf26f403",
+      "turns": [
+        {
+          "turn": 1,
+          "status": 200,
+          "latencyMs": 2959,
+          "parentSpeech": "ନମସ୍କାର, କିଏ କଥା ହେଉଛନ୍ତି?"
+        },
+        {
+          "turn": 2,
+          "status": 200,
+          "latencyMs": 6606,
+          "parentSpeech": "ମୋତେ ଜଣା ନାହିଁ, ପିଲା ସକାଳେ ସ୍କୁଲ ଯାଇଥିଲା।"
+        },
+        {
+          "turn": 3,
+          "status": 200,
+          "latencyMs": 6223,
+          "parentSpeech": "ମୁଁ ବସ୍ ଡ୍ରାଇଭରଙ୍କୁ ପଚାରୁଛି।"
+        },
+        {
+          "turn": 4,
+          "status": 200,
+          "latencyMs": 5370,
+          "parentSpeech": "ବୋଧହୁଏ ବନ୍ଧୁ ଘରକୁ ଯାଇଛି, ଖୋଜିବି।"
+        },
+        {
+          "turn": 5,
+          "status": 200,
+          "latencyMs": 2808,
+          "parentSpeech": "ଜାଣିଲେ ତୁରନ୍ତ ଆପଣଙ୍କୁ ପୁଣି କଲ୍ କରିବି।"
+        },
+        {
+          "turn": 6,
+          "status": 200,
+          "latencyMs": 2605,
+          "parentSpeech": "ହଁ, ଜଣାଇବା ପାଇଁ ଧନ୍ୟବାଦ, ନମସ୍କାର।"
+        }
+      ],
+      "turnsObserved": 0,
+      "sidecarOkCount": 0,
+      "scriptOkCount": 0,
+      "actionAgreeCount": 0,
+      "scriptRate": 0,
+      "agreeRate": 0,
+      "clean": false,
+      "turnResults": []
+    }
+  ]
+}

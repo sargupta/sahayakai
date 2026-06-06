@@ -1,0 +1,1973 @@
+{
+  "runId": "vidya-1780718936998",
+  "runStartedAt": "2026-06-06T04:08:57.450Z",
+  "runFinishedAt": "2026-06-06T04:09:42.723Z",
+  "flagsOk": true,
+  "sidecarOkRatio": 0.9797979797979798,
+  "passRate": 0,
+  "ready": false,
+  "results": [
+    {
+      "cell": "en-ans-photosyn",
+      "lang": "en",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7037351203455484,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-ans-fractions",
+      "lang": "en",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5508772509582758,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-ans-democracy",
+      "lang": "en",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.75238807854779,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-cre-lesson",
+      "lang": "en",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5423112954107319,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-cre-quiz",
+      "lang": "en",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5408814988109468,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-cre-workshet",
+      "lang": "en",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5568357773964717,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-act-visual",
+      "lang": "en",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5966064420486027,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-act-exam",
+      "lang": "en",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5425367812598019,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "en-act-video",
+      "lang": "en",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5650490343153606,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-ans-photosyn",
+      "lang": "hi",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.722537305998349,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-ans-fractions",
+      "lang": "hi",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.4997570509781679,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-ans-democracy",
+      "lang": "hi",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7508965253008999,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-cre-lesson",
+      "lang": "hi",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5192949354048859,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-cre-quiz",
+      "lang": "hi",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5215798332189435,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-cre-workshet",
+      "lang": "hi",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5490691545129416,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-act-visual",
+      "lang": "hi",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5580157942417469,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-act-exam",
+      "lang": "hi",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5059836906505495,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "hi-act-video",
+      "lang": "hi",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5252907930397669,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-ans-photosyn",
+      "lang": "bn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0.989247311827957,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7745718707550677,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-ans-fractions",
+      "lang": "bn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5470467211506976,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-ans-democracy",
+      "lang": "bn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0.9852700490998363,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7284137765546701,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-cre-lesson",
+      "lang": "bn",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5253662427923106,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-cre-quiz",
+      "lang": "bn",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5326440002456513,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-cre-workshet",
+      "lang": "bn",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5480231591158656,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-act-visual",
+      "lang": "bn",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5904811467527087,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-act-exam",
+      "lang": "bn",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5232738098442133,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "bn-act-video",
+      "lang": "bn",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5341156310247098,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-ans-photosyn",
+      "lang": "ta",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7055798938456647,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-ans-fractions",
+      "lang": "ta",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.557567135079059,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-ans-democracy",
+      "lang": "ta",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7895382031110492,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-cre-lesson",
+      "lang": "ta",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5183714040110851,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-cre-quiz",
+      "lang": "ta",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5481424925663042,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-cre-workshet",
+      "lang": "ta",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5476017013192853,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-act-visual",
+      "lang": "ta",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.587031088567365,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-act-exam",
+      "lang": "ta",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5246600831036075,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ta-act-video",
+      "lang": "ta",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5339862474388308,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-ans-photosyn",
+      "lang": "te",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7339953403248646,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-ans-fractions",
+      "lang": "te",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5346371708316116,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-ans-democracy",
+      "lang": "te",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7781885792374068,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-cre-lesson",
+      "lang": "te",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5106579268226574,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-cre-quiz",
+      "lang": "te",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5299855409061021,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-cre-workshet",
+      "lang": "te",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5510289520326355,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-act-visual",
+      "lang": "te",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5568386236350427,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-act-exam",
+      "lang": "te",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5141109519652468,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "te-act-video",
+      "lang": "te",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5185399052475734,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-ans-photosyn",
+      "lang": "mr",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0.9606741573033708,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7576205735373065,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-ans-fractions",
+      "lang": "mr",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.4970406329740272,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-ans-democracy",
+      "lang": "mr",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7772260750105086,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-cre-lesson",
+      "lang": "mr",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5271597671138725,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-cre-quiz",
+      "lang": "mr",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5239514580610652,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-cre-workshet",
+      "lang": "mr",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5452226102114208,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-act-visual",
+      "lang": "mr",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5667064174215908,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-act-exam",
+      "lang": "mr",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.537239692149372,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "mr-act-video",
+      "lang": "mr",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5254709634968143,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-ans-photosyn",
+      "lang": "gu",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7280783997941042,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-ans-fractions",
+      "lang": "gu",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.4906267024975747,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-ans-democracy",
+      "lang": "gu",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7859378924112604,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-cre-lesson",
+      "lang": "gu",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5014892981233838,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-cre-quiz",
+      "lang": "gu",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5278921097598598,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-cre-workshet",
+      "lang": "gu",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5345765233081318,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-act-visual",
+      "lang": "gu",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5825983519437191,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-act-exam",
+      "lang": "gu",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5232695690375501,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "gu-act-video",
+      "lang": "gu",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.533753667560995,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-ans-photosyn",
+      "lang": "kn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7531203407400099,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-ans-fractions",
+      "lang": "kn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5306361912348533,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-ans-democracy",
+      "lang": "kn",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7380867703348883,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-cre-lesson",
+      "lang": "kn",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5049080163283632,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-cre-quiz",
+      "lang": "kn",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5097295440705331,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-cre-workshet",
+      "lang": "kn",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.532190593237775,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-act-visual",
+      "lang": "kn",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5591365739691444,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-act-exam",
+      "lang": "kn",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5053899233490626,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "kn-act-video",
+      "lang": "kn",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5109213855990826,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-ans-photosyn",
+      "lang": "ml",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7288209968045509,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-ans-fractions",
+      "lang": "ml",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5264432910952005,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-ans-democracy",
+      "lang": "ml",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7621344170414447,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-cre-lesson",
+      "lang": "ml",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.512281186248472,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-cre-quiz",
+      "lang": "ml",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5289405487508996,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-cre-workshet",
+      "lang": "ml",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5313282945120779,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-act-visual",
+      "lang": "ml",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5603704494388629,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-act-exam",
+      "lang": "ml",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.504745213338122,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "ml-act-video",
+      "lang": "ml",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5068468545389361,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-ans-photosyn",
+      "lang": "pa",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0.9852941176470589,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7334874947816835,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-ans-fractions",
+      "lang": "pa",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "teacher-training",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5576247211233267,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-ans-democracy",
+      "lang": "pa",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": null,
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "sidecar_missing"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-cre-lesson",
+      "lang": "pa",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.511437106522797,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-cre-quiz",
+      "lang": "pa",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5305319245809652,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-cre-workshet",
+      "lang": "pa",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5470686991374438,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-act-visual",
+      "lang": "pa",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5909505106726113,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-act-exam",
+      "lang": "pa",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5088343352846907,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "pa-act-video",
+      "lang": "pa",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5221582220550919,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-ans-photosyn",
+      "lang": "or",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 1,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.7253278769541884,
+      "entityHit": true,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-ans-fractions",
+      "lang": "or",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": "instant-answer",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5388180601185129,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "action_flow_mismatch",
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-ans-democracy",
+      "lang": "or",
+      "intent": "ANSWER",
+      "expectedFlow": null,
+      "genkitFlow": null,
+      "sidecarFlow": null,
+      "flowMatch": false,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "sidecar_missing"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-cre-lesson",
+      "lang": "or",
+      "intent": "CREATE",
+      "expectedFlow": "lessonPlan",
+      "genkitFlow": "lesson-plan",
+      "sidecarFlow": "lesson-plan",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5100317521032628,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-cre-quiz",
+      "lang": "or",
+      "intent": "CREATE",
+      "expectedFlow": "quiz",
+      "genkitFlow": "quiz-generator",
+      "sidecarFlow": "quiz-generator",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5428003689112925,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-cre-workshet",
+      "lang": "or",
+      "intent": "CREATE",
+      "expectedFlow": "worksheet",
+      "genkitFlow": "worksheet-wizard",
+      "sidecarFlow": "worksheet-wizard",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5330988460724122,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-act-visual",
+      "lang": "or",
+      "intent": "ACTION",
+      "expectedFlow": "visualAid",
+      "genkitFlow": "visual-aid-designer",
+      "sidecarFlow": "visual-aid-designer",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5576432942889956,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-act-exam",
+      "lang": "or",
+      "intent": "ACTION",
+      "expectedFlow": "examPaper",
+      "genkitFlow": "exam-paper",
+      "sidecarFlow": "exam-paper",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.5092132711341326,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    },
+    {
+      "cell": "or-act-video",
+      "lang": "or",
+      "intent": "ACTION",
+      "expectedFlow": "videoStoryteller",
+      "genkitFlow": "video-storyteller",
+      "sidecarFlow": "video-storyteller",
+      "flowMatch": true,
+      "script": 0,
+      "bleed": false,
+      "bleedScripts": [],
+      "semantic": 0.519879262984404,
+      "entityHit": false,
+      "verdict": "FAIL",
+      "failReasons": [
+        "script",
+        "semantic"
+      ],
+      "notes": []
+    }
+  ]
+}
