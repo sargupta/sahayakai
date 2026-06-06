@@ -92,10 +92,27 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
         metadata: { contentType: 'image/png' },
       });
 
+      // Persist the avatarUrl on the user's profile doc — but ONLY if the
+      // doc already exists. The previous `set({...}, { merge: true })`
+      // would CREATE a user doc when none existed, which leaked test users
+      // into the collection every time a canary/QA probe hit this endpoint
+      // with a synthetic `x-user-id` (e.g. `avatar-canary-probe-*`). Real
+      // users always have a doc (created by `syncUserAction` at first auth),
+      // so `update()` succeeds for them; synthetic callers cleanly fail
+      // with NOT_FOUND, which we swallow.
       const db = await getDb();
-      await db.collection('users').doc(userId).set({
-        avatarUrl: filePath,
-      }, { merge: true });
+      try {
+        await db.collection('users').doc(userId).update({ avatarUrl: filePath });
+      } catch (err) {
+        // Firestore "NOT_FOUND" = code 5 (gRPC) or message contains "No document".
+        const code = (err as { code?: number | string }).code;
+        const msg = (err as { message?: string }).message ?? '';
+        const isNotFound = code === 5 || code === 'NOT_FOUND' || /not.found/i.test(msg);
+        if (!isNotFound) throw err;
+        // Synthetic / fixture caller — image was still generated and
+        // uploaded to Storage; we just don't persist the URL on a
+        // non-existent profile doc. No-op by design.
+      }
     }
 
     return { imageDataUri: media.url };
