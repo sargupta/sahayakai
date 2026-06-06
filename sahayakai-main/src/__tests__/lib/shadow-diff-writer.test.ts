@@ -157,6 +157,48 @@ describe('writeAgentShadowDiff', () => {
         expect(parsed.error).toBe('firestore down');
     });
 
+    // Phase 1a / Parallel-D fix (2026-06-05): Firestore rejects
+    // `undefined` field values. Pre-fix, every successful sidecar call
+    // (sidecarError === undefined) was silently dropped by the SDK.
+    // Coercion writes null for any explicitly-undefined caller field.
+    it('coerces explicitly-undefined fields to null before the Firestore write', async () => {
+        await writeAgentShadowDiff({
+            agent: 'lesson-plan',
+            uid: 'teacher-uid-coercion',
+            genkit: { title: 'g' },
+            sidecar: { title: 's' },
+            genkitLatencyMs: 100,
+            sidecarLatencyMs: 120,
+            sidecarOk: true,
+            sidecarError: undefined,
+        });
+        const [body] = mockSet.mock.calls[0] as unknown as [
+            Record<string, unknown>,
+        ];
+        expect('sidecarError' in body).toBe(true);
+        expect(body.sidecarError).toBeNull();
+        for (const [, v] of Object.entries(body)) {
+            expect(v).not.toBeUndefined();
+        }
+    });
+
+    it('preserves null values passed explicitly for genkit / sidecar', async () => {
+        await writeAgentShadowDiff({
+            agent: 'vidya',
+            uid: 'teacher-uid-explicit-null',
+            genkit: null,
+            sidecar: { ok: true },
+            genkitLatencyMs: 0,
+            sidecarLatencyMs: 0,
+            sidecarOk: true,
+        });
+        const [body] = mockSet.mock.calls[0] as unknown as [
+            Record<string, unknown>,
+        ];
+        expect(body.genkit).toBeNull();
+        expect(body.sidecar).toEqual({ ok: true });
+    });
+
     it('fails soft when set() rejects after getDb resolves', async () => {
         mockSet.mockRejectedValueOnce(new Error('quota exceeded'));
         const warnSpy = jest.spyOn(console, 'warn');
