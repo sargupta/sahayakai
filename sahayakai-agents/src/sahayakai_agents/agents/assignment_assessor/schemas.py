@@ -27,7 +27,7 @@ class RubricLevel(BaseModel):
 
     name: str
     description: str
-    points: int = Field(ge=0)
+    points: float = Field(ge=0)
 
 
 class RubricCriterion(BaseModel):
