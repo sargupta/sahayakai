@@ -53,6 +53,8 @@ export interface ParentMessageSidecarDecision {
     mode: ParentMessageSidecarMode;
     reason: string;
     bucket: number;
+    /** Q4C: raw flag value pre-bucket. */
+    configuredMode?: ParentMessageSidecarMode;
 }
 
 function userBucketForParentMessage(uid: string): number {
@@ -81,20 +83,16 @@ export async function decideParentMessageDispatch(
     const bucket = userBucketForParentMessage(uid);
 
     if (mode === 'off') {
-        return { mode: 'off', reason: 'flag_off', bucket };
+        return { mode: 'off', reason: 'flag_off', bucket, configuredMode: mode };
     }
     if (mode === 'full') {
-        return { mode: 'full', reason: 'flag_full', bucket };
+        return { mode: 'full', reason: 'flag_full', bucket, configuredMode: mode };
     }
     const percent = await readPercent();
     if (bucket < percent) {
-        return {
-            mode,
-            reason: `bucket_${bucket}_under_${percent}`,
-            bucket,
-        };
+        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket, configuredMode: mode };
     }
-    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket, configuredMode: mode };
 }
 
 // ─── Dispatcher ────────────────────────────────────────────────────────────

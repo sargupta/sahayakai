@@ -39,6 +39,8 @@ export interface RubricSidecarDecision {
     mode: RubricSidecarMode;
     reason: string;
     bucket: number;
+    /** Q4C: raw flag value pre-bucket. */
+    configuredMode?: RubricSidecarMode;
 }
 
 function userBucketForRubric(uid: string): number {
@@ -65,13 +67,13 @@ export async function decideRubricDispatch(uid: string): Promise<RubricSidecarDe
     const mode = await readMode();
     const bucket = userBucketForRubric(uid);
 
-    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
-    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
+    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket, configuredMode: mode };
+    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket, configuredMode: mode };
     const percent = await readPercent();
     if (bucket < percent) {
-        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket };
+        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket, configuredMode: mode };
     }
-    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket, configuredMode: mode };
 }
 
 export type RubricDispatchSource = 'genkit' | 'sidecar' | 'genkit_fallback';

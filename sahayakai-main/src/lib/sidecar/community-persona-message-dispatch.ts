@@ -51,6 +51,8 @@ export interface CommunityPersonaMessageSidecarDecision {
     mode: CommunityPersonaMessageSidecarMode;
     reason: string;
     bucket: number;
+    /** Q4C: raw flag value pre-bucket. */
+    configuredMode?: CommunityPersonaMessageSidecarMode;
 }
 
 function userBucket(uid: string): number {
@@ -77,17 +79,13 @@ export async function decideCommunityPersonaMessageDispatch(
 ): Promise<CommunityPersonaMessageSidecarDecision> {
     const mode = await readMode();
     const bucket = userBucket(uid);
-    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket };
-    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket };
+    if (mode === 'off') return { mode: 'off', reason: 'flag_off', bucket, configuredMode: mode };
+    if (mode === 'full') return { mode: 'full', reason: 'flag_full', bucket, configuredMode: mode };
     const percent = await readPercent();
     if (bucket < percent) {
-        return {
-            mode,
-            reason: `bucket_${bucket}_under_${percent}`,
-            bucket,
-        };
+        return { mode, reason: `bucket_${bucket}_under_${percent}`, bucket, configuredMode: mode };
     }
-    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket };
+    return { mode: 'off', reason: `bucket_${bucket}_over_${percent}`, bucket, configuredMode: mode };
 }
 
 // ─── Dispatcher ────────────────────────────────────────────────────────────
