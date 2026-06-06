@@ -147,3 +147,151 @@ class TestBuildVoiceToTextAgent:
             "pipeline is constructed once at import time, not per "
             "request."
         )
+
+
+class TestSoftEmptyTranscription:
+    """Soft-empty handling — short / silent / sub-threshold audio.
+
+    When the Gemini transcriber emits no text, the router MUST return a
+    `VoiceToTextCore(text="", language=<expected or null>)` rather than
+    raising `AgentError`. Mirrors the TS soft-empty fix shipped in
+    commit 727522140 (`src/ai/flows/voice-to-text.ts:262, 298`) so the
+    UI can render a graceful "I didn't catch that" state instead of a
+    destructive HTTP 500 toast that triggers the client's 3x retry
+    loop. See qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2.
+    """
+
+    def test_normalize_expected_language_passes_known_iso(self) -> None:
+        from sahayakai_agents.agents.voice_to_text.router import (  # noqa: PLC0415
+            _normalize_expected_language,
+        )
+
+        assert _normalize_expected_language("hi") == "hi"
+        assert _normalize_expected_language("HI") == "hi"
+        assert _normalize_expected_language("  bn  ") == "bn"
+
+    def test_normalize_expected_language_rejects_unknown(self) -> None:
+        from sahayakai_agents.agents.voice_to_text.router import (  # noqa: PLC0415
+            _normalize_expected_language,
+        )
+
+        # Unsupported ISO codes (fr, es) must return None — otherwise the
+        # behavioural guard's `assert_language_iso_allowed` would reject
+        # the soft-empty response and we'd 502 anyway.
+        assert _normalize_expected_language("fr") is None
+        assert _normalize_expected_language("es") is None
+        assert _normalize_expected_language("") is None
+        assert _normalize_expected_language(None) is None
+        # 5-letter BCP-47 like "hi-IN" is also rejected (lowercased form
+        # "hi-in" is not in the supported set).
+        assert _normalize_expected_language("hi-IN") is None
+
+    @pytest.mark.asyncio
+    async def test_run_pipeline_soft_empty_returns_empty_core(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """When the ADK Runner yields no transcript text, the soft-empty
+        branch must return `VoiceToTextCore(text="", language="hi")`
+        when the caller supplied `expected_language="hi"`.
+
+        Patches `InMemoryRunner` + `_build_pinned_pipeline` to avoid
+        instantiating a real ADK Runner / Gemini client in a unit test.
+        """
+        from sahayakai_agents.agents.voice_to_text import (  # noqa: PLC0415
+            router as vtt_router,
+        )
+        from sahayakai_agents.agents.voice_to_text.schemas import (  # noqa: PLC0415
+            VoiceToTextCore,
+        )
+
+        class _FakeSessionService:
+            async def create_session(self, **_: object) -> None:
+                return None
+
+        class _FakeRunner:
+            def __init__(self, **_: object) -> None:
+                self.session_service = _FakeSessionService()
+
+            async def run_async(self, **_: object):
+                # No events yielded — simulates Gemini returning empty
+                # response on short / silent audio.
+                if False:
+                    yield None  # pragma: no cover
+
+        monkeypatch.setattr(vtt_router, "InMemoryRunner", _FakeRunner, raising=False)
+        # ADK runner is imported inside `_run_pipeline_via_runner` —
+        # patch via sys.modules so the local import resolves to our fake.
+        import google.adk.runners as adk_runners  # noqa: PLC0415
+
+        monkeypatch.setattr(adk_runners, "InMemoryRunner", _FakeRunner)
+        monkeypatch.setattr(
+            vtt_router,
+            "_build_pinned_pipeline",
+            lambda _api_key: object(),
+        )
+
+        result = await vtt_router._run_pipeline_via_runner(
+            prompt_text="rubric",
+            audio_bytes=b"\x00" * 32,
+            audio_mime="audio/webm",
+            api_key="fake-key",
+            expected_language="hi",
+        )
+
+        assert isinstance(result, VoiceToTextCore)
+        assert result.text == ""
+        assert result.language == "hi"
+
+    @pytest.mark.asyncio
+    async def test_run_pipeline_soft_empty_unknown_hint_returns_null_language(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Soft-empty with no / unknown expected language → language=None.
+
+        Returning an arbitrary string would fail the behavioural guard's
+        `assert_language_iso_allowed` check and surface as a 502 anyway.
+        """
+        from sahayakai_agents.agents.voice_to_text import (  # noqa: PLC0415
+            router as vtt_router,
+        )
+        from sahayakai_agents.agents.voice_to_text.schemas import (  # noqa: PLC0415
+            VoiceToTextCore,
+        )
+
+        class _FakeRunner:
+            def __init__(self, **_: object) -> None:
+                class _S:
+                    async def create_session(self, **_: object) -> None:
+                        return None
+
+                self.session_service = _S()
+
+            async def run_async(self, **_: object):
+                if False:
+                    yield None  # pragma: no cover
+
+        import google.adk.runners as adk_runners  # noqa: PLC0415
+
+        monkeypatch.setattr(adk_runners, "InMemoryRunner", _FakeRunner)
+        monkeypatch.setattr(
+            vtt_router,
+            "_build_pinned_pipeline",
+            lambda _api_key: object(),
+        )
+
+        for hint in (None, "", "fr"):
+            result = await vtt_router._run_pipeline_via_runner(
+                prompt_text="rubric",
+                audio_bytes=b"\x00" * 32,
+                audio_mime="audio/webm",
+                api_key="fake-key",
+                expected_language=hint,
+            )
+            assert isinstance(result, VoiceToTextCore)
+            assert result.text == ""
+            assert result.language is None, (
+                f"hint={hint!r} → expected language=None, got "
+                f"{result.language!r}"
+            )

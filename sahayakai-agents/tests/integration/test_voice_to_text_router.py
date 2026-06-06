@@ -84,6 +84,7 @@ def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
         audio_bytes: bytes,
         audio_mime: str,
         api_key: str,
+        expected_language: str | None = None,
     ) -> VoiceToTextCore:
         # Record the call so tests could assert audio bytes flowed
         # through. The router-side audio data URI decoder is what makes
@@ -92,6 +93,7 @@ def fake_pipeline(monkeypatch: pytest.MonkeyPatch) -> _QueueFake:
             "prompt_text_len": len(prompt_text),
             "audio_bytes_len": len(audio_bytes),
             "audio_mime": audio_mime,
+            "expected_language": expected_language,
         })
         nxt = fake.pop()
         if isinstance(nxt, _RaiseAgentError):
@@ -229,6 +231,44 @@ class TestVoiceToTextRouter:
         fake_pipeline.queue = ["not valid json"]
         res = client.post("/v1/voice-to-text/transcribe", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
+
+    def test_soft_empty_returns_200_with_empty_text(
+        self,
+        client: TestClient,
+        fake_pipeline: _QueueFake,
+    ) -> None:
+        """Soft-empty: when Gemini produces no transcript (short / silent
+        audio), the router must return HTTP 200 with `text: ""` and the
+        caller's expected language hint — NOT raise a 502.
+
+        Mirrors the TS `voiceToText` soft-empty fix in commit 727522140
+        (see qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2). Without this,
+        the UI's retry loop burns 3x cost on guaranteed-empty audio and
+        the user sees an HTTP 500 toast instead of a graceful "I didn't
+        catch that" state.
+        """
+        fake_pipeline.queue = [json.dumps({"text": "", "language": "hi"})]
+        req = dict(_BASE_REQUEST, expectedLanguage="hi")
+        res = client.post("/v1/voice-to-text/transcribe", json=req)
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["text"] == ""
+        assert body["language"] == "hi"
+
+    def test_soft_empty_without_language_hint_returns_null_language(
+        self,
+        client: TestClient,
+        fake_pipeline: _QueueFake,
+    ) -> None:
+        """Soft-empty path with no language hint — language must be null
+        (the behavioural guard accepts null but rejects unknown ISO codes,
+        so we cannot guess)."""
+        fake_pipeline.queue = [json.dumps({"text": "", "language": None})]
+        res = client.post("/v1/voice-to-text/transcribe", json=_BASE_REQUEST)
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["text"] == ""
+        assert body["language"] is None
 
     def test_forbidden_phrase_in_text_returns_502(
         self,
