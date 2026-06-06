@@ -183,7 +183,7 @@ async function fetchSubscriptionPayments(
 
 interface FirestoreUserPlan {
   uid: string;
-  plan: string;                    // 'free' | 'gold' | 'premium'
+  planType: string;                // 'free' | 'pro' | 'gold' | 'premium' — CANONICAL field. Webhook writes `users.planType`; legacy code briefly used `users.plan`. Always read/write `planType` (F7-002).
   razorpaySubscriptionId?: string;
   razorpayPlanId?: string;
   monthlyCredits?: number;
@@ -196,25 +196,34 @@ interface FirestoreUserPlan {
 async function fetchFirestorePaidUsers(): Promise<FirestoreUserPlan[]> {
   const db = await getDb();
 
-  // Fetch users who either have a subscription ID or a non-free plan
-  const [bySubscription, byPlan] = await Promise.all([
+  // Fetch users who either have a subscription ID or a non-free plan.
+  // CANONICAL field is `planType` (webhook writes this). A legacy `plan`
+  // field exists on some older docs — we read both as a fallback so any
+  // stragglers are still detected; we always WRITE planType.
+  const [bySubscription, byPlanType, byLegacyPlan] = await Promise.all([
     db.collection('users')
       .where('razorpaySubscriptionId', '!=', null)
-      .select('plan', 'razorpaySubscriptionId', 'razorpayPlanId', 'monthlyCredits', 'creditsUsed', 'creditsResetAt', 'planExpiresAt', 'adminOverride')
+      .select('planType', 'plan', 'razorpaySubscriptionId', 'razorpayPlanId', 'monthlyCredits', 'creditsUsed', 'creditsResetAt', 'planExpiresAt', 'adminOverride')
       .get(),
     db.collection('users')
-      .where('plan', 'in', ['gold', 'premium'])
-      .select('plan', 'razorpaySubscriptionId', 'razorpayPlanId', 'monthlyCredits', 'creditsUsed', 'creditsResetAt', 'planExpiresAt', 'adminOverride')
+      .where('planType', 'in', ['pro', 'gold', 'premium'])
+      .select('planType', 'plan', 'razorpaySubscriptionId', 'razorpayPlanId', 'monthlyCredits', 'creditsUsed', 'creditsResetAt', 'planExpiresAt', 'adminOverride')
       .get(),
+    db.collection('users')
+      .where('plan', 'in', ['pro', 'gold', 'premium'])
+      .select('planType', 'plan', 'razorpaySubscriptionId', 'razorpayPlanId', 'monthlyCredits', 'creditsUsed', 'creditsResetAt', 'planExpiresAt', 'adminOverride')
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
   ]);
 
   const userMap = new Map<string, FirestoreUserPlan>();
 
-  for (const snap of [...bySubscription.docs, ...byPlan.docs]) {
+  for (const snap of [...bySubscription.docs, ...byPlanType.docs, ...byLegacyPlan.docs]) {
     if (!userMap.has(snap.id)) {
       userMap.set(snap.id, {
         uid: snap.id,
-        plan: snap.get('plan') || 'free',
+        // Canonical field first, then legacy fallback, then 'free'.
+        planType: snap.get('planType') || snap.get('plan') || 'free',
         razorpaySubscriptionId: snap.get('razorpaySubscriptionId') || undefined,
         razorpayPlanId: snap.get('razorpayPlanId') || undefined,
         monthlyCredits: snap.get('monthlyCredits'),
@@ -278,7 +287,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
       const userId = fsUser?.uid || rzpSub.notes.userId || 'unknown';
 
       // D1: Razorpay active, Firestore says free or user not found
-      if (rzpSub.status === 'active' && (!fsUser || fsUser.plan === 'free')) {
+      if (rzpSub.status === 'active' && (!fsUser || fsUser.planType === 'free')) {
         if (fsUser?.adminOverride) {
           // D5: Admin intentionally downgraded
           mismatches.push({
@@ -286,7 +295,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
             subscriptionId: rzpSub.id,
             userId,
             action: 'flagged',
-            details: { rzpStatus: 'active', fsPlan: fsUser?.plan || 'not_found', adminOverride: true },
+            details: { rzpStatus: 'active', fsPlan: fsUser?.planType || 'not_found', adminOverride: true },
           });
         } else {
           // AUTO-FIX: upgrade Firestore to match Razorpay
@@ -294,18 +303,25 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
           try {
             if (fsUser) {
               await db.collection('users').doc(userId).update({
-                plan: expectedPlan,
+                planType: expectedPlan,
                 razorpaySubscriptionId: rzpSub.id,
                 razorpayPlanId: rzpSub.plan_id,
                 reconciledAt: new Date(),
               });
+              // Sync custom claim so middleware/JWT match Firestore.
+              try {
+                const { getAuth } = await import('firebase-admin/auth');
+                await getAuth().setCustomUserClaims(userId, { planType: expectedPlan });
+              } catch (claimErr: any) {
+                errors.push(`Failed to set claim on auto-fix D1 for ${userId}: ${claimErr.message}`);
+              }
             }
             mismatches.push({
               type: 'rzp_active_fs_free',
               subscriptionId: rzpSub.id,
               userId,
               action: fsUser ? 'auto_fixed' : 'flagged',
-              details: { rzpStatus: 'active', fsPlan: fsUser?.plan || 'not_found', fixedTo: expectedPlan },
+              details: { rzpStatus: 'active', fsPlan: fsUser?.planType || 'not_found', fixedTo: expectedPlan },
               fixApplied: fsUser ? `Upgraded to ${expectedPlan}` : undefined,
             });
             if (fsUser) {
@@ -325,7 +341,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
       }
 
       // D2/D6: Razorpay terminal, Firestore still active
-      if (TERMINAL_STATUSES.has(rzpSub.status) && fsUser && fsUser.plan !== 'free') {
+      if (TERMINAL_STATUSES.has(rzpSub.status) && fsUser && fsUser.planType !== 'free') {
         const now = Date.now() / 1000;
         const paidUntil = rzpSub.current_end || 0;
 
@@ -333,17 +349,23 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
           // Paid period expired — AUTO-FIX: downgrade
           try {
             await db.collection('users').doc(userId).update({
-              plan: 'free',
+              planType: 'free',
               monthlyCredits: 50,
               creditsUsed: 0,
               reconciledAt: new Date(),
             });
+            try {
+              const { getAuth } = await import('firebase-admin/auth');
+              await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+            } catch (claimErr: any) {
+              errors.push(`Failed to set claim on auto-fix D2 for ${userId}: ${claimErr.message}`);
+            }
             mismatches.push({
               type: 'rzp_terminal_fs_active',
               subscriptionId: rzpSub.id,
               userId,
               action: 'auto_fixed',
-              details: { rzpStatus: rzpSub.status, fsPlan: fsUser.plan, paidUntil: new Date(paidUntil * 1000).toISOString() },
+              details: { rzpStatus: rzpSub.status, fsPlan: fsUser.planType, paidUntil: new Date(paidUntil * 1000).toISOString() },
               fixApplied: 'Downgraded to free (paid period expired)',
             });
           } catch (err: any) {
@@ -358,7 +380,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
             action: 'flagged',
             details: {
               rzpStatus: rzpSub.status,
-              fsPlan: fsUser.plan,
+              fsPlan: fsUser.planType,
               paidUntil: new Date(paidUntil * 1000).toISOString(),
               note: 'Still within paid period — will auto-downgrade after expiry',
             },
@@ -370,7 +392,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
       // D7: Amount mismatch check (only for active subscriptions with known plan amounts)
       if (rzpSub.status === 'active' && fsUser && PLAN_AMOUNT_MAP[rzpSub.plan_id]) {
         const expectedPlan = PLAN_NAME_MAP[rzpSub.plan_id];
-        if (expectedPlan && fsUser.plan !== expectedPlan) {
+        if (expectedPlan && fsUser.planType !== expectedPlan) {
           mismatches.push({
             type: 'amount_mismatch',
             subscriptionId: rzpSub.id,
@@ -379,7 +401,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
             details: {
               rzpPlanId: rzpSub.plan_id,
               expectedPlan,
-              fsPlan: fsUser.plan,
+              fsPlan: fsUser.planType,
             },
           });
         }
@@ -433,7 +455,7 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
           subscriptionId: fsUser.razorpaySubscriptionId,
           userId: fsUser.uid,
           action: 'flagged',
-          details: { fsPlan: fsUser.plan, note: 'Subscription ID not found in Razorpay' },
+          details: { fsPlan: fsUser.planType, note: 'Subscription ID not found in Razorpay' },
         });
       }
     }

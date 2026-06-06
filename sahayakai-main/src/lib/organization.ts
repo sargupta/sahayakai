@@ -47,13 +47,30 @@ async function getDb() {
     return _getDb();
 }
 
-/** Create a new organization. Returns the org ID. */
+/**
+ * Create a new organization. Returns the org ID.
+ *
+ * SECURITY: By default this does NOT grant the admin the org plan in their
+ * user profile / custom claim — that flip belongs in the Razorpay webhook
+ * after HMAC-verified payment. Pass `grantPlanToAdmin: true` only when the
+ * caller has independently verified payment (e.g. admin replaying a captured
+ * Razorpay payment ID). See F7-001.
+ *
+ * The org doc itself + admin membership are always written so seat/invite
+ * tooling has something to operate on.
+ */
 export async function createOrganization(params: {
     name: string;
     type: Organization['type'];
     adminUserId: string;
     plan: Organization['plan'];
     totalSeats: number;
+    /**
+     * When true, also writes `users.planType` + sets the Firebase custom claim
+     * to grant the admin the org plan immediately. Must ONLY be set after a
+     * Razorpay payment has been verified. Defaults to false.
+     */
+    grantPlanToAdmin?: boolean;
 }): Promise<string> {
     const db = await getDb();
     const orgRef = db.collection('organizations').doc();
@@ -79,21 +96,31 @@ export async function createOrganization(params: {
         invitedBy: params.adminUserId,
     });
 
-    // Update user profile with org ID
-    await db.collection('users').doc(params.adminUserId).update({
-        organizationId: orgRef.id,
-        planType: params.plan,
-        planSource: 'organization',
-        updatedAt: new Date(),
-    });
+    if (params.grantPlanToAdmin) {
+        // Update user profile with org ID and grant the plan
+        await db.collection('users').doc(params.adminUserId).update({
+            organizationId: orgRef.id,
+            planType: params.plan,
+            planSource: 'organization',
+            updatedAt: new Date(),
+        });
 
-    // Set custom claim
-    const { getAuth } = await import('firebase-admin/auth');
-    await getAuth().setCustomUserClaims(params.adminUserId, {
-        planType: params.plan,
-        orgId: orgRef.id,
-        orgRole: 'admin',
-    });
+        // Set custom claim
+        const { getAuth } = await import('firebase-admin/auth');
+        await getAuth().setCustomUserClaims(params.adminUserId, {
+            planType: params.plan,
+            orgId: orgRef.id,
+            orgRole: 'admin',
+        });
+    } else {
+        // Link the user to the org without flipping plan — the webhook will
+        // grant the plan once Razorpay confirms payment.
+        await db.collection('users').doc(params.adminUserId).update({
+            organizationId: orgRef.id,
+            planSource: 'organization',
+            updatedAt: new Date(),
+        });
+    }
 
     return orgRef.id;
 }
