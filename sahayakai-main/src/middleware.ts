@@ -270,6 +270,14 @@ export async function middleware(request: NextRequest) {
                 const raw = typeof plan === 'string' ? plan : '';
                 const resolved = LEGACY[raw] ?? (VALID_PLANS.includes(raw) ? raw : 'free');
                 requestHeaders.set('x-user-plan', resolved);
+                // Onboarding fast-path: a verified `onboardingCompleted` custom
+                // claim lets an already-onboarded user skip the /onboarding gate
+                // WITHOUT a profile-complete cookie. The backfill script stamps
+                // this claim for every pre-existing user that already scores >=
+                // threshold, so re-enabling the gate never re-onboards the base.
+                if ((decoded as Record<string, unknown>).onboardingCompleted === true) {
+                    requestHeaders.set('x-onboarding-completed', '1');
+                }
             } else if (isApiOrAdmin || isPageMutation) {
                 // Invalid token on protected routes OR a server-action POST →
                 // reject with 401 (not 500). The client SDK can detect this
@@ -298,17 +306,28 @@ export async function middleware(request: NextRequest) {
     // --- Onboarding completion gate (2026-06-06) ---
     // If the user is authenticated and trying to GET a page route that is
     // NOT in the allowlist below, AND we don't have a valid signed
-    // profile-completion cookie, push them to /onboarding. The completion
-    // cookie is issued by POST /api/profile/mark-complete after the server
-    // confirms the profile is ≥ 80% complete.
+    // profile-completion cookie NOR an `onboardingCompleted` token claim,
+    // push them to /onboarding. The completion cookie is issued by POST
+    // /api/profile/mark-complete after the server confirms the profile is
+    // ≥ 80% complete.
     //
-    // We deliberately gate on the cookie rather than a Firestore read so
-    // every page request stays cheap. Worst case: a cookie loss
-    // (cleared browser data, signed out elsewhere, secret rotation) sends
-    // the user through onboarding once — they will only enter the missing
-    // fields, and the mark-complete route re-issues the cookie.
+    // We deliberately gate on the cookie/claim rather than a Firestore read
+    // so every page request stays cheap.
+    //
+    // INCIDENT 2026-06-08: shipping this gate cookie-only locked out the
+    // ENTIRE existing user base — none of them had the cookie, so every
+    // already-onboarded teacher was bounced to /onboarding and could not
+    // reach any generation tool. The gate is now DEFAULT-OFF and only runs
+    // when ONBOARDING_GATE_ENABLED === 'true'. Re-enable it ONLY after the
+    // backfill (scripts/backfill-onboarding-claim.ts) has stamped the
+    // `onboardingCompleted` custom claim on every pre-existing complete
+    // user, so the claim fast-path (x-onboarding-completed) carries them
+    // through without re-onboarding.
+    const onboardingGateEnabled = process.env.ONBOARDING_GATE_ENABLED === 'true';
     const isAuthenticatedPageGet =
+        onboardingGateEnabled &&
         requestHeaders.has('x-user-id') &&
+        requestHeaders.get('x-onboarding-completed') !== '1' &&
         !isApiOrAdmin &&
         request.method === 'GET' &&
         !pathname.startsWith('/__/');
