@@ -1,0 +1,11 @@
+{
+  "name": "billing-killswitch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Auto-trips system_config/ai_killswitch on a GCP budget breach.",
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@google-cloud/firestore": "^7.9.0"
+  }
+}

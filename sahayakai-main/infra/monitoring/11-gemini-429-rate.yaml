@@ -1,0 +1,58 @@
+# Policy 11: Gemini/Vertex 429 (RESOURCE_EXHAUSTED) rate — PAGE (launch-critical).
+#
+# WHY: every AI route is synchronous Gemini. Standard PayGo Gemini uses shared
+# dynamic throughput — under regional contention you get 429s you cannot scale
+# Cloud Run out of. At the 8 AM wall this is what fails FIRST, before compute.
+# A rising 429 rate is the leading indicator that the AI tier is saturating and
+# the multi-key pool / backoff is no longer absorbing the spike.
+#
+# PREREQUISITE — log-based counter metric `gemini_429_total`, created from the
+# app's structured logs. The resilient client (src/ai/genkit.ts runResiliently)
+# logs quota/429 events; the typed AIQuotaExhaustedError surfaces them. Create:
+#
+#   gcloud logging metrics create gemini_429_total \
+#     --project=sahayakai-b4248 \
+#     --description="Gemini/Vertex 429 resource-exhausted events" \
+#     --log-filter='resource.type="cloud_run_revision"
+#       resource.labels.service_name="sahayakai-hotfix-resilience"
+#       (jsonPayload.error=~"(?i)resource.?exhausted|quota|429"
+#        OR jsonPayload.code=429 OR jsonPayload.status=429)'
+#
+# Threshold: > 10 events/min sustained 5m. Tune against the k6 load-test's
+# measured 429 onset (scripts/loadtest/launch-wall.js).
+displayName: "sahayakai prod — Gemini 429 rate > 10/min (5m) [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE.** Gemini/Vertex is returning 429 (RESOURCE_EXHAUSTED) above the
+    normal floor. The AI tier is saturating. Users should be seeing the
+    graceful "busy, try again" fallback (503), NOT raw 500s or hangs.
+
+    Action:
+      1. Confirm the multi-key pool is healthy and populated:
+         `gcloud secrets versions access latest --secret=GOOGLE_GENAI_API_KEY --project=sahayakai-b4248 | tr ',' '\n' | wc -l`  (want >= 3)
+      2. Confirm AI routes return typed 503 + cached/templated fallback, not 500.
+      3. If sustained, trip the AI kill-switch to shed AI load and keep the core
+         app (login/browse/content) up:
+         set Firestore `system_config/ai_killswitch.enabled = false`.
+      4. Medium-term: buy Provisioned Throughput for the baseline; add a
+         per-upstream circuit breaker (see scaling doc B1/B2).
+conditions:
+  - displayName: "gemini_429_total > 10/min"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        metric.type = "logging.googleapis.com/user/gemini_429_total"
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 10
+      duration: 300s
+      trigger:
+        count: 1
