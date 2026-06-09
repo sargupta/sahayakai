@@ -42,7 +42,7 @@ export async function initializeFirebase() {
           }
         }
 
-        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sahayakai-b4248.firebasestorage.app';
+        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sahayakai-b4248-mumbai';
         console.log(`[FirebaseAdmin] Using storage bucket: ${storageBucket}`);
 
         admin.initializeApp({

@@ -19,7 +19,7 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: sahayakai-b4248
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: sahayakai-b4248.firebasestorage.app
+    value: sahayakai-b4248-mumbai
   # Firebase web API key is by-design browser-exposed (see
   # https://firebase.google.com/docs/projects/api-keys). Stored in
   # Secret Manager for hygiene + rotation discipline rather than as a
