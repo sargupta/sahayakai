@@ -110,7 +110,12 @@ export async function middleware(request: NextRequest) {
         !pathname.startsWith('/__/')
     ) {
         const url = request.nextUrl.clone();
-        url.host = 'www.sahayakai.com';
+        url.protocol = 'https:';
+        url.hostname = 'www.sahayakai.com';
+        // Cloud Run terminates TLS at the edge and forwards to the container on
+        // :8080; that internal port leaks into nextUrl. Clear it so the redirect
+        // target is https://www.sahayakai.com, not www.sahayakai.com:8080.
+        url.port = '';
         return NextResponse.redirect(url, 308);
     }
 
