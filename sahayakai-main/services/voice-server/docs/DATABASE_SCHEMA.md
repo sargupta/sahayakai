@@ -1,9 +1,10 @@
 # Call Intelligence Store — Database Schema
 
+**Last updated:** 2026-06-10 (verified: `_SCHEMA_VERSION = 2` and all 9 tables present in `src/call_store.py`; Firestore mapping still matches `ParentOutreach` in `src/types/attendance.ts`).
 **Version:** 2
 **Engine:** SQLite (WAL mode) — migrates to Postgres/Firestore later
 **Location:** `data/calls.db`
-**Code:** `src/call_store.py`
+**Code:** `src/call_store.py` (in the `services/voice-server/` subproject, distinct from both the main app DB and the separate `sahayakai-voice-call` Exotel repo)
 
 ---
 

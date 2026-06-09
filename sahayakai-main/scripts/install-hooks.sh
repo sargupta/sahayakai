@@ -15,7 +15,7 @@
 #        hard-coded user-visible JSX strings — see AGENTS.md gate 1)
 #   commit-msg  — enforces Conventional Commits format on the subject
 #     line. Allows merge/revert/fixup commits. Override per-commit with
-#     SKIP_COMMITLINT=1 env. See docs/BRANCHING.md.
+#     SKIP_COMMITLINT=1 env. See docs/operations/BRANCHING.md.
 
 set -euo pipefail
 

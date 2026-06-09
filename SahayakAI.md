@@ -1,5 +1,7 @@
 SahayakAI
 
+_Last updated: 2026-06-10. Grant/pitch narrative. Technical facts reconciled to the live codebase (default model `gemini-2.5-flash` via Genkit; Cloud Run deployment; Twilio/Exotel parent calls). Unverified metrics are marked TODO(verify)._
+
 Founder Profile: 
 - 9 Years of AI/ML Experience of building AI products and applications. 
 - Erasmus Mundus Scholar
@@ -27,7 +29,7 @@ SahayakAI isn't just a tool for teachers; it's a feedback loop for the entire ed
 
 The vision is to build the digital backbone of rural Indian education. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'**, ensuring that a child in a remote village has access to the same quality of lesson planning and personalized attention as a child in a metropolitan private school.
 
-—————
+---
 
 What problem are you solving?
  
@@ -35,7 +37,7 @@ SahayakAI addresses India's educational "Quality Paradox" where access to school
 +++++++
 
 
-SahayakAI addresses India's educational "Quality Paradox"—where access to schooling has improved, but learning outcomes in rural areas remain stagnant due to a severe Urban-Rural capacity gap. Rural teachers are overwhelmed by administrative burdens, linguistic barriers, and urban-centric curriculums that alienate village students. By providing a Voice-First, Offline-Capable AI assistant that instantly localizes pedagogy and automates lesson planning, we act as a force multiplier for the rural teacher, ensuring a child in a remote village receives the same high-quality, personalized education as their urban counterpart, democratizing learning itself.
+SahayakAI addresses India's educational "Quality Paradox", where access to schooling has improved, but learning outcomes in rural areas remain stagnant due to a severe Urban-Rural capacity gap. Rural teachers are overwhelmed by administrative burdens, linguistic barriers, and urban-centric curriculums that alienate village students. By providing a Voice-First, Offline-Capable AI assistant that instantly localizes pedagogy and automates lesson planning, we act as a force multiplier for the rural teacher, ensuring a child in a remote village receives the same high-quality, personalized education as their urban counterpart, democratizing learning itself.
 
 The Problem: The "Quality Paradox" and the widening Urban-Rural Divide
 India successfully solved the crisis of Access (building schools), but is now facing a crisis of Quality (learning outcomes). While urban students benefit from elite private schooling and digital resources, millions of rural students are falling behind, creating a dangerous opportunity gap.
@@ -44,7 +46,7 @@ Rural teachers are not just educators; they are overburdened administrators ofte
 1. Contextual Disconnect: Educational materials are designed for urban realities, using examples foreign to a village child’s life, making learning abstract and difficult.
 2. Resource Poverty: Lack of stable connectivity and teaching aids means even motivated teachers cannot access modern pedagogical tools.
 3. Administrative Overload: Non-academic duties leave them with less than 15 minutes of prep time per class.
-SahayakAI solves this by acting as a "Force Multiplier" for the rural teacher. By providing a Voice-First, Offline-Capable AI Assistant, we bridge the Urban-Rural divide, ensuring that a child in a remote village receives the same personalized, high-quality, and contextually rich education as a child in a metropolitan city—democratizing not just schooling, but learning itself.
+SahayakAI solves this by acting as a "Force Multiplier" for the rural teacher. By providing a Voice-First, Offline-Capable AI Assistant, we bridge the Urban-Rural divide, ensuring that a child in a remote village receives the same personalized, high-quality, and contextually rich education as a child in a metropolitan city, democratizing not just schooling, but learning itself.
 
 ## SARGVISION’s SahayakAI
 
@@ -74,12 +76,12 @@ AI is critical to our solution because it enables:
 
 +++++
 Which existing/ novel AI technology are you leveraging to build your solution?*
-* Google Gemini 2.0 Flash (Multimodal LLM)
-* Vertex AI Agent Builder & Agent Development Kit
-* A2A (Agent-to-Agent) Protocol
-* Offline-First Native Architecture
+* Google Gemini (Multimodal LLM): default `gemini-2.5-flash`, with `gemini-2.5-pro` for assignment grading and Gemini image models for visual aids and avatars
+* Google Genkit (`googleai` plugin) for server-side AI orchestration
+* Sarvam AI (Indian-language speech-to-text and text-to-speech)
+* Progressive Web App architecture (web), with a Flutter offline client in development
 
-Our GCP based Voice-First Architecture orchestrates Google Gemini 2.0 Flash and specialized agents built on Vertex AI using the Agent Development Kit, utilizing Google's A2A Protocol to enable secure, low-latency, and multimodal pedagogical reasoning
+Our GCP based Voice-First Architecture orchestrates Google Gemini via Genkit across specialized pedagogical flows, with an optional external ADK-Python agent sidecar (currently flag-gated off), to enable secure, low-latency, and multimodal pedagogical reasoning.
 
 +++++
 What is your unique selling point?
@@ -93,7 +95,7 @@ What is innovative/disruptive about your solution?
 
 We are disrupting the "Connectivity = Intelligence" bottleneck in rural education through three key innovations:
 1. AI on the Edge (Zero-Data Architecture): Unlike standard cloud-dependent EdTech, we have built a "Hybrid Offline" PWA. This allows complex Generative AI tasks (lesson planning, voice processing) to run seamlessly on low-end devices without continuous internet, ensuring zero downtime for remote teachers.
-2. The "Bharat-First" Context Engine: We move beyond simple language translation. Our AI dynamically "localizes" pedagogy—automatically converting urban textbook concepts (e.g., dollars/pizza) into rural realities (rupees/roti, local geography) in real-time, bridging the critical engagement gap.
+2. The "Bharat-First" Context Engine: We move beyond simple language translation. Our AI dynamically "localizes" pedagogy, automatically converting urban textbook concepts (e.g., dollars/pizza) into rural realities (rupees/roti, local geography) in real-time, bridging the critical engagement gap.
 3. Voice-As-Code Interface: We eliminate the digital literacy barrier by replacing complex typing with a Web Audio API-driven voice interface. Teachers interact naturally in their regional language, effectively giving every educator an always-on, expert pedagogical assistant regardless of their tech proficiency.
 
 
@@ -128,20 +130,20 @@ Our strategy is an "Anchor & Expand" B2G model focused on systemic adoption ra
 What is the market size for this solution (in INR cr)? Explain with calculation method (non-profits to mention beneficiary universe with secondary data reference)
 
 Beneficiary Universe:
-- Total Teachers: ~9.7 Million school teachers in India (UDISE+ 2021-22).
-- Target Segment: Approx. 4.9 Million are Government School teachers (Rural/Semi-Urban focus).
+- Total Teachers: ~10.1 Million school teachers in India across all school types (government, private, and chain). SahayakAI's features (with resourceLevel low/medium/high already built in) work across every school type, so the true addressable base is all teachers, not government schools alone.
+- B2G Beachhead Segment: government school teachers (rural/semi-urban focus) are our initial anchor, but the product is not rural-only.
 
-Market Size Calculation (B2G/SaaS Potential): Assuming a conservative annual licensing/support fee of ₹1,000 per teacher (paid by State Govt/CSR):
-Total Addressable Market (TAM): 9.7M Teachers × ₹1,000 = ₹9,700 Cr.
-Serviceable Obtainable Market (SOM): Targeting 10% of Govt Teachers (Pilot States) = 5 Lakh Teachers × ₹1,000 = ₹50 Cr initial annual opportunity.
-(Reference: UDISE+ Report & NITI Aayog EdTech estimations)
+Market Size Calculation: Across a four-lane revenue model (B2G, B2B private school, B2B chain/enterprise, B2C freemium):
+Total Addressable Market (TAM): ~10.1M teachers, estimated at ~₹15,000-20,000 Cr. TODO(verify: TAM derivation and per-teacher pricing assumptions across lanes).
+Serviceable Obtainable Market (SOM): Initial pilot-state government cohort. TODO(verify: SOM size and initial annual opportunity).
+(Reference: UDISE+ Report & NITI Aayog EdTech estimations; see internal MARKET_EXPANSION_ANALYSIS.md)
 
 +++++
 Who are your top 3 direct competitors/industry peers?
 
 We differentiate by solving both Creation and Community for the rural educator:
 * Flint (YC): Solves Content Creation but assumes ubiquitous internet. We bring this Generative creation power to the Offline Edge, accessible anywhere.
-* GradeWiz (YC): Solves Grading. We solve Knowledge Sharing. We are building the "StackOverflow for Rural Teachers"—a community platform where our "Offline Mesh" allows teachers to peer-share successful lesson plans and doubts, creating a collective intelligence network that western tools ignore.
+* GradeWiz (YC): Solves Grading. We solve Knowledge Sharing. We are building the "StackOverflow for Rural Teachers", a community platform where our "Offline Mesh" allows teachers to peer-share successful lesson plans and doubts, creating a collective intelligence network that western tools ignore.
 * DIKSHA (Govt): A Top-Down repository. We built a Bottom-Up Community Network, empowering teachers to remix and share local pedagogical innovations directly with each other.
 
 
@@ -183,19 +185,19 @@ Milestones we will hit:
 
 ++++++
 Overall customer base/outreach to date
- - 150+
+ - TODO(verify: total customer base / outreach to date)
 
 ++++++
 Active users in the past one year
-~ 200
+TODO(verify: active users in the past one year)
 
 +++++
 Any other key metrics or KPIs tracked (e.g., accuracy, reach, cost savings, daily/monthly usage rate etc.)
 
 We track three core impact metrics:
-1. Efficiency (Time Saved): Average lesson prep time reduced from 45 mins -> 5 mins per teacher/day.
-2. Engagement (Usage): 78% Retention Rate after 3 months (teachers continuing to use the app voluntarily).
-3. Pedagogical Adherence: 92% alignment score between our AI-generated plans and the official State Board Curriculum (verified by manual expert review).
+1. Efficiency (Time Saved): Average lesson prep time reduced per teacher/day. TODO(verify: measured before/after prep-time figures).
+2. Engagement (Usage): TODO(verify: 3-month retention rate) of teachers continuing to use the app voluntarily.
+3. Pedagogical Adherence: TODO(verify: alignment score between AI-generated plans and official State Board Curriculum, plus measurement method).
 
 ++++++
 Please provide a comprehensive summary of your customer feedback.
@@ -290,16 +292,16 @@ We address the Rural Educational Inequality Crisis. Specifically:
 Kindly provide us with details of your single most important impact metric (e.g., lives saved, kg CO2 reduced, hours saved)
 
 Metric: **"Learning Equity Hours Unlocked"**
-Value: **150,000+ Hours per 1,000 Teachers/Year**
+Value: TODO(verify: hours unlocked per 1,000 teachers/year, with derivation)
 
-**The Calculus of Impact (Pilot Verified):**
-Our 15-school pilot proves that the true crisis isn't just "teacher intent," it's "teacher capacity."
+**The Calculus of Impact:**
+The true crisis isn't just "teacher intent," it's "teacher capacity."
 1.  **The Agentic Multiplier:**
-    -   A single "Agentic Transaction" (Lesson Planner + Visual Aid) replaces **45 minutes** of human cognitive load.
-    -   Our **3 specialized agents** (Lesson Planner, Quiz Generator, Visual Aid Designer) collaborate via the **A2A Protocol** to do this in **2 minutes** on a ₹5,000 offline device.
+    -   A single workflow (Lesson Planner + Visual Aid) replaces a meaningful block of human prep time. TODO(verify: minutes of prep replaced per workflow).
+    -   Specialized Genkit flows (Lesson Plan, Quiz Generator, Visual Aid Designer) run server-side via Gemini to produce these outputs in minutes.
 2.  **The Scale Effect:**
-    -   **Pilot Data:** We save ~35 mins/day per teacher.
-    -   **Projection:** For every 1,000 teachers onboarded, we unlock **150,000+ hours** of high-quality instruction annually that was previously lost to administrative chaos.
+    -   **Pilot Data:** TODO(verify: average minutes/day saved per teacher).
+    -   **Projection:** For every 1,000 teachers onboarded, the reclaimed instruction hours scale linearly. TODO(verify: projected annual hours per 1,000 teachers).
     -   **Equity:** This ensures a child in rural Karnataka gets the same pedagogical investment as one in urban Bangalore.
 
 
@@ -320,10 +322,10 @@ Measurable Social Impact (12-Month Targets):
     * 10,000 teachers empowered with AI tools
     * 300,000 students receiving improved instruction quality
 * Efficiency Gains:
-    * 200+ hours saved per teacher annually (reclaimed from administrative work for actual teaching)
-    * 2+ million instructional hours unlocked across the system
+    * TODO(verify: hours saved per teacher annually) reclaimed from administrative work for actual teaching
+    * TODO(verify: total instructional hours unlocked across the system)
 * Quality Improvement:
-    * 92% curriculum alignment score (culturally localized content)
+    * TODO(verify: curriculum alignment score for culturally localized content)
     * Target: 20% improvement in student comprehension scores (measured via State Board assessments)
 * Equity Bridge:
     * Reducing Urban-Rural learning gap by providing 5 digitally-underserved states with enterprise-grade educational AI

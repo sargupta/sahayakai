@@ -1,5 +1,5 @@
 // Layout primitives — Phase 2 of the design system overhaul.
-// See docs/DESIGN_TOKENS.md for the full specification.
+// See docs/product/DESIGN_TOKENS.md for the full specification.
 
 export { PageShell } from "./page-shell";
 export type { PageShellProps } from "./page-shell";
