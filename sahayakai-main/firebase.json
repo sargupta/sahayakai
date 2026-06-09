@@ -24,7 +24,14 @@
         "rules": "firestore.rules",
         "indexes": "firestore.indexes.json"
     },
-    "storage": {
-        "rules": "storage.rules"
-    }
+    "storage": [
+        {
+            "bucket": "sahayakai-b4248.firebasestorage.app",
+            "rules": "storage.rules"
+        },
+        {
+            "bucket": "sahayakai-b4248-mumbai",
+            "rules": "storage.rules"
+        }
+    ]
 }
