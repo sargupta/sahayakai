@@ -98,6 +98,34 @@ function isQuotaExhausted(error: any): boolean {
 }
 
 /**
+ * Detects a dispatcher-level timeout. These surface as `WithTimeoutError`
+ * (src/lib/sidecar/with-timeout.ts) or a sidecar client `*TimeoutError`,
+ * both with a "timed out after Nms" message.
+ *
+ * Why this exists (observed 2026-06-09 daily scan): every lesson-plan / quiz /
+ * rubric / teacher-training / instant-answer 500 that day was NOT a raw 429 —
+ * it was `WithTimeoutError: "<stage> genkit fallback timed out after 60001ms"`.
+ * Root cause: with a single-key pool the 429 backoff in runResiliently
+ * (20s → 40s) overruns the 60s `FALLBACK_TIMEOUT_MS`, so a quota-driven retry
+ * is killed by the timeout wrapper and rethrown as a plain timeout. Because
+ * `errorStatus()` can't read a status off that message, it fell through to the
+ * generic 500 branch and paged on-call instead of returning a friendly 503.
+ *
+ * A timeout is transient (a retry may succeed), so the user should get a
+ * 503 + Retry-After, not a 500 "AI generation failed". NOTE: we still log it
+ * at ERROR (see handleAIError) — per the zero-tolerance daily scan a timeout
+ * storm must stay visible until the Gemini quota / key-pool root cause is
+ * fixed. Once the pool has headroom these stop occurring and the scan goes
+ * clean on its own.
+ */
+function isTransientTimeout(error: any): boolean {
+    const name = String(error?.name || '');
+    if (name === 'WithTimeoutError' || /TimeoutError$/.test(name)) return true;
+    const msg = String(error?.message || '');
+    return /timed out after \d+\s*ms/i.test(msg);
+}
+
+/**
  * Log-only helper — classifies the error and writes at WARN or ERROR level.
  * Use this when the route has custom response logic that you don't want to
  * replace wholesale. The return path in the route is unchanged; only the
@@ -163,6 +191,14 @@ export function classifyAIError(err: unknown): ClassifiedAIError {
             code: 'AI_SERVICE_BUSY',
             message:
                 'AI service is temporarily overloaded. Please try again in a minute.',
+            transient: true,
+        };
+    }
+    if (isTransientTimeout(err)) {
+        return {
+            code: 'AI_SERVICE_BUSY',
+            message:
+                'AI service is taking longer than usual. Please try again in a minute.',
             transient: true,
         };
     }
@@ -263,6 +299,31 @@ export function handleAIError(
             {
                 status: 503,
                 headers: { 'Retry-After': String(retryAfter) },
+            },
+        );
+    }
+
+    // 3c. Dispatcher/upstream timeout → 503 with Retry-After. Transient
+    //     (a retry may succeed) and almost always driven by Gemini slowness
+    //     or single-key 429 backoff overrunning the 60s withTimeout budget,
+    //     so the user gets "try again", not "generation failed".
+    //     Deliberately logged at ERROR (not WARN like quota): per the
+    //     zero-tolerance daily scan a timeout storm must stay visible until
+    //     the Gemini quota / key-pool root cause is resolved.
+    if (isTransientTimeout(error)) {
+        logger.error(`${ctx.message} — upstream timeout (transient, served as 503)`, error, context, {
+            ...extra,
+            reason: 'upstream_timeout',
+        });
+        return NextResponse.json(
+            {
+                error: 'AI service is taking longer than usual. Please try again in a minute.',
+                code: 'AI_SERVICE_BUSY',
+                retryAfterSeconds: 60,
+            },
+            {
+                status: 503,
+                headers: { 'Retry-After': '60' },
             },
         );
     }
