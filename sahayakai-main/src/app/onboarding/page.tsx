@@ -286,6 +286,24 @@ export default function OnboardingPage() {
                 try {
                     const { profile } = await getProfileData(user.uid);
                     if (profile && profile.schoolName) {
+                        // Already-onboarded teacher. Before sending them home,
+                        // mint the profile-complete cookie + onboardingCompleted
+                        // claim — otherwise, with the onboarding gate enabled,
+                        // `/` redirects straight back here and we spin in an
+                        // infinite / ⇆ /onboarding loop showing only "Loading…".
+                        // (Root cause of the 2026-06-08 lockout: this redirect
+                        // fired before any mark-complete call, so the escape
+                        // hatch never issued a cookie.) Best-effort: even if the
+                        // call fails we still navigate home.
+                        try {
+                            const token = await user.getIdToken();
+                            await fetch('/api/profile/mark-complete', {
+                                method: 'POST',
+                                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                            });
+                        } catch {
+                            /* non-fatal — gate is default-off; cookie is a fast-path */
+                        }
                         router.push("/");
                         return;
                     }
