@@ -55,6 +55,29 @@ export async function POST() {
             );
         }
 
+        // Durable fast-path: stamp an `onboardingCompleted` custom claim so
+        // the middleware gate lets this user through even after the cookie is
+        // lost (cleared storage, secret rotation, new device) — no re-onboard.
+        // Merge with existing claims so we never clobber planType / orgId.
+        // Non-fatal: the cookie below is the immediate mechanism; if the claim
+        // write fails the user is still unblocked this session.
+        try {
+            const { getAuth } = await import('firebase-admin/auth');
+            const authAdmin = getAuth();
+            const existing = (await authAdmin.getUser(userId)).customClaims ?? {};
+            if (existing.onboardingCompleted !== true) {
+                await authAdmin.setCustomUserClaims(userId, {
+                    ...existing,
+                    onboardingCompleted: true,
+                });
+            }
+        } catch (claimErr) {
+            logger.warn('Failed to set onboardingCompleted claim', 'PROFILE', {
+                userId,
+                error: (claimErr as Error).message,
+            });
+        }
+
         const value = signProfileCompleteCookie(userId);
         const res = NextResponse.json({ ok: true, score });
         res.cookies.set(PROFILE_COMPLETE_COOKIE, value, {
