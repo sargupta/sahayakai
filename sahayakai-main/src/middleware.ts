@@ -92,6 +92,28 @@ async function verifyIdToken(token: string) {
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // Canonical host: redirect bare apex → www so the browsing origin always
+    // matches Firebase's authDomain (www.sahayakai.com, see src/lib/firebase.ts).
+    // On mobile, sign-in uses signInWithRedirect; the OAuth handoff is stored
+    // on the authDomain origin. A user on bare sahayakai.com goes cross-origin
+    // to www during the handoff, so mobile Safari ITP / Chrome storage
+    // partitioning makes getRedirectResult() return null — the teacher bounces
+    // back to the landing page, never signed in. Forcing one origin fixes it.
+    //
+    // Scope: skip /api/* (payment/Twilio webhooks may be registered on the bare
+    // host and some clients don't follow 308 on POST) and /__/* (the Firebase
+    // auth reverse-proxy must stay on whatever origin the request lands on).
+    const host = request.headers.get('host');
+    if (
+        host === 'sahayakai.com' &&
+        !pathname.startsWith('/api/') &&
+        !pathname.startsWith('/__/')
+    ) {
+        const url = request.nextUrl.clone();
+        url.host = 'www.sahayakai.com';
+        return NextResponse.redirect(url, 308);
+    }
+
     // SECURITY: Strip any client-supplied identity headers BEFORE any branch.
     // `x-user-id` / `x-user-plan` are trusted by every downstream route
     // handler as the verified-from-token identity. A client that sets them
