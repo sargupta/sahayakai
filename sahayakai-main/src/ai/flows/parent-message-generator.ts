@@ -5,7 +5,7 @@
  * - ParentMessageInput / ParentMessageOutput — exported types
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import type { OutreachReason } from '@/types/attendance';
@@ -148,7 +148,14 @@ const parentMessageFlow = ai.defineFlow(
         outputSchema: ParentMessageOutputSchema,
     },
     async (input) => {
-        const result = await parentMessagePrompt(input);
+        // Must run through the resilient key-pool wrapper so the Gemini API key
+        // is injected. Calling the prompt directly lets the SDK fall back to ADC
+        // (service-account OAuth), which generativelanguage.googleapis.com rejects
+        // with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — breaking every parent message.
+        const result = await runResiliently(
+            (overrideConfig) => parentMessagePrompt(input, overrideConfig),
+            'parentMessage.generate',
+        );
         const output = result.output!;
 
         // Override languageCode with our hardcoded map — do not trust the AI's value
