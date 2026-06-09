@@ -362,6 +362,33 @@ gcloud run revisions list --service sahayakai-hotfix-resilience \
 A live flip-and-back drill was **not** run against prod (it serves real users); the command
 syntax + target health were verified read-only. Run the live drill in a maintenance window.
 
+### 7.1 cpu=1 break-glass capacity revision (pre-staged, 0% traffic)
+
+To survive the regional 20-vCPU CPU-allocation quota **without** a quota grant, a config-only
+revision is pre-built and warm but **not serving**:
+
+- **Revision:** `sahayakai-hotfix-resilience-00510-lez`, tag `cpu1`
+- **Config:** cpu=1 / 2Gi / **concurrency=40** / maxScale=20 (vs live cpu=2 / concurrency=80)
+- **Effect:** 20 instances fit inside 20 vCPU (vs 10 at cpu=2) — **doubles the instance ceiling**.
+- **Health:** `/api/health` → 200 (verified at the `cpu1---…run.app` tag URL).
+- **Staged via** `gcloud run services update … --cpu=1 --max-instances=20 --concurrency=40 --no-traffic --tag=cpu1` (config-only; no rebuild).
+
+**FLIP it** only when alert 09 (instances ≈ maxScale) or 10 (CPU quota > 80%) fires during the
+8 AM wall:
+```
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region asia-southeast1 --to-latest
+```
+**REVERT** to the deeper cpu=2 revision instantly:
+```
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region asia-southeast1 \
+  --to-revisions sahayakai-hotfix-resilience-00438-4k5=100
+```
+**Tradeoff:** 2× instances but half the CPU each; concurrency dropped to 40 to compensate.
+Break-glass lever, not the default — keep cpu=2 (`00438-4k5`) for normal launch load, and the
+real fix is the pending regional CPU-quota increase (Appendix), not this.
+
 ---
 
 ## 8. Critical review — where this plan pushes back on itself
