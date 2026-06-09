@@ -1,9 +1,11 @@
 # SahayakAI Project Map (gemini.md)
 
 ## Project Overview
-**Status:** Blueprint Phase (B.L.A.S.T. Protocol)
-**Last Updated:** 2026-01-29
-**Project Identity:** "Bharat First" AI Teaching Assistant for Rural India.
+**Status:** In production (Cloud Run). The B.L.A.S.T. protocol notes below are historical.
+**Last Updated:** 2026-06-10
+**Project Identity:** "Bharat First" AI Teaching Assistant for teachers across India (all school types).
+
+> Quick facts (verify against `sahayakai-main/docs/_groundtruth_2026-06-09.md`): default LLM `gemini-2.5-flash` via Genkit `googleai` plugin; prod runs on Cloud Run service `sahayakai-hotfix-resilience` (`asia-southeast1`, project `sahayakai-b4248`); feature flags in Firestore `system_config/feature_flags`; parent calls via Twilio (default) or Exotel (`VOICE_PROVIDER=exotel`).
 
 ## B.L.A.S.T. Protocol Progress
 - [x] **B - Blueprint:** Discovery synthesized from Strategic Review & Roadmap
@@ -15,7 +17,7 @@
 ## Discovery Questions (Synthesized)
 *   **North Star:** Transform SahayakAI from a single-user tool to a nationwide ecosystem platform. Immediate priority: Completing the "Indian Context" transformation and establishing a "Semantic Cache" for sustainability.
 *   **Integrations:** 
-    *   **Core:** Google Gemini (via Genkit), Firebase (Hosting/Functions/Auth).
+    *   **Core:** Google Gemini (via Genkit `googleai` plugin), Cloud Run (compute), Firebase (Auth/Firestore/Storage).
     *   **Priority:** Semantic Caching layer (to be built), Supabase/Realtime DB migration for curriculum mapping.
     *   **Future:** Student/Parent communication (WhatsApp/SMS).
 *   **Source of Truth:** 

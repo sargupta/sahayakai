@@ -1,7 +1,8 @@
-# Public Profile — /profile/[uid]
+# Public Profile - /profile/[uid]
 
 **File:** `src/app/profile/[uid]/page.tsx`
 **Auth:** Not required to view (but auth needed for connection actions)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -14,8 +15,9 @@ Any teacher's public profile. Viewed when clicking on another teacher's name in 
 ## Component Tree
 
 ```
-PublicProfilePage (async, awaits params)
-└── ProfileView (isOwnProfile=false, targetUid={uid})
+PublicProfilePage (async server component, awaits params)
+├── ProfileBackBar (sticky return-to-community bar)
+└── ProfileView (uid={uid}, isOwnProfileManual={false})
     ├── Profile header (same as My Profile)
     ├── Stats row
     ├── Connection action buttons (instead of Edit)
@@ -37,7 +39,7 @@ PublicProfilePage (async, awaits params)
 Dynamic route: `/profile/[uid]`
 
 ```tsx
-// page.tsx is async — awaits params
+// page.tsx is async - awaits params
 const { uid } = await params;
 ```
 
@@ -48,8 +50,8 @@ const { uid } = await params;
 ## Data Flow
 
 Same as My Profile but:
-- `isOwnProfile: false`
-- `targetUid` = the profile owner's UID (from URL params)
+- `isOwnProfileManual={false}`
+- `uid` = the profile owner's UID (from URL params)
 - Connection state loaded via `getMyConnectionDataAction()` → determines which button to show
 
 ---

@@ -1,85 +1,66 @@
 # Lib: Indian Context
 
 **File:** `src/lib/indian-context.ts`
+**Verified:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Provides culturally-relevant examples, analogies, and replacements that are injected into AI prompts to ensure generated content resonates with Indian teachers and students — particularly those in rural areas.
+Provides culturally-relevant examples, analogies, and Western to Indian substitutions injected into AI prompts so generated content resonates with Indian teachers and students.
 
 ---
 
 ## Key Exports
 
-### IndianContext Object
+### `IndianContext` (const, also default export)
 
-A categorized database of Indian-specific examples:
+A nested database of Indian-specific examples grouped by domain, each with sub-arrays. Domains include:
 
 ```
-food:        paratha, dal, roti, sambar, idli, khichdi
-agriculture: wheat harvest at ₹25/kg, paddy cultivation, Kharif/Rabi seasons
-weather:     monsoon (June-September), summer 40°C, winter fog in North India
-geography:   Ganga-Yamuna plains, Western Ghats, Deccan plateau, Thar Desert
-festivals:   Diwali, Eid, Christmas, Pongal, Onam, Bihu, Navratri
-animals:     cow, buffalo, sparrow, crow, peacock (national bird), tiger
-currency:    rupee (₹), paisa, lakh, crore
-measurements: bigha (land), maund (weight), hand-span
-daily life:  auto-rickshaw, cycle, village panchayat, anganwadi
-transport:   state bus, cycle, bullock cart, train
-heroes:      Dr. Ambedkar, Aryabhata, APJ Abdul Kalam, Savitribai Phule
-school:      blackboard, chalk, slate, government textbook
+food:        { common, snacks, sweets }
+agriculture: { crops, seasons, tools, activities }   // kharif/rabi/zaid, plough, sickle, bullock cart...
+weather:     { seasons, phenomena, temperatures }    // monsoon rains, heat wave, '45°C in summer'...
+geography:   { rivers, mountains, states, cities }   // Ganga/Yamuna, Himalayas/Western Ghats...
+festivals:   { major, harvest, ... }                 // Diwali, Holi, Eid, Pongal, Onam...
 ```
 
-### getContextExamples(subject, topic)
+(See the file for the full set of domains and members. Values are concept strings in English, not translated text.)
 
-Returns subject-specific example sentences:
-```
-Mathematics + fractions → "If a farmer has 3/4 bigha of land..."
-Science + motion → "A bullock cart moves at 4 km/h..."
-Social Science + trade → "In a weekly haat (market)..."
-```
+### `getContextExamples(subject: string, topic: string): string[]`
 
-### exampleReplacements
+Returns subject-specific example sentences keyed off an internal map.
 
-Western → Indian substitution map:
+### `exampleReplacements: Record<string, string>`
+
+Western to Indian substitution map. Actual entries include:
+
 ```
-pizza → paratha
-snow → monsoon rain
-dollar → rupee
-celsius [negative] → "40 degree summer heat"
-football → cricket
-apple pie → mithai
+pizza → paratha,  burger → vada pav,  sandwich → samosa,  cake → ladoo,  ice cream → kulfi
+snow → monsoon rain,  winter → winter fog,  autumn → post-monsoon season
+New York → Delhi,  London → Mumbai,  Paris → Jaipur,  mountain → Himalayas,  river → Ganga
+dollar → rupee,  $ → ₹,  cent → paisa
+football → cricket,  baseball → kabaddi
+reindeer → camel,  polar bear → elephant
 ```
 
-### getIndianContextPrompt(isRural?: boolean)
+### `getIndianContextPrompt(isRural: boolean = true): string`
 
-Returns a prompt addition string:
-```
-"Use Indian examples and context. Use Indian names (Priya, Raju, Geeta).
-Reference Indian geography, festivals, and daily life.
-[if isRural]: Use examples relevant to rural India — farming, village life, local markets."
-```
+Returns a prompt-addition string instructing the model to use Indian names, geography, festivals, and daily life. **Default is `isRural = true`.** When rural, it emphasizes farming / village life / local market examples.
 
 ---
 
 ## Usage in AI Flows
 
 ```ts
-// In every AI flow prompt:
 const contextPrompt = getIndianContextPrompt();
-const systemPrompt = `You are an AI assistant for Indian teachers. ${contextPrompt}
-Generate a lesson plan for...`;
+const systemPrompt = `You are an AI assistant for Indian teachers. ${contextPrompt} ...`;
 ```
 
-This ensures generated content never contains:
-- Western sports (football, baseball) as primary examples
-- Western food (pizza, burgers)
-- Western currency
-- Non-Indian geography as default reference
+This steers content away from Western sports, food, currency, and geography as default references.
 
 ---
 
 ## Language Coverage
 
-Context database is language-neutral (examples are concepts, not translated text). The AI model is responsible for rendering these concepts in the requested output language.
+The context database is language-neutral (concepts, not translated text). The model renders these concepts in the requested output language. Related helpers: `src/lib/regional-examples.ts`, `src/lib/i18n-proper-nouns.ts`.

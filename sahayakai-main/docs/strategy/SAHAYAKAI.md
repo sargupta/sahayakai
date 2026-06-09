@@ -1,30 +1,32 @@
-# SahayakAI: AI-Powered Teaching Assistant for Rural India
+# SahayakAI: AI-Powered Teaching Assistant for India
 
-**SahayakAI** is a "Bharat First" AI-powered teaching assistant designed to empower teachers in rural India. It provides a suite of tools to help teachers create high-quality, culturally relevant lesson plans and teaching materials, even with limited resources and internet connectivity.
+**Last updated:** 2026-06-10
+
+**SahayakAI** is a "Bharat First" AI-powered teaching assistant for teachers across all Indian school types. It addresses India's systemic education-quality crisis by helping teachers create high-quality, culturally relevant lesson plans and teaching materials, adapting to each classroom's resource level (low, medium, high).
 
 ## Project Goal
-The primary goal of SahayakAI is to bridge the educational gap in rural India by providing teachers with a practical and easy-to-use tool that understands their unique challenges.
+The primary goal of SahayakAI is to raise teaching quality at scale by giving teachers a practical, easy-to-use assistant that understands their curriculum, language, and classroom context.
 
 ## Core Features
-*   **Lesson Plan Generator:** Creates detailed lesson plans based on a topic, grade level, and subject.
-*   **Rubric Generator:** Generates fair and professional grading rubrics for assignments.
-*   **Voice-First Interface:** Allows teachers to use their voice to interact with the application.
-*   **Indian Context:** All content is localized to the Indian context, with a focus on rural examples.
-*   **Offline Support:** The application is a Progressive Web App (PWA) that can be used offline.
-*   **Multilingual:** Supports multiple Indian languages.
+The platform ships roughly 17 Genkit AI flows plus the VIDYA voice assistant, including:
+*   **Lesson Plan Generator, Quiz Generator, Exam Paper Generator, Worksheet Wizard, Rubric Generator.**
+*   **Instant Answer:** Grounded Q&A using Google Search grounding.
+*   **Visual Aid (image + text), Avatar Generator, Video Storyteller, Virtual Field Trip, Teacher Training.**
+*   **Assignment Assessor and Assessment Scanner:** Grade assignments and scan handwritten work.
+*   **Attendance + Parent Outreach:** Draft parent messages and place AI parent calls (Twilio default, Exotel streaming opt-in).
+*   **VIDYA:** Voice-first assistant (OmniOrb mic) with an 11-intent router.
+*   **Community:** Resource sharing, teacher directory, and community chat.
+*   **Indian Context, Multilingual (11 Indic languages), PWA / offline-capable.**
 
 ## Current Status
-The project is in the "Stylizing" phase of the B.L.A.S.T. protocol. The core features have been implemented, and the focus is now on refining the user experience and preparing for a wider rollout.
+Core features are implemented and the platform is in pilot. Usage, retention, and pilot-outcome metrics: `TODO(verify: active users, pilot results, retention)`.
 
 ## Technology Stack
-*   **Frontend:** Next.js (React)
-*   **AI:** Google Gemini via Genkit
-*   **Backend:** Firebase (Serverless)
-*   **Deployment:** GitHub Actions to Firebase Hosting
+*   **Frontend:** Next.js (App Router, React).
+*   **AI:** Google Gemini via Genkit (default `gemini-2.5-flash`).
+*   **Backend:** Firebase (Auth, Firestore, Storage) on Google Cloud Run.
+*   **Payments:** Razorpay. **Telephony:** Twilio / Exotel.
+*   **Deployment:** Cloud Build GitHub trigger to Cloud Run (`asia-southeast1`).
 
 ## Roadmap
-The future roadmap includes features like:
-*   **Community Hub:** A place for teachers to share and discover content.
-*   **Parent Communication:** Tools to help teachers communicate with parents.
-*   **Differentiated Instruction:** The ability to generate content for different learning levels.
-*   **NCERT Curriculum Alignment:** Aligning content with the official Indian curriculum.
+`TODO(verify: roadmap dates/milestones)`. Active directions include deeper community features, expanded parent communication, differentiated instruction, and NCERT curriculum alignment (NCERT data already present in Firestore).

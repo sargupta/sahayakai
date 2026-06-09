@@ -1,76 +1,71 @@
 # Lib: IndexedDB (Client-Side Storage)
 
 **File:** `src/lib/indexed-db.ts`
+**Verified:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Client-side persistent storage for drafts, lesson plan cache, and telemetry. Used when offline or to preserve form state across navigation.
+Client-side persistent storage for draft form state, a lesson-plan cache, buffered telemetry, and an offline message outbox/cache. Used to preserve work and to keep messaging usable offline.
 
 ---
 
 ## Library
 
-Uses `idb` npm package — a thin Promise wrapper around native IndexedDB.
+Uses the `idb` npm package (a thin Promise wrapper around native IndexedDB) via `openDB`.
 
 ---
 
-## Stores
+## Database
 
-### `drafts`
-- Key: auto-increment
-- Value: `{ type: ContentType, data: object, savedAt: Date }`
-- Purpose: Auto-save form state so teachers don't lose work
-- Pruning: entries older than 7 days removed on init
-
-### `lesson-plan-cache`
-- Key: `{topic}_{grade}_{subject}_{language}` (composite string)
-- Value: `{ plan: LessonPlanSchema, cachedAt: Date }`
-- Purpose: Cache recent lesson plans to avoid regenerating identical requests
-- TTL: 24 hours
-
-### `telemetry`
-- Key: auto-increment
-- Value: `{ event: string, data: object, timestamp: Date }`
-- Purpose: Buffer analytics events when offline
-- Flushed to server on reconnect
-
----
-
-## Key Functions
-
-```ts
-// Drafts
-saveDraft(type: ContentType, data: object): Promise<number>
-getDraft(type: ContentType): Promise<Draft | null>
-clearDraft(type: ContentType): Promise<void>
-
-// Cache
-getCachedLessonPlan(key: string): Promise<LessonPlanSchema | null>
-cacheLessonPlan(key: string, plan: LessonPlanSchema): Promise<void>
-
-// Telemetry
-bufferEvent(event: string, data: object): Promise<void>
-flushEvents(): Promise<TelemetryEvent[]>
+```
+DB_NAME    = 'sahayak-ai-db'
+DB_VERSION = 3
 ```
 
+`initDB()` opens the DB and, in the `upgrade` callback, creates any missing object stores.
+
 ---
 
-## Usage Pattern
+## Object Stores
 
-In AI tool pages, auto-save triggered on input change with debounce:
+| Store | Key | Notes |
+|---|---|---|
+| `drafts` | explicit string key | Auto-saved form state. |
+| `lesson_plan_cache` | explicit string key | Cached lesson plans (note: store name uses underscores, not `lesson-plan-cache`). |
+| `telemetry` | auto-increment | Buffered analytics/telemetry events; pruned by `pruneOldTelemetry()`. |
+| `message_outbox` | explicit key | Pending outbound messages for offline send. |
+| `message_cache` | explicit key | Cached conversation messages (has an index, created with options). |
+
+---
+
+## Exported Functions
+
 ```ts
-// On form input change (debounced 2s):
-await saveDraft('lesson-plan', { topic, gradeLevel, subject, language });
+initDB(): Promise<IDBPDatabase<SahayakDB>>
 
-// On page mount (restore if draft exists):
-const draft = await getDraft('lesson-plan');
-if (draft) { setTopic(draft.data.topic); ... }
+// Drafts (caller supplies the key)
+saveDraft(key: string, data: any): Promise<...>
+getDraft(key: string): Promise<...>
+
+// Lesson-plan / generic cache
+saveCache(key: string, data: any): Promise<...>
+getCache(key: string): Promise<...>
+
+// Telemetry buffer
+logEvent(event: any): Promise<...>          // adds { ...event, timestamp: Date.now() }
+getPendingEvents(): Promise<...>            // returns keys + values for flushing
+clearEvent(key: number): Promise<void>
+pruneOldTelemetry(): Promise<void>          // drops stale telemetry entries
 ```
+
+Message outbox/cache helpers live in companion modules (`src/lib/message-outbox.ts`, `src/lib/lesson-plan-cache.ts`) which use these same stores.
 
 ---
 
 ## Browser Support
 
-IndexedDB is available in all modern browsers. Not available in SSR — all calls wrapped with `typeof window !== 'undefined'` guard.
+IndexedDB is available in all modern browsers, but NOT in SSR. Callers guard with `typeof window !== 'undefined'` (or only invoke from `'use client'` effects) before touching the DB.
+
+`pruneOldTelemetry()` is count-based, not time-based: if the telemetry store exceeds `MAX_TELEMETRY_ITEMS`, the oldest keys are deleted down to that cap. There is no 7-day / 24-hour TTL.

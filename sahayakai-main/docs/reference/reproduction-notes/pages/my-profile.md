@@ -1,7 +1,8 @@
-# My Profile — /my-profile
+# My Profile - /my-profile
 
 **File:** `src/app/my-profile/page.tsx`
 **Auth:** Required
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -14,8 +15,8 @@ The signed-in teacher's own public profile page. Shows profile info, badges, cer
 ## Component Tree
 
 ```
-MyProfilePage (Suspense wrapper with loading skeleton)
-└── ProfileView (isOwnProfile=true)
+MyProfilePage (Suspense wrapper with loading skeleton; client component)
+└── ProfileView (no uid prop → resolves the signed-in user as own profile)
     ├── Profile header
     │   ├── Cover/gradient header
     │   ├── Avatar (AI-generated or uploaded)
@@ -47,9 +48,9 @@ MyProfilePage (Suspense wrapper with loading skeleton)
 ## ProfileView Props (when used here)
 
 ```
-targetUid: string        // current user's UID
-isOwnProfile: true       // shows edit button, not connection buttons
+(none)                   // no uid → ProfileView treats the signed-in user as the subject (own profile)
 ```
+The shared `<ProfileView />` component (`src/components/profile/profile-view.tsx`) is reused by `/profile/[uid]`, which instead passes `uid` + `isOwnProfileManual={false}`.
 
 ---
 

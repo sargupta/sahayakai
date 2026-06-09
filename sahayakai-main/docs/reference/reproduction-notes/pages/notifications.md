@@ -1,7 +1,8 @@
-# Notifications — /notifications
+# Notifications - /notifications
 
 **File:** `src/app/notifications/page.tsx`
-**Auth:** Required
+**Auth:** Required (signed-out users get `<AuthGate>`: "Sign in to see notifications")
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -15,10 +16,10 @@ Shows all notifications for the signed-in teacher. Connection requests (with Acc
 
 ```
 NotificationsPage
-├── Page header (title, "mark all read" button)
 ├── Loading state (Loader2 spinner)
-├── Sign-in prompt (if unauthenticated)
-└── NotificationsFeed
+├── AuthGate (if unauthenticated)
+├── Page header (Bell icon + title + subtitle)
+└── NotificationFeed (notifications, userId, onRefresh)
     └── Notification items × N
         ├── Icon by type (UserPlus, Heart, Star, MessageCircle, etc.)
         ├── Sender avatar + name
@@ -42,15 +43,14 @@ NotificationsPage
 
 ## Data Flow
 
-1. Mount: `getNotificationsAction(userId)` → fetches 50 notifications, sorted by `createdAt` desc
-2. Accept connection: `acceptConnectionRequestAction()` → notification updates to accepted state
-3. Decline connection: `declineConnectionRequestAction()` → notification updates to declined state
-4. Mark read: `markNotificationAsReadAction(notificationId)` or `markAllAsReadAction(userId)`
-5. `revalidatePath('/notifications')` called after read actions
+1. The page resolves the user via `onAuthStateChanged`, then calls `getNotificationsAction(uid)` (`src/app/actions/notifications.ts`).
+2. Results render in `NotificationFeed`; `onRefresh` re-fetches. Accept/decline and mark-read interactions live inside the feed component. TODO(verify: exact fetch limit/sort and the read/connection action names called from NotificationFeed).
 
 ---
 
 ## Notification Icons by Type
+
+(Rendered inside `NotificationFeed`; mapping below is indicative.) TODO(verify: exact type→icon mapping against `src/components/notifications-feed.tsx`.)
 
 | Type | Icon | Color |
 |---|---|---|

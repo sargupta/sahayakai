@@ -2,50 +2,44 @@
 
 **File:** `src/components/auth/auth-button.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Top-right header button for authentication. Shows "Sign in" when unauthenticated, profile dropdown when signed in.
+Top-right header control for authentication. Shows a Google sign-in button when unauthenticated and a profile dropdown when signed in.
 
 ---
 
 ## Props
 
-None — reads from `useAuth()`.
+None - reads the user from `useAuth()`.
 
 ---
 
 ## Signed-Out State
 
-Single button: "Sign in" (with Google icon or LogIn icon).
-Click → opens `AuthDialog` modal.
+A single "Sign in with Google" button rendered with a custom `GoogleGIcon`. Click calls `signInWithGoogle()` directly (`signInWithPopup` under the hood). There is NO intermediate `AuthDialog` modal as of 2026-06-10. After sign-in the component performs a profile-completeness check and redirects (e.g. to onboarding/profile) when the profile is incomplete.
+
+TODO(verify: exact post-sign-in redirect target and the profile-completeness predicate).
 
 ---
 
 ## Signed-In State
 
-Avatar button → `DropdownMenu` with:
+Avatar button opening a `DropdownMenu`:
 - User name + email (header row)
-- "My Profile" → `/my-profile`
-- "My Library" → `/my-library`
+- "Profile & Library"
+- "Certifications"
 - Separator
 - "Sign out" → `auth.signOut()`
 
-Avatar: `AvatarImage` with `photoURL` from Firebase auth. Falls back to `AvatarFallback` (first letter of display name, orange gradient background).
+Avatar: `AvatarImage` with the Firebase `photoURL`, falling back to `AvatarFallback`.
 
 ---
 
-## AuthDialog
+## Notes
 
-`src/components/auth/auth-dialog.tsx`
-
-- Modal with feature highlights (Fast AI, Cloud Storage, Smart Insights)
-- "Continue with Google" button → `signInWithPopup(auth, googleProvider)`
-- On success: dialog closes, `syncUserAction()` called (handled by auth context)
-
----
-
-## Key Note
-
-`requireAuth()` from `useAuth()` context can be called programmatically to show this dialog. Used by AI tool pages when unauthenticated user tries to generate content.
+- No `auth-dialog.tsx` flow is referenced from this component anymore; sign-in is one click via `signInWithGoogle()`.
+- TODO(verify: whether `src/components/auth/auth-dialog.tsx` still exists elsewhere in the app - this component does not use it).

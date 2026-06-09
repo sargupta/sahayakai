@@ -1,111 +1,85 @@
-# Lesson Plan — /lesson-plan
+# Lesson Plan - /lesson-plan
 
 **File:** `src/app/lesson-plan/page.tsx`
-**Auth:** Required
+**Auth:** Required (page GET passes through; generation requires a valid Bearer token)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Generate structured lesson plans following the 5E instructional model (Engage, Explore, Explain, Elaborate, Evaluate). Supports NCERT chapter alignment.
+Generate structured 5E lesson plans (Engage, Explore, Explain, Elaborate, Evaluate) with NCERT chapter alignment, resource-level and difficulty tuning, and an offline fallback path.
 
 ---
 
 ## Architecture Note
 
-This page is a thin wrapper. All heavy logic lives in a custom hook `useLessonPlan`. The page simply renders the hook's state.
+The page is a thin wrapper. It renders `<LessonPlanView />` wrapped in `<Suspense>` (fallback `LessonPlanFormSkeleton`). All logic lives in the `useLessonPlan` hook.
 
----
+- Page: `src/app/lesson-plan/page.tsx`
+- View: `src/features/lesson-planner/components/lesson-plan-view.tsx`
+- Hook: `src/features/lesson-planner/hooks/use-lesson-plan.ts`
+- Types/schema: `src/features/lesson-planner/types.ts`
 
-## Component Tree
-
-```
-LessonPlanPage
-├── LessonPlanHeader (title + description)
-├── LessonPlanInputSection
-│   ├── LanguageSelector
-│   ├── GradeLevelSelector
-│   ├── SubjectSelector
-│   ├── Topic input + MicrophoneInput
-│   ├── Duration selector (30min, 45min, 60min)
-│   ├── NCERTChapterSelector (optional)
-│   └── Generate button
-├── LessonPlanSidebar (tips, examples, history)
-└── LessonPlanDisplay (when result available)
-    ├── Editable accordion sections (objectives, materials, 5E activities, assessment)
-    ├── Edit percentage tracker
-    ├── Copy / Save to Library / PDF export buttons
-    └── FeedbackDialog
-```
+(The feature was moved from `src/components/lesson-plan/*` into `src/features/lesson-planner/*`.)
 
 ---
 
 ## State (via `useLessonPlan` hook)
 
-| State | Type | Purpose |
-|---|---|---|
-| `topic` | `string` | Lesson topic |
-| `gradeLevel` | `GradeLevel` | Target grade |
-| `subject` | `Subject` | Teaching subject |
-| `language` | `Language` | Output language |
-| `duration` | `string` | Lesson duration |
-| `ncertChapter` | `object \| null` | Optional chapter reference |
-| `result` | `LessonPlanSchema \| null` | Generated plan |
-| `loading` | `boolean` | Generation in flight |
-| `editedPlan` | `object` | User edits to the plan |
-| `editPercentage` | `number` | % of content user has edited |
+Form is `react-hook-form` + `zodResolver(formSchema)`. Key fields/state:
+
+| State | Purpose |
+|---|---|
+| `form` (`FormValues`) | `topic`, `language` (ISO, defaults to user app language via `LANGUAGE_TO_ISO`), `gradeLevels[]`, `subject`, `imageDataUri` |
+| `lessonPlan` (`LessonPlanOutput \| null`) | Generated plan |
+| `isLoading` / `loadingMessage` | Generation in flight + rotating status text |
+| `limitState` (via `useLimitGuard`) | Plan-limit / quota gate state |
+| `selectedChapter` (`NCERTChapter \| null`) | Optional NCERT chapter context |
+| `resourceLevel` (`'low'\|'medium'\|'high'`, default `low`) | Classroom resource tuning |
+| `difficultyLevel` (`'remedial'\|'standard'\|'advanced'`, default `standard`) | Difficulty tuning |
+| `isOffline` | Toggles offline pre-written-plan path |
+
+Drafts are auto-saved to IndexedDB (`saveDraft("lessonPlanDraft")`). Telemetry events are queued offline and synced via `syncTelemetryEvents`.
 
 ---
 
 ## Data Flow
 
-1. User fills form → submits → `POST /api/ai/lesson-plan`
-2. API calls `generateLessonPlan()` flow
-3. Response rendered in accordion sections
-4. Each section is editable (textarea on click)
-5. Edits tracked: `editPercentage` calculated as % of fields changed
-6. Save → `saveToLibrary()` → `users/{uid}/content`
+1. User fills form, submits. `requireAuth()` gates; opens auth modal if signed out.
+2. Cloud cache is checked first via `getCachedLessonPlan` server action (`cached_lesson_plans`).
+3. If `isOffline`, a pre-written plan from `offlineLessonPlans[chapter.id]` is loaded (or a toast prompts reconnect).
+4. Otherwise `POST /api/ai/lesson-plan` with Bearer token. Body includes `topic`, `language` (always non-empty; defaults to `en`), `gradeLevels`, `imageDataUri`, `useRuralContext:true`, `resourceLevel`, `difficultyLevel`, `subject` (the `General` placeholder is stripped to `undefined`), and optional `ncertChapter`.
+5. On success the result renders and is cached via `saveLessonPlanToCache`.
 
 ---
 
-## AI Integration
+## API + AI Integration
 
+- **Route:** `src/app/api/ai/lesson-plan/route.ts` (`maxDuration = 120`). Wrapped in `withPlanCheck` (plan-guard) and requires `x-user-id` (injected by middleware).
+- **Dispatch:** `dispatchLessonPlan` (`src/lib/sidecar/lesson-plan-dispatch.ts`) routes to the Genkit flow or the ADK-Python sidecar based on the Firestore `lessonPlanSidecarMode`/`lessonPlanSidecarPercent` flags. Default `off` = pure Genkit.
 - **Flow:** `src/ai/flows/lesson-plan-generator.ts`
-- **Model:** Gemini via Genkit
-- **Grounding:** REMOVED (saved $0.035/call — static lesson content doesn't need live search)
-- **Structure:** 5E model — Engage/Explore/Explain/Elaborate/Evaluate
-- **Materials audit:** Cross-checks that listed materials are realistic for Indian classrooms
-- **Indian context:** Uses `getIndianContextPrompt()` and `IndianContext` examples
+- **Model:** `googleai/gemini-2.5-flash`
+- **Grounding:** REMOVED (saved ~$0.035/call; static lesson content does not need live search)
+- **Structure:** 5E model with Indian-context prompting
+- **Streaming variant:** `/api/ai/lesson-plan/stream` exists for incremental output.
 
 ---
 
 ## Voice Features
 
-- `MicrophoneInput` on topic field — voice → topic auto-fill
-
----
-
-## Design
-
-- Sidebar (on desktop): tips panel, previous generations
-- Input section: left-aligned form
-- Display: accordion with colored section headers (one color per 5E step)
-- Edit mode: clicking any section converts it to a textarea
-- Edit % badge: shows how much teacher has personalized the AI output
-
----
-
-## Print/PDF
-
-- Wrapped in `<div id="lesson-plan-pdf">` for print CSS
-- All accordion items forced open on print (CSS override)
-- Exports all 5 sections in structured layout
+- Voice/topic mic input on the topic field (voice to topic auto-fill).
 
 ---
 
 ## NCERT Integration
 
-`NCERTChapterSelector` component:
-- Server action fetch for chapters → fallback to local data if server fails
-- Shows chapter title, learning outcomes, keywords
-- When selected, chapter context injected into AI prompt
+`NCERTChapterSelector`:
+- Fetches chapters (server action) with local `@/data/ncert` fallback.
+- When a chapter is selected, its title, number, and learning outcomes are injected into the request body.
+
+---
+
+## Offline
+
+- `offlineLessonPlans` (`@/data/offline-lesson-plans`) provides pre-written plans keyed by NCERT chapter id for the offline path.

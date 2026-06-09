@@ -1,7 +1,7 @@
 # SahayakAI: User Manual & Testing Guide
 **Official Website:** [sahayakai.com](https://sahayakai.com)  
 **Author:** Abhishek Gupta  
-**Date:** February 2, 2026
+**Last updated:** 2026-06-10
 
 ---
 
@@ -165,6 +165,59 @@ Please execute the following test cases across the application. Your goal is to 
 
 5.  **Physics Analogy:** "Why do we see rainbows after rain? Explain with a simple analogy."  
     *ಕನ್ನಡದಲ್ಲಿ ಪ್ರಶ್ನೆ:* "ಮಳೆಯ ನಂತರ ನಾವು ಕಾಮನಬಿಲ್ಲನ್ನು ಏಕೆ ನೋಡುತ್ತೇವೆ? ಸರಳ ಉದಾಹರಣೆಯೊಂದಿಗೆ ವಿವರಿಸಿ."
+
+---
+
+## 🛠️ Feature 9: Exam Paper Generator (`/exam-paper`)
+
+Generates a full exam paper from a chosen board, grade, subject, and official NCERT chapters. The finished paper saves to My Library.
+
+1.  **CBSE (Class 10 Science):** "Generate a full exam paper for the chapters on 'Light' and 'Electricity'."
+2.  **State Board (Class 8 Math):** "A unit test with 1-mark, 3-mark, and 5-mark sections."
+3.  **Social Science (Class 7):** "A half-yearly paper covering the first four chapters."
+    *   *Note (test):* Choose a board/grade/subject with no chapters loaded and confirm the app asks you to add a chapter rather than failing.
+
+## 🛠️ Feature 10: Video Storyteller (`/video-storyteller`)
+
+Recommends teaching videos by category (Top Recommended, Storytelling, Pedagogy) and generates story or video scripts.
+
+1.  **Storytelling:** "Write a short story script that teaches Class 4 the water cycle."
+2.  **Recommendations:** "Do the recommended video categories reflect my profile's subjects and grades?"
+
+## 🛠️ Feature 11: Assignment Assessor (`/assess-assignment`)
+
+Teacher photographs or uploads a student assignment; the AI grades it and returns feedback.
+
+1.  **Photo grade:** "Photograph a handwritten Math answer sheet and ask for a grade with feedback."
+2.  **Upload grade:** "Upload an English essay image and request a score plus improvement notes."
+
+## 🛠️ Feature 12: Assessment Scanner (`/assessment-scanner`)
+
+Scans handwritten assessments and grades them. Distinct from the single Assignment Assessor.
+
+1.  **Scan:** "Scan a set of handwritten answer sheets and confirm each is graded."
+2.  *TODO(verify: exact scan-to-class linkage and where results display in the UI).*
+
+## 🛠️ Feature 13: Attendance & Parent Outreach (`/attendance`)
+
+Manage classes, mark daily attendance, record marks (`/attendance/[classId]/marks`), and send AI parent messages or calls in the parent's preferred language.
+
+1.  **Create class:** "Add a class with students and parent phone numbers."
+2.  **Mark attendance:** "Open the class, mark today's attendance, and submit."
+3.  **Parent message:** "Draft an AI parent message for an absent student."
+    *   *Note (test):* Parent calls go via Twilio by default; transcript and summary are saved after the call.
+
+## 🛠️ Feature 14: Community, Library & Messages
+
+1.  **Community Staff Room (`/community`):** "Open the Staff Room chat and send a text and a voice message."
+2.  **Community Library (`/community-library`):** "Filter to 'Class 5 Mathematics' and save a colleague's worksheet."
+3.  **My Library (`/my-library`):** "Confirm saved lesson plans, quizzes, and worksheets all appear."
+4.  **Messages (`/messages`):** "Start a direct chat with a connected teacher and share a saved resource."
+5.  **Impact Dashboard (`/impact-dashboard`):** "Check lesson plans created and students reached."
+
+> *Kannada test prompts for Features 9-14 are pending native review:* `TODO(verify: Kannada copy needed)`.
+
+> *Note: `/visual-aid-creator`, `/submit-content`, and `/review-panel` currently show "coming soon" placeholders. Use `/visual-aid-designer` for visual aids.*
 
 ---
 

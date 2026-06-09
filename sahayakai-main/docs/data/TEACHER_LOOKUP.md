@@ -1,5 +1,7 @@
 # How to Track Teacher Activity by Email
 
+**Last updated:** 2026-06-10 (verified: `teacher:lookup` npm script, `users` / `teacher_analytics` / `users/{uid}/content` collections all current).
+
 ## 🎯 Quick Answer
 
 **You can track any teacher's activity using their email address!** Here's how:

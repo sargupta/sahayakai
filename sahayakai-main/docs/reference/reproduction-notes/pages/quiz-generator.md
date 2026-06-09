@@ -1,7 +1,8 @@
-# Quiz Generator — /quiz-generator
+# Quiz Generator - /quiz-generator
 
 **File:** `src/app/quiz-generator/page.tsx`
-**Auth:** Required
+**Auth:** Required (`requireAuth()` gates submit; `useLimitGuard` enforces plan limits)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -21,9 +22,9 @@ QuizGeneratorPage
 │   ├── GradeLevelSelector
 │   ├── SubjectSelector
 │   ├── Topic input + MicrophoneInput
-│   ├── Question type checkboxes (MCQ, True/False, Fill-in-blank, Short Answer)
-│   ├── Bloom's taxonomy level checkboxes (Remember, Understand, Apply, Analyze, Evaluate, Create)
-│   ├── Question count selector (5, 10, 15, 20)
+│   ├── Question type checkboxes (`multiple_choice`, `true_false`, `fill_in_the_blanks`, `short_answer`; default MCQ + short answer)
+│   ├── Bloom's taxonomy level checkboxes (default Remember + Understand)
+│   ├── `numQuestions` selector (min 1, max 20; default 5)
 │   └── Generate button
 └── QuizDisplay (when result available)
     ├── Tabs: Easy | Medium | Hard
@@ -56,33 +57,34 @@ QuizGeneratorPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
-- **Flow:** `src/ai/flows/quiz-generator.ts`
-- **Model:** Gemini via Genkit
-- **Key feature:** Generates all 3 difficulty levels **in parallel** (3 concurrent Gemini calls) for speed
-- **Bloom's Taxonomy:** Question complexity maps to selected cognitive levels
-- **Output structure:** `{ easy: QuizQuestion[], medium: QuizQuestion[], hard: QuizQuestion[] }`
-- **QuizQuestion:** `{ id, question, options?, answer, type, bloomsLevel, explanation? }`
+- **Route:** `POST /api/ai/quiz` (`maxDuration = 120`, wrapped in `withPlanCheck('quiz')`).
+- **Dispatch:** `dispatchQuiz` (`src/lib/sidecar/quiz-dispatch.ts`); Firestore `quizSidecarMode` selects Genkit vs ADK sidecar (default `off`).
+- **Flow:** `src/ai/flows/quiz-definitions.ts` + `quiz-generator.ts` (validation companion: `quiz-definitions-enhanced-validation.ts`).
+- **Model:** `googleai/gemini-2.5-flash`
+- **Key feature:** Generates all 3 difficulty levels **in parallel** for speed.
+- **Output structure:** `{ id, easy, medium, hard, gradeLevel, subject, topic, isSaved }` (each variant carries the question list).
+- **Health probe:** `GET /api/ai/quiz/health` is public (no auth).
 
 ---
 
 ## QuizDisplay Features
 
-- **Difficulty tabs** — Easy/Medium/Hard (Radix Tabs)
-- **Inline edit** — click question text to edit in place
-- **Per-question regeneration** — regenerate just one question without redoing entire quiz
-- **Add question** — append new AI-generated question to current tab
-- **Answer key toggle** — teacher can print quiz without answers for students
+- **Difficulty tabs** - Easy/Medium/Hard (Radix Tabs)
+- **Inline edit** - click question text to edit in place
+- **Per-question regeneration** - regenerate just one question without redoing entire quiz
+- **Add question** - append new AI-generated question to current tab
+- **Answer key toggle** - teacher can print quiz without answers for students
 
 ---
 
 ## Export Options
 
-1. **PDF** — browser print with `#quiz-sheet` print ID
-2. **Copy** — copies formatted text to clipboard
-3. **Text file** — downloads as `.txt`
-4. **Save to Library** — saves to `users/{uid}/content` as type `quiz`
+1. **PDF** - browser print with `#quiz-sheet` print ID
+2. **Copy** - copies formatted text to clipboard
+3. **Text file** - downloads as `.txt`
+4. **Save to Library** - saves to `users/{uid}/content` as type `quiz`
 
 ---
 

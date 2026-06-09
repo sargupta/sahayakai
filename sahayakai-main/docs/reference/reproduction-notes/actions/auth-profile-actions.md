@@ -1,14 +1,18 @@
 # Server Actions: Auth & Profile
 
+**Verified:** 2026-06-10
+
+Identity comes from the middleware-injected `x-user-id` header. Where these actions accept a `_uid` / `_userId` argument it is ignored (the header is authoritative).
+
 ---
 
 ## Auth Actions
 
 **File:** `src/app/actions/auth.ts`
 
-### syncUserAction(firebaseUser)
+### syncUserAction(user)
 
-Called by AuthProvider on every sign-in. Upserts user profile.
+Called by AuthProvider on every sign-in. `user` = `{ uid, email, displayName, photoURL }`. Upserts the user profile.
 
 ```
 1. Auth check
@@ -28,41 +32,33 @@ Fetches a user profile by UID. Returns `UserProfile | null`.
 
 **File:** `src/app/actions/profile.ts`
 
-### getProfileData(userId)
+### getProfileData(_userId?)
 
-Parallel fetch:
-```
-[profile, certifications] = await Promise.all([
-  getUser(userId),
-  db.collection('users').doc(userId).collection('certifications').get()
-])
-Returns: { profile: UserProfile | null, certifications: Certification[] }
-```
+Parallel fetch of the caller's own profile + certifications (serialized for the client). Returns `{ profile, certifications }`. Throws Forbidden for cross-user reads.
 
-### updateProfileAction(userId, data)
+### getPublicProfileAction(targetUid)
 
-Updates mutable profile fields:
-```
-Allowed fields: displayName, designation, department, schoolName, bio, preferredLanguage
-Merges into users/{uid}
-revalidatePath('/my-profile')
-```
+Public-safe view of another teacher's profile. Mirrors `getProfileData`'s shape so `ProfileView` can render either. Also resolves the connection state between caller and `targetUid` (reads `connections/{pairId}`).
+
+### updateProfileAction(_userId, data)
+
+Merges mutable profile fields into `users/{uid}` and `revalidatePath('/my-profile')`.
 
 ### addCertificationAction(formData: FormData)
 
-```
-Fields: userId, certName, issuingBody, issueDate
-Creates users/{uid}/certifications/{uuid}:
-  { name, issuingBody, issueDate, status: 'pending', createdAt }
-```
+Creates a certification under `users/{uid}/certifications/{id}` (status `pending`).
 
-### getDailyCostsAction(days?)
+### markChecklistItemAction(_userId, itemId)
 
-Admin-only. Fetches daily cost data for last N days.
-```
-Calls cost-service.ts getDailyCosts(days)
-Returns daily breakdown per service
-```
+Marks an onboarding/profile checklist item complete for the caller.
+
+### lookupSchoolDominantLocationAction(...)
+
+Resolves the dominant district/state/pincode for a school name (used to pre-fill profile geography).
+
+### getDailyCostsAction(days = 7)
+
+Admin-only. Calls `costService.getDailyCosts(days)` (`src/lib/services/cost-service.ts`) and returns the daily per-service cost breakdown for the admin cost dashboard.
 
 ---
 
@@ -70,14 +66,18 @@ Returns daily breakdown per service
 
 **File:** `src/app/actions/notifications.ts`
 
-### createNotification(type, recipientId, data)
+### createNotification(notification)
 
 ```
-Creates notifications/{uuid}:
-  { type, recipientId, senderId?, senderName?, title, message, isRead: false, metadata?, createdAt }
+notification = Omit<Notification, 'id' | 'isRead' | 'createdAt'>
+Creates notifications/{id}: { ...notification, isRead: false, createdAt }
 ```
 
 Called internally by other actions (connections, community, messages).
+
+### createTypedNotification(args)
+
+Template-driven variant. `args` carries a `TemplateKey` and template params; builds the title/message from a notification template and writes the doc.
 
 ### getNotificationsAction(userId)
 

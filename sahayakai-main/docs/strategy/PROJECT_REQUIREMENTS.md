@@ -1,5 +1,7 @@
 # SahayakAI: Project Requirements Document
 
+**Last updated:** 2026-06-10
+
 ## 1. Introduction
 
 SahayakAI is a web-based application designed to assist educators with various teaching-related tasks. It leverages generative AI to provide a suite of tools that streamline content creation and lesson planning. The application is built with a focus on multilingual support, catering to a diverse user base across different regions.
@@ -8,11 +10,16 @@ The primary goal of SahayakAI is to reduce the time and effort teachers spend on
 
 ## 2. Core Features
 
-The application is centered around a set of "agents," each responsible for a specific task. The main agents are:
+The application is centered around a set of "agents" (roughly 17 Genkit flows plus the VIDYA voice assistant), each responsible for a specific task. Representative agents:
 
-*   **Lesson Plan Generator:** Creates detailed lesson plans based on a given topic, grade level, and language. The generated lesson plans include learning objectives, materials needed, step-by-step activities, and assessment methods.
-*   **Quiz Generator:** Generates quizzes with a specified number of questions and question types (multiple-choice, fill-in-the-blanks, short answer). The quizzes are tailored to the specified topic and grade level.
-*   **Instant Answer:** Provides direct answers to user questions on a wide range of topics. This feature is designed to be a quick reference tool for teachers.
+*   **Lesson Plan Generator:** Creates detailed lesson plans with learning objectives, materials, step-by-step activities, and assessment methods.
+*   **Quiz Generator:** Generates quizzes (MCQs across difficulty levels) tailored to topic and grade level.
+*   **Exam Paper Generator, Worksheet Wizard, Rubric Generator.**
+*   **Instant Answer:** Direct answers with Google Search grounding.
+*   **Visual Aid, Avatar Generator, Video Storyteller, Virtual Field Trip, Teacher Training.**
+*   **Assignment Assessor and Assessment Scanner:** Grade assignments and scan handwritten work.
+*   **Parent message drafting and AI parent calls** (attendance outreach).
+*   **VIDYA:** Voice-first assistant routed across 11 intents.
 
 ## 3. Key Components
 

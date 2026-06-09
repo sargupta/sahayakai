@@ -1,6 +1,18 @@
 # TeacherConnect: Pub/Sub & Feed Architecture
 
-To maintain high performance as the network grows, we utilize an event-driven, decoupled architecture for activity feeds and notifications.
+**Last updated:** 2026-06-10
+**Status:** ASPIRATIONAL / partially implemented. This document describes a planned event-driven design. The sections below are largely NOT yet built; see the reality check.
+
+## Reality check (verified 2026-06-10)
+
+What actually exists in code (`src/lib/pubsub.ts`, `src/app/api/jobs/**`):
+- The only live Pub/Sub topic is **`sahayakai-storage-cleanup`** (`TOPICS.STORAGE_CLEANUP`), used to clean up orphaned Cloud Storage objects after content deletion. Consumed by `/api/jobs/storage-cleanup` (OIDC-verified push).
+- There is **no** `teacher-connect-events` topic, no Pub/Sub-driven feed fan-out, and no Pub/Sub-driven FCM fan-out in code today.
+- **Feed**: assembled at read time, not via a precomputed `activity_feed` (`src/components/community/unified-feed.tsx`, `src/lib/aggregator.ts`).
+- **Notifications**: written directly to the `notifications` Firestore collection by server actions (`src/app/actions/notifications.ts`); FCM push is sent directly via `src/lib/fcm-server.ts`, not through Pub/Sub.
+- **Search**: no Algolia / search-extension indexer is wired; discovery is Firestore queries + client-side filtering.
+
+Everything below is the original design intent, retained for reference.
 
 ---
 

@@ -1,5 +1,7 @@
 # Google Services in Sahayakai
 
+**Last updated:** 2026-06-10
+
 This document provides a comprehensive overview of the Google services and technologies used throughout the Sahayakai application. Each service is detailed with its specific use case and significance.
 
 ## 1. Firebase
@@ -37,12 +39,22 @@ Genkit is an open-source framework from Google designed to streamline the develo
 
 Gemini is a family of powerful, multimodal large language models (LLMs) from Google.
 
--   **Use Case:** The Gemini Pro model is the primary AI engine for all of Sahayakai's generative features. It powers content creation for lesson plans, quizzes, rubrics, instant answers, and more.
--   **Significance:** Gemini's advanced reasoning and language understanding capabilities allow Sahayakai to generate high-quality, contextually relevant educational content. Its multimodal capabilities (handling both text and images) are foundational for features that interpret uploaded images.
+-   **Use Case:** `gemini-2.5-flash` is the default AI engine for most generative features (lesson plans, quizzes, rubrics, instant answers, worksheets, and more). `gemini-2.5-pro` is used for assignment grading (vision + reasoning). Image generation uses `gemini-3-pro-image-preview` (visual aids) and `gemini-2.5-flash-image` (avatars).
+-   **Significance:** Gemini's reasoning, multilingual, and multimodal capabilities let Sahayakai generate high-quality, contextually relevant educational content and interpret uploaded images.
 
-## 4. Google Search
+## 4. Google Search Grounding
 
-Google Search is integrated into the platform as a tool for the AI models.
+Google Search grounding is integrated as a tool for the AI models.
 
--   **Use Case:** The "Instant Answer" feature uses a Genkit tool that calls the Google Search API to fetch real-time, up-to-date information from the web.
--   **Significance:** Integrating Google Search allows the AI to answer questions about current events or topics that were not part of its training data. This ensures that the information provided is accurate, relevant, and timely, which is critical for a reliable educational tool.
+-   **Use Case:** The "Instant Answer" feature uses Google Search grounding to fetch real-time, up-to-date information. (Grounding was deliberately removed from lesson-plan generation for cost.)
+-   **Significance:** Grounding lets the AI answer questions about current events or topics outside its training data, keeping information accurate and timely.
+
+## 5. Google Cloud Run
+
+-   **Use Case:** Hosts the Next.js application (service `sahayakai-hotfix-resilience`, region `asia-southeast1`, project `sahayakai-b4248`), deployed via a Cloud Build GitHub trigger.
+-   **Significance:** Serverless, pay-per-use compute that scales to demand.
+
+## 6. Google Cloud Text-to-Speech
+
+-   **Use Case:** Powers voice output across 11 Indic languages, with a Neural2 > Wavenet > Standard tier priority. (Sarvam AI is used as the primary STT path for Indian languages, with Gemini fallback.)
+-   **Significance:** Enables the voice-first experience for low-literacy users and audio playback of generated content.

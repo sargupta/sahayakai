@@ -2,81 +2,53 @@
 
 **File:** `src/components/microphone-input.tsx`
 
+_Last verified against source: 2026-06-10. (Lives directly under `src/components/`, not a `shared/` subfolder.)_
+
 ---
 
 ## Purpose
 
-Voice input button used on AI tool pages and the home page. Records audio, transcribes via Web Speech API or `/api/ai/voice-to-text`, fills a text input, optionally auto-submits.
+Voice input button used on AI tool pages and the home page. Records audio, transcribes via the Web Speech API first and a cloud fallback (`/api/ai/voice-to-text`) second, and streams the transcript back to the caller.
 
 ---
 
-## Props
+## Props (verify against source)
 
-```ts
-{
-  onTranscript: (text: string) => void;
-  onAutoSubmit?: () => void;    // called after transcript if provided
-  language?: string;            // BCP-47 lang code for SpeechRecognition
-  disabled?: boolean;
-}
-```
+The primary callback is `onTranscriptChange` (a transcript callback), not `onTranscript`. TODO(verify: full current prop list - confirm `onTranscriptChange`, any auto-submit prop, language prop, and disabled prop against the live signature).
 
 ---
 
 ## State Machine
 
-```
-greeting → recording → processing → done → greeting (loop)
-                     ↘ idle (on cancel/error)
-```
+`MicStatus = 'idle' | 'greeting' | 'initializing' | 'recording' | 'processing'`
+
+A spoken/visual greeting state precedes recording; `initializing` covers mic permission + stream setup.
 
 ---
 
 ## Two Recognition Paths
 
-### Path 1: Web Speech API (preferred, zero latency)
+### Path 1: Web Speech API (tried first, free, zero latency)
 - `window.SpeechRecognition || window.webkitSpeechRecognition`
-- `recognition.lang = language || navigator.language`
-- `recognition.continuous = false`, `recognition.interimResults = false`
-- `recognition.onresult → onTranscript(result.transcript)`
-- Not available on Firefox
+- Not available on Firefox - falls through to Path 2.
 
-### Path 2: MediaRecorder + /api/ai/voice-to-text (fallback)
-- VAD (Voice Activity Detection) — auto-stops on silence (1.5s threshold)
-- Records audio → Blob → POST to `/api/ai/voice-to-text`
-- Response: `{ transcript: string }`
-- Used when SpeechRecognition unavailable
+### Path 2: MediaRecorder + `/api/ai/voice-to-text` (cloud fallback)
+- Server pipeline is Sarvam with a Gemini fallback.
+- Frequency-domain VAD: analyses the 300–3000 Hz band with `SPEECH_THRESHOLD = 25` to gate speech vs silence and auto-stop.
+- MIME negotiation prefers `audio/ogg;codecs=opus`, falling back to `audio/webm;codecs=opus`.
+- `MIN_AUDIO_BYTES = 2000` - clips below this are discarded as empty.
+- Includes a refusal-detection guard on the transcript result.
 
 ---
 
 ## Visual States
 
-| State | Visual |
-|---|---|
-| Greeting | Mic icon, subtle orange pulse ring |
-| Recording | Red mic, larger pulse, elapsed timer |
-| Processing | Loader2 spinner (orange) |
-| Done | Check icon (green), brief flash |
-
----
-
-## Auto-Submit
-
-If `onAutoSubmit` prop provided: called automatically after transcript is set with a short debounce (to allow state update to propagate).
+Mic icon with a live waveform during recording and a `Loader2` during `processing`. Colors use theme tokens / accents rather than hardcoded orange.
 
 ---
 
 ## Usage in Pages
 
-```tsx
-<div className="relative">
-  <Input value={topic} onChange={...} />
-  <MicrophoneInput
-    onTranscript={(text) => setTopic(text)}
-    onAutoSubmit={() => handleGenerate()}
-    language={langToCode(language)}
-  />
-</div>
-```
+Typically positioned absolute inside an input container (right side); the transcript callback writes into the page's prompt/topic state.
 
-The MicrophoneInput is typically positioned absolute inside the input container (right side).
+TODO(verify: exact auto-submit behaviour and prop name in current source).

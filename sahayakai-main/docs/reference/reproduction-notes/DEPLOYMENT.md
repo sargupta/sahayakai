@@ -1,84 +1,77 @@
+# SahayakAI - Deployment
 
-# SahayakAI — Deployment
+**Verified:** 2026-06-10
 
 ## Deploy Target
 
-Google Cloud Run, region `asia-south1` (Mumbai).
-Service name: `sahayakai-hotfix-resilience`
+Google Cloud Run, region **`asia-southeast1`**, project `sahayakai-b4248` (project number `640589855975`).
+Service: `sahayakai-hotfix-resilience`. Preview service: `sahayakai-preview`.
 
-## Deploy Trigger
+Image: `asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:{$SHORT_SHA,latest}`.
 
-Push to `main` branch → automatic Cloud Run deployment (CI/CD configured in GCP).
+---
 
-No manual deploy command needed.
+## Deploy Trigger + Routing
+
+A Cloud Build GitHub trigger (`sahayakai-main-deploy`) builds on `git push origin main` (build context `dir: sahayakai-main`, `cloudbuild.yaml`).
+
+**Crucial: new revisions deploy with `--no-traffic`.** The revision is built and warm but does NOT auto-route. An operator flips traffic explicitly:
+
+```bash
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region asia-southeast1 --project sahayakai-b4248 --to-latest
+```
+
+Why: two parallel pushes race on traffic routing; `--no-traffic` lets both produce ready revisions without one silently clobbering the other.
+
+---
+
+## CRITICAL: Use safe-deploy, never raw `gcloud run deploy`
+
+Always deploy via `bash scripts/safe-deploy.sh` from `sahayakai-main/`. It guards against parallel-deploy races:
+
+1. Aborts if any Cloud Build job is in flight (`gcloud builds list --ongoing`).
+2. Aborts if the most recent revision is younger than `MIN_REVISION_AGE_SECONDS` (default 90s) - another session likely just deployed.
+3. Aborts on a dirty git tree.
+4. Defaults to `--no-traffic`; branch-aware (main → prod service, develop → preview).
+
+Pass `--route-immediately` to opt back into the racy direct-route behavior (avoid unless certain no one else is deploying). Run `bash scripts/audit-deployments.sh` before and after every deploy.
+
+Raw `gcloud run deploy` is forbidden - it races with parallel sessions and silently clobbers earlier deploys.
 
 ---
 
 ## Build Process
 
 ```bash
-npm run build    # produces .next/standalone
+npm run build    # produces .next/standalone (output: 'standalone')
 ```
 
-Next.js `output: 'standalone'` generates a self-contained Node.js server in `.next/standalone/`. This is wrapped in a Docker image for Cloud Run.
+Wrapped in the Dockerfile image. `NEXT_PUBLIC_*` Firebase config + `SENTRY_AUTH_TOKEN` + `GIT_SHA`/`GIT_SHA_FULL`/`BUILD_ID` are baked at build time via Dockerfile `ARG`→`ENV` (VAPID key has a hardcoded default). Model IDs are NOT baked - `GENKIT_DEFAULT_MODEL` defaults in code to `googleai/gemini-2.5-flash`. AI API keys come from Secret Manager at runtime.
 
 ---
 
-## Required Secrets / Env at Runtime
+## Runtime Env
 
-Set these in Cloud Run environment variables or Secret Manager:
-
-```
-GOOGLE_GENAI_API_KEY
-FIREBASE_SERVICE_ACCOUNT_KEY   (JSON string of service account, or use Secret Manager)
-NEXT_PUBLIC_FIREBASE_API_KEY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-NEXT_PUBLIC_FIREBASE_PROJECT_ID
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-```
-
-`NEXT_PUBLIC_*` vars must be available at **build time** (baked into client bundle). All others are runtime-only.
+See CONFIG.md. Runtime-only (not in repo, not confirmable from code): `VOICE_PROVIDER`, `APP_CHECK_REQUIRED`, `ONBOARDING_GATE_ENABLED`, `NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL`, the Twilio/Razorpay/Sarvam secrets, and `GOOGLE_GENAI_API_KEY` (pool). Code defaults: `VOICE_PROVIDER=twilio`, onboarding gate OFF.
 
 ---
 
 ## Git Branching Rules
 
-- `main` is production — every push deploys
-- Bug fixes: branch `fix/<name>` from main, merge back with `--no-ff`
-- New features: branch `feature/<name>` from main, merge back with `--no-ff`
-- **Never commit directly to main**
-- **Never force-push to main**
-
-```bash
-# Standard workflow
-git checkout -b fix/my-bug
-# ... make changes ...
-git checkout main
-git merge fix/my-bug --no-ff
-git push origin main          # triggers deployment
-```
+- Never commit directly to `main`; never force-push to `main`.
+- `develop` is the integration branch; branch `fix/<name>` or `feature/<name>` FROM `develop`, merge back with `--no-ff`.
+- `main` receives merges from `develop` only on a user-initiated release.
+- Stage specific files; never `git add -A`.
 
 ---
 
 ## Firebase Project Setup Checklist
 
-1. Create Firebase project
-2. Enable Firestore (Native mode)
-3. Enable Firebase Auth → Google Sign-In provider
-4. Enable Firebase Storage
-5. Create service account → download JSON key
-6. Deploy `firestore.rules` and `storage.rules`
-7. Create required Firestore composite indexes (see CONFIG.md)
-
----
-
-## Cloud Run Recommended Settings
-
-- Memory: 512MB–1GB (AI inference is memory-intensive)
-- CPU: 1 vCPU minimum
-- Min instances: 1 (avoid cold starts for teachers)
-- Concurrency: 80 (default)
-- Timeout: 300s (long AI generation requests)
+1. Create project `sahayakai-b4248`; enable Firestore (Native), Auth (Google Sign-In), Storage.
+2. Create service account; store key in Secret Manager (or env).
+3. Deploy `firestore.rules` and `storage.rules`.
+4. Create the composite indexes in `firestore.indexes.json` (see CONFIG.md).
 
 ---
 
@@ -86,9 +79,8 @@ git push origin main          # triggers deployment
 
 ```bash
 npm install
-cp .env.example .env.local    # fill in all required vars
+cp .env.example .env.local   # fill required vars
 npm run dev
 ```
 
-Dev bypass: middleware accepts `'dev-token'` as Bearer token, maps to `'dev-user-123'`.
-PWA is disabled in development.
+Dev bypass: in development, middleware accepts `'dev-token'` as the Bearer token, mapping to `dev-user-123`/`pro`. PWA disabled in dev.

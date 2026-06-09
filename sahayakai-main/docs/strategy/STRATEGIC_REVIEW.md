@@ -1,17 +1,19 @@
 # SahayakAI: Strategic Critical Review
 **Role:** Product Strategy & Engineering Lead
-**Date:** 2025-12-08
+**Date:** 2026-06-10
+
+> Note: This review was written early in the project. Several gaps it flags (static curriculum data, lesson-plan caching, community features, language localization) have since been partly or fully addressed. Treat dated "Recommendation" items as historical context.
 
 ## 1. Executive Summary
-SahayakAI has successfully transitioned from a generic tool to a specialized assistant for rural India. The "Hybrid Offline" model is a game-changer. However, to scale from a pilot to a nationwide platform, we face significant structural, economic, and engagement challenges.
+SahayakAI addresses India's systemic education-quality crisis across all school types, adapting to each classroom's resource level rather than serving rural government schools alone. To scale from pilot to a nationwide platform, the structural, economic, and engagement challenges below remain relevant.
 
 ## 2. Critical Gaps & Risks
 
 ### 🔴 Scalability & Architecture
 *   **Static Data Bottleneck:** Currently, curriculum data (NCERT) is hardcoded in TypeScript files. This is unmaintainable for 30+ State Boards and 12 grades.
     *   **Recommendation:** Migrate to a CMS-backed database (e.g., Supabase/Firebase) with a "Sync to Local" feature for offline access.
-*   **AI Cost Explosion:** Every lesson plan generation hits the LLM API. At 1M teachers, this is financially unsustainable.
-    *   **Recommendation:** Implement a "Semantic Cache". If Teacher A generates "Photosynthesis (Class 7)", Teacher B gets the cached result instantly.
+*   **AI Cost Explosion:** Every lesson plan generation hits the LLM API. At national scale this pressures cost.
+    *   **Recommendation (partly implemented):** Cache lesson plans so repeat requests are served cheaply. A `cached_lesson_plans` Firestore collection now exists; coverage/hit-rate metrics: `TODO(verify: cache hit rate)`.
 
 ### 🟠 User Experience & Engagement
 *   **The "Empty Box" Problem:** Teachers might not know *what* to ask.

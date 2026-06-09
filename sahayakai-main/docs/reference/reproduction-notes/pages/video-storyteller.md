@@ -1,14 +1,15 @@
-# Video Storyteller — /video-storyteller
+# Video Storyteller - /video-storyteller
 
 **File:** `src/app/video-storyteller/page.tsx`
-**Auth:** Not required (public browsing — RSS content is free, no user data exposed)
+**Auth:** Optional (`x-user-id` used for profile enrichment only; no hard gate / no `withPlanCheck`)
 **Algorithm:** `docs/VIDEO_RECOMMENDATION_ALGORITHM.md`
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Curated educational YouTube video discovery for Indian school teachers. Videos are organized into 5 pedagogical categories via ranked local scoring + RSS feeds. No second LLM call — ranking is fully deterministic.
+Curated educational YouTube video discovery for Indian school teachers. Videos are organized into 5 pedagogical categories via ranked local scoring + RSS feeds. No second LLM call - ranking is fully deterministic.
 
 ---
 
@@ -49,10 +50,10 @@ VideoStorytellerPage
 
 1. `useEffect` on `user` → loads profile → sets filters from profile → calls `fetchRecommendations()`
 2. `fetchRecommendations()` → `POST /api/ai/video-storyteller` with `{ subject, gradeLevel, language, topic, state?, educationBoard? }`
-3. API route → `getVideoRecommendations()` in `src/ai/flows/video-storyteller.ts`
+3. API route → `dispatchVideoStoryteller` (`src/lib/sidecar/video-storyteller-dispatch.ts`, Firestore `videoStorytellerSidecarMode`, default `off`) → `getVideoRecommendations()` in `src/ai/flows/video-storyteller.ts`. Only the `personalizedMessage` uses an LLM call (`googleai/gemini-2.5-flash`); ranking is deterministic.
 4. Flow executes 5-tier pipeline (see `docs/VIDEO_RECOMMENDATION_ALGORITHM.md`)
 5. Returns `{ categories, personalizedMessage, categorizedVideos, fromCache, latencyScore }`
-6. Page calls `mergeCuratedVideos(categorizedVideos)` — fills empty categories from static fallback
+6. Page calls `mergeCuratedVideos(categorizedVideos)` - fills empty categories from static fallback
 7. Renders 5 `VideoCarousel` components
 
 **Error handling:** On any API failure, falls back to curated-only content and shows toast "Showing curated content".
@@ -75,7 +76,7 @@ VideoStorytellerPage
 }
 ```
 
-All fields optional. Auth is optional — `x-user-id` header injected by middleware if logged in, used for profile enrichment only.
+All fields optional. Auth is optional - `x-user-id` header injected by middleware if logged in, used for profile enrichment only.
 
 **Response:**
 ```json
@@ -110,10 +111,10 @@ All fields optional. Auth is optional — `x-user-id` header injected by middlew
 
 ## Channel Source Files
 
-- **`src/lib/youtube-channels.ts`** — Channel ID registry, `INDIAN_EDU_CHANNELS`, `LANGUAGE_CHANNEL_MAP`, `STATE_EDUCATION_CONFIG`, `SUBJECT_CHANNEL_MAP`
-- **`src/lib/youtube-rss.ts`** — RSS feed fetcher (`fetchMultipleChannelsRSS`)
-- **`src/lib/curated-videos.ts`** — Static fallback video library (verified IDs)
-- **`src/lib/youtube-video-cache.ts`** — Firestore semantic cache
+- **`src/lib/youtube-channels.ts`** - Channel ID registry, `INDIAN_EDU_CHANNELS`, `LANGUAGE_CHANNEL_MAP`, `STATE_EDUCATION_CONFIG`, `SUBJECT_CHANNEL_MAP`
+- **`src/lib/youtube-rss.ts`** - RSS feed fetcher (`fetchMultipleChannelsRSS`)
+- **`src/lib/curated-videos.ts`** - Static fallback video library (verified IDs)
+- **`src/lib/youtube-video-cache.ts`** - Firestore semantic cache
 
 ---
 

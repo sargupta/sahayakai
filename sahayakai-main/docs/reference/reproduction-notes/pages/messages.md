@@ -1,7 +1,8 @@
-# Messages — /messages
+# Messages - /messages
 
 **File:** `src/app/messages/page.tsx`
-**Auth:** Required (full redirect if not signed in)
+**Auth:** Required (signed-out users get `<AuthGate>`: "Sign in to see your messages")
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -14,8 +15,9 @@ Direct messaging between connected teachers. Supports text, shared resources (le
 ## Component Tree
 
 ```
-MessagesPage (with Suspense wrapper)
-└── MessagesContent
+MessagesPage (Suspense wrapper)
+└── MessagesPageContent
+    ├── PushPermissionBanner (FCM permission prompt)
     ├── ConversationList (left panel)
     │   ├── Search input (filter conversations)
     │   ├── Conversation items × N
@@ -30,7 +32,7 @@ MessagesPage (with Suspense wrapper)
         ├── Message bubbles
         │   ├── MessageBubble (text)
         │   ├── MessageBubble (resource card)
-        │   └── MessageBubble (audio — native <audio> player)
+        │   └── MessageBubble (audio - native <audio> player)
         ├── Resource attachment popover (Paperclip button)
         │   └── 7 resource type options (lesson-plan, quiz, worksheet, etc.)
         ├── Textarea input (Shift+Enter for newline, Enter to send)
@@ -40,21 +42,23 @@ MessagesPage (with Suspense wrapper)
 
 ---
 
-## State (MessagesContent)
+## State (MessagesPageContent)
 
 | State | Type | Purpose |
 |---|---|---|
-| `selectedConversation` | `Conversation \| null` | Currently open thread |
-| `showList` | `boolean` | Mobile: show list vs thread |
+| `activeConversation` | `Conversation \| null` | Currently open thread |
+| `showPicker` | `boolean` | Show NewConversationPicker in right panel |
+| `mobileView` | `'list' \| 'thread'` | Mobile: which panel is visible |
+| `autoOpenLoading` | `boolean` | Loading while resolving `?with`/`?open` |
 
 ---
 
 ## URL Params
 
-- `?with=uid` — auto-opens or creates DM with specified teacher
-- `?open=convId` — directly opens a specific conversation
+- `?with=uid` - `getOrCreateDirectConversationAction(user.uid, withUid)` then opens the DM
+- `?open=convId` - fetches that conversation doc directly and opens it
 
-On mount, these params are read via `useSearchParams()` to set `selectedConversation`.
+Read via `useSearchParams()`; after handling, the page calls `router.replace("/messages")` to clear the params.
 
 ---
 

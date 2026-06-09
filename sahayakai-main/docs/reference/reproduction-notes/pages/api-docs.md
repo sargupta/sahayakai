@@ -1,7 +1,8 @@
-# API Docs — /api-docs
+# API Docs - /api-docs
 
 **File:** `src/app/api-docs/page.tsx`
-**Auth:** Not required
+**Auth:** Not required (`/api-docs` is on the middleware public allowlist)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -24,17 +25,17 @@ ApiDocsPage
 
 ## Data Flow
 
-1. `swagger-jsdoc` scans route files for JSDoc `@swagger` annotations
-2. Generates OpenAPI 3.0 spec object
-3. `SwaggerUI` renders the spec as interactive documentation
-4. "Try it out" buttons allow live API calls from the browser
+1. The page (client component) fetches the spec at runtime: `GET /api/api-docs`.
+2. That route uses `swagger-jsdoc` to scan route files for JSDoc `@swagger` annotations and build the OpenAPI spec.
+3. `SwaggerClient` (dynamic import, `ssr: false`) renders the spec via SwaggerUI; shows "Loading API docs..." until the fetch resolves.
+4. "Try it out" buttons allow live API calls from the browser.
 
 ---
 
 ## Implementation
 
-- `src/lib/swagger.ts` — swagger-jsdoc config (API info, paths to scan)
-- `src/components/swagger-client.tsx` — client wrapper for SwaggerUI (requires dynamic import, no SSR)
+- `src/lib/swagger.ts` - swagger-jsdoc config (API info, paths to scan)
+- `src/components/swagger-client.tsx` - client wrapper for SwaggerUI (requires dynamic import, no SSR)
 - Each API route has JSDoc `@swagger` annotations documenting request/response schemas
 
 ---

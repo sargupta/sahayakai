@@ -1,7 +1,8 @@
-# Worksheet Wizard — /worksheet-wizard
+# Worksheet Wizard - /worksheet-wizard
 
 **File:** `src/app/worksheet-wizard/page.tsx`
 **Auth:** Required
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -21,7 +22,7 @@ WorksheetWizardPage
 │   ├── GradeLevelSelector
 │   ├── SubjectSelector
 │   ├── Topic input + MicrophoneInput
-│   ├── ImageUploader (optional — attach textbook diagram)
+│   ├── ImageUploader (optional - attach textbook diagram)
 │   └── Generate button
 └── WorksheetDisplay (when result available)
     ├── Title
@@ -46,19 +47,20 @@ WorksheetWizardPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
-- **Flow:** `src/ai/flows/worksheet-wizard.ts`
-- **Model:** Gemini (multimodal — accepts image input)
-- **Image input:** If imageUrl provided, Gemini analyzes the image and generates worksheet based on its content
-- **Math support:** Output can include LaTeX math expressions (e.g., `$E = mc^2$`)
-- **Output:** `{ title: string, content: string (markdown), instructions?: string }`
+- **Route:** `POST /api/ai/worksheet` (wrapped in `withPlanCheck('worksheet')`).
+- **Dispatch:** `dispatchWorksheet` (`src/lib/sidecar/worksheet-dispatch.ts`); Firestore `worksheetSidecarMode` selects Genkit vs ADK sidecar (default `off`).
+- **Flow:** `src/ai/flows/worksheet-wizard.ts` (validation companion `worksheet-validation.ts`).
+- **Model:** `googleai/gemini-2.5-flash` (multimodal; accepts an image input).
+- **Math support:** activities may include LaTeX math expressions.
+- **Output schema (`WorksheetWizardOutputSchema`):** `{ title, gradeLevel, subject, learningObjectives[], studentInstructions, activities: [{ content, explanation }], answerKey: [{ activityIndex, answer }] }`. A markdown `worksheetContent` is also assembled server-side for display/print.
 
 ---
 
 ## Image Upload
 
-- `ImageUploader` component — drag-drop or click to upload
+- `ImageUploader` component - drag-drop or click to upload
 - Max size: 4MB, formats: JPEG/PNG/WEBP
 - Uploads to Firebase Storage → returns URL
 - URL passed to AI flow as multimodal image input

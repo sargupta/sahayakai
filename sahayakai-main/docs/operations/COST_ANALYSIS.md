@@ -1,35 +1,49 @@
 # SahayakAI — API & Cost Analysis
 
-> Last updated: March 2026
-> Based on: full codebase audit (32 API routes, 17 AI flows)
+> Last updated: 2026-06-10
+> Based on: full codebase audit cross-checked against `src/` source (`src/ai/flows/`, `src/lib/ai-models.ts`, `src/ai/genkit.ts`).
+> Default text model is `gemini-2.5-flash` everywhere (NOT 2.0-flash — see `src/ai/genkit.ts:18`,
+> `src/lib/ai-models.ts:39`). `gemini-2.0-flash` is not used anywhere in the tree.
 
 ---
 
 ## 1. Complete API Surface Map
 
-### AI Generation Endpoints (13)
+### AI Generation Endpoints (~17 flows)
+
+Default text model = `googleai/gemini-2.5-flash` (`src/ai/genkit.ts`). Exceptions noted.
 
 | Route | Flow | Model(s) | Google Search | Notes |
 |---|---|---|---|---|
-| `POST /api/assistant` | VIDYA soul prompt | `gemini-2.0-flash` | ✗ | 2-tier cache (L1 in-memory 1h, L2 Firestore 24h) |
-| `POST /api/ai/instant-answer` | instant-answer | `gemini-2.0-flash` | ✅ | Most expensive per-call due to grounding |
-| `POST /api/ai/lesson-plan` | lesson-plan-generator | `gemini-2.0-flash` (×2) | ✅ | 2 LLM calls: generation + materials audit |
-| `POST /api/ai/quiz` | quiz-definitions | `gemini-2.0-flash` | ✗ | Structured JSON output with validation pass |
-| `POST /api/ai/worksheet` | worksheet-wizard | `gemini-2.0-flash` | ✗ | Multimodal: accepts textbook image |
-| `POST /api/ai/virtual-field-trip` | virtual-field-trip | `gemini-2.0-flash` | ✗ | Generates Google Earth itinerary |
-| `POST /api/ai/rubric` | rubric-generator | `gemini-2.0-flash` | ✗ | Grading criteria generation |
-| `POST /api/ai/teacher-training` | teacher-training | `gemini-2.0-flash` | ✗ | Pedagogical advice |
-| `POST /api/ai/visual-aid` | visual-aid-designer | `gemini-3-pro-image-preview` + `gemini-2.5-flash` | ✗ | 2 LLM calls: image gen + metadata |
-| `POST /api/ai/avatar` | avatar-generator | `gemini-2.5-flash-image` | ✗ | Profile avatar image generation |
-| `POST /api/ai/voice-to-text` | voice-to-text | `gemini-2.0-flash` (audio) | ✗ | Multimodal audio → text, detects language |
-| `POST /api/ai/video-storyteller` | video-storyteller | `gemini-2.0-flash` + RSS | ✗ | Query gen via LLM; data from YouTube RSS |
-| `POST /api/ai/intent` | agent-definitions | `gemini-2.0-flash` | ✗ | Intent classification only (routing) |
+| `POST /api/assistant` | VIDYA orchestrator (`vidya-assistant.ts`) | `gemini-2.5-flash` | ✗ | OmniOrb mic entry; intent router (11 intents) |
+| `POST /api/ai/intent` | `agent-definitions.ts` | `gemini-2.5-flash` | ✗ | Intent classification only (routing) |
+| `POST /api/ai/instant-answer` | `instant-answer.ts` | `gemini-2.5-flash` | ✅ | Most expensive text call due to grounding |
+| `POST /api/ai/lesson-plan` (+`/stream`) | `lesson-plan-generator.ts` | `gemini-2.5-flash` (×2) | ✗ | 2 LLM calls: generation + materials audit. Grounding removed for cost. |
+| `POST /api/ai/quiz` | `quiz-definitions.ts` | `gemini-2.5-flash` | ✗ | 3 difficulties generated in parallel (3 calls); validation pass |
+| `POST /api/ai/exam-paper` (+`/stream`) | `exam-paper-generator.ts` | `gemini-2.5-flash` | ✗ | Full exam paper |
+| `POST /api/ai/worksheet` | `worksheet-wizard.ts` | `gemini-2.5-flash` | ✗ | Multimodal: accepts textbook image |
+| `POST /api/ai/virtual-field-trip` | `virtual-field-trip.ts` | `gemini-2.5-flash` | ✗ | Generates Google Earth itinerary |
+| `POST /api/ai/rubric` | `rubric-generator.ts` | `gemini-2.5-flash` | ✗ | Grading criteria generation |
+| `POST /api/ai/teacher-training` | `teacher-training.ts` | `gemini-2.5-flash` | ✗ | Pedagogical advice |
+| `POST /api/ai/visual-aid` | `visual-aid-designer.ts` | **`gemini-3-pro-image-preview`** (image) + `gemini-2.5-flash` (text) | ✗ | 2 calls: image gen + metadata |
+| `POST /api/ai/avatar` | `avatar-generator.ts` | **`gemini-2.5-flash-image`** | ✗ | Profile avatar image generation |
+| `POST /api/ai/assess-assignment` | `assignment-assessor.ts` | **`gemini-2.5-pro`** (`ASSESSMENT_MODEL`) | ✗ | Vision + reasoning grading |
+| `POST /api/ai/assessment-scanner` | `assessment-scanner.ts` | `gemini-2.5-flash` (default) | ✗ | 2-pass: vision OCR + rubric-grounded scoring |
+| `POST /api/ai/voice-to-text` | `voice-to-text.ts` | Sarvam Saaras v3 (primary); `gemini-2.5-flash` fallback | ✗ | Sarvam for mp3/wav; Gemini for webm/opus |
+| `POST /api/ai/video-storyteller` | `video-storyteller.ts` | `gemini-2.5-flash` + RSS | ✗ | Query gen via LLM; data from YouTube RSS |
+| `POST /api/ai/parent-message` | `parent-message-generator.ts` | `gemini-2.5-flash` | ✗ | Draft parent message |
+| (TwiML webhooks) | `parent-call-agent.ts` | `gemini-2.5-flash` | ✗ | Live parent-call reply + summary |
+| `POST /api/community/persona-pulse` | `community-persona-message.ts` | `gemini-2.5-flash` | ✗ | AI persona chat, 150-token cap |
+
+> `geminiFlash2_0` feature flag (`src/lib/ai-models.ts`): ENABLED (default) → `gemini-2.5-flash`;
+> DISABLED → `gemini-2.5-pro` (higher quality, higher cost). Only call sites wired through
+> `getActiveGeminiModel()` respect this flip; `.prompt` frontmatter stays on `gemini-2.5-flash`.
 
 ### TTS & Voice Endpoint (1)
 
 | Route | Service | Voice Tiers |
 |---|---|---|
-| `POST /api/tts` | Google Cloud TTS v1 | Neural2 (hi, en) · Wavenet (bn, ta, kn, ml, gu, pa) · Standard (te) |
+| `POST /api/tts` | Google Cloud TTS v1 + Sarvam | Neural2 (hi, en) · Wavenet (bn, ta, kn, ml, gu, pa) · Standard (te, mr; Odia falls back to hi-IN Standard) |
 
 ### Content Management (5)
 
@@ -37,11 +51,17 @@
 
 → Firestore reads/writes + Cloud Storage reads/writes
 
-### Infrastructure/Auth/Analytics (13)
+### Telephony / attendance
 
-`/api/health` · `/api/metrics` · `/api/teacher-activity` · `/api/feedback` · `/api/auth/profile-check` · `/api/user/profile` · `/api/vidya/profile` · `/api/vidya/session` · `/api/analytics/seed` · `/api/analytics/teacher-health/[userId]` · `/api/migrate-ncert` · `/api/jobs/storage-cleanup` · `/api/ai/quiz/health`
+`POST /api/attendance/call` (Twilio REST default, Exotel via `VOICE_PROVIDER=exotel`) · `/api/attendance/twiml*` (public webhooks) · `/api/attendance/outreach*` · `/api/attendance/call-summary`
 
-→ Pure Firestore; no LLM or external paid APIs
+→ Twilio REST API (per-minute call billing). Exotel path delegates to external `sahayakai-voice-call` service. See ground-truth §7.
+
+### Infrastructure/Auth/Analytics
+
+`/api/health` · `/api/metrics` · `/api/teacher-activity` · `/api/feedback` · `/api/auth/profile-check` · `/api/user/profile` · `/api/vidya/profile` · `/api/vidya/session` · `/api/analytics/seed` · `/api/analytics/teacher-health/[userId]` · `/api/migrate-ncert` · `/api/jobs/*` · `/api/ai/quiz/health` · `/api/config/flags` · `/api/feature-flags/me` · `/api/webhooks/razorpay` · `/api/billing/*`
+
+→ Pure Firestore / Razorpay; no LLM
 
 ---
 
@@ -49,35 +69,42 @@
 
 | Service | Used By | Billing Unit |
 |---|---|---|
-| **Google Gemini 2.0 Flash** | 11 of 13 AI flows | Per token (input + output) |
-| **Google Gemini 2.5 Flash** | visual-aid metadata + lesson-plan audit | Per token |
-| **Gemini Image Generation** (`gemini-3-pro-image-preview`, `gemini-2.5-flash-image`) | visual-aid, avatar | Per image |
-| **Gemini Audio Input** | voice-to-text | Per minute of audio |
+| **Google Gemini 2.5 Flash** | default for ~15 of ~17 AI flows | Per token (input + output) |
+| **Google Gemini 2.5 Pro** | assignment grading (`assignment-assessor.ts`); also the `geminiFlash2_0`-disabled fallback for wrapped call sites | Per token |
+| **Gemini Image Generation** (`gemini-3-pro-image-preview` for visual-aid, `gemini-2.5-flash-image` for avatar) | visual-aid, avatar | Per image |
+| **Gemini Audio Input** | voice-to-text Gemini fallback (webm/opus) | Per minute of audio |
+| **Sarvam AI (Saaras v3)** | voice-to-text primary (mp3/wav); TTS option; external Exotel voicebot | Per minute / per char |
 | **Google Cloud TTS Neural2** | TTS (hi-IN, en-IN) | Per character synthesized |
 | **Google Cloud TTS Wavenet** | TTS (bn, ta, kn, ml, gu, pa) | Per character synthesized |
-| **Google Cloud TTS Standard** | TTS (te-IN) | Per character synthesized |
-| **Google Search Grounding** | instant-answer, lesson-plan | Per grounding request |
+| **Google Cloud TTS Standard** | TTS (te-IN, mr-IN, Odia fallback) | Per character synthesized |
+| **Google Search Grounding** | instant-answer (lesson-plan grounding removed for cost) | Per grounding request |
+| **Twilio** | attendance parent calls (REST API, default path) | Per call minute |
+| **Razorpay** | subscription billing / webhooks | Per transaction fee |
 | **Firebase Firestore** | All routes | Per read/write/delete |
 | **Cloud Storage (GCS)** | All content-saving flows | Per GB storage + operations |
 | **Firebase App Hosting (Cloud Run)** | Entire app | Per vCPU-second + memory |
+| **ADK-Python sidecar (Cloud Run)** | per-agent sidecar dispatch when mode ≠ `off` (all default `off`) | Per vCPU-second + memory; TODO(verify: sidecar Cloud Run cost — service is `sahayakai-agents`, source not in this repo, all dispatch modes default off so $0 in current prod) |
 | **YouTube Data API** | video-storyteller (fallback) | Per quota unit (10K units/day free) |
 
 ---
 
-## 3. Pricing Reference (Google AI, March 2026)
+## 3. Pricing Reference (Google AI)
 
 > ⚠️ Prices change. Always verify at [ai.google.dev/pricing](https://ai.google.dev/pricing) before budgeting.
+> NOTE: the production default is now `gemini-2.5-flash`, not `gemini-2.0-flash`. The per-call
+> cost figures in §4 were originally computed against 2.0-flash pricing and are flagged for re-derivation.
 
 ### Gemini API
 
-| Model | Input (text) | Output (text) | Audio input | Image input |
+| Model | Input (text) | Output (text) | Audio input | Image |
 |---|---|---|---|---|
-| gemini-2.0-flash | $0.075 / 1M tokens | $0.30 / 1M tokens | $0.02 / min | ~$0.001 / image |
-| gemini-2.5-flash | $0.15 / 1M tokens | $0.60 / 1M tokens | — | — |
-| gemini image gen (preview) | — | — | — | ~$0.03–0.05 / image |
-| **Google Search grounding** | — | — | — | **$35 / 1,000 requests** |
+| gemini-2.5-flash (default) | TODO(verify: 2.5-flash input $/1M tokens at ai.google.dev/pricing) | TODO(verify: 2.5-flash output $/1M tokens) | TODO(verify: 2.5-flash audio $/min) | — |
+| gemini-2.5-pro (grading + flag-off fallback) | TODO(verify: 2.5-pro input $/1M tokens) | TODO(verify: 2.5-pro output $/1M tokens) | — | — |
+| gemini-3-pro-image-preview (visual-aid) | — | — | — | TODO(verify: per-image $) |
+| gemini-2.5-flash-image (avatar) | — | — | — | TODO(verify: per-image $) |
+| **Google Search grounding** | — | — | — | **$35 / 1,000 requests** (verify) |
 
-> Free tier: 15 RPM / 1M tokens per day on gemini-2.0-flash (Google AI Studio plan)
+> Free tier limits vary by model; verify current RPM/TPD at ai.google.dev/pricing.
 
 ### Google Cloud TTS
 
@@ -117,6 +144,14 @@
 ---
 
 ## 4. Per-Feature Cost Breakdown (Single Use)
+
+> TODO(verify: ALL dollar amounts in §4 and §5-6 were derived from gemini-2.0-flash pricing.
+> The default model is now gemini-2.5-flash — re-derive every per-call cost once §3 pricing is
+> confirmed. Token-count estimates below remain valid; only the $ conversions are stale.)
+>
+> Additional flows not yet costed here: exam-paper, assess-assignment (gemini-2.5-pro — likely the
+> most expensive text call), assessment-scanner (2-pass vision), parent-message, parent-call (Twilio
+> per-minute), community persona-pulse. TODO(verify: add per-call costs for these).
 
 Token estimates are based on actual prompt templates + schema sizes in the codebase.
 
@@ -268,13 +303,18 @@ With caching effects (VIDYA L1/L2 cache gives ~25% hit rate on fresh queries):
 
 ## 7. Cost Driver Analysis
 
+> TODO(verify: share-of-total percentages below predate the lesson-plan grounding removal and the
+> 2.5-flash default. Re-derive once §3 pricing is confirmed. Grounding now applies to instant-answer
+> only, so its share is lower than the figure shown.)
+
 | Driver | Share of Total | Controllable? |
 |---|---|---|
-| Google Search Grounding | ~35% | ✅ Can cache results or reduce usage |
-| Image Generation (visual-aid + avatar) | ~30% | ✅ Add per-user monthly limit |
-| Voice-to-text (audio minutes) | ~25% | ✅ Limit audio length, cache transcriptions |
-| Gemini text tokens | ~8% | Mostly fixed |
-| Infrastructure (Firestore, GCS, Cloud Run) | ~2% | Scales linearly |
+| Google Search Grounding (instant-answer only) | ~35% (stale) | ✅ Can cache results or reduce usage |
+| Image Generation (visual-aid + avatar) | ~30% (stale) | ✅ Add per-user monthly limit |
+| Voice-to-text (audio minutes) | ~25% (stale) | ✅ Use Sarvam (cheaper), limit audio length, cache transcriptions |
+| Twilio parent calls | TODO(verify: per-minute share) | ✅ Cap call length |
+| Gemini text tokens | ~8% (stale) | Mostly fixed |
+| Infrastructure (Firestore, GCS, Cloud Run) | ~2% (stale) | Scales linearly |
 
 ---
 
@@ -311,11 +351,12 @@ With caching effects (VIDYA L1/L2 cache gives ~25% hit rate on fresh queries):
 - Estimated savings: 30-40% on lesson plan costs
 
 **6. Tier models by complexity**
-- Replace `gemini-2.0-flash` with `gemini-2.0-flash-lite` (cheaper) for:
+- The default is already `gemini-2.5-flash`. Consider a cheaper/lighter Gemini variant (verify availability/pricing) for:
   - Rubric generator (simple structured output)
   - Teacher training (single-turn Q&A)
   - Virtual field trip (structured itinerary)
-- Estimated savings: ~50% on those flows
+- Conversely, keep `gemini-2.5-pro` confined to assignment grading where reasoning quality matters.
+- Estimated savings: TODO(verify: depends on lighter-model pricing)
 
 **7. Lazy-load voice-to-text (text fallback first)**
 - Currently the mic button is prominent everywhere
@@ -373,4 +414,4 @@ Use **Google Cloud Billing Alerts** + **Firebase Crash-Free Rate** + the existin
 
 ---
 
-*Generated from codebase audit of 32 API routes, 17 AI flows, and 4 external service integrations.*
+*Generated from codebase audit of `src/ai/flows/` (~17 AI flows). Last updated 2026-06-10.*

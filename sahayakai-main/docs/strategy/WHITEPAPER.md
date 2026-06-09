@@ -1,7 +1,9 @@
-# SahayakAI Whitepaper: An AI-Powered Teaching Assistant for Rural India
+# SahayakAI Whitepaper: An AI-Powered Teaching Assistant for India
+
+**Last updated:** 2026-06-10
 
 ## Abstract
-This whitepaper outlines the architecture and technical details of SahayakAI, an AI-powered teaching assistant designed to address the specific needs of teachers in rural India. SahayakAI is a Progressive Web App (PWA) that provides a suite of tools for creating lesson plans, rubrics, and other teaching materials. The platform is designed to be "Bharat First," with a focus on cultural relevance, offline functionality, and ease of use. It leverages a serverless architecture, Google's Gemini language models, and the Genkit framework to deliver a scalable and cost-effective solution.
+This whitepaper outlines the architecture and technical details of SahayakAI, an AI-powered teaching assistant that addresses India's systemic education-quality crisis across all school types. While low-resource and intermittent-connectivity classrooms are a core design constraint, the platform's `resourceLevel` setting (low, medium, high) lets it serve well-resourced classrooms equally. SahayakAI is a Progressive Web App (PWA) that provides a suite of tools for creating lesson plans, rubrics, and other teaching materials. The platform is "Bharat First," with a focus on cultural relevance, language coverage, and ease of use. It leverages a serverless Cloud Run architecture, Google's Gemini language models, and the Genkit framework.
 
 ## 1. The Problem: The Digital Divide in Indian Education
 Teachers in rural India face a unique set of challenges that are not addressed by most existing educational technology platforms. These challenges include:
@@ -23,16 +25,16 @@ SahayakAI is a "Bharat First" AI-powered teaching assistant that is designed to 
 SahayakAI is built on a serverless architecture using Google Cloud and Firebase.
 
 ### 3.1 High-Level Architecture
-*   **Frontend:** The frontend is a Next.js application hosted on Firebase Hosting. It uses the App Router and Server Actions for a modern, server-centric architecture.
-*   **Backend:** The backend is a set of serverless Cloud Functions for Firebase that are triggered by events from the frontend.
-*   **AI/ML:** The AI/ML capabilities are provided by Google's Gemini models, accessed through the Genkit framework. Genkit is used to define and orchestrate the AI flows.
-*   **Database:** Cloud Firestore is used as the primary database for storing user data and generated content.
-*   **Authentication:** Firebase Authentication is used for user authentication, with support for OTP and Google OAuth.
-*   **Storage:** Cloud Storage for Firebase is used for storing user-uploaded files and other assets.
-*   **CI/CD:** A GitHub Actions workflow is used for continuous integration and deployment.
+*   **Frontend + Backend:** A single Next.js application (App Router) deployed on Google Cloud Run (service `sahayakai-hotfix-resilience`, region `asia-southeast1`). API route handlers under `src/app/api/**` serve all backend logic; there are no separate Cloud Functions.
+*   **AI/ML:** AI capabilities are provided by Google's Gemini models, accessed through the Genkit framework. Genkit defines and orchestrates roughly 17 AI flows plus the VIDYA voice assistant. An optional external ADK-Python sidecar can serve selected agents, gated by Firestore feature flags (default off, so Genkit serves by default).
+*   **Database:** Cloud Firestore is the primary database for user data and generated content; feature flags live at `system_config/feature_flags`.
+*   **Authentication:** Firebase Authentication, with ID tokens verified in middleware and injected as `x-user-id` headers.
+*   **Storage:** Cloud Storage for Firebase for user-uploaded files.
+*   **Payments:** Razorpay, with HMAC-verified webhooks.
+*   **CI/CD:** A Cloud Build GitHub trigger deploys on push to `main`.
 
 ### 3.2 AI and Machine Learning
-SahayakAI uses Google's Gemini 2.0 Flash model for its AI capabilities. This model is optimized for speed and cost, making it ideal for a platform that needs to serve a large number of users.
+SahayakAI uses Google's `gemini-2.5-flash` as its default model (optimized for speed and cost). Assignment grading uses `gemini-2.5-pro`; image generation uses `gemini-3-pro-image-preview` (visual aids) and `gemini-2.5-flash-image` (avatars).
 
 The AI flows are defined using Genkit, a new open-source framework from Google that is designed to simplify the development of AI-powered applications. Genkit allows for the easy definition of AI prompts, the validation of inputs and outputs using Zod schemas, and the orchestration of complex AI workflows.
 

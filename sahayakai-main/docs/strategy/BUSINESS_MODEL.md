@@ -1,13 +1,13 @@
 # SahayakAI: Business Model & Strategic Framework
 
-**Version:** 1.0
-**Date:** 2026-01-26
+**Version:** 1.1
+**Date:** 2026-06-10
 **Status:** Draft / Pilot Phase
 
 ---
 
 ## 1. Executive Summary
-SahayakAI is an AI-powered teaching assistant designed specifically to empower **rural government school teachers** in India. Unlike generic EdTech tools, SahayakAI is built on a "Bharat First" philosophy, addressing the unique challenges of low-resource environments, linguistic diversity, and the need for culturally relevant pedagogy. By leveraging Generative AI (Google Gemini) through a "Hybrid Offline" architecture, it democratizes access to world-class lesson planning and content creation.
+SahayakAI is an AI-powered teaching assistant that addresses India's systemic education-quality crisis across **all school types** (government, private, and chain/enterprise). The platform already supports a `resourceLevel` setting of low, medium, and high, so it adapts equally to a chalk-and-blackboard classroom and a smart classroom. Built on a "Bharat First" philosophy, it addresses linguistic diversity, curriculum alignment, and the need for culturally relevant pedagogy. By leveraging Google Gemini (default model `gemini-2.5-flash`) through Genkit on a serverless Cloud Run architecture, it democratizes access to high-quality lesson planning and content creation.
 
 ## 2. Mission & Vision
 *   **Mission:** To transform every rural teacher into a "Super Teacher" by providing an intelligent, voice-first assistant that works in their local language and context.
@@ -28,21 +28,24 @@ SahayakAI is an AI-powered teaching assistant designed specifically to empower *
 *   **Data-Driven Capabilities:** (Future) Provides visibility into teaching activities and curriculum coverage through anonymized analytics.
 
 ## 4. Target Market
-*   **Primary Segment:** Government schools in rural and semi-urban India (Tier 2/3/4 cities).
-*   **User Base:** 1 Million+ teachers teaching Grades 5-10.
-*   **Key Stakeholders:** State Education Departments, Ministry of Education, NGOs working in the education sector.
+*   **Total Addressable Market:** All ~10.1M teachers across every school type in India, estimated at ₹15,000-20,000 Cr. This is NOT limited to the government-only segment.
+*   **Segments:** Government schools, private schools (Tier 2 CBSE mid-fee being the strongest private beachhead), school chains/enterprise, and individual teachers via B2C freemium.
+*   **Key Stakeholders:** State Education Departments, Ministry of Education, private school managements, chain operators, and individual teachers.
 
 ## 5. Revenue Model & Sustainability
-SahayakAI operates on a B2G (Business-to-Government) and B2B (NGO Partnerships) model, ensuring the tool remains **free for the end-user (teachers)**.
+SahayakAI operates a four-lane revenue model rather than a government-only model:
 
-*   **Primary Revenue Stream:** Government Contracts & Grants. Licensing the platform to State Education Boards for statewide deployment.
-*   **Secondary Revenue Stream:** CSR Partnerships. Collaborating with large corporations (e.g., Tata, Reliance) for education-focused CSR initiatives.
+*   **Lane 1, B2G:** Licensing the platform to State Education Boards for statewide deployment.
+*   **Lane 2, B2B Private School:** Per-school or per-seat subscriptions for private schools.
+*   **Lane 3, B2B Chain/Enterprise:** Multi-school contracts for chains and enterprise operators (seat-based `Organization` plans already modelled in code: gold/premium).
+*   **Lane 4, B2C Freemium:** Individual teachers on free/pro/gold/premium plans via Razorpay subscriptions; generates cash from Month 1.
+*   **Supplementary Revenue Stream:** CSR Partnerships. `TODO(verify: named CSR/corporate partners)`
 *   **Cost Management Strategy:**
     *   **Semantic Caching:** To mitigate high LLM API costs, the system uses a semantic cache. If a lesson plan for "Photosynthesis Class 7" is generated once, subsequent requests from other teachers are served from the cache, drastically reducing token usage.
     *   **Serverless Architecture:** Pay-per-use infrastructure (Firebase) prevents paying for idle server time.
 
 ## 6. Key Resources & Infrastructure
-*   **Technology Stack:** Google Cloud Platform, Firebase (Hosting, Functions, Firestore), Google Genkit, Gemini 2.0 Flash.
+*   **Technology Stack:** Next.js on Google Cloud Run (region asia-southeast1, project sahayakai-b4248), Firebase (Auth, Firestore, Storage, Admin SDK), Google Genkit, Gemini (default `gemini-2.5-flash`; `gemini-2.5-pro` for assignment grading; `gemini-3-pro-image-preview` and `gemini-2.5-flash-image` for image generation). Payments via Razorpay. Parent-call telephony via Twilio (default) with an opt-in Exotel streaming path. STT/TTS via Google Cloud TTS and Sarvam AI.
 *   **Knowledge Base:** NCERT Curriculum database, State Board mappings, "Indian Context" example repository.
 *   **Human Capital:** Engineering team, pedagogical experts, regional language translators.
 

@@ -1,5 +1,15 @@
 # SahayakAI Video Storyteller — Content Recommendation Algorithm
 
+> **Last updated: 2026-06-10.** Core scoring + quota distribution verified against
+> `src/ai/flows/video-storyteller.ts`. Confirmed accurate: `ALL_CATS` order
+> (`govtUpdates` first), `MIN_QUOTA=12 / TARGET=30 / MAX=60`, topic boost `+18`,
+> exam penalty `-15`, three-tier authority (20/12/6), language boosts (15/8),
+> board/state/classroom boosts (8/12/5), `Ω` category bonuses (8/5/4), per-keyword
+> base weight 5 for `pedagogy`/`govtUpdates` and 2 for others. **One material
+> drift: §13.1's recency/popularity signal is no longer purely "future" — a
+> recency bonus IS now shipped (see updated §13.1).** Curated fallback lives in
+> `src/lib/curated-videos.ts`; channel maps in `src/lib/youtube-channels.ts`.
+
 **Abhishek Gupta**¹
 
 ¹SARGVISION Agentic Intelligence Lab
@@ -90,7 +100,12 @@ Where:
 | Category Authority | $\Omega(v, c)$ | Channel-category fit bonus | $\{0, 4, 5, 8\}$ |
 | Content Penalty | $P(v)$ | College / exam-coaching / student-event content | $\{0, 15\}$ |
 
-The $\max(0, \cdot)$ floor ensures negative-scoring videos (exam coaching, IIT lectures) receive zero probability mass in all categories. The theoretical maximum raw score is approximately **85 points** for a video that perfectly satisfies all positive signals simultaneously.
+The $\max(0, \cdot)$ floor ensures negative-scoring videos (exam coaching, IIT lectures) receive zero probability mass in all categories. The theoretical maximum raw score is approximately **85 points** from the signals shown here.
+
+> **Note (2026-06-10):** the live equation in code also adds a **recency bonus
+> $[0,10]$** to each per-category score (see updated §13.1), so the practical raw
+> maximum is now closer to **~95**. The boxed equation above omits that term for
+> readability; the recency addend is applied per-category inside the scoring loop.
 
 ### Why a Linear Model?
 
@@ -385,13 +400,30 @@ The Maharashtra SCERT video correctly wins `pedagogy` by accumulating: Tier 1 go
 
 ## 13. Known Limitations & Future Research Directions
 
-### 13.1 Absence of Temporal and Popularity Signals
+### 13.1 Temporal Signal — SHIPPED (popularity still future)
 
-The current model has no recency or popularity signal. A video published 3 years ago ranks identically to one published yesterday, assuming identical authority and keyword signals. We propose the following extension:
+> **STATUS [PARTIAL — recency shipped, popularity not].** Updated 2026-06-10
+> against `src/ai/flows/video-storyteller.ts` (the per-category scoring loop).
+
+A **recency bonus is now live**, but as an **additive** term inside the per-category
+sum, not the multiplicative form originally proposed. For each candidate with a
+`publishedAt`, the code adds:
+
+$$\text{recencyBonus}(v, c) = \text{round}\!\left(10 \cdot e^{-\,\text{ageDays}\,/\,\text{decayDays}(c)}\right), \quad \text{ageDays} > 0$$
+
+where `decayDays(govtUpdates) = 90` (stale circulars decay fast) and
+`decayDays(other) = 365`. Range `[0, 10]`, guarded against future-dated /
+unparseable timestamps. So a video published yesterday no longer ranks identically
+to a 3-year-old one.
+
+**Popularity (view-count) boost remains NOT implemented** — RSS candidates carry no
+reliable view count, so the `1 + 0.5·log10(1+views)` multiplier in the original
+proposal below is still future work. TODO(verify: confirm whether any YouTube Data
+API path attaches view counts that could feed a popularity signal).
+
+Original proposed (multiplicative) extension, retained for reference:
 
 $$R'(v, c) = R(v, c) \times \underbrace{e^{-\frac{\ln 2}{30} \cdot d_v}}_{\text{recency decay}} \times \underbrace{\left(1 + 0.5 \cdot \log_{10}(1 + \text{views}_v)\right)}_{\text{popularity boost}}$$
-
-Where $d_v$ = days since `publishedAt`. This gives a 30-day half-life to recency and a logarithmic (bounded) popularity multiplier — preventing viral outliers from dominating while surfacing genuinely widely-used content.
 
 ### 13.2 Flat Keyword Weights (TF-IDF Extension)
 

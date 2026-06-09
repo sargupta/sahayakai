@@ -1,85 +1,65 @@
 # AI Flow: Quiz Generator
 
-**Files:**
-- `src/ai/flows/quiz-generator.ts` — orchestrator
-- `src/ai/flows/quiz-definitions.ts` — prompt definitions and output schema
-- `src/ai/flows/quiz-definitions-enhanced-validation.ts` — additional validation
+> Refreshed 2026-06-10 against current source.
 
-**API Route:** `POST /api/ai/quiz`
+**Files:**
+- `src/ai/flows/quiz-generator.ts` - orchestrator (`generateQuiz`)
+- `src/ai/flows/quiz-definitions.ts` - `quizGeneratorFlow` + prompt definition
+- `src/ai/flows/quiz-definitions-enhanced-validation.ts` - additional validation
+- `src/ai/schemas/quiz-generator-schemas.ts` - input/output Zod types
+
+**API Route:** `POST /api/ai/quiz` (plus public health probe `GET /api/ai/quiz/health`).
+**Model:** `googleai/gemini-2.5-flash` (default Genkit model; `quizGenerator.prompt`).
 
 ---
 
 ## Purpose
 
-Generate quizzes at 3 difficulty levels simultaneously. Uses Bloom's Taxonomy levels to calibrate question complexity. Validates output schema strictly.
+Generate a quiz at 3 difficulty levels (easy / medium / hard) in parallel for one topic. Grade-band aware for question count and vocabulary age.
 
 ---
 
-## Input Schema
+## Input (`QuizGeneratorInput`)
 
-```ts
-{
-  topic: string;
-  gradeLevel: GradeLevel;
-  subject: Subject;
-  language: Language;
-  questionTypes: ('mcq' | 'true-false' | 'fill-blank' | 'short-answer')[];
-  bloomsLevels: ('Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create')[];
-  questionCount: number;       // per difficulty level
-}
-```
+Key fields used by `generateQuiz`: `topic`, `gradeLevel`, `subject`, `language`, `numQuestions`, `userId`, `teacherContext`, `gradeBandLabel`. Per-variant the orchestrator sets `targetDifficulty: 'easy' | 'medium' | 'hard'`.
 
----
-
-## Processing Steps
-
-1. Build 3 separate prompts (easy/medium/hard) with different Bloom's level emphasis
-2. **Generate all 3 in parallel** (`Promise.all([easyCall, mediumCall, hardCall])`)
-3. Each call independently validates output schema
-4. Merge results into unified output
-
----
-
-## Output Schema
-
-```ts
-{
-  title: string;
-  questions: {
-    easy: QuizQuestion[];
-    medium: QuizQuestion[];
-    hard: QuizQuestion[];
-  }
-}
-
-QuizQuestion: {
-  id: string;
-  question: string;
-  options?: string[];           // MCQ only
-  answer: string;
-  type: 'mcq' | 'true-false' | 'fill-blank' | 'short-answer';
-  bloomsLevel: string;
-  explanation?: string;
-}
-```
+Pre-processing in `generateQuiz`:
+- F18-01 grade-aware default `numQuestions` (`defaultNumQuestionsForGrade`): Primary(1-5)=5, Middle(6-8)=10, Secondary(9-10)=15, Senior(11-12)=20. The caller's explicit value wins.
+- F18-03 `gradeBandLabel` derived via `getGradeBand` / `getBandDisplayLabel` to bound vocabulary age.
+- Language fallback from profile `preferredLanguage`; then `normalizeLanguage()` ("en" → "English").
+- Soft NCERT chapter validation (`validateChapterForFlow`), non-blocking, with high-confidence topic auto-correct.
 
 ---
 
 ## Parallel Generation
 
-Key architectural decision: all 3 difficulty levels generated in parallel.
-- Easy: emphasizes Remember/Understand Bloom's levels
-- Medium: emphasizes Apply/Analyze
-- Hard: emphasizes Evaluate/Create
+```ts
+const difficulties = ['easy','medium','hard'] as const;
+const results = await Promise.allSettled(
+  difficulties.map(d => quizGeneratorFlow({ ...localizedInput, targetDifficulty: d }))
+);
+```
 
-This means 3x the API calls but 3x faster than sequential. Total latency ≈ latency of one call.
+`Promise.allSettled` - per-variant failure is WARN, not fatal: if even one variant succeeds the user gets a usable quiz. If ALL three fail and any failure looks like a quota error (`looksLikeQuota` checks `name === 'AIQuotaExhaustedError'` first to survive minification, then string signals 429 / quota / RESOURCE_EXHAUSTED / "temporarily overloaded"), it re-throws `AIQuotaExhaustedError` so the route returns 503 + Retry-After; otherwise a generic Error.
 
 ---
 
-## Validation
+## Output (`QuizVariantsOutput`)
 
-`quiz-definitions-enhanced-validation.ts` adds:
-- Ensures no duplicate questions across difficulties
-- Ensures answer is always one of the provided options (for MCQ)
-- Ensures Bloom's level matches difficulty band
-- Falls back to basic output if validation fails (no silent error)
+```ts
+{
+  easy: QuizSingleOutput | null;
+  medium: QuizSingleOutput | null;
+  hard: QuizSingleOutput | null;
+  id: string;
+  gradeLevel: string;
+  subject: string;
+  topic: string;
+  isSaved: boolean;
+  validationWarning?: ValidationWarning;
+}
+```
+
+Metadata (`gradeLevel`, `subject`) is inferred from the first successful variant (prefer medium). When `userId` is present the result is saved: GCS `users/{uid}/quizzes/{ts}-{contentId}.json` + `dbAdapter.saveContent` with `type: 'quiz'`.
+
+TODO(verify: exact per-question shape and the `quiz-definitions.ts` prompt details - defined in `quiz-definitions.ts` / `quiz-generator-schemas.ts`, not re-read here; confirm field names such as `bloomsLevel`/`explanation` before relying on them).

@@ -1,66 +1,67 @@
 # Server Actions: Content
 
 **File:** `src/app/actions/content.ts`
+**Verified:** 2026-06-10
+
+The caller's uid comes from the `x-user-id` header; the leading `_userId` argument on these actions is ignored (kept for signature stability). Returns use the project's content types (`BaseContent`, `ContentType`).
 
 ---
 
-## getUserContent(userId)
+## getUserContent(_userId?)
 
-Returns all saved content for a user.
+Returns all saved content for the authenticated user.
 
 ```
-Fetches users/{userId}/content (up to 100 items)
-Excludes soft-deleted items (deletedAt != null)
+Fetches users/{uid}/content (up to ~100 items)
+Excludes soft-deleted items
 Serializes Timestamps to ISO strings for client compatibility
-Returns ContentItem[]
+Returns BaseContent[]
 ```
 
 ---
 
-## searchContentAction(userId, query, filters?)
+## searchContentAction(_userId, query)
 
-Smart scored search across user's content.
+Smart scored search across the caller's content (no separate `filters` argument - context is inferred from the query).
 
 ```
-Scoring per item:
-  +10 if query term in title
-  +5  if query term in topic
-  +15 if grade matches context
-  +15 if subject matches context
-  +10 if language matches context
-
-Returns all items if query empty (show all)
-Returns ranked results sorted by score descending
+Per-item scoring on title / topic / grade / subject / language matches.
+Empty query → return all items.
+Returns results sorted by score descending.
 ```
 
 ---
 
-## saveToLibrary(userId, content)
+## saveToLibrary(_userId, type, title, data)
 
-Save AI-generated content to user's private library.
+Save AI-generated content to the caller's private library. Returns `{ success, id?, error? }`.
 
 ```
-1. Sanitize title (remove special chars, max 80 chars)
-2. Generate UUID for contentId
-3. Upload content data to GCS: users/{uid}/{type}/{sanitizedTitle}_{uuid}.json
-4. Write Firestore record: users/{uid}/content/{contentId}
-5. Track analytics event (content_created)
-6. Return { contentId, storagePath }
+1. Sanitize title
+2. Generate contentId
+3. Upload content data to GCS under users/{uid}/{type}/...
+4. Write Firestore record users/{uid}/content/{contentId}
+5. Track analytics (content_created)
 ```
 
 ---
 
-## recordPdfDownload(userId, contentId, pdfBase64)
+## recordPdfDownload(_userId, title, base64Data, type = 'lesson-plan')
 
-Saves a PDF download to GCS for future access.
+Saves a generated PDF to GCS for future access. Returns `{ success, path?, error? }`.
 
 ```
 1. Base64 → Buffer
-2. Upload to GCS with retry
-3. Update Firestore record with pdfStoragePath
-4. Wrapped with Sentry instrumentation
-5. Rolls back Firestore update if GCS upload fails
+2. Upload to GCS (with retry)
+3. Update Firestore record with the PDF storage path
+4. Sentry-instrumented; rolls back the Firestore update if GCS upload fails
 ```
+
+---
+
+## testStorageConnection(_userId?)
+
+Diagnostic: verifies GCS connectivity. Returns `{ success, message }`.
 
 ---
 

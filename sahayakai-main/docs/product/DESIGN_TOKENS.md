@@ -1,12 +1,28 @@
 # SahayakAI Design Tokens
 
+> **Last updated: 2026-06-10. STATUS: ACCURATE / load-bearing.** Verified against
+> `src/app/globals.css`, `tailwind.config.ts`, `eslint.config.mjs`, and
+> `src/components/layout/`. This doc is referenced by `eslint.config.mjs` rule
+> messages, so keep it accurate. Confirmed live: brand HSL vars (`--primary`,
+> `--secondary`, `--accent`), `--shadow-soft/elevated/floating`,
+> `--ease-out-quart`, `--motion-micro/small/medium`, `rounded-surface-{sm,md,lg}`
+> + `rounded-pill` in tailwind, and the three `container-{narrow,default,wide}`
+> utilities in `globals.css`. The ESLint design-token rules (banning
+> `rounded-[..]`, `rounded-2xl/3xl`, arbitrary shadows, etc.) are enforced via
+> `no-restricted-syntax` in `eslint.config.mjs`, exempting landing/marketing.
+
 **Source of truth.** All colors, radii, shadows, spacing, motion, and typography in SahayakAI come from this file. If you can't find a token here for what you need, propose it in PR — don't reach for arbitrary values.
 
 Defined in:
 - `src/app/globals.css` (CSS variables + utility classes)
 - `tailwind.config.ts` (Tailwind utility names)
 
-This is **Phase 1** of the layout overhaul. See [`DESIGN_EXECUTION_PLAN.md`](./DESIGN_EXECUTION_PLAN.md) for the full migration plan.
+This was **Phase 1** of the layout overhaul. Phase 2 has since landed:
+`<PageShell>` and `<SectionCard>` exist at `src/components/layout/page-shell.tsx`
+and `src/components/layout/section-card.tsx`.
+
+TODO(verify: `DESIGN_EXECUTION_PLAN.md` is referenced here and in ESLint messages
+but no such file exists under `docs/` — locate it or remove the references).
 
 ---
 
@@ -112,7 +128,9 @@ Tailwind's default 4px grid is the canonical spacing scale. Use `gap-*`, `p-*`, 
 | `container-default` | `max-w-5xl` (1024px) | Most tool pages, dashboards |
 | `container-wide` | `max-w-7xl` (1280px) | Multi-column dashboards, library grids |
 
-**Anti-pattern:** Any other `max-w-[*]` value in pages. Banned via ESLint after Phase 2 lands `<PageShell>`.
+**Anti-pattern:** Any other `max-w-[*]` value in pages. **Now banned** via the
+`max-w-[` ESLint rule in `eslint.config.mjs` (landing/marketing exempt). `<PageShell>`
+has shipped at `src/components/layout/page-shell.tsx`.
 
 Page should look like:
 ```tsx

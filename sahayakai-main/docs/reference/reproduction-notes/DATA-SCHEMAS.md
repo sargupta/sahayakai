@@ -1,373 +1,223 @@
-# SahayakAI — Data Schemas
+# SahayakAI - Data Schemas
 
-## Firestore Collections
+> Refreshed 2026-06-10 against current source (`src/types/*`, `firestore.rules`,
+> ground-truth collection list). Shapes below are derived from TS interfaces;
+> fields marked TODO(verify) were not re-read line-by-line.
 
-### `users/{uid}`
-User profile document. Created/updated by `syncUserAction()` on login.
+## Firestore Collections (full list)
 
-```
-{
-  uid: string
-  email: string
-  displayName: string
-  photoURL: string | null
-  schoolName?: string
-  district?: string
-  pincode?: string
-  bio?: string
-  department?: string
-  subjects?: string[]          // from Subject enum
-  preferredLanguage?: string   // from Language enum
-  verifiedStatus?: boolean
-  badges?: string[]
-  followerCount?: number
-  followingCount?: number
-  planType?: 'free' | 'pro'
-  impactScore?: number
-  designation?: string
-  contentSharedCount?: number
-  lastLogin?: Timestamp
-  createdAt?: Timestamp
-}
-```
-
-### `users/{uid}/content/{contentId}`
-Private content saved by a user. Created by `saveToLibrary()`.
+Distinct collection names referenced in `src/`:
 
 ```
-{
-  id: string                   // UUID
-  type: ContentType            // lesson-plan | quiz | worksheet | visual-aid | rubric | ...
-  title: string
-  gradeLevel: GradeLevel
-  subject: Subject
-  topic: string
-  language: Language
-  isPublic: boolean
-  isDraft?: boolean
-  deletedAt?: Timestamp        // soft-delete
-  expiresAt?: Timestamp        // TTL (30d after soft-delete)
-  storagePath?: string         // GCS path if file uploaded
-  data: object                 // feature-specific schema (see below)
-  createdAt: Timestamp
-}
+analytics, assessment_batches, assessments, attendance, billing_monthly_reports,
+billing_reconciliation_actions, billing_reconciliation_runs, cached_lesson_plans,
+chat, classes, community_chat, community_posts, connection_requests, connections,
+consent_log, content, conversations, fcm_tokens, feedback, feedbacks, groups,
+invites, library_resources, likes, members, messages, ncert_chapters,
+ncert_curriculum, ncert_textbooks, notifications, organizations, parent_outreach,
+pendingSignInLinks, posts, rate_limits, records, sarkar_verifications, saves,
+shadow_calls, students, subscriptions, system_config, teacher_analytics,
+telemetry_events, turns, usageCounters, users, vidya_sessions, webhook_events
 ```
 
-### `library_resources/{id}`
-Public community resources. Created by `publishContentToLibraryAction()`.
+Plus sidecar collections (Admin-SDK-only): `agent_sessions` (+ `turns`), `agent_shadow_diffs` (+ `shadow_calls`), `agent_voice_sessions`, `agent_auto_abort_seen`.
 
-```
-{
-  id: string
-  type: ContentType
-  title: string
-  gradeLevel: string
-  subject: string
-  language: string
-  authorId: string
-  authorName: string
-  authorPhotoURL?: string
-  stats: {
-    likes: number
-    saves: number
-    downloads: number
-    views?: number
-  }
-  tags?: string[]
-  createdAt: Timestamp
-  storagePath?: string
-  data?: object
-}
-```
-
-### `conversations/{conversationId}`
-DM or group conversation. ID for DMs = `[uid1, uid2].sort().join('_')`.
-
-```
-{
-  id: string
-  type: 'direct' | 'group'
-  participantIds: string[]
-  participants: {
-    [uid: string]: {
-      displayName: string
-      photoURL: string | null
-      preferredLanguage?: string
-    }
-  }
-  name?: string                // group only
-  groupPhotoURL?: string       // group only
-  lastMessage?: string         // preview text
-  lastMessageAt?: Timestamp
-  unreadCount: {
-    [uid: string]: number      // per-user unread count
-  }
-  createdAt: Timestamp
-  updatedAt?: Timestamp
-}
-```
-
-### `conversations/{conversationId}/messages/{messageId}`
-Individual messages in a conversation.
-
-```
-{
-  id: string                   // Firestore docId
-  type: 'text' | 'resource' | 'audio'
-  text: string
-  senderId: string
-  senderName: string           // denormalized
-  senderPhotoURL: string | null
-  resource?: {                 // when type === 'resource'
-    id: string
-    type: ContentType
-    title: string
-    gradeLevel: string
-    subject: string
-    language: string
-    route: string              // URL path to open the resource
-  }
-  audioUrl?: string            // when type === 'audio' — Firebase Storage URL
-  audioDuration?: number       // seconds
-  readBy: string[]             // UIDs that have opened the conversation
-  createdAt: Timestamp
-}
-```
-
-### `community_chat/{messageId}`
-Global community chat messages (one shared channel).
-
-```
-{
-  text: string
-  audioUrl?: string            // Firebase Storage URL if voice message
-  authorId: string
-  authorName: string           // fetched server-side, never from client
-  authorPhotoURL: string | null
-  createdAt: Timestamp         // serverTimestamp()
-}
-```
-
-### `connection_requests/{pairId}`
-Pending connection requests. pairId = `[fromUid, toUid].sort().join('_')`.
-
-```
-{
-  fromUid: string
-  toUid: string
-  createdAt: Timestamp
-  expiresAt: Timestamp         // 30 days from creation
-}
-```
-
-### `connections/{pairId}`
-Accepted connections. pairId same deterministic format.
-
-```
-{
-  uids: string[]               // both UIDs sorted
-  initiatedBy: string
-  connectedAt: Timestamp
-}
-```
-**Note:** Created only by Admin SDK (server action). Deleted by either participant (client SDK allowed).
-
-### `notifications/{notificationId}`
-User notifications.
-
-```
-{
-  type: NotificationType       // FOLLOW | NEW_POST | BADGE_EARNED | LIKE | RESOURCE_SAVED | RESOURCE_USED | CONNECT_REQUEST | CONNECT_ACCEPTED
-  recipientId: string
-  senderId?: string
-  senderName?: string
-  senderPhotoURL?: string
-  title: string
-  message: string
-  isRead: boolean
-  metadata?: object            // type-specific data (requestId, resourceId, etc.)
-  createdAt: Timestamp
-}
-```
-
-### `rate_limits/{userId}`
-Rate limiting data. Managed by `server-safety.ts`.
-
-```
-{
-  timestamps: number[]         // Unix ms timestamps of recent requests
-}
-```
-
-### `follows/{followerId_followedId}` (inferred from community actions)
-Follow relationships.
-
-```
-{
-  followerId: string
-  followedId: string
-  createdAt: Timestamp
-}
-```
+Note: `feedback` and `feedbacks` both appear (likely legacy + current). `chat` / `turns` / `records` / `members` are subcollection segment names.
 
 ---
 
-## Feature-Specific Content Schemas
+### `users/{uid}` - `UserProfile` (`src/types/index.ts`)
 
-### Lesson Plan (`data` field)
+```
+uid, email?, phoneNumber?, displayName, photoURL?, schoolName?, schoolNormalized?,
+district?, pincode?, state?, educationBoard?, preferredBoard?, verifiedStatus?,
+gradeLevels[], subjects[], preferredLanguage, followersCount, followingCount,
+createdAt, lastLogin, planType ('free'|'pro'|'gold'|'premium'), impactScore,
+contentSharedCount, badges[], groupIds?, ...
+```
+
+Note: `planType` is the four-tier set `free|pro|gold|premium` (NOT just free/pro). `teachingGradeLevels` is read by some flows (e.g. instant-answer fallback). TODO(verify: full field list and `teachingGradeLevels` vs `gradeLevels` naming).
+
+### `content/{docId}` - user content (top-level collection)
+
+Per `firestore.rules`, content is a TOP-LEVEL `content/{docId}` collection keyed by `resource.data.userId` (not a `users/{uid}/content` subcollection at the rules layer).
+
 ```
 {
-  title: string
-  gradeLevel: string
-  subject: string
-  topic: string
-  language: string
-  duration: string
-  objectives: string[]
-  materials: string[]
-  sections: {
-    engage: string
-    explore: string
-    explain: string
-    elaborate: string
-    evaluate: string
-  }
-  assessment: string
-  ncertAlignment?: string
-  diffSuggestions?: string
+  id, type (ContentType), title, gradeLevel, subject, topic, language,
+  userId, isPublic, isDraft?, storagePath?, deletedAt?, expiresAt?,
+  data: object,   // feature-specific (see below)
+  createdAt, updatedAt
 }
 ```
 
-### Quiz (`data` field)
+Saved via `dbAdapter.saveContent`. Files are written to GCS at `users/{uid}/{contentType}/{filename}.json`.
+
+### `library_resources/{id}` - public community resources
+
 ```
 {
-  title: string
-  questions: {
-    easy: QuizQuestion[]
-    medium: QuizQuestion[]
-    hard: QuizQuestion[]
-  }
-}
-
-QuizQuestion: {
-  id: string
-  question: string
-  options?: string[]           // MCQ
-  answer: string
-  type: 'mcq' | 'true-false' | 'fill-blank' | 'short-answer'
-  bloomsLevel?: string
-  explanation?: string
+  id, type (ContentType), title, gradeLevel, subject, language,
+  authorId, authorName, authorPhotoURL?,
+  stats: { likes, saves, downloads, views? },
+  tags?, storagePath?, data?, createdAt
 }
 ```
+Subcollections `likes/{likerId}`, `saves/{saverId}` (owner-only). TODO(verify: exact `stats` shape).
 
-### Worksheet (`data` field)
+### `conversations/{id}` - `Conversation` (`src/types/messages.ts`)
+
 ```
 {
-  title: string
-  content: string              // Markdown with optional LaTeX math
-  instructions?: string
+  id, type ('direct'|'group'), participantIds[], participants{},
+  name?, lastMessage, lastMessageAt, lastMessageSenderId, unreadCount{},
+  createdAt?, updatedAt?
 }
 ```
 
-### Visual Aid (`data` field)
+### `conversations/{id}/messages/{id}` - `Message`
+
 ```
 {
-  imageUrl: string             // Firebase Storage URL
-  pedagogicalContext: string
-  discussionSpark: string
-  altText: string
+  id, type ('text'|'resource'|'audio'), text, senderId, senderName, senderPhotoURL,
+  resource?, audioUrl?, audioDuration?, readBy[], createdAt,
+  clientMessageId?, deliveryStatus?, deliveredTo?, mediaStatus?
 }
+```
+Rules cap `text` at 1000 chars on create.
+
+### `community_chat/{id}` - broadcast chat
+
+```
+{ text, audioUrl?, authorId, authorName, authorPhotoURL, createdAt }
+```
+Rules: `text.size() <= 500 OR audioUrl is string` (voice-only allowed).
+
+### `connections/{pairId}` / `connection_requests/{pairId}`
+
+`Connection`: `{ id (sorted {uid1}_{uid2}), uids[2], initiatedBy, connectedAt }`. Created only by Admin SDK; deletable by either participant (client SDK).
+
+`ConnectionRequest`: `{ id, fromUid, toUid, createdAt, expiresAt (30d) }`. Create requires `fromUid == auth.uid && fromUid != toUid`; immutable (`update: false`); deletable by either party.
+
+### `notifications/{id}`
+
+```
+{ type, recipientId, senderId?, senderName?, senderPhotoURL?, title, message,
+  isRead, metadata?, createdAt }
+```
+Read: recipient only. Create/update/delete: server (Admin SDK) only - client cannot fabricate or mark read directly (goes through `markNotificationAsReadAction`).
+
+### `parent_outreach/{id}` - `ParentOutreach` (`src/types/attendance.ts`)
+
+```
+{ id, teacherUid, classId, className, studentId, studentName, parentPhone,
+  parentLanguage, reason, generatedMessage,
+  deliveryMethod ('twilio_call'|'whatsapp_copy'), subject?, teacherName?, schoolName?,
+  callSid?, callStatus?, transcript?(TranscriptTurn[]), callSummary?(CallSummary),
+  voicePipelineMode? ('streaming'|'batch'), performanceContext?, createdAt, updatedAt }
 ```
 
-### Rubric (`data` field)
-```
-{
-  title: string
-  criteria: {
-    name: string
-    levels: {
-      exemplary: string
-      proficient: string
-      developing: string
-      beginning: string
-    }
-  }[]
-}
-```
+### `classes/{classId}` + students/attendance
 
-### Virtual Field Trip (`data` field)
+- `classes/{classId}` - `ClassRecord`: `{ id, teacherUid, name, subject, gradeLevel, section?, academicYear, studentCount, createdAt, updatedAt }`
+- `classes/{classId}/students/{studentId}` - `Student`: `{ id, classId, rollNumber, name, parentPhone (E.164), parentLanguage, createdAt, updatedAt }`
+- `attendance/{classId}/records/{YYYY-MM-DD}` - `DailyAttendanceRecord`: `{ classId, date, teacherUid, records (studentId->'present'|'absent'|'late'), submittedAt, isFinalized }`
+
+### `organizations/{id}` - `Organization` (`src/lib/organization.ts`)
+
 ```
-{
-  destination: string
-  stops: {
-    name: string
-    googleEarthUrl: string
-    description: string
-    culturalAnalogy: string
-    educationalFacts: string[]
-    reflectionPrompt: string
-  }[]
-  overallTheme: string
-}
+{ id, name, type ('school'|'chain'|'government'), adminUserId,
+  plan ('gold'|'premium'), subscriptionId?, totalSeats, usedSeats, createdAt, updatedAt }
 ```
+Subcollections: `members` (`OrgMember`), invites (`OrgInvite`).
+
+### Billing / system
+
+- `subscriptions/{subId}` - Razorpay subscription tracking (read: owner; write: Admin only).
+- `usageCounters/{userId}` - per-user usage counters (read: owner; write: Admin only).
+- `webhook_events/{eventId}` - Razorpay idempotency (backend-only).
+- `system_config/{docId}` - feature flags + operator state. Client-readable only when docId matches `^public_.*`; `feature_flags` is Admin-SDK-only.
+- `rate_limits/{userId}` - `{ timestamps: number[] }` (managed by `server-safety.ts`).
 
 ---
 
-## TypeScript Type Enums
+## Feature-Specific Content `data` Schemas
 
-### GradeLevel
-`Nursery | LKG | UKG | Class 1 | Class 2 | ... | Class 12`
+These mirror each flow's output schema. See the per-flow reproduction notes for authoritative shapes.
 
-### Subject
-`Mathematics | Science | Social Science | History | Geography | Civics | English | Hindi | Sanskrit | Kannada | Computer Science | EVS`
+### Lesson Plan (`data`)
+```
+{ title, gradeLevel?, duration?, subject?, objectives[], keyVocabulary?[],
+  materials[], activities[{ phase, name, description, duration, teacherTips?, understandingCheck? }],
+  assessment?, homework?, language?, validationWarning? }
+```
+Note: activities are an ARRAY of `{ phase, ... }` objects (5E phases), NOT a `sections.{engage,...}` map as the prior doc stated.
 
-### Language
-`English | Hindi | Kannada | Tamil | Telugu | Marathi | Bengali | Gujarati | Punjabi | Malayalam | Odia`
+### Quiz (`data` = `QuizVariantsOutput`)
+```
+{ easy|null, medium|null, hard|null, id, gradeLevel, subject, topic, isSaved, validationWarning? }
+```
+TODO(verify: per-question shape from `quiz-generator-schemas.ts`).
+
+### Visual Aid (`data`)
+```
+{ imageUrl, pedagogicalContext, discussionSpark, altText }  // TODO(verify) against current source
+```
+
+### Rubric / Worksheet / Virtual Field Trip
+TODO(verify: re-read `rubric-generator.ts`, `worksheet-wizard.ts`, `virtual-field-trip.ts` for exact `data` shapes - prior doc's shapes are unverified).
+
+---
+
+## TypeScript Enums
 
 ### ContentType
-`lesson-plan | quiz | worksheet | visual-aid | rubric | micro-lesson | virtual-field-trip | instant-answer | teacher-training`
+`lesson-plan | quiz | worksheet | visual-aid | rubric | micro-lesson | virtual-field-trip | instant-answer | teacher-training` (TODO(verify: confirm full union including exam-paper / assessment types in `src/types`)).
 
-### NotificationType
-`FOLLOW | NEW_POST | BADGE_EARNED | LIKE | RESOURCE_SAVED | RESOURCE_USED | CONNECT_REQUEST | CONNECT_ACCEPTED`
+### Language (11 Indic)
+`hi, en, bn, ta, kn, ml, gu, pa, te, mr` + Odia fallback. Display forms via `LANGUAGE_CODE_MAP`.
 
-### ConnectionStatus
-`none | pending_sent | pending_received | connected`
+### GradeLevel
+`Nursery | LKG | UKG | Class 1 ... Class 12`.
 
----
-
-## Firebase Storage Paths
-
-| Purpose | Path |
-|---|---|
-| User content files | `users/{uid}/{contentType}/{filename}` |
-| Voice messages | `voice-messages/{uid}/{timestamp}.webm` or `.mp4` |
-| Profile images | (managed by Firebase Auth, not custom storage) |
-| Community post images | (via create-post-dialog) |
+TODO(verify: `Subject`, `NotificationType`, `ConnectionStatus` enum members against `src/types/index.ts`).
 
 ---
 
-## API Contracts
+## Firebase Storage Paths (`storage.rules`)
+
+| Purpose | Path | Rule |
+|---|---|---|
+| Voice messages (1:1 chat) | `voice-messages/{uid}/{ts}.{webm|m4a}` | owner-write, signed-in read, <5 MB, `audio/.*` |
+| User uploads | `users/{uid}/uploads/{uuid}_{filename}` | owner-write, signed-in read, <10 MB |
+| Profile photos | `profile-photos/{uid}/{uuid}.{ext}` | owner-write, signed-in read, <5 MB, `image/.*` |
+| Legacy uploads | `uploads/{uid}/{filename}` | owner-write fallback |
+| AI content JSON | `users/{uid}/{contentType}/{file}.json` | written server-side (Admin) |
+
+---
+
+## API Contracts (current)
 
 ### POST /api/ai/instant-answer
 ```
-Request: { question: string, language: string, gradeLevel: string }
-Response: { answer: string, sources?: string[] }
+Request:  { question, language?, gradeLevel?, subject?, userId }
+Response: { answer, videoSuggestionUrl?, gradeLevel?, subject? }
 ```
 
 ### POST /api/ai/lesson-plan
 ```
-Request: { topic: string, gradeLevel: string, subject: string, language: string, duration?: string, ncertChapter?: object }
-Response: LessonPlanSchema
+Request:  LessonPlanInput (topic, gradeLevels?, language?, userId, ncertChapter?, resourceLevel?, ...)
+Response: LessonPlanOutput
 ```
 
 ### POST /api/ai/quiz
 ```
-Request: { topic: string, gradeLevel: string, subject: string, language: string, questionTypes: string[], bloomsLevels: string[], questionCount: number }
-Response: { questions: { easy: [], medium: [], hard: [] } }
+Request:  QuizGeneratorInput (topic, gradeLevel, subject?, language?, numQuestions?, userId)
+Response: QuizVariantsOutput { easy, medium, hard, id, gradeLevel, subject, topic, isSaved, validationWarning? }
 ```
 
-### POST /api/assistant (streaming)
+### POST /api/ai/intent
 ```
-Request: { message: string, userId: string, context?: object }
-Response: Server-Sent Events stream of text chunks
+Request:  { prompt, language?, gradeLevels?, imageDataUri?, userId? }
+Response: AgentRouterOutput { type, topic?, gradeLevel?, subject?, language?, plannedActions?, result }
 ```

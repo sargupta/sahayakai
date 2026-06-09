@@ -1,7 +1,8 @@
-# My Library — /my-library
+# My Library - /my-library
 
 **File:** `src/app/my-library/page.tsx`
-**Auth:** Required
+**Auth:** Required (signed-out users get `<AuthGate>`: "Sign in to open your library")
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -33,8 +34,10 @@ MyLibraryPage
 │       ├── Open button
 │       ├── Download button
 │       └── Delete button (with confirm state)
-└── Avatar generation (calls /api/ai/avatar on mount if no custom avatar)
+└── "Create New" button → router.push('/lesson-plan')
 ```
+
+Avatar precedence is real photos only (NO AI generation, removed 2026-04-26): `profile.photoURL` (Settings upload) → `user.photoURL` (Google) → initials fallback.
 
 ---
 
@@ -50,8 +53,8 @@ MyLibraryPage
 
 ## Data Flow
 
-1. Mount: `getUserContent(userId)` → loads up to 100 items from `users/{uid}/content`
-2. Avatar: `GET /api/ai/avatar` → generates AI avatar if user has no `photoURL`
+1. Mount: `getProfileData(user.uid)` loads the profile; `ContentGallery` loads saved content from `users/{uid}/content` and reports its count via `onCountChange`.
+2. Avatar: real photo only (see precedence above); no AI avatar call.
 3. Open: navigates to tool page with content pre-loaded (URL param or IndexedDB key)
 4. Download: attempts client-side HTML export first, falls back to server download link
 5. Delete: `softDeleteContent(userId, contentId)` → sets `deletedAt` + `expiresAt` (30d TTL)
@@ -86,8 +89,7 @@ Priority order:
 
 ## ProfileCard
 
-Shows: Avatar (AI-generated if no photo), display name, school, followers, following, content count.
-Edit profile button → opens `EditProfileDialog`.
+Shows: avatar (real photo or initials), display name, and stats (followers, following, resources count from the gallery).
 
 ---
 

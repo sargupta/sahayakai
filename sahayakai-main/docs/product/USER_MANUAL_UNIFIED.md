@@ -1,6 +1,6 @@
 # SahayakAI: Unified Multilingual User Manual & Testing Guide
 **Official Website:** [sahayakai.com](https://sahayakai.com)  
-**Date:** February 6, 2026
+**Last updated:** 2026-06-10
 
 ---
 
@@ -10,7 +10,9 @@
 ### Core Components to Test:
 1.  **Microphone Input:** Verify accurate voice-to-text transcription in all three languages.
 2.  **Action Bar:** Test **Copy**, **Save**, and **PDF Download** buttons.
-3.  **Content Generators:** Verify the 8 core pedagogical flows (Lesson Plan, Quiz, etc.).
+3.  **Content Generators:** Verify the core pedagogical flows (Lesson Plan, Quiz, Exam Paper, Worksheet, Rubric, Instant Answer, Visual Aid, Field Trip, Video Storyteller).
+4.  **Assessment & Classroom:** Verify Assignment Assessor, Assessment Scanner, and Attendance / parent outreach.
+5.  **Community & Account:** Verify Community Staff Room chat, Community Library, My Library, Messages, and profile.
 
 ---
 
@@ -107,6 +109,20 @@ After generating any content (like a Lesson Plan), test the buttons at the botto
 
 ---
 
+## 🛠️ Feature 3b: Exam Paper Generator (`/exam-paper`)
+
+Generates a full exam paper from a chosen board, grade, subject, and official NCERT chapters. Saves to My Library.
+
+1.  **CBSE Class 10 Science: Light & Electricity**
+    *   🇺🇸 **English:** "Generate a full exam paper for the chapters on 'Light' and 'Electricity'."
+    *   🇮🇳 **Hindi:** "'प्रकाश' और 'विद्युत' अध्यायों के लिए एक पूर्ण परीक्षा पत्र तैयार करें।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+
+2.  **State Board Class 8 Math: Unit Test**
+    *   🇺🇸 **English:** "A unit test with 1-mark, 3-mark, and 5-mark sections."
+    *   🇮🇳 **Hindi:** "1-अंक, 3-अंक और 5-अंक वाले खंडों के साथ एक इकाई परीक्षा।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+
 ## 🛠️ Feature 4: Teacher Training / AI Coach (`/teacher-training`)
 
 1.  **Classroom Management**
@@ -174,6 +190,55 @@ After generating any content (like a Lesson Plan), test the buttons at the botto
     *   🇺🇸 **English:** "Why do we see rainbows after rain? Explain with a simple analogy."
     *   🇮🇳 **Hindi:** "बारिश के बाद हमें इंद्रधनुष क्यों दिखाई देता है? एक सरल सादृश्य (analogy) के साथ समझाएं।"
     *   🇮🇳 **Bengali (WB):** "বৃষ্টির পরে আমরা রামধনু (Rainbow) দেখি কেন? সহজ উদাহরণ দিয়ে বুঝিয়ে বলুন।"
+
+---
+
+## 🛠️ Feature 9: Video Storyteller (`/video-storyteller`)
+
+Recommends teaching videos by category and generates story or video scripts.
+
+1.  **Water Cycle Story**
+    *   🇺🇸 **English:** "Write a short story script that teaches Class 4 the water cycle."
+    *   🇮🇳 **Hindi:** "कक्षा 4 को जल चक्र सिखाने वाली एक छोटी कहानी की पटकथा लिखें।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+
+## 🛠️ Feature 10: Assignment Assessor (`/assess-assignment`)
+
+Photograph or upload a student assignment; the AI grades it and returns feedback.
+
+1.  **Grade a handwritten answer sheet**
+    *   🇺🇸 **English:** "Photograph a handwritten Math answer sheet and ask for a grade with feedback."
+    *   🇮🇳 **Hindi:** "हाथ से लिखी गणित की उत्तर पुस्तिका की फोटो लें और प्रतिक्रिया के साथ ग्रेड मांगें।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+
+## 🛠️ Feature 11: Assessment Scanner (`/assessment-scanner`)
+
+Scans handwritten assessments and grades them. Distinct from the Assignment Assessor.
+
+1.  **Scan a set of sheets**
+    *   🇺🇸 **English:** "Scan a set of handwritten answer sheets and confirm each is graded."
+    *   🇮🇳 **Hindi:** "हाथ से लिखी उत्तर पुस्तिकाओं का एक सेट स्कैन करें और जांचें कि प्रत्येक को ग्रेड किया गया है।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+    *   *TODO(verify: exact scan-to-class linkage and where results display in the UI).*
+
+## 🛠️ Feature 12: Attendance & Parent Outreach (`/attendance`)
+
+Manage classes, mark daily attendance, record marks (`/attendance/[classId]/marks`), and send AI parent messages or calls in the parent's preferred language. Parent calls go via Twilio by default; transcript and summary are saved after the call.
+
+1.  **Draft a parent message for an absentee**
+    *   🇺🇸 **English:** "Draft an AI parent message for a student absent three days in a row."
+    *   🇮🇳 **Hindi:** "लगातार तीन दिन अनुपस्थित छात्र के लिए एक अभिभावक संदेश तैयार करें।"
+    *   🇮🇳 **Bengali (WB):** `TODO(verify: Bengali copy needed)`
+
+## 🛠️ Feature 13: Community, Library & Messages
+
+*   **Community Staff Room (`/community`):** open the Staff Room chat; send a text and a voice message.
+*   **Community Library (`/community-library`):** filter resources, search, and save to My Library.
+*   **My Library (`/my-library`):** confirm saved lesson plans, quizzes, and worksheets appear.
+*   **Messages (`/messages`):** start a direct chat and share a saved resource.
+*   **Impact Dashboard (`/impact-dashboard`):** check lesson plans created and students reached.
+
+> *Note: `/visual-aid-creator`, `/submit-content`, and `/review-panel` currently show "coming soon" placeholders. Use `/visual-aid-designer` for visual aids.*
 
 ---
 

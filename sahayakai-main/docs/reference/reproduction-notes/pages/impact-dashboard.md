@@ -1,7 +1,8 @@
-# Impact Dashboard — /impact-dashboard
+# Impact Dashboard - /impact-dashboard
 
 **File:** `src/app/impact-dashboard/page.tsx`
-**Auth:** Required
+**Auth:** Required (signed-out users get `<AuthGate>` prompt: "Sign in to see your impact")
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -15,7 +16,8 @@ Shows a teacher's personal impact metrics and analytics. Visualizes teaching act
 
 ```
 ImpactDashboardPage
-└── TeacherAnalyticsDashboard
+├── (no user) AuthGate  → "Sign in to see your impact"
+└── (user) header + TeacherAnalyticsDashboard userId={user.uid}
     ├── Overall health score (circular progress indicator, 0–100)
     ├── Risk level badge (LOW / MEDIUM / HIGH)
     ├── Breakdown scores (circular indicators, smaller)
@@ -41,7 +43,7 @@ ImpactDashboardPage
 ## Data Flow
 
 1. Mount: `GET /api/analytics/teacher-health/{userId}` → returns impact model scores
-2. Score calculation: `src/lib/analytics/impact-score.ts` — weighted formula
+2. Score calculation: `src/lib/analytics/impact-score.ts` - weighted formula
 3. Risk level: derived from overall score (< 40 = HIGH, 40–70 = MEDIUM, > 70 = LOW)
 
 ---
@@ -59,11 +61,7 @@ File: `src/components/teacher-analytics-dashboard.tsx`
 
 ## Analytics Model (impact-score.ts)
 
-Impact score = weighted sum of:
-- **Activity** (30%): sessions per week, tool usage frequency
-- **Engagement** (25%): content edits, voice inputs, follow-throughs
-- **Success** (25%): content saved/shared, feedback ratings
-- **Growth** (20%): new tools tried, language diversity, collaboration
+Overall score is the sum of four 0..100-scaled dimensions (`src/lib/analytics/impact-score.ts`). Activity is capped at 0..30 and uses temporal decay on `sessions_last_7_days` / `sessions_days_8_to_14`. TODO(verify: exact per-dimension weights for Engagement/Success/Growth and the overall normalization).
 
 ---
 

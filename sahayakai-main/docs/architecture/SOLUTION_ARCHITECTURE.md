@@ -1,18 +1,19 @@
 # SahayakAI: Complete Solution Architecture
 
-**Version:** 2.0  
-**Date:** 2026-01-27  
-**Coverage:** Web (Main + Replica) + Mobile  
+**Version:** 2.1  
+**Last Updated:** 2026-06-10  
+**Coverage:** Web (Main) + Mobile (scaffolded)  
 
 ---
 
 ## Overview
 
-SahayakAI is deployed across **three platforms** to maximize reach and accessibility:
+SahayakAI's production surface is a single web app, with a Flutter mobile client in development:
 
-1. **sahayak-main** - Production web app (Next.js 15, Firebase Hosting)
-2. **sahayak-replica** - Feature development web app (Next.js 15, more comprehensive features)
-3. **sahayak-mobile** - Cross-platform mobile app (Flutter, Offline-First)
+1. **sahayakai-main** - Production web app (Next.js 15, Cloud Run). This is the live system.
+2. **sahayakai-flutter** - Cross-platform mobile app (Flutter), offline path scaffolded; not yet GA.
+
+> The production web app runs as a single Next.js service on **Cloud Run** (`sahayakai-hotfix-resilience`, region `asia-southeast1`, project `sahayakai-b4248`), not on Firebase Hosting / Cloud Functions. AI runs server-side via **Genkit** (`googleai` plugin) calling **Google Gemini** (default `gemini-2.5-flash`); there is no Vertex AI "Agent Garden" / A2A protocol in the live code. An optional external **ADK-Python sidecar** exists for select agents, gated off by default via Firestore feature flags.
 
 ---
 
@@ -27,25 +28,25 @@ graph TB
 
     subgraph "Client Applications"
         WEB_MAIN[🌐 sahayakai-main<br/>Next.js 15<br/>Production Web]
-        WEB_REPLICA[🌐 sahayakai-replica<br/>Next.js 15<br/>Feature Development]
-        MOBILE_APP[📱 sahayakai_mobile<br/>Flutter<br/>Cross-Platform]
+        MOBILE_APP[📱 sahayakai-flutter<br/>Flutter<br/>Cross-Platform, in dev]
     end
 
     subgraph "Backend Services - Google Cloud Platform"
+        subgraph "Compute"
+            CLOUDRUN[Cloud Run<br/>sahayakai-hotfix-resilience<br/>Next.js server + API routes]
+        end
         subgraph "Firebase Services"
-            HOSTING[Firebase Hosting<br/>Global CDN]
-            AUTH[Firebase Auth<br/>OTP + OAuth]
+            AUTH[Firebase Auth<br/>OTP + Google OAuth]
             FIRESTORE[Cloud Firestore<br/>NoSQL Database]
             STORAGE[Cloud Storage<br/>Files/Media]
-            FUNCTIONS[Cloud Functions<br/>Serverless API]
         end
         
-        subgraph "AI/ML Services - Agent Garden"
-            AGENT_GARDEN[Agent Garden<br/>Multi-Agent Orchestration]
-            VERTEX_AI[Vertex AI<br/>Enterprise ML Platform]
-            GEMINI_FLASH[Gemini 2.0 Flash<br/>Text/Voice Agents]
-            GEMINI_IMG[Gemini Image Gen<br/>Visual Agents]
-            A2A[A2A Protocol<br/>Agent Communication]
+        subgraph "AI/ML Services"
+            GENKIT[Genkit<br/>googleai plugin]
+            GEMINI_FLASH[Gemini 2.5 Flash<br/>Default text model]
+            GEMINI_PRO[Gemini 2.5 Pro<br/>Assignment grading]
+            GEMINI_IMG[Gemini 3 Pro Image Preview<br/>+ 2.5 Flash Image avatars]
+            SIDECAR[ADK-Python Sidecar<br/>optional, flag-gated off]
         end
     end
 
@@ -55,47 +56,39 @@ graph TB
     end
 
     WEB_USER --> WEB_MAIN
-    WEB_USER --> WEB_REPLICA
     MOBILE_USER --> MOBILE_APP
 
-    WEB_MAIN --> HOSTING
-    WEB_REPLICA --> HOSTING
-    MOBILE_APP --> FUNCTIONS
+    WEB_MAIN --> CLOUDRUN
+    MOBILE_APP --> CLOUDRUN
     
     WEB_MAIN --> AUTH
-    WEB_REPLICA --> AUTH
     MOBILE_APP --> AUTH
 
-    WEB_MAIN --> AGENT_GARDEN
-    WEB_REPLICA --> AGENT_GARDEN
-    FUNCTIONS --> AGENT_GARDEN
+    CLOUDRUN --> GENKIT
+    CLOUDRUN --> SIDECAR
 
-    AGENT_GARDEN --> VERTEX_AI
-    AGENT_GARDEN --> GEMINI_FLASH
-    AGENT_GARDEN --> GEMINI_IMG
-    AGENT_GARDEN --> A2A
+    GENKIT --> GEMINI_FLASH
+    GENKIT --> GEMINI_PRO
+    GENKIT --> GEMINI_IMG
     
-    VERTEX_AI --> GEMINI_FLASH
-    VERTEX_AI --> GEMINI_IMG
-    
-    WEB_MAIN --> FIRESTORE
-    WEB_REPLICA --> FIRESTORE
+    CLOUDRUN --> FIRESTORE
     MOBILE_APP --> FIRESTORE
     
-    FUNCTIONS --> SECRETS
-    AGENT_GARDEN --> SECRETS
+    CLOUDRUN --> SECRETS
 
     style WEB_MAIN fill:#a7d1e8
-    style WEB_REPLICA fill:#a7d1e8
     style MOBILE_APP fill:#ffb347
-    style AGENT_GARDEN fill:#8b5cf6
+    style CLOUDRUN fill:#4285f4
+    style GENKIT fill:#8b5cf6
     style GEMINI_FLASH fill:#4285f4
     style GEMINI_IMG fill:#34a853
 ```
 
 ---
 
-## 2. Web Application Architecture (sahayakai-main & sahayakai-replica)
+## 2. Web Application Architecture (sahayakai-main)
+
+> The "agents" below are Genkit flows in `src/ai/flows/*.ts` invoked through `/api/ai/*` route handlers, plus the VIDYA voice assistant (`/api/assistant`) whose router classifies 11 intents. They are not Vertex AI Agent-Garden agents and do not use an A2A protocol.
 
 ```mermaid
 graph TB
@@ -106,10 +99,10 @@ graph TB
         ACTIONS[Server Actions<br/>Next.js RSC]
     end
 
-    subgraph "Backend - Agent Garden Orchestration"
-        ROUTER[Agent Router<br/>Intent Classification]
+    subgraph "Backend - Genkit Flows + API Routes"
+        ROUTER[VIDYA Intent Router<br/>11 intents]
         
-        subgraph "13 Specialized Agents"
+        subgraph "Genkit Flows (~17)"
             direction TB
             subgraph "Core Content Agents"
                 LESSON[Lesson Plan Agent]
@@ -140,17 +133,17 @@ graph TB
         FIRESTORE_WEB[Firestore Collections]
         subgraph "Collections"
             USERS_COL[users/]
-            PLANS_COL[lesson_plans/]
-            LIBRARY_COL[my_library/]
-            CACHE_COL[cached_content/]
+            CONTENT_COL[content/]
+            LIBRARY_COL[library_resources/]
+            CACHE_COL[cached_lesson_plans/]
         end
         IDB_CACHE[IndexedDB<br/>Offline Cache]
     end
 
-    subgraph "AI Engine - VertexAI"
-        GEMINI_TEXT[Gemini 2.0 Flash<br/>Text Agents]
-        GEMINI_IMAGE[Gemini Image Gen<br/>Visual Agents]
-        A2A_PROTO[A2A Protocol<br/>Agent Communication]
+    subgraph "AI Engine - Genkit + Gemini"
+        GEMINI_TEXT[Gemini 2.5 Flash<br/>Text flows]
+        GEMINI_IMAGE[Gemini 3 Pro Image Preview<br/>+ 2.5 Flash Image<br/>Visual flows]
+        SIDECAR_PROTO[ADK-Python Sidecar<br/>optional, flag-gated]
     end
 
     PAGES --> COMPONENTS
@@ -174,7 +167,7 @@ graph TB
     
     ACTIONS --> FIRESTORE_WEB
     FIRESTORE_WEB --> USERS_COL
-    FIRESTORE_WEB --> PLANS_COL
+    FIRESTORE_WEB --> CONTENT_COL
     FIRESTORE_WEB --> LIBRARY_COL
     FIRESTORE_WEB --> CACHE_COL
     
@@ -185,7 +178,7 @@ graph TB
     style LESSON fill:#4caf50
     style GEMINI_TEXT fill:#4285f4
     style GEMINI_IMAGE fill:#34a853
-    style A2A_PROTO fill:#fbbc04
+    style SIDECAR_PROTO fill:#fbbc04
 ```
 
 ---
@@ -238,8 +231,8 @@ graph TB
     end
 
     subgraph "Backend APIs"
-        CLOUD_FUNC[Cloud Functions<br/>HTTP Endpoints]
-        AGENT_API[Agent Garden API<br/>13 Specialized Agents]
+        CLOUD_FUNC[Cloud Run<br/>Next.js /api/* endpoints]
+        AGENT_API[Genkit Flows<br/>~17 AI flows + VIDYA]
     end
 
     WIZARD --> SCREENS
@@ -309,7 +302,7 @@ sequenceDiagram
     Gemini-->>Genkit: Generated content (MD)
     
     Genkit-->>Action: LessonPlanOutput
-    Action->>DB: Save to my_library/
+    Action->>DB: Save to content/ (or library_resources/)
     Action-->>UI: Return content
     
     UI->>User: Display Lesson Plan
@@ -353,19 +346,19 @@ sequenceDiagram
 
 ## 5. Technology Stack Comparison
 
-| Component | Web (Main/Replica) | Mobile (Flutter) |
+| Component | Web (Main) | Mobile (Flutter, in dev) |
 |-----------|-------------------|------------------|
 | **Framework** | Next.js 15 | Flutter 3.x |
 | **Language** | TypeScript | Dart |
 | **UI Library** | Shadcn/UI + Radix | Material 3 + Studio System |
-| **State Management** | React Server Components | Riverpod 2.0 |
+| **State Management** | React Server Components + hooks | Riverpod 2.0 |
 | **Routing** | App Router | Named Routes (Flutter) |
 | **Local DB** | IndexedDB (via idb) | Isar (NoSQL) |
 | **Networking** | Fetch API | Dio |
-| **AI Orchestration** | Agent Router + VertexAI | Cloud Functions → Agent Garden |
-| **AI Models** | Gemini 2.0 Flash + Image Gen | Same (via API) |
-| **Agent Count** | 13 specialized agents | Same agents via REST API |
-| **Auth** | Firebase Auth (Web SDK) | Firebase Auth (Flutter SDK) |
+| **AI Orchestration** | Genkit flows via `/api/ai/*` (+ optional ADK-Python sidecar) | Calls same web API endpoints |
+| **AI Models** | Gemini 2.5 Flash (default); 2.5 Pro grading; 3 Pro Image Preview + 2.5 Flash Image | Same (via API) |
+| **Agent Count** | ~17 Genkit flows + VIDYA voice assistant | Same flows via REST API |
+| **Auth** | Firebase Auth (ID token verified in middleware) | Firebase Auth (Flutter SDK) |
 | **Styling** | Tailwind CSS | 6-Layer Token System (JSON) |
 | **Offline** | Service Worker (PWA) + IndexedDB | Native Offline-First + Isar |
 | **Voice** | MediaRecorder API | flutter_sound |
@@ -383,12 +376,12 @@ graph LR
     end
 
     subgraph "CI/CD"
-        BUILD[GitHub Actions<br/>Automated Workflow]
+        BUILD[Cloud Build trigger<br/>sahayakai-main-deploy<br/>on push to main]
     end
 
     subgraph "Deployment Targets"
         subgraph "Web"
-            FIREBASE_HOST[Firebase Hosting<br/>CDN Distribution]
+            CLOUDRUN_DEP[Cloud Run<br/>sahayakai-hotfix-resilience<br/>--no-traffic revision]
         end
         
         subgraph "Mobile"
@@ -398,14 +391,16 @@ graph LR
     end
 
     DEV_CODE --> BUILD
-    BUILD --> FIREBASE_HOST
+    BUILD --> CLOUDRUN_DEP
     BUILD --> ANDROID
     BUILD --> IOS
 
-    style FIREBASE_HOST fill:#ffa726
+    style CLOUDRUN_DEP fill:#ffa726
     style ANDROID fill:#4caf50
     style IOS fill:#2196f3
 ```
+
+> New Cloud Run revisions are built with `--no-traffic`; an operator flips traffic via `gcloud run services update-traffic ... --to-latest` after `./scripts/audit-deployments.sh` passes. There is no auto-route on deploy.
 
 ---
 
@@ -451,13 +446,14 @@ graph TB
 
 ## 8. Key Architectural Decisions
 
-### 8.1 Why Three Separate Codebases?
+### 8.1 Why Separate Codebases?
 
 | Aspect | Rationale |
 |--------|-----------|
-| **sahayakai-main** | Stable production version with proven features |
-| **sahayakai-replica** | Feature experimentation without affecting prod |
-| **sahayakai_mobile** | Native mobile UX, offline-first requirements |
+| **sahayakai-main** | The live production web app (Next.js on Cloud Run) |
+| **sahayakai-flutter** | Native mobile UX and offline-first requirements (in development) |
+| **sahayakai-voice-call** | Standalone streaming voicebot service for the Exotel parent-call path |
+| **sahayakai-agents** | External ADK-Python sidecar for select agents (flag-gated off by default) |
 
 ### 8.2 Offline Strategy
 
@@ -494,7 +490,7 @@ graph TB
 
     subgraph "Scaling Strategies"
         CACHING[Aggressive Caching<br/>Redis/Firestore]
-        CDN[Multi-Region CDN<br/>Firebase Hosting]
+        CDN[CDN / Edge Caching<br/>in front of Cloud Run]
         ASYNC[Async Processing<br/>Cloud Tasks]
         SHARDING[Database Sharding<br/>By State/District]
     end
@@ -517,12 +513,14 @@ graph TB
 |-------------|---------|----------------|
 | **Web ↔ Mobile** | Shared user accounts | Firebase Auth sync |
 | **Web ↔ Firestore** | Real-time data sync | Firebase SDK |
-| **Mobile ↔ Cloud Functions** | AI generation API | REST endpoints |
-| **Genkit ↔ Gemini** | LLM inference | Vertex AI SDK |
+| **Mobile ↔ Web API** | AI generation API | `/api/ai/*` REST endpoints on Cloud Run |
+| **Genkit ↔ Gemini** | LLM inference | `@genkit-ai/googleai` plugin (Gemini API key pool) |
+| **App ↔ ADK-Python sidecar** | Optional agent dispatch | App Check + HMAC-signed calls (flag-gated) |
+| **App ↔ Telephony** | Parent calls | Twilio REST (default) / Exotel (opt-in) |
 | **All ↔ Secret Manager** | API key management | GCP SDK |
 
 ---
 
-**Document Status:** ✅ Complete  
-**Last Updated:** 2026-01-27  
+**Document Status:** ✅ Current  
+**Last Updated:** 2026-06-10  
 **Maintained By:** Engineering Team

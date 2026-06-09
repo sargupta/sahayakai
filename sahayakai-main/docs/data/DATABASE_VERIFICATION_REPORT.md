@@ -1,5 +1,7 @@
 # Database Verification & Architecture Report (TeacherConnect)
 
+**Last updated:** 2026-06-10 (re-verified against `src/`).
+
 ## 1. Login & Identity Mechanism
 - **Auth Provider**: Firebase Authentication (Google OAuth).
 - **Session Management**: Client-side Firebase SDK (`onAuthStateChanged`) for real-time UI updates, supplemented by Server Actions for secure database writes.
@@ -19,10 +21,10 @@ We use a hybrid approach to balance speed and professional integrity:
 All data is linked via the `userId` / `authorId` / `fid` (Firebase ID).
 
 ### A. Firestore (NoSQL)
-- **`users/{uid}`**: Primary profile. (Mapped to UI in `/my-profile`)
+- **`users/{uid}`**: Primary profile (`UserProfile`). (Mapped to UI in `/my-profile`). Note: the profile collection is `users`, not `profiles`.
 - **`posts/{postId}`**: `authorId` links back to `users`. (Mapped to UI in `/community`)
-- **`library_resources/{id}`**: `authorId` links to `users`.
-- **`connections/{follower_following}`**: Tracks teacher-to-teacher follows.
+- **`library_resources/{id}`**: `authorId` links to `users`. Download/like/save counts live as `stats.{downloads,likes,saves}` fields on the resource doc (verified `trackDownloadAction`, `src/app/actions/community.ts:304`), NOT in a `stats/downloads` subcollection.
+- **`connections/{pairId}`**: mutual teacher-to-teacher connections. Correction: docId is the sorted `{uid1}_{uid2}` pair and the doc shape is `{ uids: [uid1, uid2], initiatedBy, connectedAt }` (`Connection`, `src/types/index.ts:419`), NOT a `followerId`/`followingId` pair. Pending requests live in `connection_requests/{fromUid}_{toUid}`.
 
 ### B. Cloud SQL (Relational)
 - **`certifications` table**:
@@ -33,8 +35,8 @@ All data is linked via the `userId` / `authorId` / `fid` (Firebase ID).
 - **Profile Page**: Aggregates Firestore `user` data and Cloud SQL `certifications` using the `getProfileData` server action.
 - **Community Feed**: `getPosts` fetches global/following posts. Each card dynamically identifies the teacher via `post.authorId`.
 - **Download Engine**: 
-  - Logged in `library_resources/{id}/stats/downloads`.
-  - Triggered via `trackDownloadAction` which also publishes a Pub/Sub event for background analytics/reporting.
+  - Increments the `stats.downloads` field on `library_resources/{id}` inside a transaction (`trackDownloadAction`, `src/app/actions/community.ts`).
+  - TODO(verify: whether download tracking still publishes a Pub/Sub event). The only live Pub/Sub topic in code is `sahayakai-storage-cleanup` (`src/lib/pubsub.ts`).
 
 ## 5. Data Adaptability & Updates
 - **Update Mechanism**: `updateProfileAction` (Server Action) uses `dbAdapter.updateUser` to perform merged updates in Firestore.

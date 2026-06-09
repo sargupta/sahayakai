@@ -1,6 +1,9 @@
 # Server Actions: Messages
 
 **File:** `src/app/actions/messages.ts`
+**Verified:** 2026-06-10
+
+Identity from the `x-user-id` header. Sender name/photo are fetched server-side, never trusted from the client.
 
 ---
 
@@ -44,7 +47,7 @@ Sends a message. Atomic transaction for unread count update.
 
 ```
 1. Auth check (senderId = x-user-id)
-2. Fetch sender profile (displayName, photoURL) — server-side, never trust client
+2. Fetch sender profile (displayName, photoURL) - server-side, never trust client
 3. Build message payload:
    - type: 'text' | 'resource' | 'audio'
    - text, senderId, senderName, senderPhotoURL
@@ -89,4 +92,10 @@ Returns total unread count across all conversations.
 3. Return total
 ```
 
-Used by AppSidebar for the Messages badge (but sidebar uses a real-time listener, not this action).
+Used by AppSidebar for the Messages badge (but the sidebar uses a real-time listener, not this action).
+
+---
+
+## acknowledgeDeliveryAction(...)
+
+Marks a message as delivered to the caller (updates the message `deliveryStatus`/`deliveredTo`), supporting the client message-outbox + delivery-receipt flow.

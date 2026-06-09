@@ -1,6 +1,8 @@
 # Selector Components
 
-Shared form input components used across all AI tool pages.
+_Last verified against source: 2026-06-10._
+
+Shared form input components used across AI tool pages. All live directly under `src/components/` (not a `shared/` subfolder). All are `"use client"` and resolve display labels through the global `useLanguage()` / `t()` dictionary (Wave 6 cleanup removed each component's local per-language translation maps in favour of the global dictionary with full 11-language coverage).
 
 ---
 
@@ -8,13 +10,13 @@ Shared form input components used across all AI tool pages.
 
 **File:** `src/components/language-selector.tsx`
 
-**Props:** `{ value: Language, onChange: (lang: Language) => void, disabled?: boolean }`
+**Props:** `{ onValueChange: (value: string) => void, defaultValue?: string, value?: string }`
 
-**Languages:** English, Hindi, Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Punjabi, Malayalam, Odia
+**Options:** an `"all"` ("All Languages") sentinel plus en, hi, bn, te, mr, ta, gu, pa, ml, or, kn. Each option label shows the native script alongside the English name (e.g. `हिंदी (Hindi)`, `বাংলা (Bengali)`).
 
-**Rendered as:** Shadcn `Select` dropdown. Shows language name in its own script (e.g., "हिन्दी", "বাংলা") alongside English name.
+**Rendered as:** Shadcn `Select`. Trigger styled `bg-card/50 backdrop-blur-sm`. Placeholder `t("Select a language")`.
 
-**Default:** Reads from `useLanguage()` context if no value prop — initializes to user's preferred language.
+**Default handling:** if `defaultValue` is not one of the known option values it falls back to `"all"`.
 
 ---
 
@@ -22,15 +24,15 @@ Shared form input components used across all AI tool pages.
 
 **File:** `src/components/grade-level-selector.tsx`
 
-**Props:** `{ value: GradeLevel | GradeLevel[], onChange, multiple?: boolean, disabled?: boolean }`
+**Props:** `{ onValueChange: (value: string[]) => void, value?: string[], language?: string (legacy, unused), isMulti?: boolean (default true), defaultValue?: string[] }`
 
-**Grades:** Nursery, LKG, UKG, Class 1–12
+**Grades:** `GRADE_KEYS` = "Class 1" … "Class 12" (English keys; labels via `t()`). No Nursery/LKG/UKG.
 
 **Modes:**
-- Single select (default): standard `Select` dropdown
-- Multi-select: checkbox popover showing all grades
+- `isMulti === false`: a single Shadcn `Select` (value is `value[0]`).
+- `isMulti` (default): a `DropdownMenu` of `DropdownMenuCheckboxItem`s (`onSelect` preventDefault to keep menu open). Trigger shows a count summary, e.g. `3 classes selected` / `1 class selected` / `Select Class(es)`.
 
-**Translations:** Grade labels translated for each of the 11 supported languages. E.g., "Class 5" → "कक्षा 5" (Hindi) → "ক্লাস 5" (Bengali).
+Styling uses theme tokens (`bg-card`, `border-border`, `shadow-soft`, `text-primary`), not hardcoded colors.
 
 ---
 
@@ -38,15 +40,9 @@ Shared form input components used across all AI tool pages.
 
 **File:** `src/components/subject-selector.tsx`
 
-**Props:** `{ value: Subject | Subject[], onChange, multiple?: boolean, disabled?: boolean }`
+**Props:** `{ onValueChange: (value: string) => void, value?: string, language?: string (legacy, unused) }`
 
-**Subjects:** Mathematics, Science, Social Science, History, Geography, Civics, English, Hindi, Sanskrit, Kannada, Computer Science, EVS
-
-**Modes:**
-- Single select: `Select` dropdown
-- Multi-select: checkbox popover
-
-**Translations:** Subject names translated for all 11 languages.
+**Subjects:** iterates the `SUBJECTS` constant from `@/types` (single source of truth - do not hardcode the list here). Single-select Shadcn `Select`; labels via `t()`.
 
 ---
 
@@ -54,11 +50,14 @@ Shared form input components used across all AI tool pages.
 
 **File:** `src/components/difficulty-selector.tsx`
 
-**Props:** `{ value: 'remedial' | 'standard' | 'advanced', onChange, disabled?: boolean }`
+**Props:** `{ value: DifficultyLevel, onValueChange: (value: DifficultyLevel) => void, className?: string }` where `DifficultyLevel = 'remedial' | 'standard' | 'advanced'`.
 
-**Options:** Remedial (SignalLow icon), Standard (Signal icon), Advanced (SignalHigh icon)
+**Options (with label key + icon + color):**
+- remedial - "Remedial (Support)" - `SignalLow` - `text-green-600`
+- standard - "Standard (Class Level)" - `SignalMedium` - `text-blue-600`
+- advanced - "Advanced (Extension)" - `SignalHigh` - `text-purple-600`
 
-**Rendered as:** 3-button toggle row. Active button: orange-500. Inactive: outline.
+**Rendered as:** a labelled Shadcn `Select` (header row: `Signal` icon + `t("Difficulty Level")`), NOT a 3-button toggle row. Each item shows its icon + translated label.
 
 ---
 
@@ -66,29 +65,17 @@ Shared form input components used across all AI tool pages.
 
 **File:** `src/components/ncert-chapter-selector.tsx`
 
-**Props:** `{ gradeLevel: GradeLevel, subject: Subject, value: NCERTChapter | null, onChange }`
+**Props:** `{ onChapterSelect: (chapter: NCERTChapter | null) => void, selectedGrade?: number, className?: string }`
 
 **Behavior:**
-1. On grade/subject change: calls server action to fetch NCERT chapters
-2. Falls back to bundled local data if server action fails
-3. Shows chapter title, learning outcomes, keywords
+1. Two-step: subject `Select` then chapter `Select`. Subject options come from a grade-aware local `getSubjectsForGrade(grade)` (e.g. Physics/Chemistry/Biology only at grade ≥ 11; Science at 6–10; EVS at 3–5; Social Studies and Sanskrit at 6–10; IT at 9–10; plus languages at all grades).
+2. On subject/grade change it fetches both static (`getChaptersForGrade` from `@/data/ncert`) and server (`getNCERTChapters` server action from `@/app/actions/ncert`, Firestore-backed) chapter lists, and uses whichever has MORE chapters (Firestore may be partially seeded). On error it falls back to static data.
+3. Changing `selectedGrade` resets subject/chapter selection.
 
-**Data:** Chapters stored as JSON in project (not fetched from external API). Server action may add extra metadata.
-
-**UI:** Two-step picker:
-1. Chapter list dropdown
-2. After selection: shows learning outcomes + keywords as info chips
+**Chapter detail panel (after selection):** textbook name + edition badge ("NCF 2023" / "Rationalized"), learning outcomes list, keyword badges, and estimated periods (`Clock`). Labels via `t()`.
 
 ---
 
 ## Usage Pattern in AI Tool Pages
 
-All AI tool pages use the same selector composition:
-
-```tsx
-<LanguageSelector value={language} onChange={setLanguage} />
-<GradeLevelSelector value={gradeLevel} onChange={setGradeLevel} />
-<SubjectSelector value={subject} onChange={setSubject} />
-```
-
-These are always in this order, always at the top of the form.
+Selectors are composed near the top of each tool form. Exact prop names differ from the legacy doc - note `onValueChange` (not `onChange`) on the simple selectors and `onChapterSelect` / `selectedGrade` on the NCERT selector.

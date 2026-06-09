@@ -1,5 +1,12 @@
-# Challenging Questions for SahayakAI (Rural India Context)
-**Current Score: 91% (Target: 95%)**These questions help ensure SahayakAI works in REAL-WORLD conditions, not just ideal scenarios. Each question represents an actual challenge faced by teachers in India.
+# Challenging Questions for SahayakAI (Indian Classroom Context)
+
+**Last updated:** 2026-06-10
+
+**Current self-assessment score:** `TODO(verify: challenging-questions self-assessment score)` (the previously stated 91% was an unverified self-rating).
+
+> Framing note: these questions stress-test low-resource classroom conditions, one important segment. SahayakAI serves all school types.
+
+These questions help ensure SahayakAI works in REAL-WORLD conditions, not just ideal scenarios. Each question represents an actual challenge faced by teachers in India.
 
 ---
 
@@ -264,7 +271,7 @@ For each question:
 - ❌ **No** = 0 points (Doesn't address)
 - ❓ **Unknown** = 0 points (Needs testing)
 
-**Current Score:** ~74/84 (88%)
+**Current Score:** `TODO(verify: challenging-questions self-assessment score)`
 **Target Score:** 80+/84 (95%+)
 
 ---
@@ -305,4 +312,4 @@ X. **"[Question from teacher's perspective]"**
 
 **Remember:** If we can answer "Yes" to most of these questions, SahayakAI will be truly useful for rural Indian teachers, not just a nice demo.
 
-*Last Updated: 2025-12-08*
+*Last Updated: 2026-06-10*

@@ -1,13 +1,14 @@
-# API Playground — /api-playground
+# API Playground - /api-playground
 
 **File:** `src/app/api-playground/page.tsx`
-**Auth:** Not required
+**Auth:** Not required at the page level (note: `/api-playground` is NOT on the middleware public allowlist, so it is treated like any page)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Interactive testing interface for all major API endpoints. Unlike API Docs (which uses SwaggerUI), this is a custom built UI with pre-configured test buttons for quick testing without needing to set up request headers manually.
+Custom (non-Swagger) interface for browsing per-feature YAML API specs and firing a few live test calls. Unlike `/api-docs` (SwaggerUI), this is a hand-built UI.
 
 ---
 
@@ -28,22 +29,20 @@ ApiPlaygroundPage
 
 ---
 
-## 14 Pre-configured Endpoint Specs
+## 14 Spec Entries (`specs` map, each points to a YAML file)
 
-1. POST /api/ai/instant-answer
-2. POST /api/ai/lesson-plan
-3. POST /api/ai/quiz
-4. POST /api/ai/rubric
-5. POST /api/ai/worksheet
-6. POST /api/ai/visual-aid
-7. POST /api/ai/teacher-training
-8. POST /api/ai/video-storyteller
-9. POST /api/ai/virtual-field-trip
-10. POST /api/ai/voice-to-text
-11. POST /api/assistant
-12. GET /api/analytics/teacher-health/[userId]
-13. GET /api/auth/profile-check
-14. GET /api/health
+`analytics` (Teacher Analytics), `auth-user` (Auth & User), `assistant` (Voice Assistant), `lesson-plan`, `quiz`, `worksheet`, `visual-aid`, `instant-answer`, `rubric`, `teacher-training`, `virtual-field-trip`, `intent` (Intent Router), `content` (Content Management), `system` (System Health).
+
+These are selectable spec descriptors. Default `selectedSpec` is `analytics`.
+
+---
+
+## Live Test Buttons
+
+The page wires three real fetch helpers (not a generic JSON request editor):
+- `testTeacherHealth()` → `GET /api/analytics/teacher-health/{userId}`
+- `testProfileCheck()` → `GET /api/auth/profile-check?uid={userId}`
+- `testSystemHealth()` → `GET /api/health`
 
 ---
 
@@ -51,17 +50,16 @@ ApiPlaygroundPage
 
 | State | Type | Purpose |
 |---|---|---|
-| `selectedSpec` | `string` | Active endpoint |
-| `requestBody` | `string` | Editable JSON |
-| `response` | `object \| null` | Last response |
+| `selectedSpec` | `string` | Active spec key (default `analytics`) |
+| `userId` | `string` | Input for the test calls |
+| `email` | `string` | Optional input |
+| `response` | `{ status, data } \| null` | Last response |
 | `loading` | `boolean` | Request in flight |
-| `status` | `number \| null` | HTTP status code |
+| `error` | `string` | Error message |
 
 ---
 
 ## Design
 
-- Two-panel layout: spec list (left) + editor/response (right)
-- JSON editor: monospace font, syntax-highlighted textarea
-- Response panel: color-coded status (green=2xx, red=4xx/5xx)
-- Quick test button: fires real HTTP request to local server
+- Lucide icons (Wrench, Rocket, etc.); response panel shows `{ status, data }`.
+- Inputs validate that a User ID is present before firing the analytics/profile tests.

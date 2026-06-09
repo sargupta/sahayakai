@@ -1,6 +1,14 @@
 # Project Snapshot
 
-This document contains a snapshot of all the files in the project. It can be used as a reference to regenerate the project to its current state.
+**Last updated:** 2026-06-10
+
+> STALE SNAPSHOT WARNING: the file contents reproduced below are from an early scaffold and no longer reflect the live codebase. Do NOT treat this as "current state." Known divergences from production:
+> - `src/ai/genkit.ts` shows `gemini-2.0-flash`; the live default is `googleai/gemini-2.5-flash` (2.0-flash was deliberately removed).
+> - `package.json` shown is the early scaffold (`next 15.3.3`, genkit `^1.14.1`); the live tree uses Next `^15.5.11` and Genkit `^1.28.0`, plus `firebase-admin`, `razorpay`, and many more deps.
+> - The app is deployed on Google Cloud Run, not Firebase Hosting; there are ~17 AI flows plus VIDYA, not the two shown here.
+> For authoritative technical facts see `docs/architecture/SOLUTION_ARCHITECTURE.md` and `docs/reference/reproduction-notes/ARCHITECTURE.md`. The snapshot is retained only as a historical scaffold reference.
+
+This document contains an early snapshot of project files. It is historical and not suitable for regenerating the current project.
 
 ## Files
 

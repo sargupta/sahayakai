@@ -1,41 +1,63 @@
 # Server Actions: Community
 
 **File:** `src/app/actions/community.ts`
+**Verified:** 2026-06-10
 
-All actions read `x-user-id` from request headers (injected by middleware). Never trust client-supplied identity.
-
----
-
-## createPostAction(content, imageUrl?)
-
-Creates a post in `community` collection.
-
-```
-1. Auth check (x-user-id)
-2. Validate: content min 5 chars, max 500
-3. Rate limit check
-4. Write to community/{docId}: { content, imageUrl, authorId, authorName, authorPhotoURL, createdAt }
-5. Publish analytics event
-6. aggregateUserMetrics() fire-and-forget
-7. revalidatePath('/community')
-```
+All actions resolve the caller's uid from the middleware-injected `x-user-id` header. Never trust client-supplied identity. Most actions take no userId argument (or ignore a passed one).
 
 ---
 
-## followTeacherAction(followerId, followedId)
+## createPostAction(content, visibility = 'public', imageUrl?)
 
-Toggle follow. Idempotent.
+Creates a doc in the `posts` collection (NOTE: `posts`, not `community_posts`).
 
 ```
-If already following → delete follows/{followerId_followedId} doc
-If not following → create doc + createNotification(FOLLOW, followedId)
+1. caller = x-user-id
+2. Validate content length; rate limit check
+3. Fetch author profile server-side (name/photo never trusted from client)
+4. Write posts/{docId} with { content, visibility, imageUrl?, authorId, ..., createdAt }
+5. revalidatePath('/community')
 ```
+
+## getProfilesAction(uids)
+
+Batch-fetch sanitized public profiles for a list of UIDs (used to hydrate post/teacher cards).
+
+## getPosts(filters?)
+
+Reads `posts` with optional `{ language, limit, gradeLevels, subjects }` filters.
+
+## getFollowingPosts()
+
+Posts authored by users the caller follows.
 
 ---
 
-## getFollowingIdsAction(userId)
+## toggleLikeAction(postId)
 
-Returns `string[]` of UIDs that `userId` follows. Simple Firestore query on `follows` collection.
+Toggle a like on a `community_posts` doc for the authenticated caller (atomic).
+
+---
+
+## followTeacherAction(followingId)
+
+Toggle follow for the authenticated caller. Idempotent. Rejects self-follow.
+
+```
+followerId = x-user-id
+docId = `${followerId}_${followingId}`   // DIRECTIONAL, not sorted
+Writes to the `connections` collection: { followingId, ... }
+On new follow → createNotification(FOLLOW, followingId)
+Invalidates the caller's cached recommendations.
+```
+
+NOTE: follow docs are stored in the `connections` collection with a directional `${follower}_${following}` id and a `followingId` field. This is distinct from the mutual-connection docs created by `connections.ts` (which use a SORTED pairId and a `uids` array). Both share the collection name; they are differentiated by their fields.
+
+---
+
+## getFollowingIdsAction()
+
+Returns `string[]` of UIDs the authenticated caller follows - queries `connections` for the caller's follow docs and maps `data().followingId`. No argument.
 
 ---
 
@@ -44,7 +66,7 @@ Returns `string[]` of UIDs that `userId` follows. Simple Firestore query on `fol
 Fetches public resources for community page.
 
 ```
-- If no filters: orderBy("stats.likes", "desc") — trending first
+- If no filters: orderBy("stats.likes", "desc") - trending first
 - If filters: in-memory sort (Firestore can't combine where + orderBy on different fields without composite index)
 - Returns max 100 items
 - Sanitized output (no internal fields)

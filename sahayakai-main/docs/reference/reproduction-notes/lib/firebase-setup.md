@@ -1,88 +1,73 @@
 # Lib: Firebase Setup
 
+**Verified:** 2026-06-10
+
 ---
 
-## Client SDK — src/lib/firebase.ts
+## Client SDK - src/lib/firebase.ts
 
 Initializes Firebase for browser use.
 
 ```ts
-// Config from env vars (NEXT_PUBLIC_FIREBASE_*)
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);  // config from NEXT_PUBLIC_FIREBASE_* env
 
-// Firestore with offline persistence
+// Firestore with persistent multi-tab IndexedDB cache
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()  // multi-tab support
-  })
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
 
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-export { app, db, auth, storage };
+export { app, db, auth, storage, rtdb };
 ```
 
-**Key:** Uses `initializeFirestore` (not `getFirestore`) to enable persistent IndexedDB caching. Multi-tab manager prevents cache conflicts when app is open in multiple tabs.
+Notes:
+- Uses `initializeFirestore` (not `getFirestore`) to enable persistent IndexedDB caching with multi-tab support.
+- `authDomain` defaults to `www.sahayakai.com` (`process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "www.sahayakai.com"`) so the auth cookie shares the app's eTLD+1.
+- Also exports `rtdb` (Realtime Database handle) alongside Firestore.
 
 ---
 
-## Admin SDK — src/lib/firebase-admin.ts
+## Admin SDK - src/lib/firebase-admin.ts
 
-Lazy-initialized server-side Admin SDK. Handles secret retrieval.
-
-### Initialization Pattern
-
-```ts
-let firebasePromise: Promise<void> | null = null;
-
-async function initializeFirebase(): Promise<void> {
-  if (firebasePromise) return firebasePromise;
-  firebasePromise = _init().catch(err => {
-    firebasePromise = null;  // allow retry on failure
-    throw err;
-  });
-  return firebasePromise;
-}
-
-async function _init() {
-  // Try env var first
-  let serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-  // Fallback: fetch from Google Secret Manager
-  if (!serviceAccount) {
-    serviceAccount = await fetchFromSecretManager();
-  }
-
-  initializeApp({ credential: cert(JSON.parse(serviceAccount)) });
-}
-```
+Lazy-initialized server-side Admin SDK. Caches the init promise; on failure it clears the cache so a later call can retry.
 
 ### Exported Functions (all async)
 
 ```ts
-export async function getDb(): Promise<Firestore>
-export async function getAuthInstance(): Promise<Auth>
-export async function getStorageInstance(): Promise<Storage>
+export async function initializeFirebase(): Promise<void>
+export async function getDb()              // Firestore
+export async function getAuthInstance()    // Admin Auth
+export async function getStorageInstance() // Admin Storage
 ```
 
-Always `await getDb()` before using Firestore in server actions. Never import `admin` directly from a server action — use these functions.
+Always `await getDb()` (etc.) before use in a server action. Never import `firebase-admin` directly from an action - go through these helpers. Service-account credentials come from `FIREBASE_SERVICE_ACCOUNT_KEY` env, falling back to Google Secret Manager when the env var is absent.
 
 ---
 
-## Auth Utils — src/lib/auth-utils.ts
+## Auth Token Helpers - src/lib/get-auth-token.ts
 
-Client-side auth utilities.
+Client-side ID-token helpers (NOT in `auth-utils.ts`):
 
 ```ts
-// Get current user's ID token (refreshes if needed)
-export async function getIdToken(): Promise<string | null>
-
-// Set token in cookie
-export function setAuthCookie(token: string): void
-
-// Clear auth cookie on signout
-export function clearAuthCookie(): void
+export async function getAuthToken(): Promise<string | null>      // auth.currentUser.getIdToken(), try/catch
+export async function forceTokenRefresh(): Promise<string | null> // getIdToken(true)
 ```
 
-Token cookie name: `auth-token`. Secure, HttpOnly, SameSite=Strict in production.
+The ID token is attached as `Authorization: Bearer` on API calls and mirrored into the `auth-token` cookie for page/server-action requests.
+
+---
+
+## Admin Check Utils - src/lib/auth-utils.ts
+
+`auth-utils.ts` is the admin-authorization helper (it does NOT mint/clear cookies):
+
+```ts
+export async function isAdmin(userId: string): Promise<boolean>
+export async function validateAdmin(userId: string): Promise<void>  // throws if not admin
+```
+
+Used by admin routes/actions (cost + log dashboards).

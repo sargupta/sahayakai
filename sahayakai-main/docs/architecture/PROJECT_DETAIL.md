@@ -1,44 +1,45 @@
 # SahayakAI: Project Detail & Technical Reference
 
-**Version:** 2.0
-**Date:** 2026-02-16
+**Version:** 2.1
+**Last Updated:** 2026-06-10
 **Repository:** `sahayakai-main`
 
 ---
 
 ## 1. Project Overview
-**SahayakAI** is a specialized, AI-powered teaching assistant built for the Indian education ecosystem. It addresses the unique challenges of rural teachers—connectivity issues, language barriers, and lack of resources—by providing a voice-first, culturally aware, and offline-capable PWA.
+**SahayakAI** is a specialized, AI-powered teaching assistant built for the Indian education ecosystem. It serves teachers across all school types (government, private, and chain), addressing connectivity constraints, language barriers, and resource gaps with a voice-first, culturally aware PWA.
 
 ### Core Philosophy
-*   **Bharat First:** All content (names, examples, currency, geography) is localized to rural India.
-*   **Offline Resilience:** "Hybrid Offline" architecture ensures functionality in low-connectivity zones.
+*   **Bharat First:** Content (names, examples, currency, geography) is localized to Indian contexts.
+*   **Offline Resilience:** PWA service-worker caching for the web shell; a Flutter offline path is in development.
 *   **Voice-First:** Designed for non-tech-savvy users, minimizing typing.
 
 ## 2. Technical Architecture
 
 ### 2.1 Technology Stack
-*   **Frontend Framework:** Next.js 15 (App Router, Server Actions)
+*   **Frontend Framework:** Next.js 15 (App Router, React 18)
 *   **Language:** TypeScript
 *   **Styling:** Tailwind CSS + Shadcn/UI (Radix Primitives)
-*   **AI Integration:** Google Genkit + Google Vertex AI SDK
-*   **LLM Model:** Google Gemini 2.0 Flash (Optimized for speed/cost)
-*   **Backend Services:** Firebase (Serverless)
-    *   **Auth:** Firebase Authentication
+*   **AI Integration:** Google Genkit (`@genkit-ai/googleai` plugin)
+*   **LLM Models:** Google Gemini. Default text model `gemini-2.5-flash`; `gemini-2.5-pro` (assignment grading); `gemini-3-pro-image-preview` (visual-aid images); `gemini-2.5-flash-image` (avatars). `gemini-2.0-flash` is no longer used.
+*   **Backend Services:** Firebase + GCP
+    *   **Auth:** Firebase Authentication (ID token verified in Next.js middleware via `jose`)
     *   **Database:** Cloud Firestore (NoSQL)
     *   **Storage:** Cloud Storage for Firebase
-    *   **Compute:** Cloud Functions for Firebase
-*   **Hosting:** Firebase App Hosting (Global CDN)
-*   **CI/CD:** GitHub Actions
+    *   **Compute:** Single Next.js server (API route handlers) on Cloud Run, service `sahayakai-hotfix-resilience`, region `asia-southeast1`, project `sahayakai-b4248`
+*   **Payments:** Razorpay (HMAC-verified webhooks at `/api/webhooks/razorpay`)
+*   **Telephony:** Twilio REST (default) or Exotel (opt-in via `VOICE_PROVIDER`) for parent attendance calls
+*   **CI/CD:** Cloud Build trigger `sahayakai-main-deploy` on push to `main` (builds a `--no-traffic` Cloud Run revision)
 
 ### 2.2 Application Architecture
-The application follows a **Serverless, Event-Driven Architecture**:
+The application runs as a single Next.js server on Cloud Run; AI work happens in server-side Genkit flows behind `/api/ai/*` route handlers:
 1.  **User Input:** Teacher speaks or types a topic (e.g., "The Monsoon").
 2.  **Voice Processing:**
-    *   Audio is captured via the browser MediaRecorder API (Data URI).
-    *   Sent to a Server Action `voiceToText` (Genkit flow).
-    *   Transcribed using Gemini 2.0 Flash multimodal capabilities.
+    *   Audio is captured via the browser MediaRecorder API.
+    *   Sent to `/api/ai/voice-to-text` (the `voice-to-text` flow).
+    *   Transcribed via Sarvam AI (Saaras) as the primary STT path for Indian languages, with Gemini 2.5 Flash as fallback (e.g., for webm/opus).
 3.  **Content Generation:**
-    *   Transcribed text + Context (Language, Location) is sent to the appropriate Genkit flow (e.g., `lessonPlanFlow`, `rubricGeneratorFlow`).
+    *   Transcribed text + context (language, location) is sent to the appropriate Genkit flow (e.g., `lessonPlanFlow`, `rubricGeneratorFlow`) via its API route.
     *   **Genkit Flow:**
         *   Validates input via Zod schema.
         *   Constructs a prompt with "Indian Rural Context" injection.
@@ -83,8 +84,8 @@ The application follows a **Serverless, Event-Driven Architecture**:
 *   **Future:** `IndexedDB` implementation for storing generated content ("Store & Forward").
 
 ### 3.5 Multilingual Support
-*   **Languages:** English, Hindi, Bengali, Telugu, Marathi, Tamil, Gujarati, Kannada.
-*   **Implementation:** `LanguageSelector` passes language codes to the AI prompt.
+*   **Languages:** 11 Indic languages: Hindi, English, Bengali, Tamil, Kannada, Malayalam, Gujarati, Punjabi, Telugu, Marathi, plus Odia (TTS falls back phonetically for Odia).
+*   **Implementation:** Language context passes language codes to the AI prompt; TTS uses Google Cloud TTS (Neural2 > Wavenet > Standard tiers) and Sarvam AI.
 
 ## 4. Development Roadmap
 
@@ -114,7 +115,7 @@ The application follows a **Serverless, Event-Driven Architecture**:
 ### Prerequisites
 *   Node.js v20+
 *   Firebase CLI
-*   Google Cloud Project (with Vertex AI API enabled)
+*   Google Cloud Project with a Gemini API key (set via Secret Manager `GOOGLE_GENAI_API_KEY` in prod; `.env.local` for dev)
 
 ### Local Development
 ```bash
@@ -130,8 +131,12 @@ npm run dev
 ```
 
 ### Deployment
-Deployment to production is handled automatically by a GitHub Actions workflow. Pushing changes to the `main` branch will trigger the deployment process.
+A Cloud Build trigger (`sahayakai-main-deploy`) fires on push to `main` and builds a Cloud Run revision with `--no-traffic`. Traffic is flipped manually after `./scripts/audit-deployments.sh` passes:
+```bash
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region=asia-southeast1 --project=sahayakai-b4248 --to-latest
+```
+Never run raw `gcloud run deploy`; use `scripts/safe-deploy.sh` as the guarded fallback. See `AGENTS.md` and `docs/architecture/SOLUTION_ARCHITECTURE.md`.
 
 ---
-**Approved By:** Engineering Lead
-**Reference:** `PROJECT_SNAPSHOT.md`, `STRATEGIC_REVIEW.md`, `GEMINI.md`
+**Reference:** `docs/architecture/SOLUTION_ARCHITECTURE.md`, `AGENTS.md`, `gemini.md`, `docs/reference/reproduction-notes/ARCHITECTURE.md`

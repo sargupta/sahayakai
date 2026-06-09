@@ -1,158 +1,94 @@
-# SahayakAI — Configuration
+# SahayakAI - Configuration
+
+**Verified:** 2026-06-10
 
 ## Environment Variables
 
-### Required (app will not start in production without these)
+### Required
 
 | Variable | Purpose | Source |
 |---|---|---|
-| `GOOGLE_GENAI_API_KEY` | Gemini AI API | Google AI Studio |
-| `FIREBASE_SERVICE_ACCOUNT_KEY` | Firebase Admin SDK | Firebase Console → Service Accounts, or Secret Manager |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase client SDK | Firebase Console → App config |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth | Firebase Console |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project | Firebase Console |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage | Firebase Console |
+| `GOOGLE_GENAI_API_KEY` | Gemini API - comma-separated key POOL with failover/backoff (`src/ai/genkit.ts`) | Secret Manager |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Firebase Admin SDK | env or Secret Manager |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase client SDK | Firebase console (baked at build) |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth (default `www.sahayakai.com`) | baked at build |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `sahayakai-b4248` | baked at build |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage | baked at build |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` / `_APP_ID` / `_MEASUREMENT_ID` / `_VAPID_KEY` | FCM + analytics (VAPID has a hardcoded Dockerfile default) | baked at build |
 
-### Optional
+### Infra / feature gates (runtime env vars)
 
-| Variable | Purpose | Default |
+| Variable | Purpose | Code default |
 |---|---|---|
-| `SENTRY_DSN` | Server-side error tracking | None (Sentry disabled) |
-| `NEXT_PUBLIC_SENTRY_DSN` | Client-side error tracking | None |
-| `GOOGLE_API_KEY` | Fallback if GOOGLE_GENAI_API_KEY missing | — |
-| `NODE_ENV` | Environment mode | `development` |
+| `ONBOARDING_GATE_ENABLED` | Onboarding redirect gate in middleware | OFF (must stay off - see auth-middleware doc) |
+| `VOICE_PROVIDER` | Telephony provider for attendance calls | `twilio` (`exotel` opt-in) |
+| `APP_CHECK_REQUIRED` | Enforce Firebase App Check on `/api/ai/*` | tolerant when unset |
+| `SAHAYAKAI_REQUIRE_APP_CHECK` | Sidecar-side App Check enforcement (read by the ADK sidecar) | - |
+| `GENKIT_DEFAULT_MODEL` | Override the default text model | `googleai/gemini-2.5-flash` |
+| `NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL` | ADK-Python sidecar base URL | unset → `SidecarConfigError` if a dispatcher needs it |
 
-### Secret Manager Support
-`FIREBASE_SERVICE_ACCOUNT_KEY` can be stored in Google Secret Manager. `firebase-admin.ts` fetches it at runtime if not found as env var.
+### Telephony / payments / other
+
+| Variable | Purpose |
+|---|---|
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` | Twilio REST (call route returns 503 if unset) |
+| `VOICE_EXOTEL_CALL_URL` | Forward target for the Exotel streaming voicebot |
+| `RAZORPAY_*` | Razorpay payments + HMAC webhook verification |
+| `SARVAM_API_KEY` | Sarvam AI STT/TTS | 
+| `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` | Error tracking + source-map upload |
+
+### Feature flags (NOT all env)
+
+Most flags live in **Firestore** at document `system_config/feature_flags` (`src/lib/feature-flags.ts`): the `billingKillSwitch`, subscription rollout, consent-notice flag, per-feature map, and all 17 agent sidecar mode/percent pairs. Read server-side with a 5-min in-memory cache and a `FALLBACK_CONFIG`. Only the infra gates above are env vars. Seed/update via `src/scripts/seed-feature-flags.ts` and `update-flags.ts`.
 
 ---
 
-## next.config.ts Key Settings
+## next.config Key Settings
 
 ```
-output: 'standalone'           // Docker-friendly build
-serverExternalPackages: [      // Not bundled by webpack (server-only)
-  '@genkit-ai/googleai',
-  'firebase-admin',
-  '@opentelemetry/*',
-  '@google-cloud/logging',
-  '@google-cloud/storage',
-  'pino',
+output: 'standalone'
+serverExternalPackages: [
+  '@genkit-ai/googleai', '@genkit-ai/firebase', '@genkit-ai/google-cloud', 'genkit',
+  '@opentelemetry/sdk-node', '@opentelemetry/api', '@opentelemetry/sdk-trace-base',
+  '@opentelemetry/sdk-metrics', 'firebase-admin',
+  '@google-cloud/secret-manager', '@google-cloud/logging',
 ]
-serverActions: {
-  bodySizeLimit: '25mb'        // Allows image uploads via server actions
-}
+serverActions: { bodySizeLimit: '25mb' }   // allows image uploads via server actions
 ```
 
-### Webpack Client Fallbacks
-These Node.js modules are stubbed out for client-side bundles:
-`fs`, `path`, `crypto`, `net`, `tls`, `child_process`, `dns`, `os`, `stream`, `http`, `https`, `zlib`
-
-### PWA (next-pwa)
-- Disabled in development
-- `skipWaiting: true` — auto-updates
-- Manifest: saffron (#f97316) theme
-- Service worker: registered at root
-
-### Sentry
-- Source maps uploaded on build
-- Tunnel route: `/monitoring` (avoids ad-blocker blocking)
-- Auto-instrumentation for Node, browser
+PWA via `next-pwa` (disabled in dev). Sentry source maps + tunnel route. Saffron (#f97316) PWA theme.
 
 ---
 
-## tailwind.config.ts Key Settings
+## tailwind.config Key Settings
 
-### Design Tokens
-```
-primary: saffron orange (HSL 28 70% 59%)
-secondary: deep green (HSL 123 37% 25%)
-accent: navy blue (HSL 240 100% 25%)
-background: white
-foreground: dark gray (#1F2937)
-sidebar: off-white (98%) with saffron accents
-```
-
-### Plugins
-- `tailwindcss-animate` — accordion, fade, slide animations
-- `@tailwindcss/typography` — prose class for markdown rendering
-
-### Custom Animations
-- `accordion-down/up`: height 0 → auto
-- `fade-in-up`: translateY(10px) → 0 + opacity 0 → 1
-- `bounce-subtle`: 0% → 5% → 0% vertical, 3s loop
-
-### Content Paths
-```
-'./src/**/*.{ts,tsx}'
-```
+- Tokens: primary saffron orange, secondary deep green, accent navy; white background.
+- Plugins: `tailwindcss-animate`, `@tailwindcss/typography`.
+- Content path: `./src/**/*.{ts,tsx}`.
 
 ---
 
-## package.json Key Dependencies
+## Key Dependencies (package.json)
 
-### AI
-- `genkit`, `@genkit-ai/googleai` — Gemini AI SDK
-- `ai` (Vercel AI SDK) — streaming utilities
-
-### Firebase
-- `firebase` — client SDK (v10+)
-- `firebase-admin` — server SDK
-
-### UI
-- `next`, `react`, `react-dom`
-- `tailwindcss`, `@tailwindcss/typography`
-- `@radix-ui/*` — all Radix primitives (via Shadcn)
-- `lucide-react` — icons
-- `class-variance-authority`, `clsx`, `tailwind-merge`
-
-### Forms & Validation
-- `react-hook-form`
-- `@hookform/resolvers`
-- `zod`
-
-### Utilities
-- `date-fns` — date formatting
-- `uuid` — ID generation
-- `idb` — IndexedDB wrapper
-
-### PDF/Export
-- `katex` — LaTeX math rendering in worksheets
-
-### Monitoring
-- `@sentry/nextjs`
-- `pino` — structured logging
-
-### Build
-- `next-pwa` — PWA support
-- `typescript`
+- Next.js `^15.5.11` (App Router), React `^18.3.1`.
+- Genkit `^1.28.0` + `@genkit-ai/googleai` `^1.28.0`.
+- `firebase ^11.9.1`, `firebase-admin ^13.4.0`.
+- `razorpay ^2.9.6` (no Stripe). `next-pwa ^5.6.0`. `idb`, `zod`, `react-hook-form`, `lucide-react`, `@sentry/nextjs`, `pino`, `katex`.
 
 ---
 
 ## Firebase Project Configuration
 
-**Firestore:** Native mode (not Datastore mode), default database
-
-**Firebase Storage:** Used for:
-- Voice messages: `voice-messages/{uid}/{timestamp}.{ext}`
-- User content files: `users/{uid}/{type}/{filename}`
-
-**Firebase Auth:** Google Sign-In provider enabled
-
-**Firestore Indexes Required:**
-- `conversations` collection: composite index on `participantIds` (array-contains) + `updatedAt` (desc) — for inbox query
-- `conversations/{id}/messages`: `createdAt` ascending — for message thread
-- `community_chat`: `createdAt` ascending — for chat
-- `library_resources`: `type` + `createdAt` (for filtered queries)
-- `notifications`: `recipientId` + `isRead` + `createdAt`
+- Firestore: Native mode, default database, project `sahayakai-b4248`.
+- Storage: voice messages `voice-messages/{uid}/{ts}.{ext}`, content files `users/{uid}/{type}/{filename}`.
+- Auth: Google Sign-In.
+- Required composite indexes: conversations (`participantIds` array-contains + sort), messages (`createdAt` asc), `community_chat` (`createdAt` asc), `library_resources` (`type` + `createdAt`), `parent_outreach` (`createdAt` asc - added in a recent fix). See `firestore.indexes.json`.
 
 ---
 
 ## Cloud Run Configuration
 
-- **Region:** asia-south1 (Mumbai — lowest latency for India)
-- **Service name:** sahayakai-hotfix-resilience
-- **Trigger:** Push to `main` branch → auto-deploy
-- **Container:** Node.js standalone Next.js build
-- **Memory:** 512MB minimum recommended (AI flows are memory-intensive)
-- **Concurrency:** Default Cloud Run concurrency (80 per instance)
+- Region: **`asia-southeast1`** (NOT asia-south1).
+- Service: `sahayakai-hotfix-resilience`, project `sahayakai-b4248` (number `640589855975`).
+- NOT auto-routed on push - see DEPLOYMENT.md (`--no-traffic`, `scripts/safe-deploy.sh`).
+- Runtime env (Dockerfile): `NODE_ENV=production`, `PORT=3000`, `HOSTNAME=0.0.0.0`, `NODE_OPTIONS=--max-old-space-size=4096`.

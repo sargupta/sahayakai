@@ -2,11 +2,13 @@
 
 **File:** `src/components/profile/profile-view.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Full profile display for both own profile (`/my-profile`) and others (`/profile/[uid]`). Conditionally shows Edit button (own) or connection action buttons (others).
+Full profile display for both own profile and other users. Conditionally shows edit/certification controls (own) or connection action buttons (others).
 
 ---
 
@@ -14,92 +16,56 @@ Full profile display for both own profile (`/my-profile`) and others (`/profile/
 
 ```ts
 {
-  targetUid: string;
-  isOwnProfile: boolean;
+  uid?: string;
+  isOwnProfileManual?: boolean;
 }
 ```
 
----
-
-## State
-
-| State | Type | Purpose |
-|---|---|---|
-| `profile` | `UserProfile \| null` | Loaded profile data |
-| `certifications` | `Certification[]` | Certifications list |
-| `connectionData` | `ConnectionData \| null` | Own connection state with targetUid |
-| `loading` | `boolean` | Data fetch |
-| `actionState` | `string` | Connection action in flight |
+Note the names: `uid` (not `targetUid`) and `isOwnProfileManual` (not `isOwnProfile`).
 
 ---
 
 ## Data Flow
 
-1. Mount: `getProfileData(targetUid)` → `{ profile, certifications }`
-2. If `!isOwnProfile`: `getMyConnectionDataAction()` → load connection state
-3. Profile displayed from fetched data
+- Own profile: `getProfileData(...)` returns the profile plus certifications.
+- Other user: `getPublicProfileAction(...)` for the public view; connection state loaded separately.
+
+TODO(verify: exact action names and return shapes for getProfileData / getPublicProfileAction in current source).
 
 ---
 
 ## Sections
 
 ### Header
-- Gradient background (saffron → amber gradient band)
-- Avatar: `h-24 w-24`, `ring-4 ring-white shadow-lg`
-- Display name + `BadgeCheck` icon if `verifiedStatus === true`
-- Designation + department (if set)
-- School + district (if set)
-- Bio text (if set)
-
-### Stats Row
-- Followers count + `Users` icon
-- Following count + `UserCheck` icon
-- Resources shared + `Library` icon
-- Impact score + `BarChart` icon
-
-### Action Buttons
-- `isOwnProfile=true`: "Edit Profile" → `EditProfileDialog`
-- `isOwnProfile=false`: Connection state buttons (see below)
-
-### Badges
-- `profile.badges[]` rendered as pill chips
-- Earned date shown on hover
+- Avatar + display name.
+- Verified check shown when `verifiedStatus === 'verified'` (a string equality, not a boolean `=== true`).
+- Designation / school / district / bio when set.
 
 ### Certifications
-- Each: name, issuing body, issue date, status badge (pending=yellow, verified=green)
-- Own profile: "Add Certification" form
+- List with status; own profile exposes an `AddCertificationDialog`.
 
-### Activity Timeline
-- Recent tool usage events
-- Each: icon by content type, action description, relative date
+### Edit
+- Own profile exposes `EditProfileDialog`.
 
-### Help Others Grow Card (own profile only)
-- Orange gradient card
-- CTA: "Share your work with the community"
+There is NO followers/following/resources/impact stats row and NO badges row in the current component (the legacy doc's "Stats Row", "Badges", and "Activity Timeline" sections are stale).
 
 ---
 
-## Connection Button Logic (isOwnProfile=false)
+## Connection Button Logic (other user)
 
-```
-connectionData.connectedUids.includes(targetUid)
-  → "Connected" (ghost) + "Message" (outline) + "Disconnect" (dropdown option)
+Connection status drives the action buttons via a `connStatus` value, conceptually:
+- connected -> Connected / Message / Disconnect
+- pending sent -> Pending (withdraw)
+- pending received -> Accept / Decline
+- none -> Connect
 
-connectionData.sentRequestUids.includes(targetUid)
-  → "Pending" (disabled outline) — click to withdraw
+Button colors use theme tokens (`bg-primary`), not hardcoded `orange-500`.
 
-connectionData.receivedRequests.find(r => r.fromUid === targetUid)
-  → "Accept" (orange-500) + "Decline" (ghost) buttons
-
-else:
-  → "Connect" (orange-500)
-```
+TODO(verify: exact `connStatus` enum values and the precise button set/labels for each state).
 
 ---
 
-## EditProfileDialog
+## Dialogs
 
-`src/components/edit-profile-dialog.tsx`
-
-Form fields: displayName, designation, department, schoolName, bio.
-Submit → `updateProfileAction()` → toast + close.
+- `AddCertificationDialog` - add a certification (own profile).
+- `EditProfileDialog` (`src/components/edit-profile-dialog.tsx`) - edit profile fields; submit then toast + close.

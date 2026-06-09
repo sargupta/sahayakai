@@ -1,6 +1,12 @@
-# Critical Analysis: SahayakAI for Rural Government School Teachers (Grades 5-10)
+# Critical Analysis: SahayakAI for Indian School Teachers (Grades 5-10)
 
-## 🎯 Context: The Reality of Rural Government Schools in India
+**Last updated:** 2026-06-10
+
+> Status note: this was an early, deliberately harsh gap analysis. Many "critical gaps" below have since shipped: PWA/offline support, NCERT alignment, resource-aware content (`resourceLevel` low/medium/high), differentiated instruction, parent communication (AI parent calls + message drafts), community sharing, and audio/voice support. Read the "Solution Needed" items as historical, and see the closing note for current status.
+>
+> Framing note: low-resource rural classrooms are one important segment. The platform serves all school types; it addresses India's systemic education-quality crisis, not a rural-only problem.
+
+## 🎯 Context: The Reality of Low-Resource Government Schools in India
 
 ### Teacher Challenges:
 - **Large class sizes**: 40-60 students per class
@@ -173,7 +179,7 @@
 ### 8. **TIME EFFICIENCY - POOR**
 **Problem:** Takes too long to generate content
 
-**Current State:** 15-30 seconds per generation
+**Current State:** generation latency `TODO(verify: average generation time per tool)`
 
 **Reality:** Teachers have 5-10 minutes between classes to prepare
 
@@ -389,10 +395,8 @@
 - ⚠️ Speed (too slow for busy teachers)
 - ⚠️ Ease of use (too many steps)
 
-### The Harsh Truth:
-**Current State:** SahayakAI is a good prototype for urban, well-resourced schools. For rural government schools, it's not yet practical.
-
-**To Succeed:** Must prioritize offline mode, curriculum alignment, and resource-aware content. Everything else is secondary.
+### The Harsh Truth (as of this early review):
+The original verdict was that the app suited well-resourced schools but not yet low-resource government schools. Since then, offline PWA support, NCERT alignment, and resource-aware content have shipped, so the practicality gap for low-resource classrooms has narrowed. Real-world field validation: `TODO(verify: pilot/field test results)`.
 
 ---
 
@@ -424,6 +428,6 @@
 
 ---
 
-**Remember:** The best ed-tech for rural India is the one that works when the power is out, the internet is down, and the teacher has 5 minutes to prepare for a class of 50 students with no textbooks.
+**Remember:** The best ed-tech for India is the one that works when the power is out, the internet is down, and the teacher has 5 minutes to prepare for a class of 50 students with no textbooks, while still serving better-resourced classrooms equally.
 
-*Last Updated: 2025-12-08*
+*Last Updated: 2026-06-10*

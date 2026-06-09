@@ -1,7 +1,8 @@
-# Visual Aid Creator — /visual-aid-creator
+# Visual Aid Creator - /visual-aid-creator
 
 **File:** `src/app/visual-aid-creator/page.tsx`
-**Auth:** Required
+**Auth:** Not gated (static placeholder; renders the same for everyone)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -9,7 +10,7 @@
 
 **Placeholder / Coming Soon page.**
 
-This route exists but shows a "coming soon" state. It may be a planned alternative or second version of the Visual Aid Designer (`/visual-aid-designer`).
+Confirmed in code: the page renders a single card with an `Images` icon, the title "Visual Aid Designer", and a translated "This feature is coming soon... Stay tuned!" message. No form, no API calls. (Note: the component is named `VisualAidDesignerPage` even though the route is `/visual-aid-creator`.)
 
 ---
 

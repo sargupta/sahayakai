@@ -2,11 +2,13 @@
 
 **File:** `src/components/community/create-post-dialog.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Modal dialog for teachers to create and publish posts to the community. Supports text content and optional image attachment.
+Modal dialog for teachers to create and publish posts to the community. Supports text content and an optional image attachment. Form is managed with `react-hook-form` + `zod`.
 
 ---
 
@@ -14,41 +16,34 @@ Modal dialog for teachers to create and publish posts to the community. Supports
 
 ```ts
 {
-  onPostCreated: () => void;   // callback after successful post
-  trigger?: React.ReactNode;   // optional custom trigger element
+  onPostCreated: () => void;             // callback after successful post
+  trigger?: React.ReactNode;             // optional custom trigger element (mobile FAB)
+  open?: boolean;                        // optional controlled-open
+  onOpenChange?: (open: boolean) => void;
 }
 ```
 
-The `trigger` prop enables the mobile FAB to use a custom circular button while reusing the same dialog logic.
+Supports controlled open state (`open` / `onOpenChange`) in addition to the default uncontrolled trigger. The `trigger` prop lets the mobile FAB reuse the same dialog.
+
+TODO(verify: exact controlled-open prop names against current source.)
 
 ---
 
-## Internal State
+## Form Validation (zod)
 
-| State | Type | Purpose |
-|---|---|---|
-| `open` | `boolean` | Dialog open/closed |
-| `content` | `string` | Post text (min 5 chars) |
-| `imageUrl` | `string \| null` | Optional image attachment |
-| `submitting` | `boolean` | Submit in flight |
-
----
-
-## Form Validation
-
-- Content: minimum 5 characters, maximum 500
-- Image: optional, uploaded via `ImageUploader`
-- Submit button disabled until content ≥ 5 chars
+- Content: minimum 5 characters (zod schema). Image optional, uploaded via `ImageUploader`.
+- Submit gated by react-hook-form validity.
 
 ---
 
 ## Submit Flow
 
-1. `createPostAction(content, imageUrl?)` server action
+1. `createPostAction(content, 'public', imageUrl)` server action (note the visibility argument)
 2. Validates auth (x-user-id header)
-3. Creates document in `community` collection
-4. `revalidatePath('/community')`
-5. On success: toast "Post published!", close dialog, call `onPostCreated()`
+3. Creates the post document
+4. On success: toast, close dialog, call `onPostCreated()`
+
+TODO(verify: target collection name and any revalidatePath call in createPostAction.)
 
 ---
 
@@ -67,7 +62,6 @@ When `trigger` prop provided: uses that element (e.g., mobile FAB circular butto
 
 ## Design
 
-- Dialog width: `max-w-md`
-- Content textarea: min-h-[120px], resizable
-- Image upload: optional section below textarea
-- Submit button: orange-500, full-width, disabled state
+- Dialog width: `sm:max-w-[500px]`
+- Content textarea + optional image-upload section
+- Submit button uses default (`bg-primary`) variant with disabled state

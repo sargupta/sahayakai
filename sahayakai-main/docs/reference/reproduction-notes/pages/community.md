@@ -1,52 +1,48 @@
-# Community — /community
+# Community - /community
 
 **File:** `src/app/community/page.tsx`
-**Auth:** Partial (browsing public, interaction requires auth)
+**Auth:** Partial (the page renders for everyone; data loads only when `onAuthStateChanged` resolves a signed-in user, and post/connect/join actions require auth)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Social hub for teachers. Discover trending educational resources shared by other teachers, connect with educators across India, and participate in live community chat.
+Social hub for teachers, organized around subject/grade/area **groups**. Teachers see a unified feed of group posts and shared resources, browse and join groups, chat in an all-teacher Staff Room, and search a teacher directory to send connection requests.
 
 ---
 
-## Component Tree
+## Render Model (view-state-machine, NOT tabs)
+
+The page is no longer a 3-tab (Discover/Connect/Chat) layout. It is a single component that returns one of five views based on boolean/id state flags, checked in this order:
+
+1. **Group Detail View** - when `activeGroup` is set → `<GroupFeed group={activeGroup} ... />` with a back button that clears `activeGroup`.
+2. **Teacher Directory View** - when `showTeacherDirectory` → `<TeacherDirectory />` under a "Find Teachers" header + BackButton.
+3. **Staff Room View** - when `showStaffRoom` → `<CommunityChat />` under a "Staff Room" header + BackButton.
+4. **Explore Groups View** - when `showExploreGroups` → `<ExploreGroups groups={suggestedGroups} ... />` + BackButton.
+5. **Main Feed View** - default fall-through (none of the above flags set).
+
+---
+
+## Component Tree (Main Feed View)
 
 ```
 CommunityPage
-├── Page header
-│   ├── Title + description
-│   └── CreatePostDialog (desktop — triggers via Button)
-├── Tabs (Discover | Connect | Chat)
-│   ├── TabsTrigger: Discover (Flame icon)
-│   ├── TabsTrigger: Connect (Users icon)
-│   └── TabsTrigger: Chat (MessageCircle icon)
-│
-├── TabsContent: "discover"
-│   ├── Search bar + MicSearch button (SpeechRecognition API)
-│   ├── Language filter chips (All + 11 languages)
-│   ├── Type filter chips (All, Lesson Plan, Quiz, Worksheet, Visual Aid, Rubric, Field Trip)
-│   │   └── Each chip: FileTypeIcon + label
-│   ├── TeacherStrip (horizontal scroll of suggested educators)
-│   └── ResourceList
-│       └── ResourceCard × N
-│           ├── FileTypeIcon + type badge
-│           ├── Author avatar + name
-│           ├── Title + metadata (grade, subject, language)
-│           ├── Stats (likes, saves, downloads)
-│           ├── Like button (toggle, optimistic)
-│           ├── Save button (toggle, optimistic)
-│           └── Use in [Tool] button
-│
-├── TabsContent: "connect"
-│   └── TeacherDirectory component
-│
-└── TabsContent: "chat"
-    └── CommunityChat component
-
-Mobile FAB (sm:hidden, fixed bottom-6 right-6)
-└── CreatePostDialog (trigger: circular + button)
+├── Header card (Users icon + "Community" title + subtitle)
+├── Primary action tiles (grid-cols-2)
+│   ├── Staff Room tile (MessageCircle) → handleOpenStaffRoom
+│   └── Find Teachers tile (UserSearch) → handleOpenTeacherDirectory
+├── First-visit inline hint (showFirstVisitHint, dismissable X)
+├── GroupList (mobile-only, lg:hidden) - my-group chips + Explore entry
+├── Cold-start empty state (no groups AND no feed) → "Browse groups"
+├── Main content row (flex)
+│   ├── Feed column
+│   │   ├── ShareComposer (inline post composer, optimistic prepend)
+│   │   ├── UnifiedFeed (group posts + resource + teacher-suggestion items)
+│   │   └── ResourceFeed ("Shared Resources")
+│   └── GroupsSidebar (desktop only, hidden lg:block)
+├── Mobile FAB (fixed left-4, sm:hidden) → setShowCreateDialog(true)
+└── CreatePostDialog (controlled by showCreateDialog)
 ```
 
 ---
@@ -55,93 +51,62 @@ Mobile FAB (sm:hidden, fixed bottom-6 right-6)
 
 | State | Type | Initial | Purpose |
 |---|---|---|---|
-| `languageFilter` | `string` | `'all'` | Filter resources by language |
-| `typeFilter` | `string` | `'all'` | Filter resources by content type |
-| `searchInput` | `string` | `''` | Controlled search input (debounced) |
-| `searchTerm` | `string` | `''` | Applied search term (after debounce) |
-| `resources` | `Resource[]` | `[]` | All loaded resources |
-| `filteredResources` | `Resource[]` | `[]` | After client-side filter applied |
+| `myGroups` | `Group[]` | `[]` | Groups the user belongs to |
+| `suggestedGroups` | `Group[]` | `[]` | Discoverable / joinable groups |
+| `feedItems` | `FeedItem[]` | `[]` | Unified feed (group_post, resource, teacher suggestion) |
+| `connectionData` | `MyConnectionData` | `{connectedUids,sentRequestUids,receivedRequests}` | Connection graph for the feed |
+| `teacherSuggestions` | `TeacherSuggestion[]` | `[]` | Sidebar teacher recommendations |
+| `selectedGroupId` | `string \| null` | `null` | Active group chip filter (mobile) |
+| `activeGroup` | `Group \| null` | `null` | Drives Group Detail View |
+| `showStaffRoom` | `boolean` | `false` | Drives Staff Room View |
+| `showTeacherDirectory` | `boolean` | `false` | Drives Teacher Directory View |
+| `showExploreGroups` | `boolean` | `false` | Drives Explore Groups View |
 | `loading` | `boolean` | `true` | Initial data fetch |
-| `likedIds` | `Set<string>` | `new Set()` | Resources liked by current user |
-| `savedIds` | `Set<string>` | `new Set()` | Resources saved by current user |
-| `, setActiveTab` | — | `'discover'` | Tab tracking (setter only, read unused) |
+| `likedPostIds` | `Set<string>` | `new Set()` | Posts liked by current user |
+| `hasMore` / `loadingMore` | `boolean` | `false` | Feed pagination |
+| `showFirstVisitHint` | `boolean` | `false` | Inline welcome hint |
+| `showCreateDialog` | `boolean` | `false` | Mobile FAB create-post dialog |
+
+A `refreshVersionRef` race guard discards stale refresh responses (replaces last-write-wins).
 
 ---
 
 ## Data Flow
 
-1. Mount: `getLibraryResources()` action → loads up to 100 resources
-2. Mount (if signed in): load `likedIds`, `savedIds` for current user
-3. Filter change: client-side filter applied to `resources` → `filteredResources`
-4. Search: client-side text match on `title + topic + subject`
-5. Voice search: `SpeechRecognition` API → fills `searchInput` → triggers filter
+On `onAuthStateChanged` (signed-in only):
+1. `ensureUserGroupsAction()` - auto-joins default groups first so membership is settled.
+2. Reads `users/{uid}.communityIntroState` (`ready`/`none` → show first-visit hint).
+3. Loads `getMyGroupsAction()`, `getUnifiedFeedAction()`, `discoverGroupsAction()`, `getMyConnectionDataAction()`, `getRecommendedTeachersAction()`, and liked ids via `getLikedItemIdsAction()`.
+
+Signed-out: `setLoading(false)` and the feed stays empty.
 
 ---
 
-## Type Filter Chips Config
+## Key Actions
 
-```
-{ value: 'all', label: 'All', icon: LayoutGrid }
-{ value: 'lesson-plan', label: 'Lesson Plans', icon: BookOpen }
-{ value: 'quiz', label: 'Quizzes', icon: ClipboardCheck }
-{ value: 'worksheet', label: 'Worksheets', icon: FileSignature }
-{ value: 'visual-aid', label: 'Visual Aids', icon: Images }
-{ value: 'rubric', label: 'Rubrics', icon: Table }
-{ value: 'virtual-field-trip', label: 'Field Trips', icon: Globe2 }
-```
+- Groups: `ensureUserGroupsAction`, `getMyGroupsAction`, `getUnifiedFeedAction`, `discoverGroupsAction`, `joinGroupAction`, `likeGroupPostAction` (`src/app/actions/groups.ts`)
+- Connections: `getMyConnectionDataAction`, `sendConnectionRequestAction` (`src/app/actions/connections.ts`)
+- Community: `getRecommendedTeachersAction`, `likeResourceAction`, `getLikedItemIdsAction` (`src/app/actions/community.ts`)
+- Profile: `updateProfileAction`
 
 ---
 
-## Voice Search
+## Persona Pulse (demo loop)
 
-Uses `window.SpeechRecognition || window.webkitSpeechRecognition` (Web Speech API).
-- Language: derived from `languageFilter` state or `navigator.language`
-- Mic button: shows `Mic` (idle) / `MicOff` (recording) / `Loader2` (processing)
-- Not available on Firefox — no fallback indicator shown
+`useCommunityLivePulse({ frequency: 'normal', enabled: true })` (`src/hooks/use-community-live-pulse.ts`) posts one AI-generated teacher message to the `community_chat` collection every 3-5 minutes while the page is open, so the Staff Room feels active during demos. It is a no-op in production: gated by `NEXT_PUBLIC_DEMO_PERSONAS_ENABLED` (disabled when set to `'false'`).
 
 ---
 
-## TeacherStrip (inline component)
+## Create Post
 
-Horizontal scrollable strip of 5 recommended educators in Discover tab.
-- Loads from `getRecommendedTeachersAction(userId)`
-- Each item: Avatar, Name, Subject badge, Follow button
-- Follows with optimistic update + rollback
-
----
-
-## ResourceCard Interactions
-
-| Action | Result |
-|---|---|
-| Like | `likeResourceAction()` — toggle, optimistic |
-| Save | `saveResourceToLibraryAction()` — adds to user library |
-| "Use in Lesson Plan" | Navigate to `/lesson-plan` with resource params |
-| "Open" | Navigate to appropriate tool page |
-
----
-
-## Mobile FAB
-
-- `sm:hidden` — only shows on mobile screens
-- Fixed position: `fixed bottom-6 right-6 z-50`
-- `+` icon (`Plus` Lucide) circular orange button
-- Opens `CreatePostDialog` via its `trigger` prop
-
----
-
-## CreatePostDialog
-
-- Form: content textarea (min 5 chars), optional image upload
-- On submit: `createPostAction()` → published to community
-- Success: toast + dialog close
-- Accepts optional `trigger` prop for custom trigger element
+- Inline: `ShareComposer` in the feed column (optimistically prepends a `group_post` FeedItem, then `handleRefreshFeed`).
+- Mobile: FAB (`fixed left-4 sm:hidden`, pinned left to avoid colliding with the right-side OmniOrb mic) → `CreatePostDialog`.
 
 ---
 
 ## Design
 
-- Tabs: pill-style with active state white bg + shadow
-- Filter chips: horizontally scrollable row, no wrap, active chip is orange-100 with orange border
-- Resource cards: white, rounded-2xl, shadow-sm, 1-col on mobile
-- TeacherStrip: `overflow-x-auto`, `flex gap-3`, snap scroll
+- Header + action tiles: `rounded-md`, `bg-card`, `border-border`, `shadow-soft`; tiles use `bg-primary/10 text-primary` icon chips.
+- Feed/sidebar: two-column `flex` on desktop; sidebar `hidden lg:block`, group chips `lg:hidden` on mobile.
+- FAB: `h-14 w-14 rounded-full bg-primary` with `safe-area-inset-bottom` offset.
+- Icons: Lucide only (Users, MessageCircle, UserSearch, Plus, Info, X).

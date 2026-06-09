@@ -1,68 +1,63 @@
 # Lib: Server Safety
 
-**File:** `src/lib/server-safety.ts`
+**File:** `src/lib/server-safety.ts` (config in `src/lib/safety.ts`)
+**Verified:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Server-side rate limiting using Firestore. Prevents abuse of AI endpoints and community actions.
+Server-side rate limiting using Firestore. Two kinds: a general per-user request limiter and a per-user daily image-generation limiter. Both fail OPEN.
 
 ---
 
-## checkServerRateLimit(userId: string)
+## General Rate Limit - `checkServerRateLimit(userId)`
 
 ```ts
 async function checkServerRateLimit(userId: string): Promise<void>
 ```
 
-**Algorithm (sliding window):**
-```
-1. Read rate_limits/{userId}.timestamps (array of Unix ms)
-2. Filter out timestamps older than WINDOW_MS (e.g., 60 seconds)
-3. If filtered.length >= MAX_REQUESTS: throw new Error('Rate limit exceeded')
-4. Append Date.now() to filtered array
-5. Write back to Firestore (overwrite entire timestamps array)
-```
+Sliding window over `rate_limits/{userId}.requests` (array of Unix ms):
+1. Drop timestamps older than `SAFETY_CONFIG.WINDOW_MS`.
+2. If remaining `>= SAFETY_CONFIG.MAX_REQUESTS_PER_WINDOW`, throw `Rate limit exceeded. Please wait N minutes.`
+3. Otherwise append `now` and write back.
 
-**Config (SAFETY_CONFIG):**
+### Config (`SAFETY_CONFIG`, in `src/lib/safety.ts`)
+
 ```ts
-WINDOW_MS: 60_000           // 1 minute window
-MAX_REQUESTS_PER_WINDOW: 10 // 10 requests per minute per user
+MAX_REQUESTS_PER_WINDOW: 15
+WINDOW_MS: 10 * 60 * 1000   // 10 minutes
 ```
 
-**Fail-open on non-limit errors:**
-```ts
-try {
-  // rate limit check
-} catch (error) {
-  if (error.message.includes('Rate limit')) throw error;  // re-throw limit errors
-  console.error('Rate limit check failed:', error);       // swallow other errors
-  // continue with request — don't block users due to Firestore init issues
-}
-```
-
-**Rationale for fail-open:** If Firestore is temporarily unavailable, we'd rather serve some requests than block all users. Rate limiting is defense-in-depth, not the only protection.
+(Note: 15 requests per 10-minute window, NOT 10/minute.)
 
 ---
 
-## Where It's Called
+## Image Rate Limit (per user, per day)
 
+```ts
+IMAGE_RATE_LIMIT = { MAX_PER_DAY: 10 }
+export const IMAGE_RATE_LIMIT_MAX_PER_DAY = 10
+
+peekImageRateLimit(userId): Promise<boolean>   // true if user is still under cap (no write)
+checkImageRateLimit(userId): Promise<void>     // throws if at/over cap, else increments
 ```
-sendChatMessageAction()  — community chat (most abuse-prone)
-createPostAction()       — community posts
-AI API routes            — via middleware or route handler
-```
+
+Counter doc: `rate_limits/{userId}_image`. Used by image-generating features (visual aid, avatar) and mirrored by `DAILY_USAGE_CAPS.image_generation` in `usage-tracker.ts`.
 
 ---
 
-## Client-Side Safety
+## Fail-Open Behavior
 
-**File:** `src/lib/safety.ts` (not to be confused with server-safety.ts)
+Every limiter wraps its Firestore work in try/catch:
+- Re-throws only the genuine `"Rate limit exceeded"` / cap errors.
+- Any other error (init failure, permission error, Firestore unavailable) is logged and swallowed - the request proceeds. Rate limiting is defense-in-depth, not the sole protection.
 
-Client-side content safety checks:
-- Basic profanity filter on user inputs
-- Max length enforcement
-- Sanitizes text before sending to AI
+---
 
-Runs in browser only — server-side is the authoritative check.
+## Client-Side Safety - `src/lib/safety.ts`
+
+`safety.ts` ALSO holds the shared config and client-side helpers:
+- `SAFETY_CONFIG` (shared with server limiter above).
+- `checkRateLimit()` - client-side localStorage-backed pre-check (`{ allowed, waitTime? }`) for snappy UX; the server check is authoritative.
+- `validateTopicSafety(topic)` - `{ safe, reason? }` content guard on user input.

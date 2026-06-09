@@ -1,30 +1,34 @@
-# Admin: Log Dashboard — /admin/log-dashboard
+# Admin: Log Dashboard - /admin/log-dashboard
 
 **File:** `src/app/admin/log-dashboard/page.tsx`
-**Auth:** Required (admin-only intent)
+**Auth:** No explicit in-route role check (component `AdminLogDashboard`, admin-only intent). Relies on `getLogsAction` access control + route not being in public nav.
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-View recent application logs from Google Cloud Logging. Filter by severity level. Debug production issues without needing GCP Console access.
+"System Logs" - view recent application logs from Google Cloud Logging without GCP Console access. Filter by severity and expand any entry to see structured attributes.
 
 ---
 
 ## Component Tree
 
 ```
-LogDashboardPage
-├── Page header (title + refresh button)
-├── Severity filter buttons (All | INFO | WARNING | ERROR | CRITICAL)
-├── Loading state
-└── Log entries list
-    └── LogEntry × N
+AdminLogDashboard
+├── Header ("System Logs" + Refresh button)
+├── Filters card
+│   └── Severity buttons: ALL | INFO | WARNING | ERROR   (no CRITICAL button)
+├── Error banner (if getLogsAction returns/throws an error)
+└── Logs card ("Live Stream - Last 50 Entries")
+    └── Log row × N
+        ├── Expand chevron
+        ├── Timestamp (date-fns "MMM dd, HH:mm:ss")
         ├── Severity badge (color-coded)
-        ├── Timestamp
-        ├── Message text
-        ├── Expand button → shows metadata JSON
-        └── Expanded metadata (collapsible)
+        ├── Message (truncated) + optional service tag
+        ├── Request id (lg+ only, first 8 chars)
+        └── Expanded panel: JSON of { service, operation, userId, errorId, ...metadata }
+                            + error-id reference block when log.errorId present
 ```
 
 ---
@@ -33,34 +37,37 @@ LogDashboardPage
 
 | State | Type | Purpose |
 |---|---|---|
-| `logs` | `LogEntry[]` | Fetched log entries |
-| `severityFilter` | `string` | 'ALL' \| 'INFO' \| 'WARNING' \| 'ERROR' \| 'CRITICAL' |
+| `logs` | `LogEntryDTO[]` | Fetched entries |
 | `loading` | `boolean` | Fetch in flight |
-| `expandedIds` | `Set<string>` | Expanded log entry IDs |
+| `severityFilter` | `string` | 'ALL' \| 'INFO' \| 'WARNING' \| 'ERROR' |
+| `expandedId` | `string \| null` | Single expanded row (`${timestamp}-${index}`) |
+| `error` | `string \| null` | Fetch error message |
+
+Note: a single `expandedId` (one row open at a time), not a `Set` of ids.
 
 ---
 
 ## Data Flow
 
-1. Mount: calls `log-service.ts` → fetches from GCP Cloud Logging API via Admin SDK
-2. Filter: client-side severity filter applied to loaded logs
-3. Refresh button: re-fetches latest logs
-4. Log structure: `{ severity, timestamp, message, metadata: object }`
+1. `fetchLogs` (useCallback, re-created when `severityFilter` changes): `getLogsAction(50, severityFilter)` (`src/app/actions/logs.ts`).
+2. Result shape `{ logs?: LogEntryDTO[], error?: string }`; on `result.error` the error banner renders.
+3. Severity filter is passed to the action (server-side filter), and changing it re-triggers `fetchLogs` via the effect dependency.
+4. Refresh button re-runs `fetchLogs`.
+
+`LogEntryDTO` (from `src/lib/services/log-service.ts`) fields used: `timestamp`, `severity`, `message`, `service`, `requestId`, `operation`, `userId`, `errorId`, `metadata`.
 
 ---
 
-## Log Service (log-service.ts)
+## Severity Badge Mapping
 
-- Uses `@google-cloud/logging` client library
-- Fetches last 100 log entries from project
-- Filters by resource type (Cloud Run service)
-- Returns structured log objects with parsed metadata
+- `ERROR` / `CRITICAL` → destructive badge (AlertCircle icon)
+- `WARNING` → amber badge (AlertTriangle icon)
+- default (INFO / other) → secondary badge (Info icon)
 
 ---
 
 ## Design
 
-- Severity color coding: INFO=blue, WARNING=amber, ERROR=red, CRITICAL=red with pulse
-- Log entries: monospace font for message, compact timestamp
-- Expanded metadata: syntax-highlighted JSON (or raw pre-formatted block)
-- Filter buttons: pill style, active = filled, inactive = outline
+- Expanded panel: dark `bg-black/90` block, emerald monospace JSON, optional red error-id reference box.
+- Filter buttons: pill style, active = filled foreground/background.
+- Lucide icons: Terminal, AlertCircle, Info, AlertTriangle, RefreshCw, ChevronDown/Right, Filter, Activity.

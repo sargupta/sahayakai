@@ -1,13 +1,17 @@
-# SahayakAI — Reproduction Notes Index
+# SahayakAI - Reproduction Notes Index
 
 Complete technical documentation for reproducing the SahayakAI application from scratch.
 
-**Total pages documented:** 26
-**Total components documented:** 17 files (grouping related components)
-**Total AI flows documented:** 5 files
-**Total actions documented:** 5 files
-**Total lib utilities documented:** 7 files
+**Last refreshed:** 2026-06-10 (against live `sahayakai-main/src/`)
+
+**Total pages documented:** 28
+**Total component docs:** 16 files (grouping related components)
+**Total AI flow docs:** 5 files
+**Total action docs:** 5 files
+**Total lib utility docs:** 7 files
 **Total global docs:** 7 files
+
+> Counts reflect the file tree at refresh time. Sibling agents refresh the pages/components/flows docs in parallel; if a count here disagrees with the actual tree, the tree wins.
 
 ---
 
@@ -15,12 +19,12 @@ Complete technical documentation for reproducing the SahayakAI application from 
 
 If reproducing from scratch, read in this order:
 
-1. [ARCHITECTURE.md](ARCHITECTURE.md) — Overall system design, request lifecycle, provider stack
-2. [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) — Colors, typography, component library, icon rules
-3. [DATA-SCHEMAS.md](DATA-SCHEMAS.md) — All Firestore collections and TypeScript types
-4. [FIRESTORE-RULES.md](FIRESTORE-RULES.md) — Security rules (critical — app won't work without these)
-5. [CONFIG.md](CONFIG.md) — Environment variables, next.config, tailwind config
-6. [DEPLOYMENT.md](DEPLOYMENT.md) — Cloud Run, CI/CD, Firebase setup checklist
+1. [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system design, request lifecycle, provider stack
+2. [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) - Colors, typography, component library, icon rules
+3. [DATA-SCHEMAS.md](DATA-SCHEMAS.md) - All Firestore collections and TypeScript types
+4. [FIRESTORE-RULES.md](FIRESTORE-RULES.md) - Security rules (critical - app won't work without these)
+5. [CONFIG.md](CONFIG.md) - Environment variables, next.config, tailwind config
+6. [DEPLOYMENT.md](DEPLOYMENT.md) - Cloud Run, CI/CD, Firebase setup checklist
 
 ---
 
@@ -58,6 +62,11 @@ If reproducing from scratch, read in this order:
 | My Library | /my-library | [pages/my-library.md](pages/my-library.md) |
 | Community Library | /community-library | [pages/community-library.md](pages/community-library.md) |
 | Submit Content | /submit-content | [pages/submit-content.md](pages/submit-content.md) |
+
+### Classroom
+| Page | Route | Doc |
+|---|---|---|
+| Attendance | /attendance | [pages/attendance.md](pages/attendance.md) |
 
 ### Analytics & Admin
 | Page | Route | Doc |
@@ -159,16 +168,16 @@ If reproducing from scratch, read in this order:
 
 ## Critical Rules to Never Break
 
-1. **AI flows are server modules** — never `'use server'`, never imported by pages directly
-2. **x-user-id from headers only** — never trust client-supplied userId in server actions
-3. **connections created via Admin SDK only** — Firestore rules block client create on connections
-4. **No emojis in UI** — all visual communication via Lucide icons
-5. **11 languages** — never assume Hindi-only; all selectors must show all 11 languages
-6. **Voice on all chat surfaces** — every chat component must have VoiceRecorder
-7. **Never commit to main directly** — always branch, merge with `--no-ff`
-8. **pairId deterministic** — `[uid1, uid2].sort().join('_')` everywhere, consistently
-9. **Google Search grounding OFF for lesson-plan** — only Instant Answer uses it
-10. **Print IDs** — every display component needs its `id="*-pdf"` div for print CSS
+1. **AI flows are server modules** - never `'use server'`, never imported by pages directly
+2. **x-user-id from headers only** - never trust client-supplied userId in server actions
+3. **connections created via Admin SDK only** - Firestore rules block client create on connections
+4. **No emojis in UI** - all visual communication via Lucide icons
+5. **11 languages** - never assume Hindi-only; all selectors must show all 11 languages
+6. **Voice on all chat surfaces** - every chat component must have VoiceRecorder
+7. **Never commit to main directly** - always branch, merge with `--no-ff`
+8. **pairId deterministic** - `[uid1, uid2].sort().join('_')` everywhere, consistently
+9. **Google Search grounding OFF for lesson-plan** - only Instant Answer uses it
+10. **Print IDs** - every display component needs its `id="*-pdf"` div for print CSS
 
 ---
 
@@ -176,14 +185,17 @@ If reproducing from scratch, read in this order:
 
 ```
 src/app/layout.tsx              Root layout + provider stack
-src/middleware.ts               Auth + security headers
-src/context/auth-context.tsx    Firebase auth state
-src/context/language-context.tsx  11-language support
-src/lib/firebase.ts             Client SDK init
-src/lib/firebase-admin.ts       Server SDK init (lazy)
-src/lib/server-safety.ts        Rate limiting
-src/lib/tts.ts                  Text-to-speech
+src/middleware.ts               Auth, App Check, onboarding gate, security headers
+src/lib/firebase.ts             Client SDK init (also exports rtdb)
+src/lib/firebase-admin.ts       Admin SDK init (lazy: getDb/getAuthInstance/getStorageInstance)
+src/lib/get-auth-token.ts       Client ID-token helpers (getAuthToken/forceTokenRefresh)
+src/lib/auth-utils.ts           Admin authorization (isAdmin/validateAdmin)
+src/lib/server-safety.ts        Server rate limiting (config in src/lib/safety.ts)
+src/lib/feature-flags.ts        Firestore system_config/feature_flags loader
+src/lib/tts.ts                  Client TTS helper (route: src/app/api/tts/route.ts)
+src/lib/sarvam.ts               Sarvam AI STT/TTS
 src/lib/indian-context.ts       Cultural context DB
+src/lib/indexed-db.ts           Client offline stores (drafts/cache/telemetry/outbox)
 src/types/index.ts              Core enums + interfaces
 src/types/messages.ts           Messaging schema
 firestore.rules                 Security rules

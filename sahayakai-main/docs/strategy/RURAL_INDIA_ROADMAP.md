@@ -1,9 +1,13 @@
 # Rural India Adaptation - Implementation Roadmap
 
+**Last updated:** 2026-06-10
+
+> Framing note: this roadmap targets the low-resource classroom segment. The same features serve all school types via the `resourceLevel` setting. SahayakAI addresses India's systemic education-quality crisis broadly, not rural government schools alone.
+
 ## 🎯 Branch: feature/rural-india-adaptation
 
 ### Mission
-Transform SahayakAI into a practical, robust tool for rural government school teachers in India (Grades 5-10).
+Make SahayakAI a practical, robust tool for low-resource classrooms in India (Grades 5-10), as one segment of a broader all-school-type platform.
 
 ---
 
@@ -224,10 +228,10 @@ Transform SahayakAI into a practical, robust tool for rural government school te
 - [ ] 3 difficulty levels for all content
 - [ ] Board exam patterns for CBSE + 2 state boards
 
-### Long-term (Phase 4):
-- [ ] 1000+ teachers using regularly
-- [ ] 500+ shared lesson plans
-- [ ] 90%+ teacher satisfaction
+### Long-term (Phase 4) targets:
+- [ ] Regular active teachers: `TODO(verify: active teacher count)`
+- [ ] Shared lesson plans: `TODO(verify: shared lesson plan count)`
+- [ ] Teacher satisfaction: `TODO(verify: teacher satisfaction %)`
 
 ---
 
@@ -237,19 +241,13 @@ Transform SahayakAI into a practical, robust tool for rural government school te
 **Phase:** Phase 1 - Foundation
 **Next Task:** 1.1 Local Context & Examples
 
-**Challenging Questions Score:**
-- Current: 15/84 (18%)
-- Target after Phase 1: 35/84 (42%)
-- Target after Phase 2: 55/84 (65%)
-- Target after Phase 3: 70/84 (83%)
-- Target after Phase 4: 80/84 (95%)
+**Challenging Questions Score:** `TODO(verify: challenging-questions self-assessment score)`
 
 ---
 
 ## 🚀 Let's Start!
 
 **First Implementation:** Local Context & Examples
-**Estimated Time:** 2-3 hours
 **Impact:** HIGH - Makes content immediately more relevant
 
-*Last Updated: 2025-12-08*
+*Last Updated: 2026-06-10*

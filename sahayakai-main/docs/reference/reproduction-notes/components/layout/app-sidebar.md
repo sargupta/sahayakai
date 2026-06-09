@@ -2,103 +2,63 @@
 
 **File:** `src/components/app-sidebar.tsx`
 
+_Last verified against source: 2026-06-10. (Lives directly under `src/components/`, not a `layout/` subfolder.)_
+
 ---
 
 ## Purpose
 
-Main navigation sidebar. Collapsible on mobile (Sheet/drawer). Shows all tool and platform links with a live unread message badge.
+Main navigation sidebar built on the Shadcn `Sidebar` primitive set. Nav is grouped by user intent with progressive disclosure (advanced groups hidden for brand-new users) and live unread badges.
 
 ---
 
 ## Props
 
-None — standalone component, reads from `useAuth()` and Firestore internally.
+None - reads `useAuth()` and Firestore internally; also consumes subscription/usage and feature-flag context.
 
 ---
 
 ## Structure
 
-### Header
-- "AI Companion" text link → `/`
-- App logo
+Intent-grouped nav (not a flat AI-Tools / Platform split). Groups: **Home, Create, Assess, Engage, Ask, My work, Account**, plus an **Admin** group pinned in the footer.
 
-### Nav Groups
+- Progressive disclosure: an `isNewUser` / `canShowAdvanced` gate hides advanced groups until the user is established; a `FeatureSpotlight` highlights newly unlocked items.
+- Footer area composes `PlanBadge` + `UsageDisplay` + `FeatureSpotlight` alongside the Admin group.
 
-**AI Tools**
-| Item | Route | Icon |
-|---|---|---|
-| Lesson Plan | /lesson-plan | BookOpen |
-| Rubric Generator | /rubric-generator | ClipboardList |
-| Worksheet Wizard | /worksheet-wizard | FileSignature |
-| Quiz Generator | /quiz-generator | ClipboardCheck |
-| Visual Aid Designer | /visual-aid-designer | Images |
-| Instant Answer | /instant-answer | Wand2 |
-| Content Creator | /content-creator | PenTool |
-| Video Storyteller | /video-storyteller | Video |
-| Teacher Training | /teacher-training | GraduationCap |
-| Virtual Field Trip | /virtual-field-trip | Globe2 |
-
-**Platform**
-| Item | Route | Icon | Special |
-|---|---|---|---|
-| My Library | /my-library | Library | |
-| Community Library | /community-library | Users | |
-| Messages | /messages | MessageCircle | Unread badge |
-| Impact Dashboard | /impact-dashboard | BarChart | |
-| Submit Content | /submit-content | Upload | |
-| My Profile | /my-profile | User | |
-| Notifications | /notifications | Bell | |
-| Community | /community | Flame | |
-
-**Admin** (bottom section)
-| Item | Route | Icon |
-|---|---|---|
-| Mission Control | /admin/cost-dashboard | DollarSign |
-| Log Dashboard | /admin/log-dashboard | FileText |
-| Review Panel | /review-panel | Shield |
+TODO(verify: exact route + icon for every item in each group against current source - the legacy two-table list is stale).
 
 ---
 
-## Live Unread Badge
+## Live Badges
 
-```
-useEffect:
-  1. onAuthStateChanged → get userId
-  2. onSnapshot on conversations where participantIds array-contains userId
-  3. Sum unreadCount[userId] across all conversations
-  4. Display as orange badge on Messages link
-  5. Shows "9+" if count > 9
+Two independent unread badges:
+1. **Conversations** - `totalUnread` summed from the user's conversations.
+2. **Notifications** - `unreadNotifications` count.
 
-Cleanup: unsubscribe both auth listener and Firestore listener
-```
+Both subscribe via Firestore listeners established inside an auth-state listener; both must be unsubscribed on cleanup.
 
 ---
 
 ## Active State
 
-Uses `usePathname()` to detect current route. Active link: bold text, orange-500 color, subtle background highlight.
+Uses `usePathname()` to mark the active link; active styling uses theme tokens (`text-primary` / accent background), not hardcoded orange.
 
 ---
 
 ## Mobile Behavior
 
-On mobile, sidebar is a Sheet (drawer) triggered by hamburger menu in header. Content is identical to desktop sidebar.
+Collapses into the Shadcn sidebar's mobile sheet/drawer; content identical to desktop.
 
 ---
 
 ## Key Pattern
 
-Double cleanup: the Firestore subscription is created inside an auth state change listener. Both must be properly unsubscribed to prevent memory leaks:
+Nested-subscription cleanup (auth listener wrapping Firestore listeners) to avoid leaks:
 
 ```
-let firestoreUnsub: (() => void) | null = null;
+let unsubA: (() => void) | null = null;
 const authUnsub = onAuthStateChanged(auth, (user) => {
-  if (user) {
-    firestoreUnsub = onSnapshot(...);
-  }
+  if (user) unsubA = onSnapshot(...);
 });
-return () => {
-  authUnsub();
-  firestoreUnsub?.();
-};
+return () => { authUnsub(); unsubA?.(); };
 ```

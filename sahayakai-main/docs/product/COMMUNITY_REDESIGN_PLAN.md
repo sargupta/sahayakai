@@ -1,5 +1,27 @@
 # SahayakAI Community Redesign — Detailed Implementation Plan
 
+> **Last updated: 2026-06-10. STATUS: LARGELY SHIPPED.** Verified against
+> `src/app/community/page.tsx`, `src/components/community/**`,
+> `src/app/actions/groups.ts`, and `src/types/community.ts`. Plan text below is
+> preserved; per-section status callouts mark what is live.
+>
+> Summary:
+> - 3-tab architecture (Discover/Connect/Chat) **removed** — no `Tabs` in
+>   `community/page.tsx`. Replaced by the unified feed. **[SHIPPED]**
+> - `GroupList`, `ShareComposer`, `UnifiedFeed`, `GroupsSidebar`, `FeedPost`,
+>   `GroupCard`, `GroupFeed`, `ContextualConnect`, `FeedSkeleton`,
+>   `ChatPreviewBanner` all exist. **[SHIPPED]**
+> - `src/types/community.ts` and `src/app/actions/groups.ts` exist with the
+>   planned action set (`getUnifiedFeedAction`, `ensureUserGroupsAction`, etc.).
+>   **[SHIPPED]**
+> - `community-chat.tsx` accepts a `collectionPath` prop; `group-feed.tsx`
+>   passes `groups/${group.id}/chat`. **[SHIPPED]**
+> - The standalone **`GroupChat` wrapper (`group-chat.tsx`) was NOT built** — the
+>   `collectionPath`-parameterized `community-chat.tsx` covers that role directly.
+>   **[NOT BUILT — superseded]**
+> - `ensureUserGroupsAction` is invoked from `community/page.tsx` on mount, **not**
+>   from a post-login auth hook as Phase 1 step 3 proposed. **[PARTIAL]**
+
 **Design Philosophy**: Facebook India 2012-2014 — Groups-first, activity-driven, belonging over browsing.
 
 **Scope**: Complete redesign of `/community` page — Discover, Connect, and Chat tabs merged into a unified, groups-based social experience.
@@ -111,6 +133,12 @@ No structural changes to the existing connection request/accept/decline/disconne
 ## Part 2: Component Architecture
 
 ### 2.1 New Components
+
+> **STATUS [SHIPPED, one exception].** All files below exist under
+> `src/components/community/` EXCEPT `group-chat.tsx`, which was not built — the
+> reusable `community-chat.tsx` (now taking a `collectionPath` prop) serves per-group
+> chat directly. Note `unified-feed.tsx` and `groups-sidebar.tsx` also shipped (they
+> are in the File Manifest in Part 5).
 
 | Component | File | Purpose |
 |-----------|------|---------|
@@ -237,6 +265,9 @@ Build all 9 new components listed in 2.1 above. Each is self-contained with its 
 ---
 
 ## Part 5: File Manifest
+
+> **STATUS [SHIPPED].** Every file in the manifest below exists EXCEPT
+> `src/components/community/group-chat.tsx` (not built — see note in 2.1).
 
 ### New Files (13)
 ```

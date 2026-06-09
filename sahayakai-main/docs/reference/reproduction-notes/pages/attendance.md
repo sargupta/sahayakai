@@ -1,8 +1,9 @@
-# Attendance — /attendance
+# Attendance - /attendance
 
 **File:** `src/app/attendance/page.tsx` (class list), `src/app/attendance/[classId]/page.tsx` (class detail)
-**Auth:** Required (full redirect if not signed in)
-**Plan gate:** Pro or Institution (enforced server-side on all write actions)
+**Auth:** Required (the page wraps content in `<AuthGate>`; signed-out users see the gate, not a redirect)
+**Plan gate:** Pro/premium (enforced server-side on all write actions)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -16,8 +17,8 @@ Full attendance management system for teachers. Create classes, add students (wi
 
 | Route | File | Description |
 |---|---|---|
-| `/attendance` | `src/app/attendance/page.tsx` | Class list — shows all classes for the authenticated teacher |
-| `/attendance/[classId]` | `src/app/attendance/[classId]/page.tsx` | Class detail — 3-tab view (Today, Students, Reports) |
+| `/attendance` | `src/app/attendance/page.tsx` | Class list - shows all classes for the authenticated teacher |
+| `/attendance/[classId]` | `src/app/attendance/[classId]/page.tsx` | Class detail - 3-tab view (Today, Students, Reports) |
 
 ---
 
@@ -65,17 +66,17 @@ ClassDetailPage (/attendance/[classId])
 │           └── Summary table (Student | Present | Absent | Late | Days | Rate%)
 │               └── Color-coded progress bar per student
 └── ContactParentModal (dialog, 5-step wizard)
-    ├── Step 1: "reason" — select outreach reason (4 options)
-    ├── Step 2: "note" — optional teacher note textarea
-    ├── Step 3: "review" — generated message preview
+    ├── Step 1: "reason" - select outreach reason (4 options)
+    ├── Step 2: "note" - optional teacher note textarea
+    ├── Step 3: "review" - generated message preview
     │   ├── Regenerate button
     │   ├── "Copy for WhatsApp" button
     │   └── "Call Parent" button (green, only if Twilio configured + language supported)
-    ├── Step 4: "calling" — live call status with pulse animation
+    ├── Step 4: "calling" - live call status with pulse animation
     │   ├── Status badge (Calling.../Connected/Completed/Failed)
     │   ├── Turn count badge (conversation turns)
     │   └── Polls /api/attendance/call-summary every 5s
-    └── Step 5: "summary" — structured call results
+    └── Step 5: "summary" - structured call results
         ├── Parent response card
         ├── Concerns (amber), Commitments (blue), Action Items (orange), Guidance (violet)
         ├── Follow-up suggestion (rose) if needed
@@ -84,7 +85,7 @@ ClassDetailPage (/attendance/[classId])
 
 ---
 
-## Types — `src/types/attendance.ts`
+## Types - `src/types/attendance.ts`
 
 ### Core Enums
 
@@ -102,7 +103,7 @@ type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 
 
 ### Firestore Document Types
 
-**`classes/{classId}`** — `ClassRecord`
+**`classes/{classId}`** - `ClassRecord`
 
 | Field | Type | Notes |
 |---|---|---|
@@ -116,7 +117,7 @@ type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 
 | `createdAt` | `string` | ISO |
 | `updatedAt` | `string` | ISO |
 
-**`classes/{classId}/students/{studentId}`** — `Student`
+**`classes/{classId}/students/{studentId}`** - `Student`
 
 | Field | Type | Notes |
 |---|---|---|
@@ -128,7 +129,7 @@ type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 
 | `createdAt` | `string` | ISO |
 | `updatedAt` | `string` | ISO |
 
-**`attendance/{classId}/records/{YYYY-MM-DD}`** — `DailyAttendanceRecord`
+**`attendance/{classId}/records/{YYYY-MM-DD}`** - `DailyAttendanceRecord`
 
 | Field | Type | Notes |
 |---|---|---|
@@ -141,7 +142,7 @@ type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 
 
 Note: `attendance/{classId}` is an empty container document. Actual records are in the `records` subcollection keyed by date string.
 
-**`parent_outreach/{outreachId}`** — `ParentOutreach`
+**`parent_outreach/{outreachId}`** - `ParentOutreach`
 
 | Field | Type | Notes |
 |---|---|---|
@@ -166,7 +167,7 @@ Note: `attendance/{classId}` is an empty container document. Actual records are 
 | `createdAt` | `string` | ISO |
 | `updatedAt` | `string` | ISO |
 
-### Computed (not stored) — `StudentAttendanceSummary`
+### Computed (not stored) - `StudentAttendanceSummary`
 
 | Field | Type | Notes |
 |---|---|---|
@@ -182,15 +183,15 @@ Note: `attendance/{classId}` is an empty container document. Actual records are 
 
 ---
 
-## Server Actions — `src/app/actions/attendance.ts`
+## Server Actions - `src/app/actions/attendance.ts`
 
 All actions use `'use server'` directive. Auth via `headers().get('x-user-id')` (injected by middleware from Firebase ID token).
 
 ### Auth & Plan Helpers
 
-- `getAuthUserId()` — reads `x-user-id` header, throws if missing
-- `requireProPlan(uid)` — checks `planType === 'pro' | 'institution'`, throws `'PREMIUM_REQUIRED'` otherwise
-- `normalizeToE164(phone)` — converts 10-digit or 91+10-digit to `+91XXXXXXXXXX`
+- `getAuthUserId()` - reads `x-user-id` header, throws if missing
+- `requireProPlan(uid)` - checks `planType === 'pro' | 'institution'`, throws `'PREMIUM_REQUIRED'` otherwise
+- `normalizeToE164(phone)` - converts 10-digit or 91+10-digit to `+91XXXXXXXXXX`
 
 ### Class Management
 
@@ -245,18 +246,18 @@ Creates a `parent_outreach` document. Duplicate of `saveOutreachRecordAction` bu
 
 **File:** `src/app/api/attendance/call/route.ts`
 
-Initiates a Twilio voice call to a parent.
+Initiates a parent voice call. **Provider is selected at runtime by `VOICE_PROVIDER` (default `twilio`).** When `VOICE_PROVIDER=exotel`, the route short-circuits to `forwardToExotel()` which POSTs to `VOICE_EXOTEL_CALL_URL` (the external `sahayakai-voice-call` streaming voicebot) and returns its `callSid`/`callId`. The Twilio path below is the default.
 
 **Request body:**
 ```json
 { "outreachId": "string", "to": "+919876543210", "parentLanguage": "Hindi" }
 ```
 
-**Flow:**
+**Twilio flow:**
 1. Auth check (`x-user-id` header)
-2. Verify Twilio env vars exist (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`)
+2. Verify Twilio env vars exist (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`); 503 if unset
 3. Verify ownership of outreach record
-4. Check language is supported for Twilio calls (only English and Hindi have voice support)
+4. Check language is in `TWILIO_LANGUAGE_MAP` (10 of 11 langs supported; Odia maps to `null`). If unsupported, returns an error telling the teacher to use WhatsApp copy.
 5. Build TwiML callback URL: `{protocol}://{host}/api/attendance/twiml?outreachId={id}`
 6. Build status callback URL: `{protocol}://{host}/api/attendance/twiml-status`
 7. POST to Twilio REST API (`Calls.json`) with Basic auth
@@ -264,11 +265,11 @@ Initiates a Twilio voice call to a parent.
 
 **Response:** `{ callSid: string }`
 
-### `GET /api/attendance/twiml` — Initial call pickup
+### `GET /api/attendance/twiml` - Initial call pickup
 
 **File:** `src/app/api/attendance/twiml/route.ts`
 
-**PUBLIC route** — called by Twilio when the parent picks up. Validated via `X-Twilio-Signature` HMAC-SHA1.
+**PUBLIC route** - called by Twilio when the parent picks up. Validated via `X-Twilio-Signature` HMAC-SHA1.
 
 **Query param:** `outreachId`
 
@@ -278,9 +279,9 @@ Initiates a Twilio voice call to a parent.
 - Saves initial transcript + `turnCount: 1` to Firestore
 - Falls back to `<Hangup/>` on any error or missing data
 
-### `POST /api/attendance/twiml` — Conversational turn handler
+### `POST /api/attendance/twiml` - Conversational turn handler
 
-**PUBLIC route** — receives `SpeechResult` / `Digits` from Twilio's `<Gather>`.
+**PUBLIC route** - receives `SpeechResult` / `Digits` from Twilio's `<Gather>`.
 
 **Flow:**
 1. Validates Twilio signature (POST variant with form params)
@@ -307,7 +308,7 @@ Initiates a Twilio voice call to a parent.
 
 **File:** `src/app/api/attendance/twiml-status/route.ts`
 
-**PUBLIC route** — Twilio status callback. Receives form-encoded data.
+**PUBLIC route** - Twilio status callback. Receives form-encoded data.
 
 **Key fields from Twilio:** `CallSid`, `CallStatus`
 
@@ -327,13 +328,13 @@ Initiates a Twilio voice call to a parent.
 
 ---
 
-## AI Flow — Parent Message Generator
+## AI Flow - Parent Message Generator
 
 **File:** `src/ai/flows/parent-message-generator.ts`
 
-Generates empathetic, multilingual parent notification messages via Genkit.
+Generates empathetic, multilingual parent notification messages via Genkit (`googleai/gemini-2.5-flash`).
 
-**Called from:** `POST /api/ai/parent-message` (not in attendance folder — standard AI route pattern)
+**Called from:** `POST /api/ai/parent-message` (standard AI route pattern; routed through `dispatchParentMessage`, Firestore `parentMessageSidecarMode`, default `off`). The route injects the Gemini API key (fix shipped 2026-06-09).
 
 ### Input Schema (`ParentMessageInput`)
 
@@ -362,26 +363,26 @@ Generates empathetic, multilingual parent notification messages via Genkit.
 ### Reason Context Map
 
 Each `OutreachReason` maps to specific prompt guidance:
-- `consecutive_absences` — Express concern, ask if everything is okay, be warm not accusatory
-- `poor_performance` — Focus on support and partnership, not blame
-- `behavioral_concern` — Acknowledge positive qualities, describe concern objectively
-- `positive_feedback` — Warm, celebratory, encourage parent to praise at home
+- `consecutive_absences` - Express concern, ask if everything is okay, be warm not accusatory
+- `poor_performance` - Focus on support and partnership, not blame
+- `behavioral_concern` - Acknowledge positive qualities, describe concern objectively
+- `positive_feedback` - Warm, celebratory, encourage parent to praise at home
 
 ### Key Design Decisions (Message Generator)
-- `languageCode` is hardcoded from a map — never trusted from AI output
-- `reasonContext` is resolved before sending to the prompt — no dynamic lookup in template
+- `languageCode` is hardcoded from a map - never trusted from AI output
+- `reasonContext` is resolved before sending to the prompt - no dynamic lookup in template
 - If `userId` provided, enriches with `teacherName` and `schoolName` from user profile via `dbAdapter`
 - Uses `SAHAYAK_SOUL_PROMPT` + `STRUCTURED_OUTPUT_OVERRIDE` system prompts
 
 ---
 
-## AI Flow — Parent Call Agent (Conversational)
+## AI Flow - Parent Call Agent (Conversational)
 
 **File:** `src/ai/flows/parent-call-agent.ts`
 
-Two capabilities powered by Genkit/Gemini with structured output:
+Two capabilities powered by Genkit/Gemini (`googleai/gemini-2.5-flash`) with structured output:
 
-### `generateAgentReply(input)` — Real-time conversational turn
+### `generateAgentReply(input)` - Real-time conversational turn
 
 **Input:** studentName, className, subject, reason, teacherMessage, teacherName?, schoolName?, parentLanguage, transcript[], parentSpeech, turnNumber
 
@@ -392,9 +393,9 @@ Two capabilities powered by Genkit/Gemini with structured output:
 - Max 3-4 sentences (spoken on phone, not written)
 - Pedagogical guidance: practical home tips (read together 10 min, check homework, praise effort)
 - Wraps up naturally at turn >= 5; sets `shouldEndCall=true` at turn >= 6 or when parent is done
-- Warm, conversational tone — "like a kind teacher at a chai meeting"
+- Warm, conversational tone - "like a kind teacher at a chai meeting"
 
-### `generateCallSummary(input)` — Post-call structured summary
+### `generateCallSummary(input)` - Post-call structured summary
 
 **Input:** studentName, className, subject, reason, teacherMessage, teacherName?, schoolName?, parentLanguage, transcript[], callDurationSeconds?
 
@@ -415,13 +416,13 @@ All summary fields in English (teacher's internal records).
 
 ---
 
-## Security — Twilio Request Validation
+## Security - Twilio Request Validation
 
 **File:** `src/lib/twilio-validate.ts`
 
-- `validateTwilioSignature(req)` — HMAC-SHA1 for GET (URL-only signing)
-- `validateTwilioSignaturePost(req, params)` — HMAC-SHA1 for POST (URL + sorted form params)
-- `isValidE164(phone)` — regex `/^\+[1-9]\d{6,14}$/`
+- `validateTwilioSignature(req)` - HMAC-SHA1 for GET (URL-only signing)
+- `validateTwilioSignaturePost(req, params)` - HMAC-SHA1 for POST (URL + sorted form params)
+- `isValidE164(phone)` - regex `/^\+[1-9]\d{6,14}$/`
 - Constant-time comparison via `crypto.timingSafeEqual`
 - Skipped on localhost (Twilio can't reach local dev)
 
@@ -439,7 +440,7 @@ All summary fields in English (teacher's internal records).
 
 ### Language Support for Voice Calls
 
-**10 of 11 languages** supported via Google TTS voices on Twilio (Odia excluded — no Google TTS available):
+**10 of 11 languages** supported via Google TTS voices on Twilio (Odia excluded - no Google TTS available):
 
 | Language | Voice | Tier | Speech Recognition |
 |---|---|---|---|
@@ -454,7 +455,7 @@ All summary fields in English (teacher's internal records).
 | Gujarati | `Google.gu-IN-Wavenet-A` | Wavenet | `gu-IN` |
 | Punjabi | `Google.pa-IN-Wavenet-A` | Wavenet | `pa-Guru-IN` |
 
-Only Odia returns `null` in `TWILIO_LANGUAGE_MAP` — UI hides "Call Parent" for Odia, leaving only "Copy for WhatsApp".
+Only Odia returns `null` in `TWILIO_LANGUAGE_MAP` - UI hides "Call Parent" for Odia, leaving only "Copy for WhatsApp".
 
 ### Call Flow Sequence (Conversational Agent)
 
@@ -578,9 +579,9 @@ interface StudentManagerProps {
 ### Data Loading (ClassDetailPage)
 
 On mount, loads in parallel:
-1. `getClassAction(classId)` — class metadata
-2. `getStudentsAction(classId)` — student list
-3. `getTwilioConfigStatusAction()` — whether Twilio env vars are set
+1. `getClassAction(classId)` - class metadata
+2. `getStudentsAction(classId)` - student list
+3. `getTwilioConfigStatusAction()` - whether Twilio env vars are set
 
 Then sequentially loads current-month summaries via `getStudentSummariesAction` for the at-risk alert banner.
 
@@ -588,7 +589,7 @@ Then sequentially loads current-month summaries via `getStudentSummariesAction` 
 
 Computed server-side in `getStudentSummariesAction`:
 - Iterates all attendance records for the month in date order
-- Tracks a running streak (`currentStreak`) — incremented on `absent`, reset on `present` or `late`
+- Tracks a running streak (`currentStreak`) - incremented on `absent`, reset on `present` or `late`
 - `consecutiveAbsences = max streak seen`
 - Students with >= 2 consecutive absences appear in the at-risk alert banner
 
@@ -603,7 +604,7 @@ Computed server-side in `getStudentSummariesAction`:
 When deleting a class:
 1. Batch-delete all students in `classes/{classId}/students/` (max 40 docs)
 2. Delete the class document itself
-3. `db.recursiveDelete(attendance/{classId})` — handles all records subcollection docs
+3. `db.recursiveDelete(attendance/{classId})` - handles all records subcollection docs
 
 ### Phone Normalization
 
@@ -619,9 +620,9 @@ Actions that require Pro plan: `createClassAction`, `addStudentAction`, `saveAtt
 
 ## Firestore Indexes
 
-No composite indexes required — all queries use single equality filters. Sorting done in JavaScript:
+A `parent_outreach` composite index on `createdAt ASC` was added (2026-06-09) for the outreach-latest query. Most other queries use single equality filters with sorting done in JavaScript:
 - Classes: `where('teacherUid', '==', uid)`, sorted by `createdAt` desc in JS
-- Students: `orderBy('rollNumber', 'asc')` — single field
-- Attendance records: `where('date', '>=', start).where('date', '<', end)` — range on single field
+- Students: `orderBy('rollNumber', 'asc')` - single field
+- Attendance records: `where('date', '>=', start).where('date', '<', end)` - range on single field
 - Outreach: `where('teacherUid', '==', uid)` + optional `where('studentId', '==', id)`, sorted in JS
-- Status callback: `where('callSid', '==', sid).limit(1)` — single field
+- Status callback: `where('callSid', '==', sid).limit(1)` - single field

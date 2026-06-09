@@ -1,7 +1,11 @@
 # SahayakAI - Rural India Adaptation: Implementation Summary
 
+**Last updated:** 2026-06-10
+
+> Framing note: rural low-resource classrooms are one important segment, not the whole market. The same `resourceLevel` (low/medium/high) features described here serve well-resourced schools too. SahayakAI addresses India's systemic education-quality crisis across all school types.
+
 ## Overview
-This document summarizes the features implemented to adapt SahayakAI for rural Indian government school teachers. The focus was on offline usability, curriculum alignment, resource awareness, and ease of use.
+This document summarizes features implemented to support low-resource classrooms: offline usability, curriculum alignment, resource awareness, and ease of use.
 
 ## Completed Features
 

@@ -1,58 +1,59 @@
 # TeacherConnect Data Schema Design
 
-This document defines the data structures for the TeacherConnect social network, using a hybrid approach between **Google Cloud Firestore (NoSQL)** for social interactions and **Cloud SQL (Relational)** for governed records.
+**Last updated:** 2026-06-10 (re-verified against `src/`).
+
+This document defines the data structures for the TeacherConnect social network: **Cloud Firestore (NoSQL)** for social interactions plus **Cloud SQL (PostgreSQL)** for governed `certifications` records.
 
 ---
 
 ## 1. Firestore Collections (Real-time & Social)
 
-### `profiles` (Collection)
-Stores user-centric professional information.
-- `id` (string, docId): User UUID from Firebase Auth.
-- `displayName` (string): Full name of the teacher.
-- `bio` (string): Short professional summary.
-- `department` (string): e.g., "Science", "Primary Education".
-- `avatarUrl` (string): URL to Cloud Storage asset.
-- `followersCount` (number): Aggregated for performance.
-- `followingCount` (number): Aggregated for performance.
-- `createdAt` (timestamp).
-- `updatedAt` (timestamp).
+> Correction: the original draft named a `profiles` collection and a `followerId/followingId` connection model. Neither matches the implementation. Profiles live in `users`; connections are mutual (not a follow graph).
+
+### `users` (Collection) — profile source of truth
+Full interface: `UserProfile` (`src/types/index.ts:155`). Social-relevant fields:
+- `uid` (string, docId): Firebase Auth UID.
+- `displayName`, `bio?`, `department?`, `designation?`.
+- `photoURL?` (string): avatar URL (the field is `photoURL`, not `avatarUrl`).
+- `followersCount`, `followingCount` (number, denormalized).
+- `schoolName?`, `district?`, `state?`, `subjects[]`, `gradeLevels[]`, `badges[]`, `impactScore`.
+- `createdAt`, `lastLogin` (Timestamp).
 
 ### `posts` (Collection)
-Main feed content.
+Main feed content (`src/app/actions/community.ts`). No exported interface; field shape assembled inline.
 - `id` (string, docId).
-- `authorId` (string): Ref to `profiles`.
-- `content` (string): Text content or description.
-- `resourceRef` (string, optional): ID of a Lesson Plan, Quiz, or Visual Aid from the library.
-- `mediaUrls` (array of strings): Links to images or PDFs in Storage.
-- `likesCount` (number).
-- `commentsCount` (number).
-- `visibility` (string): "public" | "department" | "private".
-- `createdAt` (timestamp).
+- `authorId` (string): Ref to `users`.
+- `content` (string): text content.
+- likes/saves counters and `createdAt`.
+- TODO(verify: full `posts` field shape); `resourceRef`, `mediaUrls`, `visibility` from the old draft are unconfirmed in code.
 
-### `connections` (Collection)
-Stores the follow graph.
-- `id` (string, docId): `followerId_followingId`.
-- `followerId` (string).
-- `followingId` (string).
-- `createdAt` (timestamp).
+### `library_resources` (Collection)
+Shared, downloadable resources. `authorId` → `users`. Engagement counters as `stats.{likes,saves,downloads}`. Per-user like state in `library_resources/{id}/likes/{uid}` subcollection.
 
-### `interactions` (Sub-collection under `posts/{post_id}`)
-- `likes` (collection): Docs with user ID to prevent double-likes.
-- `comments` (collection): 
-  - `id` (string).
-  - `authorId` (string).
-  - `text` (string).
-  - `createdAt` (timestamp).
+### `connections` (Collection) — mutual connection graph
+`Connection` (`src/types/index.ts:419`).
+- `id` (string, docId): sorted `{uid1}_{uid2}` pair.
+- `uids` ([string, string]): both participants (enables `array-contains`).
+- `initiatedBy` (string): who sent the original request.
+- `connectedAt` (string, ISO).
+
+### `connection_requests` (Collection) — pending requests
+`ConnectionRequest` (`src/types/index.ts:411`): `id ({fromUid}_{toUid}), fromUid, toUid, createdAt, expiresAt (30 days)`.
+
+### `groups` (Collection) + subcollections
+`Group` (`src/types/community.ts`) with `members`, `posts`, `chat` subcollections (`GroupMember`, `GroupPost`, `GroupChatMessage`).
+
+### Likes
+Per-resource likes are stored in a `likes` subcollection (`{ uid, createdAt }`) and aggregated into `stats.likes`. There is no top-level `interactions` subcollection as the old draft described; comments are not yet a separate live collection. TODO(verify: whether a comments collection exists in production).
 
 ---
 
 ## 2. Cloud SQL Schema (Relational & Governed)
 
-Database: `sahayakai_records` (PostgreSQL)
+Database: PostgreSQL, connected via the `DATABASE_URL` env/secret (`src/lib/db/sql.ts`). TODO(verify: the live database/instance name); it is not hardcoded in code, only the connection string env. Reads fail soft (return `[]`) when `DATABASE_URL` is unset.
 
 ### Table: `certifications`
-Used for formal, non-volatile professional records.
+Used for formal, non-volatile professional records. Mirrors the `Certification` interface in `src/lib/services/certification-service.ts` (columns: `id, user_id, cert_name, issuing_body, issue_date, expiry_date?, verification_url?, status`).
 | Column | Type | Description |
 | :--- | :--- | :--- |
 | `id` | UUID (PK) | Unique record ID. |

@@ -1,13 +1,14 @@
-# Content Creator — /content-creator
+# Content Creator - /content-creator
 
 **File:** `src/app/content-creator/page.tsx`
-**Auth:** Required
+**Auth:** Not gated at the page level (static hub; no API calls)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Hub page that organizes visual content creation tools. Currently links to Visual Aid Designer and Virtual Field Trip. Video Storyteller is listed as "coming soon" here (even though it exists as a separate page).
+"Content Creator Studio" hub page that organizes multimedia content tools. All three tool cards are now active links.
 
 ---
 
@@ -15,24 +16,23 @@ Hub page that organizes visual content creation tools. Currently links to Visual
 
 ```
 ContentCreatorPage
-├── Page header ("Content Creator")
-├── Description text
-└── Tool cards grid
+├── Page header ("Content Creator Studio") + description
+└── Tool cards grid (3 cards, all active=true)
     ├── Visual Aid Designer card → /visual-aid-designer
     ├── Virtual Field Trip card → /virtual-field-trip
-    └── Video Storyteller card (coming soon — disabled)
+    └── Video Storyteller card → /video-storyteller
 ```
 
 ---
 
 ## Note
 
-This page is a navigation hub, not a tool itself. It contains no AI calls or state. The individual tools it links to (`/visual-aid-designer`, `/virtual-field-trip`) each have their own full page with forms and AI generation.
+This page is a navigation hub, not a tool itself. It contains no AI calls or state (just a `tools` array rendered as `<Link>` cards). The tools it links to each have their own full page with forms and AI generation.
 
 ---
 
 ## Design
 
-- 3-col card grid
-- Each card: large icon, title, description, "Open" button or "Coming Soon" badge
-- Coming soon card: grayed out, no click action
+- 3-col card grid (`md:grid-cols-2 lg:grid-cols-3`)
+- Each card: Lucide icon (Images / Globe2 / Video), title, description, action label + ArrowRight
+- `card-accent-bar` top accent; hover elevation

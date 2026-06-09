@@ -1,5 +1,26 @@
 # SahayakAI Messaging Redesign — WhatsApp-Inspired Implementation Plan
 
+> **Last updated: 2026-06-10.** Per-phase status verified against `src/lib/`,
+> `src/hooks/`, `src/components/messages/`, and `public/`. Headline:
+> - **Phase 1 (Outbox + Presence/Typing) — [SHIPPED].** `src/lib/message-outbox.ts`,
+>   `src/hooks/use-message-outbox.ts`, `src/hooks/use-online-status.ts`,
+>   `src/hooks/use-presence.ts`, `src/hooks/use-typing-indicator.ts`,
+>   `src/components/messages/typing-indicator.tsx` + `presence-dot.tsx` all exist.
+>   RTDB is initialized in **`src/lib/firebase.ts`** (exported as `rtdb`), NOT in a
+>   separate `src/lib/firebase-rtdb.ts` (that file was not created).
+> - **Phase 2 (FCM Push + Delivery Ack) — [SHIPPED].** `src/lib/fcm-client.ts`,
+>   `src/hooks/use-fcm-registration.ts`, `src/hooks/use-delivery-ack.ts`,
+>   `public/firebase-messaging-sw.js`, `src/components/notifications/push-permission-banner.tsx`,
+>   `src/components/messages/delivery-status.tsx`, and `/api/fcm/register` all exist.
+> - **Phase 3 (Pagination + Async Media) — [PARTIAL].** `src/hooks/use-paginated-messages.ts`
+>   and `src/lib/media-upload-manager.ts` + `src/components/messages/audio-waveform.tsx`
+>   exist. But **`virtualized-message-list.tsx` was NOT built and
+>   `@tanstack/react-virtual` is NOT a dependency** — list is not virtualized.
+> - **Phase 4 (Fan-Out Inbox) — [NOT STARTED].** No `src/lib/inbox-fanout.ts`.
+> - **Phase 5 (Community Channels) — [NOT STARTED].** No `src/app/actions/channels.ts`
+>   or `src/types/channels.ts`; `community_chat` remains flat (per-group chat now
+>   lives under `groups/{id}/chat` via the community redesign instead).
+
 ## Current State
 
 The messaging system uses Firestore `conversations` collection with `messages` subcollection, server actions for all writes, real-time `onSnapshot` listeners with `limitToLast(100)`, in-app Firestore notifications (no push), no offline support, no presence/typing, no delivery states, and a flat `community_chat` collection. The `idb` and `uuid` packages are already installed. A service worker (next-pwa/Workbox) exists but handles only caching.
@@ -98,7 +119,10 @@ The messaging system uses Firestore `conversations` collection with `messages` s
 
 ---
 
-## Phase 3: Pagination + Async Media (Week 3)
+## Phase 3: Pagination + Async Media (Week 3) — [PARTIAL]
+
+> Pagination hook + async-media manager shipped; **virtualized list not built,
+> `@tanstack/react-virtual` not installed.**
 
 ### 3A. Cursor-Based Pagination with Virtualized Scroll
 
@@ -133,7 +157,7 @@ The messaging system uses Firestore `conversations` collection with `messages` s
 
 ---
 
-## Phase 4: Fan-Out Inbox (Week 4, only if >1K users)
+## Phase 4: Fan-Out Inbox (Week 4, only if >1K users) — [NOT STARTED]
 
 **Problem**: Inbox query `where('participantIds', 'array-contains', uid)` scans all conversations globally.
 
@@ -149,7 +173,11 @@ The messaging system uses Firestore `conversations` collection with `messages` s
 
 ---
 
-## Phase 5: Community Channels (Week 5)
+## Phase 5: Community Channels (Week 5) — [NOT STARTED]
+
+> Superseded in practice by the community redesign: per-group chat now lives under
+> `groups/{groupId}/chat` (served by `community-chat.tsx` via its `collectionPath`
+> prop), rather than topic channels under a `channels/` collection.
 
 **Problem**: Flat `community_chat` is a single noisy stream.
 

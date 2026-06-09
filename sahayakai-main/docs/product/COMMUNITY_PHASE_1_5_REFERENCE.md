@@ -1,5 +1,15 @@
 # Community Page — Phase 1-5 Reference
 
+> **Last updated: 2026-06-10. STATUS: ACCURATE / SHIPPED.** Verified against
+> `src/lib/auth-helpers.ts` (`requireAuth`, `requireGroupMember`,
+> `getAuthUserIdOrNull`), `src/hooks/use-optimistic-toggle.ts`,
+> `src/lib/server-cache.ts` (`cachedPerUser`, `invalidateUserCache`),
+> `src/hooks/use-near-bottom.ts`, `src/hooks/use-click-outside.ts`, and the
+> community/groups/connections/messages server actions. All helpers, hooks, and
+> actions named below exist as described. The community page has since been
+> redesigned into a groups-based unified feed (see `COMMUNITY_REDESIGN_PLAN.md`),
+> but these contracts still hold.
+
 This document describes the contracts, conventions, and reusable utilities
 introduced by the Phase 1-5 community improvement plan (April 2026). It is
 the operating manual for anyone touching `/community`, the related server

@@ -1,7 +1,8 @@
-# Rubric Generator — /rubric-generator
+# Rubric Generator - /rubric-generator
 
 **File:** `src/app/rubric-generator/page.tsx`
 **Auth:** Required
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -16,7 +17,7 @@ Generate assessment rubrics with 4 performance levels (Exemplary, Proficient, De
 ```
 RubricGeneratorPage
 ├── Header (title + description)
-├── Explainer dialog (on first visit — explains what a rubric is)
+├── Explainer dialog (on first visit - explains what a rubric is)
 ├── Form
 │   ├── LanguageSelector
 │   ├── GradeLevelSelector
@@ -48,13 +49,14 @@ RubricGeneratorPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
+- **Route:** `POST /api/ai/rubric` (wrapped in `withPlanCheck('rubric')`).
+- **Dispatch:** `dispatchRubric` (`src/lib/sidecar/rubric-dispatch.ts`); Firestore `rubricSidecarMode` selects Genkit vs ADK sidecar (default `off`).
 - **Flow:** `src/ai/flows/rubric-generator.ts`
-- **Model:** Gemini via Genkit
-- **Structure:** 4 levels × N criteria grid
-- **Level labels:** Exemplary / Proficient / Developing / Beginning (language-translated)
-- **Output:** `{ title, criteria: [{ name, levels: { exemplary, proficient, developing, beginning } }] }`
+- **Model:** `googleai/gemini-2.5-flash`
+- **Structure:** 4 mandatory levels per criterion (Exemplary / Proficient / Developing / Beginning), N criteria.
+- **Output schema (`RubricGeneratorOutputSchema`):** `{ title, description, criteria: [{ name, description, levels: [{ name, description, points }] }], gradeLevel, subject }` (levels ordered highest to lowest).
 
 ---
 

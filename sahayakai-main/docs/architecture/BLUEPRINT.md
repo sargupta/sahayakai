@@ -1,5 +1,7 @@
 # **App Name**: SahayakAI: Bharat Interface
 
+_Last updated: 2026-06-10. This is the original design/style blueprint (visual language and core UX intent). For current technical facts see `docs/architecture/SOLUTION_ARCHITECTURE.md`._
+
 ## Core Features:
 
 - Voice Input: Voice-first input: prominent microphone on input screens, for realtime speech-to-text conversion. Includes visual wave animation and audio cues for start/stop.

@@ -2,11 +2,13 @@
 
 **File:** `src/components/messages/conversation-thread.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Main chat view for a single DM or group conversation. Real-time message display, text + resource + voice input, resource sharing picker.
+Main chat view for a single DM or group conversation. Real-time, paginated message display with optimistic sending, typing indicators, text + resource + voice input, and a 2-step resource picker.
 
 ---
 
@@ -19,99 +21,41 @@ Main chat view for a single DM or group conversation. Real-time message display,
 }
 ```
 
----
-
-## State
-
-| State | Type | Purpose |
-|---|---|---|
-| `messages` | `Message[]` | Real-time message list |
-| `input` | `string` | Text input |
-| `sending` | `boolean` | Send in flight |
-| `loading` | `boolean` | Initial load |
-| `resourcePickerOpen` | `boolean` | Popover open |
+TODO(verify: exact prop names against current source.)
 
 ---
 
-## Real-Time Listener
+## Hooks (the real engine)
 
-```
-collection: conversations/{convId}/messages
-query: orderBy("createdAt", "asc"), limitToLast(100)
-```
-
-`onSnapshot` → `setMessages()`. Cleanup on unmount.
-
----
-
-## handleSend(text, type, resource?, audioUrl?, audioDuration?)
-
-```
-1. Guard: !user || sending → return
-2. Guard: type=text → !trimmed → return; type=audio → !audioUrl → return
-3. setInput("")
-4. setSending(true)
-5. await sendMessageAction({ conversationId, text, type, resource, audioUrl, audioDuration })
-6. finally: setSending(false), focus textarea
-```
+This component is driven by custom hooks, NOT local `messages`/`sending` state:
+- `usePaginatedMessages` - windowed message loading (load-older as you scroll up) instead of a single `limitToLast(100)` listener.
+- `useMessageOutbox` - optimistic send + retry queue; sending goes through `sendWithOutbox(...)`. Failed sends surface a retry affordance rather than vanishing.
+- `useTypingIndicator` - broadcasts/observes typing state.
+- `LibraryPickerDialog` / `InlineResourcePicker` - resource attach flow.
 
 ---
 
-## Resource Sharing (Popover)
+## handleSend
 
-SHAREABLE_TYPES config:
-```
-lesson-plan   → /lesson-plan  → BookOpen
-quiz          → /quiz-generator → ClipboardCheck
-worksheet     → /worksheet-wizard → FileSignature
-visual-aid    → /visual-aid-designer → Images
-field-trip    → /virtual-field-trip → Globe2
-rubric        → /rubric-generator → Wand2
-training      → /teacher-training → GraduationCap
-```
-
-Clicking a type: navigates to the tool page. When teacher generates and saves there, they return to messages and share from library (separate flow, no direct integration here).
+Sends via the outbox (`sendWithOutbox`), which enqueues an optimistic message and reconciles on server ack (or marks failed for retry). Guards: empty text for `type=text`, missing `audioUrl` for `type=audio`.
 
 ---
 
-## Mark as Read
+## Resource Sharing (2-step InlineResourcePicker)
 
-`useEffect` on `[conversation.id, user]`:
-```
-markConversationReadAction(conversation.id, user.uid)
-```
-Called once when conversation opens.
+`SHAREABLE_TYPES` maps content types to their tool routes/icons. Note `lesson-plan` routes to `lesson-planner` (not `/lesson-plan`).
 
----
+The picker is a 2-step inline flow (pick type, then pick a saved resource via `LibraryPickerDialog`) that attaches a resource message directly - this is a real in-thread share, not just a navigate-away.
 
-## Auto-Scroll
-
-```
-useEffect on [messages]:
-  bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-```
+TODO(verify: the full current `SHAREABLE_TYPES` route/icon table.)
 
 ---
 
-## Input Bar Layout
+## Other behaviour
 
-```
-[Popover trigger: Paperclip icon]
-[Textarea: Shift+Enter newline, Enter sends]
-[VoiceRecorder]
-[Send button: orange-500]
-```
+- Mark-as-read on open (server action).
+- Typing indicator row above the input.
+- Header includes a `BackButton` (mobile) + participant identity + presence.
+- Send button uses default (`bg-primary`) variant.
 
-Textarea config:
-- `min-h-[40px] max-h-32` (auto-grow up to 132px)
-- `rows={1}`, `resize-none`
-- `maxLength={1000}`
-
----
-
-## Design
-
-- Thread fills full height of parent container
-- Header: back arrow (mobile) + avatar + name + online dot
-- Bubble alignment: own = right, other = left
-- Bottom padding: enough to not overlap with input bar
+TODO(verify: textarea maxLength and exact input-bar composition in current source.)

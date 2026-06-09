@@ -1,7 +1,8 @@
-# Submit Content — /submit-content
+# Submit Content - /submit-content
 
 **File:** `src/app/submit-content/page.tsx`
-**Auth:** Required
+**Auth:** Not gated at page level (static placeholder)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -13,7 +14,7 @@ Entry point for teachers to submit their AI-generated content to the community l
 
 ## Current State
 
-**Coming soon placeholder.** The page exists but shows a "coming soon" state.
+**Coming soon placeholder.** Confirmed in code: a single card with an `Upload` icon, title "Submit Content", and "This feature is coming soon. Submit your own content to the community library. Stay tuned!" No form, no API calls.
 
 ---
 

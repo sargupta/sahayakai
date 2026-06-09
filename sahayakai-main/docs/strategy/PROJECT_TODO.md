@@ -82,7 +82,7 @@
 6. **Multi-Agent Sync** - Formalize background peer-reviews as default (Feb 2026)
 
 ---
-*Last Updated: 2025-12-08*
+*Last Updated: 2026-06-10*
 
 ## 🏗️ Future Architecture (API-First Strategy)
 - [ ] **Generate OpenAPI Spec**: Export `openapi.json` from `ai-video-script-generator` (FastAPI).

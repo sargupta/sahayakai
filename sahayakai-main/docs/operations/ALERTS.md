@@ -1,6 +1,10 @@
 # Production Alerts Setup
 
+> Last updated: 2026-06-10
+
 Covers critical alerts that catch money/security bugs BEFORE users complain.
+
+> Sidecar / App Check / health alerting policies are version-controlled as YAML under [`infra/monitoring/*.yaml`](../../infra/monitoring/) (e.g. `01-sidecar-5xx-rate.yaml`, `04-appcheck-verification-failure.yaml`, `07-prod-health-non-200.yaml`, `q3e-sidecar-cost-2x-genkit.yaml`). The gcloud log-based metrics below are the money/security tier and are created by hand.
 
 ---
 

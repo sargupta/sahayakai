@@ -2,11 +2,13 @@
 
 **File:** `src/components/messages/message-bubble.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Renders a single message in a DM conversation thread. Handles 3 message types: text, resource (shared educational content), audio (voice message).
+Renders a single message in a DM/group thread. Handles the 3 `MessageType` values: `text`, `resource` (shared educational content), `audio` (voice message).
 
 ---
 
@@ -15,8 +17,10 @@ Renders a single message in a DM conversation thread. Handles 3 message types: t
 ```ts
 {
   message: Message;
-  isOwn: boolean;              // current user sent this
-  participantIds: string[];    // for read receipt
+  isOwn: boolean;               // current user sent this
+  showAvatar: boolean;          // first-in-group flag (avatar/name shown)
+  participantIds: string[];     // for delivery/read status
+  onRetry?: (message: Message) => void;   // retry a failed optimistic send
 }
 ```
 
@@ -61,64 +65,39 @@ Shows: Mic icon + `<audio controls>` player + optional duration label.
 
 ## Bubble Styles
 
-```
-Own:    bg-orange-500 text-white rounded-br-sm
-Other:  bg-slate-100 text-slate-800 rounded-bl-sm
-Both:   px-3.5 py-2 rounded-2xl text-sm leading-relaxed font-medium break-words
-```
+Own bubbles use the primary token (`bg-primary` + primary-foreground text, `rounded-br-sm`); other bubbles use a muted surface (`rounded-bl-sm`). Avoid hardcoded `orange-500`/`slate-100`.
 
 ---
 
 ## AudioBubble Sub-Component
 
-```tsx
-function AudioBubble({ audioUrl, duration, isOwn }) {
-  return (
-    <div className="flex items-center gap-2 min-w-[160px]">
-      <div className={isOwn ? "p-1.5 rounded-full bg-white/20" : "p-1.5 rounded-full bg-orange-100"}>
-        <Mic className={isOwn ? "h-3.5 w-3.5 text-white" : "h-3.5 w-3.5 text-orange-500"} />
-      </div>
-      <audio src={audioUrl} controls preload="metadata"
-             className="h-8 flex-1 min-w-0"
-             style={{ colorScheme: 'normal' }} />
-      {duration && (
-        <span className={isOwn ? "text-[10px] text-white/70" : "text-[10px] text-slate-400"}>
-          {formatDuration(duration)}
-        </span>
-      )}
-    </div>
-  );
-}
-```
+Renders a `Mic` icon chip plus a native `<audio controls preload="metadata" />` (`h-8 flex-1 min-w-0`, `style={{ colorScheme: 'normal' }}` to defeat dark-mode inversion) and an optional formatted duration label. Chip/label colors follow own-vs-other theme tokens.
 
 ---
 
-## ResourceCard Sub-Component
+## ResourceCard / RESOURCE_CONFIG
 
-Type-to-config mapping (`RESOURCE_CONFIG`):
+Per content-type config (color + icon). Verified entries include:
 ```
-lesson-plan:         bg-orange-50 border-orange-200 text-orange-700, BookOpen
-quiz:                bg-blue-50 border-blue-200 text-blue-700, ClipboardCheck
-worksheet:           bg-green-50 border-green-200 text-green-700, FileSignature
-visual-aid:          bg-purple-50 border-purple-200 text-purple-700, Images
-virtual-field-trip:  bg-teal-50 border-teal-200 text-teal-700, Globe2
-rubric:              bg-rose-50 border-rose-200 text-rose-700, Table
-teacher-training:    bg-amber-50 border-amber-200 text-amber-700, GraduationCap
+worksheet         -> emerald accent,  (resource icon)
+visual-aid        -> pink accent
+rubric            -> violet accent,    GraduationCap
+teacher-training  -> amber accent,     Wand2
 ```
+(Note: rubric uses `GraduationCap` and teacher-training uses `Wand2` here - the legacy doc's `Table`/`GraduationCap` mapping is stale.)
 
-Shows grade + subject badges + "Open in Tool" button → navigates to `resource.route`.
+Shows grade + subject badges + an open/"Open in Tool" action that navigates to the resource's route.
+
+TODO(verify: the complete current RESOURCE_CONFIG table - color + icon for every content type.)
 
 ---
 
-## ReadReceipt Sub-Component
+## Delivery / Read Status (DeliveryStatus)
 
-```tsx
-function ReadReceipt({ readBy, participantIds }) {
-  const allRead = participantIds.every(uid => readBy.includes(uid));
-  return allRead
-    ? <CheckCheck className="h-3 w-3 text-blue-300" />   // blue double-check = all read
-    : <Check className="h-3 w-3 text-white/50" />;       // single white check = sent
-}
-```
+For `isOwn` messages the bubble renders a delivery-status tick reflecting `DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed'`:
+- sending -> spinner/clock
+- sent/delivered -> single/double check
+- read -> highlighted double check
+- failed -> error affordance wired to `onRetry(message)`
 
-Only shown for `isOwn` messages.
+TODO(verify: exact icon per DeliveryStatus value.)

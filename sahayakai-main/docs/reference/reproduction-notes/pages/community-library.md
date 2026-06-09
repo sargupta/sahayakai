@@ -1,19 +1,20 @@
-# Community Library — /community-library
+# Community Library - /community-library
 
 **File:** `src/app/community-library/page.tsx`
-**Auth:** Not required (public browsing)
+**Auth:** Not required (static page)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Browse community-shared educational resources. Currently uses mock data — full implementation pending.
+Intended browser for community-shared educational resources.
 
 ---
 
 ## Current State
 
-Uses **mock data** (hardcoded resource array in the page file). Not yet connected to live `library_resources` Firestore collection. Consider this a UI scaffold / work-in-progress.
+**Non-functional static mockup.** The page renders a hardcoded `mockResources` array (5 fake entries: Ravi Kumar, Priya Singh, etc.) with fixed like counts. The search input, LanguageSelector, and Download buttons have no handlers wired up. The "Following" tab shows a static "Content from teachers you follow will appear here" placeholder. It is NOT connected to the `library_resources` Firestore collection. The live working equivalent is the `/community` Discover tab.
 
 ---
 
@@ -42,7 +43,7 @@ When implementing for real:
 1. Replace mock data with `getLibraryResources()` action
 2. "Following" tab: `getFollowingPosts(userId)` action
 3. Connect like/save buttons to `likeResourceAction()` / `saveResourceToLibraryAction()`
-4. The community page (`/community`) already has a working "Discover" tab that does this — use it as reference
+4. The community page (`/community`) already has a working "Discover" tab that does this - use it as reference
 
 ---
 

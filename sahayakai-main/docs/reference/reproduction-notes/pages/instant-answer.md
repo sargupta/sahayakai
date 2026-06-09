@@ -1,7 +1,8 @@
-# Instant Answer — /instant-answer
+# Instant Answer - /instant-answer
 
 **File:** `src/app/instant-answer/page.tsx`
 **Auth:** Required (prompts sign-in modal if unauthenticated)
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -54,20 +55,21 @@ InstantAnswerPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
+- **Route:** `POST /api/ai/instant-answer` (wrapped in `withPlanCheck('instant-answer')`).
+- **Dispatch:** `dispatchInstantAnswer` (`src/lib/sidecar/instant-answer-dispatch.ts`); Firestore `instantAnswerSidecarMode` selects Genkit vs ADK sidecar (default `off`).
 - **Flow:** `src/ai/flows/instant-answer.ts`
-- **Model:** Gemini (via Genkit)
-- **Grounding:** Google Search enabled (unlike lesson plan — this one needs live facts)
-- **Input normalization:** language name → full name, grade → "Class X" format
-- **Output:** Markdown text + source citations
-- **Persistence:** Auto-saves to Firestore when userId present
+- **Model:** `googleai/gemini-2.5-flash`
+- **Grounding:** Google Search (`googleSearch` tool) enabled (unlike lesson plan, this one needs live facts).
+- **Output:** `{ answer (markdown), videoSuggestionUrl, gradeLevel, subject }`.
+- **Persistence:** Auto-saves to library when userId present.
 
 ---
 
 ## Voice Features
 
-- `MicrophoneInput` — mic icon in question input
+- `MicrophoneInput` - mic icon in question input
 - On transcript received: fills `question` state, auto-submits
 - Language selector affects speech recognition lang hint
 

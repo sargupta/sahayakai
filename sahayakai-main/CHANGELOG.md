@@ -5,7 +5,7 @@ Format derived from [Keep a Changelog](https://keepachangelog.com/).
 Versioning is CalVer (`release-YYYY-MM-DD` tags); the older B–U phase
 numbering tracks the AI agent migration internally.
 
-See [docs/BRANCHING.md](./docs/BRANCHING.md) for release process.
+See [docs/operations/BRANCHING.md](./docs/operations/BRANCHING.md) for release process.
 
 ---
 
@@ -13,6 +13,22 @@ See [docs/BRANCHING.md](./docs/BRANCHING.md) for release process.
 
 (Phase C — Firebase Remote Config feature flags + Phase D follow-ups
 are queued on develop but not yet released to prod.)
+
+### Docs
+- **2026-06-10 — Documentation refresh (`feature/docs-refresh-jun2026`).**
+  Reorganized ~160 project docs into a `docs/` taxonomy
+  (architecture / data / operations / product / strategy / reference /
+  historical) with a single SCREAMING_SNAKE_CASE naming convention; added
+  `docs/README.md` as the doc index. Every living doc was re-verified against
+  the current source as of 2026-06-10 and corrected: default text model is
+  `gemini-2.5-flash` (not 2.0-flash), telephony supports both Twilio (default)
+  and Exotel via `VOICE_PROVIDER`, feature flags live in Firestore
+  `system_config/feature_flags`, Cloud Run region `asia-southeast1`, and the
+  `reproduction-notes/` snapshot was regenerated. Unverifiable investor/usage
+  metrics were flagged in-place with `TODO(verify: ...)` rather than guessed;
+  all 139 markers are collected in `docs/DOC_REFRESH_OPEN_QUESTIONS.md`.
+  Historical artifacts (incident logs, UX reviews, baseline snapshots) were
+  moved but not rewritten.
 
 ---
 

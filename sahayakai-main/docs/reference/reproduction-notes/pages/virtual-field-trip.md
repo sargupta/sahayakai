@@ -1,7 +1,8 @@
-# Virtual Field Trip — /virtual-field-trip
+# Virtual Field Trip - /virtual-field-trip
 
 **File:** `src/app/virtual-field-trip/page.tsx`
 **Auth:** Required
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -53,27 +54,28 @@ VirtualFieldTripPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
+- **Route:** `POST /api/ai/virtual-field-trip` (`maxDuration = 120`, wrapped in `withPlanCheck('virtual-field-trip')`; route includes a timeout-fallback path).
+- **Dispatch:** `dispatchVirtualFieldTrip` (`src/lib/sidecar/virtual-field-trip-dispatch.ts`); Firestore `virtualFieldTripSidecarMode` selects Genkit vs ADK sidecar (default `off`).
 - **Flow:** `src/ai/flows/virtual-field-trip.ts`
-- **Model:** Gemini via Genkit
-- **Validation:** `src/ai/flows/virtual-field-trip-validation.ts` (schema validation layer)
-- **Google Earth URLs:** AI generates real Google Earth 3D viewer URLs for each stop
-- **Cultural grounding:** Bharat-first analogies (e.g., Amazon rainforest → like Western Ghats but larger)
-- **Output:** `{ destination, stops: [{ name, googleEarthUrl, description, culturalAnalogy, educationalFacts, reflectionPrompt }], overallTheme }`
+- **Model:** `googleai/gemini-2.5-flash`
+- **Validation:** `src/ai/flows/virtual-field-trip-validation.ts`
+- **Cultural grounding:** Bharat-first analogies.
+- **Output schema (`VirtualFieldTripOutputSchema`):** `{ title, stops: [{ name, description, reflectionPrompt, googleEarthUrl, culturalAnalogy }], gradeLevel, subject }`. (Top-level is `title`, not `destination`; there is no `overallTheme` field and facts are folded into `description`.)
 
 ---
 
 ## Voice Input
 
-- `MicrophoneInput` on destination field — teachers can speak the destination name
+- `MicrophoneInput` on destination field - teachers can speak the destination name
 
 ---
 
 ## VirtualFieldTripDisplay
 
 - Numbered stop cards with left-side step indicator
-- Google Earth button: opens `earth.google.com/web/@lat,lng,alt` — no embedding (CSP blocks iframes from Google Earth)
+- Google Earth button: opens `earth.google.com/web/@lat,lng,alt` - no embedding (CSP blocks iframes from Google Earth)
 - Cultural analogy: italicized, orange accent
 - Facts: bulleted list
 - Reflection prompt: highlighted callout box

@@ -1,6 +1,8 @@
 # Maintenance & Scaling Guide
 
-This guide explains how to update SahayakAI once the Load Balancer (GCLB) and Cloud Run architecture is live.
+> Last updated: 2026-06-10
+
+This guide explains how to update SahayakAI once the Load Balancer (GCLB) and Cloud Run architecture is live. Production service: `sahayakai-hotfix-resilience` (`asia-southeast1`, project `sahayakai-b4248`).
 
 ---
 
@@ -21,9 +23,14 @@ The app now supports **Multi-Key Resilience**. This prevents "429 Rate Limit" er
 When you add a new feature or switch to a different branch:
 
 **The Process:**
-1.  Run the deployment script: `./scripts/deploy_shadow.sh` (for testing) or your production equivalent.
-2.  **What happens automatically:** `gcloud run` creates a new "Revision." The **Serverless NEG** automatically redirects the Load Balancer to this new revision.
-3.  **Result:** Your users see the new features instantly at `sahayakai.com` without any downtime. You **do not** need to update the Load Balancer.
+1.  Run `./scripts/safe-deploy.sh` (the canonical prod path; `develop` deploys to `sahayakai-preview`, `main`/`hotfix/*` to prod). NEVER run raw `gcloud run deploy`.
+2.  **What happens:** a new Cloud Run revision is built **with `--no-traffic`** and a `dep-<sha>` tag — it is warm but does NOT auto-route. This prevents parallel-deploy races.
+3.  **Flip traffic explicitly** once `./scripts/audit-deployments.sh` is clean:
+    ```bash
+    gcloud run services update-traffic sahayakai-hotfix-resilience \
+      --region=asia-southeast1 --project=sahayakai-b4248 --to-latest
+    ```
+4.  **Result:** users see new features at `sahayakai.com` after the traffic flip. See [DEPLOY.md](./DEPLOY.md) for the full runbook.
 
 ---
 

@@ -1,5 +1,20 @@
 # i18n quality backlog — literal vs. idiomatic
 
+> **Last updated: 2026-06-10.** Verified against `src/context/language-context.tsx`
+> and `src/types/index.ts`. Notes:
+> - **11 languages supported**, keyed by full English name (not ISO codes):
+>   `English, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi,
+>   Gujarati, Punjabi, Odia` (`Language = typeof LANGUAGES[number]` in
+>   `src/types/index.ts`).
+> - The dictionary now has **~1,490 top-level string keys × 11 languages**
+>   (~16,000 values), not the "322 keys ≈ 3,500 values" the approach section
+>   below estimates. That older figure is stale; the audit scope is much larger.
+> - The "already fixed" transliterations (Product, Pricing, Visual Aid Designer,
+>   Content Creator, Virtual Field Trip, Teacher Training) are present in the
+>   source. The "commit pending" note below is also stale — these are committed.
+> - `scripts/audit-i18n-source.sh` exists (coverage audit, not idiomatic audit),
+>   as the doc states.
+
 This file tracks translation entries in `src/context/language-context.tsx`
 that read as **dictionary-literal** rather than **idiomatic Indian SaaS
 usage**. Many were committed in earlier passes when the priority was
@@ -29,7 +44,7 @@ Kannada, Malayalam, Punjabi, Odia. Where I am confident, I have already
 applied transliterations. Where I am not, the entry stays awkward and
 needs review by a native speaker.
 
-## Already fixed (commit pending)
+## Already fixed (committed — verified present 2026-06-10)
 
 - Product (all 11 languages → transliterated)
 - Pricing (all 11 → "मूल्य" + equivalents)
@@ -52,9 +67,10 @@ These were not changed in the focused fix and may still read literal:
 
 ## Approach for the rest
 
-The dictionary has 322 keys × 11 languages ≈ 3,500 individual values.
-Auditing every one for idiomatic quality is a multi-hour native-review
-job. Recommended path:
+The dictionary has ~1,490 keys × 11 languages ≈ 16,000 individual values
+(TODO(verify: exact key count drifts as strings are added; ~1,490 measured
+2026-06-10). Auditing every one for idiomatic quality is a multi-hour
+native-review job. Recommended path:
 
 1. **Triage by visibility** — fix nav, CTAs, hero, top-level page titles
    first (highest impact per fix). Skip rarely-seen toast messages

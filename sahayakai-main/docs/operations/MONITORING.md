@@ -1,5 +1,8 @@
 # SahayakAI Monitoring Guide
 
+> Last updated: 2026-06-10
+> Note: `POST /api/metrics` ingests client web-vitals into Cloud Logging (it is public/unauthenticated). Sidecar/infra alert policies live as YAML under `infra/monitoring/*.yaml`; see ALERTS.md.
+
 ## 🎯 Quick Start
 
 Check all metrics with one command:

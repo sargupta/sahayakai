@@ -1,19 +1,20 @@
-# Review Panel — /review-panel
+# Review Panel - /review-panel
 
 **File:** `src/app/review-panel/page.tsx`
-**Auth:** Required (admin/moderator intent)
+**Auth:** Not gated at page level (static placeholder)
+**Snapshot:** 2026-06-10
 
 ---
 
 ## Purpose
 
-Content moderation panel for reviewing teacher-submitted community content before or after publication. Approve, reject, or flag resources.
+Intended content-moderation panel for reviewing teacher-submitted community content. (Admin-only per the copy.)
 
 ---
 
 ## Status
 
-Placeholder/coming soon page based on codebase state. The route exists and is linked from the admin sidebar section, but full moderator UI may not be implemented.
+Confirmed placeholder / coming-soon page. Renders a single card with a `ShieldCheck` icon, title "Review Panel", and the message "This feature is coming soon. (Admin-only) Review community-submitted content. Stay tuned!" No queue, no API calls, no moderation actions.
 
 ---
 

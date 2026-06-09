@@ -2,6 +2,8 @@
 
 **File:** `src/components/messages/voice-recorder.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
@@ -37,11 +39,11 @@ idle → recording → uploading → idle (on success)
 | `state` | `'idle' \| 'recording' \| 'uploading'` | Current recorder state |
 | `elapsed` | `number` | Recording seconds elapsed |
 
-**Refs (not state — no re-render):**
-- `mediaRecorderRef` — `MediaRecorder` instance
-- `chunksRef` — `Blob[]` audio data chunks
-- `timerRef` — `NodeJS.Timeout` for elapsed counter
-- `startTimeRef` — `number` recording start timestamp
+**Refs (not state - no re-render):**
+- `mediaRecorderRef` - `MediaRecorder` instance
+- `chunksRef` - `Blob[]` audio data chunks
+- `timerRef` - `NodeJS.Timeout` for elapsed counter
+- `startTimeRef` - `number` recording start timestamp
 
 ---
 
@@ -50,7 +52,7 @@ idle → recording → uploading → idle (on success)
 ```
 startRecording():
   1. navigator.mediaDevices.getUserMedia({ audio: true })
-  2. Detect MIME type: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') → webm, else mp4
+  2. Pick first supported MIME from candidate list (see below)
   3. new MediaRecorder(stream, { mimeType })
   4. recorder.ondataavailable → push to chunksRef
   5. recorder.onstop → uploadAudio()
@@ -59,13 +61,14 @@ startRecording():
 
 stopRecording():
   1. stopTimer()
-  2. setState('uploading')
-  3. mediaRecorder.stop() → triggers onstop → uploadAudio()
+  2. mediaRecorder.requestData()  // flush any buffered final chunk before stop
+  3. setState('uploading')
+  4. mediaRecorder.stop() → triggers onstop → uploadAudio()
 
 cancelRecording():
   1. stopTimer()
   2. Nullify ondataavailable + replace onstop (discard chunks)
-  3. recorder.stop() — but onstop just stops stream tracks
+  3. recorder.stop() - but onstop just stops stream tracks
   4. chunksRef.current = []
   5. setState('idle')
 ```
@@ -89,33 +92,32 @@ uploadAudio(blob, mimeType, duration):
 
 ## Cross-Browser MIME Detection
 
-```ts
-const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-  ? 'audio/webm;codecs=opus'   // Chrome, Android Chrome, Edge
-  : 'audio/mp4';               // Safari, iOS
+Picks the first supported candidate from an ordered list (broader than the legacy two-way check):
+```
+audio/webm;codecs=opus   (Chrome / Android Chrome / Edge)
+audio/webm
+audio/mp4                (Safari / iOS)
+audio/aac
 ```
 
-File extension: `webm` for opus, `mp4` for mp4.
+File extension: `m4a` for the mp4/aac family, otherwise `webm`.
 
 ---
 
 ## UI States
 
 **Idle:**
-- Single mic button (`Mic` icon, h-10 w-10 rounded-xl)
-- `text-slate-400 hover:text-orange-500 hover:bg-orange-50`
+- Single mic button (`Mic` icon). Colors via theme tokens (muted -> primary on hover), not hardcoded slate/orange.
 
 **Recording:**
-- Inline bar: red-50 background, red-200 border
-- Red pulsing dot + elapsed time (MM:SS format)
-- Cancel (`X` icon) + Stop+Send (`Square` icon + "Send" text) buttons
+- Inline bar with a pulsing dot + elapsed time (MM:SS)
+- Cancel (`X`) + Stop+Send (`Square`) controls
 
 **Uploading:**
-- Inline bar: slate-50 background
-- `Loader2` spinning orange + "Sending…" text
+- Inline bar with a spinning `Loader2` + "Sending..." text
 
 ---
 
 ## Error Handling
 
-Both recording failure (mic denied) and upload failure are caught silently — state resets to idle. No user error message shown (fail quietly, don't block chat).
+Failures are surfaced to the user via toasts (NOT silent - the legacy "fail quietly" note is stale). A microphone permission-denied error is handled as a distinct case with its own message. State resets to idle after an error.

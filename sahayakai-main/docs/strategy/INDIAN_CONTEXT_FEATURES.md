@@ -1,4 +1,8 @@
-# SahayakAI - Rural India Adaptation Features
+# SahayakAI - Indian Context Features
+
+**Last updated:** 2026-06-10
+
+> Framing note: these culturally-relevant content features apply across all school types, not only rural government schools. Resource-awareness is controlled by the `resourceLevel` setting (low/medium/high).
 
 ## 🎯 Indian Context Transformation
 
@@ -70,7 +74,7 @@ Real-world connection: Observe plants in the school garden or nearby fields
 ## 🌾 Agricultural Context Integration
 
 ### **Why Agriculture?**
-- 60%+ rural families depend on farming
+- A large share of rural families depend on farming `TODO(verify: % rural families dependent on farming, cite source)`
 - Students understand farming cycles, crops, seasons
 - Makes abstract concepts concrete
 
@@ -121,14 +125,7 @@ Real-world connection: Observe plants in the school garden or nearby fields
 
 ### **Cultural Relevance Score:**
 
-| Aspect | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Indian Examples | 20% | 95% | +375% |
-| Local Geography | 10% | 90% | +800% |
-| Indian Currency | 0% | 100% | ∞ |
-| Agricultural Context | 5% | 80% | +1500% |
-| Resource Awareness | 30% | 90% | +200% |
-| Indian Heroes | 10% | 85% | +750% |
+The percentage figures previously shown here were illustrative, not measured. Pending real measurement: `TODO(verify: cultural-relevance scores by aspect)`.
 
 ---
 
@@ -185,9 +182,7 @@ Use Indian examples:
 - Q6: "Can teacher with only chalk and blackboard implement this?" → **MOSTLY** (needs testing)
 
 ### **📊 Score Improvement:**
-- **Before:** 15/84 (18%)
-- **After Phase 1.1:** ~22/84 (26%)
-- **Target:** 80/84 (95%)
+`TODO(verify: challenging-questions self-assessment score)`
 
 ---
 
@@ -274,6 +269,5 @@ Connection to Daily Life:
 
 ---
 
-**Last Updated:** 2025-12-08
+**Last Updated:** 2026-06-10
 **Branch:** feature/rural-india-adaptation
-**Status:** Phase 1.1 Complete ✅

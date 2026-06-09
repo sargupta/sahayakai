@@ -2,11 +2,13 @@
 
 **File:** `src/components/messages/conversation-list.tsx`
 
+_Last verified against source: 2026-06-10._
+
 ---
 
 ## Purpose
 
-Left-panel inbox showing all conversations. Real-time updates. Search filter. Opens/creates conversations. Shows unread counts.
+Left-panel inbox showing all conversations. Real-time updates. Opens/creates conversations. Shows unread counts and presence.
 
 ---
 
@@ -14,8 +16,9 @@ Left-panel inbox showing all conversations. Real-time updates. Search filter. Op
 
 ```ts
 {
-  selectedConversationId: string | null;
+  activeConversationId: string | null;     // note: activeConversationId, not selectedConversationId
   onSelect: (conversation: Conversation) => void;
+  onNewDM: () => void;                       // open the new-DM flow
 }
 ```
 
@@ -37,7 +40,7 @@ Left-panel inbox showing all conversations. Real-time updates. Search filter. Op
 ```
 collection: conversations
 query: where participantIds array-contains userId
-       orderBy updatedAt desc
+       orderBy lastMessageAt desc      (note: lastMessageAt, not updatedAt)
 ```
 
 `onSnapshot` → updates list live when new messages arrive or conversations update.
@@ -56,24 +59,27 @@ Each item shows:
 - Avatar (for DM: other participant's photo; for group: group photo or initials)
 - Display name (DM: other person's name; group: group name)
 - Last message preview: "You: [text]" if own, otherwise just "[text]"
-- Relative timestamp (e.g., "2 min ago")
-- Unread badge: `unreadCount[userId]` — orange circle
+- Relative timestamp
+- Unread badge: `unreadCount[userId]`, rendered on the avatar
+- Presence: a `PresenceDot` shows the other participant's online state
 
 ---
 
 ## Selected State
 
-Active conversation: orange-50 background, orange-500 left border.
+Active conversation highlighted via theme tokens (accent background / primary accent), not hardcoded `orange-50`/`orange-500`.
 
 ---
 
 ## New Conversation
 
-"New message" button → `Sheet` (mobile) or `Dialog` (desktop) → `NewConversationPicker`.
+A new-DM affordance (`PenSquare` icon) calls the `onNewDM` prop, which the parent wires to its new-conversation picker flow.
 
 ---
 
-## NewConversationPicker
+## NewConversationPicker (parent-owned)
+
+Note: ConversationList no longer owns the picker; it raises `onNewDM`. The picker itself lives separately. TODO(verify: current picker filename and its action names against source.)
 
 `src/components/messages/new-conversation-picker.tsx`
 

@@ -1,7 +1,8 @@
-# Teacher Training — /teacher-training
+# Teacher Training - /teacher-training
 
 **File:** `src/app/teacher-training/page.tsx`
 **Auth:** Required
+**Snapshot:** 2026-06-10
 
 ---
 
@@ -45,13 +46,14 @@ TeacherTrainingPage
 
 ---
 
-## AI Integration
+## API + AI Integration
 
+- **Route:** `POST /api/ai/teacher-training` (wrapped in `withPlanCheck('teacher-training')`).
+- **Dispatch:** `dispatchTeacherTraining` (`src/lib/sidecar/teacher-training-dispatch.ts`); Firestore `teacherTrainingSidecarMode` selects Genkit vs ADK sidecar (default `off`).
 - **Flow:** `src/ai/flows/teacher-training.ts`
-- **Model:** Gemini via Genkit
-- **Approach:** References established pedagogy frameworks (Bloom's, Vygotsky ZPD, differentiated instruction)
-- **Indian context:** Examples tailored to Indian classroom realities (large class sizes, mixed ability, limited resources)
-- **Output:** `{ strategies: [{ title, description, steps }], pedagogyNote: string }`
+- **Model:** `googleai/gemini-2.5-flash`
+- **Indian context:** Examples tailored to Indian classroom realities (large class sizes, mixed ability, limited resources).
+- **Output:** `{ introduction, advice, conclusion, gradeLevel, subject }`.
 
 ---
 

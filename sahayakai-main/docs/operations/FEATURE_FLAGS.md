@@ -1,6 +1,12 @@
 # Feature flags
 
+> Last updated: 2026-06-10
+
 This project uses a **Firestore-based** feature flag system implemented in [`src/lib/feature-flags.ts`](../src/lib/feature-flags.ts). Source of truth is the Firestore document `system_config/feature_flags`.
+
+**Two flag planes:**
+- **Firestore** (`system_config/feature_flags`) — billing kill switch, subscription rollout, all per-agent sidecar dispatch modes, per-feature toggles. Changeable without a deploy.
+- **Env vars** (read in `src/middleware.ts` and sidecar clients) — infra gates that must be set on the Cloud Run revision: `ONBOARDING_GATE_ENABLED`, `APP_CHECK_REQUIRED`, `VOICE_PROVIDER`, `SAHAYAKAI_REQUIRE_APP_CHECK`, `GENKIT_DEFAULT_MODEL`, `NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL`. See the **Env-var gates** section below.
 
 ## Architecture
 
@@ -14,20 +20,32 @@ For client-side flag checks, the canonical pattern is: server emits the flag val
 
 ## The Firestore document — `system_config/feature_flags`
 
-Shape: see `FeatureFlagsConfig` interface in `src/lib/feature-flags.ts`. Three buckets of flags:
+Shape: see `FeatureFlagsConfig` interface in `src/lib/feature-flags.ts`. Buckets of flags:
 
-### 1. Global switches
-- `billingKillSwitch` — if `true`, ALL plan checks return "free" (the master kill switch).
-- `maintenanceMode` + `maintenanceMessage` — show banner, skip billing flows.
+### 1. Global switches (with `FALLBACK_CONFIG` defaults)
+- `billingKillSwitch` (fallback `true`) — if `true`, ALL plan checks return "free" (the master kill switch). On Firestore outage it defaults ON, so everything is free.
+- `maintenanceMode` (`false`) + `maintenanceMessage` (`''`) — show banner, skip billing flows.
+- `consentNoticeEnabled` (`false`) — when `true`, the TwiML parent-call route plays a one-sentence DPDP consent prologue before the message. Stays OFF until all 11 languages have legally-reviewed translations (shipping untranslated consent text is worse than none).
 
-### 2. Sidecar dispatch (per-agent, four-mode contract)
-Each of the 14+ agents (parent-call, lesson-plan, VIDYA, quiz, exam-paper, visual-aid, worksheet, rubric, teacher-training, virtual-field-trip, instant-answer, parent-message, video-storyteller, avatar, voice-to-text) has:
-- `<agent>SidecarMode`: `'off' | 'shadow' | 'canary' | 'full'`
-- `<agent>SidecarPercent`: `0..100` rollout % (sticky on `callSid` or `uid`)
+### 2. Subscription rollout
+- `subscriptionEnabled` (`false`) — subscription system live for eligible users.
+- `subscriptionRolloutPercent` (`0`) — 0-100 hash-bucketed (`uid`) rollout.
+- `subscriptionAllowlist` (`[]`) — UIDs always on subscription regardless of rollout %.
 
-`off` is the safe default — Genkit alone, sidecar untouched. `canary` and `full` serve from the sidecar with Genkit fallback on error.
+Order in `isSubscriptionEnabled()`: kill-switch ON → off; maintenance ON → off; `subscriptionEnabled` OFF → off; allowlist → on; else rollout-bucket check.
 
-### 3. Per-feature toggles — `features: Record<string, FeatureToggle>`
+### 3. Sidecar dispatch (per-agent, four-mode contract)
+Each agent has a `<agent>SidecarMode` (`'off' | 'shadow' | 'canary' | 'full'`) + `<agent>SidecarPercent` (`0..100`, sticky on `callSid` for parent-call, on `uid` for everything else). **All default to `off` / `0` in `FALLBACK_CONFIG`.**
+
+Modes (from `src/lib/feature-flags.ts`):
+- `off` — Genkit only (default). Sidecar untouched even if deployed.
+- `shadow` — Genkit serves; sidecar called fire-and-forget for parity scoring; output ignored.
+- `canary` — Sidecar serves; Genkit fallback on any sidecar error/timeout.
+- `full` — Sidecar serves; same fallbacks as canary; percent treated as 100.
+
+**17 agents wired** (original three + Phase J.5 cohort): `parentCall`, `lessonPlan`, `vidya`, `quiz`, `examPaper`, `visualAid`, `worksheet`, `rubric`, `teacherTraining`, `virtualFieldTrip`, `instantAnswer`, `parentMessage`, `videoStoryteller`, `avatar`, `voiceToText`, `assessmentScanner`, `communityPersonaMessage`, `assignmentAssessor`. Dispatchers live in `src/lib/sidecar/*-dispatch.ts` (parent-call in `dispatch.ts`). The sidecar is an external ADK-Python Cloud Run service (`sahayakai-agents`), base URL `NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL`; since all modes default `off`, default prod is pure Genkit.
+
+### 4. Per-feature toggles — `features: Record<string, FeatureToggle>`
 ```ts
 { enabled: boolean, allowlist?: string[], blocklist?: string[] }
 ```
@@ -77,7 +95,7 @@ npx tsx src/scripts/update-flags.ts --kill-switch true
 | `communityPersonas` | `POST /api/community/persona-pulse` | enabled | New persona-pulse messages stop. Existing seeded messages remain (filter on `community_chat` where `isDemoPersona: true` would be needed for full hide). | #53 |
 | `assessmentScannerDemoMode` | `POST /api/ai/assessment-scanner` page-cap check | enabled (cap = 3) | DISABLED bumps server cap to 15 (schema ceiling). Client UI still enforces 3 today — full bump needs client-side flag plumbing (Task 15a). Server-side flag still useful as a kill switch / for API-direct callers. | #58 |
 | `ncertChapterValidation` | `src/ai/flows/exam-paper-generator.ts` soft validation block | enabled | Skips chapter validation entirely. Useful when the NCERT chapter seed is stale and the teacher's correct chapter triggers a false-positive warning. | #58 |
-| `geminiFlash2_0` | `src/lib/ai-models.ts` (`getActiveGeminiModel()`) | enabled | DISABLED falls back from `gemini-2.0-flash` to `gemini-2.5-pro`. **Resolver only landed in this PR** — individual flow wraps follow incrementally. Until each call site is wrapped, that site keeps using `2.0-flash` unconditionally. `.prompt` YAML frontmatter (used by `ai.prompt()` calls) cannot read the flag and stays on `FLASH_2_0` — those need runtime model override (`prompt.generate({ model: ... })`) to participate. | #61 |
+| `geminiFlash2_0` | `src/lib/ai-models.ts` (`getActiveGeminiModel()`) | enabled | ENABLED → `gemini-2.5-flash` (`GEMINI_MODELS.FLASH_2_0`, the constant name is legacy). DISABLED → `gemini-2.5-pro` (slower, higher quality, higher cost). Only call sites wired through `getActiveGeminiModel()` respect the flip; unwrapped sites and `.prompt` YAML frontmatter stay on `gemini-2.5-flash` (Genkit reads frontmatter at module load; override at runtime via `prompt.generate({ model: ... })`). | #61 |
 
 To kill `communityPersonas` in prod (e.g., once real-teacher volume on `/community` warrants):
 
@@ -92,9 +110,24 @@ To kill `communityPersonas` in prod (e.g., once real-teacher volume on `/communi
 
 The next `/api/community/persona-pulse` request returns `503 { error: "Feature disabled", reason: "feature_disabled" }`. The `useCommunityLivePulse` hook treats 503 as a stop-polling signal (see hook implementation).
 
-## Sidecar flags (separate Phase J.5 system)
+## Sidecar flags (Phase J.5 system)
 
-Sidecar flags (`parentCallSidecarMode`, `lessonPlanSidecarMode`, etc.) live as top-level fields on the same doc, NOT in the `features` map. They use the four-mode contract documented in `FeatureFlagsConfig`. See `src/lib/sidecar/*.ts` dispatchers for how they read these.
+Sidecar flags (`parentCallSidecarMode`, `lessonPlanSidecarMode`, etc. — 17 agents total) live as **top-level fields** on the same doc, NOT in the `features` map. They use the four-mode contract documented in §3 above and in `FeatureFlagsConfig`. See `src/lib/sidecar/*-dispatch.ts` (and `dispatch.ts` for parent-call) for how they read these via `getFeatureFlags()`. All default `off`/`0`, so a single Firestore flip rolls every agent back to pure Genkit.
+
+## Env-var gates (NOT in Firestore)
+
+These are read from `process.env` on the Cloud Run revision, not from `system_config/feature_flags`. Changing them requires a Cloud Run env update (`gcloud run services update ... --update-env-vars`), not a Firestore edit.
+
+| Env var | Read in | Default (code) | Effect |
+|---|---|---|---|
+| `ONBOARDING_GATE_ENABLED` | `src/middleware.ts` | OFF | When `'true'`, authenticated page GETs without a valid profile-complete cookie / onboarding claim redirect to `/onboarding`. **MUST stay OFF in prod** (2026-06-08 incident locked out the entire user base). |
+| `APP_CHECK_REQUIRED` | `src/middleware.ts` | tolerant (off) | When `'true'`, verifies `X-Firebase-AppCheck` JWT; strict mode rejects missing token on `/api/ai/*`. |
+| `VOICE_PROVIDER` | `src/app/api/attendance/call/route.ts` | `twilio` | `exotel` switches parent calls to the external `sahayakai-voice-call` streaming voicebot. |
+| `SAHAYAKAI_REQUIRE_APP_CHECK` | sidecar enforcement | — | Sidecar's own App Check requirement. |
+| `GENKIT_DEFAULT_MODEL` | `src/ai/genkit.ts` | `googleai/gemini-2.5-flash` | Overrides the default text model without a code change. |
+| `NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL` | `src/lib/sidecar/*` | unset → `SidecarConfigError` | Base URL of the ADK-Python sidecar. |
+
+TODO(verify: which of these env vars are actually set on the live `sahayakai-hotfix-resilience` revision — runtime env is not in the repo. Code defaults: `VOICE_PROVIDER=twilio`, onboarding gate OFF, App Check tolerant.)
 
 ## Removing a flag
 

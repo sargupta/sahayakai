@@ -1,6 +1,9 @@
 # SahayakAI Impact Score Dashboard — Technical Reference
 
 **Author:** Abhishek Gupta, SARGVISION AI · SahayakAI Analytics Team
+**Last updated:** 2026-06-10
+
+> Note: this document describes the scoring *model and its hyperparameters* (verifiable design). It does not assert any specific teacher's score or aggregate platform numbers. `estimated_students_impacted` is a derived heuristic, not a measured outcome.
 
 ## 1. Overview & Philosophy
 
