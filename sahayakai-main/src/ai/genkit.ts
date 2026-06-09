@@ -164,6 +164,17 @@ export async function runResiliently<T>(
   // which is the right strategy for per-minute quota ceilings.
   const maxAttempts = Math.max(3, Math.min(poolSize, 5));
 
+  // Total-time budget for the retry loop (waits + attempts). Every caller
+  // that wraps this in the dispatcher's `withTimeout` uses FALLBACK_TIMEOUT_MS
+  // = 60_000ms (src/lib/sidecar/with-timeout.ts). The single-key 429 backoff
+  // below (20s → 40s) can exceed that window, in which case `withTimeout`
+  // wins the race and throws an UNCLASSIFIED `WithTimeoutError` *instead of*
+  // our typed `AIQuotaExhaustedError` — which is exactly why the 2026-06-09
+  // scan saw quota failures surface as 500/ERROR rather than a clean 503.
+  // Cap the loop below the 60s wrapper so we always break early and throw the
+  // typed 503 first. Leaves ~10s headroom for the final attempt + response.
+  const MAX_TOTAL_BUDGET_MS = 50_000;
+
   for (let i = 0; i < maxAttempts; i++) {
     const currentIndex = (startIndex + i) % poolSize;
     const currentKey = keyPool[currentIndex];
@@ -221,6 +232,19 @@ export async function runResiliently<T>(
       } else {
         delay = jittered(1000 * Math.pow(2, i));  // 1s → 2s → 4s
       }
+
+      // Budget guard: if waiting `delay` would push the loop past the total
+      // budget (and therefore past the caller's 60s `withTimeout`), stop now
+      // and let the typed AIQuotaExhaustedError below surface as a clean 503,
+      // instead of letting the wrapper fire an unclassified WithTimeoutError.
+      // This is what makes the 2026-06-09 quota failures return 503 (WARN)
+      // rather than 500 (ERROR) at their true source.
+      const elapsed = Date.now() - startTime;
+      if (elapsed + delay > MAX_TOTAL_BUDGET_MS) {
+        console.warn(`[AI Resilience] ${status} on key ${currentIndex}. Budget exhausted (${elapsed}ms elapsed + ${delay}ms wait > ${MAX_TOTAL_BUDGET_MS}ms); surfacing typed error early.`);
+        break;
+      }
+
       console.warn(`[AI Resilience] ${status} on key ${currentIndex}. Backing off ${delay}ms before retry ${i + 2}/${maxAttempts}`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
