@@ -98,7 +98,7 @@ steps:
       # to point preview/staging deploys at the staging sidecar, do that in
       # a SEPARATE Cloud Build trigger — never as an ad-hoc env override on
       # the prod service.
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
       - --quiet
     waitFor: [push-sha]
 
