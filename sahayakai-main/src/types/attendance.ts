@@ -114,6 +114,15 @@ export interface ParentOutreach {
     teacherNote?: string;
     generatedMessage: string;
     deliveryMethod: 'twilio_call' | 'whatsapp_copy';
+    /**
+     * Personalization fields consumed by the Exotel streaming voicebot
+     * (sahayakai-voice-call). Populated server-side at outreach creation so the
+     * agent can greet by subject, name the teacher, and name the school.
+     * Optional because the legacy Twilio batch path does not require them.
+     */
+    subject?: Subject;
+    teacherName?: string;
+    schoolName?: string;
     callSid?: string;
     callStatus?: CallStatus;
     // Conversational call fields

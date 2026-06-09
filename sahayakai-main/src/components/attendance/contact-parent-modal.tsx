@@ -385,6 +385,7 @@ export function ContactParentModal({
                 generatedMessage,
                 deliveryMethod,
                 performanceContext: performanceContext ?? undefined,
+                subject, // personalizes the Exotel voicebot greeting; ignored by Twilio path
             }),
         });
         if (!res.ok) {

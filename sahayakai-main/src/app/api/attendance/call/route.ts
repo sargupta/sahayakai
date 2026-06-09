@@ -5,9 +5,77 @@ import { isValidE164 } from '@/lib/twilio-validate';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import type { Language } from '@/types';
 
+/**
+ * Route the attendance call through the standalone sahayakai-voice-call service
+ * (Exotel WebSocket streaming voicebot). That service performs its own ownership
+ * verification and server-side phone lookup against the SAME parent_outreach doc
+ * (shared Firestore project), so we forward only the outreachId + caller identity.
+ *
+ * Config:
+ *   VOICE_EXOTEL_CALL_URL — full URL of the voicebot's start-call endpoint,
+ *     e.g. https://sahayakai-voice-call-xxxx.a.run.app/api/exotel/call
+ */
+async function forwardToExotel(userId: string, outreachId: string): Promise<NextResponse> {
+    const callUrl = process.env.VOICE_EXOTEL_CALL_URL;
+    if (!callUrl) {
+        console.error('[attendance/call] VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
+        return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
+    }
+    try {
+        const res = await fetch(callUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // The voicebot authorizes the call by matching outreach.teacherUid
+                // against this header (same identity model as the main app middleware).
+                'x-user-id': userId,
+            },
+            body: JSON.stringify({ outreachId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            console.error('[attendance/call] Exotel voicebot error:', res.status, data?.error);
+            // Surface the upstream status so the modal can show a useful message
+            // (e.g. 422 no-phone, 403 ownership) without leaking internals.
+            return NextResponse.json(
+                { error: data?.error ?? 'Failed to initiate call' },
+                { status: res.status >= 400 && res.status < 600 ? res.status : 502 },
+            );
+        }
+        // Voicebot returns its own call identifier; normalize to callSid for the modal.
+        return NextResponse.json({ callSid: data?.callSid ?? data?.callId ?? data?.sid ?? 'exotel' });
+    } catch (error) {
+        console.error('[attendance/call] Exotel forward failed:', error);
+        return NextResponse.json({ error: 'Failed to initiate call' }, { status: 502 });
+    }
+}
+
 export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Parse the body once up front — both the Exotel and Twilio providers need it,
+    // and req.json() can only be consumed a single time.
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    const { outreachId, parentLanguage } = body as {
+        outreachId: string;
+        parentLanguage: Language;
+    };
+    if (!outreachId || !parentLanguage) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Provider switch. Default 'twilio' preserves the existing batch TwiML path.
+    // Set VOICE_PROVIDER=exotel to route attendance calls through the standalone
+    // sahayakai-voice-call streaming voicebot (Sarvam STT/TTS + Gemini, 11 langs,
+    // counselor-style interruption handling). The voicebot reads the same
+    // parent_outreach doc (shared Firestore project) by id, so we only need to
+    // forward the outreachId + the caller identity.
+    const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
+    if (provider === 'exotel') {
+        return forwardToExotel(userId, outreachId);
+    }
 
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
@@ -15,16 +83,6 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const body = await req.json().catch(() => null);
-        if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-        const { outreachId, parentLanguage } = body as {
-            outreachId: string;
-            parentLanguage: Language;
-        };
-
-        if (!outreachId || !parentLanguage) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
 
         // Verify ownership of the outreach record AND get the server-stored parent phone.
         // SECURITY: Never trust a phone number from the request body — a teacher could

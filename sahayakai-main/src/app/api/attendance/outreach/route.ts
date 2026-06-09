@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import type { OutreachReason, CallStatus, PerformanceContext } from '@/types/attendance';
-import type { Language } from '@/types';
+import type { Language, Subject } from '@/types';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 // Per-(teacher,student) dedup window — protects against accidental floods
@@ -37,6 +37,11 @@ export async function POST(req: NextRequest) {
             generatedMessage: string;
             deliveryMethod: 'twilio_call' | 'whatsapp_copy';
             performanceContext?: PerformanceContext;
+            // Forwarded from the modal; used only by the Exotel streaming voicebot
+            // to personalize the spoken greeting. teacherName/schoolName are NOT
+            // trusted from the client — they are sourced from the teacher profile
+            // server-side below.
+            subject?: Subject;
         };
 
         if (!data.classId || !data.studentId) {
@@ -118,6 +123,11 @@ export async function POST(req: NextRequest) {
         };
         if (data.teacherNote) record.teacherNote = data.teacherNote;
         if (data.performanceContext) record.performanceContext = data.performanceContext;
+        // Personalization for the Exotel streaming voicebot. subject comes from the
+        // modal; teacherName/schoolName are server-trusted from the teacher profile.
+        if (data.subject) record.subject = data.subject;
+        if (profile.displayName) record.teacherName = profile.displayName;
+        if (profile.schoolName) record.schoolName = profile.schoolName;
 
         await ref.set(record);
         return NextResponse.json({ outreachId: ref.id });
