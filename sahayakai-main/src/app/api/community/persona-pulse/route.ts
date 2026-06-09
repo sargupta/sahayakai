@@ -142,9 +142,40 @@ export async function POST(req: NextRequest) {
       docId,
     });
   } catch (err) {
+    // Classify before responding. The agents sidecar returns 503 on Gemini
+    // quota (429 RESOURCE_EXHAUSTED) — surfaced here as a
+    // CommunityPersonaMessageSidecarHttpError with .status, or a
+    // *TimeoutError. These are transient AND the useCommunityLivePulse hook
+    // is built to treat 503 as a stop-polling signal (see the flag note
+    // above). Returning a blanket 500 here did two harmful things during the
+    // 2026-06-09 quota storm: (1) paged on-call at ERROR for an expected
+    // transient, and (2) kept the client polling every 3-5 min, amplifying
+    // the 429 storm on the agents service. Map transient failures to 503 +
+    // Retry-After (WARN), reserve 500/ERROR for genuine bugs.
+    const status = typeof (err as any)?.status === 'number' ? (err as any).status : null;
+    const name = String((err as any)?.name || '');
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTransient =
+      status === 503 ||
+      status === 429 ||
+      /TimeoutError$/.test(name) ||
+      /timed out after \d+\s*ms|RESOURCE_EXHAUSTED|Resource exhausted|\b429\b/i.test(msg);
+
+    if (isTransient) {
+      console.warn('[persona-pulse] transient upstream failure — stop-polling 503', {
+        status,
+        name,
+        message: msg.slice(0, 200),
+      });
+      return NextResponse.json(
+        { error: 'Persona service is busy. Pausing live pulse.', code: 'AI_SERVICE_BUSY', retryAfterSeconds: 60 },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      );
+    }
+
     console.error('[persona-pulse] generation failed', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Generation failed' },
+      { error: msg },
       { status: 500 },
     );
   }
