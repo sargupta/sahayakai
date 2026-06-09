@@ -21,7 +21,7 @@
  *   2. Add the key + default to FLAG_DEFAULTS below
  *   3. Use `useFeatureFlag('<key>')` from this module
  *
- * See docs/FEATURE_FLAGS.md.
+ * See docs/operations/FEATURE_FLAGS.md.
  */
 
 'use client';

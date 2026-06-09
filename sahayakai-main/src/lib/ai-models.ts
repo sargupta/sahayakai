@@ -28,7 +28,7 @@
  * Toggle in Firestore at `system_config/feature_flags`:
  *   features.geminiFlash2_0.enabled = false
  *
- * See docs/FEATURE_FLAGS.md for the full flag lifecycle.
+ * See docs/operations/FEATURE_FLAGS.md for the full flag lifecycle.
  */
 
 import { isFeatureEnabled } from './feature-flags';
@@ -63,7 +63,7 @@ export async function getActiveGeminiModel(userId?: string): Promise<GeminiModel
  * (e.g. inside `.prompt` YAML frontmatter, which Genkit reads at module
  * load). Operators flipping the flag will only affect callers that use
  * `getActiveGeminiModel` — the static frontmatter still says
- * `FLASH_2_0`. Document this asymmetry in docs/FEATURE_FLAGS.md.
+ * `FLASH_2_0`. Document this asymmetry in docs/operations/FEATURE_FLAGS.md.
  */
 export function getDefaultGeminiModel(): GeminiModel {
     return GEMINI_MODELS.FLASH_2_0;

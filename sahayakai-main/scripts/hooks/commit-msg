@@ -85,7 +85,7 @@ Examples:
     chore(release): catch up main to develop tip
 
 To bypass in an emergency: SKIP_COMMITLINT=1 git commit ...
-See docs/BRANCHING.md for the full convention.
+See docs/operations/BRANCHING.md for the full convention.
 EOF
     exit 1
 fi
