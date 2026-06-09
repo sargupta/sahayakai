@@ -361,6 +361,24 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "teacherUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "parent_outreach",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "callSid",
           "order": "ASCENDING"
         }
