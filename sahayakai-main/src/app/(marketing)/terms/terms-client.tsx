@@ -14,7 +14,7 @@ export function TermsClient() {
     const tldr = [
         "Whatever you create with SahayakAI is yours.",
         "You can cancel anytime. 7-day refund on any paid plan.",
-        "Your data stays in India and you control it.",
+        "Your data is stored on Google Cloud in Singapore (Asia) and you control it.",
         "SahayakAI never asks for student personal data.",
         "If there is a problem, email grievance@sargvision.com. We respond within 7 days.",
     ];
@@ -118,7 +118,7 @@ export function TermsClient() {
                             <strong>Breach notification.</strong> In the event of a personal-data breach, we notify affected Data Principals and the Data Protection Board of India within the timelines prescribed by the DPDP Act.
                         </p>
                         <p className="mt-3">
-                            <strong>Cross-border processing.</strong> AI inference is performed through third-party providers (Google Gemini, Sarvam). We process only the minimal prompt data needed to generate your output and do not retain personal data on these third-party systems beyond the request lifecycle.
+                            <strong>Cross-border storage and processing.</strong> Your account data is stored and processed on Google Cloud infrastructure located in Singapore (the <em>asia-southeast1</em> region), not within India. By using SahayakAI you consent to this cross-border transfer of your personal data outside India. AI inference is additionally performed through third-party providers (Google Gemini, Sarvam); we process only the minimal prompt data needed to generate your output and do not retain personal data on these third-party systems beyond the request lifecycle.
                         </p>
                         <p className="mt-3">
                             <strong>Grievance Officer.</strong> Abhishek Gupta, SARGVISION Intelligence Pvt. Ltd., Bengaluru, Karnataka, India. Email:{" "}
