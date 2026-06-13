@@ -191,6 +191,10 @@ function rand(studentSeed: number, variantSeed: number): number {
 function attendanceFor(s: Scenario, daysAgo: number, roll: number): AttendanceStatus {
     switch (s) {
         case "top":
+            // Celebrate / positive_feedback needs attendanceRate >= 99 — keep top
+            // performers perfectly present so they reliably surface in that group.
+            return "present";
+
         case "above":
             return rand(roll, daysAgo) < 0.02 ? "late" : "present";
 
