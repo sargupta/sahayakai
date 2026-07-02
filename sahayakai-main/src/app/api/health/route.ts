@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 
 export async function GET() {
+    // Middleware leaves this route public, so x-user-id is only set when a
+    // valid Firebase ID token was presented. Unauthenticated callers get a
+    // minimal {status} body; detailed build/env provenance (SHAs, build id,
+    // NODE_ENV, names of missing env vars) is only exposed to authenticated
+    // callers to avoid handing attackers targeting information.
+    const headersList = await headers();
+    const isAuthed = !!headersList.get('x-user-id');
+
     const checks = {
         timestamp: new Date().toISOString(),
         status: 'healthy',
@@ -34,11 +43,23 @@ export async function GET() {
     };
 
     const allHealthy = Object.values(checks.checks).every(c => c.healthy);
+    const status = allHealthy ? 200 : 503;
+    const cacheHeaders = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+    };
 
+    // Public callers get only a coarse liveness signal — no build provenance,
+    // no environment names, no missing-var listing.
+    if (!isAuthed) {
+        return NextResponse.json(
+            { status: allHealthy ? 'ok' : 'unhealthy' },
+            { status, headers: cacheHeaders },
+        );
+    }
+
+    // Authenticated callers get the full diagnostic payload.
     return NextResponse.json(checks, {
-        status: allHealthy ? 200 : 503,
-        headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-        }
+        status,
+        headers: cacheHeaders,
     });
 }

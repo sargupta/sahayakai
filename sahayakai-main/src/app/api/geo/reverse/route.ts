@@ -4,6 +4,35 @@ import { INDIAN_STATES } from '@/types';
 import { logger } from '@/lib/logger';
 
 /**
+ * Lightweight in-memory per-uid rate limiter.
+ *
+ * Each authenticated user gets at most RATE_MAX billed Google Maps geocode
+ * calls per RATE_WINDOW_MS. This guards against a signed-in user (or a leaked
+ * token) driving unbounded server-side Maps calls, which we pay for.
+ *
+ * Best-effort only: state lives in process memory, so on multi-instance Cloud
+ * Run the limit is enforced PER INSTANCE, not globally. That is acceptable
+ * here — geocode is a cheap onboarding pre-fill, not a security boundary, and
+ * this cap turns "unlimited billing abuse" into "bounded per-instance abuse".
+ */
+const RATE_MAX = 30;
+const RATE_WINDOW_MS = 60_000;
+const geoRateBuckets = new Map<string, number[]>();
+
+function checkGeoRateLimit(userId: string): boolean {
+    const now = Date.now();
+    const windowStart = now - RATE_WINDOW_MS;
+    const hits = (geoRateBuckets.get(userId) || []).filter(t => t > windowStart);
+    if (hits.length >= RATE_MAX) {
+        geoRateBuckets.set(userId, hits);
+        return false;
+    }
+    hits.push(now);
+    geoRateBuckets.set(userId, hits);
+    return true;
+}
+
+/**
  * POST /api/geo/reverse
  * Body: { lat: number, lng: number }
  *
@@ -17,6 +46,14 @@ export async function POST(req: Request) {
     const userId = headersList.get('x-user-id');
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Per-user rate limit to prevent Google Maps billing abuse.
+    if (!checkGeoRateLimit(userId)) {
+        return NextResponse.json(
+            { error: 'Too many requests. Please try again shortly.' },
+            { status: 429 },
+        );
     }
 
     let lat: number, lng: number;
