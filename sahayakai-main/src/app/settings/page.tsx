@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { GoogleAuthProvider, reauthenticateWithPopup, reauthenticateWithRedirect } from 'firebase/auth';
+import { shouldUseRedirect } from '@/lib/sign-in-with-google';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -27,7 +29,7 @@ import {
   Settings as SettingsIcon, Sun, Moon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification, EDUCATION_BOARDS, type EducationBoard } from '@/types';
+import { LANGUAGES, type Language, ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification, EDUCATION_BOARDS, type EducationBoard, LANGUAGE_TO_ISO, LANGUAGE_NATIVE_LABELS } from '@/types';
 import { AuthGate } from '@/components/auth/auth-gate';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -40,14 +42,87 @@ import { updateProfileAction } from '@/app/actions/profile';
 import { UserCircle, Upload } from 'lucide-react';
 import Link from 'next/link';
 
-const ADMIN_ROLE_LABELS: Record<string, string> = {
-  hod: 'Head of Department',
-  coordinator: 'Coordinator',
-  exam_controller: 'Exam Controller',
-  vice_principal: 'Vice Principal',
-  principal: 'Principal',
-  none: 'None / Class Teacher',
+// ─── Local i18n tables (resolved by uiLangCode) ───
+// Administrative role labels in all 11 supported UI scripts.
+const ADMIN_ROLE_LABELS_I18N: Record<AdministrativeRole, Record<string, string>> = {
+  hod: {
+    en: 'Head of Department', hi: 'विभागाध्यक्ष', mr: 'विभागप्रमुख', bn: 'বিভাগীয় প্রধান',
+    pa: 'ਵਿਭਾਗ ਮੁਖੀ', gu: 'વિભાગના વડા', or: 'ବିଭାଗୀୟ ମୁଖ୍ୟ', ta: 'துறைத் தலைவர்',
+    te: 'విభాగాధిపతి', kn: 'ವಿಭಾಗ ಮುಖ್ಯಸ್ಥ', ml: 'വകുപ്പ് മേധാവി',
+  },
+  coordinator: {
+    en: 'Coordinator', hi: 'समन्वयक', mr: 'समन्वयक', bn: 'সমন্বয়কারী',
+    pa: 'ਤਾਲਮੇਲ ਕਰਤਾ', gu: 'સંયોજક', or: 'ସମନ୍ୱୟକାରୀ', ta: 'ஒருங்கிணைப்பாளர்',
+    te: 'సమన్వయకర్త', kn: 'ಸಂಯೋಜಕ', ml: 'ഏകോപകൻ',
+  },
+  exam_controller: {
+    en: 'Exam Controller', hi: 'परीक्षा नियंत्रक', mr: 'परीक्षा नियंत्रक', bn: 'পরীক্ষা নিয়ন্ত্রক',
+    pa: 'ਪ੍ਰੀਖਿਆ ਕੰਟਰੋਲਰ', gu: 'પરીક્ષા નિયંત્રક', or: 'ପରୀକ୍ଷା ନିୟନ୍ତ୍ରକ', ta: 'தேர்வுக் கட்டுப்பாட்டாளர்',
+    te: 'పరీక్ష నియంత్రణాధికారి', kn: 'ಪರೀಕ್ಷಾ ನಿಯಂತ್ರಕ', ml: 'പരീക്ഷാ കൺട്രോളർ',
+  },
+  vice_principal: {
+    en: 'Vice Principal', hi: 'उप-प्राचार्य', mr: 'उपमुख्याध्यापक', bn: 'সহকারী প্রধান শিক্ষক',
+    pa: 'ਉਪ-ਪ੍ਰਿੰਸੀਪਲ', gu: 'ઉપ-આચાર્ય', or: 'ଉପ-ପ୍ରଧାନ ଶିକ୍ଷକ', ta: 'துணை முதல்வர்',
+    te: 'ఉప ప్రధానోపాధ్యాయుడు', kn: 'ಉಪ ಮುಖ್ಯೋಪಾಧ್ಯಾಯ', ml: 'വൈസ് പ്രിൻസിപ്പൽ',
+  },
+  principal: {
+    en: 'Principal', hi: 'प्राचार्य', mr: 'मुख्याध्यापक', bn: 'প্রধান শিক্ষক',
+    pa: 'ਪ੍ਰਿੰਸੀਪਲ', gu: 'આચાર્ય', or: 'ପ୍ରଧାନ ଶିକ୍ଷକ', ta: 'முதல்வர்',
+    te: 'ప్రధానోపాధ్యాయుడు', kn: 'ಮುಖ್ಯೋಪಾಧ್ಯಾಯ', ml: 'പ്രിൻസിപ്പൽ',
+  },
+  none: {
+    en: 'None / Class Teacher', hi: 'कोई नहीं / कक्षा शिक्षक', mr: 'काहीही नाही / वर्ग शिक्षक', bn: 'কোনোটিই নয় / শ্রেণি শিক্ষক',
+    pa: 'ਕੋਈ ਨਹੀਂ / ਜਮਾਤ ਅਧਿਆਪਕ', gu: 'કોઈ નહીં / વર્ગ શિક્ષક', or: 'କିଛି ନୁହେଁ / ଶ୍ରେଣୀ ଶିକ୍ଷକ', ta: 'எதுவுமில்லை / வகுப்பு ஆசிரியர்',
+    te: 'ఏదీ కాదు / తరగతి ఉపాధ్యాయుడు', kn: 'ಯಾವುದೂ ಇಲ್ಲ / ತರಗತಿ ಶಿಕ್ಷಕ', ml: 'ഒന്നുമില്ല / ക്ലാസ് ടീച്ചർ',
+  },
 };
+
+// Qualification labels — academic degrees kept as recognised proper nouns
+// (B.Ed, M.A, Ph.D etc.) but 'Other' translated per UI script.
+const QUALIFICATION_LABELS_I18N: Record<Qualification, Record<string, string>> = {
+  'D.El.Ed': {}, 'B.Ed': {}, 'M.Ed': {}, 'B.A': {}, 'M.A': {}, 'B.Sc': {}, 'M.Sc': {}, 'NET': {}, 'Ph.D': {},
+  'Other': {
+    en: 'Other', hi: 'अन्य', mr: 'इतर', bn: 'অন্যান্য',
+    pa: 'ਹੋਰ', gu: 'અન્ય', or: 'ଅନ୍ୟ', ta: 'பிற',
+    te: 'ఇతర', kn: 'ಇತರೆ', ml: 'മറ്റുള്ളവ',
+  },
+};
+
+// Profile-photo validation / error messages in all 11 UI scripts.
+// Marks that a mobile reauthenticate-with-redirect was initiated for account
+// deletion, so the deletion is completed when the app reloads post-redirect.
+const PENDING_ACCOUNT_DELETE_KEY = 'sahayakai-pending-account-delete';
+
+const PHOTO_ERROR_I18N: Record<string, Record<string, string>> = {
+  tooLarge: {
+    en: 'Photo must be under 4MB.', hi: 'फ़ोटो 4MB से कम होनी चाहिए।', mr: 'फोटो 4MB पेक्षा कमी असावा.', bn: 'ছবি অবশ্যই 4MB-এর কম হতে হবে।',
+    pa: 'ਫੋਟੋ 4MB ਤੋਂ ਘੱਟ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ।', gu: 'ફોટો 4MB થી ઓછો હોવો જોઈએ.', or: 'ଫଟୋ 4MB ରୁ କମ୍ ହେବା ଆବଶ୍ୟକ।', ta: 'புகைப்படம் 4MB-க்கு குறைவாக இருக்க வேண்டும்.',
+    te: 'ఫోటో 4MB కంటే తక్కువగా ఉండాలి.', kn: 'ಫೋಟೋ 4MB ಗಿಂತ ಕಡಿಮೆ ಇರಬೇಕು.', ml: 'ഫോട്ടോ 4MB-യിൽ കുറവായിരിക്കണം.',
+  },
+  notImage: {
+    en: 'File must be an image (JPG, PNG, WebP).', hi: 'फ़ाइल एक छवि होनी चाहिए (JPG, PNG, WebP)।', mr: 'फाइल एक प्रतिमा असावी (JPG, PNG, WebP).', bn: 'ফাইলটি অবশ্যই একটি ছবি হতে হবে (JPG, PNG, WebP)।',
+    pa: 'ਫਾਈਲ ਇੱਕ ਤਸਵੀਰ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ (JPG, PNG, WebP)।', gu: 'ફાઈલ એક છબી હોવી જોઈએ (JPG, PNG, WebP).', or: 'ଫାଇଲ୍ ଏକ ଚିତ୍ର ହେବା ଆବଶ୍ୟକ (JPG, PNG, WebP)।', ta: 'கோப்பு ஒரு படமாக இருக்க வேண்டும் (JPG, PNG, WebP).',
+    te: 'ఫైల్ ఒక చిత్రం అయి ఉండాలి (JPG, PNG, WebP).', kn: 'ಫೈಲ್ ಒಂದು ಚಿತ್ರವಾಗಿರಬೇಕು (JPG, PNG, WebP).', ml: 'ഫയൽ ഒരു ചിത്രമായിരിക്കണം (JPG, PNG, WebP).',
+  },
+  uploadFailed: {
+    en: 'Upload failed. Please try again.', hi: 'अपलोड विफल रहा। कृपया पुनः प्रयास करें।', mr: 'अपलोड अयशस्वी झाले. कृपया पुन्हा प्रयत्न करा.', bn: 'আপলোড ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    pa: 'ਅੱਪਲੋਡ ਅਸਫਲ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।', gu: 'અપલોડ નિષ્ફળ ગયું. કૃપા કરી ફરી પ્રયાસ કરો.', or: 'ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।', ta: 'பதிவேற்றம் தோல்வியடைந்தது. மீண்டும் முயற்சிக்கவும்.',
+    te: 'అప్‌లోడ్ విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.', kn: 'ಅಪ್‌ಲೋಡ್ ವಿಫಲವಾಯಿತು. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.', ml: 'അപ്‌ലോഡ് പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.',
+  },
+  removeFailed: {
+    en: 'Could not remove photo.', hi: 'फ़ोटो हटाई नहीं जा सकी।', mr: 'फोटो काढता आला नाही.', bn: 'ছবি সরানো যায়নি।',
+    pa: 'ਫੋਟੋ ਹਟਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।', gu: 'ફોટો દૂર કરી શકાયો નહીં.', or: 'ଫଟୋ ହଟାଯାଇ ପାରିଲା ନାହିଁ।', ta: 'புகைப்படத்தை அகற்ற முடியவில்லை.',
+    te: 'ఫోటోను తీసివేయలేకపోయాం.', kn: 'ಫೋಟೋವನ್ನು ತೆಗೆದುಹಾಕಲಾಗಲಿಲ್ಲ.', ml: 'ഫോട്ടോ നീക്കം ചെയ്യാനായില്ല.',
+  },
+};
+
+function resolveI18n(
+  table: Record<string, string>,
+  uiLangCode: string,
+  fallback: string,
+): string {
+  return table[uiLangCode] ?? table.en ?? fallback;
+}
 
 interface ConsentPrefs {
   analytics: boolean;
@@ -59,6 +134,8 @@ interface ConsentPrefs {
 export default function SettingsPage() {
   const { user } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  // App UI language (interface chrome) — drives local i18n tables below.
+  const uiLangCode = LANGUAGE_TO_ISO[language] ?? 'en';
   const { theme, setTheme } = useTheme();
   const { plan, isPro, loading: planLoading } = useSubscription();
   const getIdToken = useCallback(async () => {
@@ -118,8 +195,12 @@ export default function SettingsPage() {
 
   const handlePhotoUpload = useCallback(async (file: File) => {
     if (!user) return;
-    if (file.size > 4 * 1024 * 1024) { setPhotoError('Photo must be under 4MB.'); return; }
-    if (!file.type.startsWith('image/')) { setPhotoError('File must be an image (JPG, PNG, WebP).'); return; }
+    if (file.size > 4 * 1024 * 1024) { setPhotoError(resolveI18n(PHOTO_ERROR_I18N.tooLarge, uiLangCode, 'Photo must be under 4MB.')); return; }
+    // Must match the storage.rules profile-photos contentType allowlist
+    // (raster only; SVG excluded) so the user gets a clear message instead of a
+    // post-upload rule rejection for AVIF/BMP/TIFF/SVG.
+    const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) { setPhotoError(resolveI18n(PHOTO_ERROR_I18N.notImage, uiLangCode, 'File must be an image (JPG, PNG, WebP).')); return; }
     setPhotoError(null);
     setPhotoUploading(true);
     try {
@@ -134,11 +215,11 @@ export default function SettingsPage() {
       await updateProfileAction(user.uid, { photoURL: url });
       setPhotoUrl(url);
     } catch (err: any) {
-      setPhotoError(err?.message ?? 'Upload failed. Please try again.');
+      setPhotoError(err?.message ?? resolveI18n(PHOTO_ERROR_I18N.uploadFailed, uiLangCode, 'Upload failed. Please try again.'));
     } finally {
       setPhotoUploading(false);
     }
-  }, [user]);
+  }, [user, uiLangCode]);
 
   const handleRemovePhoto = useCallback(async () => {
     if (!user) return;
@@ -147,11 +228,11 @@ export default function SettingsPage() {
       await updateProfileAction(user.uid, { photoURL: null });
       setPhotoUrl(null);
     } catch (err: any) {
-      setPhotoError(err?.message ?? 'Could not remove photo.');
+      setPhotoError(err?.message ?? resolveI18n(PHOTO_ERROR_I18N.removeFailed, uiLangCode, 'Could not remove photo.'));
     } finally {
       setPhotoUploading(false);
     }
-  }, [user]);
+  }, [user, uiLangCode]);
 
   const fetchConsent = useCallback(async () => {
     if (!user) return;
@@ -266,29 +347,81 @@ export default function SettingsPage() {
     }
   };
 
+  // Sends the delete request with a freshly-reauthenticated token. Shared by
+  // the desktop (popup) path and the mobile (redirect-return) path.
+  const performAccountDeletion = async (freshToken: string) => {
+    const res = await fetch('/api/user/delete-account', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${freshToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true, idToken: freshToken }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(t('Account deletion scheduled. You have 30 days to export your data.'));
+      router.push('/');
+    } else {
+      alert(data.error || t('Failed to delete account'));
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!user || deleteConfirmText !== 'DELETE') return;
     setDeleting(true);
+    // Account deletion is irreversible — require a FRESH re-authentication so a
+    // stolen/borrowed long-lived session (or an XSS-driven request) cannot
+    // delete the account. Re-auth refreshes the token's auth_time, which the
+    // server asserts is recent before deleting.
+    //
+    // Mobile/PWA/in-app browsers: signInWithPopup is broken there (same reason
+    // sign-in uses redirect), so use reauthenticateWithRedirect and complete
+    // the deletion when the app reloads (see the redirect-return effect below).
+    // Desktop: popup is fine and completes inline.
     try {
-      const token = await getIdToken();
-      const res = await fetch('/api/user/delete-account', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: true }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(t('Account deletion scheduled. You have 30 days to export your data.'));
-        router.push('/');
-      } else {
-        alert(data.error || t('Failed to delete account'));
+      const provider = new GoogleAuthProvider();
+      if (shouldUseRedirect()) {
+        try { sessionStorage.setItem(PENDING_ACCOUNT_DELETE_KEY, '1'); } catch { /* storage blocked */ }
+        await reauthenticateWithRedirect(user, provider); // navigates away
+        return; // completion happens on redirect return
       }
+      let token: string;
+      try {
+        await reauthenticateWithPopup(user, provider);
+        token = await user.getIdToken(true);
+      } catch {
+        alert(t('Please re-authenticate to confirm account deletion.'));
+        setDeleting(false);
+        return;
+      }
+      await performAccountDeletion(token);
     } catch {
       alert(t('Failed to delete account. Please try again.'));
     } finally {
       setDeleting(false);
     }
   };
+
+  // Redirect-return handler: after a mobile reauthenticateWithRedirect, the app
+  // reloads and `user` re-populates with a fresh auth_time. If a delete was
+  // pending, finish it with a force-refreshed token.
+  useEffect(() => {
+    if (!user) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem(PENDING_ACCOUNT_DELETE_KEY) === '1'; } catch { /* ignore */ }
+    if (!pending) return;
+    try { sessionStorage.removeItem(PENDING_ACCOUNT_DELETE_KEY); } catch { /* ignore */ }
+    (async () => {
+      setDeleting(true);
+      try {
+        const token = await user.getIdToken(true);
+        await performAccountDeletion(token);
+      } catch {
+        alert(t('Please re-authenticate to confirm account deletion.'));
+      } finally {
+        setDeleting(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSaveProfProfile = async () => {
     if (!user) return;
@@ -472,7 +605,7 @@ export default function SettingsPage() {
               <SelectContent>
                 {ADMINISTRATIVE_ROLES.map((role) => (
                   <SelectItem key={role} value={role}>
-                    {ADMIN_ROLE_LABELS[role]}
+                    {resolveI18n(ADMIN_ROLE_LABELS_I18N[role], uiLangCode, role)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -491,7 +624,7 @@ export default function SettingsPage() {
                       checked={profQuals.includes(q)}
                       onCheckedChange={() => toggleQual(q)}
                     />
-                    <label htmlFor={`qual-${q}`} className="text-sm cursor-pointer select-none">{q}</label>
+                    <label htmlFor={`qual-${q}`} className="text-sm cursor-pointer select-none">{resolveI18n(QUALIFICATION_LABELS_I18N[q], uiLangCode, q)}</label>
                   </div>
                 ))}
               </div>
@@ -531,7 +664,7 @@ export default function SettingsPage() {
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.map((lang) => (
-                <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                <SelectItem key={lang} value={lang}>{LANGUAGE_NATIVE_LABELS[lang]}</SelectItem>
               ))}
             </SelectContent>
           </Select>

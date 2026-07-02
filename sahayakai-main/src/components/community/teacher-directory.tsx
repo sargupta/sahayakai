@@ -41,6 +41,10 @@ export function TeacherDirectory() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isListening, setIsListening] = useState(false);
     const recRef = useRef<any>(null);
+    // H27 (hot mic): guard setState-after-unmount and let the unmount effect
+    // abort a live SpeechRecognition session so navigating away mid-listen does
+    // not leave the microphone hardware ON.
+    const mountedRef = useRef(true);
     // Cancel guard: when auth flips quickly (sign-in → sign-out → sign-in), the
     // earlier loadData() may resolve AFTER the later one, clobbering newer data.
     // We bump this on every load attempt and discard responses whose token is stale.
@@ -57,6 +61,23 @@ export function TeacherDirectory() {
             }
         });
         return () => unsubscribe();
+    }, []);
+
+    // H27 (hot mic): stop voice-search recognition on unmount.
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            const rec = recRef.current;
+            if (rec) {
+                rec.onresult = null;
+                rec.onend = null;
+                rec.onerror = null;
+                try { rec.abort?.(); } catch { /* no-op */ }
+                try { rec.stop?.(); } catch { /* no-op */ }
+                recRef.current = null;
+            }
+        };
     }, []);
 
     const loadData = async (uid?: string) => {
@@ -177,9 +198,9 @@ export function TeacherDirectory() {
         rec.lang = BCP47_MAP[language] ?? 'en-IN';
         rec.interimResults = false;
         rec.maxAlternatives = 1;
-        rec.onresult = (e: any) => { const t = e.results[0]?.[0]?.transcript ?? ''; if (t) setSearchQuery(t); };
-        rec.onend = () => setIsListening(false);
-        rec.onerror = () => setIsListening(false);
+        rec.onresult = (e: any) => { if (!mountedRef.current) return; const t = e.results[0]?.[0]?.transcript ?? ''; if (t) setSearchQuery(t); };
+        rec.onend = () => { if (mountedRef.current) setIsListening(false); };
+        rec.onerror = () => { if (mountedRef.current) setIsListening(false); };
         recRef.current = rec;
         rec.start();
         setIsListening(true);

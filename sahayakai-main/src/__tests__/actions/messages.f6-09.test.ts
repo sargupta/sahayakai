@@ -105,7 +105,7 @@ jest.mock('@/lib/db/adapter', () => ({
     dbAdapter: { serialize: (x: any) => x },
 }));
 
-jest.mock('@/app/actions/notifications', () => ({
+jest.mock('@/lib/notifications/create', () => ({
     createNotification: async () => {},
     createTypedNotification: async () => {},
 }));

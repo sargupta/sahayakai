@@ -5,6 +5,7 @@ import { generateCacheKey, getCachedAudio, setCachedAudio } from '@/lib/cache';
 import { checkServerRateLimit } from '@/lib/server-safety';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { sarvamTTS, toSarvamLangCode, chunkText, concatBase64Mp3 } from '@/lib/sarvam';
+import { bhashiniTTS, bhashiniSupportsLang } from '@/lib/bhashini';
 import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes, buildVoiceQuotaSnapshot } from '@/lib/voice-quota-guard';
 
 // Cache the GCP access token for its full lifetime (1 hour).
@@ -202,6 +203,17 @@ export async function POST(req: NextRequest) {
 
         const cleanText = stripMarkdown(text);
 
+        // Hard character cap — TTS providers (Google/Sarvam) bill per character
+        // and long input fans out into many parallel synthesis chunks. Reject
+        // oversized requests before any provider call to bound cost and latency.
+        const MAX_TTS_CHARS = 5000;
+        if (cleanText.length > MAX_TTS_CHARS) {
+            return NextResponse.json(
+                { error: 'Text too long', maxChars: MAX_TTS_CHARS },
+                { status: 413 },
+            );
+        }
+
         // Use caller-provided language code when valid; otherwise detect from script.
         const langCode = (targetLang && VALID_LANG_CODE.test(targetLang))
             ? targetLang
@@ -235,11 +247,28 @@ export async function POST(req: NextRequest) {
                 audioContent = result.audioContent;
                 UsageTracker.trackTTS(uid, cleanText.length, false, 'sarvam');
             } catch (sarvamErr: any) {
-                // Sarvam failed — fall back to Google
-                console.warn(`[TTS] Sarvam failed (${sarvamErr.message}), falling back to Google`);
-                const googleVoice = getVoiceName(langCode);
-                audioContent = await googleTTS(cleanText, langCode, googleVoice);
-                UsageTracker.trackTTS(uid, cleanText.length, false, 'google');
+                // Sarvam failed. Voice-equity tier: for te/mr/or — the languages
+                // where Google's voice is Standard-only or absent — try Bhashini
+                // (native govt models) BEFORE falling to Google. Bhashini is
+                // best-effort and may be unconfigured; any throw drops to Google.
+                let fallbackAudio: string | null = null;
+                if (bhashiniSupportsLang(langCode)) {
+                    try {
+                        console.warn(`[TTS] Sarvam failed (${sarvamErr.message}), trying Bhashini for ${langCode}`);
+                        const result = await bhashiniTTS(cleanText, langCode);
+                        fallbackAudio = result.audioContent;
+                        UsageTracker.trackTTS(uid, cleanText.length, false, 'bhashini');
+                    } catch (bhashiniErr: any) {
+                        console.warn(`[TTS] Bhashini failed (${bhashiniErr.message}), falling back to Google`);
+                    }
+                }
+                if (fallbackAudio === null) {
+                    console.warn(`[TTS] Falling back to Google for ${langCode}`);
+                    const googleVoice = getVoiceName(langCode);
+                    fallbackAudio = await googleTTS(cleanText, langCode, googleVoice);
+                    UsageTracker.trackTTS(uid, cleanText.length, false, 'google');
+                }
+                audioContent = fallbackAudio;
             }
         } else {
             // Language not supported by Sarvam — use Google directly

@@ -19,11 +19,12 @@ import { extractGradeFromTopic } from '@/lib/grade-utils';
 export const WorksheetWizardInputSchema = z.object({
   imageDataUri: z
     .string()
+    .max(14_000_000)
     .describe(
       "A photo of a textbook page, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  prompt: z.string().describe('The user\'s request for what kind of worksheet to create.'),
-  language: z.string().optional().describe('The language for the worksheet.'),
+  prompt: z.string().max(2000).describe('The user\'s request for what kind of worksheet to create.'),
+  language: z.string().max(50).optional().describe('The language for the worksheet.'),
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
   subject: z.string().optional().describe('The academic subject.'),

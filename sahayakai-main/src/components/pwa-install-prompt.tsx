@@ -54,7 +54,13 @@ export function PWAInstallPrompt() {
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // Guard matchMedia — some restricted WebViews / older environments don't
+    // implement it, and this component is always mounted. A missing API here
+    // would throw on every route and take the whole app down.
+    if (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(display-mode: standalone)').matches
+    ) {
       setIsInstalled(true);
       return;
     }

@@ -16,13 +16,16 @@ import type { TeacherSuggestion } from "@/types/community";
 // adminRoles, planType, razorpaySubscriptionId, creditsUsed, email. We now
 // strip to the same public allowlist that getPublicProfileAction uses.
 //
-// Allowlist mirrors src/app/actions/profile.ts::getPublicProfileAction.
+// H6 (PII leak): email is intentionally NOT in this allowlist. The directory
+// path (getProfilesAction/stripToPublicProfile) returns these fields to any
+// signed-in caller for any uid, so including email would let anyone bulk-harvest
+// every teacher's address. Email stays gated behind a connection in
+// getPublicProfileAction.
 const PUBLIC_PROFILE_FIELDS = [
     'id',
     'uid',
     'displayName',
     'photoURL',
-    'email', // already shown elsewhere in connection flows
     'bio',
     'state',
     'district',
@@ -52,18 +55,24 @@ function stripToPublicProfile(user: any): any {
 }
 
 export async function getProfilesAction(uids: string[]) {
-    await requireAuth();
-    const users = await dbAdapter.getUsers(uids);
-    if (!Array.isArray(users)) return users;
-    return users.map(stripToPublicProfile);
+    const callerId = await requireAuth();
+    try {
+        const users = await dbAdapter.getUsers(uids);
+        if (!Array.isArray(users)) return users;
+        return users.map(stripToPublicProfile);
+    } catch (err) {
+        logger.error('getProfilesAction failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
+    }
 }
 
 /**
  * Create a public post. Author is derived from the authenticated session —
  * the client cannot impersonate other users.
  */
-export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string) {
+export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string, gradeLevel?: string, subject?: string) {
     const userId = await requireAuth();
+    try {
 
     // Wave 3: input validation. Without these caps a client could POST a
     // 50 MB string into Firestore (rejected at storage-write time, but the
@@ -87,10 +96,19 @@ export async function createPostAction(content: string, visibility: string = 'pu
 
     const db = await getDb();
 
+    // getPosts filters with .where('gradeLevel','in',...) and
+    // .where('subject','in',...). Firestore 'in' filters match only docs that
+    // actually carry the field, so posts written without gradeLevel/subject were
+    // silently excluded whenever a grade/subject filter was applied. Always
+    // persist both fields, defaulting consistently with the rest of this file
+    // (subject → 'General', matching saveResourceToLibraryAction; gradeLevel →
+    // 'all' so an unspecified post still surfaces under the "all grades" bucket).
     const postData: any = {
         authorId: userId,
         content,
         visibility,
+        gradeLevel: (typeof gradeLevel === 'string' && gradeLevel.trim()) ? gradeLevel : 'all',
+        subject: (typeof subject === 'string' && subject.trim()) ? subject : 'General',
         likesCount: 0,
         commentsCount: 0,
         createdAt: new Date().toISOString(),
@@ -120,10 +138,15 @@ export async function createPostAction(content: string, visibility: string = 'pu
     aggregateUserMetrics(userId).catch(e => logger.error("Aggregator error for user metrics", e, 'COMMUNITY', { userId }));
 
     return docRef.id;
+    } catch (err) {
+        logger.error('createPostAction failed', err, 'COMMUNITY', { userId });
+        throw err;
+    }
 }
 
 export async function toggleLikeAction(postId: string) {
     const userId = await requireAuth();
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
     const postRef = db.collection('posts').doc(postId);
@@ -153,10 +176,15 @@ export async function toggleLikeAction(postId: string) {
     });
 
     revalidatePath("/community");
+    } catch (err) {
+        logger.error('toggleLikeAction failed', err, 'COMMUNITY', { userId });
+        throw err;
+    }
 }
 
 export async function getPosts(filters: { language?: string, limit?: number, gradeLevels?: string[], subjects?: string[] } = {}) {
-    await requireAuth();
+    const callerId = await requireAuth();
+    try {
     const db = await getDb();
     let query = db.collection('posts').orderBy('createdAt', 'desc');
 
@@ -177,12 +205,17 @@ export async function getPosts(filters: { language?: string, limit?: number, gra
         id: doc.id,
         ...doc.data()
     })));
+    } catch (err) {
+        logger.error('getPosts failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
+    }
 }
 
-import { createTypedNotification } from "./notifications";
+import { createTypedNotification } from "@/lib/notifications/create";
 
 export async function followTeacherAction(followingId: string) {
     const followerId = await requireAuth();
+    try {
     // F10-04: forbid self-follow. Inflates the follower graph and gives
     // social-proof to the wrong account.
     if (followingId === followerId) {
@@ -195,16 +228,29 @@ export async function followTeacherAction(followingId: string) {
     const connectionId = `${followerId}_${followingId}`;
     const connectionRef = db.collection('connections').doc(connectionId);
 
-    const doc = await connectionRef.get();
-    if (doc.exists) {
-        await connectionRef.delete();
-    } else {
-        await connectionRef.set({
+    // F5 fix: same TOCTOU pattern as toggleLikeAction. Reading connectionRef
+    // then conditionally delete/set as separate operations meant two concurrent
+    // follow taps could both observe `!exists` and both set the connection doc
+    // (idempotent) — or a concurrent follow+unfollow could interleave and leave
+    // the graph in an inconsistent state. Wrap the read + conditional write in a
+    // transaction so exactly one of {follow, unfollow} wins. The closure returns
+    // `true` when a NEW follow was created, so the notification side-effects
+    // below fire once and only for a genuine new follow.
+    const didFollow = await db.runTransaction(async (tx) => {
+        const doc = await tx.get(connectionRef);
+        if (doc.exists) {
+            tx.delete(connectionRef);
+            return false;
+        }
+        tx.set(connectionRef, {
             followerId,
             followingId,
             createdAt: new Date().toISOString()
         });
+        return true;
+    });
 
+    if (didFollow) {
         // Create Notification for the person being followed
         try {
             const followerDoc = await db.collection('users').doc(followerId).get();
@@ -224,19 +270,29 @@ export async function followTeacherAction(followingId: string) {
         }
     }
     revalidatePath("/community");
+    } catch (err) {
+        logger.error('followTeacherAction failed', err, 'COMMUNITY', { userId: followerId });
+        throw err;
+    }
 }
 
 export async function getFollowingIdsAction() {
     const followerId = await requireAuth();
+    try {
     const db = await getDb();
     const snapshot = await db.collection('connections')
         .where('followerId', '==', followerId)
         .get();
     return snapshot.docs.map(doc => doc.data().followingId);
+    } catch (err) {
+        logger.error('getFollowingIdsAction failed', err, 'COMMUNITY', { userId: followerId });
+        throw err;
+    }
 }
 
 export async function getFollowingPosts() {
     const followerId = await requireAuth();
+    try {
     const db = await getDb();
 
     // 1. Get list of following IDs
@@ -256,10 +312,15 @@ export async function getFollowingPosts() {
         .get();
 
     return dbAdapter.serialize(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (err) {
+        logger.error('getFollowingPosts failed', err, 'COMMUNITY', { userId: followerId });
+        throw err;
+    }
 }
 
 export async function getLibraryResources(filters: { type?: string, language?: string, authorId?: string, authorIds?: string[], excludeTypes?: string[] } = {}) {
-    await requireAuth();
+    const callerId = await requireAuth();
+    try {
     const db = await getDb();
     let query: any = db.collection('library_resources');
 
@@ -299,10 +360,15 @@ export async function getLibraryResources(filters: { type?: string, language?: s
     }
 
     return dbAdapter.serialize(resources);
+    } catch (err) {
+        logger.error('getLibraryResources failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
+    }
 }
 
 export async function trackDownloadAction(resourceId: string) {
-    await requireAuth();
+    const callerId = await requireAuth();
+    try {
     const db = await getDb();
     const ref = db.collection('library_resources').doc(resourceId);
 
@@ -319,6 +385,10 @@ export async function trackDownloadAction(resourceId: string) {
         resourceId,
         timestamp: new Date().toISOString()
     });
+    } catch (err) {
+        logger.error('trackDownloadAction failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
+    }
 }
 
 // Cached inner function. Pulled out so unstable_cache can key the result by
@@ -458,10 +528,15 @@ export async function getRecommendedTeachersAction(userId?: string): Promise<Tea
     // Authz: derive uid from session — ignore client-supplied parameter to prevent
     // a caller from scraping recommendations for arbitrary users.
     const callerId = await requireAuth();
-    if (userId && userId !== callerId) {
-        throw new Error('Forbidden: cannot fetch recommendations for another user');
+    try {
+        if (userId && userId !== callerId) {
+            throw new Error('Forbidden: cannot fetch recommendations for another user');
+        }
+        return await _recommendedTeachersFor(callerId);
+    } catch (err) {
+        logger.error('getRecommendedTeachersAction failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
     }
-    return _recommendedTeachersFor(callerId);
 }
 
 // Cached inner. Keyed by selfUid so each user gets their own filtered list
@@ -512,10 +587,15 @@ export async function getAllTeachersAction(currentUserId?: string): Promise<Teac
     // The optional `currentUserId` parameter is preserved for backward compat
     // but the actual self-exclusion uses the session uid.
     const callerId = await requireAuth();
-    await checkServerRateLimit(callerId);
-    const selfUid = currentUserId ?? callerId;
+    try {
+        await checkServerRateLimit(callerId);
+        const selfUid = currentUserId ?? callerId;
 
-    return _allTeachersFor(selfUid);
+        return await _allTeachersFor(selfUid);
+    } catch (err) {
+        logger.error('getAllTeachersAction failed', err, 'COMMUNITY', { userId: callerId });
+        throw err;
+    }
 }
 
 // ── Engagement actions ────────────────────────────────────────────────────────
@@ -545,41 +625,46 @@ export async function likeResourceAction(
     // call sites compile; it is intentionally ignored.
     const userId = await requireAuth();
     void _userId;
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
     const resRef  = db.collection('library_resources').doc(resourceId);
     const likeRef = resRef.collection('likes').doc(userId);
 
-    const [resDoc, likeDoc] = await Promise.all([resRef.get(), likeRef.get()]);
+    // F5 fix: the toggle used to read likeDoc.exists and then run the like-doc
+    // write + stats.likes increment as separate operations outside any
+    // transaction, so two concurrent taps could both observe `!exists` and both
+    // fire FieldValue.increment(+1), double-counting the like. Mirror
+    // toggleLikeAction: read the resource + like docs, decide, and write the
+    // counter delta all inside one Firestore transaction so the final state is
+    // one like-doc and a counter delta of +1 or 0.
+    const { resData, isLiked } = await db.runTransaction(async (tx) => {
+        const resDoc = await tx.get(resRef);
+        if (!resDoc.exists) throw new Error('Resource not found');
+        const data = resDoc.data()!;
 
-    if (!resDoc.exists) throw new Error('Resource not found');
-    const resData = resDoc.data()!;
+        // F10-05: forbid self-like on library resources too.
+        if (data.authorId && data.authorId === userId) {
+            throw new Error('Cannot like your own resource');
+        }
 
-    // F10-05: forbid self-like on library resources too.
-    if (resData.authorId && resData.authorId === userId) {
-        throw new Error('Cannot like your own resource');
-    }
-
-    let isLiked: boolean;
-
-    if (likeDoc.exists) {
-        // Already liked — unlike
-        await Promise.all([
-            likeRef.delete(),
-            resRef.update({ 'stats.likes': FieldValue.increment(-1) }),
-        ]);
-        isLiked = false;
-    } else {
+        const likeDoc = await tx.get(likeRef);
+        if (likeDoc.exists) {
+            // Already liked — unlike
+            tx.delete(likeRef);
+            tx.update(resRef, { 'stats.likes': FieldValue.increment(-1) });
+            return { resData: data, isLiked: false };
+        }
         // New like. We write `uid` on the doc so a single
         // `collectionGroup('likes').where('uid', '==', uid)` can hydrate the
         // full liked-state for a user without having to crawl every resource.
-        await Promise.all([
-            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
-            resRef.update({ 'stats.likes': FieldValue.increment(1) }),
-        ]);
-        isLiked = true;
+        tx.set(likeRef, { uid: userId, createdAt: new Date().toISOString() });
+        tx.update(resRef, { 'stats.likes': FieldValue.increment(1) });
+        return { resData: data, isLiked: true };
+    });
 
+    if (isLiked) {
         // Notify the original author (non-blocking)
         if (resData.authorId && resData.authorId !== userId) {
             try {
@@ -614,6 +699,10 @@ export async function likeResourceAction(
 
     revalidatePath('/community');
     return { isLiked, newCount };
+    } catch (err) {
+        logger.error('likeResourceAction failed', err, 'COMMUNITY', { userId });
+        throw err;
+    }
 }
 
 /**
@@ -638,6 +727,7 @@ export async function saveResourceToLibraryAction(
     // Derive saver from session. Legacy `_saverId` parameter is ignored.
     const saverId = await requireAuth();
     void _saverId;
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -728,6 +818,10 @@ export async function saveResourceToLibraryAction(
 
     revalidatePath('/community');
     return { alreadySaved: false };
+    } catch (err) {
+        logger.error('saveResourceToLibraryAction failed', err, 'COMMUNITY', { userId: saverId });
+        throw err;
+    }
 }
 
 /**
@@ -747,6 +841,7 @@ export async function publishContentToLibraryAction(
     // would fail with "Content not found" rather than mis-publishing.
     const userId = await requireAuth();
     void _userId;
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -812,6 +907,10 @@ export async function publishContentToLibraryAction(
 
     revalidatePath('/community');
     return { resourceId };
+    } catch (err) {
+        logger.error('publishContentToLibraryAction failed', err, 'COMMUNITY', { userId });
+        throw err;
+    }
 }
 
 /**
@@ -820,20 +919,25 @@ export async function publishContentToLibraryAction(
  */
 export async function shareLatestContentAction(contentType: string): Promise<{ resourceId: string }> {
     const userId = await requireAuth();
+    try {
+        // Find the user's most recent content of this type
+        const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
+        if (!items.length) throw new Error('No content found to share. Generate something first!');
 
-    // Find the user's most recent content of this type
-    const { items } = await dbAdapter.listContent(userId, { type: contentType as any, limit: 1 });
-    if (!items.length) throw new Error('No content found to share. Generate something first!');
+        const latestContent = items[0];
+        if (latestContent.isPublic) throw new Error('This content is already shared.');
 
-    const latestContent = items[0];
-    if (latestContent.isPublic) throw new Error('This content is already shared.');
-
-    return publishContentToLibraryAction(latestContent.id);
+        return await publishContentToLibraryAction(latestContent.id);
+    } catch (err) {
+        logger.error('shareLatestContentAction failed', err, 'COMMUNITY', { userId });
+        throw err;
+    }
 }
 
 export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // 1. Authenticate via middleware-injected header — never trust client-supplied identity
     const authorId = await requireAuth();
+    try {
 
     // 2. Validate input
     const trimmed = text?.trim();
@@ -885,6 +989,10 @@ export async function sendChatMessageAction(text: string, audioUrl?: string) {
     // Fire-and-forget: trigger AI reactive reply (non-blocking)
     const { triggerAIReactiveReply } = await import("@/lib/ai-reactive-trigger");
     triggerAIReactiveReply("community_chat", trimmed || '', authorName);
+    } catch (err) {
+        logger.error('sendChatMessageAction failed', err, 'COMMUNITY', { userId: authorId });
+        throw err;
+    }
 }
 
 /**
@@ -904,6 +1012,7 @@ export async function getLikedItemIdsAction(): Promise<{
     resourceIds: string[];
 }> {
     const uid = await requireAuth();
+    try {
     const db = await getDb();
 
     // Cap the result set so a heavy liker doesn't load megabytes on page load.
@@ -933,4 +1042,8 @@ export async function getLikedItemIdsAction(): Promise<{
     }
 
     return { groupPostIds, resourceIds };
+    } catch (err) {
+        logger.error('getLikedItemIdsAction failed', err, 'COMMUNITY', { userId: uid });
+        throw err;
+    }
 }

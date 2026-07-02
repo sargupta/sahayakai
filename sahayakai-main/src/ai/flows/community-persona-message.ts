@@ -73,7 +73,7 @@ ${recentBlock}
 TASK: Write ONE short message that ${input.personaName} would post right now.
 
 RULES:
-1. Write in ${input.preferredLanguage}. Use the correct script (Devanagari for Hindi/Marathi, Bangla for Bengali, Tamil script for Tamil, Kannada for Kannada, Malayalam for Malayalam, Gujarati for Gujarati, Gurmukhi for Punjabi, English for English). Occasional Indian-English code-switch ("ma'am", "doubt") is fine only for English-preferring personas.
+1. Write in ${input.preferredLanguage}. Use the correct script (Devanagari for Hindi/Marathi, Bangla for Bengali, Tamil script for Tamil, Telugu script for Telugu, Kannada for Kannada, Malayalam for Malayalam, Gujarati for Gujarati, Odia script for Odia, Gurmukhi for Punjabi, English for English). NEVER transliterate into Latin or any other script — output MUST be in the native script of ${input.preferredLanguage}. Occasional Indian-English code-switch ("ma'am", "doubt") is fine only for English-preferring personas.
 2. Length: 30 to 180 characters. Real WhatsApp-message style.
 3. Stay in character — match the voice exactly.
 4. Be concrete. Talk about teaching ${input.personaSubject} to Class ${input.personaGradeLevel}, a student moment, a small question, a tip, an observation.

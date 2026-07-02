@@ -2,9 +2,9 @@
  * GET /api/organizations/[orgId]/analytics?window=7d
  *
  * Returns aggregated school-level analytics for the principal dashboard.
- * Caller must be the org admin (verified via administrativeRole on the
- * user profile; will move to Firebase custom claims orgRole when middleware
- * starts emitting x-org-role headers).
+ * Caller must be the org admin, verified against server-managed data only:
+ * the org doc's adminUserId or an admin role in the org's members
+ * subcollection. User-editable profile fields are never trusted for authz.
  *
  * Response shape: OrgAnalyticsOutput from src/lib/analytics/org-aggregator.ts
  */
@@ -17,8 +17,6 @@ import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const PRINCIPAL_ROLES = ['principal', 'vice_principal'] as const;
 
 export async function GET(
     req: NextRequest,
@@ -47,18 +45,23 @@ export async function GET(
             adminUserId?: string;
         };
 
-        // Role gate: adminUserId match, OR profile.administrativeRole in PRINCIPAL_ROLES with matching organizationId
-        const isOrgAdmin = orgData.adminUserId === userId;
+        // Role gate — SERVER-TRUST ONLY. Authorize on data that a user cannot
+        // self-assign: the org's adminUserId, or an admin membership doc in
+        // THIS org's members subcollection (written exclusively by Admin-SDK
+        // org code). We deliberately do NOT trust profile.administrativeRole /
+        // profile.organizationId here — those are user-editable and previously
+        // allowed any user to read any school's analytics by self-asserting
+        // { administrativeRole:'principal', organizationId:<victimOrg> }.
+        let isOrgAdmin = orgData.adminUserId === userId;
         if (!isOrgAdmin) {
-            const userDoc = await db.collection('users').doc(userId).get();
-            const profile = userDoc.data() as { administrativeRole?: string; organizationId?: string } | undefined;
-            const isPrincipalOfThisOrg =
-                profile?.organizationId === orgId &&
-                profile?.administrativeRole !== undefined &&
-                PRINCIPAL_ROLES.includes(profile.administrativeRole as typeof PRINCIPAL_ROLES[number]);
-            if (!isPrincipalOfThisOrg) {
-                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-            }
+            const memberDoc = await orgRef.collection('members').doc(userId).get();
+            const memberRole = memberDoc.exists
+                ? (memberDoc.data() as { role?: string }).role
+                : undefined;
+            isOrgAdmin = memberRole === 'admin';
+        }
+        if (!isOrgAdmin) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // 2. Load members subcollection

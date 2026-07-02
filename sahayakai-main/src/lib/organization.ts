@@ -66,11 +66,18 @@ export async function createOrganization(params: {
     plan: Organization['plan'];
     totalSeats: number;
     /**
-     * When true, also writes `users.planType` + sets the Firebase custom claim
-     * to grant the admin the org plan immediately. Must ONLY be set after a
-     * Razorpay payment has been verified. Defaults to false.
+     * When true, the caller is REQUESTING that the admin's plan be granted
+     * immediately. This is only honoured if `razorpayPaymentId` resolves to a
+     * genuinely captured Razorpay payment (verified server-side below). If the
+     * flag is set but verification fails or no payment id is supplied, we fall
+     * back to the webhook path (link org, do NOT flip plan). Defaults to false.
      */
     grantPlanToAdmin?: boolean;
+    /**
+     * Razorpay payment id backing the immediate grant. Verified against the
+     * Razorpay API (must be `captured` with amount > 0) before any plan flip.
+     */
+    razorpayPaymentId?: string;
 }): Promise<string> {
     const db = await getDb();
     const orgRef = db.collection('organizations').doc();
@@ -96,7 +103,35 @@ export async function createOrganization(params: {
         invitedBy: params.adminUserId,
     });
 
-    if (params.grantPlanToAdmin) {
+    // The plan flip is only honoured after a real Razorpay payment is verified
+    // server-side (F7-001 / H21). grantPlanToAdmin alone is not enough — the
+    // caller derives it from the mere *presence* of a payment id, which is not
+    // proof of payment. Fail closed to the webhook path on any doubt.
+    let paymentVerified = false;
+    if (params.grantPlanToAdmin && params.razorpayPaymentId) {
+        try {
+            const { getRazorpay } = await import('./razorpay');
+            const payment = await getRazorpay().payments.fetch(params.razorpayPaymentId);
+            const amount = typeof payment?.amount === 'string'
+                ? parseInt(payment.amount, 10)
+                : (payment?.amount ?? 0);
+            paymentVerified = payment?.status === 'captured' && amount > 0;
+            if (!paymentVerified) {
+                console.warn(
+                    `[Org] Refusing immediate plan grant for ${params.adminUserId}: payment ${params.razorpayPaymentId} status=${payment?.status} amount=${amount}`
+                );
+            }
+        } catch (err) {
+            // Fail closed — webhook will grant the plan once Razorpay confirms.
+            console.error(
+                `[Org] Razorpay payment verification failed for ${params.razorpayPaymentId}; deferring plan grant to webhook:`,
+                err
+            );
+            paymentVerified = false;
+        }
+    }
+
+    if (paymentVerified) {
         // Update user profile with org ID and grant the plan
         await db.collection('users').doc(params.adminUserId).update({
             organizationId: orgRef.id,
@@ -208,26 +243,48 @@ export async function removeTeacher(orgId: string, userId: string): Promise<void
     const db = await getDb();
     const orgRef = db.collection('organizations').doc(orgId);
 
-    await db.runTransaction(async (tx) => {
+    // Only touch the target user's profile/claims/seat count if they were
+    // genuinely a member of THIS org (H3). The transaction confirms the member
+    // doc exists and decrements seats atomically; a non-member removal is a
+    // no-op rather than a cross-tenant force-downgrade of an arbitrary uid.
+    const userRef = db.collection('users').doc(userId);
+
+    const removed = await db.runTransaction(async (tx) => {
         const memberRef = orgRef.collection('members').doc(userId);
-        const member = await tx.get(memberRef);
-        if (!member.exists) throw new Error('Member not found');
+        // Read the user profile inside the transaction so the org-match check
+        // is consistent with the seat decrement.
+        const [member, userDoc] = await Promise.all([
+            tx.get(memberRef),
+            tx.get(userRef),
+        ]);
+
+        if (!member.exists) {
+            // Not a member of this org — do NOT mutate their profile/claims.
+            return false;
+        }
         if (member.data()?.role === 'admin') throw new Error('Cannot remove admin');
 
         tx.delete(memberRef);
         tx.update(orgRef, { usedSeats: FieldValue.increment(-1), updatedAt: new Date() });
+
+        // Only downgrade the profile if it actually points at this org.
+        const belongsToOrg = userDoc.exists && userDoc.data()?.organizationId === orgId;
+        if (belongsToOrg) {
+            tx.update(userRef, {
+                organizationId: FieldValue.delete(),
+                planType: 'free',
+                planSource: 'self',
+                updatedAt: new Date(),
+            });
+        }
+        return belongsToOrg;
     });
 
-    // Downgrade user to free
-    await db.collection('users').doc(userId).update({
-        organizationId: FieldValue.delete(),
-        planType: 'free',
-        planSource: 'self',
-        updatedAt: new Date(),
-    });
-
-    const { getAuth } = await import('firebase-admin/auth');
-    await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+    // Reset custom claims only when we actually downgraded this user's profile.
+    if (removed) {
+        const { getAuth } = await import('firebase-admin/auth');
+        await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+    }
 }
 
 /** Get org details with member list. */

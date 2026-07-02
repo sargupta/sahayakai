@@ -56,10 +56,12 @@ export async function POST(request: Request) {
             adminUserId: adminUid,
             plan,
             totalSeats,
-            // Only flip the user's planType + custom claim if a verified payment
-            // reference is provided. Otherwise the org doc is created but the
-            // user's plan will be flipped by the webhook on payment.captured.
+            // Only flip the user's planType + custom claim if a payment
+            // reference is provided AND createOrganization verifies it as
+            // 'captured' against Razorpay (H21). Otherwise the org doc is
+            // created but the plan is flipped by the webhook on payment.captured.
             grantPlanToAdmin: typeof razorpayPaymentId === 'string' && razorpayPaymentId.length > 0,
+            razorpayPaymentId: typeof razorpayPaymentId === 'string' ? razorpayPaymentId : undefined,
         });
 
         return NextResponse.json({ orgId });

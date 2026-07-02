@@ -73,6 +73,10 @@ export function ContactParentModal({
     const { t } = useLanguage();
 
     const [step, setStep] = useState<Step>("reason");
+    // True once polling has given up waiting for a summary (call ended too short / unanswered, or
+    // the result never landed). Lets SummaryView show a terminal message instead of an endless
+    // "Generating summary…" spinner.
+    const [pollExhausted, setPollExhausted] = useState(false);
     const [reason, setReason] = useState<OutreachReason | null>(null);
     const [note, setNote] = useState("");
     const [generatedMessage, setGeneratedMessage] = useState("");
@@ -181,8 +185,18 @@ export function ContactParentModal({
         pollAbortRef.current = new AbortController();
         const signal = pollAbortRef.current.signal;
 
-        const maxPolls = 60; // 5 minutes at 5s intervals
+        setPollExhausted(false);
+        const maxPolls = 60; // ~5 min ceiling while the call is still in progress (5s interval)
+        // Once the call is terminal but no summary has landed yet, wait only a short bounded window
+        // for the async summary (the finalizer writes it within a few seconds of the call ending).
+        // A call that ended too short / unanswered never produces one — so we must stop, not spin.
+        const maxTerminalWaits = 8; // ~24s at 3s interval
         let polls = 0;
+        let terminalWaits = 0;
+
+        // Give up gracefully: land on the summary step and let SummaryView render the right
+        // terminal message (too-short / unanswered / still-processing) instead of an infinite spin.
+        const giveUp = () => { setPollExhausted(true); setStep("summary"); };
 
         const schedule = (ms: number, fn: () => void) => {
             if (signal.aborted) return;
@@ -191,13 +205,13 @@ export function ContactParentModal({
 
         const poll = async () => {
             if (signal.aborted) return;
-            if (polls >= maxPolls) return;
+            if (polls >= maxPolls) { giveUp(); return; }
             polls++;
 
             try {
                 const res = await fetch(`/api/attendance/call-summary?outreachId=${oid}`, { signal });
                 if (signal.aborted) return;
-                if (!res.ok) return;
+                if (!res.ok) { schedule(5000, poll); return; }
 
                 const data: CallResult = await res.json();
                 if (signal.aborted) return;
@@ -209,17 +223,22 @@ export function ContactParentModal({
                         setStep("summary");
                         return;
                     }
-                    if (polls < maxPolls) {
+                    // Terminal status, summary not yet present — wait a short bounded window, then
+                    // stop (a too-short / unanswered call will never produce a summary).
+                    if (terminalWaits < maxTerminalWaits) {
+                        terminalWaits++;
+                        setStep("summary"); // show the completed banner while the summary settles
                         schedule(3000, poll);
                         return;
                     }
-                    setStep("summary");
+                    giveUp();
                     return;
                 }
                 schedule(5000, poll);
             } catch (err: any) {
                 if (err?.name === 'AbortError') return;
                 if (polls < maxPolls) schedule(5000, poll);
+                else giveUp();
             }
         };
 
@@ -453,7 +472,7 @@ export function ContactParentModal({
                 {step === "calling" ? (
                     <CallingView student={student} callResult={callResult} />
                 ) : step === "summary" ? (
-                    <SummaryView callResult={callResult} student={student} onClose={handleClose} />
+                    <SummaryView callResult={callResult} student={student} onClose={handleClose} pollExhausted={pollExhausted} />
                 ) : step === "reason" ? (
                     <div className="space-y-3 mt-2">
                         <p className="text-xs text-muted-foreground font-medium">{t("Select reason for outreach:")}</p>
@@ -829,7 +848,7 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
 
 // ── Call summary view ───────────────────────────────────────────────────────
 
-function SummaryView({ callResult, student, onClose }: { callResult: CallResult | null; student: Student; onClose: () => void }) {
+function SummaryView({ callResult, student, onClose, pollExhausted = false }: { callResult: CallResult | null; student: Student; onClose: () => void; pollExhausted?: boolean }) {
     const { t } = useLanguage();
     const summary = callResult?.callSummary;
     const transcript = callResult?.transcript ?? [];
@@ -889,11 +908,11 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     </div>
 
                     {/* Concerns */}
-                    {summary.parentConcerns.length > 0 && (
+                    {(summary.parentConcerns ?? []).length > 0 && (
                         <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
                             <p className="text-xs font-semibold text-amber-600 mb-1">{t("Concerns Raised")}</p>
                             <ul className="space-y-1">
-                                {summary.parentConcerns.map((c, i) => (
+                                {(summary.parentConcerns ?? []).map((c, i) => (
                                     <li key={i} className="text-xs text-amber-800 flex gap-2">
                                         <span className="shrink-0 mt-0.5">-</span> {c}
                                     </li>
@@ -903,11 +922,11 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     )}
 
                     {/* Parent commitments */}
-                    {summary.parentCommitments.length > 0 && (
+                    {(summary.parentCommitments ?? []).length > 0 && (
                         <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                             <p className="text-xs font-semibold text-blue-600 mb-1">{t("Parent Commitments")}</p>
                             <ul className="space-y-1">
-                                {summary.parentCommitments.map((c, i) => (
+                                {(summary.parentCommitments ?? []).map((c, i) => (
                                     <li key={i} className="text-xs text-blue-800 flex gap-2">
                                         <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5 text-blue-500" /> {c}
                                     </li>
@@ -922,7 +941,7 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                             <ClipboardList className="h-3 w-3" /> {t("Your Action Items")}
                         </p>
                         <ul className="space-y-1">
-                            {summary.actionItemsForTeacher.map((a, i) => (
+                            {(summary.actionItemsForTeacher ?? []).map((a, i) => (
                                 <li key={i} className="text-xs text-primary flex gap-2">
                                     <ArrowRight className="h-3 w-3 shrink-0 mt-0.5 text-primary" /> {a}
                                 </li>
@@ -931,11 +950,11 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                     </div>
 
                     {/* Guidance given */}
-                    {summary.guidanceGiven.length > 0 && (
+                    {(summary.guidanceGiven ?? []).length > 0 && (
                         <div className="p-3 bg-violet-50 rounded-lg border border-violet-100">
                             <p className="text-xs font-semibold text-violet-600 mb-1">{t("Guidance Shared with Parent")}</p>
                             <ul className="space-y-1">
-                                {summary.guidanceGiven.map((g, i) => (
+                                {(summary.guidanceGiven ?? []).map((g, i) => (
                                     <li key={i} className="text-xs text-violet-800 flex gap-2">
                                         <span className="shrink-0 mt-0.5">-</span> {g}
                                     </li>
@@ -951,6 +970,21 @@ function SummaryView({ callResult, student, onClose }: { callResult: CallResult 
                             <p className="text-xs text-rose-800">{summary.followUpSuggestion}</p>
                         </div>
                     )}
+                </div>
+            ) : pollExhausted ? (
+                // Terminal: no summary will arrive. Distinguish a too-short/unanswered call from a
+                // result we simply couldn't fetch — never leave the teacher on an endless spinner.
+                <div className="p-3 bg-muted/40 rounded-lg border border-border text-center space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                        {(callResult?.turnCount ?? 0) < 2
+                            ? t("Call ended before a conversation could happen")
+                            : t("Summary isn't available for this call")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {(callResult?.turnCount ?? 0) < 2
+                            ? t("The parent didn't respond long enough to summarize. You can try again or use WhatsApp.")
+                            : t("The call connected but no summary was generated. The transcript below has the full exchange.")}
+                    </p>
                 </div>
             ) : (
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-4">

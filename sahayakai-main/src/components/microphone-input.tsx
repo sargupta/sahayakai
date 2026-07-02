@@ -428,7 +428,21 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       }, MAX_RECORDING_TIME_MS);
 
       if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
-        audioContextRef.current = new window.AudioContext();
+        // H30: iOS Safari exposes only webkitAudioContext; `new window.AudioContext()`
+        // throws there ("undefined is not a constructor") and the catch below then
+        // shows a misleading "Microphone Access Denied" toast. Resolve the vendor
+        // prefix and guard if neither exists.
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AC) {
+          toast({
+            title: t("Voice input not supported"),
+            description: t("Your browser does not support audio processing. Please try a different browser."),
+            variant: "destructive",
+          });
+          forceReset();
+          return;
+        }
+        audioContextRef.current = new AC();
         analyserRef.current = audioContextRef.current.createAnalyser();
         analyserRef.current.fftSize = 2048;
       } else if (audioContextRef.current.state === 'suspended') {

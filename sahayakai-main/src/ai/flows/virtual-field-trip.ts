@@ -16,8 +16,8 @@ import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const VirtualFieldTripInputSchema = z.object({
-  topic: z.string().describe('The topic or theme for the virtual field trip.'),
-  language: z.string().optional().describe('The language for the trip descriptions.'),
+  topic: z.string().max(1000).describe('The topic or theme for the virtual field trip.'),
+  language: z.string().max(50).optional().describe('The language for the trip descriptions.'),
   gradeLevel: z.string().optional().describe('The grade level the trip should be tailored for.'),
   userId: z.string().optional().describe('The ID of the user for whom the trip is being generated.'),
 });
@@ -30,7 +30,7 @@ const VirtualFieldTripOutputSchema = z.object({
     description: z.string().describe('A brief, engaging description of the stop.'),
     educationalFact: z.string().describe('A "wow-factor" educational fact about this location.'),
     reflectionPrompt: z.string().describe('A critical thinking question for students to answer at this stop.'),
-    googleEarthUrl: z.string().describe('A valid Google Earth search URL.'),
+    googleEarthUrl: z.string().url().describe('A valid Google Earth search URL.'),
     culturalAnalogy: z.string().describe('A "Bharat-First" analogy (e.g., "Like the Western Ghats but in South America").'),
     explanation: z.string().describe('The pedagogical reason for visiting this specific spot.'),
   })).describe('An array of stops.'),

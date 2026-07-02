@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     collection, query, orderBy, limitToLast, onSnapshot,
     endBefore, getDocs, Timestamp,
@@ -92,15 +92,17 @@ export function usePaginatedMessages(conversationId: string): UsePaginatedMessag
         }
     }, [conversationId, loadingMore, hasMore]);
 
-    // Merge older + realtime, deduplicate
-    const messages = (() => {
+    // Merge older + realtime, deduplicate.
+    // Memoized so the returned array is referentially stable across renders that
+    // don't change the underlying message sets — prevents consumers (and their
+    // useEffect([messages]) hooks like auto-scroll / mark-read) from firing every render.
+    const messages = useMemo(() => {
         const olderIds = new Set(olderMessages.map(m => m.id));
-        const deduped = [
+        return [
             ...olderMessages,
             ...realtimeMessages.filter(m => !olderIds.has(m.id)),
         ];
-        return deduped;
-    })();
+    }, [olderMessages, realtimeMessages]);
 
     return { messages, loading, loadingMore, hasMore, loadMore };
 }

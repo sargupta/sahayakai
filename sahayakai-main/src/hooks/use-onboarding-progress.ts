@@ -62,10 +62,18 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
     // Debounce refs for B4 — batch generation count writes
     const pendingIncrementRef = useRef(0);
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Latest persisted-base generation count (the value loaded/last flushed from
+    // Firestore, excluding still-pending increments). Kept in a ref so the
+    // debounced flush computes from the current value instead of a stale closure.
+    const baseGenerationCountRef = useRef(0);
+    // Latest user, so unmount cleanup (which captures values at mount time) can
+    // still flush against the current user.
+    const userRef = useRef(user);
     // Track shown chapter IDs for suggestion refresh (U2)
     const shownChapterIdsRef = useRef<string[]>([]);
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
+    useEffect(() => { userRef.current = user; }, [user]);
 
     // Load once when user is available
     useEffect(() => {
@@ -86,6 +94,7 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
             phaseRef.current = effectivePhase;
 
             setGenerationCount(profile.aiGenerationCount ?? 0);
+            baseGenerationCountRef.current = profile.aiGenerationCount ?? 0;
             setChecklistItems(profile.onboardingChecklistItems ?? {});
             setSpotlightsSeen(profile.featureSpotlightsSeen ?? []);
             setDismissCount(profile.profileCompletionDismissCount ?? 0);
@@ -163,32 +172,43 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
         phaseRef.current = 'exploring';
     }, [user]);
 
-    // B4: Debounced generation counter — batches writes, avoids race conditions
+    // B4: Debounced generation counter — batches writes, avoids race conditions.
+    // Computes from refs (baseGenerationCountRef + pendingIncrementRef + userRef)
+    // rather than closed-over state, so a debounced/unmount flush always uses the
+    // latest values and never a stale captured count. Stable identity (no deps).
     const flushIncrement = useCallback(() => {
         const pending = pendingIncrementRef.current;
-        if (pending === 0 || !user) return;
+        const currentUser = userRef.current;
+        if (pending === 0 || !currentUser) return;
 
-        const update: Record<string, any> = { aiGenerationCount: generationCount + pending };
+        const newCount = baseGenerationCountRef.current + pending;
+        const update: Record<string, any> = { aiGenerationCount: newCount };
 
         // Check if phase should advance
-        if (generationCount + pending >= 5 && phaseRef.current === 'exploring') {
+        if (newCount >= 5 && phaseRef.current === 'exploring') {
             update.onboardingPhase = 'completing';
             setPhase('completing');
             phaseRef.current = 'completing';
         }
 
+        // Fold the flushed increments into the persisted base and clear pending,
+        // so subsequent flushes build on the correct running total.
+        baseGenerationCountRef.current = newCount;
         pendingIncrementRef.current = 0;
-        updateProfileAction(user.uid, update).catch(() => {});
-    }, [user, generationCount]);
+        updateProfileAction(currentUser.uid, update).catch(() => {});
+    }, []);
 
-    // Flush pending increments on unmount
+    // Flush any pending increment on unmount so a user who generates then
+    // navigates away doesn't lose the aiGenerationCount write.
     useEffect(() => {
         return () => {
-            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-            // Note: flushIncrement uses stale refs in cleanup, which is fine —
-            // the ref values are current at cleanup time
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
+            }
+            flushIncrement();
         };
-    }, []);
+    }, [flushIncrement]);
 
     const incrementGeneration = useCallback(() => {
         setGenerationCount(prev => prev + 1);

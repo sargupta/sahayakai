@@ -41,18 +41,19 @@ const PerCriterionScoreSchema = z.object({
 export const AssessAssignmentInputSchema = z.object({
   imageDataUri: z
     .string()
+    .max(14_000_000)
     .regex(/^data:image\/(jpeg|png|webp);base64,/, 'imageDataUri must be a base64 data URI for jpeg/png/webp')
     .describe("The student's handwritten work as a base64 data URI."),
   rubricSnapshot: RubricSnapshotSchema.optional().describe('Rubric to grade against. If omitted, the model will infer a sensible rubric from the work.'),
-  language: z.string().optional().describe('Output language (display name or ISO code).'),
-  subject: z.string().optional().describe('Academic subject hint.'),
-  gradeLevel: z.string().optional().describe('Grade level hint (e.g. "Class 5").'),
+  language: z.string().max(50).optional().describe('Output language (display name or ISO code).'),
+  subject: z.string().max(100).optional().describe('Academic subject hint.'),
+  gradeLevel: z.string().max(50).optional().describe('Grade level hint (e.g. "Class 5").'),
   studentId: z
     .string()
     .max(64)
     .optional()
     .describe('Anonymous student handle — NEVER a name. Name PII must be stripped at the API boundary.'),
-  editedTranscript: z.string().optional().describe("If the teacher has corrected the transcript before scoring, pass it here and set mode='score'."),
+  editedTranscript: z.string().max(50_000).optional().describe("If the teacher has corrected the transcript before scoring, pass it here and set mode='score'."),
   mode: z.enum(['full', 'transcribe', 'score']).default('full').describe("'full' runs all 5 stages. 'transcribe' returns only the transcript stage. 'score' uses editedTranscript without re-reading the image."),
   userId: z.string().optional().describe('Owner uid for persistence + usage tracking.'),
   teacherContext: z.string().optional().describe('Career-stage context line for tone calibration.'),
@@ -81,7 +82,7 @@ export const AssessAssignmentOutputSchema = z.object({
 export type AssessAssignmentOutput = z.infer<typeof AssessAssignmentOutputSchema>;
 
 const PromptInputSchema = AssessAssignmentInputSchema.extend({
-  rubricJson: z.string().describe('Stringified rubricSnapshot for the prompt.'),
+  rubricJson: z.string().max(50_000).describe('Stringified rubricSnapshot for the prompt.'),
   fewShots: z.string().describe('Stringified few-shot exemplars.'),
 });
 

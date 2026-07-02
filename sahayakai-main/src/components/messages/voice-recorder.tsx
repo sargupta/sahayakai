@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { Mic, Square, Loader2, X } from "lucide-react";
@@ -146,6 +146,27 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
         chunksRef.current = [];
         setState("idle");
         setElapsed(0);
+    }, []);
+
+    // H27 (hot mic): on unmount, tear down any live recording so navigating away
+    // mid-record does not leave the microphone hardware ON. Stop the MediaRecorder,
+    // release every getUserMedia track, and clear the elapsed-time interval.
+    // Handlers are nulled first so the async onstop cannot fire setState after unmount.
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+            const recorder = mediaRecorderRef.current;
+            if (recorder) {
+                recorder.ondataavailable = null;
+                recorder.onstop = null;
+                recorder.onerror = null;
+                try { if (recorder.state !== "inactive") recorder.stop(); } catch { /* already stopped */ }
+                try { recorder.stream?.getTracks().forEach((tr) => tr.stop()); } catch { /* no stream */ }
+            }
+        };
     }, []);
 
     const uploadAudio = async (blob: Blob, mimeType: string, duration: number) => {

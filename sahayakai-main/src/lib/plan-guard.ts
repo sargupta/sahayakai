@@ -21,66 +21,97 @@ import { reserveQuota, rollbackQuota } from './usage-counters';
  * On success: calls the handler, then increments usage counter (fire-and-forget).
  * On failure: returns 403 (feature unavailable) or 429 (limit reached).
  */
+/**
+ * Result of a plan-quota reservation. On success, `rollback` returns the
+ * reserved quota (idempotent) — call it if the downstream work fails.
+ */
+export type PlanQuotaResult =
+    | { ok: true; rollback: () => Promise<void> }
+    | { ok: false; status: number; body: Record<string, unknown> };
+
+/**
+ * Shared plan-gate: feature-flag check → plan/limit check → atomic
+ * check-and-reserve. Used by both `withPlanCheck` (NextResponse routes) and
+ * SSE/streaming routes that cannot use the HOF because they return a native
+ * `Response`. This keeps a SINGLE enforcement implementation — the streaming
+ * lesson-plan/exam-paper endpoints previously exported the bare handler and
+ * bypassed gating entirely.
+ */
+export async function reservePlanQuota(request: Request, feature: GatedFeature): Promise<PlanQuotaResult> {
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+        return { ok: false, status: 401, body: { error: 'Unauthorized' } };
+    }
+
+    // Feature flag — if subscription gating is disabled, pass through.
+    const gatingEnabled = await isSubscriptionEnabled();
+    if (!gatingEnabled) {
+        return { ok: true, rollback: async () => { /* no reservation made */ } };
+    }
+
+    const rawPlan = request.headers.get('x-user-plan') || 'free';
+    const plan = normalizePlan(rawPlan);
+    const config = PLAN_CONFIG[plan];
+    const limit = config.limits[feature];
+
+    if (limit === 0) {
+        const minPlan = getMinimumPlan(feature);
+        return {
+            ok: false,
+            status: 403,
+            body: {
+                error: 'PLAN_UPGRADE_REQUIRED',
+                message: `This feature requires ${PLAN_DISPLAY_NAMES[minPlan]} plan or higher.`,
+                requiredPlan: minPlan,
+                currentPlan: plan,
+                feature,
+            },
+        };
+    }
+
+    // Atomically check-and-reserve quota BEFORE the handler runs.
+    const dailyLimitMap: Partial<Record<GatedFeature, number>> = {
+        'instant-answer': config.instantAnswerDailyLimit,
+        'assistant': config.assistantDailyLimit,
+    };
+    const dailyCap = dailyLimitMap[feature];
+
+    const reservation = await reserveQuota(userId, feature, limit, dailyCap);
+    if (!reservation.ok) {
+        const isDaily = reservation.reason === 'daily';
+        return {
+            ok: false,
+            status: 429,
+            body: {
+                error: isDaily ? 'DAILY_LIMIT_REACHED' : 'USAGE_LIMIT_REACHED',
+                message: isDaily
+                    ? `You've used all ${reservation.limit} ${feature.replace(/-/g, ' ')} interactions for today. Try again tomorrow.`
+                    : `You've used all ${reservation.limit} ${feature.replace('-', ' ')} generations this month. Resets next month.`,
+                used: reservation.used,
+                limit: reservation.limit,
+                feature,
+                currentPlan: plan,
+            },
+        };
+    }
+
+    let rolledBack = false;
+    return {
+        ok: true,
+        rollback: async () => {
+            if (rolledBack) return;
+            rolledBack = true;
+            await rollbackQuota(userId, feature);
+        },
+    };
+}
+
 export function withPlanCheck(feature: GatedFeature) {
     return function <T extends Request>(handler: (request: T) => Promise<NextResponse>) {
         return async function (request: T): Promise<NextResponse> {
-            const userId = request.headers.get('x-user-id');
-            if (!userId) {
-                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-            }
-
-            // Check feature flag — if subscription gating is disabled, pass through
-            const gatingEnabled = await isSubscriptionEnabled();
-            if (!gatingEnabled) {
-                return handler(request);
-            }
-
-            const rawPlan = request.headers.get('x-user-plan') || 'free';
-            const plan = normalizePlan(rawPlan);
-            const config = PLAN_CONFIG[plan];
-            const limit = config.limits[feature];
-
-            // Feature not available on this plan
-            if (limit === 0) {
-                const minPlan = getMinimumPlan(feature);
-                return NextResponse.json(
-                    {
-                        error: 'PLAN_UPGRADE_REQUIRED',
-                        message: `This feature requires ${PLAN_DISPLAY_NAMES[minPlan]} plan or higher.`,
-                        requiredPlan: minPlan,
-                        currentPlan: plan,
-                        feature,
-                    },
-                    { status: 403 }
-                );
-            }
-
-            // Atomically check-and-reserve quota BEFORE the handler runs.
-            // Previously this was two separate steps (read → handler → increment),
-            // which allowed concurrent requests to both pass the check and both
-            // execute, effectively bypassing the limit.
-            const dailyLimitMap: Partial<Record<GatedFeature, number>> = {
-                'instant-answer': config.instantAnswerDailyLimit,
-                'assistant': config.assistantDailyLimit,
-            };
-            const dailyCap = dailyLimitMap[feature];
-
-            const reservation = await reserveQuota(userId, feature, limit, dailyCap);
-            if (!reservation.ok) {
-                const isDaily = reservation.reason === 'daily';
-                return NextResponse.json(
-                    {
-                        error: isDaily ? 'DAILY_LIMIT_REACHED' : 'USAGE_LIMIT_REACHED',
-                        message: isDaily
-                            ? `You've used all ${reservation.limit} ${feature.replace(/-/g, ' ')} interactions for today. Try again tomorrow.`
-                            : `You've used all ${reservation.limit} ${feature.replace('-', ' ')} generations this month. Resets next month.`,
-                        used: reservation.used,
-                        limit: reservation.limit,
-                        feature,
-                        currentPlan: plan,
-                    },
-                    { status: 429 }
-                );
+            const gate = await reservePlanQuota(request, feature);
+            if (!gate.ok) {
+                return NextResponse.json(gate.body, { status: gate.status });
             }
 
             // Execute the actual handler. Roll back the reservation on any failure
@@ -89,11 +120,11 @@ export function withPlanCheck(feature: GatedFeature) {
             try {
                 const response = await handler(request);
                 if (!response.ok) {
-                    await rollbackQuota(userId, feature);
+                    await gate.rollback();
                 }
                 return response;
             } catch (err: any) {
-                await rollbackQuota(userId, feature);
+                await gate.rollback();
 
                 // Surface AI quota exhaustion as a user-friendly 503 with
                 // Retry-After so the client shows "try again in a minute"

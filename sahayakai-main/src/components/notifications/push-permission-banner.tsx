@@ -15,29 +15,42 @@ export function PushPermissionBanner() {
         // Only show if notifications are supported but not yet granted
         if (typeof Notification === 'undefined') return;
         if (Notification.permission === 'default') {
-            // Check if user previously dismissed (stored in localStorage)
-            const dismissed = localStorage.getItem('push-banner-dismissed');
+            // Check if user previously dismissed (stored in localStorage).
+            // localStorage throws in private-mode Safari / restricted WebViews —
+            // guard so this globally-mounted banner can't crash the whole app.
+            let dismissed: string | null = null;
+            try {
+                dismissed = localStorage.getItem('push-banner-dismissed');
+            } catch { /* localStorage unavailable */ }
             if (!dismissed) setShow(true);
         }
     }, []);
 
     const handleEnable = async () => {
         setEnabling(true);
-        const token = await requestNotificationPermission();
-        if (token) {
-            try {
-                await fetch('/api/fcm/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token }),
-                });
-            } catch {}
+        try {
+            const token = await requestNotificationPermission();
+            if (token) {
+                try {
+                    await fetch('/api/fcm/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token }),
+                    });
+                } catch {}
+            }
+            setShow(false);
+        } catch {
+            // A rejected permission request must not leave the button stuck on
+            // "Enabling…". Reset so the teacher can retry or dismiss.
+            setEnabling(false);
         }
-        setShow(false);
     };
 
     const handleDismiss = () => {
-        localStorage.setItem('push-banner-dismissed', 'true');
+        try {
+            localStorage.setItem('push-banner-dismissed', 'true');
+        } catch { /* localStorage unavailable */ }
         setShow(false);
     };
 

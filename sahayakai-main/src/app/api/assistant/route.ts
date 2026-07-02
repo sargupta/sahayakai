@@ -135,6 +135,18 @@ async function _handler(req: Request) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
         }
 
+        // Length guard: the intent cache is keyed on the raw message, so an
+        // unbounded `message` would let a caller poison the cache with huge
+        // keys (and blow the prompt budget). Reject before the cache lookup /
+        // dispatchVidya. 4000 chars is well above any real VIDYA utterance.
+        const MAX_MESSAGE_CHARS = 4000;
+        if (typeof message === 'string' && message.length > MAX_MESSAGE_CHARS) {
+            return NextResponse.json(
+                { error: 'Message is too long.', code: 'MESSAGE_TOO_LONG' },
+                { status: 400 },
+            );
+        }
+
         // Cache applies only to fresh single-turn queries (no prior conversation).
         // Multi-turn context is too personalised to be safely shared across users.
         const isFreshQuery = chatHistory.length === 0;

@@ -557,7 +557,12 @@ Example: {"Hindi": "...", "Kannada": "...", "Tamil": "..."}`;
     logger.warn('Translation returned unexpected format', 'DAILY_BRIEFING');
     return {};
   } catch (err: any) {
-    logger.error('Translation failed, posting English-only', err, 'DAILY_BRIEFING');
+    // Graceful degradation, not an error: the briefing still posts in English
+    // when translation fails (usually an upstream Gemini 503). Log at WARN so
+    // it stays out of the prod ERROR-rate scan. warn(message, context?, data?).
+    logger.warn('Translation failed, posting English-only', 'DAILY_BRIEFING', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return {};
   }
 }
@@ -717,23 +722,53 @@ export async function POST(request: Request) {
     ]);
 
     // ── 2b. Query active states & scrape state-level news ─────────
-    const usersSnap = await db.collection('users').select('state').get();
+    // Read the users collection in bounded pages (cursor loop) instead of a
+    // single unbounded .get(). A full-collection read grows linearly with the
+    // user base and will OOM the container / blow past maxDuration, leaving the
+    // briefing half-posted. Here we only need the DISTINCT set of `state`
+    // values, so we accumulate into a Set and keep just one page in memory.
+    const USER_PAGE_SIZE = 1000;
     const stateCounts = new Map<string, number>();
-    for (const doc of usersSnap.docs) {
-      const st = doc.data().state;
-      if (st && typeof st === 'string') {
-        stateCounts.set(st, (stateCounts.get(st) || 0) + 1);
+    let lastUserDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+    for (;;) {
+      let pageQuery = db
+        .collection('users')
+        .select('state')
+        .orderBy('__name__')
+        .limit(USER_PAGE_SIZE);
+      if (lastUserDoc) pageQuery = pageQuery.startAfter(lastUserDoc);
+
+      const pageSnap = await pageQuery.get();
+      if (pageSnap.empty) break;
+
+      for (const doc of pageSnap.docs) {
+        const st = doc.data().state;
+        if (st && typeof st === 'string') {
+          stateCounts.set(st, (stateCounts.get(st) || 0) + 1);
+        }
       }
+
+      lastUserDoc = pageSnap.docs[pageSnap.docs.length - 1];
+      if (pageSnap.size < USER_PAGE_SIZE) break;
     }
     const activeStates = Array.from(stateCounts.keys()).filter(s => (stateCounts.get(s) || 0) >= 1);
     logger.info(`Active states: ${activeStates.join(', ')} (${activeStates.length} total)`, 'DAILY_BRIEFING');
 
-    const stateRssResults = await Promise.all(
-      activeStates.map(async (state) => {
-        const xml = await fetchPage(stateNewsRssUrl(state));
-        return { state, xml };
-      }),
-    );
+    // Cap per-state fan-out concurrency: process states in bounded chunks so a
+    // large number of active states cannot spawn an unbounded number of
+    // concurrent Google-News fetches (and, downstream, Gemini calls).
+    const STATE_FETCH_CONCURRENCY = 5;
+    const stateRssResults: { state: string; xml: string | null }[] = [];
+    for (let i = 0; i < activeStates.length; i += STATE_FETCH_CONCURRENCY) {
+      const chunk = activeStates.slice(i, i + STATE_FETCH_CONCURRENCY);
+      const chunkResults = await Promise.all(
+        chunk.map(async (state) => {
+          const xml = await fetchPage(stateNewsRssUrl(state));
+          return { state, xml };
+        }),
+      );
+      stateRssResults.push(...chunkResults);
+    }
 
     // ── 3. Parse all sources ────────────────────────────────────────
     const allArticles: RawArticle[] = [];

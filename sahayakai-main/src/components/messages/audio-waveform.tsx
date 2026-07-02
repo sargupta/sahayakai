@@ -34,12 +34,15 @@ export function AudioWaveform({ audioUrl, duration, isOwn, uploadProgress }: Aud
 
         let cancelled = false;
         (async () => {
+            // Track the context so we can always close it — even if decode throws.
+            // Browsers cap live AudioContexts (~6); leaking one per failed decode
+            // eventually makes every subsequent voice message silently fail.
+            let audioCtx: AudioContext | null = null;
             try {
                 const response = await fetch(audioUrl);
                 const arrayBuffer = await response.arrayBuffer();
-                const audioCtx = new AudioContext();
+                audioCtx = new AudioContext();
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                audioCtx.close();
 
                 if (cancelled) return;
 
@@ -65,6 +68,12 @@ export function AudioWaveform({ audioUrl, duration, isOwn, uploadProgress }: Aud
                 if (!duration) setTotalDuration(audioBuffer.duration);
             } catch {
                 // Fallback: keep random bars
+            } finally {
+                // Always release the AudioContext so repeated decode failures
+                // don't exhaust the browser's live-context limit.
+                if (audioCtx) {
+                    try { await audioCtx.close(); } catch { /* already closed */ }
+                }
             }
         })();
 
@@ -129,7 +138,11 @@ export function AudioWaveform({ audioUrl, duration, isOwn, uploadProgress }: Aud
             cancelAnimationFrame(animFrameRef.current);
             setPlaying(false);
         } else {
-            audioRef.current.play();
+            // play() returns a promise that REJECTS when autoplay is blocked or
+            // the source fails to load. If we don't catch it, the UI stays stuck
+            // on "playing" with a spinning rAF loop forever. Await + catch so a
+            // failure cleanly resets state and cancels the animation frame.
+            const playPromise = audioRef.current.play();
             setPlaying(true);
 
             const update = () => {
@@ -139,6 +152,13 @@ export function AudioWaveform({ audioUrl, duration, isOwn, uploadProgress }: Aud
                 animFrameRef.current = requestAnimationFrame(update);
             };
             update();
+
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise.catch(() => {
+                    setPlaying(false);
+                    cancelAnimationFrame(animFrameRef.current);
+                });
+            }
         }
     }, [audioUrl, playing, duration]);
 

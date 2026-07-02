@@ -18,10 +18,29 @@ interface MetricBatch {
     }>;
 }
 
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB defense-in-depth against payload DoS
+const MAX_METRICS_PER_BATCH = 50;
+
 export async function POST(req: NextRequest) {
+    // This route is intentionally PUBLIC (anonymous client telemetry), so we
+    // cannot require auth. But we must not trust a client-supplied userId for
+    // identity/cost labels — it is overwritten below with the server-derived
+    // caller id from x-user-id (set by middleware) or 'anonymous'.
+    const callerUid = req.headers.get('x-user-id') || 'anonymous';
+
+    let raw: string;
+    try {
+        raw = await req.text();
+    } catch {
+        return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+    if (raw.length > MAX_BODY_BYTES) {
+        return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     let body: MetricBatch;
     try {
-        body = await req.json();
+        body = JSON.parse(raw);
     } catch {
         return NextResponse.json(
             { error: 'Invalid JSON body' },
@@ -37,8 +56,18 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        if (body.metrics.length > MAX_METRICS_PER_BATCH) {
+            return NextResponse.json(
+                { error: `Too many metrics (max ${MAX_METRICS_PER_BATCH})` },
+                { status: 400 }
+            );
+        }
+
         // Log each metric to Google Cloud Logging with structured data
         for (const metric of body.metrics) {
+            // Never trust client-supplied userId for identity/cost labels —
+            // overwrite with the server-derived caller id.
+            metric.userId = callerUid;
             // Determine severity based on metric type and values
             const severity = getSeverity(metric);
 
