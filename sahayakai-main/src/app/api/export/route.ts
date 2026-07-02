@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dataExportService, ExportRequest } from '@/lib/services/data-export-service';
 import { logger } from '@/lib/logger';
+import { isAdmin } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120; // Allow up to 2 min for large exports
@@ -36,8 +37,20 @@ export async function POST(request: NextRequest) {
       schoolNormalized,
     } = body;
 
-    // School-wide export → always async background job
+    // School-wide export → always async background job.
+    // SECURITY (C6): a school export bundles EVERY teacher's data for the
+    // given school. There is no self-serve "school admin of <schoolNormalized>"
+    // authority a caller can prove without self-asserting a profile field
+    // (schoolNormalized/administrativeRole are both user-editable), so a
+    // signed-in teacher could previously export any school's data. Until an
+    // org-scoped, server-verified school-admin model exists, restrict this
+    // bulk-PII operation to platform admins only. Individual self-export
+    // (below) remains open to every authenticated user.
     if (schoolExport && schoolNormalized) {
+      if (!(await isAdmin(userId))) {
+        logger.warn('Blocked non-admin school export attempt', 'EXPORT', { userId });
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const jobId = await dataExportService.createExportJob(userId, 'school', {
         schoolNormalized,
         contentTypes,
