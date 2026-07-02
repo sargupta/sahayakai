@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MicrophoneInput } from "@/components/microphone-input";
@@ -86,6 +86,10 @@ export function DashboardHome() {
     },
   });
 
+  // Guards the URL voice_transcript auto-submit so it fires at most once,
+  // even when the greeting effect re-runs on a language change.
+  const voiceHandledRef = useRef(false);
+
   const onSubmit = async (values: FormValues) => {
     if (!requireAuth()) return;
     // Determine intent using the Smart Router
@@ -162,12 +166,16 @@ export function DashboardHome() {
     else if (hour < 18) setGreeting(t("Good Afternoon"));
     else setGreeting(t("Good Evening"));
 
-    // Handle voice transcript from URL
-    if (typeof window !== 'undefined') {
+    // Handle voice transcript from URL — fire at most ONCE. `t` is in the deps
+    // (so the greeting re-localizes on language change), but a language switch
+    // must NOT re-trigger the auto-submit (which would double-generate + double
+    // cost). The ref guard makes the submit idempotent across effect re-runs.
+    if (typeof window !== 'undefined' && !voiceHandledRef.current) {
       const params = new URLSearchParams(window.location.search);
       const voiceTranscript = params.get("voice_transcript");
 
       if (voiceTranscript) {
+        voiceHandledRef.current = true;
         form.setValue("topic", voiceTranscript);
         form.handleSubmit(onSubmit)();
       }
