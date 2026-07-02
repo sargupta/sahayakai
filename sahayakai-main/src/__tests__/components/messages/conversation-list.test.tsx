@@ -15,6 +15,21 @@ jest.mock('@/lib/firebase', () => ({
     db: {},
 }));
 
+// ConversationList now uses useLanguage()/t() for all copy (i18n Wave 1.3).
+// Without a LanguageProvider the fallback `t` is unstable across renders,
+// which re-runs the [user, t] subscribe effect and resets the loading state.
+// A STABLE identity translator keeps English copy assertions valid and the
+// effect deps steady.
+jest.mock('@/context/language-context', () => {
+    const mockLanguageValue = {
+        t: (s: string) => s,
+        language: 'English',
+        setLanguage: jest.fn(),
+        isLoaded: true,
+    };
+    return { useLanguage: () => mockLanguageValue };
+});
+
 // Mock Firestore onSnapshot to return test conversations
 const mockUnsubscribe = jest.fn();
 let snapshotCallback: ((snap: any) => void) | null = null;

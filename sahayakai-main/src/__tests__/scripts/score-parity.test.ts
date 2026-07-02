@@ -730,7 +730,38 @@ describe('scoreCellRecommender — synthetic end-to-end', () => {
     expect(row.failReasons).not.toContain('message');
   });
 
-  it('still flags script-bleed (Tamil leak inside Hindi queries)', async () => {
+  // Native Script Mandate re-score (commit fe8f0cacb): script + bleed
+  // checks now run on `personalizedMessage` ONLY — search queries are
+  // intentionally Latin/English per the mandate, so query-side scripts
+  // are exempt. The bleed guard therefore lives on the message.
+  it('still flags script-bleed (Tamil leak inside Hindi personalizedMessage)', async () => {
+    const embed = await getEmbed();
+    const baseline = {
+      categories: { pedagogy: ['कक्षा 3 गणित भिन्न शिक्षण विधि'] },
+      personalizedMessage: 'नमस्ते! कक्षा 3 गणित भिन्न के लिए ये वीडियो देखें।',
+    };
+    const sidecar = {
+      categories: { pedagogy: ['कक्षा 3 गणित भिन्न शिक्षण विधि'] },
+      personalizedMessage:
+        'நமஸ்தே! கணிதம் வகுப்பு 3 பின்னங்கள் கற்பித்தல் வீடியோ பார்க்கவும்.',
+    };
+    const row = await mod.scoreCellRecommender({
+      cell: 'hi-g3-math-fractions.json',
+      lang: 'hi',
+      agent: 'video-storyteller',
+      genkitResponse: baseline,
+      sidecarResponse: sidecar,
+      validator: null,
+      embed,
+    });
+    expect(row.bleed).toBe(true);
+    expect(row.bleedScripts).toContain('ta');
+    expect(row.failReasons).toContain('bleed');
+  });
+
+  // Companion to the above: Tamil inside the QUERY strings alone must NOT
+  // trip bleed post-fe8f0cacb — queries are exempt from the script checks.
+  it('does not flag bleed for non-Latin scripts confined to query strings', async () => {
     const embed = await getEmbed();
     const baseline = {
       categories: { pedagogy: ['कक्षा 3 गणित भिन्न शिक्षण विधि'] },
@@ -749,8 +780,7 @@ describe('scoreCellRecommender — synthetic end-to-end', () => {
       validator: null,
       embed,
     });
-    expect(row.bleed).toBe(true);
-    expect(row.bleedScripts).toContain('ta');
-    expect(row.failReasons).toContain('bleed');
+    expect(row.bleed).toBe(false);
+    expect(row.failReasons).not.toContain('bleed');
   });
 });

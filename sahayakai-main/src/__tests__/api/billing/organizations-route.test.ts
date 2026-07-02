@@ -57,6 +57,16 @@ jest.mock('@/lib/db/adapter', () => ({
     dbAdapter: { getUser: jest.fn().mockResolvedValue({ role: 'teacher' }) },
 }));
 
+// H21 (commit 966ae0bb4): createOrganization now verifies the payment id
+// against Razorpay server-side and only grants the plan when the payment
+// is `captured` with amount > 0 (fail-closed to the webhook otherwise).
+// Default: verification fails (unmocked fetch rejects) — individual tests
+// stage a captured payment when they exercise the grant path.
+const razorpayFetchMock = jest.fn();
+jest.mock('@/lib/razorpay', () => ({
+    getRazorpay: () => ({ payments: { fetch: razorpayFetchMock } }),
+}));
+
 import { POST } from '@/app/api/organizations/route';
 
 function makeReq(body: unknown, headers: Record<string, string> = {}) {
@@ -80,6 +90,7 @@ beforeEach(() => {
     orgSetMock.mockReset();
     memberSetMock.mockReset();
     isAdminMock.mockReset().mockResolvedValue(false);
+    razorpayFetchMock.mockReset().mockRejectedValue(new Error('razorpay not staged'));
 });
 
 describe('POST /api/organizations (F7-001 admin-only gate)', () => {
@@ -128,8 +139,11 @@ describe('POST /api/organizations (F7-001 admin-only gate)', () => {
         expect(setCustomUserClaimsMock).not.toHaveBeenCalled();
     });
 
-    test('admin WITH razorpayPaymentId grants the plan', async () => {
+    test('admin WITH verified (captured) razorpayPaymentId grants the plan', async () => {
         isAdminMock.mockResolvedValue(true);
+        // H21: the grant only happens after server-side verification says
+        // the payment is captured with a positive amount.
+        razorpayFetchMock.mockResolvedValue({ status: 'captured', amount: 49900 });
 
         const req = makeReq(
             {
@@ -155,5 +169,37 @@ describe('POST /api/organizations (F7-001 admin-only gate)', () => {
             'school_admin_uid',
             expect.objectContaining({ planType: 'premium', orgRole: 'admin' })
         );
+    });
+
+    // H21 (commit 966ae0bb4): the mere presence of a payment id is NOT proof
+    // of payment. Unverifiable / non-captured payments must fail closed —
+    // org is created, but the plan flip is deferred to the webhook.
+    test('admin with UNVERIFIED razorpayPaymentId does NOT grant the plan (fail closed)', async () => {
+        isAdminMock.mockResolvedValue(true);
+        razorpayFetchMock.mockResolvedValue({ status: 'created', amount: 49900 });
+
+        const req = makeReq(
+            {
+                name: 'Test School',
+                type: 'school',
+                plan: 'premium',
+                totalSeats: 20,
+                adminUserId: 'school_admin_uid',
+                razorpayPaymentId: 'pay_not_captured',
+            },
+            { 'x-user-id': 'admin_uid' }
+        );
+
+        const res = await POST(req);
+        expect(res.status).toBe(200);
+
+        // Org + membership are still written (seat tooling needs them)…
+        expect(orgSetMock).toHaveBeenCalled();
+        expect(memberSetMock).toHaveBeenCalled();
+        // …but no planType write and no custom claim without a captured payment.
+        for (const call of userUpdateMock.mock.calls) {
+            expect(call[0]).not.toHaveProperty('planType');
+        }
+        expect(setCustomUserClaimsMock).not.toHaveBeenCalled();
     });
 });

@@ -26,7 +26,7 @@ jest.mock('@/lib/plan-utils', () => ({
 
 // ── In-memory firestore double ──────────────────────────────────────────────
 
-interface FakeClass { teacherUid: string; studentCount?: number }
+interface FakeClass { teacherUid: string; studentCount?: number; students?: string[] }
 
 const fakeClasses: Record<string, FakeClass> = {};
 const writes: Array<{ op: string; path: string; data?: any }> = [];
@@ -51,6 +51,10 @@ const classRefForId = (classId: string) => {
             }),
             count: () => ({ get: async () => ({ data: () => ({ count: fakeClasses[classId]?.studentCount ?? 0 }) }) }),
             orderBy: () => ({ get: async () => ({ docs: [] }) }),
+            // H9 fix reads the class's real student ids to validate records keys.
+            get: async () => ({
+                docs: (fakeClasses[classId]?.students ?? []).map((id) => ({ id })),
+            }),
         }),
     };
     return classRef;
@@ -121,7 +125,7 @@ describe('attendance actions — F9 fixes', () => {
             const fixed = new Date('2026-06-05T20:30:00Z');
             jest.useFakeTimers().setSystemTime(fixed);
 
-            fakeClasses['c1'] = { teacherUid: 'teacher-A' };
+            fakeClasses['c1'] = { teacherUid: 'teacher-A', students: ['s1'] };
             const { saveAttendanceAction } = await import('@/app/actions/attendance');
             await expect(
                 saveAttendanceAction('c1', '2026-06-06', { 's1': 'present' as any }),

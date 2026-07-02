@@ -9,27 +9,9 @@ jest.mock('next/navigation', () => ({
 }));
 
 
-// Mock `lucide-react` globally for this test file
-jest.mock("lucide-react", () => ({
-    Loader2: (props: any) => <div {...props} data-testid="loader2" />,
-    Mic: (props: any) => <div {...props} data-testid="mic" />,
-    Search: (props: any) => <div {...props} data-testid="search" />,
-    Sparkles: (props: any) => <div {...props} data-testid="sparkles" />,
-    BookOpen: (props: any) => <div {...props} data-testid="book-open" />,
-    BrainCircuit: (props: any) => <div {...props} data-testid="brain-circuit" />,
-    PenTool: (props: any) => <div {...props} data-testid="pen-tool" />,
-    GraduationCap: (props: any) => <div {...props} data-testid="graduation-cap" />,
-    ArrowRight: (props: any) => <div {...props} data-testid="arrow-right" />,
-    X: (props: any) => <div {...props} data-testid="x" />,
-    Lightbulb: (props: any) => <div {...props} data-testid="lightbulb" />,
-    FileText: (props: any) => <div {...props} data-testid="file-text" />,
-    ClipboardList: (props: any) => <div {...props} data-testid="clipboard-list" />,
-    Image: (props: any) => <div {...props} data-testid="image" />,
-    CheckCircle2: (props: any) => <div {...props} data-testid="check-circle" />,
-    Clock: (props: any) => <div {...props} data-testid="clock" />,
-    Users: (props: any) => <div {...props} data-testid="users" />,
-    RefreshCw: (props: any) => <div {...props} data-testid="refresh-cw" />,
-}));
+// lucide-react is mocked globally via moduleNameMapper (src/__mocks__/lucide-react.ts,
+// a Proxy that resolves ANY icon name). Do not shadow it with an inline subset —
+// components under test import icons (e.g. ScanEye) that a fixed list would miss.
 
 // Mock new landing page components
 jest.mock("@/components/landing/sample-output-section", () => ({

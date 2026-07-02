@@ -11,6 +11,26 @@ jest.mock('@/context/auth-context', () => ({
     useAuth: () => ({ user: mockUser, loading: false }),
 }));
 
+// ConversationThread renders BackButton (@/components/ui/back-button), which
+// calls next/navigation's useRouter — in jsdom there is no app router mounted,
+// so mock the hooks it needs.
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({ push: jest.fn(), back: jest.fn(), refresh: jest.fn() }),
+    usePathname: () => '/messages',
+}));
+
+// Copy is now behind useLanguage()/t() (i18n Wave 1.3). Stable identity
+// translator: keeps English assertions valid and effect deps steady.
+jest.mock('@/context/language-context', () => {
+    const mockLanguageValue = {
+        t: (s: string) => s,
+        language: 'English',
+        setLanguage: jest.fn(),
+        isLoaded: true,
+    };
+    return { useLanguage: () => mockLanguageValue };
+});
+
 jest.mock('@/lib/firebase', () => ({
     db: {},
     storage: {},

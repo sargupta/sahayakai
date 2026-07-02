@@ -78,6 +78,11 @@ const fakeDb: any = {
         if (name === 'conversations') {
             return {
                 doc: (_id: string) => ({
+                    // F2-02: participant check reads the conversation doc first.
+                    get: async () => ({
+                        exists: true,
+                        data: () => ({ participantIds: ['user-a', 'user-b'] }),
+                    }),
                     update: async () => {},
                     collection: () => ({
                         orderBy: () => ({

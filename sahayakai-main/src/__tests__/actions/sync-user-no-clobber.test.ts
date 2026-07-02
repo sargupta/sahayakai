@@ -32,6 +32,10 @@ import { syncUserAction } from '@/app/actions/auth';
 
 describe('syncUserAction — no clobber (F11-5)', () => {
     it('does NOT write displayName when provider value is null', async () => {
+        // F1-06: email/displayName are sourced from the middleware-verified
+        // headers, not the client payload. Phone-only re-sign-in: token has
+        // an email claim but no name claim.
+        mockHeadersMap.set('x-user-email', 'a@b.com');
         await syncUserAction({
             uid: 'user-1',
             email: 'a@b.com',
@@ -60,6 +64,10 @@ describe('syncUserAction — no clobber (F11-5)', () => {
     });
 
     it('DOES write displayName / photoURL when provider supplies them', async () => {
+        // F1-06: the "provider-supplied" identity the server trusts is the
+        // verified-token copy injected by middleware, never the raw payload.
+        mockHeadersMap.set('x-user-email', 'a@b.com');
+        mockHeadersMap.set('x-user-name', 'Asha');
         await syncUserAction({
             uid: 'user-1',
             email: 'a@b.com',

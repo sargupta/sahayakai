@@ -64,6 +64,15 @@ jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
     writeAgentShadowDiff: jest.fn(),
 }));
 
+// F14-001 (commit 4b7aad000) flipped SHADOW_DIFF_IN_CANARY_OBSERVATION
+// to false and added a 5% sample gate, so the real gate never fires in
+// tests. Mock it so the Q4C observation tests can verify the dispatch
+// wiring with the gate force-enabled; default mirrors prod (off).
+const mockShouldRunCanaryShadowDiff = jest.fn((): boolean => false);
+jest.mock('@/lib/sidecar/canary-shadow-diff', () => ({
+    shouldRunCanaryShadowDiff: () => mockShouldRunCanaryShadowDiff(),
+}));
+
 const mockCheckRateLimit = jest.fn(async () => undefined);
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
@@ -137,6 +146,8 @@ beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // Prod default since F14-001: Q4C observation gate is off.
+    mockShouldRunCanaryShadowDiff.mockReturnValue(false);
 });
 
 afterEach(() => {
@@ -349,6 +360,7 @@ describe('dispatchQuiz — full mode (Phase K persistence)', () => {
 
     // Q4C — observation shadow-diff writes during full mode.
     it('Q4C: also writes a shadow_diff for the (sidecar, genkit) pair in full mode', async () => {
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('full');
         mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockPersist.mockResolvedValue({ contentId: 'cid-full', storagePath: 'p' });
@@ -374,6 +386,7 @@ describe('dispatchQuiz — full mode (Phase K persistence)', () => {
 // sidecar-route AND the bucket-overshoot Genkit-route.
 describe('dispatchQuiz — canary mode Q4C observation', () => {
     it('sidecar route: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('canary', 100);
         mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockPersist.mockResolvedValue({ contentId: 'cid-q4c', storagePath: 'p' });
@@ -393,6 +406,7 @@ describe('dispatchQuiz — canary mode Q4C observation', () => {
     it('Genkit route (bucket-overshoot): fires sidecar fire-and-forget and writes shadow_diff', async () => {
         // percent=0 → bucket>=percent → mode collapses to 'off', but
         // configuredMode stays 'canary'. Dispatcher must still observe.
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('canary', 0);
         mockGenerateQuiz.mockResolvedValue(GENKIT_OUTPUT);
         mockCallSidecar.mockResolvedValue(SIDECAR_OUTPUT);

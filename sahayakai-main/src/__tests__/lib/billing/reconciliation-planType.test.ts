@@ -59,6 +59,17 @@ jest.mock('@/lib/firebase-admin', () => ({
             return { doc: () => ({}) };
         },
         batch: () => ({ set: batchSetMock, commit: async () => undefined }),
+        // F12-P2-10 lease mutex: acquireLease/releaseLease use db.doc + db.runTransaction.
+        doc: (_path: string) => ({
+            get: async () => ({ exists: false, data: () => undefined }),
+        }),
+        runTransaction: async (fn: (tx: any) => Promise<any>) => fn({
+            get: async (ref: any) =>
+                ref?.get ? ref.get() : { exists: false, data: () => undefined },
+            set: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+        }),
     }),
 }));
 
