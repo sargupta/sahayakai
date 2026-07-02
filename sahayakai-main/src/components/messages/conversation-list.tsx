@@ -10,17 +10,41 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, MessageCircle, Search, Users, PenSquare } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, type Locale } from "date-fns";
+import { hi, ta, bn, te, kn, gu, enIN } from "date-fns/locale";
 import { Timestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { PresenceDot } from './presence-dot';
 import { useLanguage } from "@/context/language-context";
+import type { Language } from "@/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatTime(ts: Timestamp | null): string {
+// date-fns locale per UI language. date-fns ships hi/ta/bn/te/kn/gu; Marathi,
+// Punjabi, Malayalam and Odia have no date-fns locale yet → fall back to en-IN
+// (still India-formatted) rather than rendering plain en-US.
+const DATE_FNS_LOCALE: Record<Language, Locale> = {
+    English: enIN,
+    Hindi: hi,
+    Kannada: kn,
+    Tamil: ta,
+    Telugu: te,
+    Marathi: enIN,
+    Bengali: bn,
+    Gujarati: gu,
+    Punjabi: enIN,
+    Malayalam: enIN,
+    Odia: enIN,
+};
+
+function formatTime(ts: Timestamp | null, uiLanguage: Language): string {
     if (!ts) return "";
-    try { return formatDistanceToNow(ts.toDate(), { addSuffix: true }); } catch { return ""; }
+    try {
+        return formatDistanceToNow(ts.toDate(), {
+            addSuffix: true,
+            locale: DATE_FNS_LOCALE[uiLanguage] ?? enIN,
+        });
+    } catch { return ""; }
 }
 
 function getInitials(name: string): string {
@@ -52,7 +76,7 @@ function ConversationListItem({
     isActive: boolean;
     onClick: () => void;
 }) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { name, photo } = getConversationLabel(conv, myUid, t);
     const unread = conv.unreadCount?.[myUid] ?? 0;
     const isMyLastMsg = conv.lastMessageSenderId === myUid;
@@ -98,7 +122,7 @@ function ConversationListItem({
                         {name}
                     </p>
                     <span className="text-[10px] text-muted-foreground shrink-0 font-medium">
-                        {formatTime(conv.lastMessageAt)}
+                        {formatTime(conv.lastMessageAt, language)}
                     </span>
                 </div>
                 <p className={cn(
@@ -129,11 +153,22 @@ export function ConversationList({
     const { t } = useLanguage();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
     // Real-time inbox
     useEffect(() => {
-        if (!user) return;
+        // No signed-in user → nothing to load. Don't leave the spinner running
+        // forever for signed-out visitors.
+        if (!user) {
+            setConversations([]);
+            setError(null);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
 
         const q = query(
             collection(db, "conversations"),
@@ -141,13 +176,25 @@ export function ConversationList({
             orderBy("lastMessageAt", "desc"),
         );
 
-        const unsub = onSnapshot(q, (snap) => {
-            setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Conversation)));
-            setLoading(false);
-        });
+        const unsub = onSnapshot(
+            q,
+            (snap) => {
+                setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Conversation)));
+                setError(null);
+                setLoading(false);
+            },
+            (err) => {
+                // Swallowing this left the spinner running forever on a
+                // missing-index / permission-denied error. Log it, stop the
+                // spinner, and surface an error state so the UI can recover.
+                console.error("[ConversationList] onSnapshot error:", err);
+                setError(t("Couldn't load conversations. Please try again."));
+                setLoading(false);
+            },
+        );
 
         return () => unsub();
-    }, [user]);
+    }, [user, t]);
 
     const filtered = search.trim()
         ? conversations.filter((conv) => {
@@ -188,6 +235,13 @@ export function ConversationList({
                 {loading ? (
                     <div className="flex justify-center items-center h-32">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/60" />
+                    </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center space-y-3">
+                        <div className="p-4 bg-red-50 rounded-full">
+                            <MessageCircle className="h-8 w-8 text-red-300" />
+                        </div>
+                        <p className="text-sm font-semibold text-red-600">{error}</p>
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center space-y-3">

@@ -11,7 +11,7 @@ import { sendGroupChatMessageAction } from "@/app/actions/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Loader2, Mic, ArrowDown } from "lucide-react";
+import { Send, MessageCircle, Loader2, Mic, ArrowDown, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { VoiceRecorder } from "@/components/messages/voice-recorder";
@@ -25,7 +25,29 @@ type ChatMessage = {
     authorName: string;
     authorPhotoURL?: string | null;
     createdAt: Timestamp | null;
+    // Seeded AI demo persona (written by persona-pulse). UNESCO GenAI
+    // disclosure: synthetic participants must be visibly labelled so a
+    // teacher never mistakes model output for a real peer.
+    isDemoPersona?: boolean;
+    // Set on locally-inserted optimistic messages only. The real doc echoed
+    // back by Firestore never carries this flag.
+    _optimistic?: boolean;
 };
+
+// A real (server) message counts as the echo of an optimistic one when the
+// author and content line up. The send actions don't round-trip a client id,
+// so we match on authorId + text + audioUrl. Good enough: a teacher would have
+// to send two byte-identical messages in the same sub-100-message window for a
+// false positive, and even then dropping the redundant optimistic copy is
+// harmless (the real doc still renders).
+function isEchoOf(real: ChatMessage, optimistic: ChatMessage): boolean {
+    if (real.authorId !== optimistic.authorId) return false;
+    // Audio: the server doc stores text:"" while the optimistic copy shows a
+    // "Voice message" placeholder, so match on the (identical) audioUrl alone.
+    if (optimistic.audioUrl) return real.audioUrl === optimistic.audioUrl;
+    // Text: no audioUrl on either side, compare the text.
+    return !real.audioUrl && (real.text ?? "") === (optimistic.text ?? "");
+}
 
 function getInitials(name: string) {
     return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -69,6 +91,9 @@ export function CommunityChat({
     const isNearBottom = useNearBottom(scrollContainerRef, 120);
     const [unreadFromScrollUp, setUnreadFromScrollUp] = useState(0);
     const lastSeenLengthRef = useRef(0);
+    // Monotonic counter so optimistic ids never collide, even on two sends
+    // within the same millisecond (Date.now() alone can repeat).
+    const optimisticSeqRef = useRef(0);
 
     // Real-time listener — limitToLast(100) gives the most recent 100 messages
     useEffect(() => {
@@ -78,23 +103,43 @@ export function CommunityChat({
             limitToLast(100),
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const all = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...(doc.data() as Omit<ChatMessage, "id">),
-            }));
-            // Filter out seeded demo personas when the communityPersonas
-            // flag is disabled. Real-user messages (no isDemoPersona
-            // marker) always render.
-            const visible = personasEnabled
-                ? all
-                : all.filter((m) => !(m as { isDemoPersona?: boolean }).isDemoPersona);
-            setMessages(visible);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const all = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...(doc.data() as Omit<ChatMessage, "id">),
+                }));
+                // Filter out seeded demo personas when the communityPersonas
+                // flag is disabled. Real-user messages (no isDemoPersona
+                // marker) always render.
+                const visible = personasEnabled
+                    ? all
+                    : all.filter((m) => !m.isDemoPersona);
+                setLoading(false);
+                setError(null);
+                // Merge server docs with any still-pending optimistic messages.
+                // Drop each optimistic entry once its server echo shows up —
+                // otherwise the message renders twice (H25).
+                setMessages((prev) => {
+                    const pending = prev.filter(
+                        (m) => m._optimistic && !visible.some((real) => isEchoOf(real, m)),
+                    );
+                    return [...visible, ...pending];
+                });
+            },
+            (err) => {
+                // Previously no error handler → a missing-index /
+                // permission-denied error was swallowed and the spinner ran
+                // forever (H26). Log, stop the spinner, surface the error.
+                console.error("[CommunityChat] onSnapshot error:", err);
+                setError(t("Couldn't load messages. Please try again."));
+                setLoading(false);
+            },
+        );
 
         return () => unsubscribe();
-    }, [collectionPath, personasEnabled]);
+    }, [collectionPath, personasEnabled, t]);
 
     // Auto-scroll on new messages — but ONLY if the user is already near the
     // bottom. Yanking them back when they're scrolled up reading history is
@@ -130,8 +175,9 @@ export function CommunityChat({
         if (!audioUrl && !text) return;
         if (!user || sending) return;
 
-        // Optimistic update
-        const optimisticId = `optimistic_${Date.now()}`;
+        // Optimistic update. Date.now() alone can collide on same-ms sends and
+        // produce duplicate React keys — append a monotonic seq + random suffix.
+        const optimisticId = `optimistic_${Date.now()}_${optimisticSeqRef.current++}_${Math.random().toString(36).slice(2, 8)}`;
         const optimisticMsg: ChatMessage = {
             id: optimisticId,
             text: audioUrl ? "Voice message" : text,
@@ -140,6 +186,7 @@ export function CommunityChat({
             authorName: user.displayName || "Teacher",
             authorPhotoURL: user.photoURL,
             createdAt: null,
+            _optimistic: true,
         };
         setMessages((prev) => [...prev, optimisticMsg]);
         if (!audioUrl) setInput("");
@@ -238,16 +285,33 @@ export function CommunityChat({
                                     {showMeta && (
                                         <Avatar className="h-7 w-7 ring-1 ring-background shadow-soft">
                                             <AvatarImage src={msg.authorPhotoURL ?? undefined} referrerPolicy="no-referrer" />
-                                            <AvatarFallback className="text-[10px] font-bold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                                                {getInitials(msg.authorName)}
-                                            </AvatarFallback>
+                                            {msg.isDemoPersona ? (
+                                                <AvatarFallback className="bg-gradient-to-br from-amber-400 to-amber-600 text-white">
+                                                    <Bot className="h-3.5 w-3.5" />
+                                                </AvatarFallback>
+                                            ) : (
+                                                <AvatarFallback className="text-[10px] font-bold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                                                    {getInitials(msg.authorName)}
+                                                </AvatarFallback>
+                                            )}
                                         </Avatar>
                                     )}
                                 </div>
 
                                 <div className={cn("max-w-[72%] space-y-0.5", isOwn && "items-end flex flex-col")}>
                                     {showMeta && !isOwn && (
-                                        <p className="text-[10px] font-bold text-muted-foreground px-1">{msg.authorName}</p>
+                                        <div className="flex items-center gap-1 px-1">
+                                            <p className="text-[10px] font-bold text-muted-foreground">{msg.authorName}</p>
+                                            {msg.isDemoPersona && (
+                                                <span
+                                                    title={t("This is an AI demo persona, not a real teacher. Its messages are AI-generated and not fact-checked.")}
+                                                    className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-800"
+                                                >
+                                                    <Bot className="h-2.5 w-2.5" />
+                                                    AI
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                     <div className={cn(
                                         "px-3.5 py-2 rounded-2xl text-sm leading-relaxed font-medium break-words",
