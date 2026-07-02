@@ -1,7 +1,7 @@
 
 import { dispatchLessonPlan } from '@/lib/sidecar/lesson-plan-dispatch';
 import { logger } from '@/lib/logger';
-import { withPlanCheck } from '@/lib/plan-guard';
+import { reservePlanQuota } from '@/lib/plan-guard';
 import { logAIError, classifyAIError } from '@/lib/ai-error-response';
 
 /**
@@ -24,6 +24,7 @@ function sseEvent(payload: Record<string, unknown>): string {
 
 async function _handler(request: Request) {
   let topicText = 'Unknown Topic';
+  let gate: Awaited<ReturnType<typeof reservePlanQuota>> | null = null;
   try {
     const userId = request.headers.get('x-user-id');
     if (!userId) {
@@ -31,6 +32,24 @@ async function _handler(request: Request) {
         sseEvent({ type: 'error', message: 'Unauthorized: Missing User Identity' }),
         {
           status: 401,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          },
+        },
+      );
+    }
+
+    // Plan/quota gate — same enforcement as the non-stream route. SSE returns
+    // a native Response, so we use the shared reservePlanQuota() rather than
+    // the withPlanCheck() HOF. Reserve BEFORE streaming; roll back on failure.
+    gate = await reservePlanQuota(request, 'lesson-plan');
+    if (!gate.ok) {
+      return new Response(
+        sseEvent({ type: 'error', code: gate.body.error, message: gate.body.message ?? gate.body.error }),
+        {
+          status: gate.status,
           headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
@@ -72,6 +91,10 @@ async function _handler(request: Request) {
           // --- Phase 3: Done ---
           send({ type: 'complete', data: output });
         } catch (error) {
+          // Generation failed — refund the reserved quota so the user isn't
+          // charged for a call that delivered nothing.
+          if (gate?.ok) await gate.rollback();
+
           const errorMessage =
             error instanceof Error ? error.message : String(error);
           const classified = classifyAIError(error);
@@ -107,6 +130,10 @@ async function _handler(request: Request) {
       },
     });
   } catch (error) {
+    // Pre-stream failure (bad JSON body, etc.) after a successful reservation —
+    // refund so a failed request doesn't consume quota.
+    if (gate?.ok) await gate.rollback();
+
     const errorMessage =
       error instanceof Error ? error.message : String(error);
     const classified = classifyAIError(error);
@@ -144,6 +171,7 @@ async function _handler(request: Request) {
   }
 }
 
-// SSE routes return native Response (not NextResponse), so withPlanCheck
-// type is incompatible. Plan check runs inside _handler before streaming.
+// SSE routes return native Response (not NextResponse), so the withPlanCheck
+// HOF is type-incompatible. The plan/quota gate DOES run: _handler calls
+// reservePlanQuota() after auth and before streaming, and rolls back on failure.
 export const POST = _handler;
