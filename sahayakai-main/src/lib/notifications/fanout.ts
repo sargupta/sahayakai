@@ -64,6 +64,29 @@ function renderMessage(lang: Language | string | undefined, name: string, school
     return template.replace('{name}', name).replace('{school}', school);
 }
 
+// B6 fix: the notification title must follow the recipient's preferredLanguage
+// too (previously hardcoded English, producing a mixed-language card/push).
+// One entry per supported language. Kept inline for the same reason as
+// MESSAGE_TEMPLATES (this module runs server-side; the dictionary is "use client").
+const TITLE_TEMPLATES: Record<Language, string> = {
+    English: 'A nearby teacher just joined',
+    Hindi: 'पास के एक शिक्षक अभी-अभी जुड़े',
+    Kannada: 'ಹತ್ತಿರದ ಒಬ್ಬ ಶಿಕ್ಷಕರು ಈಗಷ್ಟೇ ಸೇರಿದರು',
+    Tamil: 'அருகிலுள்ள ஒரு ஆசிரியர் இப்போது இணைந்தார்',
+    Telugu: 'సమీపంలోని ఒక ఉపాధ్యాయుడు ఇప్పుడే చేరారు',
+    Marathi: 'जवळचे एक शिक्षक नुकतेच सामील झाले',
+    Bengali: 'কাছাকাছি একজন শিক্ষক সবেমাত্র যোগ দিয়েছেন',
+    Gujarati: 'નજીકના એક શિક્ષક હમણાં જ જોડાયા',
+    Punjabi: 'ਨੇੜਲੇ ਇੱਕ ਅਧਿਆਪਕ ਹੁਣੇ ਹੀ ਸ਼ਾਮਲ ਹੋਏ',
+    Malayalam: 'അടുത്തുള്ള ഒരു അധ്യാപകൻ ഇപ്പോൾ ചേർന്നു',
+    Odia: 'ନିକଟସ୍ଥ ଜଣେ ଶିକ୍ଷକ ବର୍ତ୍ତମାନ ଯୋଗ ଦେଲେ',
+};
+
+function renderTitle(lang: Language | string | undefined): string {
+    const canonical = resolveLanguage(lang) ?? 'English';
+    return TITLE_TEMPLATES[canonical] ?? TITLE_TEMPLATES.English;
+}
+
 // Mirror of the community-page deny-list: never notify on behalf of (or to)
 // a dev/QA test account. Cheap substring guard.
 function looksLikeTestAccount(displayName?: string): boolean {
@@ -235,10 +258,11 @@ export async function fanoutNewTeacherJoinedNotification(
         for (const r of recipients) {
             const ref = db.collection('notifications').doc();
             const localizedMessage = renderMessage(r.data.preferredLanguage, name, school);
+            const localizedTitle = renderTitle(r.data.preferredLanguage);
             const doc: Omit<Notification, 'id'> = {
                 recipientId: r.uid,
                 type: newType,
-                title: 'A nearby teacher just joined',
+                title: localizedTitle,
                 message: localizedMessage,
                 senderId: newTeacherUid,
                 senderName: name,
@@ -250,7 +274,7 @@ export async function fanoutNewTeacherJoinedNotification(
             batch.set(ref, doc);
             pushPayloads.push({
                 recipientId: r.uid,
-                title: 'A nearby teacher just joined',
+                title: localizedTitle,
                 body: localizedMessage,
             });
         }

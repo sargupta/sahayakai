@@ -32,6 +32,7 @@
 import { NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { logger } from '@/lib/logger';
+import { writeAuditLog } from '@/lib/audit-log';
 import type { StorageCleanupMessage } from '@/lib/pubsub';
 
 export const maxDuration = 60;
@@ -191,6 +192,13 @@ export async function POST(request: Request) {
         try {
             await storage.bucket().file(storagePath).delete();
             logger.info('GCS cleanup succeeded', 'STORAGE', { userId, contentId, storagePath });
+            await writeAuditLog({
+                action: 'storage.deleted',
+                targetType: 'gcs_object',
+                targetId: storagePath,
+                actor: 'job:storage-cleanup',
+                details: { userId: userId ?? null, contentId: contentId ?? null },
+            });
         } catch (err: any) {
             if (err?.code === 404) {
                 logger.info('GCS cleanup: file already absent', 'STORAGE', { userId, contentId, storagePath });

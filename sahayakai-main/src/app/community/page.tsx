@@ -631,7 +631,7 @@ export default function CommunityPage() {
                       id: info.postId,
                       groupId: info.groupId,
                       authorUid: user.uid,
-                      authorName: user.displayName ?? 'Teacher',
+                      authorName: user.displayName ?? t('Teacher'),
                       authorPhotoURL: user.photoURL ?? null,
                       content: info.content,
                       postType: info.postType,

@@ -25,8 +25,35 @@ import {
     CalendarX2, TrendingDown, Star,
 } from "lucide-react";
 import { format } from "date-fns";
+import { hi, bn, ta, te, kn, gu, enIN, type Locale } from "date-fns/locale";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/ui/back-button";
+
+// date-fns locale per UI language ISO code. mr/ml/or/pa lack a date-fns pack,
+// so they fall back to en-IN (Indian English ordering, day-first).
+const DATE_FNS_LOCALE: Record<string, Locale> = {
+    hi, bn, ta, te, kn, gu, en: enIN,
+};
+function dateFnsLocaleFor(isoCode: string): Locale {
+    return DATE_FNS_LOCALE[isoCode] ?? enIN;
+}
+
+// Component-local triage badge labels. "d in a row" and "top" are short,
+// chip-specific strings absent from the shared dictionary, so they live here
+// keyed by the 11 ISO UI-language codes and resolved by uiLangCode.
+// Values include their own leading separator after the numeric count: English
+// uses the compact "3d in a row"; other scripts read better with a space.
+const DAYS_IN_A_ROW: Record<string, string> = {
+    en: "d in a row", hi: " दिन लगातार", mr: " दिवस सलग", bn: " দিন টানা",
+    pa: " ਦਿਨ ਲਗਾਤਾਰ", gu: " દિવસ સળંગ", or: " ଦିନ ଲଗାତାର", ta: " நாள் தொடர்ச்சியாக",
+    te: " రోజులు వరుసగా", kn: " ದಿನ ಸತತ", ml: " ദിവസം തുടർച്ചയായി",
+};
+const TOP_LABEL: Record<string, string> = {
+    en: "top", hi: "शीर्ष", mr: "अव्वल", bn: "শীর্ষ",
+    pa: "ਚੋਟੀ", gu: "ટોચ", or: "ଶ୍ରେଷ୍ଠ", ta: "சிறந்த",
+    te: "అగ్ర", kn: "ಉನ್ನತ", ml: "മികച്ച",
+};
 
 function todayStr() {
     return format(new Date(), 'yyyy-MM-dd');
@@ -35,7 +62,8 @@ function todayStr() {
 function ClassDetailContent() {
     const { classId } = useParams<{ classId: string }>();
     const { toast } = useToast();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || 'en';
 
     const [cls, setCls] = useState<ClassRecord | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -151,25 +179,25 @@ function ClassDetailContent() {
             absenceGroup.push({
                 student, summary, perf,
                 suggestedReason: 'consecutive_absences',
-                badge: `${streak}d in a row`,
+                badge: `${streak}${DAYS_IN_A_ROW[uiLangCode] ?? DAYS_IN_A_ROW.en}`,
             });
         } else if (typeof latest === 'number' && latest < 35) {
             academicGroup.push({
                 student, summary, perf,
                 suggestedReason: 'poor_performance',
-                badge: `${Math.round(latest)}% avg · at-risk`,
+                badge: `${Math.round(latest)}% ${t('avg · at-risk')}`,
             });
         } else if (isBehavioral) {
             behavioralGroup.push({
                 student, summary, perf,
                 suggestedReason: 'behavioral_concern',
-                badge: 'Behavioral note',
+                badge: t('Behavioral note'),
             });
         } else if (attendanceRate >= 99 && typeof latest === 'number' && latest >= 85) {
             celebrateGroup.push({
                 student, summary, perf,
                 suggestedReason: 'positive_feedback',
-                badge: `${Math.round(latest)}% · top`,
+                badge: `${Math.round(latest)}% · ${TOP_LABEL[uiLangCode] ?? TOP_LABEL.en}`,
             });
         }
     }
@@ -214,7 +242,7 @@ function ClassDetailContent() {
                 <BackButton to="/attendance" className="shrink-0" />
                 <div className="flex-1 min-w-0">
                     <h1 className="text-xl font-black font-headline tracking-tight text-foreground truncate">{cls.name}</h1>
-                    <p className="text-xs text-muted-foreground">{cls.gradeLevel} · {cls.subject} · {cls.studentCount} {t("students")}</p>
+                    <p className="text-xs text-muted-foreground">{cls.gradeLevel ? t(cls.gradeLevel) : cls.gradeLevel} · {cls.subject ? t(cls.subject) : cls.subject} · {cls.studentCount} {t("students")}</p>
                 </div>
                 {triageTotal > 0 && (
                     <button
@@ -304,7 +332,7 @@ function ClassDetailContent() {
                 <TabsContent value="today" className="mt-4">
                     <div className="mb-3 flex items-center justify-between">
                         <p className="text-xs text-muted-foreground">
-                            {format(new Date(), 'EEEE, d MMMM yyyy')}
+                            {format(new Date(), 'EEEE, d MMMM yyyy', { locale: dateFnsLocaleFor(uiLangCode) })}
                         </p>
                     </div>
                     <AttendanceGrid

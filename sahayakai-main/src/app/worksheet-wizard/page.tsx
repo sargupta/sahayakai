@@ -512,7 +512,7 @@ function WorksheetWizardContent() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="worksheet" />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="worksheet" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
@@ -615,6 +615,7 @@ function WorksheetWizardContent() {
             }}
             title={form.getValues("prompt") || t.resultTitle}
             selectedLanguage={selectedLanguage}
+            uiLangCode={uiLangCode}
           /></div>
           <ShareToCommunityCTA contentType="worksheet" className="mt-3" />
           </>

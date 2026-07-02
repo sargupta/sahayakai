@@ -610,6 +610,7 @@ export function useLessonPlan() {
         setDifficultyLevel,
         currentGrade,
         selectedLanguage,
+        uiLangCode,
         topicPlaceholder,
         handleTranscript,
         handlePromptClick,

@@ -18,6 +18,7 @@
 
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { writeAuditLogBatch } from '@/lib/audit-log';
 
 export const maxDuration = 60;
 
@@ -56,8 +57,19 @@ export async function POST(request: Request) {
         }
 
         const batch = db.batch();
-        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+        const audited: { targetId: string; details?: Record<string, unknown> }[] = [];
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+            audited.push({ targetId: doc.id });
+        });
         await batch.commit();
+
+        await writeAuditLogBatch(
+            'community_chat.purged',
+            'community_chat',
+            'job:community-chat-cleanup',
+            audited,
+        );
 
         logger.info('Community chat cleanup complete', 'CHAT_CLEANUP', {
             deleted: snapshot.size,

@@ -234,6 +234,10 @@ function QuizGeneratorContent() {
   }, [searchParams, form, toast]);
 
   const selectedLanguage = form.watch("language") || 'en';
+  // UI chrome (incl. Quick Ideas sample prompts) follows the app language, NOT
+  // the AI-output language form field. Keeps samples in the language the
+  // teacher reads the interface in.
+  const uiLangCode = LANGUAGE_TO_ISO[userLanguage] || 'en';
   // Local `translations` removed (Wave 6 cleanup). All chrome resolves via translate() from UI language.
 
   const submittingRef = useRef(false);
@@ -434,7 +438,7 @@ function QuizGeneratorContent() {
 
                   <div className="space-y-2">
                     <FormLabel className="font-headline">{translate("Quick Ideas")}</FormLabel>
-                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
+                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="quiz" />
                   </div>
                 </div>
 
@@ -641,7 +645,7 @@ function QuizGeneratorContent() {
             tone="muted"
             className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5"
           >
-            <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} />
+            <QuizDisplay quiz={quiz as any} onRegenerate={() => form.handleSubmit(onSubmit)()} selectedLanguage={selectedLanguage} uiLangCode={uiLangCode} />
           </SectionCard>
           <ShareToCommunityCTA contentType="quiz" />
         </>

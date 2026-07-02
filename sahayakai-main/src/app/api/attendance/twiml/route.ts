@@ -1,11 +1,12 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
-import { TWILIO_LANGUAGE_MAP, TWILIO_VOICE_MAP, CALL_MENU_PROMPTS } from '@/types/attendance';
+import { TWILIO_LANGUAGE_MAP, TWILIO_VOICE_MAP, CALL_MENU_PROMPTS, CONSENT_NOTICE_VERSION, PARENT_OUTREACH_RETENTION_DAYS } from '@/types/attendance';
 import { validateTwilioSignature, validateTwilioSignaturePost } from '@/lib/twilio-validate';
 import { generateAgentReply } from '@/ai/flows/parent-call-agent';
 import { dispatchParentCallReply } from '@/lib/sidecar/dispatch';
 import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
+import { readConfig } from '@/lib/feature-flags';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
 import { LANGUAGE_TO_ISO } from '@/types/index';
@@ -82,6 +83,22 @@ export async function GET(req: NextRequest) {
         const prompts = CALL_MENU_PROMPTS[langCode] ?? CALL_MENU_PROMPTS['en-IN'];
         const speechLang = SPEECH_LANGUAGE_MAP[langCode] ?? 'en-IN';
 
+        // DPDP Act 2023 (itemised notice before personal-data collection) +
+        // UNESCO AI-disclosure: play a one-sentence notice that the call is
+        // recorded and AI-processed BEFORE any conversation. Disclosure now
+        // defaults ON — only an explicit `consentNoticeEnabled === false` in
+        // the feature-flags doc suppresses it, and a flag-read failure still
+        // plays the notice (fail toward disclosure, never record silently).
+        let consentPrologue: string | null = null;
+        try {
+            const flags = await readConfig();
+            consentPrologue = flags.consentNoticeEnabled === false
+                ? null
+                : (prompts.consentPrologue ?? CALL_MENU_PROMPTS['en-IN'].consentPrologue ?? null);
+        } catch {
+            consentPrologue = prompts.consentPrologue ?? CALL_MENU_PROMPTS['en-IN'].consentPrologue ?? null;
+        }
+
         // Initialize transcript with the agent's opening. F5-006: route
         // through `appendTurnAtomically` so a Twilio GET retry doesn't
         // duplicate the opening turn.
@@ -96,10 +113,29 @@ export async function GET(req: NextRequest) {
         await doc.ref.update({
             voicePipelineMode: 'batch',
             updatedAt: new Date().toISOString(),
+            // DPDP storage-limitation: stamp a retention expiry so the
+            // `parent-outreach-cleanup` lifecycle job can purge the transcript
+            // + summary once the window lapses.
+            transcriptExpiresAt: new Date(Date.now() + PARENT_OUTREACH_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+            // Record the recorded-consent step: which notice text the parent
+            // heard, when, and in what language. Decline (DTMF 2) is recorded
+            // separately in the POST handler.
+            ...(consentPrologue ? {
+                consentDisclosure: {
+                    disclosedAt: new Date().toISOString(),
+                    noticeVersion: CONSENT_NOTICE_VERSION,
+                    language: langCode,
+                    method: 'ivr_prologue_press2_to_decline',
+                },
+            } : {}),
         });
 
         const gatherUrl = `/api/attendance/twiml?outreachId=${outreachId}`;
         const esc = escapeXml;
+        // Consent/AI-disclosure prologue precedes the greeting when enabled.
+        const consentSay = consentPrologue
+            ? `<Say language="${langCode}" voice="${voice}">${esc(consentPrologue)}</Say>\n  <Pause length="1"/>\n  `
+            : '';
 
         // Greeting → teacher message → invite parent to speak
         // Enhanced: add hints for Hinglish recognition
@@ -110,7 +146,7 @@ export async function GET(req: NextRequest) {
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Pause length="1"/>
-  <Say language="${langCode}" voice="${voice}">${esc(prompts.greeting)}</Say>
+  ${consentSay}<Say language="${langCode}" voice="${voice}">${esc(prompts.greeting)}</Say>
   <Pause length="1"/>
   <Say language="${langCode}" voice="${voice}">${esc(message)}</Say>
   <Pause length="1"/>
@@ -191,8 +227,15 @@ export async function POST(req: NextRequest) {
         const transcript: TranscriptTurn[] = data.transcript ?? [];
         const turnCount: number = data.turnCount ?? 1;
 
-        // If parent pressed 2 or star → end call
+        // If parent pressed 2 or star → end call. This is also the recorded
+        // consent-decline path: the parent heard the AI/recording notice and
+        // opted out, so we stamp the refusal for the audit trail.
         if (digits === '2' || digits === '*') {
+            void outreachRef.update({
+                consentDeclined: true,
+                consentDeclinedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            }).catch((e) => console.warn('[twiml] failed to record consent decline:', e));
             return twimlResponse(goodbyeXml(langCode, voice, prompts));
         }
 
@@ -361,6 +404,9 @@ export async function POST(req: NextRequest) {
             turnCount: newTurnCount,
             [`processedTurnReplies.${fingerprint}`]: replyXml,
             updatedAt: new Date().toISOString(),
+            // Keep the retention clock fresh on every turn so a long call still
+            // expires PARENT_OUTREACH_RETENTION_DAYS after its last activity.
+            transcriptExpiresAt: new Date(Date.now() + PARENT_OUTREACH_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString(),
         });
 
         return twimlResponse(replyXml);

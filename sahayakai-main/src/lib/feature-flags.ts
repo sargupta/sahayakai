@@ -193,15 +193,17 @@ export interface FeatureFlagsConfig {
   assignmentAssessorSidecarPercent: number;
 
   /**
-   * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when true,
-   * the TwiML route plays a one-sentence consent prologue BEFORE the
-   * teacher's message. DPDP Act 2023 (enforced Nov 2026) requires
-   * itemised notice before personal-data collection.
+   * Round-2 audit P1 DPDP-1 (30-agent review, group G2): when not
+   * explicitly `false`, the TwiML route plays a one-sentence consent +
+   * AI-disclosure prologue BEFORE the greeting. DPDP Act 2023 requires
+   * itemised notice before personal-data collection, and UNESCO GenAI
+   * guidance requires disclosure that a citizen is speaking with an AI.
    *
-   * Defaults to `false` in `FALLBACK_CONFIG` until all 11 languages
-   * have legally-reviewed translations. Operator flips to `true`
-   * once translations land. See `.claude/plans/dpdp-compliance.md`
-   * for the rollout plan.
+   * Now defaults ON (`true` in `FALLBACK_CONFIG`): all call languages
+   * carry a `consentPrologue` translation, so the only reason to play
+   * no notice is an explicit operator opt-out. The TwiML route treats a
+   * missing/true value as enabled and only suppresses on `=== false`,
+   * so a flag-read failure still discloses (fail toward disclosure).
    */
   consentNoticeEnabled: boolean;
 
@@ -278,9 +280,11 @@ const FALLBACK_CONFIG: FeatureFlagsConfig = {
   communityPersonaMessageSidecarPercent: 0,
   assignmentAssessorSidecarMode: 'off',
   assignmentAssessorSidecarPercent: 0,
-  // Consent prologue OFF until 11-language translations land. Operator
-  // flips when ready. See `.claude/plans/dpdp-compliance.md`.
-  consentNoticeEnabled: false,
+  // Consent + AI-disclosure prologue ON by default — every call language
+  // now carries a `consentPrologue` translation. Fail-open toward
+  // disclosure: a Firestore outage must not silently record a parent
+  // without notice. Operator can still opt out by setting this to false.
+  consentNoticeEnabled: true,
   features: {},
   updatedAt: '',
   updatedBy: 'fallback',

@@ -43,6 +43,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "Getting Answer...",
     searchingText: "Searching for the best answer...",
     answerTitle: "Your Answer",
+    forTheQuestion: "For the question:",
     saveButton: "Save to Library",
     videoTitle: "Recommended Video",
     videoButton: "Watch on YouTube"
@@ -59,6 +60,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "उत्तर प्राप्त कर रहा है...",
     searchingText: "सर्वोत्तम उत्तर की खोज कर रहा है...",
     answerTitle: "आपका उत्तर",
+    forTheQuestion: "प्रश्न के लिए:",
     saveButton: "लाइब्रेरी में सहेजें",
     videoTitle: "अनुशंसित वीडियो",
     videoButton: "YouTube पर देखें"
@@ -75,6 +77,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "উত্তর পাচ্ছেন...",
     searchingText: "সেরা উত্তরের জন্য অনুসন্ধান করা হচ্ছে...",
     answerTitle: "আপনার উত্তর",
+    forTheQuestion: "প্রশ্নের জন্য:",
     saveButton: "লাইব্রেরিতে সংরক্ষণ করুন",
     videoTitle: "প্রস্তাবিত ভিডিও",
     videoButton: "YouTube এ দেখুন"
@@ -91,6 +94,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "సమాధానం పొందుతున్నారు...",
     searchingText: "ఉత్తమ సమాధానం కోసం వెతుకుతోంది...",
     answerTitle: "మీ సమాధానం",
+    forTheQuestion: "ప్రశ్నకు:",
     saveButton: "లైబ్రరీలో సేవ్ చేయండి",
     videoTitle: "సిఫార్సు చేయబడిన వీడియో",
     videoButton: "YouTube లో చూడండి"
@@ -107,6 +111,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "उत्तर मिळवत आहे...",
     searchingText: "उत्तम उत्तर शोधत आहे...",
     answerTitle: "आपले उत्तर",
+    forTheQuestion: "प्रश्नासाठी:",
     saveButton: "लायब्ररीमध्ये जतन करा",
     videoTitle: "शिफारस केलेला व्हिडिओ",
     videoButton: "YouTube वर पहा"
@@ -123,6 +128,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "பதில் பெறுகிறது...",
     searchingText: "சிறந்த பதிலைத் தேடுகிறது...",
     answerTitle: "உங்கள் பதில்",
+    forTheQuestion: "கேள்விக்கு:",
     saveButton: "நூலகத்தில் சேமிக்கவும்",
     videoTitle: "பரிந்துரைக்கப்பட்ட வீடியோ",
     videoButton: "YouTube இல் பாருங்கள்"
@@ -139,6 +145,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "જવાબ મેળવી રહ્યા છે...",
     searchingText: "શ્રેષ્ઠ જવાબ શોધી રહ્યા છે...",
     answerTitle: "તમારો જવાબ",
+    forTheQuestion: "પ્રશ્ન માટે:",
     saveButton: "લાઇબ્રેરીમાં સાચવો",
     videoTitle: "ભલામણ કરેલ વિડિઓ",
     videoButton: "YouTube પર જુઓ"
@@ -155,6 +162,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "ಉತ್ತರ ಪಡೆಯಲಾಗುತ್ತಿದೆ...",
     searchingText: "ಅತ್ಯುತ್ತಮ ಉತ್ತರಕ್ಕಾಗಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ...",
     answerTitle: "ನಿಮ್ಮ ಉತ್ತರ",
+    forTheQuestion: "ಪ್ರಶ್ನೆಗಾಗಿ:",
     saveButton: "ಲೈಬ್ರರಿಯಲ್ಲಿ ಉಳಿಸಿ",
     videoTitle: "ಶಿಫಾರಸು ಮಾಡಲಾದ ವೀಡಿಯೊ",
     videoButton: "YouTube ನಲ್ಲಿ ವೀಕ್ಷಿಸಿ"
@@ -171,6 +179,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "ਜਵਾਬ ਪ੍ਰਾਪਤ ਕਰ ਰਿਹਾ ਹੈ...",
     searchingText: "ਵਧੀਆ ਜਵਾਬ ਲੱਭ ਰਿਹਾ ਹੈ...",
     answerTitle: "ਤੁਹਾਡਾ ਜਵਾਬ",
+    forTheQuestion: "ਪ੍ਰਸ਼ਨ ਲਈ:",
     saveButton: "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ",
     videoTitle: "ਸਿਫਾਰਸ਼ ਕੀਤੀ ਵੀਡੀਓ",
     videoButton: "YouTube 'ਤੇ ਦੇਖੋ"
@@ -187,6 +196,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "ഉത്തരം ലഭിക്കുന്നു...",
     searchingText: "മികച്ച ഉത്തരത്തിനായി തിരയുന്നു...",
     answerTitle: "നിങ്ങളുടെ ഉത്തരം",
+    forTheQuestion: "ചോദ്യത്തിന്:",
     saveButton: "ലൈബ്രറിയിൽ സേവ് ചെയ്യുക",
     videoTitle: "ശുപാർശ ചെയ്യുന്ന വീഡിയോ",
     videoButton: "YouTube-ൽ കാണുക"
@@ -203,6 +213,7 @@ const translations: Record<string, Record<string, string>> = {
     loadingText: "ଉତ୍ତର ଆସୁଛି...",
     searchingText: "ସର୍ବୋତ୍ତମ ଉତ୍ତର ଖୋଜା ଚାଲିଛି...",
     answerTitle: "ଆପଣଙ୍କ ଉତ୍ତର",
+    forTheQuestion: "ପ୍ରଶ୍ନ ପାଇଁ:",
     saveButton: "ଲାଇବ୍ରେରୀରେ ସଂରକ୍ଷଣ କରନ୍ତୁ",
     videoTitle: "ପରାମର୍ଶିତ ଭିଡିଓ",
     videoButton: "YouTube ରେ ଦେଖନ୍ତୁ"
@@ -450,7 +461,7 @@ function InstantAnswerContent() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="instant-answer" />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="instant-answer" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
@@ -545,7 +556,7 @@ function InstantAnswerContent() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="font-headline text-2xl">{t.answerTitle}</CardTitle>
-                <CardDescription className="italic">For the question: "{answer.question}"</CardDescription>
+                <CardDescription className="italic">{t.forTheQuestion} "{answer.question}"</CardDescription>
               </div>
               <Button
                 variant="outline"

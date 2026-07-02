@@ -25,7 +25,25 @@ import {
     Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { BackButton } from "@/components/ui/back-button";
+
+// ── Component-local chrome strings (resolved by uiLangCode) ───────────────────
+// "Loading..." already lives in the shared dictionary (use t()); only
+// "Load older messages" is missing there, so it gets a local table here.
+const LOAD_OLDER_LABEL: Record<string, string> = {
+    en: "Load older messages",
+    hi: "पुराने संदेश लोड करें",
+    mr: "जुने संदेश लोड करा",
+    bn: "পুরোনো বার্তা লোড করুন",
+    pa: "ਪੁਰਾਣੇ ਸੁਨੇਹੇ ਲੋਡ ਕਰੋ",
+    gu: "જૂના સંદેશા લોડ કરો",
+    or: "ପୁରୁଣା ସନ୍ଦେଶ ଲୋଡ୍ କରନ୍ତୁ",
+    ta: "பழைய செய்திகளை ஏற்று",
+    te: "పాత సందేశాలను లోడ్ చేయండి",
+    kn: "ಹಳೆಯ ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಿ",
+    ml: "പഴയ സന്ദേശങ്ങൾ ലോഡ് ചെയ്യുക",
+};
 
 // ── Resource type picker (what teacher can share) ─────────────────────────────
 
@@ -184,7 +202,8 @@ interface ConversationThreadProps {
 
 export function ConversationThread({ conversation, onBack }: ConversationThreadProps) {
     const { user } = useAuth();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
     const { messages, loading, loadingMore, hasMore, loadMore } = usePaginatedMessages(conversation.id);
     const [input, setInput] = useState("");
     const [resourceOpen, setResourceOpen] = useState(false);
@@ -300,7 +319,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             className="text-xs text-muted-foreground hover:text-foreground"
                         >
                             {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                            {loadingMore ? 'Loading...' : 'Load older messages'}
+                            {loadingMore ? t('Loading...') : (LOAD_OLDER_LABEL[uiLangCode] || LOAD_OLDER_LABEL.en)}
                         </Button>
                     </div>
                 )}

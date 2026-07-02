@@ -76,14 +76,8 @@ export async function revokeAnalyticsConsent(userId: string): Promise<void> {
 }
 
 /**
- * Schedule data deletion (after 1 year)
- * This would typically be a Cloud Function that runs daily
+ * The 1-year analytics retention promise is enforced server-side by the daily
+ * cron job at `POST /api/jobs/analytics-retention`, which deletes per-day
+ * analytics aggregate docs older than the window and writes an audit-log entry
+ * per deletion. There is no per-user client-side scheduling to do here.
  */
-export async function scheduleDataDeletion(userId: string): Promise<void> {
-    // TO DO: Implement as Cloud Function
-    // Pseudocode:
-    // 1. Find all analytics_events older than 1 year for this user
-    // 2. Delete from Firestore teacher_analytics
-    // 3. Archive to cold storage (optional)
-    // 4. Log deletion event for compliance
-}

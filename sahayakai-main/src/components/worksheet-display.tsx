@@ -24,6 +24,7 @@ type WorksheetDisplayProps = {
     };
     title?: string;
     selectedLanguage?: string;
+    uiLangCode?: string;
 };
 
 const PDF_ID = "worksheet-pdf";
@@ -32,9 +33,10 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
     worksheet,
     title,
     selectedLanguage,
+    uiLangCode,
 }) => {
     const { toast } = useToast();
-    const t = getResultShellDict(selectedLanguage);
+    const t = getResultShellDict(uiLangCode ?? selectedLanguage);
 
     if (!worksheet || !worksheet.worksheetContent) return null;
 

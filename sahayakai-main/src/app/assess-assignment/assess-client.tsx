@@ -39,6 +39,7 @@ import {
 import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import type { AssessAssignmentOutput } from "@/ai/flows/assignment-assessor";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 
 // Local `translations` removed (Wave 6 cleanup). All strings now via global useLanguage().
 
@@ -68,7 +69,8 @@ export default function AssessAssignmentClient() {
 function AssessAssignmentContent() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language: uiLang } = useLanguage();
+  const uiLangCode = LANGUAGE_TO_ISO[uiLang] ?? "en";
   const [language, setLanguage] = useState<string>("en");
   const [gradeLevel, setGradeLevel] = useState<string | undefined>(undefined);
   const [subject, setSubject] = useState<string | undefined>(undefined);
@@ -171,7 +173,7 @@ function AssessAssignmentContent() {
           </CardHeader>
           <CardContent>
             <AssessmentCamera
-              language={language}
+              uiLangCode={uiLangCode}
               onImageReady={(uri) => setImageDataUri(uri)}
             />
           </CardContent>

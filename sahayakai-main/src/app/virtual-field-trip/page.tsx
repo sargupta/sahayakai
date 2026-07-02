@@ -73,7 +73,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "ভ্রমণসূচী তৈরি করা হচ্ছে...",
     planningText: "আপনার ভার্চুয়াল অভিযানের পরিকল্পনা করা হচ্ছে...",
     saveButton: "লাইব্রেরিতে সংরক্ষণ করুন",
-    visitButton: "Google Earth এ যান"
+    visitButton: "Google Earth এ যান",
+    subjectLabel: "বিষয়"
   },
   te: {
     pageTitle: "వర్చువల్ ఫీల్డ్ ట్రిప్",
@@ -87,7 +88,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "ప్రయాణ ప్రణాళికను సృష్టిస్తోంది...",
     planningText: "మీ వర్చువల్ అడ్వెంచర్‌ను ప్లాన్ చేస్తోంది...",
     saveButton: "లైబ్రరీలో సేవ్ చేయండి",
-    visitButton: "Google Earth లో సందర్శించండి"
+    visitButton: "Google Earth లో సందర్శించండి",
+    subjectLabel: "విషయం"
   },
   mr: {
     pageTitle: "आभासी क्षेत्र सहल",
@@ -101,7 +103,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "प्रवास कार्यक्रम तयार करत आहे...",
     planningText: "तुमच्या आभासी साहसाचे नियोजन करत आहे...",
     saveButton: "लायब्ररीमध्ये जतन करा",
-    visitButton: "Google Earth वर भेट द्या"
+    visitButton: "Google Earth वर भेट द्या",
+    subjectLabel: "विषय"
   },
   ta: {
     pageTitle: "மெய்நிகர் களப்பயணம்",
@@ -115,7 +118,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "பயணத்திட்டத்தை உருவாக்குகிறது...",
     planningText: "உங்கள் மெய்நிகர் சாகசத்தைத் திட்டமிடுகிறது...",
     saveButton: "நூலகத்தில் சேமிக்கவும்",
-    visitButton: "Google Earth இல் பார்வையிடவும்"
+    visitButton: "Google Earth இல் பார்வையிடவும்",
+    subjectLabel: "பாடம்"
   },
   gu: {
     pageTitle: "વર્ચ્યુઅલ ફીલ્ડ ટ્રિપ",
@@ -129,7 +133,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "પ્રવાસ કાર્યક્રમ બનાવી રહ્યું છે...",
     planningText: "તમારા વર્ચ્યુઅલ સાહસનું આયોજન કરી રહ્યું છે...",
     saveButton: "લાઇબ્રેરીમાં સાચવો",
-    visitButton: "Google Earth પર મુલાકાત લો"
+    visitButton: "Google Earth પર મુલાકાત લો",
+    subjectLabel: "વિષય"
   },
   kn: {
     pageTitle: "ವರ್ಚುವಲ್ ಫೀಲ್ಡ್ ಟ್ರಿಪ್",
@@ -138,12 +143,13 @@ const translations: Record<string, Record<string, string>> = {
     speakLabel: "ನಿಮ್ಮ ಪ್ರವಾಸ ಕಲ್ಪನೆಯನ್ನು ಮಾತನಾಡಿ...",
     placeholder: "ಉದಾ., 'ಹರಪ್ಪನ್ ನಾಗರೀಕತೆಯ ಪ್ರಮುಖ ಕೇಂದ್ರಗಳ ಪ್ರವಾಸ...'",
     gradeLabel: "ದರ್ಜೆ ಮಟ್ಟ",
-    languageLabel: "ಭಾೆ",
+    languageLabel: "ಭಾಷೆ",
     submitButton: "ರಚಿಸಿ",
     generating: "ಪ್ರವಾಸದ ವಿವರವನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ...",
     planningText: "ನಿಮ್ಮ ವರ್ಚುವಲ್ ಸಾಹಸವನ್ನು ಯೋಜಿಸುತ್ತಿದೆ...",
     saveButton: "ಲೈಬ್ರರಿಯಲ್ಲಿ ಉಳಿಸಿ",
-    visitButton: "Google Earth ನಲ್ಲಿ ಭೇಟಿ ನೀಡಿ"
+    visitButton: "Google Earth ನಲ್ಲಿ ಭೇಟಿ ನೀಡಿ",
+    subjectLabel: "ವಿಷಯ"
   },
   pa: {
     pageTitle: "ਵਰਚੁਅਲ ਫੀਲਡ ਟ੍ਰਿਪ",
@@ -157,7 +163,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "ਯਾਤਰਾ ਯੋਜਨਾ ਬਣਾ ਰਿਹਾ ਹੈ...",
     planningText: "ਤੁਹਾਡੇ ਵਰਚੁਅਲ ਸਾਹਸ ਦੀ ਯੋਜਨਾ ਬਣਾ ਰਿਹਾ ਹੈ...",
     saveButton: "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ",
-    visitButton: "Google Earth 'ਤੇ ਜਾਓ"
+    visitButton: "Google Earth 'ਤੇ ਜਾਓ",
+    subjectLabel: "ਵਿਸ਼ਾ"
   },
   ml: {
     pageTitle: "വെർച്വൽ ഫീൽഡ് ട്രിപ്പ്",
@@ -171,7 +178,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "യാത്രാ പദ്ധതി തയ്യാറാക്കുന്നു...",
     planningText: "നിങ്ങളുടെ വെർച്വൽ സാഹസികത ആസൂത്രണം ചെയ്യുന്നു...",
     saveButton: "ലൈബ്രറിയിൽ സേവ് ചെയ്യുക",
-    visitButton: "Google Earth സന്ദർശിക്കുക"
+    visitButton: "Google Earth സന്ദർശിക്കുക",
+    subjectLabel: "വിഷയം"
   },
   or: {
     pageTitle: "ଭର୍ଚୁଆଲ୍ ଫିଲ୍ଡ ଟ୍ରିପ୍",
@@ -185,7 +193,8 @@ const translations: Record<string, Record<string, string>> = {
     generating: "ଯାତ୍ରା ଯୋଜନା ତିଆରି ଚାଲିଛି...",
     planningText: "ଆପଣଙ୍କ ଭର୍ଚୁଆଲ୍ ଦୁଃସାହସିକ ଯାତ୍ରା ଯୋଜନା କରାଯାଉଛି...",
     saveButton: "ଲାଇବ୍ରେରୀରେ ସଂରକ୍ଷଣ କରନ୍ତୁ",
-    visitButton: "Google Earth ରେ ଦେଖନ୍ତୁ"
+    visitButton: "Google Earth ରେ ଦେଖନ୍ତୁ",
+    subjectLabel: "ବିଷୟ"
   },
 };
 

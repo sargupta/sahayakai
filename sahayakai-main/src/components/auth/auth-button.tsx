@@ -27,12 +27,44 @@ import { LogOut, User as UserIcon, ShieldCheck } from "lucide-react";
 import { GoogleGIcon } from "./google-g-icon";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { LANGUAGE_TO_ISO } from "@/types";
+
+// Component-local translation tables keyed by ISO code (uiLangCode).
+const PROFILE_LIBRARY_LABELS: Record<string, string> = {
+    en: "Profile & Library",
+    hi: "प्रोफ़ाइल और लाइब्रेरी",
+    mr: "प्रोफाइल आणि लायब्ररी",
+    bn: "প্রোফাইল ও লাইব্রেরি",
+    pa: "ਪ੍ਰੋਫਾਈਲ ਅਤੇ ਲਾਇਬ੍ਰੇਰੀ",
+    gu: "પ્રોફાઇલ અને લાઇબ્રેરી",
+    or: "ପ୍ରୋଫାଇଲ୍ ଓ ଲାଇବ୍ରେରୀ",
+    ta: "சுயவிவரம் & நூலகம்",
+    te: "ప్రొఫైల్ & లైబ్రరీ",
+    kn: "ಪ್ರೊಫೈಲ್ ಮತ್ತು ಲೈಬ್ರರಿ",
+    ml: "പ്രൊഫൈൽ & ലൈബ്രറി",
+};
+
+const SIGN_IN_ERROR_LABELS: Record<string, string> = {
+    en: "Something went wrong signing in. Please try again.",
+    hi: "साइन इन करने में कुछ गड़बड़ हो गई। कृपया फिर से प्रयास करें।",
+    mr: "साइन इन करताना काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.",
+    bn: "সাইন ইন করতে কিছু সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    pa: "ਸਾਈਨ ਇਨ ਕਰਨ ਵਿੱਚ ਕੁਝ ਗੜਬੜ ਹੋ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    gu: "સાઇન ઇન કરવામાં કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    or: "ସାଇନ୍ ଇନ୍ କରିବାରେ କିଛି ତ୍ରୁଟି ହୋଇଗଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    ta: "உள்நுழைவதில் ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்.",
+    te: "సైన్ ఇన్ చేయడంలో ఏదో తప్పు జరిగింది. దయచేసి మళ్ళీ ప్రయత్నించండి.",
+    kn: "ಸೈನ್ ಇನ್ ಮಾಡುವಲ್ಲಿ ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    ml: "സൈൻ ഇൻ ചെയ്യുന്നതിൽ എന്തോ പിശക് സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കുക.",
+};
 
 export function AuthButton() {
     const { user, loading } = useAuth();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const router = useRouter();
     const { toast } = useToast();
+
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
 
     const handleSignIn = async () => {
         try {
@@ -85,9 +117,10 @@ export function AuthButton() {
                 router.refresh();
             }
         } catch (error: any) {
+            console.error(`Firebase Error: ${error?.code} (${error?.message})`);
             toast({
                 title: t("Sign-in Failed"),
-                description: `Firebase Error: ${error.code} (${error.message})`,
+                description: SIGN_IN_ERROR_LABELS[uiLangCode] || SIGN_IN_ERROR_LABELS.en,
                 variant: "destructive",
             });
         }
@@ -152,7 +185,7 @@ export function AuthButton() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push('/my-profile')}>
                     <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Profile & Library</span>
+                    <span>{PROFILE_LIBRARY_LABELS[uiLangCode] || PROFILE_LIBRARY_LABELS.en}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <ShieldCheck className="mr-2 h-4 w-4" />

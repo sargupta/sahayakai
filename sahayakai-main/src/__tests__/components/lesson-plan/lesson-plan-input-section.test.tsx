@@ -53,7 +53,8 @@ describe('LessonPlanInputSection', () => {
         );
 
         // expect(screen.getByText(/Topic/i)).toBeInTheDocument(); // Removed as per current UI
-        expect(screen.getByPlaceholderText(/A lesson on 'Healthy Food'/i)).toBeInTheDocument();
+        // Placeholder comes from the topicPlaceholder prop (localized upstream).
+        expect(screen.getByPlaceholderText(defaultProps.topicPlaceholder)).toBeInTheDocument();
         // expect(screen.getByText('Generate')).toBeInTheDocument(); // Removed as per current UI
     });
 
@@ -65,7 +66,7 @@ describe('LessonPlanInputSection', () => {
             </Wrapper>
         );
 
-        const input = screen.getByPlaceholderText(/A lesson on 'Healthy Food'/i);
+        const input = screen.getByPlaceholderText(defaultProps.topicPlaceholder);
         await user.type(input, 'Force and Motion');
         expect(input).toHaveValue('Force and Motion');
     });

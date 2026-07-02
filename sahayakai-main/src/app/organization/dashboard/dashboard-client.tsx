@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import type { OrgAnalyticsOutput } from '@/lib/analytics/org-aggregator';
-import { useLanguage } from '@/context/language-context';
+import { useLanguage, BCP47_MAP } from '@/context/language-context';
 
 // Map feature key → dictionary key. Translation lookup happens inside the
 // component via useLanguage().t() so labels follow the principal's language.
@@ -23,7 +23,8 @@ const FEATURE_DICT_KEY: Record<string, string> = {
 };
 
 export function DashboardClient({ data }: { data: OrgAnalyticsOutput }) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLocale = BCP47_MAP[language] || 'en-IN';
 
     const {
         org,
@@ -40,11 +41,12 @@ export function DashboardClient({ data }: { data: OrgAnalyticsOutput }) {
         return dictKey ? t(dictKey) : key;
     };
 
-    // Localized "Week of {month} {day}" — date itself uses the browser's
-    // current locale; the prefix wrapper comes from the dictionary.
+    // Localized "Week of {month} {day}" — the month name follows the UI
+    // language (uiLocale), not the browser locale, so the whole line stays
+    // in one script.
     const formatWeekRange = (): string => {
         const now = new Date();
-        const month = now.toLocaleDateString(undefined, { month: 'long' });
+        const month = now.toLocaleDateString(uiLocale, { month: 'long' });
         const day = now.getDate();
         return t('Week of {date}').replace('{date}', `${month} ${day}`);
     };

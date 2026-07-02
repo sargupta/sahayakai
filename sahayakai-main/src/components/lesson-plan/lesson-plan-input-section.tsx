@@ -13,6 +13,12 @@ import { type QuickTemplate } from "@/data/quick-templates";
 interface LessonPlanInputSectionProps {
   topicPlaceholder: string;
   selectedLanguage: string;
+  /**
+   * App UI language code (ISO, e.g. "bn"). Quick Ideas are UI chrome — sample
+   * topics the teacher reads — so they follow the app language, NOT the
+   * AI-output language field. Falls back to selectedLanguage if omitted.
+   */
+  uiLangCode?: string;
   onTranscriptChange: (transcript: string) => void;
   onPromptClick: (prompt: string) => void;
   onTemplateSelect: (template: QuickTemplate) => void;
@@ -27,6 +33,7 @@ interface LessonPlanInputSectionProps {
 export function LessonPlanInputSection({
   topicPlaceholder,
   selectedLanguage,
+  uiLangCode,
   onTranscriptChange,
   onPromptClick,
   onTemplateSelect,
@@ -73,8 +80,8 @@ export function LessonPlanInputSection({
           </div>
           <ExamplePrompts
             onPromptClick={onPromptClick}
-            selectedLanguage={selectedLanguage}
-            page="homeWithImage"
+            selectedLanguage={uiLangCode || selectedLanguage}
+            page="lesson-plan"
           />
         </div>
 

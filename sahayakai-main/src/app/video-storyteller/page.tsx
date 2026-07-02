@@ -18,7 +18,7 @@ import { getUserProfileAction } from "@/app/actions/auth";
 import { useNetworkAware } from "@/hooks/use-network-aware";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
-import { LANGUAGE_CODE_MAP } from "@/types";
+import { LANGUAGE_CODE_MAP, LANGUAGE_TO_ISO } from "@/types";
 import { useLanguage } from "@/context/language-context";
 
 interface VideoRecommendations {
@@ -42,6 +42,23 @@ const CATEGORY_DEFS: { key: string; titleKey: string; icon: LucideIcon }[] = [
   { key: "courses",        titleKey: "Teacher Training Courses", icon: School },
 ];
 
+// Fallback personalization banner (degraded/offline path) — local i18n table
+// keyed by UI-language ISO code, native script only. Mirrors the widely-used
+// component-local table pattern (lesson-plan-view.tsx, example-prompts.tsx).
+const FALLBACK_MESSAGE: Record<string, string> = {
+  en: "Namaste Adhyapak! Here are some carefully selected videos to help you deliver engaging lessons, stay updated on government policies, and grow as an educator.",
+  hi: "नमस्ते अध्यापक! यहाँ कुछ सावधानीपूर्वक चुने गए वीडियो हैं जो आपको रोचक पाठ पढ़ाने, सरकारी नीतियों से अपडेट रहने और एक शिक्षक के रूप में विकसित होने में मदद करेंगे।",
+  mr: "नमस्ते अध्यापक! येथे काळजीपूर्वक निवडलेले काही व्हिडिओ आहेत जे तुम्हाला आकर्षक धडे शिकवण्यास, सरकारी धोरणांबाबत अद्ययावत राहण्यास आणि शिक्षक म्हणून प्रगती करण्यास मदत करतील.",
+  bn: "নমস্তে অধ্যাপক! এখানে যত্ন সহকারে নির্বাচিত কিছু ভিডিও রয়েছে যা আপনাকে আকর্ষণীয় পাঠ দিতে, সরকারি নীতি সম্পর্কে আপডেট থাকতে এবং একজন শিক্ষক হিসেবে এগিয়ে যেতে সাহায্য করবে।",
+  pa: "ਨਮਸਤੇ ਅਧਿਆਪਕ! ਇੱਥੇ ਕੁਝ ਧਿਆਨ ਨਾਲ ਚੁਣੇ ਗਏ ਵੀਡੀਓ ਹਨ ਜੋ ਤੁਹਾਨੂੰ ਦਿਲਚਸਪ ਪਾਠ ਪੜ੍ਹਾਉਣ, ਸਰਕਾਰੀ ਨੀਤੀਆਂ ਬਾਰੇ ਅੱਪਡੇਟ ਰਹਿਣ ਅਤੇ ਇੱਕ ਅਧਿਆਪਕ ਵਜੋਂ ਅੱਗੇ ਵਧਣ ਵਿੱਚ ਮਦਦ ਕਰਨਗੇ।",
+  gu: "નમસ્તે અધ્યાપક! અહીં કાળજીપૂર્વક પસંદ કરેલા કેટલાક વીડિયો છે જે તમને રસપ્રદ પાઠ ભણાવવામાં, સરકારી નીતિઓ વિશે અપડેટ રહેવામાં અને એક શિક્ષક તરીકે વિકાસ કરવામાં મદદ કરશે.",
+  or: "ନମସ୍ତେ ଅଧ୍ୟାପକ! ଏଠାରେ ଯତ୍ନ ସହକାରେ ବଛାଯାଇଥିବା କିଛି ଭିଡିଓ ଅଛି ଯାହା ଆପଣଙ୍କୁ ଆକର୍ଷଣୀୟ ପାଠ ପଢ଼ାଇବାରେ, ସରକାରୀ ନୀତି ବିଷୟରେ ଅଦ୍ୟତନ ରହିବାରେ ଏବଂ ଜଣେ ଶିକ୍ଷକ ଭାବେ ଆଗକୁ ବଢ଼ିବାରେ ସାହାଯ୍ୟ କରିବ।",
+  ta: "வணக்கம் ஆசிரியரே! கவர்ச்சிகரமான பாடங்களை வழங்கவும், அரசாங்கக் கொள்கைகளில் புதுப்பித்த நிலையில் இருக்கவும், ஒரு கல்வியாளராக வளரவும் உதவ கவனமாகத் தேர்ந்தெடுக்கப்பட்ட சில வீடியோக்கள் இங்கே உள்ளன.",
+  te: "నమస్తే అధ్యాపకా! ఆకర్షణీయమైన పాఠాలను అందించడంలో, ప్రభుత్వ విధానాలపై తాజాగా ఉండడంలో మరియు ఉపాధ్యాయునిగా ఎదగడంలో మీకు సహాయపడేందుకు జాగ్రత్తగా ఎంపిక చేసిన కొన్ని వీడియోలు ఇక్కడ ఉన్నాయి.",
+  kn: "ನಮಸ್ತೆ ಅಧ್ಯಾಪಕರೇ! ಆಕರ್ಷಕ ಪಾಠಗಳನ್ನು ನೀಡಲು, ಸರ್ಕಾರಿ ನೀತಿಗಳ ಬಗ್ಗೆ ನವೀಕೃತವಾಗಿರಲು ಮತ್ತು ಶಿಕ್ಷಕರಾಗಿ ಬೆಳೆಯಲು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಎಚ್ಚರಿಕೆಯಿಂದ ಆಯ್ಕೆ ಮಾಡಿದ ಕೆಲವು ವೀಡಿಯೊಗಳು ಇಲ್ಲಿವೆ.",
+  ml: "നമസ്തേ അധ്യാപകാ! ആകർഷകമായ പാഠങ്ങൾ നൽകാനും സർക്കാർ നയങ്ങളെക്കുറിച്ച് അപ്ഡേറ്റ് ആയിരിക്കാനും ഒരു അധ്യാപകനായി വളരാനും നിങ്ങളെ സഹായിക്കുന്ന ശ്രദ്ധയോടെ തിരഞ്ഞെടുത്ത ചില വീഡിയോകൾ ഇതാ.",
+};
+
 // Next 15 prerender requires useSearchParams() to be wrapped in a
 // Suspense boundary; otherwise the page falls back to client-side
 // rendering at build time and errors out. Default export wraps the
@@ -57,7 +74,8 @@ export default function VideoStorytellerPage() {
 function VideoStorytellerPageInner() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
@@ -102,7 +120,7 @@ function VideoStorytellerPageInner() {
       console.error("Error fetching video recommendations:", error);
       setRecommendations({
         categories: { pedagogy: [], storytelling: [], govtUpdates: [], courses: [], topRecommended: [] },
-        personalizedMessage: "Namaste Adhyapak! Here are some carefully selected videos to help you deliver engaging lessons, stay updated on government policies, and grow as an educator.",
+        personalizedMessage: FALLBACK_MESSAGE[uiLangCode] || FALLBACK_MESSAGE.en,
         categorizedVideos: mergeCuratedVideos({}),
       });
       toast({
@@ -221,7 +239,7 @@ function VideoStorytellerPageInner() {
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
             : <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
           }
-          Refresh
+          {t("Refresh")}
         </Button>
       </div>
 

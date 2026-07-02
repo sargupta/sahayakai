@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { writeAuditLog } from '@/lib/audit-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,24 +81,62 @@ export async function POST(request: NextRequest) {
       .limit(50)
       .get();
 
+    // PII fields wiped on anonymisation. Kept as a single list so the wipe,
+    // the verification re-read, and the audit entry can never drift apart.
+    const PII_FIELDS = ['displayName', 'email', 'photoURL', 'schoolName', 'district', 'pincode', 'bio'] as const;
+
     let anonymized = 0;
+    let verificationFailures = 0;
     for (const doc of expiredSnap.docs) {
       // Idempotency guard (F12-P1-04): skip already-anonymized users.
       const docData = doc.data();
       if (docData?.cancellation?.anonymized === true) {
         continue;
       }
+      const anonEmail = `anonymized_${doc.id.slice(0, 8)}@sahayakai.app`;
       // Anonymize profile but keep content in read-only mode
-      await db.collection('users').doc(doc.id).update({
+      await doc.ref.update({
         'cancellation.anonymized': true,
         'cancellation.anonymizedAt': now.toISOString(),
         displayName: 'Former Teacher',
-        email: `anonymized_${doc.id.slice(0, 8)}@sahayakai.app`,
+        email: anonEmail,
         photoURL: null,
         schoolName: null,
         district: null,
         pincode: null,
         bio: null,
+      });
+
+      // End-to-end verification: re-read the doc and confirm every PII field
+      // is actually cleared before we treat the erasure as complete. Without
+      // this, a partial write would leave residual PII that nobody notices.
+      const after = (await doc.ref.get()).data() ?? {};
+      const residualPII = PII_FIELDS.filter((f) => {
+        if (f === 'displayName') return after.displayName !== 'Former Teacher';
+        if (f === 'email') return after.email !== anonEmail;
+        return after[f] !== null && after[f] !== undefined;
+      });
+      const verified = residualPII.length === 0;
+      if (!verified) {
+        verificationFailures++;
+        logger.error('Anonymisation verification failed — residual PII remains', undefined, 'JOBS', {
+          userId: doc.id, residualPII,
+        });
+      }
+
+      // Immutable audit trail: prove WHEN this user was anonymised, WHAT was
+      // cleared, and whether the post-write verification passed.
+      await writeAuditLog({
+        action: 'account.anonymized',
+        targetType: 'user',
+        targetId: doc.id,
+        actor: 'job:export-reminder',
+        details: {
+          fieldsCleared: [...PII_FIELDS],
+          verified,
+          residualPII,
+          gracePeriodEnd: docData?.cancellation?.gracePeriodEnd ?? null,
+        },
       });
       anonymized++;
     }
@@ -106,12 +145,14 @@ export async function POST(request: NextRequest) {
       usersChecked: snap.size,
       remindersQueued,
       anonymized,
+      verificationFailures,
     });
 
     return NextResponse.json({
       usersChecked: snap.size,
       remindersQueued,
       expiredAnonymized: anonymized,
+      verificationFailures,
     });
 
   } catch (error) {

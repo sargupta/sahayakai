@@ -19,8 +19,78 @@ import {
 import { getLogsAction } from '@/app/actions/logs';
 import { LogEntryDTO } from '@/lib/services/log-service';
 import { format } from 'date-fns';
+import { hi, bn, ta, te, kn, gu, enIN, type Locale } from 'date-fns/locale';
+import { useLanguage } from '@/context/language-context';
+import { LANGUAGE_TO_ISO } from '@/types';
+
+// Component-local chrome translations, keyed by the 11 ISO UI-language codes.
+const LOCAL_T: Record<string, Record<string, string>> = {
+    systemLogs: {
+        en: 'System Logs', hi: 'सिस्टम लॉग', mr: 'सिस्टम लॉग', bn: 'সিস্টেম লগ', pa: 'ਸਿਸਟਮ ਲੌਗ', gu: 'સિસ્ટમ લોગ', or: 'ସିଷ୍ଟମ୍ ଲଗ୍', ta: 'கணினி பதிவுகள்', te: 'సిస్టమ్ లాగ్‌లు', kn: 'ಸಿಸ್ಟಮ್ ಲಾಗ್‌ಗಳು', ml: 'സിസ്റ്റം ലോഗുകൾ'
+    },
+    subtitle: {
+        en: 'Real-time infrastructure and AI flow visibility from GCP Logging.',
+        hi: 'GCP लॉगिंग से रीयल-टाइम इन्फ्रास्ट्रक्चर और AI फ़्लो की दृश्यता।',
+        mr: 'GCP लॉगिंगमधून रिअल-टाइम इन्फ्रास्ट्रक्चर आणि AI फ्लो दृश्यमानता.',
+        bn: 'GCP লগিং থেকে রিয়েল-টাইম পরিকাঠামো এবং AI ফ্লো দৃশ্যমানতা।',
+        pa: 'GCP ਲੌਗਿੰਗ ਤੋਂ ਰੀਅਲ-ਟਾਈਮ ਬੁਨਿਆਦੀ ਢਾਂਚਾ ਅਤੇ AI ਫਲੋ ਦੀ ਦਿੱਖ।',
+        gu: 'GCP લોગિંગથી રીઅલ-ટાઇમ ઇન્ફ્રાસ્ટ્રક્ચર અને AI ફ્લો દૃશ્યતા.',
+        or: 'GCP ଲଗିଂରୁ ରିଅଲ୍-ଟାଇମ୍ ଭିତ୍ତିଭୂମି ଏବଂ AI ଫ୍ଲୋ ଦୃଶ୍ୟମାନତା।',
+        ta: 'GCP லாக்கிங்கிலிருந்து நிகழ்நேர உள்கட்டமைப்பு மற்றும் AI ஓட்ட தெரிவுநிலை.',
+        te: 'GCP లాగింగ్ నుండి రియల్-టైమ్ మౌలిక సదుపాయాలు మరియు AI ఫ్లో దృశ్యమానత.',
+        kn: 'GCP ಲಾಗಿಂಗ್‌ನಿಂದ ರಿಯಲ್-ಟೈಮ್ ಮೂಲಸೌಕರ್ಯ ಮತ್ತು AI ಫ್ಲೋ ಗೋಚರತೆ.',
+        ml: 'GCP ലോഗിംഗിൽ നിന്നുള്ള തത്സമയ ഇൻഫ്രാസ്ട്രക്ചറും AI ഫ്ലോ ദൃശ്യതയും.'
+    },
+    filterBySeverity: {
+        en: 'Filter by Severity:', hi: 'गंभीरता के अनुसार फ़िल्टर करें:', mr: 'तीव्रतेनुसार फिल्टर करा:', bn: 'গুরুত্ব অনুসারে ফিল্টার করুন:', pa: 'ਗੰਭੀਰਤਾ ਅਨੁਸਾਰ ਫਿਲਟਰ ਕਰੋ:', gu: 'ગંભીરતા પ્રમાણે ફિલ્ટર કરો:', or: 'ଗମ୍ଭୀରତା ଅନୁସାରେ ଫିଲ୍ଟର୍ କରନ୍ତୁ:', ta: 'தீவிரத்தன்மை அடிப்படையில் வடிகட்டு:', te: 'తీవ్రత ఆధారంగా ఫిల్టర్ చేయండి:', kn: 'ತೀವ್ರತೆಯ ಆಧಾರದ ಮೇಲೆ ಫಿಲ್ಟರ್ ಮಾಡಿ:', ml: 'തീവ്രത അനുസരിച്ച് ഫിൽട്ടർ ചെയ്യുക:'
+    },
+    syncing: {
+        en: 'Syncing with GCP...', hi: 'GCP के साथ सिंक हो रहा है...', mr: 'GCP सोबत सिंक होत आहे...', bn: 'GCP-এর সাথে সিঙ্ক হচ্ছে...', pa: 'GCP ਨਾਲ ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...', gu: 'GCP સાથે સિંક થઈ રહ્યું છે...', or: 'GCP ସହିତ ସିଙ୍କ୍ ହେଉଛି...', ta: 'GCP உடன் ஒத்திசைக்கிறது...', te: 'GCP తో సింక్ అవుతోంది...', kn: 'GCP ಜೊತೆ ಸಿಂಕ್ ಆಗುತ್ತಿದೆ...', ml: 'GCP-യുമായി സമന്വയിപ്പിക്കുന്നു...'
+    },
+    fetchError: {
+        en: 'An unexpected error occurred while fetching logs.',
+        hi: 'लॉग प्राप्त करते समय एक अप्रत्याशित त्रुटि हुई।',
+        mr: 'लॉग मिळवताना एक अनपेक्षित त्रुटी आली.',
+        bn: 'লগ আনার সময় একটি অপ্রত্যাশিত ত্রুটি ঘটেছে।',
+        pa: 'ਲੌਗ ਪ੍ਰਾਪਤ ਕਰਦੇ ਸਮੇਂ ਇੱਕ ਅਣਕਿਆਸੀ ਗਲਤੀ ਹੋਈ।',
+        gu: 'લૉગ મેળવતી વખતે એક અણધારી ભૂલ આવી.',
+        or: 'ଲଗ୍ ଆଣିବା ସମୟରେ ଏକ ଅପ୍ରତ୍ୟାଶିତ ତ୍ରୁଟି ଘଟିଲା।',
+        ta: 'பதிவுகளைப் பெறும்போது எதிர்பாராத பிழை ஏற்பட்டது.',
+        te: 'లాగ్‌లను పొందుతున్నప్పుడు ఊహించని లోపం సంభవించింది.',
+        kn: 'ಲಾಗ್‌ಗಳನ್ನು ಪಡೆಯುವಾಗ ಅನಿರೀಕ್ಷಿತ ದೋಷ ಸಂಭವಿಸಿದೆ.',
+        ml: 'ലോഗുകൾ ലഭ്യമാക്കുമ്പോൾ അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.'
+    },
+    liveStream: {
+        en: 'Live Stream', hi: 'लाइव स्ट्रीम', mr: 'लाइव्ह स्ट्रीम', bn: 'লাইভ স্ট্রিম', pa: 'ਲਾਈਵ ਸਟ੍ਰੀਮ', gu: 'લાઇવ સ્ટ્રીમ', or: 'ଲାଇଭ୍ ଷ୍ଟ୍ରିମ୍', ta: 'நேரடி ஸ்ட்ரீம்', te: 'లైవ్ స్ట్రీమ్', kn: 'ಲೈವ್ ಸ್ಟ್ರೀಮ್', ml: 'ലൈവ് സ്ട്രീം'
+    },
+    last50: {
+        en: 'Last 50 Entries', hi: 'अंतिम 50 प्रविष्टियाँ', mr: 'शेवटच्या 50 नोंदी', bn: 'সর্বশেষ 50টি এন্ট্রি', pa: 'ਆਖਰੀ 50 ਐਂਟਰੀਆਂ', gu: 'છેલ્લી 50 એન્ટ્રીઓ', or: 'ଶେଷ 50 ଏଣ୍ଟ୍ରି', ta: 'கடைசி 50 உள்ளீடுகள்', te: 'చివరి 50 ఎంట్రీలు', kn: 'ಕೊನೆಯ 50 ನಮೂದುಗಳು', ml: 'അവസാന 50 എൻട്രികൾ'
+    },
+    noLogs: {
+        en: 'No logs found for this filter in the last period.',
+        hi: 'पिछली अवधि में इस फ़िल्टर के लिए कोई लॉग नहीं मिला।',
+        mr: 'मागील कालावधीत या फिल्टरसाठी कोणतेही लॉग आढळले नाहीत.',
+        bn: 'গত সময়কালে এই ফিল্টারের জন্য কোনো লগ পাওয়া যায়নি।',
+        pa: 'ਪਿਛਲੇ ਸਮੇਂ ਵਿੱਚ ਇਸ ਫਿਲਟਰ ਲਈ ਕੋਈ ਲੌਗ ਨਹੀਂ ਮਿਲਿਆ।',
+        gu: 'છેલ્લા સમયગાળામાં આ ફિલ્ટર માટે કોઈ લૉગ મળ્યો નથી.',
+        or: 'ଶେଷ ସମୟ ଅବଧିରେ ଏହି ଫିଲ୍ଟର୍ ପାଇଁ କୌଣସି ଲଗ୍ ମିଳିଲା ନାହିଁ।',
+        ta: 'கடந்த காலகட்டத்தில் இந்த வடிப்பானுக்கு பதிவுகள் எதுவும் இல்லை.',
+        te: 'గత కాలంలో ఈ ఫిల్టర్ కోసం లాగ్‌లు ఏవీ కనుగొనబడలేదు.',
+        kn: 'ಕಳೆದ ಅವಧಿಯಲ್ಲಿ ಈ ಫಿಲ್ಟರ್‌ಗಾಗಿ ಯಾವುದೇ ಲಾಗ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.',
+        ml: 'കഴിഞ്ഞ കാലയളവിൽ ഈ ഫിൽട്ടറിനായി ലോഗുകളൊന്നും കണ്ടെത്തിയില്ല.'
+    }
+};
+
+// date-fns locales by ISO; mr/or/pa/ml lack a date-fns locale -> fall back to enIN.
+const DATE_LOCALES: Record<string, Locale> = {
+    en: enIN, hi, bn, ta, te, kn, gu, mr: hi, or: enIN, pa: enIN, ml: enIN
+};
 
 export default function AdminLogDashboard() {
+    const { language, t } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || 'en';
+    const tl = (key: string) => LOCAL_T[key]?.[uiLangCode] ?? LOCAL_T[key]?.en ?? key;
+    const dateLocale = DATE_LOCALES[uiLangCode] || enIN;
     const [logs, setLogs] = useState<LogEntryDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [severityFilter, setSeverityFilter] = useState('ALL');
@@ -38,11 +108,11 @@ export default function AdminLogDashboard() {
                 setLogs(result.logs || []);
             }
         } catch (err) {
-            setError('An unexpected error occurred while fetching logs.');
+            setError(LOCAL_T.fetchError[uiLangCode] ?? LOCAL_T.fetchError.en);
         } finally {
             setLoading(false);
         }
-    }, [severityFilter]);
+    }, [severityFilter, uiLangCode]);
 
     useEffect(() => {
         fetchLogs();
@@ -69,10 +139,10 @@ export default function AdminLogDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-headline font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                        System Logs
+                        {tl('systemLogs')}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Real-time infrastructure and AI flow visibility from GCP Logging.
+                        {tl('subtitle')}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -84,7 +154,7 @@ export default function AdminLogDashboard() {
                         className="gap-2 backdrop-blur-sm bg-background/50"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
+                        {t('Refresh')}
                     </Button>
                 </div>
             </div>
@@ -95,7 +165,7 @@ export default function AdminLogDashboard() {
                     <CardContent className="p-4 flex flex-wrap items-center gap-4">
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <Filter className="h-4 w-4 text-muted-foreground" />
-                            Filter by Severity:
+                            {tl('filterBySeverity')}
                         </div>
                         <div className="flex gap-2">
                             {['ALL', 'INFO', 'WARNING', 'ERROR'].map((lvl) => (
@@ -116,7 +186,7 @@ export default function AdminLogDashboard() {
                         </div>
                         {loading && <div className="ml-auto text-xs text-muted-foreground flex items-center gap-2">
                             <Activity className="h-3 w-3 animate-pulse text-primary" />
-                            Syncing with GCP...
+                            {tl('syncing')}
                         </div>}
                     </CardContent>
                 </Card>
@@ -134,10 +204,10 @@ export default function AdminLogDashboard() {
                         <div className="flex justify-between items-center">
                             <CardTitle className="text-lg font-semibold flex items-center gap-2">
                                 <Terminal className="h-5 w-5 text-primary" />
-                                Live Stream
+                                {tl('liveStream')}
                             </CardTitle>
                             <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">
-                                Last 50 Entries
+                                {tl('last50')}
                             </span>
                         </div>
                     </CardHeader>
@@ -146,7 +216,7 @@ export default function AdminLogDashboard() {
                             {logs.length === 0 && !loading ? (
                                 <div className="p-12 text-center">
                                     <Terminal className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                                    <p className="text-muted-foreground">No logs found for this filter in the last period.</p>
+                                    <p className="text-muted-foreground">{tl('noLogs')}</p>
                                 </div>
                             ) : (
                                 logs.map((log, index) => {
@@ -163,7 +233,7 @@ export default function AdminLogDashboard() {
                                                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                                 </div>
                                                 <div className="w-48 flex-shrink-0 text-xs font-mono text-muted-foreground tabular-nums">
-                                                    {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')}
+                                                    {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss', { locale: dateLocale })}
                                                 </div>
                                                 <div className="w-32 flex-shrink-0">
                                                     {getSeverityBadge(log.severity)}

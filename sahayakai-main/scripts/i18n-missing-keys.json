@@ -1,1 +1,18 @@
-[]
+[
+  "Call ended before a conversation could happen",
+  "Contact & location (optional)",
+  "Detect my location",
+  "Mobile number",
+  "Optional. Used for parent SMS only. Never shared.",
+  "Pincode",
+  "Please enter a 10-digit number",
+  "Please enter a 6-digit pincode",
+  "Please re-authenticate to confirm account deletion.",
+  "The call connected but no summary was generated. The transcript below has the full exchange.",
+  "This is an AI demo persona, not a real teacher. Its messages are AI-generated and not fact-checked.",
+  "Voice input not supported",
+  "We use this to suggest content for your region.",
+  "Your browser does not support audio processing. Please try a different browser.",
+  "Your name",
+  "e.g. Anita Sharma"
+]

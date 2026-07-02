@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { getClassAction, getStudentsAction } from "@/app/actions/attendance";
 import { getAuthToken } from "@/lib/get-auth-token";
@@ -28,26 +29,79 @@ import {
 } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 
-const TYPE_LABELS: Record<AssessmentType, string> = {
-    unit_test: "Unit Test",
-    mid_term: "Mid Term",
-    final_exam: "Final Exam",
-    assignment: "Assignment",
-    practical: "Practical",
-    project: "Project",
+// Component-local translation tables keyed by AssessmentType/Term -> ISO uiLangCode -> native-script label.
+const TYPE_LABELS: Record<AssessmentType, Record<string, string>> = {
+    unit_test: {
+        en: "Unit Test", hi: "इकाई परीक्षा", mr: "घटक चाचणी", bn: "একক পরীক্ষা",
+        pa: "ਯੂਨਿਟ ਟੈਸਟ", gu: "એકમ કસોટી", or: "ଏକକ ପରୀକ୍ଷା", ta: "அலகுத் தேர்வு",
+        te: "యూనిట్ పరీక్ష", kn: "ಘಟಕ ಪರೀಕ್ಷೆ", ml: "യൂണിറ്റ് ടെസ്റ്റ്",
+    },
+    mid_term: {
+        en: "Mid Term", hi: "अर्धवार्षिक", mr: "सत्रमध्य", bn: "মধ্যবর্তী পরীক্ষা",
+        pa: "ਮੱਧ ਮਿਆਦ", gu: "મધ્ય સત્ર", or: "ମଧ୍ୟବର୍ତ୍ତୀ", ta: "இடைப்பருவம்",
+        te: "మధ్యంతర", kn: "ಮಧ್ಯಾವಧಿ", ml: "മധ്യവാർഷികം",
+    },
+    final_exam: {
+        en: "Final Exam", hi: "अंतिम परीक्षा", mr: "अंतिम परीक्षा", bn: "চূড়ান্ত পরীক্ষা",
+        pa: "ਅੰਤਿਮ ਪ੍ਰੀਖਿਆ", gu: "અંતિમ પરીક્ષા", or: "ଅନ୍ତିମ ପରୀକ୍ଷା", ta: "இறுதித் தேர்வு",
+        te: "తుది పరీక్ష", kn: "ಅಂತಿಮ ಪರೀಕ್ಷೆ", ml: "അന്തിമ പരീക്ഷ",
+    },
+    assignment: {
+        en: "Assignment", hi: "असाइनमेंट", mr: "असाइनमेंट", bn: "অ্যাসাইনমেন্ট",
+        pa: "ਅਸਾਈਨਮੈਂਟ", gu: "સોંપણી", or: "ଆସାଇନମେଣ୍ଟ", ta: "பணி",
+        te: "అసైన్‌మెంట్", kn: "ನಿಯೋಜನೆ", ml: "അസൈൻമെന്റ്",
+    },
+    practical: {
+        en: "Practical", hi: "प्रायोगिक", mr: "प्रात्यक्षिक", bn: "ব্যবহারিক",
+        pa: "ਪ੍ਰਯੋਗੀ", gu: "પ્રાયોગિક", or: "ବ୍ୟବହାରିକ", ta: "செயல்முறை",
+        te: "ప్రాక్టికల్", kn: "ಪ್ರಾಯೋಗಿಕ", ml: "പ്രായോഗികം",
+    },
+    project: {
+        en: "Project", hi: "परियोजना", mr: "प्रकल्प", bn: "প্রকল্প",
+        pa: "ਪ੍ਰੋਜੈਕਟ", gu: "પ્રોજેક્ટ", or: "ପ୍ରକଳ୍ପ", ta: "திட்டப்பணி",
+        te: "ప్రాజెక్ట్", kn: "ಯೋಜನೆ", ml: "പ്രോജക്റ്റ്",
+    },
 };
 
-const TERM_LABELS: Record<Term, string> = {
-    term1: "Term 1",
-    term2: "Term 2",
-    annual: "Annual",
+const TERM_LABELS: Record<Term, Record<string, string>> = {
+    term1: {
+        en: "Term 1", hi: "सत्र 1", mr: "सत्र 1", bn: "পর্ব ১",
+        pa: "ਮਿਆਦ 1", gu: "સત્ર 1", or: "ସତ୍ର 1", ta: "பருவம் 1",
+        te: "టర్మ్ 1", kn: "ಅವಧಿ 1", ml: "ടേം 1",
+    },
+    term2: {
+        en: "Term 2", hi: "सत्र 2", mr: "सत्र 2", bn: "পর্ব ২",
+        pa: "ਮਿਆਦ 2", gu: "સત્ર 2", or: "ସତ୍ର 2", ta: "பருவம் 2",
+        te: "టర్మ్ 2", kn: "ಅವಧಿ 2", ml: "ടേം 2",
+    },
+    annual: {
+        en: "Annual", hi: "वार्षिक", mr: "वार्षिक", bn: "বার্ষিক",
+        pa: "ਸਾਲਾਨਾ", gu: "વાર્ષિક", or: "ବାର୍ଷିକ", ta: "ஆண்டுத் தேர்வு",
+        te: "వార్షిక", kn: "ವಾರ್ಷಿಕ", ml: "വാർഷികം",
+    },
+};
+
+// Fallback "Save failed (status)" copy keyed by ISO uiLangCode. {status} is interpolated at call time.
+const SAVE_FAILED_LABELS: Record<string, string> = {
+    en: "Save failed ({status})",
+    hi: "सहेजना विफल ({status})",
+    mr: "जतन अयशस्वी ({status})",
+    bn: "সংরক্ষণ ব্যর্থ ({status})",
+    pa: "ਸੰਭਾਲਣ ਵਿੱਚ ਅਸਫਲ ({status})",
+    gu: "સાચવવામાં નિષ્ફળ ({status})",
+    or: "ସଞ୍ଚୟ ବିଫଳ ({status})",
+    ta: "சேமிக்க முடியவில்லை ({status})",
+    te: "సేవ్ విఫలమైంది ({status})",
+    kn: "ಉಳಿಸುವಿಕೆ ವಿಫಲವಾಗಿದೆ ({status})",
+    ml: "സേവ് പരാജയപ്പെട്ടു ({status})",
 };
 
 function MarksEntryContent() {
     const { classId } = useParams<{ classId: string }>();
     const router = useRouter();
     const { toast } = useToast();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
 
     const [cls, setCls] = useState<ClassRecord | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
@@ -182,7 +236,8 @@ function MarksEntryContent() {
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
-                throw new Error(data.error || `Save failed (${res.status})`);
+                const fallback = (SAVE_FAILED_LABELS[uiLangCode] || SAVE_FAILED_LABELS.en).replace("{status}", String(res.status));
+                throw new Error(data.error || fallback);
             }
 
             toast({ title: t("Marks saved successfully") });
@@ -245,8 +300,8 @@ function MarksEntryContent() {
                         >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {ASSESSMENT_TYPES.map((t) => (
-                                    <SelectItem key={t} value={t}>{TYPE_LABELS[t]}</SelectItem>
+                                {ASSESSMENT_TYPES.map((type) => (
+                                    <SelectItem key={type} value={type}>{TYPE_LABELS[type][uiLangCode] || TYPE_LABELS[type].en}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -261,7 +316,7 @@ function MarksEntryContent() {
                             <SelectTrigger><SelectValue placeholder={t("Select subject")} /></SelectTrigger>
                             <SelectContent>
                                 {SUBJECTS.map((s) => (
-                                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    <SelectItem key={s} value={s}>{t(s)}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -286,8 +341,8 @@ function MarksEntryContent() {
                         >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {TERMS.map((t) => (
-                                    <SelectItem key={t} value={t}>{TERM_LABELS[t]}</SelectItem>
+                                {TERMS.map((tm) => (
+                                    <SelectItem key={tm} value={tm}>{TERM_LABELS[tm][uiLangCode] || TERM_LABELS[tm].en}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

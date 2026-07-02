@@ -180,8 +180,13 @@ const translations: Translations = {
 export interface AssessmentCameraProps {
   /** Fires once the photo is ready as a base64 data URI. Empty string clears. */
   onImageReady: (dataUri: string) => void;
-  /** Language code for labels (en/hi/bn/ta/te/kn/ml/gu/pa/mr/or). */
-  language?: string;
+  /**
+   * UI-language ISO code for the capture-pane chrome
+   * (en/hi/bn/ta/te/kn/ml/gu/pa/mr/or). This is interface chrome, so it MUST
+   * follow the app UI language (uiLangCode), NOT the selected AI-output
+   * language. Caller passes `uiLangCode={LANGUAGE_TO_ISO[language]}`.
+   */
+  uiLangCode?: string;
   className?: string;
   /** Max file size in bytes. Defaults to 8 MB. */
   maxBytes?: number;
@@ -192,11 +197,11 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export const AssessmentCamera: FC<AssessmentCameraProps> = ({
   onImageReady,
-  language = "en",
+  uiLangCode = "en",
   className,
   maxBytes = DEFAULT_MAX_BYTES,
 }) => {
-  const t = translations[language] || translations.en;
+  const t = translations[uiLangCode] || translations.en;
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);

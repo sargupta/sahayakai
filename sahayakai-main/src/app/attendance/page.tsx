@@ -115,7 +115,7 @@ function AttendancePageContent() {
                                     <span>{cls.gradeLevel ? t(cls.gradeLevel) : cls.gradeLevel}</span>
                                     <span>·</span>
                                     <span>{cls.subject ? t(cls.subject) : cls.subject}</span>
-                                    {cls.section && <><span>·</span><span>Section {cls.section}</span></>}
+                                    {cls.section && <><span>·</span><span>{t("Section")} {cls.section}</span></>}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">
                                     <div className="flex items-center gap-1 text-xs text-muted-foreground">

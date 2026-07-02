@@ -75,7 +75,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "আপনার ভিজ্যুয়াল এইড তৈরি করা হচ্ছে... এতে কিছুক্ষণ সময় লাগতে পারে।",
     resultTitle: "তৈরি করা ছবি",
     saveButton: "সংরক্ষণ করুন",
-    downloadButton: "ডাউনলোড করুন"
+    downloadButton: "ডাউনলোড করুন",
+    subjectLabel: "বিষয়"
   },
   te: {
     pageTitle: "విజువల్ ఎయిడ్ డిజైనర్",
@@ -90,7 +91,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "మీ విజువల్ ఎయిడ్ను సృష్టిస్తోంది... దీనికి కొంత సమయం పట్టవచ్చు.",
     resultTitle: "సృష్టించబడిన చిత్రం",
     saveButton: "సేవ్ చేయండి",
-    downloadButton: "డౌన్లోడ్ చేయండి"
+    downloadButton: "డౌన్లోడ్ చేయండి",
+    subjectLabel: "విషయం"
   },
   mr: {
     pageTitle: "व्हिज्युअल एड डिझायनर",
@@ -105,7 +107,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "तुमचे व्हिज्युअल एड तयार करत आहे... यास थोडा वेळ लागू शकतो.",
     resultTitle: "तयार केलेली प्रतिमा",
     saveButton: "जतन करा",
-    downloadButton: "डाउनलोड करा"
+    downloadButton: "डाउनलोड करा",
+    subjectLabel: "विषय"
   },
   ta: {
     pageTitle: "காட்சி உதவி வடிவமைப்பாளர்",
@@ -120,7 +123,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "உங்கள் காட்சி உதவியை உருவாக்குகிறது... இதற்கு சிறிது நேரம் ஆகலாம்.",
     resultTitle: "உருவாக்கப்பட்ட படம்",
     saveButton: "சேமிக்கவும்",
-    downloadButton: "பதிவிறக்கவும்"
+    downloadButton: "பதிவிறக்கவும்",
+    subjectLabel: "பாடம்"
   },
   gu: {
     pageTitle: "વિઝ્યુઅલ એઇડ ડિઝાઇનર",
@@ -135,7 +139,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "તમારી વિઝ્યુઅલ એઇડ બનાવી રહ્યું છે... આમાં થોડો સમય લાગી શકે છે.",
     resultTitle: "બનાવેલી છબી",
     saveButton: "સાચવો",
-    downloadButton: "ડાઉનલોડ કરો"
+    downloadButton: "ડાઉનલોડ કરો",
+    subjectLabel: "વિષય"
   },
   kn: {
     pageTitle: "ವಿಶುವಲ್ ಏಡ್ ಡಿಸೈನರ್",
@@ -150,7 +155,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "ನಿಮ್ಮ ವಿಶುವಲ್ ಏಡ್ ರಚಿಸಲಾಗುತ್ತಿದೆ... ಇದಕ್ಕೆ ಸ್ವಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳಬಹುದು.",
     resultTitle: "ರಚಿಸಿದ ಚಿತ್ರ",
     saveButton: "ಉಳಿಸಿ",
-    downloadButton: "ಡೌನ್ಲೋಡ್ ಮಾಡಿ"
+    downloadButton: "ಡೌನ್ಲೋಡ್ ಮಾಡಿ",
+    subjectLabel: "ವಿಷಯ"
   },
   pa: {
     pageTitle: "ਵਿਜ਼ੂਅਲ ਏਡ ਡਿਜ਼ਾਈਨਰ",
@@ -165,7 +171,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "ਤੁਹਾਡੀ ਵਿਜ਼ੂਅਲ ਏਡ ਬਣਾ ਰਿਹਾ ਹੈ... ਇਸ ਵਿੱਚ ਕੁਝ ਸਮਾਂ ਲੱਗ ਸਕਦਾ ਹੈ।",
     resultTitle: "ਬਣਾਈ ਗਈ ਤਸਵੀਰ",
     saveButton: "ਸੁਰੱਖਿਅਤ ਕਰੋ",
-    downloadButton: "ਡਾਊਨਲੋਡ ਕਰੋ"
+    downloadButton: "ਡਾਊਨਲੋਡ ਕਰੋ",
+    subjectLabel: "ਵਿਸ਼ਾ"
   },
   ml: {
     pageTitle: "വിഷ്വൽ എയ്ഡ് ഡിസൈനർ",
@@ -180,7 +187,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "നിങ്ങളുടെ വിഷ്വൽ എയ്ഡ് സൃഷ്ടിക്കുന്നു... ഇതിന് ഒരു നിമിഷം എടുത്തേക്കാം.",
     resultTitle: "സൃഷ്ടിച്ച ചിത്രം",
     saveButton: "സേവ് ചെയ്യുക",
-    downloadButton: "ഡൗൺലോഡ് ചെയ്യുക"
+    downloadButton: "ഡൗൺലോഡ് ചെയ്യുക",
+    subjectLabel: "വിഷയം"
   },
   or: {
     pageTitle: "ଭିଜୁଆଲ୍ ଏଡ୍ ଡିଜାଇନର୍",
@@ -195,7 +203,8 @@ const translations: Record<string, Record<string, string>> = {
     generatingText: "ଆପଣଙ୍କ ଭିଜୁଆଲ୍ ଏଡ୍ ତିଆରି ଚାଲିଛି... ଏଥିପାଇଁ କିଛି ସମୟ ଲାଗିପାରે |",
     resultTitle: "ପ୍ରସ୍ତୁତ ଚିତ୍ର",
     saveButton: "ସଂରକ୍ଷଣ କରନ୍ତୁ",
-    downloadButton: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ"
+    downloadButton: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
+    subjectLabel: "ବିଷୟ"
   },
 };
 
@@ -445,7 +454,7 @@ function VisualAidContent() {
                 )}
               />
 
-              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="visual-aid" />
+              <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="visual-aid" />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
                 <FormField
@@ -544,7 +553,7 @@ function VisualAidContent() {
             visualAid={visualAid}
             title={form.getValues('prompt')}
             gradeLevel={form.getValues('gradeLevel')}
-            language={form.getValues('language')}
+            language={uiLangCode}
           />
           <ShareToCommunityCTA contentType="visual-aid" className="mt-3" />
           </div>

@@ -3,6 +3,7 @@
 import { useSubscription } from '@/hooks/use-subscription';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
+import { LANGUAGE_TO_ISO } from '@/types';
 import { PLAN_DISPLAY_NAMES } from '@/lib/plan-config';
 import type { PlanType } from '@/lib/plan-utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +31,73 @@ const FEATURE_META: Record<string, { icon: React.ElementType; label: string; hre
     'voice-to-text':     { icon: Mic,             label: 'Voice to Text',      href: '/' },
 };
 
+// Component-local translation table for FEATURE_META labels, keyed by ISO code.
+// Resolved by uiLangCode so feature names follow the app UI language even when
+// the shared dictionary lacks a key. (B1-HARDCODED-ENGLISH)
+const FEATURE_LABELS: Record<string, Record<string, string>> = {
+    'lesson-plan': {
+        en: 'Lesson Plans', hi: 'पाठ योजनाएं', mr: 'पाठ योजना', bn: 'পাঠ পরিকল্পনা',
+        pa: 'ਪਾਠ ਯੋਜਨਾਵਾਂ', gu: 'પાઠ યોજનાઓ', or: 'ପାଠ ଯୋଜନା', ta: 'பாடத் திட்டங்கள்',
+        te: 'పాఠ ప్రణాళికలు', kn: 'ಪಾಠ ಯೋಜನೆಗಳು', ml: 'പാഠ പദ്ധതികൾ',
+    },
+    'quiz': {
+        en: 'Quizzes', hi: 'प्रश्नोत्तरी', mr: 'प्रश्नमंजुषा', bn: 'কুইজ',
+        pa: 'ਕੁਇਜ਼', gu: 'ક્વિઝ', or: 'କୁଇଜ୍', ta: 'வினாடி வினா',
+        te: 'క్విజ్‌లు', kn: 'ರಸಪ್ರಶ್ನೆಗಳು', ml: 'ക്വിസുകൾ',
+    },
+    'worksheet': {
+        en: 'Worksheets', hi: 'वर्कशीट', mr: 'वर्कशीट', bn: 'ওয়ার্কশীট',
+        pa: 'ਵਰਕਸ਼ੀਟ', gu: 'વર્કશીટ', or: 'ୱର୍କସିଟ୍', ta: 'வேலைத்தாள்கள்',
+        te: 'వర్క్‌షీట్‌లు', kn: 'ವರ್ಕ್‌ಶೀಟ್‌ಗಳು', ml: 'വർക്ക്‌ഷീറ്റുകൾ',
+    },
+    'rubric': {
+        en: 'Rubrics', hi: 'मूल्यांकन मानक', mr: 'मूल्यांकन निकष', bn: 'মূল্যায়ন মানদণ্ড',
+        pa: 'ਮੁਲਾਂਕਣ ਮਾਪਦੰਡ', gu: 'મૂલ્યાંકન માપદંડ', or: 'ମୂଲ୍ୟାୟନ ମାନଦଣ୍ଡ', ta: 'மதிப்பீட்டு அளவுகோல்கள்',
+        te: 'మూల్యాంకన ప్రమాణాలు', kn: 'ಮೌಲ್ಯಮಾಪನ ಮಾನದಂಡಗಳು', ml: 'മൂല്യനിർണ്ണയ മാനദണ്ഡങ്ങൾ',
+    },
+    'instant-answer': {
+        en: 'Instant Answers', hi: 'तुरंत उत्तर', mr: 'त्वरित उत्तरे', bn: 'তাৎক্ষণিক উত্তর',
+        pa: 'ਤੁਰੰਤ ਜਵਾਬ', gu: 'તાત્કાલિક જવાબો', or: 'ତୁରନ୍ତ ଉତ୍ତର', ta: 'உடனடி பதில்கள்',
+        te: 'తక్షణ సమాధానాలు', kn: 'ತಕ್ಷಣದ ಉತ್ತರಗಳು', ml: 'തൽക്ഷണ ഉത്തരങ്ങൾ',
+    },
+    'teacher-training': {
+        en: 'Teacher Training', hi: 'टीचर ट्रेनिंग', mr: 'शिक्षक प्रशिक्षण', bn: 'শিক্ষক প্রশিক্ষণ',
+        pa: 'ਅਧਿਆਪਕ ਸਿਖਲਾਈ', gu: 'શિક્ષક તાલીમ', or: 'ଶିକ୍ଷକ ତାଲିମ୍', ta: 'ஆசிரியர் பயிற்சி',
+        te: 'ఉపాధ్యాయ శిక్షణ', kn: 'ಶಿಕ್ಷಕ ತರಬೇತಿ', ml: 'അധ്യാപക പരിശീലനം',
+    },
+    'virtual-field-trip': {
+        en: 'Virtual Field Trips', hi: 'वर्चुअल फील्ड ट्रिप', mr: 'व्हर्च्युअल फील्ड ट्रिप', bn: 'ভার্চুয়াল ফিল্ড ট্রিপ',
+        pa: 'ਵਰਚੁਅਲ ਫੀਲਡ ਟ੍ਰਿਪ', gu: 'વર્ચ્યુઅલ ફીલ્ડ ટ્રિપ', or: 'ଭର୍ଚୁଆଲ୍ ଫିଲ୍ଡ ଟ୍ରିପ୍', ta: 'மெய்நிகர் கள பயணங்கள்',
+        te: 'వర్చువల్ ఫీల్డ్ ట్రిప్‌లు', kn: 'ವರ್ಚುವಲ್ ಫೀಲ್ಡ್ ಟ್ರಿಪ್‌ಗಳು', ml: 'വെർച്വൽ ഫീൽഡ് ട്രിപ്പുകൾ',
+    },
+    'visual-aid': {
+        en: 'Visual Aids', hi: 'दृश्य सामग्री', mr: 'दृश्य साधने', bn: 'ভিজ্যুয়াল এইড',
+        pa: 'ਵਿਜ਼ੂਅਲ ਏਡਜ਼', gu: 'દ્રશ્ય સહાય', or: 'ଭିଜୁଆଲ୍ ଏଡ୍', ta: 'காட்சி உதவிகள்',
+        te: 'దృశ్య సహాయాలు', kn: 'ದೃಶ್ಯ ಸಾಧನಗಳು', ml: 'വിഷ്വൽ എയ്ഡ്സ്',
+    },
+    'avatar': {
+        en: 'AI Avatars', hi: 'एआई अवतार', mr: 'एआय अवतार', bn: 'এআই অবতার',
+        pa: 'ਏਆਈ ਅਵਤਾਰ', gu: 'એઆઈ અવતાર', or: 'ଏଆଇ ଅବତାର', ta: 'AI அவதாரங்கள்',
+        te: 'AI అవతారాలు', kn: 'AI ಅವತಾರಗಳು', ml: 'AI അവതാരങ്ങൾ',
+    },
+    'parent-message': {
+        en: 'Parent Messages', hi: 'अभिभावक संदेश', mr: 'पालक संदेश', bn: 'অভিভাবক বার্তা',
+        pa: 'ਮਾਪੇ ਸੁਨੇਹੇ', gu: 'વાલી સંદેશા', or: 'ଅଭିଭାବକ ବାର୍ତ୍ତା', ta: 'பெற்றோர் செய்திகள்',
+        te: 'తల్లిదండ్రుల సందేశాలు', kn: 'ಪೋಷಕರ ಸಂದೇಶಗಳು', ml: 'രക്ഷിതാക്കളുടെ സന്ദേശങ്ങൾ',
+    },
+    'voice-to-text': {
+        en: 'Voice to Text', hi: 'आवाज से टेक्स्ट', mr: 'आवाज ते मजकूर', bn: 'ভয়েস থেকে টেক্সট',
+        pa: 'ਆਵਾਜ਼ ਤੋਂ ਟੈਕਸਟ', gu: 'અવાજથી ટેક્સ્ટ', or: 'ସ୍ୱର ରୁ ଟେକ୍ସଟ୍', ta: 'குரல் முதல் உரை',
+        te: 'వాయిస్ నుండి టెక్స్ట్', kn: 'ಧ್ವನಿಯಿಂದ ಪಠ್ಯ', ml: 'ശബ്ദത്തിൽ നിന്ന് ടെക്സ്റ്റ്',
+    },
+};
+
+// BCP-47 locale tags by UI ISO code, for date formatting. (B7-LOCALE-FORMAT)
+const ISO_TO_BCP47: Record<string, string> = {
+    en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', bn: 'bn-IN', pa: 'pa-IN', gu: 'gu-IN',
+    or: 'or-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN',
+};
+
 function getBarColor(pct: number): string {
     if (pct >= 90) return 'bg-red-500';
     if (pct >= 70) return 'bg-amber-500';
@@ -45,7 +113,13 @@ function getBarBg(pct: number): string {
 export default function UsagePage() {
     const { user } = useAuth();
     const { usage, plan, isPro, loading } = useSubscription();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] ?? 'en';
+    const featureLabel = (key: string): string => {
+        const entry = FEATURE_LABELS[key];
+        if (!entry) return FEATURE_META[key]?.label ?? key;
+        return entry[uiLangCode] ?? entry.en;
+    };
 
     if (!user) {
         return (
@@ -84,7 +158,7 @@ export default function UsagePage() {
     const planLabel = t(PLAN_DISPLAY_NAMES[plan as PlanType] ?? (plan.charAt(0).toUpperCase() + plan.slice(1)));
     const resetDate = new Date();
     resetDate.setMonth(resetDate.getMonth() + 1, 1);
-    const resetLabel = resetDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' });
+    const resetLabel = resetDate.toLocaleDateString(ISO_TO_BCP47[uiLangCode] ?? 'en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' });
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
@@ -122,7 +196,7 @@ export default function UsagePage() {
                                     <div className="p-1.5 rounded-lg bg-muted/50">
                                         <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
                                     </div>
-                                    {meta?.label ? t(meta.label) : f.key}
+                                    {FEATURE_LABELS[f.key] ? featureLabel(f.key) : (meta?.label ? t(meta.label) : f.key)}
                                 </Link>
                                 <span className="text-lg font-semibold tabular-nums">
                                     {f.used}<span className="text-muted-foreground text-sm font-normal">/{f.limit}</span>
@@ -159,7 +233,7 @@ export default function UsagePage() {
                                 return (
                                     <div key={f.key} className="flex items-center gap-2.5 text-sm">
                                         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                                        <span className="truncate">{meta?.label ? t(meta.label) : f.key}</span>
+                                        <span className="truncate">{FEATURE_LABELS[f.key] ? featureLabel(f.key) : (meta?.label ? t(meta.label) : f.key)}</span>
                                         <Infinity className="h-3.5 w-3.5 ml-auto text-emerald-500 shrink-0" />
                                     </div>
                                 );

@@ -9,6 +9,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/context/language-context';
 
 /**
  * Sidebar nav item for the Usage page.
@@ -18,6 +19,7 @@ export function UsageDisplay() {
     const { usage, loading, isPro } = useSubscription();
     const { setOpenMobile } = useSidebar();
     const pathname = usePathname();
+    const { t } = useLanguage();
 
     if (loading) return null;
 
@@ -36,12 +38,12 @@ export function UsageDisplay() {
             <SidebarMenuButton
                 asChild
                 isActive={pathname === '/usage'}
-                tooltip="Usage"
+                tooltip={t("Usage")}
             >
                 <Link href="/usage" onClick={() => setOpenMobile(false)} className="flex items-center justify-between w-full">
                     <span className="flex items-center gap-2">
                         <Gauge />
-                        <span>Usage</span>
+                        <span>{t("Usage")}</span>
                     </span>
                     {atLimit && (
                         <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />

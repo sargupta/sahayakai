@@ -17,6 +17,8 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 
 type RubricDisplayProps = {
     rubric: RubricGeneratorOutput;
@@ -25,12 +27,32 @@ type RubricDisplayProps = {
 
 const PDF_ID = "rubric-pdf";
 
+// Component-local chrome label for the points abbreviation shown in the
+// rubric table header (e.g. "Excellent (4 pts)"). Resolved by uiLangCode
+// (the app UI language) — this is interface chrome, not AI content.
+const PTS_LABEL: Record<string, string> = {
+    en: "pts",
+    hi: "अंक",
+    mr: "गुण",
+    bn: "নম্বর",
+    pa: "ਅੰਕ",
+    gu: "ગુણ",
+    or: "ନମ୍ବର",
+    ta: "மதிப்பெண்",
+    te: "మార్కులు",
+    kn: "ಅಂಕಗಳು",
+    ml: "മാർക്ക്",
+};
+
 export const RubricDisplay: FC<RubricDisplayProps> = ({
     rubric,
     selectedLanguage,
 }) => {
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
+    const { language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
+    const ptsLabel = PTS_LABEL[uiLangCode] || PTS_LABEL.en;
 
     if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
         return null;
@@ -112,7 +134,7 @@ ${idx + 1}. ${criterion.name}
 ${criterion.levels
     .map(
         (level) =>
-            `   • ${level.name} (${level.points} pts): ${level.description}`,
+            `   • ${level.name} (${level.points} ${ptsLabel}): ${level.description}`,
     )
     .join("\n")}
 `,
@@ -163,7 +185,7 @@ ${criterion.levels
                                     key={level.name}
                                     className="w-[18.75%] border border-primary/20 p-2 text-center font-headline text-primary-foreground bg-primary"
                                 >
-                                    {level.name} ({level.points} pts)
+                                    {level.name} ({level.points} {ptsLabel})
                                 </TableHead>
                             ))}
                         </TableRow>

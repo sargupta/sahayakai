@@ -15,6 +15,7 @@ import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { LessonPlanLoadingOverlay } from "@/components/skeletons";
 import { useLessonPlan } from "../hooks/use-lesson-plan";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { useLanguage } from "@/context/language-context";
 
 type LessonPlanViewProps = ReturnType<typeof useLessonPlan>;
 
@@ -309,6 +310,7 @@ export function LessonPlanView({
     setDifficultyLevel,
     currentGrade,
     selectedLanguage,
+    uiLangCode,
     topicPlaceholder,
     handleTranscript,
     handlePromptClick,
@@ -317,7 +319,12 @@ export function LessonPlanView({
     limitState,
 }: LessonPlanViewProps) {
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
-    const t = translations[selectedLanguage] || translations.en;
+    const { t: translate } = useLanguage();
+    // Page chrome (title, description, button, sidebar/input labels) follows the
+    // app UI language, NOT the AI-output language. selectedLanguage only drives
+    // generated content; using it here flipped the whole interface to the
+    // output-dropdown language.
+    const t = translations[uiLangCode] || translations.en;
     return (
         <div className="container-wide py-8 md:py-12 space-y-8">
 
@@ -349,6 +356,7 @@ export function LessonPlanView({
                                         topicPlaceholder={topicPlaceholder}
                                         labels={t.inputs}
                                         selectedLanguage={selectedLanguage}
+                                        uiLangCode={uiLangCode}
                                         onTranscriptChange={handleTranscript}
                                         onPromptClick={handlePromptClick}
                                         onTemplateSelect={handleTemplateSelect}
@@ -410,7 +418,7 @@ export function LessonPlanView({
                 <>
                     <div className="flex items-center gap-3">
                         <hr className="flex-1 border-border/40" />
-                        <span className="type-caption text-muted-foreground px-2">Result</span>
+                        <span className="type-caption text-muted-foreground px-2">{translate("Result")}</span>
                         <hr className="flex-1 border-border/40" />
                     </div>
                     <SectionCard

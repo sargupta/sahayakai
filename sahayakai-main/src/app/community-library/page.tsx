@@ -11,6 +11,69 @@ import { FileTypeIcon, type FileType } from '@/components/file-type-icon';
 import { LanguageSelector } from '@/components/language-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from '@/context/language-context';
+import { LANGUAGE_TO_ISO } from '@/types';
+
+
+// Component-LOCAL native-script transliterations for the demo author names.
+// Keyed by the canonical Latin name -> 11 ISO codes, resolved by uiLangCode.
+// These are placeholder/demo proper nouns; real Firestore authors will replace them.
+const AUTHOR_NAME_TABLE: Record<string, Record<string, string>> = {
+  'Ravi Kumar': {
+    en: 'Ravi Kumar',
+    hi: 'रवि कुमार',
+    mr: 'रवी कुमार',
+    bn: 'রবি কুমার',
+    pa: 'ਰਵੀ ਕੁਮਾਰ',
+    gu: 'રવિ કુમાર',
+    or: 'ରବି କୁମାର',
+    ta: 'ரவி குமார்',
+    te: 'రవి కుమార్',
+    kn: 'ರವಿ ಕುಮಾರ್',
+    ml: 'രവി കുമാർ',
+  },
+  'Priya Singh': {
+    en: 'Priya Singh',
+    hi: 'प्रिया सिंह',
+    mr: 'प्रिया सिंह',
+    bn: 'প্রিয়া সিং',
+    pa: 'ਪ੍ਰਿਆ ਸਿੰਘ',
+    gu: 'પ્રિયા સિંહ',
+    or: 'ପ୍ରିୟା ସିଂ',
+    ta: 'பிரியா சிங்',
+    te: 'ప్రియా సింగ్',
+    kn: 'ಪ್ರಿಯಾ ಸಿಂಗ್',
+    ml: 'പ്രിയ സിങ്',
+  },
+  'Sameer Gupta': {
+    en: 'Sameer Gupta',
+    hi: 'समीर गुप्ता',
+    mr: 'समीर गुप्ता',
+    bn: 'সমীর গুপ্ত',
+    pa: 'ਸਮੀਰ ਗੁਪਤਾ',
+    gu: 'સમીર ગુપ્તા',
+    or: 'ସମୀର ଗୁପ୍ତା',
+    ta: 'சமீர் குப்தா',
+    te: 'సమీర్ గుప్తా',
+    kn: 'ಸಮೀರ್ ಗುಪ್ತಾ',
+    ml: 'സമീർ ഗുപ്ത',
+  },
+  'Aisha Khan': {
+    en: 'Aisha Khan',
+    hi: 'आयशा खान',
+    mr: 'आयेशा खान',
+    bn: 'আয়েশা খান',
+    pa: 'ਆਇਸ਼ਾ ਖ਼ਾਨ',
+    gu: 'આયશા ખાન',
+    or: 'ଆଇଶା ଖାନ',
+    ta: 'ஆயிஷா கான்',
+    te: 'ఆయేషా ఖాన్',
+    kn: 'ಆಯಿಷಾ ಖಾನ್',
+    ml: 'ആയിഷ ഖാൻ',
+  },
+};
+
+const localizeAuthor = (name: string, uiLangCode: string): string =>
+  AUTHOR_NAME_TABLE[name]?.[uiLangCode] ?? name;
 
 
 type Resource = {

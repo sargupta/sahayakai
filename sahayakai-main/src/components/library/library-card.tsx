@@ -8,8 +8,29 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, Download, Calendar, BookOpen, Trash2 } from "lucide-react";
 import { FileTypeIcon } from "@/components/file-type-icon";
 import { cn } from "@/lib/utils";
-import { BaseContent } from "@/types";
+import { BaseContent, LANGUAGE_TO_ISO } from "@/types";
 import { useLanguage } from "@/context/language-context";
+
+// Component-local UI translations, resolved by uiLangCode (app UI language).
+const CARD_STRINGS: Record<string, { open: string; updated: string; justNow: string }> = {
+    en: { open: "Open", updated: "Updated", justNow: "Just now" },
+    hi: { open: "खोलें", updated: "अपडेट किया गया", justNow: "अभी-अभी" },
+    mr: { open: "उघडा", updated: "अपडेट केले", justNow: "आत्ताच" },
+    bn: { open: "খুলুন", updated: "আপডেট করা হয়েছে", justNow: "এইমাত্র" },
+    pa: { open: "ਖੋਲ੍ਹੋ", updated: "ਅੱਪਡੇਟ ਕੀਤਾ", justNow: "ਹੁਣੇ" },
+    gu: { open: "ખોલો", updated: "અપડેટ કર્યું", justNow: "હમણાં જ" },
+    or: { open: "ଖୋଲନ୍ତୁ", updated: "ଅପଡେଟ୍ ହୋଇଛି", justNow: "ବର୍ତ୍ତମାନ" },
+    ta: { open: "திற", updated: "புதுப்பிக்கப்பட்டது", justNow: "இப்போதே" },
+    te: { open: "తెరవండి", updated: "నవీకరించబడింది", justNow: "ఇప్పుడే" },
+    kn: { open: "ತೆರೆಯಿರಿ", updated: "ನವೀಕರಿಸಲಾಗಿದೆ", justNow: "ಈಗಷ್ಟೇ" },
+    ml: { open: "തുറക്കുക", updated: "അപ്ഡേറ്റ് ചെയ്തു", justNow: "ഇപ്പോൾ തന്നെ" },
+};
+
+// BCP-47 locale tag for date formatting, matching the UI language (India region).
+const LOCALE_FOR: Record<string, string> = {
+    en: "en-IN", hi: "hi-IN", mr: "mr-IN", bn: "bn-IN", pa: "pa-IN",
+    gu: "gu-IN", or: "or-IN", ta: "ta-IN", te: "te-IN", kn: "kn-IN", ml: "ml-IN",
+};
 
 interface LibraryCardProps {
     resource: BaseContent;
@@ -44,13 +65,17 @@ export function LibraryCard({
     isFollowing,
     showAuthor = false
 }: LibraryCardProps) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [confirmDelete, setConfirmDelete] = useState(false);
+
+    const uiLangCode = LANGUAGE_TO_ISO[language] ?? "en";
+    const cardStrings = CARD_STRINGS[uiLangCode] ?? CARD_STRINGS.en;
+    const dateLocale = LOCALE_FOR[uiLangCode] ?? "en-IN";
 
     // Format date safely
     const formattedDate = resource.updatedAt?.seconds
-        ? new Date(resource.updatedAt.seconds * 1000).toLocaleDateString()
-        : 'Just now';
+        ? new Date(resource.updatedAt.seconds * 1000).toLocaleDateString(dateLocale)
+        : cardStrings.justNow;
 
     return (
         <Card className="flex flex-col h-full group hover:shadow-elevated transition-all duration-300 border-border bg-card overflow-hidden">
@@ -90,7 +115,7 @@ export function LibraryCard({
             <CardContent className="flex-grow px-5 py-2">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mt-1">
                     <Calendar className="h-3 w-3" />
-                    <span>Updated {formattedDate}</span>
+                    <span>{cardStrings.updated} {formattedDate}</span>
                 </div>
             </CardContent>
 
@@ -143,7 +168,7 @@ export function LibraryCard({
                         onClick={() => onOpen?.(resource)}
                     >
                         <BookOpen className="h-4 w-4" />
-                        <span>Open</span>
+                        <span>{cardStrings.open}</span>
                     </Button>
                     <Button
                         variant="default"

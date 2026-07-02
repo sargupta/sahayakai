@@ -47,7 +47,14 @@ interface AIErrorContext {
     extra?: Record<string, unknown>;
 }
 
-const TRANSIENT_STATUSES = new Set([429]);
+// 429 (rate limit / quota) and 503 (provider overload, "model is currently
+// experiencing high demand") are both transient and retryable. 503 was added
+// 2026-06-11 after the daily scan found Gemini 2.5-flash "[503 Service
+// Unavailable] high demand" errors falling through every transient classifier
+// and being logged as ERROR + returned as 500 (exam-paper, and the same blind
+// spot in the persona-pulse route). See errorStatus() below for message-string
+// detection when the SDK doesn't surface .status.
+const TRANSIENT_STATUSES = new Set([429, 503]);
 const TRANSIENT_NAMES = new Set(['AIQuotaExhaustedError']);
 
 /**
@@ -62,6 +69,12 @@ function errorStatus(error: any): number | null {
     // user sees the proper "AI service overloaded" message + Retry-After
     // header instead of a generic 500 "AI generation failed".
     if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Resource exhausted') || msg.includes('Rate limit exceeded')) return 429;
+    // Gemini provider overload surfaces 503 only inside the message string
+    // (".status" is often undefined on the GoogleGenerativeAI error), e.g.
+    // "[503 Service Unavailable] This model is currently experiencing high
+    // demand." Map these to 503 so isQuotaExhausted() treats them as transient
+    // (WARN + 503 + Retry-After) instead of paging on-call with a 500.
+    if (msg.includes('503') || /service unavailable|experiencing high demand|model is overloaded|\boverloaded\b|\bUNAVAILABLE\b/i.test(msg)) return 503;
     if (msg.includes('403') || msg.includes('denied access')) return 403;
     if (msg.includes('401')) return 401;
     if (msg.includes('400') || msg.includes('API key expired')) return 400;

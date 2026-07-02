@@ -2,6 +2,7 @@ import { ProfileView } from "@/components/profile/profile-view";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileBackBar } from "@/components/profile/profile-back-bar";
+import { ProfileLoadingLabel } from "@/components/profile/profile-loading-label";
 
 interface PageProps {
     params: Promise<{ uid: string }>;
@@ -22,7 +23,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                     <Skeleton className="h-20 w-20 rounded-full" />
                     <Skeleton className="h-8 w-48 rounded-lg" />
                     <Skeleton className="h-4 w-64 rounded-lg" />
-                    <p className="text-muted-foreground font-medium">Loading teacher profile...</p>
+                    <ProfileLoadingLabel />
                 </div>
             }>
                 <ProfileView uid={uid} isOwnProfileManual={false} />

@@ -378,7 +378,7 @@ function RubricGeneratorContent() {
             <hr className="flex-1 border-border/40" />
           </div>
           <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4">
-            <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />
+            <RubricDisplay rubric={rubric} selectedLanguage={uiLangCode} />
           </div>
         </>
       )}

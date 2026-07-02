@@ -51,7 +51,23 @@ import { isNewUser as checkIsNewUser } from "@/lib/profile-utils"
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight"
 import { updateProfileAction } from "@/app/actions/profile"
 import { useLanguage } from "@/context/language-context"
+import { LANGUAGE_TO_ISO } from "@/types"
 import type { UserProfile } from "@/types"
+
+// Component-local "New" badge translations (11 native scripts), resolved by uiLangCode.
+const NEW_BADGE_LABEL: Record<string, string> = {
+  en: "New",
+  hi: "नया",
+  mr: "नवीन",
+  bn: "নতুন",
+  pa: "ਨਵਾਂ",
+  gu: "નવું",
+  or: "ନୂଆ",
+  ta: "புதியது",
+  te: "కొత్తది",
+  kn: "ಹೊಸತು",
+  ml: "പുതിയത്",
+};
 
 /**
  * App sidebar — Phase 3 restructure (2026-04-24).
@@ -68,7 +84,8 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const uiLangCode = LANGUAGE_TO_ISO[language] || 'en';
   const [totalUnread, setTotalUnread] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showCommunityNew, setShowCommunityNew] = useState(false);
@@ -340,7 +357,7 @@ export function AppSidebar() {
                     </span>
                     {showCommunityNew && (
                       <span className="ml-auto h-[18px] px-1.5 rounded-pill bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">
-                        New
+                        {NEW_BADGE_LABEL[uiLangCode] ?? NEW_BADGE_LABEL.en}
                       </span>
                     )}
                   </Link>

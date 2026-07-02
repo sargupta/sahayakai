@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/language-context";
 import { getAuthToken } from "@/lib/get-auth-token";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
-import { LANGUAGE_CODE_MAP } from "@/types";
+import { LANGUAGE_CODE_MAP, LANGUAGE_TO_ISO } from "@/types";
 import { getProfileData } from "@/app/actions/profile";
 import {
   FileText,
@@ -90,6 +90,20 @@ interface GeneratedPaper {
 const GRADE_OPTIONS = ["Class 9", "Class 10"] as const;
 const DIFFICULTY_OPTIONS = ["easy", "moderate", "hard", "mixed"] as const;
 
+// ── Localized paper-preview micro-labels ─────────────────────────────────
+// Question-number prefix ("Q1.") and the marks abbreviation ("[3m]") must
+// follow the UI language so the rendered paper reads in one script. Keyed
+// by the 11 ISO codes; resolved by uiLangCode. Faithful native-script
+// abbreviations — proper-noun-free.
+const QUESTION_PREFIX: Record<string, string> = {
+  en: "Q", hi: "प्र", mr: "प्र", bn: "প্র", pa: "ਪ੍ਰ", gu: "પ્ર",
+  or: "ପ୍ର", ta: "வ", te: "ప్ర", kn: "ಪ್ರ", ml: "ചോ",
+};
+const MARKS_ABBREV: Record<string, string> = {
+  en: "m", hi: "अंक", mr: "गुण", bn: "নম্বর", pa: "ਅੰਕ", gu: "ગુણ",
+  or: "ନମ୍ବର", ta: "மதிப்பெண்", te: "మార్కులు", kn: "ಅಂಕ", ml: "മാർക്ക്",
+};
+
 // ── Page Component ───────────────────────────────────────────────────────
 
 // Next 15 prerender requires useSearchParams() to be wrapped in a
@@ -105,7 +119,12 @@ export default function ExamPaperPage() {
 }
 
 function ExamPaperPageInner() {
-  const { t } = useLanguage();
+  const { t, language: uiLanguage } = useLanguage();
+  // UI-chrome language drives the paper-preview micro-labels (Q-prefix, marks
+  // abbreviation), independent of the selected AI-output language.
+  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] ?? "en";
+  const qPrefix = QUESTION_PREFIX[uiLangCode] ?? QUESTION_PREFIX.en;
+  const marksAbbr = MARKS_ABBREV[uiLangCode] ?? MARKS_ABBREV.en;
   // Auth state
   const [authed, setAuthed] = useState(false);
   const [loading, setLoading] = useState(true);

@@ -6,10 +6,42 @@ import { ScriptMarks } from "@/components/landing/script-marks";
 import { PageAudio } from "@/components/marketing/page-audio";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
+
+// Component-local UI-chrome translations, resolved by uiLangCode (the app UI language).
+const LAST_UPDATED: Record<string, string> = {
+    en: "Last updated: April 2026. Governed by the laws of India.",
+    hi: "अंतिम अद्यतन: अप्रैल 2026। भारत के कानूनों द्वारा शासित।",
+    mr: "शेवटचे अद्यतन: एप्रिल 2026. भारताच्या कायद्यांद्वारे नियंत्रित.",
+    bn: "সর্বশেষ হালনাগাদ: এপ্রিল 2026। ভারতের আইন দ্বারা পরিচালিত।",
+    pa: "ਆਖਰੀ ਅੱਪਡੇਟ: ਅਪ੍ਰੈਲ 2026। ਭਾਰਤ ਦੇ ਕਾਨੂੰਨਾਂ ਅਨੁਸਾਰ ਨਿਯੰਤਰਿਤ।",
+    gu: "છેલ્લે અપડેટ: એપ્રિલ 2026। ભારતના કાયદાઓ દ્વારા સંચાલિત।",
+    or: "ଶେଷ ଅଦ୍ୟତନ: ଏପ୍ରିଲ 2026। ଭାରତର ଆଇନ ଦ୍ୱାରା ନିୟନ୍ତ୍ରିତ।",
+    ta: "கடைசியாக புதுப்பிக்கப்பட்டது: ஏப்ரல் 2026. இந்திய சட்டங்களால் நிர்வகிக்கப்படுகிறது.",
+    te: "చివరిగా నవీకరించబడింది: ఏప్రిల్ 2026. భారత చట్టాల ప్రకారం నిర్వహించబడుతుంది.",
+    kn: "ಕೊನೆಯ ನವೀಕರಣ: ಏಪ್ರಿಲ್ 2026. ಭಾರತದ ಕಾನೂನುಗಳಿಂದ ನಿಯಂತ್ರಿಸಲಾಗಿದೆ.",
+    ml: "അവസാനം പുതുക്കിയത്: ഏപ്രിൽ 2026. ഇന്ത്യൻ നിയമങ്ങൾ പ്രകാരം നിയന്ത്രിക്കപ്പെടുന്നു.",
+};
+
+// Notice shown above the full legal text, which is authoritative in English only.
+const ENGLISH_LEGAL_NOTICE: Record<string, string> = {
+    en: "The full legal terms below are provided in English, which is the authoritative version.",
+    hi: "नीचे दी गई पूर्ण कानूनी शर्तें अंग्रेज़ी में प्रदान की गई हैं, जो प्रामाणिक संस्करण है।",
+    mr: "खालील संपूर्ण कायदेशीर अटी इंग्रजीमध्ये दिल्या आहेत, जी अधिकृत आवृत्ती आहे.",
+    bn: "নীচের সম্পূর্ণ আইনি শর্তাবলী ইংরেজিতে প্রদান করা হয়েছে, যা প্রামাণিক সংস্করণ।",
+    pa: "ਹੇਠਾਂ ਦਿੱਤੀਆਂ ਪੂਰੀਆਂ ਕਾਨੂੰਨੀ ਸ਼ਰਤਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਦਿੱਤੀਆਂ ਗਈਆਂ ਹਨ, ਜੋ ਪ੍ਰਮਾਣਿਕ ਸੰਸਕਰਣ ਹੈ।",
+    gu: "નીચે આપેલી સંપૂર્ણ કાનૂની શરતો અંગ્રેજીમાં આપવામાં આવી છે, જે અધિકૃત આવૃત્તિ છે।",
+    or: "ତଳେ ଦିଆଯାଇଥିବା ସମ୍ପୂର୍ଣ୍ଣ ଆଇନଗତ ସର୍ତ୍ତାବଳୀ ଇଂରାଜୀରେ ପ୍ରଦାନ କରାଯାଇଛି, ଯାହା ପ୍ରାମାଣିକ ସଂସ୍କରଣ।",
+    ta: "கீழே உள்ள முழு சட்டப்பூர்வ விதிமுறைகள் ஆங்கிலத்தில் வழங்கப்படுகின்றன, இதுவே அதிகாரப்பூர்வ பதிப்பு.",
+    te: "క్రింద ఉన్న పూర్తి చట్టపరమైన నిబంధనలు ఆంగ్లంలో అందించబడ్డాయి, ఇదే అధికారిక సంస్కరణ.",
+    kn: "ಕೆಳಗಿನ ಸಂಪೂರ್ಣ ಕಾನೂನು ನಿಯಮಗಳನ್ನು ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಒದಗಿಸಲಾಗಿದೆ, ಇದು ಅಧಿಕೃತ ಆವೃತ್ತಿಯಾಗಿದೆ.",
+    ml: "ചുവടെയുള്ള പൂർണ്ണ നിയമ വ്യവസ്ഥകൾ ഇംഗ്ലീഷിൽ നൽകിയിരിക്കുന്നു, അതാണ് ആധികാരിക പതിപ്പ്.",
+};
 
 export function TermsClient() {
     const { openAuthModal } = useAuth();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
 
     const tldr = [
         "Whatever you create with SahayakAI is yours.",
@@ -43,7 +75,7 @@ export function TermsClient() {
                         {t("Terms of Service")}
                     </h1>
                     <p className="font-body text-[15px] text-neutral-500 mt-3">
-                        Last updated: April 2026. Governed by the laws of India.
+                        {LAST_UPDATED[uiLangCode] || LAST_UPDATED.en}
                     </p>
                 </section>
 
@@ -68,6 +100,9 @@ export function TermsClient() {
                 </section>
 
                 <article className="relative z-10 max-w-[720px] mx-auto px-6 sm:px-12 pb-16 font-body text-[15px] text-neutral-700 leading-[1.7]">
+                    <p className="mb-8 rounded-[12px] bg-neutral-50 border border-neutral-200 px-5 py-3 text-[13px] text-neutral-500">
+                        {ENGLISH_LEGAL_NOTICE[uiLangCode] || ENGLISH_LEGAL_NOTICE.en}
+                    </p>
                     <Section kicker="01" title="What SahayakAI does">
                         <p>
                             SahayakAI is an AI teaching assistant built by <strong>SARGVISION Intelligence Pvt. Ltd.</strong> for teachers, schools, and education administrators in India. It generates lesson plans, quizzes, worksheets, rubrics, visual aids, and voice-driven workflows aligned to NCERT, CBSE, ICSE, and 28 state board curricula across 11 Indian languages.

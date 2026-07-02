@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS, LANGUAGE_CODE_MAP } from "@/types";
+import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS, LANGUAGE_CODE_MAP, LANGUAGE_TO_ISO } from "@/types";
 import type { AdministrativeRole, EducationBoard } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
 import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction } from "@/app/actions/profile";
@@ -49,10 +49,154 @@ const ROLE_LABEL: Record<AdministrativeRole, string> = {
     'principal': 'Principal',
 };
 
+// ─── Component-LOCAL translation tables (B3 / B1) ───────────────────────────
+// The shared dictionary (language-context.tsx) only translates the role
+// labels/hints for Hindi + Kannada; the other 8 Indic languages silently fall
+// back to English. We resolve these locally by uiLangCode so the role picker
+// chrome follows the app UI language in all 11 languages.
+type LangTable = Record<string, string>;
+
+// Role labels keyed by AdministrativeRole value.
+const ROLE_LABEL_I18N: Record<AdministrativeRole, LangTable> = {
+    'none': {
+        en: 'Classroom Teacher', hi: 'कक्षा शिक्षक', mr: 'वर्ग शिक्षक', bn: 'শ্রেণিশিক্ষক',
+        pa: 'ਜਮਾਤ ਅਧਿਆਪਕ', gu: 'વર્ગ શિક્ષક', or: 'ଶ୍ରେଣୀ ଶିକ୍ଷକ', ta: 'வகுப்பு ஆசிரியர்',
+        te: 'తరగతి ఉపాధ్యాయుడు', kn: 'ತರಗತಿ ಶಿಕ್ಷಕ', ml: 'ക്ലാസ് അധ്യാപകൻ',
+    },
+    'hod': {
+        en: 'HOD / Subject Lead', hi: 'विभागाध्यक्ष / विषय प्रमुख', mr: 'विभागप्रमुख / विषय प्रमुख',
+        bn: 'বিভাগীয় প্রধান / বিষয় প্রধান', pa: 'ਵਿਭਾਗ ਮੁਖੀ / ਵਿਸ਼ਾ ਮੁਖੀ', gu: 'વિભાગના વડા / વિષય વડા',
+        or: 'ବିଭାଗ ମୁଖ୍ୟ / ବିଷୟ ମୁଖ୍ୟ', ta: 'துறைத் தலைவர் / பாடத் தலைவர்', te: 'విభాగాధిపతి / సబ్జెక్ట్ లీడ్',
+        kn: 'ವಿಭಾಗ ಮುಖ್ಯಸ್ಥ / ವಿಷಯ ಮುಖ್ಯಸ್ಥ', ml: 'വിഭാഗ മേധാവി / വിഷയ മേധാവി',
+    },
+    'coordinator': {
+        en: 'Coordinator', hi: 'समन्वयक', mr: 'समन्वयक', bn: 'সমন্বয়কারী',
+        pa: 'ਤਾਲਮੇਲ ਕਰਤਾ', gu: 'સંયોજક', or: 'ସମନ୍ୱୟକାରୀ', ta: 'ஒருங்கிணைப்பாளர்',
+        te: 'సమన్వయకర్త', kn: 'ಸಮನ್ವಯಕಾರ', ml: 'കോർഡിനേറ്റർ',
+    },
+    'exam_controller': {
+        en: 'Exam Controller', hi: 'परीक्षा नियंत्रक', mr: 'परीक्षा नियंत्रक', bn: 'পরীক্ষা নিয়ন্ত্রক',
+        pa: 'ਪ੍ਰੀਖਿਆ ਕੰਟਰੋਲਰ', gu: 'પરીક્ષા નિયંત્રક', or: 'ପରୀକ୍ଷା ନିୟନ୍ତ୍ରକ', ta: 'தேர்வுக் கட்டுப்பாட்டாளர்',
+        te: 'పరీక్షల నియంత్రకుడు', kn: 'ಪರೀಕ್ಷಾ ನಿಯಂತ್ರಕ', ml: 'പരീക്ഷാ കൺട്രോളർ',
+    },
+    'vice_principal': {
+        en: 'Vice Principal', hi: 'उप-प्राचार्य', mr: 'उपमुख्याध्यापक', bn: 'উপাধ্যক্ষ',
+        pa: 'ਉਪ-ਪ੍ਰਿੰਸੀਪਲ', gu: 'ઉપાચાર્ય', or: 'ଉପ-ଅଧ୍ୟକ୍ଷ', ta: 'துணை முதல்வர்',
+        te: 'ఉప ప్రధానోపాధ్యాయుడు', kn: 'ಉಪ ಪ್ರಾಂಶುಪಾಲ', ml: 'വൈസ് പ്രിൻസിപ്പൽ',
+    },
+    'principal': {
+        en: 'Principal / School Admin', hi: 'प्राचार्य / स्कूल प्रशासक', mr: 'मुख्याध्यापक / शाळा प्रशासक',
+        bn: 'অধ্যক্ষ / স্কুল প্রশাসক', pa: 'ਪ੍ਰਿੰਸੀਪਲ / ਸਕੂਲ ਪ੍ਰਬੰਧਕ', gu: 'આચાર્ય / શાળા સંચાલક',
+        or: 'ଅଧ୍ୟକ୍ଷ / ବିଦ୍ୟାଳୟ ପ୍ରଶାସକ', ta: 'முதல்வர் / பள்ளி நிர்வாகி', te: 'ప్రధానోపాధ్యాయుడు / స్కూల్ అడ్మిన్',
+        kn: 'ಪ್ರಾಂಶುಪಾಲ / ಶಾಲಾ ನಿರ್ವಾಹಕ', ml: 'പ്രിൻസിപ്പൽ / സ്കൂൾ അഡ്മിൻ',
+    },
+};
+
+// Short role labels (collapsed-section summary) keyed by AdministrativeRole.
+const ROLE_LABEL_SHORT_I18N: Record<AdministrativeRole, LangTable> = {
+    'none': ROLE_LABEL_I18N['none'],
+    'hod': {
+        en: 'HOD', hi: 'विभागाध्यक्ष', mr: 'विभागप्रमुख', bn: 'বিভাগীয় প্রধান',
+        pa: 'ਵਿਭਾਗ ਮੁਖੀ', gu: 'વિભાગના વડા', or: 'ବିଭାଗ ମୁଖ୍ୟ', ta: 'துறைத் தலைவர்',
+        te: 'విభాగాధిపతి', kn: 'ವಿಭಾಗ ಮುಖ್ಯಸ್ಥ', ml: 'വിഭാഗ മേധാവി',
+    },
+    'coordinator': ROLE_LABEL_I18N['coordinator'],
+    'exam_controller': ROLE_LABEL_I18N['exam_controller'],
+    'vice_principal': ROLE_LABEL_I18N['vice_principal'],
+    'principal': {
+        en: 'Principal', hi: 'प्राचार्य', mr: 'मुख्याध्यापक', bn: 'অধ্যক্ষ',
+        pa: 'ਪ੍ਰਿੰਸੀਪਲ', gu: 'આચાર્ય', or: 'ଅଧ୍ୟକ୍ଷ', ta: 'முதல்வர்',
+        te: 'ప్రధానోపాధ్యాయుడు', kn: 'ಪ್ರಾಂಶುಪಾಲ', ml: 'പ്രിൻസിപ്പൽ',
+    },
+};
+
+// Role hints keyed by AdministrativeRole value.
+const ROLE_HINT_I18N: Record<AdministrativeRole, LangTable> = {
+    'none': {
+        en: 'Teach one or more classes', hi: 'एक या अधिक कक्षाएँ पढ़ाएँ', mr: 'एक किंवा अधिक वर्ग शिकवा',
+        bn: 'এক বা একাধিক শ্রেণিতে পড়ান', pa: 'ਇੱਕ ਜਾਂ ਵੱਧ ਜਮਾਤਾਂ ਪੜ੍ਹਾਓ', gu: 'એક કે વધુ વર્ગ ભણાવો',
+        or: 'ଗୋଟିଏ କିମ୍ବା ଅଧିକ ଶ୍ରେଣୀ ପଢ଼ାନ୍ତୁ', ta: 'ஒன்று அல்லது அதற்கு மேற்பட்ட வகுப்புகளைக் கற்பியுங்கள்',
+        te: 'ఒకటి లేదా అంతకంటే ఎక్కువ తరగతులు బోధించండి', kn: 'ಒಂದು ಅಥವಾ ಹೆಚ್ಚು ತರಗತಿಗಳನ್ನು ಕಲಿಸಿ',
+        ml: 'ഒന്നോ അതിലധികമോ ക്ലാസുകൾ പഠിപ്പിക്കുക',
+    },
+    'hod': {
+        en: 'Lead a subject department', hi: 'किसी विषय विभाग का नेतृत्व करें', mr: 'विषय विभागाचे नेतृत्व करा',
+        bn: 'একটি বিষয় বিভাগের নেতৃত্ব দিন', pa: 'ਕਿਸੇ ਵਿਸ਼ਾ ਵਿਭਾਗ ਦੀ ਅਗਵਾਈ ਕਰੋ', gu: 'એક વિષય વિભાગનું નેતૃત્વ કરો',
+        or: 'ଗୋଟିଏ ବିଷୟ ବିଭାଗର ନେତୃତ୍ୱ ନିଅନ୍ତୁ', ta: 'ஒரு பாடத் துறையை வழிநடத்துங்கள்',
+        te: 'ఒక సబ్జెక్ట్ విభాగానికి నాయకత్వం వహించండి', kn: 'ಒಂದು ವಿಷಯ ವಿಭಾಗವನ್ನು ಮುನ್ನಡೆಸಿ',
+        ml: 'ഒരു വിഷയ വിഭാഗത്തെ നയിക്കുക',
+    },
+    'coordinator': {
+        en: 'Coordinate across teachers or sections', hi: 'शिक्षकों या अनुभागों के बीच समन्वय करें',
+        mr: 'शिक्षक किंवा विभागांमध्ये समन्वय साधा', bn: 'শিক্ষক বা বিভাগগুলির মধ্যে সমন্বয় করুন',
+        pa: 'ਅਧਿਆਪਕਾਂ ਜਾਂ ਸੈਕਸ਼ਨਾਂ ਵਿਚਕਾਰ ਤਾਲਮੇਲ ਕਰੋ', gu: 'શિક્ષકો કે વિભાગો વચ્ચે સંકલન કરો',
+        or: 'ଶିକ୍ଷକ କିମ୍ବା ବିଭାଗ ମଧ୍ୟରେ ସମନ୍ୱୟ କରନ୍ତୁ', ta: 'ஆசிரியர்கள் அல்லது பிரிவுகளுக்கிடையே ஒருங்கிணைக்கவும்',
+        te: 'ఉపాధ్యాయులు లేదా విభాగాల మధ్య సమన్వయం చేయండి', kn: 'ಶಿಕ್ಷಕರು ಅಥವಾ ವಿಭಾಗಗಳ ನಡುವೆ ಸಮನ್ವಯ ಮಾಡಿ',
+        ml: 'അധ്യാപകർക്കോ വിഭാഗങ്ങൾക്കോ ഇടയിൽ ഏകോപിപ്പിക്കുക',
+    },
+    'exam_controller': {
+        en: 'Run examinations and assessment', hi: 'परीक्षाएँ और मूल्यांकन संचालित करें',
+        mr: 'परीक्षा आणि मूल्यांकन चालवा', bn: 'পরীক্ষা ও মূল্যায়ন পরিচালনা করুন',
+        pa: 'ਪ੍ਰੀਖਿਆਵਾਂ ਅਤੇ ਮੁਲਾਂਕਣ ਚਲਾਓ', gu: 'પરીક્ષાઓ અને મૂલ્યાંકન ચલાવો',
+        or: 'ପରୀକ୍ଷା ଓ ମୂଲ୍ୟାୟନ ପରିଚାଳନା କରନ୍ତୁ', ta: 'தேர்வுகள் மற்றும் மதிப்பீட்டை நடத்துங்கள்',
+        te: 'పరీక్షలు మరియు మూల్యాంకనం నిర్వహించండి', kn: 'ಪರೀಕ್ಷೆಗಳು ಮತ್ತು ಮೌಲ್ಯಮಾಪನವನ್ನು ನಡೆಸಿ',
+        ml: 'പരീക്ഷകളും മൂല്യനിർണയവും നടത്തുക',
+    },
+    'vice_principal': {
+        en: 'Manage academics for a wing', hi: 'किसी विंग के शैक्षणिक कार्य संभालें',
+        mr: 'एका विभागाचे शैक्षणिक कामकाज सांभाळा', bn: 'একটি উইংয়ের শিক্ষাবিষয়ক কাজ পরিচালনা করুন',
+        pa: 'ਕਿਸੇ ਵਿੰਗ ਦੇ ਅਕਾਦਮਿਕ ਕੰਮ ਸੰਭਾਲੋ', gu: 'એક વિંગનું શૈક્ષણિક સંચાલન કરો',
+        or: 'ଗୋଟିଏ ୱିଙ୍ଗର ଶିକ୍ଷାଗତ ବିଷୟ ପରିଚାଳନା କରନ୍ତୁ', ta: 'ஒரு பிரிவின் கல்விப் பணிகளை நிர்வகியுங்கள்',
+        te: 'ఒక వింగ్ యొక్క విద్యా వ్యవహారాలను నిర్వహించండి', kn: 'ಒಂದು ವಿಭಾಗದ ಶೈಕ್ಷಣಿಕ ಕಾರ್ಯವನ್ನು ನಿರ್ವಹಿಸಿ',
+        ml: 'ഒരു വിഭാഗത്തിന്റെ അക്കാദമിക് കാര്യങ്ങൾ കൈകാര്യം ചെയ്യുക',
+    },
+    'principal': {
+        en: 'Run the school', hi: 'पूरे स्कूल का संचालन करें', mr: 'संपूर्ण शाळा चालवा',
+        bn: 'পুরো স্কুল পরিচালনা করুন', pa: 'ਪੂਰਾ ਸਕੂਲ ਚਲਾਓ', gu: 'આખી શાળાનું સંચાલન કરો',
+        or: 'ସମଗ୍ର ବିଦ୍ୟାଳୟ ପରିଚାଳନା କରନ୍ତୁ', ta: 'பள்ளியை நிர்வகியுங்கள்',
+        te: 'పాఠశాలను నడపండి', kn: 'ಶಾಲೆಯನ್ನು ನಡೆಸಿ', ml: 'സ്കൂൾ നടത്തുക',
+    },
+};
+
+// Misc onboarding chrome strings missing from / inconsistently in the shared
+// dictionary, resolved locally by uiLangCode.
+const ONBOARDING_LOCAL_I18N: Record<string, LangTable> = {
+    earlyChildhood: {
+        en: 'Early Childhood (Nursery, LKG, UKG)', hi: 'प्रारंभिक बचपन (नर्सरी, एलकेजी, यूकेजी)',
+        mr: 'पूर्व-प्राथमिक (नर्सरी, एलकेजी, यूकेजी)', bn: 'প্রারম্ভিক শৈশব (নার্সারি, এলকেজি, ইউকেজি)',
+        pa: 'ਮੁੱਢਲਾ ਬਚਪਨ (ਨਰਸਰੀ, ਐਲਕੇਜੀ, ਯੂਕੇਜੀ)', gu: 'પ્રારંભિક બાળપણ (નર્સરી, એલકેજી, યુકેજી)',
+        or: 'ପ୍ରାରମ୍ଭିକ ଶୈଶବ (ନର୍ସରୀ, ଏଲକେଜି, ୟୁକେଜି)', ta: 'ஆரம்பக் குழந்தைப் பருவம் (நர்சரி, எல்.கே.ஜி, யு.கே.ஜி)',
+        te: 'ప్రారంభ బాల్యం (నర్సరీ, ఎల్‌కేజీ, యూకేజీ)', kn: 'ಆರಂಭಿಕ ಬಾಲ್ಯ (ನರ್ಸರಿ, ಎಲ್‌ಕೆಜಿ, ಯುಕೆಜಿ)',
+        ml: 'ആദ്യകാല ബാല്യം (നഴ്സറി, എൽകെജി, യുകെജി)',
+    },
+    couldNotGenerate: {
+        en: "Could not generate. Don't worry, you can create content anytime from the home page.",
+        hi: 'तैयार नहीं हो सका। चिंता न करें, आप होम पेज से कभी भी सामग्री बना सकते हैं।',
+        mr: 'तयार करता आले नाही. काळजी करू नका, तुम्ही होम पेजवरून कधीही सामग्री तयार करू शकता.',
+        bn: 'তৈরি করা যায়নি। চিন্তা করবেন না, আপনি হোম পেজ থেকে যেকোনো সময় কনটেন্ট তৈরি করতে পারেন।',
+        pa: 'ਤਿਆਰ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਚਿੰਤਾ ਨਾ ਕਰੋ, ਤੁਸੀਂ ਹੋਮ ਪੇਜ ਤੋਂ ਕਿਸੇ ਵੇਲੇ ਵੀ ਸਮੱਗਰੀ ਬਣਾ ਸਕਦੇ ਹੋ।',
+        gu: 'જનરેટ કરી શકાયું નહીં. ચિંતા ન કરો, તમે હોમ પેજ પરથી ગમે ત્યારે સામગ્રી બનાવી શકો છો.',
+        or: 'ତିଆରି କରାଯାଇପାରିଲା ନାହିଁ। ଚିନ୍ତା କରନ୍ତୁ ନାହିଁ, ଆପଣ ହୋମ ପେଜରୁ ଯେକୌଣସି ସମୟରେ ବିଷୟବସ୍ତୁ ତିଆରି କରିପାରିବେ।',
+        ta: 'உருவாக்க முடியவில்லை. கவலைப்பட வேண்டாம், முகப்புப் பக்கத்திலிருந்து எந்த நேரத்திலும் உள்ளடக்கத்தை உருவாக்கலாம்.',
+        te: 'రూపొందించలేకపోయాం. చింతించకండి, మీరు హోమ్ పేజ్ నుండి ఎప్పుడైనా కంటెంట్‌ను సృష్టించవచ్చు.',
+        kn: 'ರಚಿಸಲಾಗಲಿಲ್ಲ. ಚಿಂತಿಸಬೇಡಿ, ನೀವು ಹೋಮ್ ಪೇಜ್‌ನಿಂದ ಯಾವಾಗ ಬೇಕಾದರೂ ವಿಷಯವನ್ನು ರಚಿಸಬಹುದು.',
+        ml: 'സൃഷ്ടിക്കാൻ കഴിഞ്ഞില്ല. വിഷമിക്കേണ്ട, ഹോം പേജിൽ നിന്ന് എപ്പോൾ വേണമെങ്കിലും ഉള്ളടക്കം സൃഷ്ടിക്കാം.',
+    },
+    yourLessonPlan: {
+        en: 'Your Lesson Plan', hi: 'आपकी पाठ योजना', mr: 'तुमची पाठ योजना', bn: 'আপনার পাঠ পরিকল্পনা',
+        pa: 'ਤੁਹਾਡੀ ਪਾਠ ਯੋਜਨਾ', gu: 'તમારી પાઠ યોજના', or: 'ଆପଣଙ୍କ ପାଠ ଯୋଜନା', ta: 'உங்கள் பாடத் திட்டம்',
+        te: 'మీ పాఠ్య ప్రణాళిక', kn: 'ನಿಮ್ಮ ಪಾಠ ಯೋಜನೆ', ml: 'നിങ്ങളുടെ പാഠ പദ്ധതി',
+    },
+};
+
 export default function OnboardingPage() {
     const router = useRouter();
     const { toast } = useToast();
-    const { t, setLanguage } = useLanguage();
+    const { t, setLanguage, language } = useLanguage();
+    // Interface chrome MUST follow the app UI language, not the AI-output
+    // (selected) language. uiLangCode drives the component-LOCAL i18n tables.
+    const uiLangCode = LANGUAGE_TO_ISO[language] || 'en';
+    const ui = (table: LangTable) => table[uiLangCode] || table.en;
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
@@ -461,7 +605,13 @@ export default function OnboardingPage() {
             await setLanguage(formData.preferredLanguage as Language, false);
 
             // Load pre-generated example for their subject/grade
-            const example = getOnboardingExample(formData.subjects, formData.gradeLevels, formData.preferredLanguage === 'Hindi' ? 'Hindi' : 'English');
+            // Pass the teacher's actual selected language so the preview matches
+            // it instead of collapsing every non-Hindi choice to English. The
+            // example data table (src/data/onboarding-examples.ts) currently only
+            // ships English + Hindi rows and falls back to English for the other
+            // 9 languages; once native-script rows are added there, this call
+            // already threads the right language through.
+            const example = getOnboardingExample(formData.subjects, formData.gradeLevels, formData.preferredLanguage);
             setPreviewExample(example);
 
             // Get topic suggestion for real generation
@@ -709,7 +859,7 @@ export default function OnboardingPage() {
                             {generatedContent && (
                                 <div className="p-3 rounded-xl bg-background border border-border">
                                     <p className="text-sm font-semibold text-primary mb-1">
-                                        {generatedContent.result?.title || generatedContent.title || "Your Lesson Plan"}
+                                        {generatedContent.result?.title || generatedContent.title || ui(ONBOARDING_LOCAL_I18N.yourLessonPlan)}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {t("Created successfully! You can view and edit this from your library.")}
@@ -720,7 +870,7 @@ export default function OnboardingPage() {
                             {generationError && (
                                 <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
                                     <p className="text-sm text-destructive">
-                                        Could not generate. Don&apos;t worry, you can create content anytime from the home page.
+                                        {ui(ONBOARDING_LOCAL_I18N.couldNotGenerate)}
                                     </p>
                                     <Button variant="outline" size="sm" onClick={handleGenerate} className="mt-2 rounded-xl">
                                         {t("Try again")}
@@ -799,7 +949,7 @@ export default function OnboardingPage() {
                             <div className="flex items-center gap-2">
                                 {formData.administrativeRole !== undefined && activeSection !== 0 && (
                                     <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                                        {t(ROLE_LABEL[formData.administrativeRole])}
+                                        {ui(ROLE_LABEL_SHORT_I18N[formData.administrativeRole])}
                                     </span>
                                 )}
                                 {formData.administrativeRole !== undefined ? (
@@ -825,8 +975,8 @@ export default function OnboardingPage() {
                                                     : "bg-card border-border hover:border-primary/50 hover:shadow-soft"
                                             )}
                                         >
-                                            <div className="text-sm font-semibold">{t(opt.label)}</div>
-                                            <div className="text-xs text-muted-foreground mt-0.5">{t(opt.hint)}</div>
+                                            <div className="text-sm font-semibold">{ui(ROLE_LABEL_I18N[opt.value])}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5">{ui(ROLE_HINT_I18N[opt.value])}</div>
                                         </button>
                                     ))}
                                 </div>
@@ -1043,7 +1193,7 @@ export default function OnboardingPage() {
                                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                                 >
                                     <ChevronDown className={cn("h-3 w-3 transition-transform", showEarlyChildhood && "rotate-180")} />
-                                    Early Childhood (Nursery, LKG, UKG)
+                                    {ui(ONBOARDING_LOCAL_I18N.earlyChildhood)}
                                 </button>
                                 {showEarlyChildhood && (
                                     <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-300">

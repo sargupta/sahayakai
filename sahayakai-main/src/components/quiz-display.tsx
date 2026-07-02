@@ -44,11 +44,81 @@ import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 import { useLanguage } from "@/context/language-context";
+import { LANGUAGE_TO_ISO } from "@/types";
 
 type QuizDisplayProps = {
     quiz: QuizVariantsOutput;
     onRegenerate?: () => void;
     selectedLanguage?: string;
+    /**
+     * App UI language (ISO). Drives interface chrome (buttons, toasts,
+     * structural labels). Falls back to the language context when absent.
+     * Distinct from `selectedLanguage`, which is the AI-output language.
+     */
+    uiLangCode?: string;
+};
+
+// Component-local chrome strings not present in the shared ResultShell dict.
+// Resolved by uiLangCode (app UI language), in native script per language.
+const QUIZ_CHROME_I18N: Record<
+    string,
+    { feedbackThanks: string; feedbackImprove: string; questionSavedToast: string }
+> = {
+    en: {
+        feedbackThanks: "Thanks for your feedback!",
+        feedbackImprove: "We'll improve this.",
+        questionSavedToast: "Question {n} saved",
+    },
+    hi: {
+        feedbackThanks: "आपकी प्रतिक्रिया के लिए धन्यवाद!",
+        feedbackImprove: "हम इसे बेहतर बनाएँगे।",
+        questionSavedToast: "प्रश्न {n} सहेजा गया",
+    },
+    mr: {
+        feedbackThanks: "तुमच्या अभिप्रायाबद्दल धन्यवाद!",
+        feedbackImprove: "आम्ही हे सुधारू.",
+        questionSavedToast: "प्रश्न {n} जतन केला",
+    },
+    bn: {
+        feedbackThanks: "আপনার মতামতের জন্য ধন্যবাদ!",
+        feedbackImprove: "আমরা এটি উন্নত করব।",
+        questionSavedToast: "প্রশ্ন {n} সংরক্ষিত হয়েছে",
+    },
+    pa: {
+        feedbackThanks: "ਤੁਹਾਡੀ ਫੀਡਬੈਕ ਲਈ ਧੰਨਵਾਦ!",
+        feedbackImprove: "ਅਸੀਂ ਇਸ ਨੂੰ ਬਿਹਤਰ ਬਣਾਵਾਂਗੇ।",
+        questionSavedToast: "ਸਵਾਲ {n} ਸੰਭਾਲਿਆ ਗਿਆ",
+    },
+    gu: {
+        feedbackThanks: "તમારા પ્રતિસાદ બદલ આભાર!",
+        feedbackImprove: "અમે આને સુધારીશું.",
+        questionSavedToast: "પ્રશ્ન {n} સાચવ્યો",
+    },
+    or: {
+        feedbackThanks: "ଆପଣଙ୍କ ମତାମତ ପାଇଁ ଧନ୍ୟବାଦ!",
+        feedbackImprove: "ଆମେ ଏହାକୁ ଉନ୍ନତ କରିବୁ।",
+        questionSavedToast: "ପ୍ରଶ୍ନ {n} ସଞ୍ଚୟ ହୋଇଛି",
+    },
+    ta: {
+        feedbackThanks: "உங்கள் கருத்துக்கு நன்றி!",
+        feedbackImprove: "இதை மேம்படுத்துவோம்.",
+        questionSavedToast: "கேள்வி {n} சேமிக்கப்பட்டது",
+    },
+    te: {
+        feedbackThanks: "మీ అభిప్రాయానికి ధన్యవాదాలు!",
+        feedbackImprove: "మేము దీన్ని మెరుగుపరుస్తాము.",
+        questionSavedToast: "ప్రశ్న {n} సేవ్ చేయబడింది",
+    },
+    kn: {
+        feedbackThanks: "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು!",
+        feedbackImprove: "ನಾವು ಇದನ್ನು ಸುಧಾರಿಸುತ್ತೇವೆ.",
+        questionSavedToast: "ಪ್ರಶ್ನೆ {n} ಉಳಿಸಲಾಗಿದೆ",
+    },
+    ml: {
+        feedbackThanks: "നിങ്ങളുടെ പ്രതികരണത്തിന് നന്ദി!",
+        feedbackImprove: "ഞങ്ങൾ ഇത് മെച്ചപ്പെടുത്തും.",
+        questionSavedToast: "ചോദ്യം {n} സേവ് ചെയ്തു",
+    },
 };
 
 type EditingState = {
@@ -62,6 +132,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
     quiz,
     onRegenerate,
     selectedLanguage,
+    uiLangCode,
 }) => {
     const [activeTab, setActiveTab] = useState<"easy" | "medium" | "hard">(
         "medium",
@@ -74,8 +145,13 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
     const [isRefining, setIsRefining] = useState<number | null>(null);
     const [includeBranding] = useState(true);
     const { toast } = useToast();
-    const t = getResultShellDict(selectedLanguage);
-    const { t: tr } = useLanguage();
+    const { t: tr, language } = useLanguage();
+    // Interface chrome (buttons/toasts/labels) follows the app UI language,
+    // NOT the AI-output language. Prefer the explicit uiLangCode prop; fall
+    // back to the language context. selectedLanguage stays for AI content only.
+    const resolvedUiLang = uiLangCode || LANGUAGE_TO_ISO[language] || "en";
+    const t = getResultShellDict(resolvedUiLang);
+    const chrome = QUIZ_CHROME_I18N[resolvedUiLang] || QUIZ_CHROME_I18N.en;
 
     useEffect(() => {
         setEditState({
@@ -266,8 +342,8 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
             title: type === "up" ? t.goodFeedback : t.badFeedback,
             description:
                 type === "up"
-                    ? "Thanks for your feedback!"
-                    : "We'll improve this.",
+                    ? chrome.feedbackThanks
+                    : chrome.feedbackImprove,
         });
         try {
             const { auth } = await import("@/lib/firebase");
@@ -342,7 +418,10 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
             if (!response.ok) throw new Error("Server rejected save");
             toast({
                 title: tr("Saved"),
-                description: `${tr("Question")} ${idx + 1} ${tr("saved")}`,
+                description: chrome.questionSavedToast.replace(
+                    "{n}",
+                    String(idx + 1),
+                ),
             });
         } catch {
             toast({

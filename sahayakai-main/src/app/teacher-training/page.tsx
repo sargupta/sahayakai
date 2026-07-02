@@ -79,6 +79,18 @@ const descriptionTranslations: Record<string, [string, string]> = {
     "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಎಐ ತರಬೇತುದಾರ, ಶಿಕ್ಷಣಾತ್ಮಕ ತತ್ವಗಳ ಮೇಲೆ ಆಧಾರಿತವಾದ ಸಲಹೆಯನ್ನು ನೀಡುತ್ತದೆ.",
     "ತಂತ್ರಗಳು, ತರಗತಿಯ ತಂತ್ರಗಳು, ಅಥವಾ ಪ್ರೇರಣೆಗಾಗಿ ಕೇಳಿ."
   ],
+  pa: [
+    "ਤੁਹਾਡਾ ਨਿੱਜੀ AI ਕੋਚ, ਜੋ ਠੋਸ ਸਿੱਖਿਆ ਸ਼ਾਸਤਰੀ ਸਿਧਾਂਤਾਂ 'ਤੇ ਆਧਾਰਿਤ ਸਲਾਹ ਪ੍ਰਦਾਨ ਕਰਦਾ ਹੈ।",
+    "ਤਕਨੀਕਾਂ, ਕਲਾਸਰੂਮ ਰਣਨੀਤੀਆਂ ਜਾਂ ਪ੍ਰੇਰਣਾ ਲਈ ਪੁੱਛੋ।"
+  ],
+  ml: [
+    "നിങ്ങളുടെ വ്യക്തിഗത AI പരിശീലകൻ, ഉറച്ച അധ്യാപന തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള ഉപദേശം നൽകുന്നു.",
+    "സങ്കേതങ്ങൾ, ക്ലാസ് മുറി തന്ത്രങ്ങൾ അല്ലെങ്കിൽ പ്രചോദനത്തിനായി ചോദിക്കുക."
+  ],
+  or: [
+    "ଆପଣଙ୍କ ବ୍ୟକ୍ତିଗତ AI କୋଚ୍, ଯିଏ ଦୃଢ଼ ଶିକ୍ଷାଦାନ ସିଦ୍ଧାନ୍ତ ଉପରେ ଆଧାରିତ ପରାମର୍ଶ ପ୍ରଦାନ କରନ୍ତି।",
+    "କୌଶଳ, ଶ୍ରେଣୀକକ୍ଷ ରଣନୀତି କିମ୍ବା ପ୍ରେରଣା ପାଇଁ ପଚାରନ୍ତୁ।"
+  ],
 };
 
 const placeholderTranslations: Record<string, string> = {
@@ -495,7 +507,7 @@ function TeacherTrainingContent() {
 
                   <div className="space-y-2">
                     <FormLabel className="font-headline">{t("Quick Ideas")}</FormLabel>
-                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="teacher-training" />
+                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={uiLangCode} page="teacher-training" />
                   </div>
                 </div>
 
