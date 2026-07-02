@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20]
+        # 20 matches the production container (node:20-alpine); 18 is EOL
+        # and below the package.json engines floor.
+        node-version: [20]
 
     defaults:
       run:
@@ -42,7 +44,10 @@ jobs:
         run: npm run lint
 
       - name: Unit & integration tests
-        run: npm test -- --ci --coverage --json --outputFile=test-results.json 2>&1 | tee test-output.txt
+        # NO pipe here. `… | tee` swallowed jest's exit code for weeks
+        # (Actions' default shell has no pipefail), letting 50 failing
+        # tests merge green. Jest writes the JSON itself via --outputFile.
+        run: npm test -- --ci --coverage --json --outputFile=test-results.json
 
       - name: Test results & coverage summary
         if: always() && matrix.node-version == 20

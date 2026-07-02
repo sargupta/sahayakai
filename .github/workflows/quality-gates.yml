@@ -194,3 +194,7 @@ jobs:
         run: npm ci
       - name: Run jest on CI script tests
         run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts --runInBand --coverage=false
+
+# NOTE: the full unit suite gates PRs via test.yml (Test Suite workflow).
+# Its exit code is only meaningful because the `| tee` pipe was removed
+# there on 2026-07-03 — do not reintroduce pipes on the jest step.
