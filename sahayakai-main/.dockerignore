@@ -6,5 +6,20 @@ README.md
 .next
 .git
 .github
+
+# Secrets / env — NEVER copy into any image layer. Runtime secrets are
+# injected via Cloud Run env / Secret Manager, not baked at build time.
+# (A prior `!.env.local` negation re-included the real service-account key,
+# Twilio token, and API keys into the builder layer — removed.)
 *.local
-!.env.local
+.env
+.env.*
+secrets/
+._*
+
+# Local tooling / build artifacts that must not ship in the image
+.claude/
+qa/
+company/
+docs/
+*.log
