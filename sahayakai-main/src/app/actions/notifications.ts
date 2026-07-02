@@ -70,11 +70,17 @@ export async function markAllAsReadAction(_userId?: string) {
         .where('isRead', '==', false)
         .get();
 
-    const batch = db.batch();
-    snapshot.docs.forEach(doc => {
-        batch.update(doc.ref, { isRead: true });
-    });
-
-    await batch.commit();
+    // Firestore caps a batch at 500 writes. A user with >500 unread would throw
+    // on commit() and NONE would get marked read. Chunk into batches of <=500
+    // and commit each (mirrors the PAGE_SIZE=500 chunking in messages.ts).
+    const BATCH_LIMIT = 500;
+    for (let i = 0; i < snapshot.docs.length; i += BATCH_LIMIT) {
+        const chunk = snapshot.docs.slice(i, i + BATCH_LIMIT);
+        const batch = db.batch();
+        chunk.forEach(doc => {
+            batch.update(doc.ref, { isRead: true });
+        });
+        await batch.commit();
+    }
     revalidatePath("/notifications");
 }

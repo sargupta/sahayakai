@@ -182,14 +182,6 @@ export async function sendMessageAction({
 
     const convRef = db.collection('conversations').doc(conversationId);
 
-    // Idempotency: if clientMessageId provided, check for existing doc (dedup)
-    if (clientMessageId) {
-        const existingDoc = await convRef.collection('messages').doc(clientMessageId).get();
-        if (existingDoc.exists) {
-            return { messageId: clientMessageId };
-        }
-    }
-
     const convDoc = await convRef.get();
     if (!convDoc.exists) throw new Error('Conversation not found');
 
@@ -204,7 +196,22 @@ export async function sendMessageAction({
         ? convRef.collection('messages').doc(clientMessageId)
         : convRef.collection('messages').doc();
 
+    // Idempotency: the check MUST run inside the transaction. Running it as a
+    // pre-check outside meant two concurrent retries with the same
+    // clientMessageId could both pass and both apply the unreadCount
+    // increment(1) + fire duplicate notifications. Inside the transaction the
+    // deterministic message doc read serializes the retries: the loser sees the
+    // doc already exists and returns early (no increment, no notifications).
+    let alreadyExists = false;
     await db.runTransaction(async (tx) => {
+        if (clientMessageId) {
+            const existing = await tx.get(msgRef);
+            if (existing.exists) {
+                alreadyExists = true;
+                return;
+            }
+        }
+
         const messagePayload: Record<string, any> = {
             type,
             text: trimmed,
@@ -248,6 +255,13 @@ export async function sendMessageAction({
             ...unreadUpdates,
         });
     });
+
+    // Duplicate retry (same clientMessageId): the message + increment were
+    // already applied by the winning attempt. Skip the notification/push
+    // fan-out so the recipient isn't notified twice, and return the stable id.
+    if (alreadyExists) {
+        return { messageId: msgRef.id };
+    }
 
     // Fire-and-forget notifications to other participants
     const recipients = (convData.participantIds as string[]).filter((uid) => uid !== senderId);
