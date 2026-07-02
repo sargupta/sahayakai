@@ -24,6 +24,39 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
     }
 
+    // Fields on the users/{uid} doc that a user must NEVER be able to set or
+    // change via a direct client-SDK write. Privilege (role/admin/claims),
+    // billing/plan, org/tenant membership, server-computed aggregates, and
+    // immutable identity all live here. These are written only by Admin-SDK
+    // server code (server actions, webhooks, cron), which bypasses rules.
+    // Blocking them at the rule layer closes the direct-write bypass that the
+    // server-action allowlist alone did not cover.
+    function protectedUserFields() {
+      return [
+        // privilege / admin
+        'role', 'isAdmin', 'adminRoles', 'superadmin', 'customClaims',
+        // billing / plan
+        'plan', 'planType', 'planTier', 'planExpiresAt', 'subscriptionStatus',
+        'subscription', 'subscriptionId', 'razorpaySubscriptionId', 'razorpayCustomerId',
+        'monthlyCredits', 'credits', 'creditsUsed', 'adminOverride', 'billing',
+        // org / tenant membership (self-asserted role was a cross-tenant hole)
+        'organizationId', 'organizationRole', 'administrativeRole',
+        // server-computed aggregates
+        'impactScore', 'badges', 'verifiedStatus', 'followersCount',
+        'followingCount', 'contentSharedCount',
+        // server-issued / immutable identity
+        'referralCode', 'email', 'emailVerified', 'uid', 'createdAt',
+        // push tokens (written only by the dedicated FCM action)
+        'fcmTokens'
+      ];
+    }
+
+    // A self-update is allowed only if it touches none of the protected fields.
+    function isSafeUserUpdate() {
+      return !request.resource.data.diff(resource.data)
+                .affectedKeys().hasAny(protectedUserFields());
+    }
+
     // =============================================
     // EXISTING COLLECTIONS
     // =============================================
@@ -36,8 +69,13 @@ service cloud.firestore {
     // --- Users ---
     // Each user can only read/write their own document
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow read: if isOwner(userId);
+      // Owner may update their own doc but NEVER privileged/billing/org/identity
+      // fields — those are Admin-SDK-only (see protectedUserFields()).
+      allow update: if isOwner(userId) && isSafeUserUpdate();
+      // On create, forbid a user seeding themselves with privileged values.
+      allow create: if isOwner(userId)
+                    && !request.resource.data.keys().hasAny(protectedUserFields());
     }
 
     // --- Content ---
@@ -84,8 +122,14 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.text.size() <= 1000;
 
+        // A participant may only stamp read/delivery receipts — NOT edit the
+        // message text, sender, or attachments (previously any participant
+        // could overwrite ANY message's content, enabling impersonation).
+        // Message content is authored on create and never client-mutable after.
         allow update: if isSignedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['readBy', 'deliveredTo', 'readAt', 'deliveredAt', 'lastReadAt']);
 
         allow delete: if false;
       }
@@ -119,7 +163,9 @@ service cloud.firestore {
 
     // --- Connections (accepted, symmetric) ---
     match /connections/{connId} {
-      allow read: if isSignedIn();
+      // Only the two connected users may read a connection — previously any
+      // signed-in user could read every doc and enumerate the whole social graph.
+      allow read: if isSignedIn() && request.auth.uid in resource.data.uids;
       allow create: if false;
       allow delete: if isSignedIn()
         && request.auth.uid in resource.data.uids;

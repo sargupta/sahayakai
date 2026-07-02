@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/auth-utils';
+import { AdminSecureSessionLabel } from './admin-secure-session-label';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -22,15 +23,16 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     // 2. Verify Admin Status
-    // In development, we skip the DB check if we're using the mock dev-user-123.
-    // This prevents hangs due to local GCP auth/Secret Manager issues.
-    const isDev = process.env.NODE_ENV === 'development';
-    const isDevUser = userId === 'dev-user-123';
+    // The dev bypass is gated ONLY on an explicit opt-in flag (ALLOW_DEV_ADMIN)
+    // AND the known mock dev uid — never on NODE_ENV. This prevents a non-prod
+    // build (staging/preview) from rendering the admin dashboard to any signed-in
+    // user. When the flag is set for the mock uid, we skip the DB check to avoid
+    // hangs from local GCP auth/Secret Manager issues.
+    const devBypass =
+        process.env.ALLOW_DEV_ADMIN === 'true' && userId === 'dev-user-123';
 
     let authorized = false;
-    if (isDev && isDevUser) {
-        authorized = false; // We still treat them as unauthorized for the UI flags
-    } else {
+    if (!devBypass) {
         try {
             authorized = await isAdmin(userId);
         } catch (e) {
@@ -39,7 +41,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     // 3. Application Security Guard
-    if (!authorized && !isDev) {
+    // Render the admin surface ONLY to real admins or the explicit dev bypass.
+    if (!authorized && !devBypass) {
         redirect('/');
     }
 
@@ -50,8 +53,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
             <div className="bg-slate-900 px-6 py-3 flex items-center justify-between shadow-lg">
                 <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-white text-xs font-bold tracking-widest uppercase">Admin Secure Session</span>
-                    {isDev && !authorized && (
+                    <AdminSecureSessionLabel className="text-white text-xs font-bold tracking-widest uppercase" />
+                    {devBypass && (
                         <span className="ml-2 text-amber-400 text-[10px] font-bold border border-amber-400/30 px-1 rounded">DEV BYPASS</span>
                     )}
                 </div>

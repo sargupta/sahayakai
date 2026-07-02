@@ -15,13 +15,13 @@ import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/vali
 import { isFeatureEnabled } from '@/lib/feature-flags';
 
 const ExamPaperInputSchema = z.object({
-  board: z.string().describe("The education board (e.g., 'CBSE', 'ICSE')."),
-  gradeLevel: z.string().describe("The grade level (e.g., 'Class 10')."),
-  subject: z.string().describe("The subject (e.g., 'Mathematics')."),
-  chapters: z.array(z.string()).describe("Selected chapters to cover. Empty array means cover all chapters for the subject."),
+  board: z.string().max(100).describe("The education board (e.g., 'CBSE', 'ICSE')."),
+  gradeLevel: z.string().max(50).describe("The grade level (e.g., 'Class 10')."),
+  subject: z.string().max(100).describe("The subject (e.g., 'Mathematics')."),
+  chapters: z.array(z.string().max(300)).max(50).describe("Selected chapters to cover. Empty array means cover all chapters for the subject."),
   duration: z.number().optional().describe("Exam duration in minutes. Defaults to blueprint value."),
   maxMarks: z.number().optional().describe("Maximum marks. Defaults to blueprint value."),
-  language: z.string().default('English').describe("Language for the paper (e.g., 'English', 'Hindi')."),
+  language: z.string().max(50).default('English').describe("Language for the paper (e.g., 'English', 'Hindi')."),
   difficulty: z.enum(['easy', 'moderate', 'hard', 'mixed']).default('mixed').describe("Overall difficulty distribution."),
   includeAnswerKey: z.boolean().default(true).describe("Whether to generate answer keys."),
   includeMarkingScheme: z.boolean().default(true).describe("Whether to generate marking schemes."),
@@ -87,7 +87,11 @@ export async function generateExamPaper(input: ExamPaperInput): Promise<ExamPape
   let localizedInput = { ...input };
 
   if (uid) {
-    if (!input.language || input.language === 'English') {
+    // Only fall back to the teacher's profile preferredLanguage when the
+    // AI-output language is truly omitted. An explicit selection (including
+    // 'English') is the user's deliberate choice and must be respected — do
+    // NOT treat 'English' as "unset" (mirrors lesson-plan-generator.ts).
+    if (input.language === undefined || input.language === null) {
       const { dbAdapter } = await import('@/lib/db/adapter');
       const profile = await dbAdapter.getUser(uid);
       if (profile?.preferredLanguage) {

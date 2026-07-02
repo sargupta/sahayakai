@@ -155,11 +155,20 @@ export async function POST(req: NextRequest) {
     const status = typeof (err as any)?.status === 'number' ? (err as any).status : null;
     const name = String((err as any)?.name || '');
     const msg = err instanceof Error ? err.message : String(err);
+    // NOTE (2026-06-11): a raw Genkit/GoogleGenerativeAI error from the `off`/
+    // direct path often carries no numeric `.status`, embedding the code in the
+    // message instead — e.g. "[503 Service Unavailable] This model is currently
+    // experiencing high demand." The daily scan found 19 persona-pulse 500s in
+    // 24h that were exactly this transient Gemini overload, misclassified as a
+    // genuine bug because the regex below only matched 429/RESOURCE_EXHAUSTED/
+    // timeout. Add 503/Service Unavailable/high demand/overloaded/UNAVAILABLE so
+    // they correctly become a stop-polling 503 (WARN) like the shared
+    // handleAIError helper now does (see src/lib/ai-error-response.ts).
     const isTransient =
       status === 503 ||
       status === 429 ||
       /TimeoutError$/.test(name) ||
-      /timed out after \d+\s*ms|RESOURCE_EXHAUSTED|Resource exhausted|\b429\b/i.test(msg);
+      /timed out after \d+\s*ms|RESOURCE_EXHAUSTED|Resource exhausted|\b429\b|\b503\b|service unavailable|experiencing high demand|model is overloaded|\boverloaded\b|\bUNAVAILABLE\b/i.test(msg);
 
     if (isTransient) {
       console.warn('[persona-pulse] transient upstream failure — stop-polling 503', {
@@ -174,8 +183,10 @@ export async function POST(req: NextRequest) {
     }
 
     console.error('[persona-pulse] generation failed', err);
+    // Genuine (non-transient) failure. Log the raw error above, but return a
+    // generic body so the client never sees raw internal error strings.
     return NextResponse.json(
-      { error: msg },
+      { error: 'Failed to generate. Please try again.', code: 'INTERNAL_ERROR' },
       { status: 500 },
     );
   }

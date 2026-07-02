@@ -32,8 +32,10 @@ async function _handler(req: NextRequest) {
             wordCount: dispatched.wordCount,
         });
     } catch (error: any) {
+        // Keep the raw error in the server log; return a generic body so the
+        // client never sees model IDs, endpoints, or credential hints.
         console.error('[parent-message] Error:', error);
-        return NextResponse.json({ error: error.message ?? 'Failed to generate message' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to generate. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
     }
 }
 

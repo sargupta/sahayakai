@@ -461,10 +461,11 @@ function TriageGroup({
                             "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors",
                             tc.chip,
                         )}
-                        title={`${e.student.name} — ${e.badge}`}
+                        title={`${e.student.name} — ${e.badge} — ${e.student.parentLanguage}`}
                     >
                         <span className="truncate max-w-[120px]">{e.student.name.split(' ')[0]}</span>
                         <span className="font-normal opacity-70 tabular-nums">{e.badge}</span>
+                        <span className="font-normal opacity-60">· {e.student.parentLanguage}</span>
                     </button>
                 ))}
             </div>

@@ -73,8 +73,15 @@ async function getUserPlanTier(userId: string): Promise<keyof typeof DAILY_USAGE
         const db = await getDb();
         const userDoc = await db.collection('users').doc(userId).get();
         const data = userDoc.data();
-        const plan = (data?.plan ?? data?.subscription?.plan ?? 'free') as string;
-        return plan === 'pro' || plan === 'enterprise' ? 'pro' : 'free';
+        // Canonical field is `planType` (written by the Razorpay webhook,
+        // billing-reconciliation, and middleware). Legacy `plan`/subscription
+        // fields are read only as a fallback.
+        const { normalizePlan } = await import('./plan-utils');
+        const raw = data?.planType ?? data?.plan ?? data?.subscription?.plan;
+        const plan = normalizePlan(raw);
+        // DAILY_USAGE_CAPS only defines 'free' and 'pro' tiers; any paid tier
+        // (pro/gold/premium) maps to the 'pro' cap. Free stays free.
+        return plan === 'free' ? 'free' : 'pro';
     } catch (err) {
         logger.warn?.(`Failed to read plan for ${userId}; defaulting to free`, 'USAGE_GUARD', { err: String(err) });
         return 'free';
@@ -157,7 +164,7 @@ export const UsageTracker = {
         }
     },
 
-    trackTTS(userId: string, characterCount: number, cacheHit: boolean = false, provider: 'google' | 'sarvam' = 'google') {
+    trackTTS(userId: string, characterCount: number, cacheHit: boolean = false, provider: 'google' | 'sarvam' | 'bhashini' = 'google') {
         this.logUsage({
             userId,
             type: 'tts_characters',

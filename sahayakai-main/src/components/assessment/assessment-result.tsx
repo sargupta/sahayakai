@@ -216,14 +216,14 @@ export function AssessmentResult({
           <p>{t("AI-generated grade. Please verify the transcript and feedback before sharing with the student or parent.")}</p>
         </div>
 
-        {result.warnings.length > 0 && (
+        {(result.warnings ?? []).length > 0 && (
           <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-3 space-y-2">
             <p className="flex items-center gap-2 text-sm font-semibold text-orange-900">
               <AlertTriangle className="h-4 w-4" />
               {t("Heads up")}
             </p>
             <ul className="text-sm text-orange-900 list-disc pl-6">
-              {result.warnings.map((w) => (
+              {(result.warnings ?? []).map((w) => (
                 <li key={w}>{WARNING_STRINGS[w] ? t(WARNING_STRINGS[w]) : w}</li>
               ))}
             </ul>
@@ -260,7 +260,7 @@ export function AssessmentResult({
                 </tr>
               </thead>
               <tbody>
-                {result.perCriterionScores.map((row, i) => (
+                {(result.perCriterionScores ?? []).map((row, i) => (
                   <tr
                     key={`${row.criterionName}-${i}`}
                     className="border-b border-border/40 last:border-0 align-top"
@@ -286,19 +286,19 @@ export function AssessmentResult({
           <FeedbackList
             heading={t("Strengths")}
             icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-            items={result.strengths}
+            items={result.strengths ?? []}
             tint="emerald"
           />
           <FeedbackList
             heading={t("Things to improve")}
             icon={<TrendingUp className="h-4 w-4 text-orange-600" />}
-            items={result.improvements}
+            items={result.improvements ?? []}
             tint="orange"
           />
           <FeedbackList
             heading={t("Next steps")}
             icon={<Sparkles className="h-4 w-4 text-violet-600" />}
-            items={result.nextSteps}
+            items={result.nextSteps ?? []}
             tint="violet"
           />
         </section>
@@ -519,14 +519,14 @@ function buildFeedbackSpeech(
   const lines: string[] = [];
   lines.push(`${t("Overall")} ${Math.round(result.overallScore)} percent.`);
   if (result.teacherNote) lines.push(result.teacherNote);
-  for (const c of result.perCriterionScores) {
+  for (const c of result.perCriterionScores ?? []) {
     lines.push(`${c.criterionName}: ${c.feedback}`);
   }
-  if (result.improvements.length) {
-    lines.push(`${t("Things to improve")}: ${result.improvements.join(". ")}`);
+  if ((result.improvements ?? []).length) {
+    lines.push(`${t("Things to improve")}: ${(result.improvements ?? []).join(". ")}`);
   }
-  if (result.nextSteps.length) {
-    lines.push(`${t("Next steps")}: ${result.nextSteps.join(". ")}`);
+  if ((result.nextSteps ?? []).length) {
+    lines.push(`${t("Next steps")}: ${(result.nextSteps ?? []).join(". ")}`);
   }
   return lines.join(" \n");
 }
@@ -538,13 +538,13 @@ function buildFeedbackSummary(result: AssessAssignmentOutput): string {
     `Score: ${Math.round(result.overallScore)}% (${result.pointsEarned}/${result.pointsPossible})`,
     "",
     "Strengths:",
-    ...result.strengths.map((s) => `• ${s}`),
+    ...(result.strengths ?? []).map((s) => `• ${s}`),
     "",
     "To improve:",
-    ...result.improvements.map((s) => `• ${s}`),
+    ...(result.improvements ?? []).map((s) => `• ${s}`),
     "",
     "Next steps:",
-    ...result.nextSteps.map((s) => `• ${s}`),
+    ...(result.nextSteps ?? []).map((s) => `• ${s}`),
     "",
     result.teacherNote,
   ].join("\n");

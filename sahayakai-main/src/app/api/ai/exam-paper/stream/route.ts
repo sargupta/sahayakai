@@ -1,7 +1,7 @@
 
 import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
 import { logger } from '@/lib/logger';
-import { withPlanCheck } from '@/lib/plan-guard';
+import { reservePlanQuota } from '@/lib/plan-guard';
 import { logAIError, classifyAIError } from '@/lib/ai-error-response';
 
 /**
@@ -26,6 +26,7 @@ function sseEvent(payload: Record<string, unknown>): string {
 
 async function _handler(request: Request) {
   let paperDesc = 'Unknown Paper';
+  let gate: Awaited<ReturnType<typeof reservePlanQuota>> | null = null;
   try {
     const userId = request.headers.get('x-user-id');
     if (!userId) {
@@ -102,6 +103,24 @@ async function _handler(request: Request) {
       );
     }
 
+    // Plan/quota gate AFTER input validation (so a 400 never consumes quota),
+    // BEFORE streaming. SSE returns a native Response so we use the shared
+    // reservePlanQuota() rather than the withPlanCheck() HOF.
+    gate = await reservePlanQuota(request, 'exam-paper');
+    if (!gate.ok) {
+      return new Response(
+        sseEvent({ type: 'error', code: gate.body.error, message: gate.body.message ?? gate.body.error }),
+        {
+          status: gate.status,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          },
+        },
+      );
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
@@ -157,6 +176,9 @@ async function _handler(request: Request) {
             },
           });
         } catch (error) {
+          // Generation failed — refund the reserved quota.
+          if (gate?.ok) await gate.rollback();
+
           const errorMessage =
             error instanceof Error ? error.message : String(error);
           const classified = classifyAIError(error);
@@ -190,6 +212,9 @@ async function _handler(request: Request) {
       },
     });
   } catch (error) {
+    // Pre-stream failure after a successful reservation — refund.
+    if (gate?.ok) await gate.rollback();
+
     const classified = classifyAIError(error);
     const status = classified.code === 'AI_SERVICE_BUSY' ? 503 : 500;
 
@@ -221,6 +246,7 @@ async function _handler(request: Request) {
   }
 }
 
-// SSE routes return native Response (not NextResponse), so withPlanCheck
-// type is incompatible. Plan check runs inside _handler before streaming.
+// SSE routes return native Response (not NextResponse), so the withPlanCheck
+// HOF is type-incompatible. The plan/quota gate DOES run: _handler calls
+// reservePlanQuota() after validation and before streaming, rolling back on failure.
 export const POST = _handler;

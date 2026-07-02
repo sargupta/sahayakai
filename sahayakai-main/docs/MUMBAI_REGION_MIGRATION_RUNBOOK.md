@@ -250,6 +250,15 @@ Firebase download URLs look like `https://firebasestorage.googleapis.com/v0/b/<B
 - Confirm zero reads hitting the old bucket (Cloud Monitoring on `$OLD_BUCKET` request count) for 30 days.
 - Then set old bucket read-only, and finally delete after the soak. **Never delete before the soak.**
 
+> **PHASE B §5.5 — LIVE VERIFIED, SOAK STARTED (2026-06-10):**
+> - **Existing media serves live from Mumbai:** a real `visual-aids/*.png` (token `ca38d017…`) fetched over HTTPS from the Mumbai bucket = **HTTP 200, 1,223,683 bytes, image/png, 1.5s**; the SAME token against the old US bucket also = **HTTP 200, identical 1,223,683 bytes, 3.9s** (Mumbai 2.6× faster — closer region; both buckets coexist for the soak).
+> - **Fresh live write lands in Mumbai, NOT US:** minted a real QA ID token (`provision-test-user.mjs`), POSTed `/api/content/save` against prod `www.sahayakai.com` (HTTP 200, `{success:true}`). New object appeared at `gs://sahayakai-b4248-mumbai/users/<uid>/lesson-plans/…json`; **absent from US**. QA artifact + user cleaned up afterward (Mumbai back to 4169).
+> - **Zero post-cutover writes to US:** newest US object is `2026-06-09T17:17:37Z` (pre-cutover); nothing written after the `2026-06-09T18:00:00Z` boundary. No divergence → nothing to lose on eventual deletion.
+> - **Soak baseline (24h request_count):** US `ReadObject` app traffic ≈ nil — the 7021 US requests are migration tooling (`RewriteObject.From` 4170 copy-reads + `ListObjects` 2803 verification `ls`). Mumbai receiving live `WriteObject` + serving `ReadObject`.
+> - **Repo synced:** storage cutover released to `main` (`chore(release): Mumbai storage cutover (Phase B)`), develop back-merged; git now matches what prod runs.
+> - **Soak window: 2026-06-10 → 2026-07-10 (30 days).** Re-run `bash scripts/qa/soak-check-us-bucket.sh` any time and as the final gate on/after 2026-07-10. It checks object parity, the post-cutover-write tripwire, and US request breakdown; exit 0 = clean. **US bucket NOT deleted; kept fully intact as rollback target during soak.**
+> - **Open decision (deferred to user):** whether to harden US to *read-only* (remove write IAM) now vs. keep it write-capable. Read-only eliminates silent-divergence risk but disables instant write-rollback (rollback would then need a reverse delta-copy first). Kept write-capable for now since cutover is freshly verified; revisit mid-soak.
+
 ### 5.6 Rollback
 At any point pre-deletion: flip `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` back to `$OLD_BUCKET` and redeploy. Old bucket still has every object; the broadened allowlist already accepts it. URL rewrite is reversible (re-run swap in reverse, both buckets hold the objects).
 

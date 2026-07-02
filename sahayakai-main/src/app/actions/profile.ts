@@ -36,6 +36,7 @@ function buildConnectionPairId(uid1: string, uid2: string): string {
 export async function getProfileData(_userId?: string) {
     const userId = await requireAuth();
     if (_userId && _userId !== userId) {
+        logger.error('getProfileData failed', new Error('Forbidden: cannot read another user\'s profile via this action'), 'PROFILE', { userId });
         throw new Error('Forbidden: cannot read another user\'s profile via this action');
     }
     try {
@@ -67,6 +68,7 @@ export async function getProfileData(_userId?: string) {
 export async function getPublicProfileAction(targetUid: string) {
     const callerUid = await requireAuth(); // any signed-in teacher can view another teacher
     if (!targetUid || typeof targetUid !== 'string') {
+        logger.error('getPublicProfileAction failed', new Error('Invalid targetUid'), 'PROFILE', { userId: callerUid });
         throw new Error('Invalid targetUid');
     }
     try {
@@ -149,21 +151,26 @@ export async function getPublicProfileAction(targetUid: string) {
  */
 export async function addCertificationAction(formData: FormData) {
     const userId = await requireAuth();
-    const certName = formData.get("certName") as string;
-    const issuingBody = formData.get("issuingBody") as string;
-    const issueDate = formData.get("issueDate") as string;
+    try {
+        const certName = formData.get("certName") as string;
+        const issuingBody = formData.get("issuingBody") as string;
+        const issueDate = formData.get("issueDate") as string;
 
-    if (!certName) throw new Error("Missing required field: certName");
+        if (!certName) throw new Error("Missing required field: certName");
 
-    await certificationService.addCertification({
-        userId,
-        certName,
-        issuingBody,
-        issueDate,
-        status: 'pending'
-    } as any);
+        await certificationService.addCertification({
+            userId,
+            certName,
+            issuingBody,
+            issueDate,
+            status: 'pending'
+        } as any);
 
-    revalidatePath("/my-profile");
+        revalidatePath("/my-profile");
+    } catch (error) {
+        logger.error("addCertificationAction failed", error, 'PROFILE', { userId });
+        throw error;
+    }
 }
 
 /**
@@ -226,7 +233,12 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
     'school', // legacy alias
     'schoolNormalized',
     'udise',
-    'organizationId',
+    // NOTE: 'organizationId' is intentionally NOT writable here. It is a
+    // server-managed tenant key set only by Admin-SDK org code
+    // (src/lib/organization.ts on create/join, deleted on removal). Allowing
+    // a client to self-assign it let any user read another school's org data
+    // and analytics (cross-tenant). administrativeRole remains writable as a
+    // display-only self-description; it is no longer trusted for authorization.
     'interests',
 
     // Location
@@ -318,6 +330,7 @@ const ONBOARDING_PHASE_PREREQUISITES: Record<string, readonly string[]> = {
 
 export async function updateProfileAction(_userId: string, data: any) {
     const userId = await requireAuth();
+    try {
     if (_userId !== userId) {
         throw new Error('Forbidden: cannot update another user\'s profile');
     }
@@ -412,6 +425,10 @@ export async function updateProfileAction(_userId: string, data: any) {
 
     revalidatePath("/my-profile");
     return { profileCompletionLevel: completionScore };
+    } catch (error) {
+        logger.error("updateProfileAction failed", error, 'PROFILE', { userId });
+        throw error;
+    }
 }
 
 /**
@@ -424,10 +441,12 @@ const CHECKLIST_ITEM_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 export async function markChecklistItemAction(_userId: string, itemId: string) {
     if (!itemId) return;
     if (!CHECKLIST_ITEM_ID_RE.test(itemId)) {
+        logger.error('markChecklistItemAction failed', new Error('Invalid checklist item id'), 'PROFILE', { userId: null });
         throw new Error('Invalid checklist item id');
     }
     const userId = await requireAuth();
     if (_userId !== userId) {
+        logger.error('markChecklistItemAction failed', new Error('Forbidden: cannot update another user\'s checklist'), 'PROFILE', { userId });
         throw new Error('Forbidden: cannot update another user\'s checklist');
     }
     try {
@@ -503,10 +522,15 @@ export async function getDailyCostsAction(days: number = 7) {
     const headersList = await headers();
     const userId = headersList.get('x-user-id');
 
-    if (!userId) throw new Error("Unauthorized");
-    await validateAdmin(userId);
+    try {
+        if (!userId) throw new Error("Unauthorized");
+        await validateAdmin(userId);
 
-    const { costService } = await import("@/lib/services/cost-service");
-    const data = await costService.getDailyCosts(days);
-    return data;
+        const { costService } = await import("@/lib/services/cost-service");
+        const data = await costService.getDailyCosts(days);
+        return data;
+    } catch (error) {
+        logger.error("getDailyCostsAction failed", error, 'PROFILE', { userId });
+        throw error;
+    }
 }

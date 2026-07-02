@@ -11,8 +11,8 @@ const QuestionSchema = z.object({
 });
 
 export const QuizGeneratorInputSchema = z.object({
-  topic: z.string().describe('The topic of the quiz.'),
-  imageDataUri: z.string().optional().describe(
+  topic: z.string().max(1000).describe('The topic of the quiz.'),
+  imageDataUri: z.string().max(14_000_000).optional().describe(
     "An optional photo of a textbook page, as a data URI that must include a MIME type and use Base64 encoding. This will be the primary context for the quiz."
   ),
   numQuestions: z.number().default(5).describe('The number of questions to generate.'),

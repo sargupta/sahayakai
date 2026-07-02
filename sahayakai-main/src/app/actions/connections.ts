@@ -2,8 +2,9 @@
 
 import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
+import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth-helpers';
-import { createTypedNotification } from './notifications';
+import { createTypedNotification } from '@/lib/notifications/create';
 import type { ConnectionRequest, Connection, MyConnectionData } from '@/types';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -22,50 +23,55 @@ function buildConnectionId(uid1: string, uid2: string): string {
 
 export async function sendConnectionRequestAction(toUid: string): Promise<{ status: 'sent' | 'already_connected' | 'already_pending' }> {
     const fromUid = await getAuthUserId();
-    if (fromUid === toUid) throw new Error('Cannot connect with yourself');
-
-    const db = await getDb();
-    const pairId = buildConnectionId(fromUid, toUid); // sorted — same key regardless of direction
-
-    // Parallel pre-flight: check connection + existing request in one round-trip
-    const [connSnap, existingReq] = await Promise.all([
-        db.collection('connections').doc(pairId).get(),
-        db.collection('connection_requests').doc(pairId).get(),
-    ]);
-    if (connSnap.exists) return { status: 'already_connected' };
-    if (existingReq.exists) return { status: 'already_pending' };
-
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-    const reqData: Omit<ConnectionRequest, 'id'> = {
-        fromUid,
-        toUid,
-        createdAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-    };
-
-    await db.collection('connection_requests').doc(pairId).set(reqData);
-
-    // Notify recipient
     try {
-        const userSnap = await db.collection('users').doc(fromUid).get();
-        const sender = userSnap.data();
-        await createTypedNotification({
-            type: 'CONNECT_REQUEST',
-            recipientId: toUid,
-            placeholders: { senderName: sender?.displayName ?? 'A teacher' },
-            senderId: fromUid,
-            senderName: sender?.displayName,
-            senderPhotoURL: sender?.photoURL,
-            link: `/profile/${fromUid}`,
-            metadata: { requestId: pairId },
-        });
-    } catch {
-        // Notification failure must not block the request
-    }
+        if (fromUid === toUid) throw new Error('Cannot connect with yourself');
 
-    return { status: 'sent' };
+        const db = await getDb();
+        const pairId = buildConnectionId(fromUid, toUid); // sorted — same key regardless of direction
+
+        // Parallel pre-flight: check connection + existing request in one round-trip
+        const [connSnap, existingReq] = await Promise.all([
+            db.collection('connections').doc(pairId).get(),
+            db.collection('connection_requests').doc(pairId).get(),
+        ]);
+        if (connSnap.exists) return { status: 'already_connected' };
+        if (existingReq.exists) return { status: 'already_pending' };
+
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+        const reqData: Omit<ConnectionRequest, 'id'> = {
+            fromUid,
+            toUid,
+            createdAt: now.toISOString(),
+            expiresAt: expiresAt.toISOString(),
+        };
+
+        await db.collection('connection_requests').doc(pairId).set(reqData);
+
+        // Notify recipient
+        try {
+            const userSnap = await db.collection('users').doc(fromUid).get();
+            const sender = userSnap.data();
+            await createTypedNotification({
+                type: 'CONNECT_REQUEST',
+                recipientId: toUid,
+                placeholders: { senderName: sender?.displayName ?? 'A teacher' },
+                senderId: fromUid,
+                senderName: sender?.displayName,
+                senderPhotoURL: sender?.photoURL,
+                link: `/profile/${fromUid}`,
+                metadata: { requestId: pairId },
+            });
+        } catch {
+            // Notification failure must not block the request
+        }
+
+        return { status: 'sent' };
+    } catch (err) {
+        logger.error('sendConnectionRequestAction failed', err, 'CONNECTIONS', { userId: fromUid });
+        throw err;
+    }
 }
 
 // ── acceptConnectionRequestAction ─────────────────────────────────────────────
@@ -76,43 +82,48 @@ export async function sendConnectionRequestAction(toUid: string): Promise<{ stat
 
 export async function acceptConnectionRequestAction(requestId: string): Promise<void> {
     const callerId = await getAuthUserId();
-    const db = await getDb();
-
-    const reqSnap = await db.collection('connection_requests').doc(requestId).get();
-    if (!reqSnap.exists) throw new Error('Request not found');
-
-    const req = reqSnap.data() as Omit<ConnectionRequest, 'id'>;
-    if (req.toUid !== callerId) throw new Error('Unauthorized: only recipient can accept');
-
-    const connId = buildConnectionId(req.fromUid, req.toUid);
-    const now = new Date().toISOString();
-
-    const connectionData: Omit<Connection, 'id'> = {
-        uids: [req.fromUid, req.toUid].sort() as [string, string],
-        initiatedBy: req.fromUid,
-        connectedAt: now,
-    };
-
-    const batch = db.batch();
-    batch.delete(db.collection('connection_requests').doc(requestId));
-    batch.set(db.collection('connections').doc(connId), connectionData);
-    await batch.commit();
-
-    // Notify requester
     try {
-        const userSnap = await db.collection('users').doc(callerId).get();
-        const accepter = userSnap.data();
-        await createTypedNotification({
-            type: 'CONNECT_ACCEPTED',
-            recipientId: req.fromUid,
-            placeholders: { senderName: accepter?.displayName ?? 'A teacher' },
-            senderId: callerId,
-            senderName: accepter?.displayName,
-            senderPhotoURL: accepter?.photoURL,
-            link: `/profile/${callerId}`,
-        });
-    } catch {
-        // Notification failure must not block acceptance
+        const db = await getDb();
+
+        const reqSnap = await db.collection('connection_requests').doc(requestId).get();
+        if (!reqSnap.exists) throw new Error('Request not found');
+
+        const req = reqSnap.data() as Omit<ConnectionRequest, 'id'>;
+        if (req.toUid !== callerId) throw new Error('Unauthorized: only recipient can accept');
+
+        const connId = buildConnectionId(req.fromUid, req.toUid);
+        const now = new Date().toISOString();
+
+        const connectionData: Omit<Connection, 'id'> = {
+            uids: [req.fromUid, req.toUid].sort() as [string, string],
+            initiatedBy: req.fromUid,
+            connectedAt: now,
+        };
+
+        const batch = db.batch();
+        batch.delete(db.collection('connection_requests').doc(requestId));
+        batch.set(db.collection('connections').doc(connId), connectionData);
+        await batch.commit();
+
+        // Notify requester
+        try {
+            const userSnap = await db.collection('users').doc(callerId).get();
+            const accepter = userSnap.data();
+            await createTypedNotification({
+                type: 'CONNECT_ACCEPTED',
+                recipientId: req.fromUid,
+                placeholders: { senderName: accepter?.displayName ?? 'A teacher' },
+                senderId: callerId,
+                senderName: accepter?.displayName,
+                senderPhotoURL: accepter?.photoURL,
+                link: `/profile/${callerId}`,
+            });
+        } catch {
+            // Notification failure must not block acceptance
+        }
+    } catch (err) {
+        logger.error('acceptConnectionRequestAction failed', err, 'CONNECTIONS', { userId: callerId });
+        throw err;
     }
 }
 
@@ -121,17 +132,22 @@ export async function acceptConnectionRequestAction(requestId: string): Promise<
 
 export async function declineConnectionRequestAction(requestId: string): Promise<void> {
     const callerId = await getAuthUserId();
-    const db = await getDb();
+    try {
+        const db = await getDb();
 
-    const reqSnap = await db.collection('connection_requests').doc(requestId).get();
-    if (!reqSnap.exists) return; // idempotent
+        const reqSnap = await db.collection('connection_requests').doc(requestId).get();
+        if (!reqSnap.exists) return; // idempotent
 
-    const req = reqSnap.data() as Omit<ConnectionRequest, 'id'>;
-    if (req.fromUid !== callerId && req.toUid !== callerId) {
-        throw new Error('Unauthorized');
+        const req = reqSnap.data() as Omit<ConnectionRequest, 'id'>;
+        if (req.fromUid !== callerId && req.toUid !== callerId) {
+            throw new Error('Unauthorized');
+        }
+
+        await db.collection('connection_requests').doc(requestId).delete();
+    } catch (err) {
+        logger.error('declineConnectionRequestAction failed', err, 'CONNECTIONS', { userId: callerId });
+        throw err;
     }
-
-    await db.collection('connection_requests').doc(requestId).delete();
 }
 
 // ── disconnectAction ──────────────────────────────────────────────────────────
@@ -139,16 +155,21 @@ export async function declineConnectionRequestAction(requestId: string): Promise
 
 export async function disconnectAction(otherUid: string): Promise<void> {
     const callerId = await getAuthUserId();
-    const db = await getDb();
-    const connId = buildConnectionId(callerId, otherUid);
+    try {
+        const db = await getDb();
+        const connId = buildConnectionId(callerId, otherUid);
 
-    const connSnap = await db.collection('connections').doc(connId).get();
-    if (!connSnap.exists) return; // idempotent
+        const connSnap = await db.collection('connections').doc(connId).get();
+        if (!connSnap.exists) return; // idempotent
 
-    const conn = connSnap.data() as Omit<Connection, 'id'>;
-    if (!conn.uids.includes(callerId)) throw new Error('Unauthorized');
+        const conn = connSnap.data() as Omit<Connection, 'id'>;
+        if (!conn.uids.includes(callerId)) throw new Error('Unauthorized');
 
-    await db.collection('connections').doc(connId).delete();
+        await db.collection('connections').doc(connId).delete();
+    } catch (err) {
+        logger.error('disconnectAction failed', err, 'CONNECTIONS', { userId: callerId });
+        throw err;
+    }
 }
 
 // ── getMyConnectionDataAction ─────────────────────────────────────────────────
@@ -157,6 +178,7 @@ export async function disconnectAction(otherUid: string): Promise<void> {
 
 export async function getMyConnectionDataAction(): Promise<MyConnectionData> {
     const callerId = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const [connSnap, sentSnap, receivedSnap] = await Promise.all([
@@ -189,4 +211,8 @@ export async function getMyConnectionDataAction(): Promise<MyConnectionData> {
     }));
 
     return dbAdapter.serialize({ connectedUids, sentRequestUids, receivedRequests }) as MyConnectionData;
+    } catch (err) {
+        logger.error('getMyConnectionDataAction failed', err, 'CONNECTIONS', { userId: callerId });
+        throw err;
+    }
 }

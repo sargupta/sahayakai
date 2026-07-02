@@ -79,17 +79,13 @@ async function _handler(request: Request) {
 
         logAIError(error, 'TEACHER_TRAINING', { message: `Teacher Training API Failed for question: "${questionText}"`, userId: request.headers.get('x-user-id') });
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const isAuthError = errorMessage.includes('ADC') || errorMessage.includes('credentials') || errorMessage.includes('Secret Manager');
-
-        const userFriendlyError = isAuthError
-            ? `Server Configuration Error: ${errorMessage}. Please ensure 'gcloud auth application-default login' has been run on the server.`
-            : errorMessage;
-
+        // Do NOT echo raw internal error strings to the client — they leak
+        // model IDs, endpoints, and ADC/Secret-Manager hints. Full detail is
+        // captured server-side by logAIError above.
         return NextResponse.json(
             {
-                error: userFriendlyError,
-                code: (error as any).code || 'INTERNAL_ERROR'
+                error: 'Failed to generate. Please try again.',
+                code: 'INTERNAL_ERROR'
             },
             { status: 500 }
         );

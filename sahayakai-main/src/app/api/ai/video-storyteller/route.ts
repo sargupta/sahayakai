@@ -41,9 +41,14 @@ export const maxDuration = 120;
  */
 export async function POST(request: Request) {
     try {
-        // userId is optional — used only for profile-based personalization.
-        // Video recommendations work without auth (RSS is free, no user data exposed).
-        const userId = request.headers.get('x-user-id') || undefined;
+        // Require authentication. Middleware already 401s unauthenticated
+        // /api/ai/* calls; we assert it here too so this expensive endpoint
+        // (Gemini categorization + YouTube fan-out) can never be driven
+        // anonymously even if the route were ever moved to the public list.
+        const userId = request.headers.get('x-user-id');
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const body = await request.json();
 
@@ -69,11 +74,10 @@ export async function POST(request: Request) {
             userId: request.headers.get('x-user-id'),
         });
 
+        // Do not leak internal error detail (model IDs, endpoints, stack) to
+        // the client — log it server-side, return a generic message.
         return NextResponse.json(
-            {
-                error: error instanceof Error ? error.message : 'Internal Server Error',
-                code: (error as any).code || 'INTERNAL_ERROR'
-            },
+            { error: 'Failed to generate video recommendations', code: 'INTERNAL_ERROR' },
             { status: 500 }
         );
     }

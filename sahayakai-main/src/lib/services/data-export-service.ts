@@ -539,8 +539,24 @@ export const dataExportService = {
 
     // profile.json
     if (bundle.profile) {
-      // Strip sensitive fields
-      const { ...safeProfile } = bundle.profile;
+      // Strip internal / billing / system fields. This is the user's OWN
+      // data (DPDP self-export), so identity fields like email/displayName are
+      // intentionally KEPT; only server-internal secrets and billing linkage
+      // are removed (the previous `{ ...safeProfile }` spread stripped nothing).
+      const {
+        razorpaySubscriptionId: _rzpSub,
+        razorpayCustomerId: _rzpCust,
+        subscriptionId: _sub,
+        adminOverride: _adminOverride,
+        customClaims: _claims,
+        adminRoles: _adminRoles,
+        fcmTokens: _fcm,
+        cancellation: _cancellation,
+        billing: _billing,
+        ...safeProfile
+      } = bundle.profile as unknown as Record<string, unknown>;
+      void _rzpSub; void _rzpCust; void _sub; void _adminOverride; void _claims;
+      void _adminRoles; void _fcm; void _cancellation; void _billing;
       fileMap.set('profile.json', Buffer.from(JSON.stringify(safeProfile, null, 2)));
     }
 

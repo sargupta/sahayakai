@@ -2,6 +2,7 @@
 
 import { getDb } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
+import { logger } from '@/lib/logger';
 import { dbAdapter } from '@/lib/db/adapter';
 import type {
     ClassRecord, Student, DailyAttendanceRecord,
@@ -63,6 +64,7 @@ export async function createClassAction(data: {
     academicYear: string;
 }): Promise<{ classId: string }> {
     const uid = await getAuthUserId();
+    try {
     await requireProPlan(uid);
 
     if (!data.name.trim()) throw new Error('Class name is required');
@@ -86,10 +88,15 @@ export async function createClassAction(data: {
 
     await ref.set(record);
     return { classId: ref.id };
+    } catch (err) {
+        logger.error('createClassAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getClassesAction(): Promise<ClassRecord[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     // No composite index needed — equality filter only, sort in JS
@@ -100,10 +107,15 @@ export async function getClassesAction(): Promise<ClassRecord[]> {
     return snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as ClassRecord))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    } catch (err) {
+        logger.error('getClassesAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getClassAction(classId: string): Promise<ClassRecord | null> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const doc = await db.collection('classes').doc(classId).get();
@@ -113,6 +125,10 @@ export async function getClassAction(classId: string): Promise<ClassRecord | nul
     if (data.teacherUid !== uid) throw new Error('Unauthorized');
 
     return { id: doc.id, ...data };
+    } catch (err) {
+        logger.error('getClassAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function updateClassAction(classId: string, data: {
@@ -122,6 +138,7 @@ export async function updateClassAction(classId: string, data: {
     section?: string;
 }): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const doc = await db.collection('classes').doc(classId).get();
@@ -132,10 +149,15 @@ export async function updateClassAction(classId: string, data: {
         ...data,
         updatedAt: new Date().toISOString(),
     });
+    } catch (err) {
+        logger.error('updateClassAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function deleteClassAction(classId: string): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const doc = await db.collection('classes').doc(classId).get();
@@ -161,6 +183,10 @@ export async function deleteClassAction(classId: string): Promise<void> {
 
     // Only delete the class doc once all subcollections are gone
     await db.collection('classes').doc(classId).delete();
+    } catch (err) {
+        logger.error('deleteClassAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Student Management ────────────────────────────────────────────────────────
@@ -172,6 +198,7 @@ export async function addStudentAction(classId: string, data: {
     parentLanguage: Language;
 }): Promise<{ studentId: string }> {
     const uid = await getAuthUserId();
+    try {
     await requireProPlan(uid);
     const db = await getDb();
 
@@ -224,10 +251,15 @@ export async function addStudentAction(classId: string, data: {
     });
 
     return { studentId: ref.id };
+    } catch (err) {
+        logger.error('addStudentAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getStudentsAction(classId: string): Promise<Student[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -240,6 +272,10 @@ export async function getStudentsAction(classId: string): Promise<Student[]> {
         .get();
 
     return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
+    } catch (err) {
+        logger.error('getStudentsAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function updateStudentAction(classId: string, studentId: string, data: {
@@ -249,6 +285,7 @@ export async function updateStudentAction(classId: string, studentId: string, da
     parentLanguage?: Language;
 }): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -263,10 +300,15 @@ export async function updateStudentAction(classId: string, studentId: string, da
 
     await db.collection('classes').doc(classId)
         .collection('students').doc(studentId).update(update);
+    } catch (err) {
+        logger.error('updateStudentAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function deleteStudentAction(classId: string, studentId: string): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -281,6 +323,10 @@ export async function deleteStudentAction(classId: string, studentId: string): P
         updatedAt: new Date().toISOString(),
     });
     await batch.commit();
+    } catch (err) {
+        logger.error('deleteStudentAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Attendance Recording ──────────────────────────────────────────────────────
@@ -291,6 +337,7 @@ export async function saveAttendanceAction(
     records: Record<string, AttendanceStatus>,
 ): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     await requireProPlan(uid);
     const db = await getDb();
 
@@ -321,6 +368,32 @@ export async function saveAttendanceAction(
     if (!classDoc.exists) throw new Error('Class not found');
     if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
 
+    // H9 fix: validate the client-supplied `records` map before writing it
+    // verbatim. Without this, a caller could inject arbitrary studentId keys or
+    // out-of-enum status values straight into the attendance doc, or push an
+    // oversized document.
+    const VALID_STATUSES: ReadonlySet<string> = new Set<AttendanceStatus>(['present', 'absent', 'late']);
+    const MAX_RECORDS = 200; // hard cap — a class holds ≤40 students; guards against oversized-doc writes
+
+    const recordEntries = Object.entries(records);
+    if (recordEntries.length > MAX_RECORDS) {
+        throw new Error(`Too many attendance entries (max ${MAX_RECORDS})`);
+    }
+
+    // Fetch the class's real student ids once and reject any key that isn't one.
+    const studentsSnap = await db.collection('classes').doc(classId)
+        .collection('students').get();
+    const validStudentIds = new Set(studentsSnap.docs.map((d) => d.id));
+
+    for (const [studentId, status] of recordEntries) {
+        if (!validStudentIds.has(studentId)) {
+            throw new Error(`Unknown student in attendance records: ${studentId}`);
+        }
+        if (!VALID_STATUSES.has(status as string)) {
+            throw new Error(`Invalid attendance status for ${studentId}: ${String(status)}`);
+        }
+    }
+
     const record: DailyAttendanceRecord = {
         classId,
         date,
@@ -333,6 +406,10 @@ export async function saveAttendanceAction(
     // Path: attendance/{classId}/records/{YYYY-MM-DD}
     await db.collection('attendance').doc(classId)
         .collection('records').doc(date).set(record);
+    } catch (err) {
+        logger.error('saveAttendanceAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getAttendanceForDateAction(
@@ -340,6 +417,7 @@ export async function getAttendanceForDateAction(
     date: string,
 ): Promise<DailyAttendanceRecord | null> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -350,6 +428,10 @@ export async function getAttendanceForDateAction(
         .collection('records').doc(date).get();
 
     return doc.exists ? (doc.data() as DailyAttendanceRecord) : null;
+    } catch (err) {
+        logger.error('getAttendanceForDateAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getMonthlyAttendanceAction(
@@ -358,6 +440,7 @@ export async function getMonthlyAttendanceAction(
     month: number,  // 1–12
 ): Promise<Record<string, DailyAttendanceRecord>> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -379,6 +462,10 @@ export async function getMonthlyAttendanceAction(
         result[d.id] = d.data() as DailyAttendanceRecord;
     });
     return result;
+    } catch (err) {
+        logger.error('getMonthlyAttendanceAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Student Attendance Summary ────────────────────────────────────────────────
@@ -389,6 +476,7 @@ export async function getStudentSummariesAction(
     month: number,
 ): Promise<StudentAttendanceSummary[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -444,6 +532,10 @@ export async function getStudentSummariesAction(
     });
 
     return dbAdapter.serialize(summaries) as StudentAttendanceSummary[];
+    } catch (err) {
+        logger.error('getStudentSummariesAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Parent Outreach ───────────────────────────────────────────────────────────
@@ -462,8 +554,22 @@ export async function saveOutreachRecordAction(data: {  // premium gate enforced
     performanceContext?: import('@/types/attendance').PerformanceContext;
 }): Promise<{ outreachId: string }> {
     const uid = await getAuthUserId();
+    try {
     await requireProPlan(uid);
     const db = await getDb();
+
+    // H2 fix: verify the caller owns the class AND that the student belongs to
+    // it BEFORE writing the outreach doc. Without this a caller could seed the
+    // Twilio call pipeline with an attacker-chosen classId / studentId /
+    // parentPhone. Mirror the ownership check used by every other action here.
+    const classDoc = await db.collection('classes').doc(data.classId).get();
+    if (!classDoc.exists) throw new Error('Class not found');
+    if (classDoc.data()!.teacherUid !== uid) throw new Error('Unauthorized');
+
+    // Student must be a real member of this class (classes/{classId}/students/{studentId}).
+    const studentDoc = await db.collection('classes').doc(data.classId)
+        .collection('students').doc(data.studentId).get();
+    if (!studentDoc.exists) throw new Error('Student not found in this class');
 
     const now = new Date().toISOString();
     const ref = db.collection('parent_outreach').doc();
@@ -489,6 +595,10 @@ export async function saveOutreachRecordAction(data: {  // premium gate enforced
 
     await ref.set(record);
     return { outreachId: ref.id };
+    } catch (err) {
+        logger.error('saveOutreachRecordAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 export async function getOutreachHistoryAction(
@@ -496,6 +606,7 @@ export async function getOutreachHistoryAction(
     studentId?: string,
 ): Promise<ParentOutreach[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     // No composite indexes needed — equality filters only, sort in JS
@@ -515,18 +626,27 @@ export async function getOutreachHistoryAction(
         .slice(0, studentId ? 20 : 50);
 
     return dbAdapter.serialize(records) as ParentOutreach[];
+    } catch (err) {
+        logger.error('getOutreachHistoryAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Twilio config check ───────────────────────────────────────────────────────
 
 export async function getTwilioConfigStatusAction(): Promise<{ configured: boolean }> {
-    await getAuthUserId(); // auth check
-    const configured = !!(
-        process.env.TWILIO_ACCOUNT_SID &&
-        process.env.TWILIO_AUTH_TOKEN &&
-        process.env.TWILIO_PHONE_NUMBER
-    );
-    return { configured };
+    const uid = await getAuthUserId(); // auth check
+    try {
+        const configured = !!(
+            process.env.TWILIO_ACCOUNT_SID &&
+            process.env.TWILIO_AUTH_TOKEN &&
+            process.env.TWILIO_PHONE_NUMBER
+        );
+        return { configured };
+    } catch (err) {
+        logger.error('getTwilioConfigStatusAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Outreach triage helpers (added for Contact-Parent demo polish) ───────────
@@ -548,6 +668,7 @@ export async function getStudentAbsenceDatesAction(
     limitDays: number = 30,
 ): Promise<string[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -574,6 +695,10 @@ export async function getStudentAbsenceDatesAction(
         if (data.records?.[studentId] === 'absent') absent.push(d.id);
     });
     return absent.sort((a, b) => b.localeCompare(a));
+    } catch (err) {
+        logger.error('getStudentAbsenceDatesAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 /**
@@ -597,6 +722,7 @@ export async function getClassPerformanceSummariesAction(
     classId: string,
 ): Promise<StudentPerformanceSummary[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const classDoc = await db.collection('classes').doc(classId).get();
@@ -659,6 +785,10 @@ export async function getClassPerformanceSummariesAction(
     });
 
     return dbAdapter.serialize(summaries) as StudentPerformanceSummary[];
+    } catch (err) {
+        logger.error('getClassPerformanceSummariesAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }
 
 /**
@@ -672,6 +802,7 @@ export async function getStudentsWithRecentBehavioralOutreachAction(
     lookbackDays: number = 30,
 ): Promise<string[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const since = new Date();
@@ -690,4 +821,8 @@ export async function getStudentsWithRecentBehavioralOutreachAction(
         if ((data.createdAt ?? '') >= sinceIso) ids.add(data.studentId);
     });
     return Array.from(ids);
+    } catch (err) {
+        logger.error('getStudentsWithRecentBehavioralOutreachAction failed', err, 'ATTENDANCE', { userId: uid });
+        throw err;
+    }
 }

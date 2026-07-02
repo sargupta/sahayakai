@@ -80,6 +80,26 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
   const { language: uiLanguage } = useLanguage();
   const [isListening, setIsListening] = useState(false);
   const recRef = useRef<any>(null);
+  // H27 (hot mic): guards against setState-after-unmount and lets the unmount
+  // effect abort a live SpeechRecognition session so the mic stays claimed no
+  // longer than the component is mounted.
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const rec = recRef.current;
+      if (rec) {
+        rec.onresult = null;
+        rec.onend = null;
+        rec.onerror = null;
+        try { rec.abort?.(); } catch { /* no-op */ }
+        try { rec.stop?.(); } catch { /* no-op */ }
+        recRef.current = null;
+      }
+    };
+  }, []);
 
   const toggle = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -100,11 +120,12 @@ function useVoiceSearch(onResult: (text: string) => void, lang: string) {
     rec.maxAlternatives = 1;
 
     rec.onresult = (e: any) => {
+      if (!mountedRef.current) return;
       const transcript = e.results[0]?.[0]?.transcript ?? '';
       if (transcript) onResult(transcript);
     };
-    rec.onend = () => setIsListening(false);
-    rec.onerror = () => setIsListening(false);
+    rec.onend = () => { if (mountedRef.current) setIsListening(false); };
+    rec.onerror = () => { if (mountedRef.current) setIsListening(false); };
 
     recRef.current = rec;
     rec.start();

@@ -31,9 +31,13 @@ service firebase.storage {
         // Mirrors the voice-messages owner-write / authenticated-read pattern.
         match /users/{userId}/uploads/{fileName=**} {
             allow read: if request.auth != null;
+            // Images only (matches the uploader's jpeg/png/webp accept list).
+            // Without a contentType gate a user could upload .html / SVG-with-
+            // <script> and get a trusted-domain URL → stored XSS / phishing.
             allow write: if request.auth != null
                          && request.auth.uid == userId
-                         && request.resource.size < 10 * 1024 * 1024;
+                         && request.resource.size < 10 * 1024 * 1024
+                         && request.resource.contentType.matches('image/(jpeg|png|webp)');
             allow delete: if request.auth != null && request.auth.uid == userId;
         }
 
@@ -47,7 +51,9 @@ service firebase.storage {
             allow write: if request.auth != null
                          && request.auth.uid == userId
                          && request.resource.size < 5 * 1024 * 1024
-                         && request.resource.contentType.matches('image/.*');
+                         // Raster images only — exclude image/svg+xml (SVG can carry
+                         // <script>, and avatars render on trusted app pages).
+                         && request.resource.contentType.matches('image/(jpeg|png|webp|gif|heic|heif)');
             allow delete: if request.auth != null && request.auth.uid == userId;
         }
 
@@ -58,7 +64,8 @@ service firebase.storage {
             allow read: if request.auth != null;
             allow write: if request.auth != null
                          && request.auth.uid == userId
-                         && request.resource.size < 10 * 1024 * 1024;
+                         && request.resource.size < 10 * 1024 * 1024
+                         && request.resource.contentType.matches('image/(jpeg|png|webp)');
             allow delete: if request.auth != null && request.auth.uid == userId;
         }
 

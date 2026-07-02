@@ -16,7 +16,7 @@ import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const RubricGeneratorInputSchema = z.object({
-  assignmentDescription: z.string().describe("A description of the assignment for which to create a rubric."),
+  assignmentDescription: z.string().max(2000).describe("A description of the assignment for which to create a rubric."),
   gradeLevel: z.string().optional().describe('The grade level for which the rubric is intended.'),
   subject: z.string().optional().describe('The academic subject.'),
   language: z.string().optional().describe('The language for the rubric.'),

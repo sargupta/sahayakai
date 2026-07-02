@@ -108,8 +108,9 @@ async function _handler(request: NextRequest) {
         });
     } catch (error) {
         logAIError(error, 'VOICE_TO_TEXT', { message: 'Voice-to-text API failed' });
-        const message = error instanceof Error ? error.message : String(error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        // Server-side detail is captured by logAIError; return a generic body
+        // so the client never sees raw internal error strings.
+        return NextResponse.json({ error: 'Failed to transcribe. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
     }
 }
 

@@ -34,7 +34,7 @@ jest.mock('@/lib/server-cache', () => ({
 jest.mock('@/lib/ai-reactive-trigger', () => ({
     triggerAIReactiveReply: jest.fn(),
 }));
-jest.mock('@/app/actions/notifications', () => ({
+jest.mock('@/lib/notifications/create', () => ({
     createNotification: jest.fn(),
     createTypedNotification: jest.fn(),
 }));

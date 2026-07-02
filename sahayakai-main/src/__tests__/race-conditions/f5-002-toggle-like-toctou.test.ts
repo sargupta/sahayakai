@@ -45,7 +45,7 @@ jest.mock('@/lib/db/adapter', () => ({
     },
 }));
 
-jest.mock('@/app/actions/notifications', () => ({
+jest.mock('@/lib/notifications/create', () => ({
     createNotification: jest.fn(async () => {}),
     createTypedNotification: jest.fn(async () => {}),
 }));

@@ -108,6 +108,17 @@ export async function POST(request: Request) {
                         };
                     } else {
                     const imageDataUri = validContent.data.imageDataUri as string;
+                    // Guard against OOM: SaveContentSchema.data is z.any(), so the
+                    // base64 string is unbounded. Reject before decoding —
+                    // ~14M chars ≈ 10 MB decoded, comfortably above any real
+                    // generated image but well under the container memory cap.
+                    const MAX_IMAGE_DATA_URI_CHARS = 14_000_000;
+                    if (typeof imageDataUri === 'string' && imageDataUri.length > MAX_IMAGE_DATA_URI_CHARS) {
+                        return NextResponse.json(
+                            { error: 'Image too large.', code: 'IMAGE_TOO_LARGE' },
+                            { status: 413 },
+                        );
+                    }
                     const base64Data = imageDataUri.replace(/^data:image\/\w+;base64,/, '');
                     const imageBuffer = Buffer.from(base64Data, 'base64');
 

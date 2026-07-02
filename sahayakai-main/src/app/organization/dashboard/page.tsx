@@ -8,14 +8,17 @@ import { EmptyStateDashboard } from './components/empty-state';
 
 export const dynamic = 'force-dynamic';
 
-const PRINCIPAL_ROLES = ['principal', 'vice_principal'] as const;
-
 /**
  * Principal dashboard.
  *
- * Server component: resolves auth + role, loads organisation + teacher
- * analytics, aggregates, passes props to the DashboardClient. Role guard
- * redirects non-principals to `/`.
+ * Server component: resolves auth, then determines the caller's org from
+ * SERVER-MANAGED data only (the org they administer), loads teacher
+ * analytics, aggregates, passes props to the DashboardClient.
+ *
+ * SECURITY: org membership/role is resolved from the organizations collection
+ * (adminUserId) — NEVER from the user-editable profile.administrativeRole /
+ * profile.organizationId fields, which a user can self-assign to read any
+ * school's data. displayName is the only profile field read, for greeting.
  */
 export default async function OrganizationDashboardPage() {
     const h = await headers();
@@ -24,27 +27,26 @@ export default async function OrganizationDashboardPage() {
 
     const db = await getDb();
 
-    // 1. Resolve user profile, confirm principal role + get orgId
+    // 1. Resolve the org this user actually administers (server-truth).
+    //    A principal is the adminUserId of exactly one organization.
+    const ownedOrgSnap = await db.collection('organizations')
+        .where('adminUserId', '==', userId)
+        .limit(1)
+        .get();
+
     const userDoc = await db.collection('users').doc(userId).get();
-    const profile = userDoc.data() as {
-        organizationId?: string;
-        administrativeRole?: string;
-        displayName?: string;
-    } | undefined;
+    const profile = userDoc.data() as { displayName?: string } | undefined;
 
-    const role = profile?.administrativeRole;
-    const isPrincipal = !!role && PRINCIPAL_ROLES.includes(role as typeof PRINCIPAL_ROLES[number]);
-    if (!isPrincipal) redirect('/');
-
-    const orgId = profile?.organizationId;
-    if (!orgId) {
-        // Principal without an org: render an empty state with an invite-first CTA.
+    if (ownedOrgSnap.empty) {
+        // Not an org admin: check if they administer an org via a members
+        // admin role (defensive; current model always sets adminUserId too).
+        // If neither, they are not a principal — send home.
         return <EmptyStateDashboard reason="no-org" principalName={profile?.displayName} />;
     }
 
-    // 2. Load org doc
+    const orgDoc = ownedOrgSnap.docs[0];
+    const orgId = orgDoc.id;
     const orgRef = db.collection('organizations').doc(orgId);
-    const orgDoc = await orgRef.get();
     if (!orgDoc.exists) redirect('/');
     const orgData = orgDoc.data() as {
         name?: string;
