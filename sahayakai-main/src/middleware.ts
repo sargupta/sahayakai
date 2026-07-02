@@ -406,6 +406,61 @@ export async function middleware(request: NextRequest) {
         response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     }
 
+    // Content-Security-Policy (H17): shipped in REPORT-ONLY mode on purpose.
+    //
+    // This policy is built from the domains the app actually loads (audited
+    // 2026-07-02): Firebase (auth/firestore/storage/RTDB/App Check reCAPTCHA),
+    // Google Analytics + Tag Manager, Google Fonts, Sentry ingest, Cloudflare
+    // Insights beacon, YouTube thumbnails, the voice-call Cloud Run service,
+    // and Next.js inline styles. Because a single missing source would break
+    // production, we DO NOT enforce yet — `Content-Security-Policy-Report-Only`
+    // makes the browser REPORT violations without blocking anything.
+    //
+    // The per-request `nonce` above is threaded into script-src so future
+    // inline scripts can adopt it. `'unsafe-inline'` is intentionally kept for
+    // now (the Cloudflare beacon <script> and Next.js styles are un-nonced);
+    // once we review real violation reports we can drop 'unsafe-inline' from
+    // script-src and flip this header to the enforcing `Content-Security-Policy`.
+    const csp = [
+        `default-src 'self'`,
+        // Firebase JS SDK / GA / reCAPTCHA use eval + inline; nonce added for future adoption.
+        `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com`,
+        // Next.js emits inline <style>; Google Fonts stylesheet.
+        `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+        `font-src 'self' data: https://fonts.gstatic.com`,
+        `img-src 'self' data: blob: https: https://lh3.googleusercontent.com https://*.googleusercontent.com https://i.ytimg.com https://firebasestorage.googleapis.com https://storage.googleapis.com https://placehold.co https://www.google-analytics.com`,
+        `media-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com`,
+        [
+            `connect-src 'self'`,
+            `https://*.googleapis.com`,
+            `https://firebaseappcheck.googleapis.com`,
+            `https://firebasestorage.googleapis.com`,
+            `https://identitytoolkit.googleapis.com`,
+            `https://securetoken.googleapis.com`,
+            `https://generativelanguage.googleapis.com`,
+            `https://texttospeech.googleapis.com`,
+            `https://firebase.googleapis.com`,
+            `https://*.firebaseio.com`,
+            `https://*.firebasedatabase.app`,
+            `https://*.google-analytics.com`,
+            `https://www.googletagmanager.com`,
+            `https://www.google.com`,
+            `https://*.ingest.sentry.io`,
+            `https://*.sentry.io`,
+            `https://cloudflareinsights.com`,
+            `https://static.cloudflareinsights.com`,
+            `https://*.run.app`,
+        ].join(' '),
+        // reCAPTCHA (App Check) + Firebase auth handler render in iframes.
+        `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+        `worker-src 'self' blob:`,
+        `object-src 'none'`,
+        `base-uri 'self'`,
+        `form-action 'self'`,
+        `frame-ancestors 'none'`,
+    ].join('; ');
+    response.headers.set('Content-Security-Policy-Report-Only', csp);
+
     return response;
 }
 
