@@ -15,7 +15,7 @@ import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const TeacherTrainingInputSchema = z.object({
-  question: z.string().describe("The teacher's question or request for advice."),
+  question: z.string().max(2000).describe("The teacher's question or request for advice."),
   language: z.string().optional().describe('The language for the response.'),
   subject: z.string().optional().describe('The academic subject.'),
   // Middleware always injects x-user-id from the Firebase ID token,

@@ -16,8 +16,8 @@ import { validateTopicSafety } from '@/lib/safety';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const VisualAidInputSchema = z.object({
-  prompt: z.string().describe('A description of the visual aid to generate.'),
-  language: z.string().optional().describe('The language for any text in the visual aid.'),
+  prompt: z.string().max(1000).describe('A description of the visual aid to generate.'),
+  language: z.string().max(50).optional().describe('The language for any text in the visual aid.'),
   gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the visual aid is being generated.'),
   subject: z.string().optional().describe('The academic subject.'),

@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
 const AvatarGeneratorInputSchema = z.object({
-  name: z.string().describe("The name of the teacher for whom to generate an avatar."),
+  name: z.string().max(200).describe("The name of the teacher for whom to generate an avatar."),
   userId: z.string().optional().describe('The ID of the user for whom the avatar is being generated.'),
 });
 export type AvatarGeneratorInput = z.infer<typeof AvatarGeneratorInputSchema>;

@@ -135,7 +135,7 @@ const agentReplyPrompt = ai.definePrompt({
 9. If turn number >= 5, start wrapping up naturally unless parent has an urgent concern.
 10. Set shouldEndCall=true when: parent says goodbye, parent seems done, or turn >= 6.
 11. Use warm closings like "We are partners in your child's success" / "The school is always here for you".
-12. NEVER introduce yourself as "Sahayak", "SahayakAI", or any AI/bot name. You are the school or the teacher — never reveal you are an AI system.
+12. Speak naturally as the school or the teacher; do not brand yourself with a product name like "Sahayak" or "SahayakAI". The call already opened with a recorded notice telling the parent it is automated and AI-assisted, so you never need to conceal that — just keep the focus on the parent and the child.
 
 **Tone:** Like a kind teacher speaking to a parent at a chai meeting — respectful, warm, unhurried. Village parents deserve the same dignity as city parents. Never condescend. Never use jargon.`,
 });
@@ -146,7 +146,14 @@ export async function generateAgentReply(input: AgentReplyInput): Promise<AgentR
         REPLY_TIMEOUT_MS,
         runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply'),
     );
-    const output = result.output!;
+    const output = result.output;
+
+    // Model returned null (safety block / empty completion). Throw so the
+    // TwiML route's outer try/catch serves the safe canned wrap-up instead of
+    // 500-ing on `output!.reply`.
+    if (!output) {
+        throw new Error('parentCall.agentReply returned no output (safety block or empty completion)');
+    }
 
     // Round-2 audit P0 BEHAV-1: post-response behavioural guard, fail-closed.
     // Mirrors the Python sidecar's `assert_all_rules` so the Genkit
@@ -185,14 +192,43 @@ const CallSummaryInputSchema = z.object({
     teacherName: z.string().optional(),
     schoolName: z.string().optional(),
     parentLanguage: ParentCallLanguageEnum,
+    /**
+     * Language for the teacher-facing summary fields (the teacher's UI
+     * language). The post-call summary card is read by the teacher, so it
+     * must localize to the teacher's language — not be forced to English.
+     * Falls back to `parentLanguage` when the caller does not know the
+     * teacher's UI language (regional outreach is typically in the same
+     * language the teacher reads).
+     */
+    teacherLanguage: ParentCallLanguageEnum.optional(),
     transcript: z.array(TranscriptTurnSchema),
     // Twilio CallSid — required for cross-correlation with sidecar logs.
     callSid: z.string(),
     callDurationSeconds: z.number().optional(),
 });
 
+// Native-script names for the 11 supported languages, used to make the
+// Native-Script Mandate explicit in the summary prompt so output never
+// transliterates into Latin or bleeds across scripts.
+const LANGUAGE_NATIVE_NAME: Record<
+    'en' | 'hi' | 'kn' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'pa' | 'ml' | 'or',
+    string
+> = {
+    en: 'English',
+    hi: 'हिन्दी (Devanagari script)',
+    kn: 'ಕನ್ನಡ (Kannada script)',
+    ta: 'தமிழ் (Tamil script)',
+    te: 'తెలుగు (Telugu script)',
+    mr: 'मराठी (Devanagari script)',
+    bn: 'বাংলা (Bengali script)',
+    gu: 'ગુજરાતી (Gujarati script)',
+    pa: 'ਪੰਜਾਬੀ (Gurmukhi script)',
+    ml: 'മലയാളം (Malayalam script)',
+    or: 'ଓଡ଼ିଆ (Odia script)',
+};
+
 const CallSummaryOutputSchema = z.object({
-    parentResponse: z.string().describe('Brief summary of what the parent said/felt — 1-2 sentences in English'),
+    parentResponse: z.string().describe('Brief summary of what the parent said/felt — 1-2 sentences in the teacher summary language'),
     parentConcerns: z.array(z.string()).describe('List of specific concerns raised by the parent'),
     parentCommitments: z.array(z.string()).describe('Things the parent agreed or offered to do'),
     actionItemsForTeacher: z.array(z.string()).describe('Recommended follow-up actions for the teacher'),
@@ -206,9 +242,16 @@ const CallSummaryOutputSchema = z.object({
 export type CallSummaryInput = z.infer<typeof CallSummaryInputSchema>;
 export type CallSummaryOutput = z.infer<typeof CallSummaryOutputSchema>;
 
+// Internal prompt schema: extends the public input with the resolved
+// native-script label for the summary language, computed in
+// generateCallSummary so the prompt can reference it directly.
+const CallSummaryPromptSchema = CallSummaryInputSchema.extend({
+    summaryLanguageNative: z.string(),
+});
+
 const callSummaryPrompt = ai.definePrompt({
     name: 'parentCallSummary',
-    input: { schema: CallSummaryInputSchema },
+    input: { schema: CallSummaryPromptSchema },
     output: { schema: CallSummaryOutputSchema },
     prompt: `You are analyzing a completed phone call between a school AI agent and a parent. Generate a structured summary for the teacher's records.
 
@@ -227,7 +270,7 @@ const callSummaryPrompt = ai.definePrompt({
 {{/each}}
 
 **Instructions:**
-1. Write ALL summary fields in English (this is for the teacher's internal records).
+1. Write ALL summary text fields (parentResponse, parentConcerns, parentCommitments, actionItemsForTeacher, guidanceGiven, followUpSuggestion) in {{summaryLanguageNative}} — this summary is read by the teacher in their own UI language. NATIVE-SCRIPT MANDATE: write entirely in the native script of {{summaryLanguageNative}}. Never transliterate into Latin. Never let another script bleed in. Keep proper nouns, numbers, and any {placeholders} intact. (The enum fields parentSentiment and callQuality keep their fixed English keyword values.)
 2. parentResponse: 1-2 sentence summary of the parent's overall reaction.
 3. parentConcerns: Extract SPECIFIC concerns (not vague). Empty array if none.
 4. parentCommitments: Things parent said they would do ("I'll check homework", "I'll send him tomorrow"). Empty if none.
@@ -239,10 +282,27 @@ const callSummaryPrompt = ai.definePrompt({
 });
 
 export async function generateCallSummary(input: CallSummaryInput): Promise<CallSummaryOutput> {
+    // Resolve the teacher-facing summary language. Prefer the teacher's UI
+    // language; fall back to the parent's language when the caller does not
+    // know it. Map to the native-script label so the Native-Script Mandate
+    // in the prompt is explicit and the output never transliterates.
+    const summaryLanguage = input.teacherLanguage ?? input.parentLanguage;
+    const summaryLanguageNative = LANGUAGE_NATIVE_NAME[summaryLanguage];
+
     const result = await withTimeout(
         'parentCall.summary',
         SUMMARY_TIMEOUT_MS,
-        runResiliently((cfg) => callSummaryPrompt(input, cfg), 'parentCall.summary'),
+        runResiliently(
+            (cfg) => callSummaryPrompt({ ...input, summaryLanguageNative }, cfg),
+            'parentCall.summary',
+        ),
     );
-    return result.output!;
+    const output = result.output;
+
+    // Model returned null (safety block / empty completion). Throw a clear
+    // error instead of dereferencing `output!` and 500-ing the summary route.
+    if (!output) {
+        throw new Error('parentCall.summary returned no output (safety block or empty completion)');
+    }
+    return output;
 }

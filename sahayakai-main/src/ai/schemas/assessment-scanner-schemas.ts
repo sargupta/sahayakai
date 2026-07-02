@@ -228,33 +228,38 @@ export const AssessmentScannerInputSchema = z.object({
         .describe('Client-generated UUIDv4. Idempotency key — re-submitting returns cached result.'),
     studentId: z
         .string()
+        .max(128)
         .optional()
         .describe('Optional today; required once class rosters land (Phase 3+).'),
     classId: z
         .string()
+        .max(128)
         .optional()
         .describe('Optional today; required once class rosters land (Phase 3+).'),
     subject: z
         .string()
+        .max(100)
         .describe(
             'Subject from ASSESSMENT_SUPPORTED_SUBJECTS (Mathematics, Science, EVS, Social Science / History / Geography / Civics, Hindi, English, or "Other"). The route validates against this list and rejects unknowns with a 400.',
         ),
     gradeLevel: z
         .string()
+        .max(50)
         .describe('Grade from GRADE_LEVELS (e.g. "Class 10").'),
     language: z
         .string()
+        .max(50)
         .default('English')
         .describe('Language for the feedback output. One of LANGUAGES.'),
     pageUrls: z
-        .array(z.string())
+        .array(z.string().max(14_000_000))
         .min(1)
         .max(ASSESSMENT_MAX_PAGES)
         .describe(
             'HTTPS URLs (Firebase Storage download URLs) OR data URIs. The flow normalises both. Schema ceiling is 15; the route currently caps demo traffic at ASSESSMENT_DEMO_PAGE_CAP (3) for cost + latency control.',
         ),
     ncertChapterIds: z
-        .array(z.string())
+        .array(z.string().max(200))
         .max(10)
         .optional()
         .describe('Optional teacher-selected scope. If omitted, falls back to grade+subject chapters.'),
@@ -266,9 +271,10 @@ export const AssessmentScannerInputSchema = z.object({
         .describe('Override total. If omitted, inferred as sum of marksMax across graded questions.'),
     teacherAnswerKeyText: z
         .string()
+        .max(20_000)
         .optional()
         .describe('Optional pasted/dictated answer key. Authoritative when present.'),
-    educationBoard: z.string().optional(),
+    educationBoard: z.string().max(100).optional(),
     userId: z.string().describe('Set server-side from the x-user-id header.'),
 });
 export type AssessmentScannerInput = z.infer<typeof AssessmentScannerInputSchema>;

@@ -156,7 +156,16 @@ const parentMessageFlow = ai.defineFlow(
             (overrideConfig) => parentMessagePrompt(input, overrideConfig),
             'parentMessage.generate',
         );
-        const output = result.output!;
+        const output = result.output;
+
+        // Model returned null (safety block / empty completion). Throw a clear
+        // error instead of dereferencing `output!.message` and 500-ing with an
+        // opaque "Cannot read properties of null" that the route can't map.
+        if (!output) {
+            throw new Error(
+                'Parent message generation returned no output (likely a safety block or empty completion). Please rephrase the teacher note and try again.',
+            );
+        }
 
         // Override languageCode with our hardcoded map — do not trust the AI's value
         const languageCode = LANGUAGE_TO_BCP47[input.parentLanguage] ?? 'en-IN';

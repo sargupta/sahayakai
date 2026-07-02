@@ -23,10 +23,10 @@ import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/vali
 import { getGradeBand, getPedagogyFrameworkBlock, getBandDisplayLabel } from '@/lib/grade-bands';
 
 export const LessonPlanInputSchema = z.object({
-  topic: z.string().describe('The topic for which to generate a lesson plan.'),
-  language: z.string().optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
-  gradeLevels: z.array(z.string()).optional().describe('The grade levels for the lesson plan.'),
-  imageDataUri: z.string().optional().describe(
+  topic: z.string().max(1000).describe('The topic for which to generate a lesson plan.'),
+  language: z.string().max(50).optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
+  gradeLevels: z.array(z.string().max(50)).max(20).optional().describe('The grade levels for the lesson plan.'),
+  imageDataUri: z.string().max(14_000_000).optional().describe(
     "An optional image of a textbook page or other material, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
   ),
   // Middleware always injects x-user-id from the Firebase ID token,
