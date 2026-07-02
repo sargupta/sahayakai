@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, reauthenticateWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, reauthenticateWithPopup, reauthenticateWithRedirect } from 'firebase/auth';
+import { shouldUseRedirect } from '@/lib/sign-in-with-google';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -88,6 +89,10 @@ const QUALIFICATION_LABELS_I18N: Record<Qualification, Record<string, string>> =
 };
 
 // Profile-photo validation / error messages in all 11 UI scripts.
+// Marks that a mobile reauthenticate-with-redirect was initiated for account
+// deletion, so the deletion is completed when the app reloads post-redirect.
+const PENDING_ACCOUNT_DELETE_KEY = 'sahayakai-pending-account-delete';
+
 const PHOTO_ERROR_I18N: Record<string, Record<string, string>> = {
   tooLarge: {
     en: 'Photo must be under 4MB.', hi: 'फ़ोटो 4MB से कम होनी चाहिए।', mr: 'फोटो 4MB पेक्षा कमी असावा.', bn: 'ছবি অবশ্যই 4MB-এর কম হতে হবে।',
@@ -191,7 +196,11 @@ export default function SettingsPage() {
   const handlePhotoUpload = useCallback(async (file: File) => {
     if (!user) return;
     if (file.size > 4 * 1024 * 1024) { setPhotoError(resolveI18n(PHOTO_ERROR_I18N.tooLarge, uiLangCode, 'Photo must be under 4MB.')); return; }
-    if (!file.type.startsWith('image/')) { setPhotoError(resolveI18n(PHOTO_ERROR_I18N.notImage, uiLangCode, 'File must be an image (JPG, PNG, WebP).')); return; }
+    // Must match the storage.rules profile-photos contentType allowlist
+    // (raster only; SVG excluded) so the user gets a clear message instead of a
+    // post-upload rule rejection for AVIF/BMP/TIFF/SVG.
+    const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) { setPhotoError(resolveI18n(PHOTO_ERROR_I18N.notImage, uiLangCode, 'File must be an image (JPG, PNG, WebP).')); return; }
     setPhotoError(null);
     setPhotoUploading(true);
     try {
@@ -338,41 +347,81 @@ export default function SettingsPage() {
     }
   };
 
+  // Sends the delete request with a freshly-reauthenticated token. Shared by
+  // the desktop (popup) path and the mobile (redirect-return) path.
+  const performAccountDeletion = async (freshToken: string) => {
+    const res = await fetch('/api/user/delete-account', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${freshToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true, idToken: freshToken }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(t('Account deletion scheduled. You have 30 days to export your data.'));
+      router.push('/');
+    } else {
+      alert(data.error || t('Failed to delete account'));
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!user || deleteConfirmText !== 'DELETE') return;
     setDeleting(true);
+    // Account deletion is irreversible — require a FRESH re-authentication so a
+    // stolen/borrowed long-lived session (or an XSS-driven request) cannot
+    // delete the account. Re-auth refreshes the token's auth_time, which the
+    // server asserts is recent before deleting.
+    //
+    // Mobile/PWA/in-app browsers: signInWithPopup is broken there (same reason
+    // sign-in uses redirect), so use reauthenticateWithRedirect and complete
+    // the deletion when the app reloads (see the redirect-return effect below).
+    // Desktop: popup is fine and completes inline.
     try {
-      // Account deletion is irreversible — require a FRESH re-authentication so a
-      // stolen/borrowed long-lived session (or an XSS-driven request) cannot
-      // delete the account. reauthenticateWithPopup refreshes the token's
-      // auth_time, which the server asserts is recent before deleting.
+      const provider = new GoogleAuthProvider();
+      if (shouldUseRedirect()) {
+        try { sessionStorage.setItem(PENDING_ACCOUNT_DELETE_KEY, '1'); } catch { /* storage blocked */ }
+        await reauthenticateWithRedirect(user, provider); // navigates away
+        return; // completion happens on redirect return
+      }
       let token: string;
       try {
-        await reauthenticateWithPopup(user, new GoogleAuthProvider());
+        await reauthenticateWithPopup(user, provider);
         token = await user.getIdToken(true);
       } catch {
         alert(t('Please re-authenticate to confirm account deletion.'));
         setDeleting(false);
         return;
       }
-      const res = await fetch('/api/user/delete-account', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: true, idToken: token }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(t('Account deletion scheduled. You have 30 days to export your data.'));
-        router.push('/');
-      } else {
-        alert(data.error || t('Failed to delete account'));
-      }
+      await performAccountDeletion(token);
     } catch {
       alert(t('Failed to delete account. Please try again.'));
     } finally {
       setDeleting(false);
     }
   };
+
+  // Redirect-return handler: after a mobile reauthenticateWithRedirect, the app
+  // reloads and `user` re-populates with a fresh auth_time. If a delete was
+  // pending, finish it with a force-refreshed token.
+  useEffect(() => {
+    if (!user) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem(PENDING_ACCOUNT_DELETE_KEY) === '1'; } catch { /* ignore */ }
+    if (!pending) return;
+    try { sessionStorage.removeItem(PENDING_ACCOUNT_DELETE_KEY); } catch { /* ignore */ }
+    (async () => {
+      setDeleting(true);
+      try {
+        const token = await user.getIdToken(true);
+        await performAccountDeletion(token);
+      } catch {
+        alert(t('Please re-authenticate to confirm account deletion.'));
+      } finally {
+        setDeleting(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSaveProfProfile = async () => {
     if (!user) return;
