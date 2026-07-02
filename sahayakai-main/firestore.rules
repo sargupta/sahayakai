@@ -122,8 +122,14 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.text.size() <= 1000;
 
+        // A participant may only stamp read/delivery receipts — NOT edit the
+        // message text, sender, or attachments (previously any participant
+        // could overwrite ANY message's content, enabling impersonation).
+        // Message content is authored on create and never client-mutable after.
         allow update: if isSignedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['readBy', 'deliveredTo', 'readAt', 'deliveredAt', 'lastReadAt']);
 
         allow delete: if false;
       }
@@ -157,7 +163,9 @@ service cloud.firestore {
 
     // --- Connections (accepted, symmetric) ---
     match /connections/{connId} {
-      allow read: if isSignedIn();
+      // Only the two connected users may read a connection — previously any
+      // signed-in user could read every doc and enumerate the whole social graph.
+      allow read: if isSignedIn() && request.auth.uid in resource.data.uids;
       allow create: if false;
       allow delete: if isSignedIn()
         && request.auth.uid in resource.data.uids;
