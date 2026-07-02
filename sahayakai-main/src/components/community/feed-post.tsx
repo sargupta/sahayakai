@@ -97,6 +97,76 @@ function AttachmentCard({ attachment }: { attachment: PostAttachment }) {
   return content;
 }
 
+// Null-safe initials from a possibly-undefined display name.
+function getInitials(name?: string | null): string {
+  if (!name || typeof name !== "string") return "?";
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return initials || "?";
+}
+
+// Coerce an arbitrary createdAt value into a Date. Handles ISO strings,
+// epoch numbers, and Firestore Timestamp shapes ({seconds} / {_seconds} /
+// .toDate()). Returns null when it cannot produce a valid Date.
+function coerceDate(value: unknown): Date | null {
+  if (value == null) return null;
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  if (typeof value === "object") {
+    const obj = value as {
+      toDate?: () => Date;
+      seconds?: number;
+      _seconds?: number;
+    };
+    if (typeof obj.toDate === "function") {
+      try {
+        const d = obj.toDate();
+        return d instanceof Date && !isNaN(d.getTime()) ? d : null;
+      } catch {
+        return null;
+      }
+    }
+    const seconds =
+      typeof obj.seconds === "number"
+        ? obj.seconds
+        : typeof obj._seconds === "number"
+          ? obj._seconds
+          : null;
+    if (seconds != null) {
+      const d = new Date(seconds * 1000);
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+
+  return null;
+}
+
+// Safe relative-time string. Returns '' on any malformed/invalid input
+// so a single bad post can never throw and blank the whole feed.
+function formatTimeAgo(value: unknown): string {
+  const date = coerceDate(value);
+  if (!date) return "";
+  try {
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch {
+    return "";
+  }
+}
+
 export default function FeedPost({
   post,
   groupName,
@@ -112,11 +182,13 @@ export default function FeedPost({
   const typeConfig = POST_TYPE_CONFIG[post.postType] ?? POST_TYPE_CONFIG.share;
   const TypeIcon = typeConfig.icon;
 
-  // Show translated content if available for user's language
+  // Show translated content if available for user's language.
+  // Default to '' so a post missing both a translation and content
+  // never crashes on `.length` / `.slice`.
   const localizedContent =
-    language !== "English" && post.translations?.[language]
+    (language !== "English" && post.translations?.[language]
       ? post.translations[language]
-      : post.content;
+      : post.content) ?? "";
 
   const needsTruncation = localizedContent.length > READ_MORE_THRESHOLD;
   const displayContent =
@@ -124,16 +196,9 @@ export default function FeedPost({
       ? localizedContent.slice(0, READ_MORE_THRESHOLD) + "..."
       : localizedContent;
 
-  const initials = post.authorName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = getInitials(post.authorName);
 
-  const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
-    addSuffix: true,
-  });
+  const timeAgo = formatTimeAgo(post.createdAt);
 
   function handleLike() {
     onLike?.(post.id);
