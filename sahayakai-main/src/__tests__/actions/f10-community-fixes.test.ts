@@ -51,6 +51,14 @@ jest.mock('@/lib/firebase-admin', () => ({
                 return { id: 'new-msg-id' };
             },
         }),
+        // likeResourceAction / followTeacherAction now run inside a transaction;
+        // delegate tx ops to the docRef helpers so the guard logic executes.
+        runTransaction: async (fn: (tx: any) => any) => fn({
+            get: (ref: any) => ref.get(),
+            set: (ref: any, data: any) => ref.set(data),
+            update: (ref: any, data: any) => ref.update(data),
+            delete: (ref: any) => ref.delete(),
+        }),
     }),
 }));
 
