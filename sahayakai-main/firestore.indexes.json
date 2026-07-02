@@ -1,16 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "vidya_sessions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "content",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
@@ -84,16 +74,6 @@
         },
         {
           "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "library_resources",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "stats.likes",
           "order": "DESCENDING"
         }
       ]
@@ -375,16 +355,6 @@
       ]
     },
     {
-      "collectionGroup": "parent_outreach",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "callSid",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "assessments",
       "queryScope": "COLLECTION",
       "fields": [
@@ -446,16 +416,6 @@
     },
     {
       "collectionGroup": "assessments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "batchId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "assessments",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
@@ -465,29 +425,6 @@
         {
           "fieldPath": "classId",
           "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "assessment_batches",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pyq_questions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "embedding",
-          "vectorConfig": {
-            "dimension": 768,
-            "flat": {}
-          }
         }
       ]
     },
@@ -541,19 +478,40 @@
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "state", "order": "ASCENDING" },
-        { "fieldPath": "district", "order": "ASCENDING" },
-        { "fieldPath": "subjects", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "state",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "district",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "subjects",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "recipientId", "order": "ASCENDING" },
-        { "fieldPath": "type", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "recipientId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
@@ -702,8 +660,14 @@
       "collectionGroup": "fcm_tokens",
       "fieldPath": "token",
       "indexes": [
-        { "queryScope": "COLLECTION", "order": "ASCENDING" },
-        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+        {
+          "queryScope": "COLLECTION",
+          "order": "ASCENDING"
+        },
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        }
       ]
     }
   ]
