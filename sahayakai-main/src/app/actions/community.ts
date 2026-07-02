@@ -70,7 +70,7 @@ export async function getProfilesAction(uids: string[]) {
  * Create a public post. Author is derived from the authenticated session —
  * the client cannot impersonate other users.
  */
-export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string) {
+export async function createPostAction(content: string, visibility: string = 'public', imageUrl?: string, gradeLevel?: string, subject?: string) {
     const userId = await requireAuth();
     try {
 
@@ -96,10 +96,19 @@ export async function createPostAction(content: string, visibility: string = 'pu
 
     const db = await getDb();
 
+    // getPosts filters with .where('gradeLevel','in',...) and
+    // .where('subject','in',...). Firestore 'in' filters match only docs that
+    // actually carry the field, so posts written without gradeLevel/subject were
+    // silently excluded whenever a grade/subject filter was applied. Always
+    // persist both fields, defaulting consistently with the rest of this file
+    // (subject → 'General', matching saveResourceToLibraryAction; gradeLevel →
+    // 'all' so an unspecified post still surfaces under the "all grades" bucket).
     const postData: any = {
         authorId: userId,
         content,
         visibility,
+        gradeLevel: (typeof gradeLevel === 'string' && gradeLevel.trim()) ? gradeLevel : 'all',
+        subject: (typeof subject === 'string' && subject.trim()) ? subject : 'General',
         likesCount: 0,
         commentsCount: 0,
         createdAt: new Date().toISOString(),
@@ -219,16 +228,29 @@ export async function followTeacherAction(followingId: string) {
     const connectionId = `${followerId}_${followingId}`;
     const connectionRef = db.collection('connections').doc(connectionId);
 
-    const doc = await connectionRef.get();
-    if (doc.exists) {
-        await connectionRef.delete();
-    } else {
-        await connectionRef.set({
+    // F5 fix: same TOCTOU pattern as toggleLikeAction. Reading connectionRef
+    // then conditionally delete/set as separate operations meant two concurrent
+    // follow taps could both observe `!exists` and both set the connection doc
+    // (idempotent) — or a concurrent follow+unfollow could interleave and leave
+    // the graph in an inconsistent state. Wrap the read + conditional write in a
+    // transaction so exactly one of {follow, unfollow} wins. The closure returns
+    // `true` when a NEW follow was created, so the notification side-effects
+    // below fire once and only for a genuine new follow.
+    const didFollow = await db.runTransaction(async (tx) => {
+        const doc = await tx.get(connectionRef);
+        if (doc.exists) {
+            tx.delete(connectionRef);
+            return false;
+        }
+        tx.set(connectionRef, {
             followerId,
             followingId,
             createdAt: new Date().toISOString()
         });
+        return true;
+    });
 
+    if (didFollow) {
         // Create Notification for the person being followed
         try {
             const followerDoc = await db.collection('users').doc(followerId).get();
@@ -610,35 +632,39 @@ export async function likeResourceAction(
     const resRef  = db.collection('library_resources').doc(resourceId);
     const likeRef = resRef.collection('likes').doc(userId);
 
-    const [resDoc, likeDoc] = await Promise.all([resRef.get(), likeRef.get()]);
+    // F5 fix: the toggle used to read likeDoc.exists and then run the like-doc
+    // write + stats.likes increment as separate operations outside any
+    // transaction, so two concurrent taps could both observe `!exists` and both
+    // fire FieldValue.increment(+1), double-counting the like. Mirror
+    // toggleLikeAction: read the resource + like docs, decide, and write the
+    // counter delta all inside one Firestore transaction so the final state is
+    // one like-doc and a counter delta of +1 or 0.
+    const { resData, isLiked } = await db.runTransaction(async (tx) => {
+        const resDoc = await tx.get(resRef);
+        if (!resDoc.exists) throw new Error('Resource not found');
+        const data = resDoc.data()!;
 
-    if (!resDoc.exists) throw new Error('Resource not found');
-    const resData = resDoc.data()!;
+        // F10-05: forbid self-like on library resources too.
+        if (data.authorId && data.authorId === userId) {
+            throw new Error('Cannot like your own resource');
+        }
 
-    // F10-05: forbid self-like on library resources too.
-    if (resData.authorId && resData.authorId === userId) {
-        throw new Error('Cannot like your own resource');
-    }
-
-    let isLiked: boolean;
-
-    if (likeDoc.exists) {
-        // Already liked — unlike
-        await Promise.all([
-            likeRef.delete(),
-            resRef.update({ 'stats.likes': FieldValue.increment(-1) }),
-        ]);
-        isLiked = false;
-    } else {
+        const likeDoc = await tx.get(likeRef);
+        if (likeDoc.exists) {
+            // Already liked — unlike
+            tx.delete(likeRef);
+            tx.update(resRef, { 'stats.likes': FieldValue.increment(-1) });
+            return { resData: data, isLiked: false };
+        }
         // New like. We write `uid` on the doc so a single
         // `collectionGroup('likes').where('uid', '==', uid)` can hydrate the
         // full liked-state for a user without having to crawl every resource.
-        await Promise.all([
-            likeRef.set({ uid: userId, createdAt: new Date().toISOString() }),
-            resRef.update({ 'stats.likes': FieldValue.increment(1) }),
-        ]);
-        isLiked = true;
+        tx.set(likeRef, { uid: userId, createdAt: new Date().toISOString() });
+        tx.update(resRef, { 'stats.likes': FieldValue.increment(1) });
+        return { resData: data, isLiked: true };
+    });
 
+    if (isLiked) {
         // Notify the original author (non-blocking)
         if (resData.authorId && resData.authorId !== userId) {
             try {
