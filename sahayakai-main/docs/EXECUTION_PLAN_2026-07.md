@@ -67,6 +67,11 @@
 - CSP Report-Only → enforcing; App Check on (after violation review).
 - Prompt-injection delimiter framing across ~18 flows (after eval harness exists to catch quality regressions — sequencing matters).
 
+## Housekeeping found during execution
+- **Zombie Cloudflare Pages integration** fails on every PR (this repo deploys via Cloud Run, not CF Pages) — red noise that trains people to ignore red. Disconnect it in the Cloudflare dashboard (founder has CF access) or scope it out of PR checks.
+- i18n pre-commit gate flags jest-mock JSX in `__tests__/` — exempt test files in the audit script.
+- **console.log burn-down: 299 sites** (Gate 5's first live run caught the backlog; gate converted to a changed-files ratchet so PRs stay honest while the debt burns down). Migrate to `lib/logger`. Priority within the backlog: `src/ai/genkit.ts` logs **API-key fingerprints** (`substring(0,8)`) — kill those lines first, they don't belong in Cloud Logging at any severity.
+
 ## Continuous gates (added as they land, never removed)
 - Perf budget CI: first-load JS ≤200KB on dashboard, Lighthouse CI on PR (Fast-3G LCP target).
 - Playwright smoke (login → generate → export) in PR gates.
