@@ -37,7 +37,7 @@ service cloud.firestore {
         'role', 'isAdmin', 'adminRoles', 'superadmin', 'customClaims',
         // billing / plan
         'plan', 'planType', 'planTier', 'planExpiresAt', 'subscriptionStatus',
-        'subscriptionId', 'razorpaySubscriptionId', 'razorpayCustomerId',
+        'subscription', 'subscriptionId', 'razorpaySubscriptionId', 'razorpayCustomerId',
         'monthlyCredits', 'credits', 'creditsUsed', 'adminOverride', 'billing',
         // org / tenant membership (self-asserted role was a cross-tenant hole)
         'organizationId', 'organizationRole', 'administrativeRole',
