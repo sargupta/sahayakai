@@ -1,0 +1,1129 @@
+{
+  "generatedAt": "2026-06-06T08:44:03.113Z",
+  "base": "https://sahayakai-hotfix-resilience-zwydpvyuca-as.a.run.app",
+  "probesPerAgent": 3,
+  "summary": {
+    "healthy": 0,
+    "degraded": 14,
+    "totalSidecar": 0,
+    "totalFallback": 36,
+    "totalGenkit": 0,
+    "totalNoLog": 6,
+    "failureAgents": [
+      "instant-answer",
+      "quiz",
+      "worksheet",
+      "lesson-plan",
+      "video-storyteller",
+      "rubric",
+      "parent-message",
+      "teacher-training",
+      "exam-paper",
+      "virtual-field-trip",
+      "visual-aid",
+      "avatar"
+    ]
+  },
+  "rows": [
+    {
+      "id": "instant-answer",
+      "flag": "instantAnswer",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 4454,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-instant-answer-0-1780734657356-0",
+          "bucket": 3,
+          "status": 200,
+          "ms": 5174,
+          "bodySample": "{\"answer\":\"Algebra is a branch of mathematics where we use letters (like x, y, a, b) to represent unknown numbers. These letters are called variables. Think of algebra like a detective game where you have to find the missing number hidden behind a letter! For example, if you have 5 + x = 10, algebra",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 3,
+          "reason": "bucket_3_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "InstantAnswerSidecarHttpError",
+          "sidecarLatencyMs": 51,
+          "matchedLogTs": "2026-06-06T08:30:59.991126Z"
+        },
+        {
+          "uid": "canary-vf-instant-answer-1-1780734665168-18",
+          "bucket": 9,
+          "status": 200,
+          "ms": 4097,
+          "bodySample": "{\"answer\":\"Algebra is like a puzzle where you use letters (called variables) to represent numbers that you don't know yet. Imagine you have some chocolates, but you don't know the exact number. You can say you have 'x' chocolates. Algebra helps you solve problems to find out the value of 'x'. We use",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "InstantAnswerSidecarHttpError",
+          "sidecarLatencyMs": 34,
+          "matchedLogTs": "2026-06-06T08:31:06.470656Z"
+        },
+        {
+          "uid": "canary-vf-instant-answer-2-1780734670831-70",
+          "bucket": 1,
+          "status": 200,
+          "ms": 4090,
+          "bodySample": "{\"answer\":\"Algebra is like a fun puzzle where we use letters, called variables (like x, y, or z), to represent numbers we don't know yet. Imagine you have a certain number of sweets, but you don't want to tell anyone how many. You could say, \\\"I have 'x' sweets.\\\" Then, if someone gives you 5 more, ",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 1,
+          "reason": "bucket_1_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "InstantAnswerSidecarHttpError",
+          "sidecarLatencyMs": 39,
+          "matchedLogTs": "2026-06-06T08:31:12.226829Z"
+        }
+      ]
+    },
+    {
+      "id": "quiz",
+      "flag": "quiz",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 22545,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-quiz-0-1780734676494-20",
+          "bucket": 8,
+          "status": 200,
+          "ms": 29160,
+          "bodySample": "{\"easy\":{\"title\":\"Fun with Algebraic Expressions: Class 7 Quiz\",\"questions\":[{\"questionText\":\"Which of these is a 'variable' in mathematics?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"x\",\"explanation\":\"Just like a farmer's basket can hold a different number of vegetables each day, a 'variabl",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 8,
+          "reason": "bucket_8_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 46,
+          "matchedLogTs": "2026-06-06T08:31:17.872176Z"
+        },
+        {
+          "uid": "canary-vf-quiz-1-1780734707242-10",
+          "bucket": 4,
+          "status": 200,
+          "ms": 22057,
+          "bodySample": "{\"easy\":{\"title\":\"Fun with Algebraic Expressions: A Class 7 Quiz\",\"questions\":[{\"questionText\":\"Which of these is a variable in the expression 3x + 5?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"x\",\"explanation\":\"Just like how the amount of grain a farmer sells can change each day, a variable",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 4,
+          "reason": "bucket_4_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 50,
+          "matchedLogTs": "2026-06-06T08:31:48.736839Z"
+        },
+        {
+          "uid": "canary-vf-quiz-2-1780734730891-40",
+          "bucket": 6,
+          "status": 200,
+          "ms": 16417,
+          "bodySample": "{\"easy\":{\"title\":\"Understanding Algebraic Expressions: A Class 7 Quiz\",\"questions\":[{\"questionText\":\"Which of these is a variable in the expression 3x + 5?\",\"questionType\":\"multiple_choice\",\"correctAnswer\":\"x\",\"explanation\":\"In an algebraic expression, a variable is a symbol, usually a letter like '",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 6,
+          "reason": "bucket_6_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 48,
+          "matchedLogTs": "2026-06-06T08:32:12.245616Z"
+        }
+      ]
+    },
+    {
+      "id": "worksheet",
+      "flag": "worksheet",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 18511,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-worksheet-0-1780734748876-33",
+          "bucket": 9,
+          "status": 200,
+          "ms": 18832,
+          "bodySample": "{\"title\":\"Algebra Adventures: Unravelling the Unknown\",\"gradeLevel\":\"Class 7\",\"subject\":\"Mathematics\",\"learningObjectives\":[\"To understand the concept of variables and constants in real-life scenarios.\",\"To form simple algebraic expressions from given statements and situations.\",\"To solve basic line",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 61,
+          "matchedLogTs": "2026-06-06T08:32:30.308015Z"
+        },
+        {
+          "uid": "canary-vf-worksheet-1-1780734769291-10",
+          "bucket": 5,
+          "status": 200,
+          "ms": 15318,
+          "bodySample": "{\"title\":\"बीजगणित की यात्रा: चर और समीकरण का खेल (Journey of Algebra: The Game of Variables and Equations)\",\"gradeLevel\":\"Class 7\",\"subject\":\"Mathematics\",\"learningObjectives\":[\"To understand the concept of variables and constants in algebraic expressions.\",\"To form simple algebraic expressions from",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 5,
+          "reason": "bucket_5_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 41,
+          "matchedLogTs": "2026-06-06T08:32:50.653779Z"
+        },
+        {
+          "uid": "canary-vf-worksheet-2-1780734786206-30",
+          "bucket": 7,
+          "status": 200,
+          "ms": 21384,
+          "bodySample": "{\"title\":\"Exploring Algebra: Variables and Expressions\",\"gradeLevel\":\"Class 7\",\"subject\":\"Mathematics\",\"learningObjectives\":[\"To understand the concept of variables and constants.\",\"To form algebraic expressions from real-life situations.\",\"To evaluate algebraic expressions for given values of varia",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 7,
+          "reason": "bucket_7_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 42,
+          "matchedLogTs": "2026-06-06T08:33:07.481852Z"
+        }
+      ]
+    },
+    {
+      "id": "lesson-plan",
+      "flag": "lessonPlan",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 1425,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-lesson-plan-0-1780734809055-60",
+          "bucket": 6,
+          "status": 200,
+          "ms": 1433,
+          "bodySample": "{\"title\":\"Unveiling the Unknown: An Introduction to Algebraic Expressions\",\"objectives\":[\"SWBAT define and identify variables, constants, and terms in an algebraic expression.\",\"SWBAT formulate simple algebraic expressions for given real-world situations.\",\"SWBAT differentiate between arithmetic and",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 6,
+          "reason": "bucket_6_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "LessonPlanSidecarHttpError",
+          "sidecarLatencyMs": 64,
+          "matchedLogTs": "2026-06-06T08:33:30.368034Z"
+        },
+        {
+          "uid": "canary-vf-lesson-plan-1-1780734812033-33",
+          "bucket": 9,
+          "status": 200,
+          "ms": 1484,
+          "bodySample": "{\"title\":\"Unveiling the Unknown: An Introduction to Algebraic Expressions\",\"objectives\":[\"SWBAT define and identify variables, constants, and terms in an algebraic expression.\",\"SWBAT formulate simple algebraic expressions for given real-world situations.\",\"SWBAT differentiate between arithmetic and",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "LessonPlanSidecarHttpError",
+          "sidecarLatencyMs": 28,
+          "matchedLogTs": "2026-06-06T08:33:33.323440Z"
+        },
+        {
+          "uid": "canary-vf-lesson-plan-2-1780734814971-1",
+          "bucket": 0,
+          "status": 200,
+          "ms": 1357,
+          "bodySample": "{\"title\":\"Unveiling the Unknown: An Introduction to Algebraic Expressions\",\"objectives\":[\"SWBAT define and identify variables, constants, and terms in an algebraic expression.\",\"SWBAT formulate simple algebraic expressions for given real-world situations.\",\"SWBAT differentiate between arithmetic and",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 0,
+          "reason": "bucket_0_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "LessonPlanSidecarHttpError",
+          "sidecarLatencyMs": 24,
+          "matchedLogTs": "2026-06-06T08:33:36.192227Z"
+        }
+      ]
+    },
+    {
+      "id": "video-storyteller",
+      "flag": "videoStoryteller",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 7388,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-video-storyteller-0-1780734817814-60",
+          "bucket": 9,
+          "status": 200,
+          "ms": 8362,
+          "bodySample": "{\"categories\":{\"pedagogy\":[\"NEP 2020 Algebra teaching Class 7\",\"Active learning methods Class 7 Math\",\"Child centred algebra techniques teachers\",\"DIKSHA module algebra Class 7\",\"NISHTHA pedagogy for mathematics\"],\"storytelling\":[\"Class 7 Algebra animated explanation\",\"NCERT Math Class 7 Algebra vis",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 47,
+          "matchedLogTs": "2026-06-06T08:33:46.813511Z"
+        },
+        {
+          "uid": "canary-vf-video-storyteller-1-1780734827581-90",
+          "bucket": 5,
+          "status": 200,
+          "ms": 7089,
+          "bodySample": "{\"categories\":{\"pedagogy\":[\"NEP 2020 Algebra teaching methods\",\"NCF 2023 Mathematics Class 7 Algebra\",\"Active learning strategies for Algebra\",\"Child-centred Algebra activities Class 7\",\"DIKSHA modules Algebra teaching\"],\"storytelling\":[\"Algebra storytelling videos Class 7\",\"Animated Algebra concept",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 5,
+          "reason": "bucket_5_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 40,
+          "matchedLogTs": "2026-06-06T08:33:55.498480Z"
+        },
+        {
+          "uid": "canary-vf-video-storyteller-2-1780734836267-10",
+          "bucket": 9,
+          "status": 200,
+          "ms": 6713,
+          "bodySample": "{\"categories\":{\"pedagogy\":[\"NEP 2020 math pedagogy class 7\",\"active learning algebra techniques\",\"NCF 2023 math teaching methods\",\"DIKSHA algebra teaching strategies\",\"NISHTHA mathematics primary teachers\"],\"storytelling\":[\"Algebra storytelling for Class 7\",\"NCERT Class 7 Algebra animated\",\"math con",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 33,
+          "matchedLogTs": "2026-06-06T08:34:03.780095Z"
+        }
+      ]
+    },
+    {
+      "id": "rubric",
+      "flag": "rubric",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 11262,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-rubric-0-1780734844551-20",
+          "bucket": 5,
+          "status": 200,
+          "ms": 11286,
+          "bodySample": "{\"title\":\"Class 7 Algebra Assignment Rubric\",\"description\":\"This rubric evaluates students' understanding and application of algebraic concepts in the Class 7 assignment.\",\"criteria\":[{\"name\":\"Understanding of Variables and Expressions\",\"description\":\"Evaluates the student's comprehension of algebra",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 5,
+          "reason": "bucket_5_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "RubricSidecarHttpError",
+          "sidecarLatencyMs": 56,
+          "matchedLogTs": "2026-06-06T08:34:05.935640Z"
+        },
+        {
+          "uid": "canary-vf-rubric-1-1780734857376-10",
+          "bucket": 2,
+          "status": 200,
+          "ms": 12870,
+          "bodySample": "{\"title\":\"Class 7 Algebra Assignment Rubric\",\"description\":\"This rubric evaluates a Class 7 Mathematics assignment on fundamental algebraic concepts and problem-solving.\",\"criteria\":[{\"name\":\"Understanding of Variables and Expressions\",\"description\":\"Evaluates the student's grasp of algebraic termin",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 2,
+          "reason": "bucket_2_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "RubricSidecarHttpError",
+          "sidecarLatencyMs": 39,
+          "matchedLogTs": "2026-06-06T08:34:18.667162Z"
+        },
+        {
+          "uid": "canary-vf-rubric-2-1780734871803-29",
+          "bucket": 0,
+          "status": 200,
+          "ms": 9631,
+          "bodySample": "{\"title\":\"Class 7 Algebra Assignment Rubric\",\"description\":\"This rubric evaluates a student's understanding, application, and presentation of algebraic concepts in the given assignment.\",\"criteria\":[{\"name\":\"Understanding of Algebraic Concepts\",\"description\":\"Evaluates the student's foundational kno",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 0,
+          "reason": "bucket_0_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "RubricSidecarHttpError",
+          "sidecarLatencyMs": 38,
+          "matchedLogTs": "2026-06-06T08:34:33.058369Z"
+        }
+      ]
+    },
+    {
+      "id": "parent-message",
+      "flag": "parentMessage",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 5250,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-parent-message-0-1780734882923-40",
+          "bucket": 3,
+          "status": 200,
+          "ms": 5130,
+          "bodySample": "{\"message\":\"Dear Aarav's Parents,I hope this message finds you well.I am writing to you today as Aarav's Mathematics teacher, Mrs. Sharma, from Sahayak Public School. I wanted to bring to your attention that we've noticed a recent decline in Aarav's academic performance in Mathematics.Aarav is a bri",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 3,
+          "reason": "bucket_3_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "ParentMessageSidecarHttpError",
+          "sidecarLatencyMs": 66,
+          "matchedLogTs": "2026-06-06T08:34:44.368427Z"
+        },
+        {
+          "uid": "canary-vf-parent-message-1-1780734889632-11",
+          "bucket": 0,
+          "status": 200,
+          "ms": 5521,
+          "bodySample": "{\"message\":\"Dear Aarav's Parents, I hope this message finds you well. I am writing to you today regarding Aarav's academic performance in Mathematics in Class 7 at Sahayak Public School. We've noticed a recent decline in Aarav's engagement and understanding of the concepts in class. We believe that ",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 0,
+          "reason": "bucket_0_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "ParentMessageSidecarHttpError",
+          "sidecarLatencyMs": 33,
+          "matchedLogTs": "2026-06-06T08:34:50.814397Z"
+        },
+        {
+          "uid": "canary-vf-parent-message-2-1780734896612-10",
+          "bucket": 4,
+          "status": 200,
+          "ms": 5098,
+          "bodySample": "{\"message\":\"Dear Aarav's parent/guardian, I hope this message finds you well. I am writing to you today from Sahayak Public School regarding Aarav's performance in Class 7 Mathematics. We've noticed a recent decline in his academic results, and we wanted to reach out to you. Aarav is a bright studen",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 4,
+          "reason": "bucket_4_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": "ParentMessageSidecarHttpError",
+          "sidecarLatencyMs": 31,
+          "matchedLogTs": "2026-06-06T08:34:57.878753Z"
+        }
+      ]
+    },
+    {
+      "id": "assessment-scanner",
+      "flag": "assessmentScanner",
+      "probes": 3,
+      "httpOk": 0,
+      "avgMs": 515,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 0,
+      "noLog": 3,
+      "fallbackPct": 0,
+      "verdict": "NO_LOGS_MATCHED",
+      "probeReports": [
+        {
+          "uid": "canary-vf-assessment-scanner-0-1780734903254-0",
+          "bucket": 7,
+          "status": 400,
+          "ms": 485,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"assessmentId\",\"code\":\"invalid_string\",\"message\":\"Invalid uuid\"}]}",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        },
+        {
+          "uid": "canary-vf-assessment-scanner-1-1780734905305-27",
+          "bucket": 0,
+          "status": 400,
+          "ms": 517,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"assessmentId\",\"code\":\"invalid_string\",\"message\":\"Invalid uuid\"}]}",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        },
+        {
+          "uid": "canary-vf-assessment-scanner-2-1780734907254-34",
+          "bucket": 0,
+          "status": 400,
+          "ms": 542,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"assessmentId\",\"code\":\"invalid_string\",\"message\":\"Invalid uuid\"}]}",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        }
+      ]
+    },
+    {
+      "id": "assignment-assessor",
+      "flag": "assignmentAssessor",
+      "probes": 3,
+      "httpOk": 0,
+      "avgMs": 551,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 0,
+      "noLog": 3,
+      "fallbackPct": 0,
+      "verdict": "NO_LOGS_MATCHED",
+      "probeReports": [
+        {
+          "uid": "canary-vf-assignment-assessor-0-1780734909217-0",
+          "bucket": 4,
+          "status": 400,
+          "ms": 538,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"rubricSnapshot.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.levels",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        },
+        {
+          "uid": "canary-vf-assignment-assessor-1-1780734911212-130",
+          "bucket": 1,
+          "status": 400,
+          "ms": 569,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"rubricSnapshot.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.levels",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        },
+        {
+          "uid": "canary-vf-assignment-assessor-2-1780734913132-30",
+          "bucket": 8,
+          "status": 400,
+          "ms": 546,
+          "bodySample": "{\"error\":\"Request body failed schema validation.\",\"code\":\"INVALID_ARGUMENT\",\"issues\":[{\"path\":\"rubricSnapshot.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.description\",\"code\":\"invalid_type\",\"message\":\"Required\"},{\"path\":\"rubricSnapshot.criteria.0.levels",
+          "source": null,
+          "mode": null,
+          "decisionBucket": null,
+          "reason": null,
+          "sidecarErrorClass": null,
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": null,
+          "matchedLogTs": null
+        }
+      ]
+    },
+    {
+      "id": "teacher-training",
+      "flag": "teacherTraining",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 8874,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-teacher-training-0-1780734915091-24",
+          "bucket": 9,
+          "status": 200,
+          "ms": 8065,
+          "bodySample": "{\"introduction\":\"Teaching Algebra can be a significant hurdle for many Class 7 students, but it's also a critical gateway to higher mathematics. Your proactive approach to seeking effective methods is commendable and foundational for building strong mathematical reasoning skills in your students.\",\"",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 89,
+          "matchedLogTs": "2026-06-06T08:35:16.387797Z"
+        },
+        {
+          "uid": "canary-vf-teacher-training-1-1780734924597-22",
+          "bucket": 9,
+          "status": 200,
+          "ms": 9980,
+          "bodySample": "{\"introduction\":\"Teaching Algebra to Class 7 students can indeed be a challenging yet rewarding endeavor, as it lays the critical groundwork for advanced mathematical reasoning. Let's delve into strategies that ensure a robust and accessible learning experience.\",\"advice\":[{\"strategy\":\"Utilize Concr",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 32,
+          "matchedLogTs": "2026-06-06T08:35:25.793651Z"
+        },
+        {
+          "uid": "canary-vf-teacher-training-2-1780734936055-50",
+          "bucket": 5,
+          "status": 200,
+          "ms": 8576,
+          "bodySample": "{\"introduction\":\"Teaching Algebra to Class 7 students can indeed be challenging, as it introduces abstract concepts for the first time. However, with the right pedagogical approach, it can become an engaging and foundational experience for them.\",\"advice\":[{\"strategy\":\"Implement the Concrete-Represe",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 5,
+          "reason": "bucket_5_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 54,
+          "matchedLogTs": "2026-06-06T08:35:37.303845Z"
+        }
+      ]
+    },
+    {
+      "id": "exam-paper",
+      "flag": "examPaper",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 67860,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-exam-paper-0-1780734946096-0",
+          "bucket": 1,
+          "status": 202,
+          "ms": 75668,
+          "bodySample": "{\"error\":\"generation_in_progress\",\"message\":\"Exam paper still generating. Check My Library in 1 minute.\",\"budgetMs\":75000,\"elapsedMs\":75000}",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 1,
+          "reason": "bucket_1_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 84,
+          "matchedLogTs": "2026-06-06T08:35:47.513019Z"
+        },
+        {
+          "uid": "canary-vf-exam-paper-1-1780735023307-25",
+          "bucket": 9,
+          "status": 202,
+          "ms": 75867,
+          "bodySample": "{\"error\":\"generation_in_progress\",\"message\":\"Exam paper still generating. Check My Library in 1 minute.\",\"budgetMs\":75000,\"elapsedMs\":75001}",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 50,
+          "matchedLogTs": "2026-06-06T08:37:05.074459Z"
+        },
+        {
+          "uid": "canary-vf-exam-paper-2-1780735100868-11",
+          "bucket": 9,
+          "status": 200,
+          "ms": 52046,
+          "bodySample": "{\"title\":\"CBSE Class 7 Mathematics Sample Paper: Algebra\",\"board\":\"CBSE\",\"subject\":\"Mathematics\",\"gradeLevel\":\"Class 7\",\"duration\":\"2 Hours\",\"maxMarks\":50,\"generalInstructions\":[\"This question paper consists of 4 sections: A, B, C, and D.\",\"Section A comprises 8 multiple-choice questions of 1 mark e",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 51,
+          "matchedLogTs": "2026-06-06T08:38:22.348Z"
+        }
+      ]
+    },
+    {
+      "id": "virtual-field-trip",
+      "flag": "virtualFieldTrip",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 14175,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-virtual-field-trip-0-1780735154470-20",
+          "bucket": 3,
+          "status": 200,
+          "ms": 15790,
+          "bodySample": "{\"title\":\"Unlocking Algebra: A Global Quest for Variables and Patterns\",\"stops\":[{\"name\":\"Gateway of India, Mumbai\",\"description\":\"Our journey begins in bustling Mumbai at the iconic Gateway of India. Imagine this magnificent arch as a starting point. Just like we use street numbers and building nam",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 3,
+          "reason": "bucket_3_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 99,
+          "matchedLogTs": "2026-06-06T08:39:15.920238Z"
+        },
+        {
+          "uid": "canary-vf-virtual-field-trip-1-1780735171787-0",
+          "bucket": 2,
+          "status": 200,
+          "ms": 12756,
+          "bodySample": "{\"title\":\"Unlocking the World with X: A Virtual Algebraic Adventure!\",\"stops\":[{\"name\":\"Devaraja Market, Mysuru, India\",\"description\":\"Imagine we're at a vibrant Indian market, like Devaraja Market in Mysuru. Look at the stalls piled high with colourful vegetables and fruits. Each vendor has differe",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 2,
+          "reason": "bucket_2_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 44,
+          "matchedLogTs": "2026-06-06T08:39:33.268360Z"
+        },
+        {
+          "uid": "canary-vf-virtual-field-trip-2-1780735186185-29",
+          "bucket": 0,
+          "status": 200,
+          "ms": 13980,
+          "bodySample": "{\"title\":\"Unlocking the World's Secrets: A Global Algebra Adventure!\",\"stops\":[{\"name\":\"Local Market (Haat Bazaar), India\",\"description\":\"Imagine yourself in a bustling local market in India. Vendors are selling fresh produce, textiles, and spices. How do they quickly calculate prices for varying qu",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 0,
+          "reason": "bucket_0_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 36,
+          "matchedLogTs": "2026-06-06T08:39:47.552070Z"
+        }
+      ]
+    },
+    {
+      "id": "visual-aid",
+      "flag": "visualAid",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 29992,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-visual-aid-0-1780735201717-90",
+          "bucket": 6,
+          "status": 200,
+          "ms": 32733,
+          "bodySample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeJSlAAAQAAAAEAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjIwOTk4OTkyLWVjN2ItYzQ5ZC0wZGQyLTRiYjgwOGQ3ZmYwNAAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 6,
+          "reason": "bucket_6_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 62,
+          "matchedLogTs": "2026-06-06T08:40:03.044427Z"
+        },
+        {
+          "uid": "canary-vf-visual-aid-1-1780735236009-100",
+          "bucket": 9,
+          "status": 200,
+          "ms": 29078,
+          "bodySample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeJSlAAAQAAAAEAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmU1ZTI4NTc3LWVjY2UtODI5MS01YjZiLTQ1OTVhMmNiZWZlZgAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 9,
+          "reason": "bucket_9_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 54,
+          "matchedLogTs": "2026-06-06T08:40:37.582741Z"
+        },
+        {
+          "uid": "canary-vf-visual-aid-2-1780735266763-70",
+          "bucket": 6,
+          "status": 200,
+          "ms": 28165,
+          "bodySample": "{\"imageDataUri\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeJSlAAAQAAAAEAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjUyYWFhM2RkLTZjZTUtODA5Ni1lOGZmLTRkMjdkMTllZDlmZQAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVy",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 6,
+          "reason": "bucket_6_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 44,
+          "matchedLogTs": "2026-06-06T08:41:08.240705Z"
+        }
+      ]
+    },
+    {
+      "id": "avatar",
+      "flag": "avatar",
+      "probes": 3,
+      "httpOk": 3,
+      "avgMs": 10513,
+      "sidecar": 0,
+      "genkit": 0,
+      "fallback": 3,
+      "noLog": 0,
+      "fallbackPct": 100,
+      "verdict": "FAIL_FALLBACK_DOMINANT",
+      "probeReports": [
+        {
+          "uid": "canary-vf-avatar-0-1780735296568-7",
+          "bucket": 0,
+          "status": 200,
+          "ms": 9614,
+          "bodySample": "{\"imageDataUri\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAAAXf2NhQlgAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjY0ODhiYjUzLTE3ZTktM2VjOS0zYjk4LTRiZjhiMmUzYzI2YgAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhL",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 0,
+          "reason": "bucket_0_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 65,
+          "matchedLogTs": "2026-06-06T08:41:38.053822Z"
+        },
+        {
+          "uid": "canary-vf-avatar-1-1780735307903-50",
+          "bucket": 3,
+          "status": 200,
+          "ms": 12522,
+          "bodySample": "{\"imageDataUri\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAAAXf2NhQlgAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmU1MmE4NjdlLWFlNTAtMzhiNS00NmZkLTQ0ODA0MjBhMmQ3NQAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhL",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 3,
+          "reason": "bucket_3_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 169,
+          "matchedLogTs": "2026-06-06T08:41:49.393837Z"
+        },
+        {
+          "uid": "canary-vf-avatar-2-1780735322041-30",
+          "bucket": 4,
+          "status": 200,
+          "ms": 9404,
+          "bodySample": "{\"imageDataUri\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAAAXf2NhQlgAABd/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1lqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmFiNmE5OGI1LTU3MzQtZmUwNy1jOTVmLTQ0NmZjMWZiODdiZQAAABMCanVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhL",
+          "source": "genkit_fallback",
+          "mode": "canary",
+          "decisionBucket": 4,
+          "reason": "bucket_4_under_10",
+          "sidecarErrorClass": "http",
+          "sidecarErrorType": null,
+          "sidecarLatencyMs": 40,
+          "matchedLogTs": "2026-06-06T08:42:03.558516Z"
+        }
+      ]
+    }
+  ],
+  "stagingChecks": {
+    "instant-answer": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/instant-answer/answer",
+        "latency": "0.007789359s",
+        "ts": "2026-06-06T08:41:35.739850Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/instant-answer/answer",
+        "latency": "0.009845211s",
+        "ts": "2026-06-06T08:31:12.210447Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/instant-answer/answer",
+        "latency": "0.008072241s",
+        "ts": "2026-06-06T08:31:06.454741Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/instant-answer/answer",
+        "latency": "0.007873617s",
+        "ts": "2026-06-06T08:30:59.959845Z"
+      }
+    ],
+    "quiz": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/quiz/generate",
+        "latency": "0.007722007s",
+        "ts": "2026-06-06T08:32:12.223312Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/quiz/generate",
+        "latency": "0.010551327s",
+        "ts": "2026-06-06T08:31:48.704959Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/quiz/generate",
+        "latency": "0.008068899s",
+        "ts": "2026-06-06T08:31:17.855471Z"
+      }
+    ],
+    "worksheet": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/worksheet/generate",
+        "latency": "0.007561660s",
+        "ts": "2026-06-06T08:33:07.458915Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/worksheet/generate",
+        "latency": "0.010244372s",
+        "ts": "2026-06-06T08:32:50.630885Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/worksheet/generate",
+        "latency": "0.007571099s",
+        "ts": "2026-06-06T08:32:30.285386Z"
+      }
+    ],
+    "lesson-plan": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/lesson-plan/generate",
+        "latency": "0.008062079s",
+        "ts": "2026-06-06T08:33:36.176164Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/lesson-plan/generate",
+        "latency": "0.010899999s",
+        "ts": "2026-06-06T08:33:33.303939Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/lesson-plan/generate",
+        "latency": "0.009448409s",
+        "ts": "2026-06-06T08:33:30.342574Z"
+      }
+    ],
+    "video-storyteller": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/video-storyteller/recommend-queries",
+        "latency": "0.007774750s",
+        "ts": "2026-06-06T08:41:50.234637Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/video-storyteller/recommend-queries",
+        "latency": "0.008647460s",
+        "ts": "2026-06-06T08:33:57.393499Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/video-storyteller/recommend-queries",
+        "latency": "0.008323040s",
+        "ts": "2026-06-06T08:33:48.732279Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/video-storyteller/recommend-queries",
+        "latency": "0.007569608s",
+        "ts": "2026-06-06T08:33:38.814302Z"
+      }
+    ],
+    "rubric": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/rubric/generate",
+        "latency": "0.008222837s",
+        "ts": "2026-06-06T08:41:39.356223Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/rubric/generate",
+        "latency": "0.008386319s",
+        "ts": "2026-06-06T08:34:33.037381Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/rubric/generate",
+        "latency": "0.008609909s",
+        "ts": "2026-06-06T08:34:18.646755Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/rubric/generate",
+        "latency": "0.007478487s",
+        "ts": "2026-06-06T08:34:05.919974Z"
+      }
+    ],
+    "parent-message": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/parent-message/generate",
+        "latency": "0.007315360s",
+        "ts": "2026-06-06T08:34:57.864909Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/parent-message/generate",
+        "latency": "0.011816047s",
+        "ts": "2026-06-06T08:34:50.795862Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/parent-message/generate",
+        "latency": "0.008255957s",
+        "ts": "2026-06-06T08:34:44.345376Z"
+      }
+    ],
+    "teacher-training": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/teacher-training/advise",
+        "latency": "0.008565690s",
+        "ts": "2026-06-06T08:35:37.277621Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/teacher-training/advise",
+        "latency": "0.008001280s",
+        "ts": "2026-06-06T08:35:25.777427Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/teacher-training/advise",
+        "latency": "0.013063540s",
+        "ts": "2026-06-06T08:35:16.362296Z"
+      }
+    ],
+    "exam-paper": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/exam-paper/generate",
+        "latency": "0.009164379s",
+        "ts": "2026-06-06T08:38:22.318489Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/exam-paper/generate",
+        "latency": "0.007883137s",
+        "ts": "2026-06-06T08:37:05.047730Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/exam-paper/generate",
+        "latency": "0.010601783s",
+        "ts": "2026-06-06T08:35:47.488230Z"
+      }
+    ],
+    "virtual-field-trip": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/virtual-field-trip/plan",
+        "latency": "0.008594859s",
+        "ts": "2026-06-06T08:39:47.530513Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/virtual-field-trip/plan",
+        "latency": "0.013290298s",
+        "ts": "2026-06-06T08:39:33.240836Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/virtual-field-trip/plan",
+        "latency": "0.008495028s",
+        "ts": "2026-06-06T08:39:15.888750Z"
+      }
+    ],
+    "visual-aid": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/visual-aid/generate",
+        "latency": "0.007938960s",
+        "ts": "2026-06-06T08:41:08.216698Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/visual-aid/generate",
+        "latency": "0.008213679s",
+        "ts": "2026-06-06T08:40:37.551658Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/visual-aid/generate",
+        "latency": "0.009542419s",
+        "ts": "2026-06-06T08:40:03.020821Z"
+      }
+    ],
+    "avatar": [
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/avatar-generator/generate",
+        "latency": "0.008389060s",
+        "ts": "2026-06-06T08:42:03.535981Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/avatar-generator/generate",
+        "latency": "0.008625329s",
+        "ts": "2026-06-06T08:41:49.355771Z"
+      },
+      {
+        "status": 401,
+        "url": "https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app/v1/avatar-generator/generate",
+        "latency": "0.008523756s",
+        "ts": "2026-06-06T08:41:38.038141Z"
+      }
+    ]
+  }
+}

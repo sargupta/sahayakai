@@ -1,0 +1,131 @@
+{
+  "investigator": "F5 - race/concurrency forensic",
+  "scope": "dispatchers, counters, webhooks, double-submit, twilio idempotency, shadow-diff collisions",
+  "date": "2026-06-06",
+  "preview_only_writes": true,
+  "prod_reads_only": true,
+  "auth": "gcloud impersonate; test UIDs forensic-race-<n>",
+  "p0_count": 1,
+  "p1_count": 4,
+  "p2_count": 1,
+  "findings": [
+    {
+      "id": "F5-001",
+      "title": "Generic shadow-diff doc-id collides under burst (uid__Date.now())",
+      "severity": "P1",
+      "file": "src/lib/sidecar/shadow-diff-writer.ts",
+      "line": 100,
+      "snippet": "const id = `${sample.uid}__${Date.now()}`;\nawait db.collection('agent_shadow_diffs').doc(date).collection(sample.agent).doc(id).set(payload);",
+      "vector": "17 dispatchers (vidya, quiz, lesson-plan, exam-paper, instant-answer, rubric, teacher-training, video-storyteller, virtual-field-trip, visual-aid, voice-to-text, worksheet, parent-message, avatar-generator, assessment-scanner, assignment-assessor, community-persona-message) write here. With Q4C canary-observation now firing BOTH a sidecar primary AND a parallel Genkit shadow per request from the SAME uid, two shadow_diff writes for one logical request frequently land in the same millisecond → second write silently overwrites first via .set().",
+      "repro_synthetic": "qa/forensics/repros/F5-001-shadow-diff-doc-collision.mjs (200 calls → 1 unique id, 199 collisions)",
+      "repro_preview_steps": [
+        "gcloud auth application-default login --impersonate-service-account=...preview...",
+        "Hit /api/ai/quiz with same auth header 10× via Promise.all from a script",
+        "Query: agent_shadow_diffs/<today>/quiz where uid==<test-uid>",
+        "Expected: 10 docs. Observed: 1-3 docs."
+      ],
+      "impact": "Parity-rollup loses samples; Q4C promotion gate evaluates on a lossy denominator; regressions slip past canary→full because their evidence row was overwritten.",
+      "fix": "Append randomUUID().slice(0,8) suffix: `${uid}__${Date.now()}__${randomUUID().slice(0,8)}`. Alternative: collection.add() for Firestore auto-id.",
+      "blast_radius": "all 17 sidecar dispatchers in shadow + canary + full modes"
+    },
+    {
+      "id": "F5-002",
+      "title": "toggleLike TOCTOU inflates likesCount on concurrent likes",
+      "severity": "P0",
+      "files": [
+        {"path": "src/app/actions/community.ts", "line": 83},
+        {"path": "src/app/actions/groups.ts", "line": 535}
+      ],
+      "snippet": "const likeDoc = await likeRef.get();\nif (likeDoc.exists) { ... } else {\n  await Promise.all([likeRef.set(...), postRef.update({ likesCount: FieldValue.increment(1) })]);\n}",
+      "race": "Read-then-write. N concurrent likes from same UID → 1 like-doc (set idempotent) but likesCount inflated by N.",
+      "comment_misleading": "Comment at community.ts:92 claims 'replaced read-modify-write with FieldValue.increment so two concurrent toggles can't ... lose a count' — but the toggle DIRECTION (like vs unlike) is decided by the pre-read, which is not atomic. The fix solved only HALF the problem.",
+      "trigger": "Double-tap on slow network; React strict-mode dev fires server actions twice; intentional spam click",
+      "repro": "qa/forensics/repros/F5-002-like-toggle-toctou.mjs (preview required)",
+      "fix": "Wrap entire toggle inside db.runTransaction so read+set+increment is serialised. Alternatively use .create()/.delete() and catch ALREADY_EXISTS as no-op."
+    },
+    {
+      "id": "F5-003",
+      "title": "saveResource TOCTOU inflates stats.saves",
+      "severity": "P1",
+      "file": "src/app/actions/community.ts",
+      "line": 582,
+      "snippet": "const saveDoc = await saveRef.get();\nif (saveDoc.exists) return { alreadySaved: true };\nawait saveRef.set(...);\nawait resRef.update({ 'stats.saves': FieldValue.increment(1) });",
+      "race": "Same pattern as F5-002 but for community library saves. 1 save-doc, +N counter on N concurrent saves.",
+      "user_library_safe": "Personal-library copy uses deterministic contentId, so no duplicate appears in the saver's library. Only counter is wrong.",
+      "repro": "qa/forensics/repros/F5-003-save-resource-toctou.mjs",
+      "fix": "runTransaction around read saveRef + set + increment."
+    },
+    {
+      "id": "F5-004",
+      "title": "Profile double-submit duplicates fan-out notifications",
+      "severity": "P1",
+      "file": "src/app/api/user/profile/route.ts",
+      "line": 85,
+      "snippet": "const existingProfile = await dbAdapter.getUser(requestingUserId);\nconst isNewUser = !existingProfile;\n...\nawait dbAdapter.createUser(profile);\nif (isNewUser) {\n  void fanoutNewTeacherJoinedNotification(profile.uid).catch(...);\n}",
+      "race": "Two concurrent first-save requests both observe existingProfile=null → both fan out new-teacher notifications to every nearby teacher.",
+      "blast_radius": "FCM cost doubles; receiving teachers see N notifications for one join; trust erosion in the directory.",
+      "repro": "qa/forensics/repros/F5-004-profile-double-submit-fanout.mjs",
+      "fix": "Before firing fanout, .create() a guard doc welcome_fanout_sent/{uid}. ALREADY_EXISTS → skip."
+    },
+    {
+      "id": "F5-005",
+      "title": "Razorpay 'failed' → retry CAS window allows concurrent handlers",
+      "severity": "P2",
+      "file": "src/app/api/webhooks/razorpay/route.ts",
+      "line": 54,
+      "snippet": "if (existingStatus === 'failed') {\n  await eventRef.update({ status: 'processing', retriedAt: ... });\n}",
+      "race": "Two retries of a previously-failed event both read status='failed' and both flip to 'processing' without atomic CAS. Both handlers run. Today's payloads are idempotent at the value level so no double-charge. Risk is latent.",
+      "no_double_charge": true,
+      "repro": "qa/forensics/repros/F5-005-razorpay-failed-retry-window.mjs",
+      "fix": "Wrap failed→processing flip in db.runTransaction with tx.get() pre-check; throw sentinel on CAS-mismatch and return already_processed."
+    },
+    {
+      "id": "F5-006",
+      "title": "Twilio twiml retry duplicates transcript + collides shadow-diff",
+      "severity": "P1",
+      "file": "src/app/api/attendance/twiml/route.ts",
+      "line": 170,
+      "race": "Read-modify-write of (turnCount, transcript) with no per-turn idempotency lock. When Twilio retries a slow webhook, two concurrent invocations both compute the SAME turnNumber, both call the dispatcher, both push (parent, agent) to transcript, and last write wins.",
+      "effects": [
+        "transcript divergence — Firestore stores reply from whichever request finished last; parent heard the FIRST",
+        "shadow-diff collision on ${callSid}__${turnNumber:04d} — one row lost",
+        "2x Gemini + 2x sidecar spend per retry",
+        "post-call summary shown to teacher uses the wrong agent branch"
+      ],
+      "repro": "qa/forensics/repros/F5-006-twiml-retry-transcript-double.mjs",
+      "fix": "Claim per-turn lock with .create('outreach/{id}/turn_locks/{newTurnCount}') at entry; ALREADY_EXISTS → return cached TwiML stored on the lock doc."
+    }
+  ],
+  "non_findings_verified_safe": [
+    {
+      "id": "F5-N1",
+      "scope": "parent-call shadow-diff (src/lib/sidecar/shadow-diff.ts)",
+      "result": "doc-id is `${callSid}__${turnNumber:04d}` — deterministic by design. No same-millisecond burst risk. Collides only on twiml RETRY (F5-006)."
+    },
+    {
+      "id": "F5-N2",
+      "scope": "joinGroupAction / leaveGroupAction (src/app/actions/groups.ts:341-403)",
+      "result": "Properly wrapped in db.runTransaction with t.get(memberRef) gating the count update. Re-entry safe."
+    },
+    {
+      "id": "F5-N3",
+      "scope": "messages.ts unread counter (src/app/actions/messages.ts:233)",
+      "result": "Inside the same runTransaction as the message write — safe."
+    },
+    {
+      "id": "F5-N4",
+      "scope": "ensureUserGroups subject-grade auto-join (src/app/actions/groups.ts:117-118)",
+      "result": "Uses .create() to claim membership before increment; catch ALREADY_EXISTS skips the increment. Safe."
+    },
+    {
+      "id": "F5-N5",
+      "scope": "Razorpay webhook initial idempotency (route.ts:47)",
+      "result": "Uses eventRef.create() which atomically fails on duplicate — no TOCTOU on first delivery. Only 'failed' retry-window has residual race (F5-005)."
+    },
+    {
+      "id": "F5-N6",
+      "scope": "usage-counters.ts incrementUsageCounter (line 99)",
+      "result": "Pure FieldValue.increment with no read-modify-write. Atomic. Safe."
+    }
+  ]
+}

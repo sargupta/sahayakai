@@ -1,0 +1,135 @@
+{
+  "role": 11,
+  "lane": "F17-board-compliance",
+  "auditor": "claude-opus-4.7",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "scope": [
+    "src/ai/flows/lesson-plan-generator.ts",
+    "src/ai/flows/exam-paper-generator.ts",
+    "src/ai/data/board-blueprints.ts",
+    "src/ai/data/pyq-store.ts",
+    "src/ai/data/pyq/",
+    "src/ai/data/ncert-chapters.ts",
+    "src/data/ncert/"
+  ],
+  "validation_oracle": {
+    "expected_path": "qa/syllabus-reference/syllabus.json",
+    "present": false,
+    "note": "Brief assumes this oracle exists; it does not. See finding F17-000."
+  },
+  "summary": {
+    "boards_probed": 8,
+    "probes_total": 24,
+    "p0_count": 14,
+    "p1_count": 5,
+    "p2_count": 5,
+    "ok_count": 2
+  },
+  "findings": [
+    {
+      "id": "F17-000",
+      "severity": "P1",
+      "title": "Syllabus reference oracle missing",
+      "file": "qa/syllabus-reference/syllabus.json",
+      "summary": "Required validation oracle does not exist; F17 lane has no offline ground truth for board↔chapter↔blueprint claims.",
+      "remediation": "Author qa/syllabus-reference/syllabus.json keyed on {board, grade, subject}."
+    },
+    {
+      "id": "F17-001",
+      "severity": "P0",
+      "title": "Lesson plan flow has no board parameter",
+      "file": "src/ai/flows/lesson-plan-generator.ts",
+      "line": "24-50",
+      "summary": "LessonPlanInputSchema lacks any board field. Lesson plans always use the NCERT seed (effectively CBSE) regardless of teacher's actual board.",
+      "exploit": "POST /api/ai/lesson-plan {topic:'Motion', gradeLevels:['Class 10'], subject:'Science'} for an ICSE / TN / WB / UP teacher → output uses NCERT framing, chapter ordering, and pedagogy.",
+      "affects_boards": ["ICSE", "KSEEB", "TNSCERT", "WBBSE", "MSBSHSE", "UPMSP", "APSCERT", "TSBIE"]
+    },
+    {
+      "id": "F17-002",
+      "severity": "P0",
+      "title": "Exam-paper blueprint registry is CBSE-only",
+      "file": "src/ai/data/board-blueprints.ts",
+      "line": "289-294",
+      "summary": "ALL_BLUEPRINTS contains exactly 4 entries — all CBSE (Class 9/10 Math/Science). findBlueprint() returns undefined for every other board.",
+      "evidence": "grep -oE \"board:\\s*'[^']+'\" src/ai/data/board-blueprints.ts → board: 'CBSE' (4 occurrences)"
+    },
+    {
+      "id": "F17-003",
+      "severity": "P0",
+      "title": "Silent CBSE-shaped fallback for unknown boards",
+      "file": "src/ai/flows/exam-paper-generator.ts",
+      "line": "116-118",
+      "summary": "When blueprint is undefined, prompt instructs LLM to generate 4-5 sections with MCQ+SA+LA+case-study — the CBSE pattern. Output is labelled with the requested board name, misleading the teacher.",
+      "exploit": "POST /api/ai/exam-paper {board:'ICSE', gradeLevel:'Class 10', subject:'Science', …} → returns paper titled 'ICSE Class 10 Science Exam Paper' but structured as a CBSE blueprint (case study, assertion-reason, etc., none of which appear on ICSE).",
+      "affects_boards": ["ICSE", "KSEEB", "TNSCERT", "WBBSE", "MSBSHSE", "UPMSP", "APSCERT", "TSBIE"],
+      "remediation": "Replace fallback with a hard error until per-board blueprints exist; or implement blueprints (preferred)."
+    },
+    {
+      "id": "F17-004",
+      "severity": "P1",
+      "title": "PYQ corpus 99% CBSE",
+      "file": "src/ai/data/pyq/",
+      "summary": "3 830 CBSE / 54 Karnataka / 36 Telangana / 0 ICSE+TN+WB+MH+UP+AP. Even if PYQs were retrieved, no per-board grounding is possible for 6 of 8 boards.",
+      "evidence": "grep -hoE '\"board\":\\s*\"[^\"]+\"' src/ai/data/pyq/*.json | sort | uniq -c → 3830 CBSE, 54 Karnataka SSLC, 36 Telangana SSC."
+    },
+    {
+      "id": "F17-005",
+      "severity": "P1",
+      "title": "NCERT seed is the only chapter index; no per-state textbook chapters",
+      "file": "src/ai/data/ncert-chapters.ts",
+      "supporting_file": "src/data/ncert/*",
+      "summary": "Chapter validation feeds off NCERT-only seed. State-board-specific chapters (e.g. WBBSE 'পরিবেশের জন্য ভাবনা', TN 'Periyar and Self-Respect Movement', TS 'Telangana Statehood Movement', MH 'Disaster Management Class 10') are unknown — the AI either hallucinates or refuses."
+    },
+    {
+      "id": "F17-006",
+      "severity": "P0",
+      "title": "TNSCERT mark cap wrong by ~7%",
+      "file": "src/ai/flows/exam-paper-generator.ts",
+      "line": "116-118",
+      "summary": "TN Class 10 Science board paper is 75 marks. Fallback honours user-passed maxMarks (defaults seen at 80) and a CBSE shape. Teachers using TN preset will get 80-mark papers that do not match the TN public exam.",
+      "affects_boards": ["TNSCERT"]
+    },
+    {
+      "id": "F17-007",
+      "severity": "P0",
+      "title": "WBBSE mark cap wrong by ~11%",
+      "file": "src/ai/flows/exam-paper-generator.ts",
+      "summary": "WB Madhyamik Phys Sc paper is 90 marks. Fallback yields 80-mark CBSE-shaped output.",
+      "affects_boards": ["WBBSE"]
+    },
+    {
+      "id": "F17-008",
+      "severity": "P0",
+      "title": "MSBSHSE and AP/TS two-paper structure not modelled",
+      "file": "src/ai/flows/exam-paper-generator.ts",
+      "summary": "Maharashtra SSC Science is two papers (Sci-I, Sci-II) of 40 marks each. AP/TS SSC similarly splits Phys Sci and Bio Sci. The flow generates a single 80-mark paper.",
+      "affects_boards": ["MSBSHSE", "APSCERT", "TSBIE"]
+    },
+    {
+      "id": "F17-009",
+      "severity": "P0",
+      "title": "UPMSP mark cap wrong; case-study and A-R not on syllabus",
+      "file": "src/ai/flows/exam-paper-generator.ts",
+      "summary": "UP Board High School Science is 70 marks and uses neither case-study nor assertion-reason items. CBSE fallback emits both at 80 marks.",
+      "affects_boards": ["UPMSP"]
+    },
+    {
+      "id": "F17-010",
+      "severity": "P2",
+      "title": "extractGradeFromTopic can override teacher's selected grade",
+      "file": "src/ai/flows/lesson-plan-generator.ts",
+      "line": "173",
+      "summary": "When a user types 'Motion for grade 10' but Motion is a Class 9 NCERT chapter, extractGradeFromTopic overrides the user's UI selection. Output may silently target a grade the teacher did not pick. Not strictly a board issue, but commonly surfaces in CBSE Probe-1."
+    }
+  ],
+  "remediation_priority": [
+    "F17-001 (add board param to lesson plan)",
+    "F17-003 (refuse instead of CBSE-fallback)",
+    "F17-002 (build 7 missing board blueprints)",
+    "F17-006/007/008/009 (per-board structural correctness)",
+    "F17-000 (author syllabus oracle)",
+    "F17-004 (expand PYQ corpus)",
+    "F17-005 (state-board chapter indices)"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "investigator": "F13 — Performance & Latency",
+  "date": "2026-06-06",
+  "method": "static-analysis-only (no live probe this pass)",
+  "summary": { "P0": 0, "P1": 0, "P2": 4, "P3": 1, "INFO": 3 },
+  "findings": [
+    {
+      "id": "F13-001",
+      "severity": "P2",
+      "category": "N+1",
+      "title": "daily-briefing sequential stateGroupRef.get() in for-of loop",
+      "file": "src/app/api/jobs/daily-briefing/route.ts",
+      "line": 942,
+      "evidence": "for (const [state, items] of curatedStateNews) { ... const stateGroupSnap = await stateGroupRef.get(); ... }",
+      "impact": "Up to 28 sequential round-trips per cron run (~0.8-1.4s added wall-time). Cron-only.",
+      "fix": "Use db.getAll(...refs) or Promise.all over the existence checks.",
+      "repro": "Trigger /api/jobs/daily-briefing with seed of 28 states in curatedStateNews; log duration."
+    },
+    {
+      "id": "F13-002",
+      "severity": "P2",
+      "category": "N+1",
+      "title": "ai-community-agent sequential userRef.get() per persona",
+      "file": "src/app/api/jobs/ai-community-agent/route.ts",
+      "line": 68,
+      "evidence": "for (const persona of personas) { ... const userSnap = await userRef.get(); ... }",
+      "impact": "Scales with persona pool size; cron-only.",
+      "fix": "db.getAll(...personas.map(p => db.doc('users/'+p.uid))) then iterate."
+    },
+    {
+      "id": "F13-003",
+      "severity": "P2",
+      "category": "sync-io",
+      "title": "readFileSync in /api/seo/llms* request handlers",
+      "file": "src/app/api/seo/llms/route.ts",
+      "line": 10,
+      "alsoAt": "src/app/api/seo/llms-full/route.ts:10",
+      "impact": "Blocks event loop per request; bot-driven traffic can spike.",
+      "fix": "Read once at module init or use fs.promises.readFile."
+    },
+    {
+      "id": "F13-004",
+      "severity": "P2",
+      "category": "timeout-config",
+      "title": "Hot AI routes lack explicit maxDuration export",
+      "files": ["src/app/api/ai/lesson-plan/route.ts", "src/app/api/ai/quiz/route.ts", "src/app/api/ai/exam-paper/route.ts", "src/app/api/ai/virtual-field-trip/route.ts", "src/app/api/ai/assessment-scanner/route.ts", "src/app/api/ai/video-storyteller/route.ts"],
+      "impact": "Silent 504 if Cloud Run instance timeout is dropped below long-tail of these handlers.",
+      "fix": "Add export const maxDuration = 60 (or 90 for exam-paper, video-storyteller) to each."
+    },
+    {
+      "id": "F13-005",
+      "severity": "P3",
+      "category": "cold-start",
+      "title": "Sidecar cold-start not yet measured / min-instances unverified",
+      "file": "sahayakai-agents/Dockerfile",
+      "impact": "First request after idle may exceed budget; static audit cannot confirm.",
+      "fix": "Probe: idle 5min → hit /health → measure TTFB. Run gcloud run services describe to check minScale."
+    },
+    {
+      "id": "F13-006",
+      "severity": "INFO",
+      "category": "methodology",
+      "title": "Live 50 RPS latency probe not run this pass",
+      "impact": "P1 regression claims cannot be made without baseline numbers.",
+      "fix": "Run hey -z 60s -c 50 against each canary agent URL with App Check token; capture p50/p95/p99."
+    },
+    {
+      "id": "F13-007",
+      "severity": "INFO",
+      "category": "indices",
+      "title": "Composite index audit clean",
+      "verified": ["parent_outreach(teacherUid,studentId,createdAt)", "parent_outreach(callSid)", "users(state,district,subjects,createdAt)", "notifications(recipientId,type,createdAt)", "posts(authorUid,createdAt)", "billing_reconciliation_actions(action,createdAt)"],
+      "missing": []
+    },
+    {
+      "id": "F13-008",
+      "severity": "INFO",
+      "category": "tts",
+      "title": "TTS chunk parallelism via Promise.all confirmed",
+      "files": ["src/app/api/tts/route.ts:182", "src/lib/sarvam.ts:218"],
+      "note": "Structural confirmation only; live <5s p95 for 2000-char input still needs probe."
+    }
+  ]
+}

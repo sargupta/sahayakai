@@ -1,0 +1,92 @@
+{
+  "investigator": "F10-community-social",
+  "role": 16,
+  "lane": "F10-community",
+  "date": "2026-06-06",
+  "findings": [
+    {
+      "id": "F10-01",
+      "severity": "P0",
+      "area": "profile-pii",
+      "title": "getProfilesAction returns raw UserProfile including phoneNumber + fcmTokens",
+      "file": "src/app/actions/community.ts",
+      "line": 14,
+      "summary": "dbAdapter.getUsers returns raw Firestore docs; any signed-in user can dump 10 users at a time including phone, FCM tokens, adminRoles, billing flags.",
+      "fix": "Whitelist same fields as getPublicProfileAction, or delete the action (no in-app callers).",
+      "exploitable_by": "any signed-in user",
+      "repro": "qa/forensics/F10-repros/F10-01-getProfilesAction-pii.md"
+    },
+    {
+      "id": "F10-02",
+      "severity": "P0",
+      "area": "profile-pii",
+      "title": "Public profile UI exposes email to any signed-in viewer",
+      "file": "src/components/profile/profile-view.tsx",
+      "line": 245,
+      "summary": "getPublicProfileAction includes email; UI shows it unconditionally. Fallback string 'Contact Hidden' shows original design intent was gated.",
+      "fix": "Gate email behind connStatus === 'connected'; strip from server projection unless caller is a confirmed connection.",
+      "exploitable_by": "any signed-in user",
+      "repro": "qa/forensics/F10-repros/F10-02-profile-email-disclosure.md"
+    },
+    {
+      "id": "F10-03",
+      "severity": "P1",
+      "area": "chat",
+      "title": "sendChatMessageAction has no audioUrl host validation",
+      "file": "src/app/actions/community.ts",
+      "line": 768,
+      "summary": "Community-chat path missing the firebasestorage.googleapis.com host check that sendGroupChatMessageAction enforces. Enables tracking-pixel audio, open-redirect, and potential crash payloads.",
+      "fix": "Copy validator from groups.ts:616-618; add length cap on audioUrl.",
+      "exploitable_by": "any signed-in chat sender",
+      "repro": "qa/forensics/F10-repros/F10-03-community-chat-audio-host.md"
+    },
+    {
+      "id": "F10-04",
+      "severity": "P2",
+      "area": "follow",
+      "title": "followTeacherAction allows self-follow",
+      "file": "src/app/actions/community.ts",
+      "line": 139,
+      "summary": "No guard for followerId === followingId. Inflates follower stats, pollutes following feed, sends self-notification.",
+      "fix": "Reject self-follow at top of action."
+    },
+    {
+      "id": "F10-05",
+      "severity": "P2",
+      "area": "like",
+      "title": "toggleLikeAction allows self-like",
+      "file": "src/app/actions/community.ts",
+      "line": 83,
+      "summary": "No guard preventing post author from liking their own post; inflates likesCount.",
+      "fix": "Reject self-like, or mark and exclude from public counts."
+    },
+    {
+      "id": "F10-06",
+      "severity": "P2",
+      "area": "groups",
+      "title": "getGroupAction returns group doc to non-members",
+      "file": "src/app/actions/groups.ts",
+      "line": 309,
+      "summary": "Only requireAuth, not requireGroupMember. Exposes name/description/autoJoinRules/memberCount to any signed-in user. May be intentional for Discover Groups.",
+      "fix": "Confirm intent; if private, gate behind requireGroupMember."
+    },
+    {
+      "id": "F10-07",
+      "severity": "INFO",
+      "area": "chat",
+      "title": "Community-chat text cap is 500, playbook expected 1000",
+      "file": "src/app/actions/community.ts",
+      "line": 775,
+      "summary": "Playbook step 6 expects 1000-char cap; actual is 500.",
+      "fix": "Reconcile playbook vs cap; 500 may be intentional for mobile."
+    }
+  ],
+  "confirmed_safe": [
+    "acceptConnectionRequestAction: rejects non-recipient (connections.ts:85)",
+    "sendConnectionRequestAction: rejects self-connect (connections.ts:25)",
+    "storage.rules: voice-messages/{uid} enforces uid ownership + 5MB + audio MIME (storage.rules:19-26)",
+    "getRecommendedTeachersAction: rejects mismatched userId param (community.ts:411)",
+    "getGroupPostsAction: enforces requireGroupMember (groups.ts:418)",
+    "Recommendation engine: same-school +30, same-district +15, subject +20/match, grade +5/match"
+  ]
+}

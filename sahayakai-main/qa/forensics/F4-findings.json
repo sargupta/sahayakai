@@ -1,0 +1,99 @@
+{
+  "scope": "18 AI agents (Genkit + ADK sidecar)",
+  "methodology": "static",
+  "summary": { "P0": 0, "P1": 4, "P2": 3, "P3": 2 },
+  "findings": [
+    {
+      "id": "F4-P1-01",
+      "severity": "P1",
+      "title": "Sidecar dispatcher bypasses validateTopicSafety for instant-answer",
+      "file": "src/lib/sidecar/instant-answer-dispatch.ts",
+      "lineRange": "373-443",
+      "surface": ["POST /api/ai/instant-answer", "POST /api/ai/intent default branch"],
+      "vector": "prompt-injection / jailbreak",
+      "fix": "Lift validateTopicSafety(input.question) into dispatcher before runSidecarSafe"
+    },
+    {
+      "id": "F4-P1-02",
+      "severity": "P1",
+      "title": "parent-message route has no Zod validation",
+      "file": "src/app/api/ai/parent-message/route.ts",
+      "lineRange": "10-14",
+      "vector": "prompt-injection -> tone-flip on parent phone call",
+      "fields": ["teacherNote","reasonContext","reason","studentName"],
+      "fix": "Add Zod schema with max(500); add validateTopicSafety on teacherNote+reasonContext"
+    },
+    {
+      "id": "F4-P1-03",
+      "severity": "P1",
+      "title": "/api/ai/intent passes raw prompt to agentRouterFlow with no validation",
+      "file": "src/app/api/ai/intent/route.ts",
+      "lineRange": "74-88",
+      "vector": "orchestrator prompt-injection; reflected XSS via topic in NAVIGATE URL",
+      "fix": "Zod-validate prompt max 2000; validateTopicSafety before agentRouterFlow"
+    },
+    {
+      "id": "F4-P1-04",
+      "severity": "P1",
+      "title": "validateTopicSafety missing from 7 of 11 Genkit flows",
+      "flowsWithoutSafety": ["quiz-generator","exam-paper","teacher-training","rubric-generator","virtual-field-trip","video-storyteller","parent-message"],
+      "flowsWithSafety": ["instant-answer","visual-aid-designer","worksheet-wizard","lesson-plan-generator"],
+      "fix": "Add validateTopicSafety on primary user text field in every flow"
+    },
+    {
+      "id": "F4-P2-01",
+      "severity": "P2",
+      "title": "numQuestions has no upper bound",
+      "file": "src/ai/schemas/quiz-generator-schemas.ts",
+      "line": 18,
+      "fix": "z.number().int().min(1).max(50).default(5)"
+    },
+    {
+      "id": "F4-P2-02",
+      "severity": "P2",
+      "title": "parentCallSummary lacks NSM (intentional English-only)",
+      "file": "src/ai/prompts/parentCallSummary.prompt"
+    },
+    {
+      "id": "F4-P2-03",
+      "severity": "P2",
+      "title": "VIDYA action.flow JSON drives auto-navigation without allowlist re-validation",
+      "file": "src/ai/prompts/partials/_sahayakSoul.prompt",
+      "lineRange": "630-657",
+      "fix": "Strict allowlist on action.flow; max(500) on every params.*"
+    },
+    {
+      "id": "F4-P3-01",
+      "severity": "P3",
+      "title": "Triple-stash Handlebars on free-text fields skips HTML escaping",
+      "files": [
+        "src/ai/prompts/instantAnswer.prompt:87",
+        "src/ai/prompts/lessonPlan.prompt:161",
+        "src/ai/prompts/quizGenerator.prompt:354",
+        "src/ai/prompts/teacherTraining.prompt:432",
+        "src/ai/prompts/worksheetWizard.prompt:570",
+        "src/ai/prompts/visualAidDesigner.prompt:527",
+        "src/ai/prompts/virtualFieldTrip.prompt:505"
+      ],
+      "fix": "Switch to double-stash; adopt sidecar U+27E6/U+27E7 marker pattern"
+    },
+    {
+      "id": "F4-P3-02",
+      "severity": "P3",
+      "title": "Sidecar data-marker U+27E6/U+27E7 is forgeable by user input",
+      "files": ["sahayakai-agents/prompts/vidya/orchestrator.handlebars","sahayakai-agents/prompts/community-persona-message/generator.handlebars"],
+      "fix": "Escape U+27E6/U+27E7 in user input or use per-request nonce delimiter"
+    }
+  ],
+  "nsmCoverage": {
+    "present": ["examPaperGenerator","instantAnswer","lessonPlan","parentCallAgentReply","parentMessage","quizGenerator","rubricGenerator","teacherTraining","videoStoryteller","virtualFieldTrip","visualAidDesigner","worksheetWizard"],
+    "intentionallyAbsent": ["parentCallSummary"]
+  },
+  "leakageChecks": {
+    "secretsInPrompts": false,
+    "systemPromptLeakViaInjection": "likely on unsafetied flows (P1-04)"
+  },
+  "renderingChecks": {
+    "dangerousHtml": "guarded by escapeHtml in src/components/lesson-plan-display.tsx:28; safe"
+  }
+}

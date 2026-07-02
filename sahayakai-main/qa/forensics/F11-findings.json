@@ -1,0 +1,89 @@
+{
+  "role": 17,
+  "domain": "onboarding-profile",
+  "audited_at": "2026-06-06",
+  "files": [
+    "src/app/onboarding/page.tsx",
+    "src/app/actions/profile.ts",
+    "src/app/actions/auth.ts",
+    "src/lib/db/adapter.ts",
+    "src/app/api/user/profile/route.ts",
+    "src/app/privacy-for-teachers/consent-form.tsx"
+  ],
+  "findings": [
+    {
+      "id": "F11-1",
+      "severity": "P0",
+      "title": "Privilege escalation via UI field write",
+      "status": "NOT EXPLOITABLE",
+      "summary": "PROFILE_WRITABLE_FIELDS (action layer) + CLIENT_EDITABLE_USER_FIELDS (adapter layer) both correctly exclude adminRoles/plan/razorpaySubscriptionId/role/isAdmin/email/uid/impactScore/badges/verifiedStatus/followersCount/followingCount/referralCode/fcmTokens. No UI call-site writes a non-allowlisted field. Layered defence holds.",
+      "evidence": "Inventory of 13 call sites of updateProfileAction — all fields written are in PROFILE_WRITABLE_FIELDS. See F11-onboarding-profile.md call-site table."
+    },
+    {
+      "id": "F11-2",
+      "severity": "P1",
+      "title": "Dual-allowlist drift between action and adapter layers",
+      "summary": "Adapter allowlist (57 fields) is a strict superset of action allowlist (49). 'notificationPreferences', 'voicePreferences', 'consentGivenAt', 'consentVersion', 'onboardingComplete', 'teachingGradeLevels', 'phone', 'avatarUrl', 'lastLessonPlanLanguage', 'grades' (action only? no — both), 'groupsInitialized' are permitted at adapter but not action. Any future UI write of these via updateProfileAction is silently stripped with no client error.",
+      "files": ["src/app/actions/profile.ts:159-214", "src/lib/db/adapter.ts:21-84"],
+      "remediation": "Single source of truth for the two allowlists."
+    },
+    {
+      "id": "F11-3",
+      "severity": "P1",
+      "title": "Onboarding state-machine bypass — onboardingPhase is client-writable",
+      "summary": "onboardingPhase is in PROFILE_WRITABLE_FIELDS. A signed-in client can set { onboardingPhase: 'exploring', schoolName: 'x' } directly. The onboarding page only redirects-out on profile.schoolName presence (page.tsx:144), so the bypass works. No server-side rule rejects 'exploring' without a complete profile.",
+      "files": ["src/app/actions/profile.ts:196", "src/app/onboarding/page.tsx:144"],
+      "repro": "F11-repros/F11-3-skip-onboarding.md",
+      "remediation": "Server-side gate: reject onboardingPhase transitions if subjects[]/gradeLevels[]/state/educationBoard missing."
+    },
+    {
+      "id": "F11-4",
+      "severity": "P1",
+      "title": "syncUserAction cannot write email — silently dropped by adapter",
+      "summary": "Q1.A NEEDS-FOLLOWUP resolved: 'email' is NOT in CLIENT_EDITABLE_USER_FIELDS, so dbAdapter.updateUser silently strips the email field syncUserAction tries to write. Phone-only auth is therefore safe from a null-overwrite, but the code in auth.ts is misleading. New-user email is actually saved via POST /api/user/profile (createUser, bypasses filter).",
+      "files": ["src/app/actions/auth.ts:46", "src/lib/db/adapter.ts:21-84"],
+      "remediation": "Remove the email write from syncUserAction OR add email to the adapter allowlist (preferred: remove; one source of truth is /api/user/profile)."
+    },
+    {
+      "id": "F11-5",
+      "severity": "P1",
+      "title": "syncUserAction clobbers displayName/photoURL to empty string on phone-only re-sign-in",
+      "summary": "auth.ts:47-48 sets displayName: user.displayName || '', photoURL: user.photoURL || ''. Both are in the adapter allowlist (no filter rescue). A user who signed up with email (has displayName) then later signs in with phone-only (displayName: null) will have displayName blanked to ''. Same for photoURL.",
+      "files": ["src/app/actions/auth.ts:47-48"],
+      "repro": "F11-repros/F11-5-displayName-clobber.md",
+      "remediation": "Skip the field if null instead of coercing to ''. Or: only write on first-time (isNewUser check)."
+    },
+    {
+      "id": "F11-6",
+      "severity": "P1",
+      "title": "Onboarding Step 1 has no per-section autosave",
+      "summary": "Step 0 (language) autosaves on selection (page.tsx:243). Step 1 (role + school + state + board + subjects + grades) only persists on the Continue button (page.tsx:283). Network failure / accidental refresh mid-flow loses all of it. The accordion's 'auto-advance on completion' UX implies persistence is happening.",
+      "files": ["src/app/onboarding/page.tsx:248-308"],
+      "remediation": "Call saveStep on each section completion the same way handleLanguageSelect does."
+    },
+    {
+      "id": "F11-7",
+      "severity": "P2",
+      "title": "Consent has no withdrawal path",
+      "summary": "consent-form.tsx only writes privacyAcceptedAt+privacyVersion. There is no UI to clear either, and the action would refuse anyway (no 'unsetField' semantics). DPDP Act right-to-withdraw is not implementable by the user.",
+      "files": ["src/app/privacy-for-teachers/consent-form.tsx"],
+      "repro": "F11-repros/F11-7-consent-no-withdraw.md"
+    },
+    {
+      "id": "F11-8",
+      "severity": "P2",
+      "title": "Consent version-bump overwrites prior acceptance without history",
+      "summary": "Re-accepting after PRIVACY_VERSION bump overwrites privacyAcceptedAt with the new date. No subcollection or audit trail of prior acceptances. For DPDP evidence we cannot prove what version the user accepted on what date if it ever bumped.",
+      "files": ["src/app/privacy-for-teachers/consent-form.tsx:96-99"],
+      "repro": "F11-repros/F11-8-consent-version-history.md",
+      "remediation": "Append to a privacyAcceptances subcollection in addition to mirroring on the user doc."
+    },
+    {
+      "id": "F11-10",
+      "severity": "P3",
+      "title": "Onboarding completion check is too narrow",
+      "summary": "Redirect-out condition only checks profile.schoolName (page.tsx:144). Compose with F11-3 for the bypass.",
+      "files": ["src/app/onboarding/page.tsx:144"]
+    }
+  ]
+}

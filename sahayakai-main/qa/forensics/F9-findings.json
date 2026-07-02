@@ -1,0 +1,90 @@
+{
+  "role": 18,
+  "lane": "F9-attendance",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "date": "2026-06-06",
+  "method": "static",
+  "findings": [
+    {
+      "id": "F9-001",
+      "severity": "P0",
+      "title": "Outreach POST lacks class/student ownership check; attacker-controlled phone is persisted then trusted",
+      "file": "src/app/api/attendance/outreach/route.ts",
+      "lines": "8-63",
+      "category": "authz",
+      "impact": "wrong-parent call, free arbitrary-call gateway via SahayakAI Twilio account, PII leak",
+      "repro": "qa/forensics/repros/F9/F9-001-outreach-ownership.sh",
+      "fix": "Read classes/{classId} verify teacherUid; read students/{studentId}; use stored parentPhone/parentLanguage; ignore body values"
+    },
+    {
+      "id": "F9-002",
+      "severity": "P1",
+      "title": "Duplicate call-summary generation across transcript-sync + twiml-status webhooks, plus intra-webhook race",
+      "files": [
+        "src/app/api/attendance/transcript-sync/route.ts",
+        "src/app/api/attendance/twiml-status/route.ts"
+      ],
+      "lines": "transcript-sync:84-111; twiml-status:62-67",
+      "category": "idempotency",
+      "impact": "2x Vertex Gemini cost per completed call; non-deterministic callSummary on race (last-write-wins)",
+      "repro": "qa/forensics/repros/F9/F9-002-race-summary.ts",
+      "fix": "Firestore transaction with callSummaryStatus='generating' sentinel before LLM call; applied to BOTH webhook paths"
+    },
+    {
+      "id": "F9-003",
+      "severity": "P1",
+      "title": "No outreach dedup / cooldown",
+      "file": "src/app/api/attendance/outreach/route.ts",
+      "category": "rate-limit",
+      "impact": "parent harassment, Twilio bill DoS; compounds with F9-001",
+      "repro": "qa/forensics/repros/F9/F9-003-outreach-dedup.sh",
+      "fix": "5-minute cooldown check against most recent parent_outreach doc for (teacherUid, studentId)"
+    },
+    {
+      "id": "F9-004",
+      "severity": "P1",
+      "title": "saveAttendance computes todayStr in server UTC; IST teachers active 00:00-05:30 IST get false 'future date' rejection",
+      "file": "src/app/actions/attendance.ts",
+      "lines": "281-318",
+      "category": "tz-bug",
+      "impact": "early-morning IST attendance saves rejected as future-dated",
+      "repro": "qa/forensics/repros/F9/F9-004-ist-midnight.ts",
+      "fix": "Pin todayStr to IST (UTC+5:30) or accept clientTimezone parameter"
+    },
+    {
+      "id": "F9-005",
+      "severity": "P2",
+      "title": "7-day backfill window has no admin override",
+      "file": "src/app/actions/attendance.ts",
+      "lines": "299-300",
+      "category": "ux",
+      "impact": "month-end reconciliation impossible"
+    },
+    {
+      "id": "F9-006",
+      "severity": "P2",
+      "title": "40-student cap enforced via count-then-write; TOCTOU race allows >40 on concurrent adds",
+      "file": "src/app/actions/attendance.ts",
+      "lines": "183-218",
+      "category": "race",
+      "impact": "cap exceeded by 1-2 in race; cosmetic"
+    },
+    {
+      "id": "F9-007",
+      "severity": "P2",
+      "title": "transcript-sync trusts client-supplied turnCount; no equality check vs transcript.length",
+      "file": "src/app/api/attendance/transcript-sync/route.ts",
+      "lines": "44-69",
+      "category": "data-integrity",
+      "impact": "UI off-by-one if Pipecat miscounts; summary trigger uses array length so unaffected"
+    }
+  ],
+  "verified_good": [
+    "Class ownership checks on getClassAction/updateClassAction/deleteClassAction/getStudentsAction/saveAttendanceAction — playbook step 8 blocked",
+    "Middleware deletes incoming x-user-id and re-injects only after verifyIdToken — header spoof blocked",
+    "/api/attendance/call validates outreach.teacherUid and uses server-stored phone (necessary but bypassed via F9-001 upstream)",
+    "transcript-sync uses timingSafeEqual for internal key",
+    "twiml-status validates Twilio signature",
+    "normalizeToE164 rejects malformed/non-Indian numbers"
+  ]
+}

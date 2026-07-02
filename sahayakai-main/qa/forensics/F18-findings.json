@@ -1,0 +1,101 @@
+{
+  "investigation": "F18-grade-bands",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "method": "static-source-forensic",
+  "bands": ["primary", "middle", "secondary", "senior"],
+  "flows_audited": [
+    "src/ai/flows/lesson-plan-generator.ts",
+    "src/ai/flows/quiz-definitions.ts",
+    "src/ai/flows/quiz-generator.ts",
+    "src/ai/flows/parent-message-generator.ts",
+    "src/ai/schemas/quiz-generator-schemas.ts"
+  ],
+  "findings": [
+    {
+      "id": "F18-01",
+      "severity": "P1",
+      "title": "numQuestions default 5 applied uniformly across all grade bands",
+      "file": "src/ai/schemas/quiz-generator-schemas.ts",
+      "line": 18,
+      "evidence": "numQuestions: z.number().default(5).describe(...)",
+      "bands_affected": ["middle", "secondary", "senior"],
+      "spec_floor": {"primary": "5-10", "middle": "10-15", "secondary": "15-25", "senior": "15-25"},
+      "fix": "Resolve band-aware default at dispatcher: primary=8, middle=12, secondary=20, senior=25"
+    },
+    {
+      "id": "F18-02",
+      "severity": "P1",
+      "title": "Single 5E pedagogy template applied to all bands; spec wants band-specific frameworks",
+      "file": "src/ai/flows/lesson-plan-generator.ts",
+      "line_range": "271-277",
+      "evidence": "You MUST organize the activities into the 5E Instructional Model — applied unconditionally",
+      "bands_affected": ["primary", "senior"],
+      "spec": "primary=story-based, middle=inquiry, secondary=structured, senior=exam-prep",
+      "fix": "Derive gradeBand and conditionally swap pedagogy block in Handlebars prompt"
+    },
+    {
+      "id": "F18-03",
+      "severity": "P1",
+      "title": "Quiz prompt has no vocabulary-age constraint; LLM free to use Class-9 vocabulary for Class 3",
+      "file": "src/ai/flows/quiz-definitions.ts",
+      "line_range": "6-85",
+      "bands_affected": ["primary"],
+      "fix": "Add gradeBand-conditional vocabulary register block (e.g., 'sentences ≤8 words, Dolch-2' for primary)"
+    },
+    {
+      "id": "F18-04",
+      "severity": "P2",
+      "title": "Parent message tone fixed; no child-age modulation",
+      "file": "src/ai/flows/parent-message-generator.ts",
+      "line_range": "97-141",
+      "evidence": "Single 'empathetic, respectful, solution-focused' instruction; no band branching",
+      "bands_affected": ["primary", "secondary", "senior"],
+      "fix": "Add gradeBand to ParentMessageInputSchema and 4 tone blocks (primary=warm/concrete, secondary=board-year, senior=college-prep)"
+    },
+    {
+      "id": "F18-05",
+      "severity": "P2",
+      "title": "No board-exam awareness (CBSE Class 10) or NEET/JEE awareness (Class 11-12 Science)",
+      "file": "src/ai/flows/quiz-definitions.ts",
+      "line_range": "47-77",
+      "bands_affected": ["secondary", "senior"],
+      "fix": "Inject board-format block for secondary + competitive-exam block for senior Science"
+    },
+    {
+      "id": "F18-06",
+      "severity": "P2",
+      "title": "Primary lesson plan lacks 'avoid abstract concepts' guard; concrete-operational stage not encoded",
+      "file": "src/ai/flows/lesson-plan-generator.ts",
+      "line_range": "260-330",
+      "bands_affected": ["primary"],
+      "fix": "Conditional block: 'For Class 1-5: use only concrete examples; no metaphors, no symbolic abstraction'"
+    },
+    {
+      "id": "F18-07",
+      "severity": "P3",
+      "title": "Silent 'Class 5' fallback masks band misconfiguration",
+      "file": "src/ai/flows/quiz-generator.ts",
+      "lines": [142, 181],
+      "evidence": "gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5')",
+      "fix": "Throw or log error instead of silently defaulting to primary band"
+    }
+  ],
+  "probe_matrix": [
+    {"band": "primary", "grade": "Class 3", "subject": "Science", "topic": "Plants around us", "flow": "lesson-plan", "expected_findings": ["F18-02", "F18-06"]},
+    {"band": "primary", "grade": "Class 3", "subject": "Science", "topic": "Plants around us", "flow": "quiz", "expected_findings": ["F18-01", "F18-03"]},
+    {"band": "primary", "grade": "Class 3", "flow": "parent-message", "reason": "poor_performance", "expected_findings": ["F18-04"]},
+    {"band": "middle", "grade": "Class 7", "subject": "Math", "topic": "Integers", "flow": "lesson-plan", "expected_findings": []},
+    {"band": "middle", "grade": "Class 7", "subject": "Math", "topic": "Integers", "flow": "quiz", "expected_findings": ["F18-01"]},
+    {"band": "middle", "grade": "Class 7", "flow": "parent-message", "reason": "poor_performance", "expected_findings": ["F18-04"]},
+    {"band": "secondary", "grade": "Class 10", "subject": "Science", "topic": "Light - Reflection and Refraction", "flow": "lesson-plan", "expected_findings": ["F18-02", "F18-05"]},
+    {"band": "secondary", "grade": "Class 10", "subject": "Science", "topic": "Light - Reflection and Refraction", "flow": "quiz", "expected_findings": ["F18-01", "F18-05"]},
+    {"band": "secondary", "grade": "Class 10", "flow": "parent-message", "reason": "consecutive_absences", "expected_findings": ["F18-04"]},
+    {"band": "senior", "grade": "Class 12", "subject": "Physics", "topic": "Electrostatics", "flow": "lesson-plan", "expected_findings": ["F18-02", "F18-05"]},
+    {"band": "senior", "grade": "Class 12", "subject": "Physics", "topic": "Electrostatics", "flow": "quiz", "expected_findings": ["F18-01", "F18-05"]},
+    {"band": "senior", "grade": "Class 12", "flow": "parent-message", "reason": "poor_performance", "expected_findings": ["F18-04"]}
+  ],
+  "live_probe_status": "static-only; harness at qa/forensics/repros/F18/probe.mjs requires ID_TOKEN env var",
+  "p0_found": false,
+  "p0_predicted_runtime": "F18-02 + F18-06 will manifest as senior-secondary-style derivations in primary lesson plans when grade is mislabeled or when LLM defaults override; reproducible via live probe"
+}

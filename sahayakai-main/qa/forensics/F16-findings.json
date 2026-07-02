@@ -1,0 +1,153 @@
+{
+  "role": "F16 — Subject + Pedagogy Forensics",
+  "date": "2026-06-06",
+  "method": "static-forensic analysis of NCERT seed data (src/data/ncert/*, src/ai/data/ncert-chapters.ts) + AI prompt audit (src/ai/flows/lesson-plan-generator.ts, quiz-definitions.ts) + rendering-surface audit. Live API probes (50 total) are scripted at qa/forensics/repros/F16/ and require SAHAYAK_ID_TOKEN to run end-to-end.",
+  "summary": {
+    "P0": 0,
+    "P1": 8,
+    "P2": 4,
+    "P3": 2
+  },
+  "findings": [
+    {
+      "id": "F16-001",
+      "subject": "Mathematics",
+      "specialist": "10A",
+      "severity": "P1",
+      "title": "Class 11 Mathematics seed contains chapters rationalized OUT by NCERT (2022-23)",
+      "evidence_file": "src/data/ncert/mathematics.ts:225",
+      "details": "Chapters present in seed but DELETED from rationalized NCERT Class 11 Mathematics (2022-23 onwards): 'Principle of Mathematical Induction' (math-11-4), 'Mathematical Reasoning' (math-11-14). Source: NCERT rationalization circular, March 2022. Impact: lesson plans / quizzes generated for these chapters mislead teachers about the live syllabus; chapter validator (src/ai/data/ncert-chapters.ts) accepts them as valid.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Mathematics --grade=\"Class 11\" --chapter=\"Mathematical Reasoning\" --topic=\"Mathematical Reasoning\""
+    },
+    {
+      "id": "F16-002",
+      "subject": "Physics",
+      "specialist": "10B",
+      "severity": "P1",
+      "title": "Class 11 Physics seed begins with rationalized-OUT chapter 'Physical World'",
+      "evidence_file": "src/data/ncert/physics.ts:10",
+      "details": "phy-11-1 'Physical World' was removed in 2023-24 rationalized NCERT Class 11 Physics; the textbook now begins with 'Units and Measurements' as chapter 1. The seed preserves the old 15-chapter ordering. Any 'Class 11 Physics chapter 1' lesson plan will teach a non-existent chapter.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Physics --grade=\"Class 11\" --chapterNum=1 --chapter=\"Physical World\" --topic=\"Physical World\""
+    },
+    {
+      "id": "F16-003",
+      "subject": "Chemistry",
+      "specialist": "10C",
+      "severity": "P1",
+      "title": "Class 12 Chemistry seed has 16 chapters; rationalized NCERT has ~10",
+      "evidence_file": "src/data/ncert/chemistry.ts (chem-12-*)",
+      "details": "Pre-rationalization 16-chapter Class 12 Chemistry is encoded. Rationalized (2023-24) book removed at minimum: 'The Solid State' (chem-12-1), 'Surface Chemistry' (chem-12-5), 'General Principles and Processes of Isolation of Elements' (chem-12-6), 'Polymers' (chem-12-15), 'Chemistry in Everyday Life' (chem-12-16). Several remaining chapters had numbering shifted. Teachers asking for 'Chapter 1' now expect 'Solutions' but seed says 'The Solid State'.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Chemistry --grade=\"Class 12\" --chapterNum=1 --chapter=\"The Solid State\" --topic=\"Solid State\""
+    },
+    {
+      "id": "F16-004",
+      "subject": "Biology",
+      "specialist": "10D",
+      "severity": "P1",
+      "title": "Class 12 Biology seed lists 14 chapters; rationalized NCERT has 13",
+      "evidence_file": "src/data/ncert/biology.ts (bio-12-*)",
+      "details": "Seed lists ch 1..14 but post-rationalization NCERT Class 12 Biology has 13 chapters — 'Reproduction in Organisms' (old ch 1) was removed and 'Strategies for Enhancement in Food Production' (old ch 9) was removed, with renumbering. The seed's chapter 1 'Sexual Reproduction in Flowering Plants' is correctly the new ch 1, suggesting partial migration — but the total count and downstream ch numbers (esp. 9 onwards) drift from the live textbook.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Biology --grade=\"Class 12\" --chapterNum=14 --topic=\"Environmental Issues\""
+    },
+    {
+      "id": "F16-005",
+      "subject": "Mathematics",
+      "specialist": "10A",
+      "severity": "P1",
+      "title": "Lesson plan + quiz prompts have ZERO math-notation guardrails",
+      "evidence_file": "src/ai/flows/lesson-plan-generator.ts:253-326, src/ai/flows/quiz-definitions.ts:6-85",
+      "details": "Neither prompt instructs the model to (a) render fractions/exponents in a defined notation, (b) use SI units, (c) balance equations explicitly, (d) include `°`, `π`, `±`, `≥` correctly, or (e) avoid Unicode-look-alike confusables. Output JSON description fields therefore pass through whatever the model emits — frequently `1/2` mixed with `½`, `pi` instead of `π`, and `*` (asterisk) for multiplication. Compounded by F16-006 below (no math renderer).",
+      "repro": "qa/forensics/repros/F16/probe-quiz.mjs --subject=Mathematics --grade=\"Class 10\" --topic=\"Quadratic Equations\""
+    },
+    {
+      "id": "F16-006",
+      "subject": "Mathematics + Physics + Chemistry",
+      "specialist": "10A/10B/10C",
+      "severity": "P1",
+      "title": "Only worksheet display renders math; lesson-plan/quiz/exam displays render LaTeX as plain text",
+      "evidence_file": "src/components/worksheet-display.tsx:6-8 (only component importing remark-math + rehype-katex)",
+      "details": "If the model ever emits `$x^2$` or `\\frac{1}{2}` in a lesson plan or quiz output, it surfaces to teachers as raw `$x^2$` literals. Since the prompt does not tell the model NOT to use LaTeX, the surface is non-deterministic across subjects.",
+      "repro": "grep -rn 'remark-math\\|rehype-katex' src/components/ → only worksheet-display.tsx"
+    },
+    {
+      "id": "F16-007",
+      "subject": "Sanskrit",
+      "specialist": "10H",
+      "severity": "P1",
+      "title": "Quiz/lesson prompts have NO Sanskrit sandhi / vyākaraṇa / chandas instructions",
+      "evidence_file": "src/ai/flows/quiz-definitions.ts (Bharat-First section), src/ai/flows/lesson-plan-generator.ts",
+      "details": "When generating Sanskrit content, the model must respect sandhi-rules, vibhakti agreement, lakāra (tense/mood) consistency, and śloka meter (anuṣṭubh = 8+8+8+8, etc.). The prompt's only Sanskrit-relevant rule is the language lock ('every word in Devanagari'). Without grammar gating, generated ślokas frequently break vibhakti and metre — invisible to non-Sanskrit-literate teachers but pedagogically wrong.",
+      "repro": "qa/forensics/repros/F16/probe-quiz.mjs --subject=Sanskrit --grade=\"Class 10\" --topic=\"Subhashitani\" --language=Sanskrit"
+    },
+    {
+      "id": "F16-008",
+      "subject": "Information Technology / CS",
+      "specialist": "10J",
+      "severity": "P1",
+      "title": "Quiz/lesson prompts have no code-block / language-version guardrails",
+      "evidence_file": "src/ai/flows/quiz-definitions.ts, src/ai/flows/lesson-plan-generator.ts",
+      "details": "CBSE IT-402 and CS-083 specify Python 3 + LibreOffice / SQL. No prompt instruction (a) fences code in markdown blocks, (b) pins Python 3 (so model may emit Python 2 `print foo`), (c) requires actual compilable code, (d) names whether SQL examples follow MySQL vs SQLite. Pedagogically incorrect code samples are P1 because students copy them verbatim.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=\"Information Technology\" --grade=\"Class 11\" --topic=\"Python: Lists and Tuples\""
+    },
+    {
+      "id": "F16-009",
+      "subject": "Regional Languages",
+      "specialist": "10I",
+      "severity": "P2",
+      "title": "Regional language as TAUGHT subject — no grammar lock beyond script",
+      "evidence_file": "src/ai/flows/quiz-definitions.ts:13-25 (ABSOLUTE LANGUAGE LOCK)",
+      "details": "The language lock enforces script (e.g. Bengali → বাংলা), but not vibhakti / bibhakti / sandhi / oikya rules native to Bengali/Tamil/Telugu/Marathi/Kannada/Malayalam/Punjabi/Gujarati/Urdu *grammar*. For a Bengali grammar lesson on 'অপরিচিতা' the model may produce grammatically sloppy Bengali that still passes the 'all-Devanagari' style script check (since Bengali = Bangla script, not Devanagari, the existing rule explicitly references Devanagari).",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Bengali --grade=\"Class 7\" --topic=\"অপরিচিতা\" --language=Bengali"
+    },
+    {
+      "id": "F16-010",
+      "subject": "Social Science",
+      "specialist": "10E",
+      "severity": "P2",
+      "title": "Social Studies seed in src/data/ncert/social-studies.ts uses 'NCF-2023' textbook 'Exploring Society: India and Beyond' but rationalized NCERT Class 8 SST has multiple older books still in circulation",
+      "evidence_file": "src/data/ncert/social-studies.ts:51-53",
+      "details": "Mixed-textbook reality — many state/CBSE schools still use 'Our Pasts III', 'Resources and Development', 'Social and Political Life III' (older 2022 books). NCF-2023 'Exploring Society: India and Beyond' was published mid-2024 and is being phased in unevenly. The seed treats the new book as the only truth → lesson plans cite chapter titles teachers cannot find in their existing textbook.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=\"Social Studies\" --grade=\"Class 8\" --topic=\"Resistance to Colonial Rule\""
+    },
+    {
+      "id": "F16-011",
+      "subject": "Hindi",
+      "specialist": "10F",
+      "severity": "P2",
+      "title": "Hindi quiz language-lock instruction is style-prescriptive in ways that drop transliteration even when pedagogically required",
+      "evidence_file": "src/ai/flows/quiz-definitions.ts:18-23",
+      "details": "Rule: 'No transliterated Hindi words (like \"shiksha\", \"pradhan\") either. Pure English.' Conversely for Hindi-locked content, common loanwords like 'school', 'computer', 'quiz' are excluded except as 'well-established'. For grammar topics like 'समास' (Compound words) or 'कारक' (Cases), the prompt offers no requirement for example sentences that DEMONSTRATE the grammatical structure — quiz options can be lexically correct but pedagogically empty.",
+      "repro": "qa/forensics/repros/F16/probe-quiz.mjs --subject=Hindi --grade=\"Class 10\" --topic=\"समास\" --language=Hindi"
+    },
+    {
+      "id": "F16-012",
+      "subject": "Mathematics",
+      "specialist": "10A",
+      "severity": "P2",
+      "title": "Age-appropriateness — no class-band vocabulary guardrails in prompts",
+      "evidence_file": "src/ai/flows/lesson-plan-generator.ts:264-269",
+      "details": "Prompt says 'use EXACT grade level' but offers no per-band vocabulary / sentence-length / cognitive-load guidance. A Class 3 lesson on 'Long and Short' can legitimately produce 'utilise', 'phenomenon', 'reciprocal' — vocabulary teachers must then rewrite. Compare Class 12 'Probability' that ought to introduce 'Bayes' theorem' explicitly. Without Bloom × class-band scaffolding, outputs drift to a middle register regardless of grade.",
+      "repro": "qa/forensics/repros/F16/probe-lesson-plan.mjs --subject=Mathematics --grade=\"Class 3\" --topic=\"Long and Short\""
+    },
+    {
+      "id": "F16-013",
+      "subject": "All",
+      "specialist": "10A-10J",
+      "severity": "P3",
+      "title": "Chapter validator fuzzy-matches with Levenshtein cap 3 — false positives on short Sanskrit/Hindi titles",
+      "evidence_file": "src/ai/data/ncert-chapters.ts:333",
+      "details": "Pass-3 fuzzy match accepts dist ≤ 3 on full-title; on Devanagari titles of 4-6 characters this allows nearly half the characters to differ. 'सन्धि' vs 'सङ्घ' would pass auto-correct to the wrong chapter.",
+      "repro": "node -e \"const{validateChapter}=require('./src/ai/data/ncert-chapters'); console.log(validateChapter('Class 7','Sanskrit','सन्धि'))\""
+    },
+    {
+      "id": "F16-014",
+      "subject": "All",
+      "specialist": "F16",
+      "severity": "P3",
+      "title": "No subject-pedagogy unit tests assert AI-output correctness",
+      "evidence_file": "src/ai/data/__tests__/ncert-chapters.test.ts (only validator tests exist)",
+      "details": "Tests cover the validator only; nothing tests an actual generated lesson plan for math-notation correctness, factual accuracy, or grammar. Combined with F16-001..004 (stale seed) the system has neither static nor regression coverage for pedagogy.",
+      "repro": "find src -path '*/__tests__/*pedagogy*' -o -path '*/__tests__/*notation*' (empty)"
+    }
+  ]
+}

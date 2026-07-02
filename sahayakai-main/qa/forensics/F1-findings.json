@@ -1,0 +1,146 @@
+{
+  "role": 1,
+  "lane": "F1-auth-identity",
+  "auditor": "claude-opus-4.7",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary (working tree on fix/payment-p0-fixes)",
+  "prod_revision": "sahayakai-hotfix-resilience-00482-her",
+  "head_commit": "9c8483b9c",
+  "scope": [
+    "src/middleware.ts",
+    "src/lib/auth-helpers.ts",
+    "src/app/actions/auth.ts",
+    "src/app/api/auth/profile-check/route.ts",
+    "src/app/api/jobs/*/route.ts",
+    "src/app/api/webhooks/razorpay/route.ts",
+    "src/app/api/billing/create-public-subscription/route.ts",
+    "src/lib/sidecar/*-client.ts",
+    "Cloud Run prod env + IAM"
+  ],
+  "findings": [
+    {
+      "id": "F1-01",
+      "severity": "P0",
+      "title": "/api/jobs/daily-briefing executes full LLM + Firestore-write workload anonymously in prod",
+      "endpoint": "POST /api/jobs/daily-briefing",
+      "evidence": "Anon POST returned 200 {\"ok\":true,\"posted\":3,\"scrapedTotal\":150,\"durationMs\":87088} on 2026-06-06 from the public internet.",
+      "code_ref": "src/app/api/jobs/daily-briefing/route.ts:656-664",
+      "repro": "qa/forensics/repros/F1-01.sh",
+      "status": "confirmed-exploited",
+      "money_impact": "Each run = ~$1-3 of Gemini + translation. Looped = monthly bill annihilation. Plus Firestore writes to daily_briefings and dedup poisoning of legitimate news.",
+      "root_cause": "Source has correct CRON_SECRET gate, but live prod is running without it triggering. Either CRON_SECRET not bound to env (consistent with F1-05) or deploy artifact mismatch.",
+      "fix_recommendation": "Bind CRON_SECRET via Secret Manager. Redeploy. Add audit-deployments.sh probe asserting 401 on this path."
+    },
+    {
+      "id": "F1-02",
+      "severity": "P0",
+      "title": "/api/jobs/grow-persona-pool creates AI personas anonymously in prod",
+      "endpoint": "POST /api/jobs/grow-persona-pool",
+      "evidence": "Anon POST returned 200 {\"ok\":true,\"created\":[\"Kavitha Devi\"],...} on 2026-06-06.",
+      "code_ref": "src/app/api/jobs/grow-persona-pool/route.ts:175-183",
+      "repro": "qa/forensics/repros/F1-02.sh",
+      "status": "confirmed-exploited",
+      "fix_recommendation": "Same as F1-01."
+    },
+    {
+      "id": "F1-03",
+      "severity": "P0",
+      "title": "/api/jobs/ai-community-agent posts AI-persona content anonymously in prod",
+      "endpoint": "POST /api/jobs/ai-community-agent",
+      "evidence": "Anon POST returned 200 with actions {staffRoomChats:[\"Mohammed Farooq\",\"Anjali Patil\"], groupPost:\"Joseph Vargese\", likes:\"Gurpreet Kaur\"} on 2026-06-06.",
+      "code_ref": "src/app/api/jobs/ai-community-agent/route.ts:401-408",
+      "repro": "qa/forensics/repros/F1-03.sh",
+      "status": "confirmed-exploited",
+      "fix_recommendation": "Same as F1-01. Plus consider rate limit at edge — current code path makes multiple Gemini calls per request."
+    },
+    {
+      "id": "F1-04",
+      "severity": "P1",
+      "title": "Twilio ACCOUNT_SID + AUTH_TOKEN stored as plaintext Cloud Run env vars (not Secret Manager)",
+      "endpoint": "n/a — Cloud Run service config",
+      "evidence": "gcloud run services describe sahayakai-hotfix-resilience returns {name:TWILIO_AUTH_TOKEN, value:<32-hex>} not valueFrom.secretKeyRef. Contrasts with GOOGLE_GENAI_API_KEY, FIREBASE_SERVICE_ACCOUNT_KEY, SAHAYAKAI_AGENTS_AUDIENCE, SAHAYAKAI_REQUEST_SIGNING_KEY which are all correctly Secret-Manager-bound.",
+      "repro": "qa/forensics/repros/F1-04.sh",
+      "status": "confirmed",
+      "fix_recommendation": "Move to Secret Manager. Rotate Twilio auth token immediately (assume compromised since it has been visible to any principal with run.services.get for the deployment lifetime)."
+    },
+    {
+      "id": "F1-05",
+      "severity": "P1",
+      "title": "CRON_SECRET not configured in prod environment",
+      "endpoint": "POST /api/jobs/billing-reconciliation",
+      "evidence": "Anon POST returns 500 {\"error\":\"CRON_SECRET not configured\"} — explicit unconfigured branch fires. So legitimate Cloud Scheduler invocations cannot authenticate either; reconciliation is silently broken.",
+      "code_ref": "src/app/api/jobs/billing-reconciliation/route.ts:27-35",
+      "repro": "qa/forensics/repros/F1-05.sh",
+      "status": "confirmed",
+      "fix_recommendation": "Generate 32-byte random secret; bind via Secret Manager + Cloud Scheduler Authorization header."
+    },
+    {
+      "id": "F1-06",
+      "severity": "P1",
+      "title": "syncUserAction trusts client-supplied email/displayName/photoURL without ID-token cross-check",
+      "endpoint": "server action syncUserAction",
+      "evidence": "Source: dbAdapter.updateUser(callerUid, { uid, email: user.email || '', displayName: user.displayName || '', photoURL: user.photoURL || '' }). uid is verified against session — but email/displayName/photoURL are written verbatim from the client.",
+      "code_ref": "src/app/actions/auth.ts:23-58",
+      "repro": "qa/forensics/repros/F1-06.sh",
+      "status": "confirmed-source",
+      "attack": "Caller authed as attacker@x.com calls syncUserAction({uid: SELF, email: 'ceo@school.com', ...}). users/{SELF}.email now displays as ceo@school.com in teacher directory, community profiles, support tickets, and any feature that reads users.email. Token claim remains attacker@x.com so auth still works for the attacker.",
+      "fix_recommendation": "Middleware already decodes the ID token — extend it to inject x-user-email (from decoded.email). Server-side in syncUserAction, ignore the client-supplied email and use header. Same treatment for displayName/photoURL (or fetch via Admin SDK auth.getUser(uid))."
+    },
+    {
+      "id": "F1-07",
+      "severity": "P1",
+      "title": "/api/jobs/ai-reactive-reply auth is fail-open when AI_INTERNAL_SECRET env var unset",
+      "endpoint": "POST /api/jobs/ai-reactive-reply",
+      "evidence": "Code: `if (secret) { check }` — if AI_INTERNAL_SECRET is unset, the entire auth check is skipped. Live: anon POST passed auth, only rejected by payload validation (400 'invalid path').",
+      "code_ref": "src/app/api/jobs/ai-reactive-reply/route.ts:44-50",
+      "repro": "qa/forensics/repros/F1-07.sh",
+      "status": "confirmed",
+      "fix_recommendation": "Change to: if (!secret || provided !== secret) return 403. Grep the rest of the repo for similar `if (secret)` and `if (cronSecret)` fail-open anti-patterns."
+    },
+    {
+      "id": "F1-08",
+      "severity": "P2",
+      "title": "/api/jobs/edu-news reachable anonymously",
+      "endpoint": "POST /api/jobs/edu-news",
+      "evidence": "Anon POST returned 500 with a downstream fetch failure — auth was not the rejection layer. The handler also has no explicit CRON_SECRET gate.",
+      "code_ref": "src/app/api/jobs/edu-news/route.ts",
+      "status": "confirmed",
+      "fix_recommendation": "Add CRON_SECRET gate matching sibling jobs. Treat as P0 once F1-01/02/03 are fixed because the same exploit class applies."
+    },
+    {
+      "id": "F1-09",
+      "severity": "P2",
+      "title": "Prod Cloud Run service has roles/run.invoker bound to allUsers",
+      "endpoint": "n/a — IAM policy",
+      "evidence": "gcloud run services get-iam-policy sahayakai-hotfix-resilience returns members: [allUsers]. By design for public Next.js, but it disables the platform-level OIDC check the cron-jobs documentation relies on (\"Cloud Run validates automatically\").",
+      "status": "confirmed",
+      "fix_recommendation": "Either split cron endpoints onto a second Cloud Run service with IAM-only invoker (cleanest), or require every /api/jobs/* handler to parse-and-verify the Cloud Scheduler OIDC token against the expected SA email."
+    },
+    {
+      "id": "F1-10",
+      "severity": "YELLOW",
+      "title": "Sidecar audience drift — cannot read SAHAYAKAI_AGENTS_AUDIENCE secret with available IAM",
+      "endpoint": "sidecar OIDC binding",
+      "evidence": "Sidecar IAM correctly limited to 640589855975-compute@developer (only the compute SA can invoke). Audience secret correctly bound to prod env via valueFrom.secretKeyRef. Literal secret value unverifiable under impersonated firebase-adminsdk SA (PERMISSION_DENIED on secretmanager.versions.access).",
+      "code_ref": "src/lib/sidecar/*-client.ts (10 client files all use AUDIENCE_ENV = SAHAYAKAI_AGENTS_AUDIENCE)",
+      "status": "incomplete",
+      "fix_recommendation": "Add CI smoke test: mint OIDC with audience env value, hit sidecar, assert 200. Would catch any future audience drift like the Q4B regression."
+    }
+  ],
+  "verified_correct": [
+    "Middleware unconditionally strips x-user-id + x-user-plan from inbound headers BEFORE any branch — src/middleware.ts:99-101",
+    "Live confirmed: spoofed x-user-id header → 401 Unauthorized on /api/usage",
+    "Firebase ID token verified against Google certs with audience+issuer checks (5h cert cache) — src/middleware.ts:62-86",
+    "Server-action POST gate enforces auth on page mutations (closes the 'expired session → 500 leak' from 2026-06-01 audit) — src/middleware.ts:202-245",
+    "requireAuth() logs WARN before throwing UnauthorizedError when header missing (defense in depth + observability) — src/lib/auth-helpers.ts:31-46",
+    "App Check verification on /api/ai/* when APP_CHECK_REQUIRED=true (currently not enabled in prod) — src/middleware.ts:161-176",
+    "syncUserAction uid cross-check: returns Forbidden when supplied uid ≠ session uid — src/app/actions/auth.ts:30-43",
+    "getUserProfileAction rejects reading another user's profile — src/app/actions/auth.ts:80-87",
+    "Razorpay webhook signature verification with throw → 401 (no Razorpay retry storm) — src/app/api/webhooks/razorpay/route.ts:18-32",
+    "Webhook idempotency via Firestore .create() (TOCTOU-safe) — src/app/api/webhooks/razorpay/route.ts:46-67",
+    "/api/jobs/billing-reconciliation correctly rejects bad-bearer with 401 (gate functional even though CRON_SECRET unset means it's also blocking real cron)",
+    "/api/auth/profile-check correctly de-conflated 'doc exists' vs 'onboarding complete' (2026-04-30 fix in place)",
+    "Sidecar IAM is tight: only compute SA can invoke — anon callers cannot impersonate the sidecar even with a stolen audience",
+    "AI flows trust only x-user-id from middleware-injected header, not from request body — verified across assistant, lesson-plan/stream, virtual-field-trip, voice-to-text, content/*"
+  ]
+}

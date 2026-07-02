@@ -1,0 +1,95 @@
+{
+  "role": 8,
+  "specialty": "cost-quota-forensics",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "date": "2026-06-06",
+  "findings": [
+    {
+      "id": "F14-P0-1",
+      "severity": "P0",
+      "title": "Q4C SHADOW_DIFF_IN_CANARY_OBSERVATION doubles model spend on 100% of canary-mode traffic",
+      "files": [
+        "src/lib/sidecar/canary-shadow-diff.ts:21",
+        "src/lib/sidecar/voice-to-text-dispatch.ts:210-226,271-284",
+        "src/lib/sidecar/visual-aid-dispatch.ts:193-209,285-298",
+        "src/lib/sidecar/lesson-plan-dispatch.ts:276-292,388-401"
+      ],
+      "agents_affected": 14,
+      "evidence": "Both branches (canary primary AND off-bucket-overshoot) fire the OTHER provider in the background unconditionally. Percent gate only decides which provider serves the user; observation always pays the second call.",
+      "projected_monthly_delta_usd": 3800,
+      "scale_assumption": "1000 calls/day per agent",
+      "fix": "Either gate observation on bucket-overshoot only, or restrict to true shadow mode with sample rate. Suggest flipping flag to false immediately.",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P0-2",
+      "severity": "P0",
+      "title": "Image-gen Q4C observation bypasses the daily 10-image quota",
+      "files": [
+        "src/lib/sidecar/visual-aid-dispatch.ts:247-298",
+        "src/lib/server-safety.ts:19-47",
+        "src/lib/sidecar/avatar-dispatch.ts"
+      ],
+      "evidence": "checkImageRateLimit ticks Firestore counter once for the primary sidecar call; Q4C background runGenkitSafe generates a SECOND $0.04 image with no quota check. Daily ceiling effectively doubled.",
+      "cost_impact_per_call_usd": 0.04,
+      "fix": "Move quota gate into model-call wrappers OR suppress Q4C observation on visual-aid + avatar (signal-to-cost ratio poor).",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P0-3",
+      "severity": "P0",
+      "title": "UsageTracker only logs; no budget enforcement layer exists",
+      "files": ["src/lib/usage-tracker.ts"],
+      "evidence": "trackGemini / trackImageGen / trackGrounding write logs + Firestore counters but no read-and-reject path. gemini-2.5-pro (assignment-assessor, $5/1M output) lands uncapped per user per day.",
+      "fix": "Add enforceDailyBudget(userId, type) with per-plan caps; throw 429 before model call.",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P1-1",
+      "severity": "P1",
+      "title": "Q4C observation lacks sampling rate — 100% sample for statistically negligible signal gain",
+      "files": ["src/lib/sidecar/canary-shadow-diff.ts"],
+      "fix": "Add SHADOW_DIFF_SAMPLE_RATE (default 0.05) and Math.random() gate around each observation block.",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P1-2",
+      "severity": "P1",
+      "title": "agent_shadow_diffs/{date}/{agent} subcollections have no TTL",
+      "files": ["src/lib/sidecar/shadow-diff-writer.ts:84-118"],
+      "estimated_growth": "~2GB/month at canary scale; aggregator read cost grows linearly",
+      "fix": "Apply Firestore TTL policy on createdAt with 30-day retention.",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P1-3",
+      "severity": "P1",
+      "title": "Assignment-assessor uses gemini-2.5-pro with no per-session cost cap",
+      "files": ["src/ai/flows/assignment-assessor.ts:28"],
+      "evidence": "30-student worksheet batch at 2-3 images each = 60-90 Pro multimodal calls. No throttle.",
+      "fix": "Cap N images per assessment session; integrate with enforceDailyBudget.",
+      "confirmed": true
+    },
+    {
+      "id": "F14-P2-1",
+      "severity": "P2",
+      "title": "Persona-pulse 15-min 503 retry can outlive operator-intended kill",
+      "files": ["src/hooks/use-community-live-pulse.ts:117-132"],
+      "fix": "Distinguish killswitch 503 (stop polling) from transient 503 (15-min retry).",
+      "confirmed": true
+    }
+  ],
+  "clean_beats": [
+    "qa/embedding-cache/ — directory does not exist, embeddings live in Firestore vector field",
+    "Image-gen retry loops — none in visual-aid-designer.ts or avatar-generator.ts",
+    "Sarvam STT retries — capped at MAX_RETRIES=2",
+    "grow-persona-pool — capped at MAX_PER_RUN=15",
+    "daily-briefing — single daily cron with bounded call structure",
+    "voice-to-text Gemini script-mismatch retry — bounded to 1 retry"
+  ],
+  "out_of_scope_needs_prod_access": [
+    "Cloud Billing BigQuery export query for last-7-days SKU breakdown",
+    "Live counts of agent_shadow_diffs docs per agent per day",
+    "Actual call volumes per agent to validate projected monthly delta"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "agent": "F20",
+  "role": "mobile-offline-forensics",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "scope_root": "/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-flutter/",
+  "scope_present": true,
+  "scope_state": "phase-T.1-scaffolding-only",
+  "notes": [
+    "Flutter checkout present but cloud-only; no offline path, no local store, no sync code.",
+    "P0 criteria (data-loss on sync, on-device language correctness) NOT testable on this checkout.",
+    "Static analysis only; Flutter not invoked; firebase_options.dart absent."
+  ],
+  "inventory": {
+    "flutter_sdk_constraint": "^3.11.4",
+    "app_version": "1.0.0+1",
+    "min_android_sdk": "flutter default (API 21)",
+    "min_ios": "13.0",
+    "firebase_deps": ["firebase_core ^3.6.0", "firebase_app_check ^0.3.1", "firebase_ai ^2.3.0"],
+    "voice_deps": ["record ^5.1.2", "path_provider ^2.1.4"],
+    "local_store_deps": [],
+    "connectivity_deps": [],
+    "background_sync_deps": [],
+    "firebase_options_present": false,
+    "agents_wired": ["instantAnswer", "vidyaClassifier", "voiceToText"],
+    "all_agents_model": "gemini-2.5-flash",
+    "hybrid_inference_enabled": false,
+    "hybrid_flag_constant": "_hybridInferenceAvailable=false"
+  },
+  "findings": [
+    {
+      "id": "F20-001",
+      "severity": "P1",
+      "title": "Hybrid inference flag permanently off; offline path inert",
+      "file": "lib/services/sahayakai_ai.dart",
+      "lines": "40-62",
+      "evidence": "static const bool _hybridInferenceAvailable = false; _buildModel always returns cloud-only constructor.",
+      "user_impact": "When device offline, every call throws network error to UI; no fallback.",
+      "fix_owner": "Phase T.2 / SDK release",
+      "fix_summary": "Flip constant when firebase_ai exposes useHybridInference; add connectivity check + offline UX in interim."
+    },
+    {
+      "id": "F20-002",
+      "severity": "P1",
+      "title": "No local store, no outbox, no sync — entire offline write path absent",
+      "file": "pubspec.yaml + lib/**",
+      "evidence": "Zero local persistence deps (sqflite/drift/hive/isar/sembast/shared_preferences). No repository/DAO/outbox classes in lib/.",
+      "user_impact": "Nothing queued offline; offline writes simply fail. Reconciliation logic is not present to verify.",
+      "fix_owner": "Phase T.2",
+      "fix_summary": "Pick a store (drift recommended for SQL + codegen, isar for object store), add outbox per collection, define conflict policy (LWW vs vector clock) BEFORE merge code."
+    },
+    {
+      "id": "F20-003",
+      "severity": "P1",
+      "title": "Voice clips written to getTemporaryDirectory; failure drops bytes with no retry queue",
+      "file": "lib/screens/voice_to_text_screen.dart",
+      "lines": "53-80",
+      "evidence": "Recorder writes to tmp dir; on transcription error, bytes are not persisted; no resumable upload.",
+      "user_impact": "Rural teacher on flaky network records voice → upload fails → clip lost. Voice-first app guarantee broken.",
+      "fix_owner": "Phase T.1.5 (small fix possible now)",
+      "fix_summary": "Use application-documents dir + SQLite row {path, mime, createdAt, status}; retry with exp backoff on connectivity restore."
+    },
+    {
+      "id": "F20-004",
+      "severity": "P2",
+      "title": "iOS min 13.0; Android minSdk unpinned — will silently disable Nano for ~95% of users when hybrid lands",
+      "file": "ios/Runner.xcodeproj/project.pbxproj + android/app/build.gradle.kts",
+      "evidence": "IPHONEOS_DEPLOYMENT_TARGET = 13.0; minSdk = flutter.minSdkVersion (API 21).",
+      "user_impact": "Once hybrid flag flips, existing user base will mostly fall back to cloud silently. Cost + UX expectation mismatch.",
+      "fix_owner": "Phase T.2",
+      "fix_summary": "Add runtime AICore / Apple Intelligence capability check; UI badge for on-device availability; pin minSdk=24 explicitly."
+    },
+    {
+      "id": "F20-005",
+      "severity": "P2",
+      "title": "VIDYA classifier JSON parsed without schema/enum validation — P0 risk once Nano live",
+      "file": "lib/screens/vidya_classifier_screen.dart",
+      "lines": "42-46",
+      "evidence": "responseMimeType=application/json set but no responseSchema; jsonDecode then ['intent'] with no enum check.",
+      "user_impact": "When on-device Nano lands, hallucinated/markdown-wrapped intent labels will break VIDYA routing. High risk on bn/ta/kn/ml/gu/pa/te/or/as.",
+      "fix_owner": "Phase T.2",
+      "fix_summary": "Add responseSchema with enum of 11 intents; hard allow-list check; route 'unknown' back to cloud."
+    },
+    {
+      "id": "F20-006",
+      "severity": "P2",
+      "title": "firebase_options.dart absent — app cannot boot on fresh checkout",
+      "file": "lib/main.dart + flutter project root",
+      "evidence": "Firebase.initializeApp() called without options; flutterfire configure not yet run; no google-services.json / GoogleService-Info.plist.",
+      "user_impact": "Dev cannot run app to repro; this agent could not run dynamic checks.",
+      "fix_owner": "Dev experience",
+      "fix_summary": "Commit firebase_options.dart for dev project, or document flutterfire configure as required bootstrap step."
+    }
+  ],
+  "not_evaluable": [
+    {
+      "id": "P0-data-loss-on-sync",
+      "reason": "no offline write path exists in checkout"
+    },
+    {
+      "id": "P0-on-device-language-correctness",
+      "reason": "on-device inference dormant; needs Phase T.2 100-prompt eval on emulator"
+    },
+    {
+      "id": "P1-sync-conflict-resolution",
+      "reason": "no sync layer exists in checkout"
+    },
+    {
+      "id": "P1-offline-mode-crash",
+      "reason": "no offline mode implemented; today it simply surfaces network error in UI"
+    }
+  ],
+  "repros": [],
+  "recommendation": "Out-of-scope as a P0 hunt on this checkout. Re-hunt when Phase T.2 ships, with emphasis on F20-002 (sync correctness) and F20-005 (on-device language correctness) — both upgrade to P0 once the offline path goes live."
+}

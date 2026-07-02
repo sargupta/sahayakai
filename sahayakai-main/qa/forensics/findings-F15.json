@@ -1,0 +1,61 @@
+{
+  "role": 15,
+  "lane": "F15-i18n-all-langs",
+  "auditor": "claude-opus-4.7",
+  "date": "2026-06-06",
+  "languages_audited": ["hi","bn","ta","te","mr","gu","kn","ml","pa","or"],
+  "probe_count_planned": 100,
+  "probe_count_static_executed": 40,
+  "probe_count_deferred_live": 60,
+  "findings": [
+    {
+      "id": "F15-001",
+      "severity": "P2",
+      "title": "Odia TTS silently falls back to Hindi voice",
+      "file": "src/app/api/tts/route.ts",
+      "line": "78-95",
+      "summary": "UNSUPPORTED_TTS_LANGS contains 'or-IN' and fallbackVoiceForUnsupported maps Odia text to hi-IN-Neural2-A. Odia teachers hear Hindi-accented playback of their Odia script. Upstream Google Cloud TTS gap, but the silent substitution masks the gap from the user. Suggest Sarvam Saarika TTS for Odia or an explicit UI notice."
+    },
+    {
+      "id": "F15-002",
+      "severity": "P2",
+      "title": "UI dictionary has 2.8%–4.5% English-placeholder entries per non-English language",
+      "file": "src/context/language-context.tsx",
+      "line": "2137, 5055",
+      "summary": "41 entries (Hindi/Kannada) up to 67 entries (others) of 1475 dictionary keys fall back to the English string. File comments acknowledge these as placeholders pending translation, concentrated in the Wave 6 Rubric Generator strings. Below the P1 20% bar but visible to teachers in those screens."
+    },
+    {
+      "id": "F15-003",
+      "severity": "P3",
+      "title": "Indic font preload skipped on cold-start when localStorage is empty",
+      "file": "public/indic-font-preload.js",
+      "line": "11-32",
+      "summary": "Preload only fires when localStorage.sahayakai-lang already exists. A first-time visitor with a saved profile but no client storage (or in a private window) sees 200-500ms of Inter fallback (tofu boxes) for all Indic scripts until React mounts and ensureIndicFontLoaded runs. Suggest also reading navigator.language and the server-set profile cookie before deciding to skip."
+    }
+  ],
+  "verified_correct": [
+    "Dictionary key-count parity across all 11 languages: 1499 entries each (src/context/language-context.tsx)",
+    "Native-script coverage 95.5%-97.2% per Indic language (Probe 7, F15-placeholder-detect.mjs)",
+    "Zero cross-script bleed: every non-English dictionary value either uses its target script or is an explicit English placeholder; no Devanagari-in-Bengali, no Tamil-in-Telugu, etc.",
+    "Notification i18n dictionary covers all 11 languages for group_post and group_post_like (src/lib/notifications/i18n.ts)",
+    "Proper-noun i18n covers Indian states and school subjects across all 11 languages with explicit honest English fallback for uncertain cells (src/lib/i18n-proper-nouns.ts)",
+    "Commit 4b0799161 Sarvam STT fix present: normalizeIsoLang and scriptMatchesExpected imported and called from voice-to-text route handler (src/app/api/ai/voice-to-text/route.ts:7,71,80,107)",
+    "16 unit tests assert Punjabi-Devanagari mismatch detection and od->or normalization (src/__tests__/ai/flows/voice-to-text.test.ts:43-74)",
+    "Font preload script maps every Indic script to its correct Noto Sans family including Gurmukhi for Punjabi and Oriya for Odia (public/indic-font-preload.js:11-22)",
+    "TTS voice map covers all 10 Indic languages with documented tier (Neural2 for Hindi, Wavenet for bn/ta/kn/ml/gu/pa, Standard for te/mr) and explicit Odia fallback (src/app/api/tts/route.ts:52-95)",
+    "Hindi and Marathi (both Devanagari) have distinct columns in UI dictionary and notification dictionary - no accidental aliasing"
+  ],
+  "deferred_live_probes": {
+    "reason": "No dev server reachable on localhost:3000 or :9002 during audit window; live probes require gcloud-impersonated ID token plus App Check token plus running Next server",
+    "cells_deferred": 60,
+    "repros_provided": [
+      "qa/forensics/repros/F15-instant-answer.mjs",
+      "qa/forensics/repros/F15-lesson-plan.mjs",
+      "qa/forensics/repros/F15-page-render.mjs",
+      "qa/forensics/repros/F15-tts.mjs",
+      "qa/forensics/repros/F15-stt-roundtrip.mjs",
+      "qa/forensics/repros/F15-bn-pongal.mjs",
+      "qa/forensics/repros/F15-ta-sanskrit.mjs"
+    ]
+  }
+}

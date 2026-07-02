@@ -42,3 +42,6 @@ next-env.d.ts
 .gemini/.env
 **/__pycache__/
 .gstack/
+
+# QA storage-state artifacts contain live auth tokens — never commit
+sahayakai-main/qa/fixtures/*state*.json

@@ -1,0 +1,287 @@
+<style>
+  :root{
+    --ground:#FAF6EE; --panel:#F4EDE1; --panel-2:#EFE6D6;
+    --ink:#221B15; --ink-soft:#5C5044; --ink-faint:#8B7E6E;
+    --saffron:#D9761B; --saffron-deep:#B25A11;
+    --indigo:#20406A; --green:#2C6E49; --crit:#AE4127;
+    --border:#E3D8C6; --border-strong:#D4C6AE;
+    --chalk:#EDE4D3;
+    --stripe-root:#AE4127; --stripe-p0:#D9761B; --stripe-lev:#20406A;
+    --stripe-high:#8A6D2E; --stripe-quick:#2C6E49; --stripe-med:#7A7160;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  .wrap{
+    background:var(--ground); color:var(--ink);
+    font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased; padding:clamp(20px,4vw,64px);
+    max-width:1180px; margin:0 auto;
+  }
+  .wrap ::selection{background:rgba(217,118,27,.22)}
+
+  /* ---- structural motifs ---- */
+  .tricolor{height:3px;width:100%;border-radius:3px;display:flex;overflow:hidden;margin:22px 0}
+  .tricolor i{flex:1}
+  .tricolor i:nth-child(1){background:var(--saffron)}
+  .tricolor i:nth-child(2){background:#F4EDE1}
+  .tricolor i:nth-child(3){background:var(--green)}
+  .rule{height:1px;background:repeating-linear-gradient(90deg,var(--border-strong) 0 8px,transparent 8px 15px);border:0;margin:44px 0}
+
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--saffron-deep);font-weight:600}
+  .eyebrow.muted{color:var(--ink-faint)}
+
+  /* ---- masthead ---- */
+  .mast h1{
+    font-family:var(--sans);font-weight:800;letter-spacing:-.025em;
+    font-size:clamp(30px,5.4vw,58px);line-height:1.02;margin:.32em 0 0;
+    text-wrap:balance;max-width:16ch;
+  }
+  .mast h1 em{font-style:normal;color:var(--saffron-deep)}
+  .thesis{
+    font-family:var(--serif);font-size:clamp(17px,2.1vw,22px);line-height:1.55;
+    color:var(--ink-soft);max-width:64ch;margin:26px 0 0;
+  }
+  .thesis b{color:var(--ink);font-weight:600}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 30px;margin-top:26px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+  .meta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+  h2.sec{font-family:var(--sans);font-weight:800;letter-spacing:-.02em;font-size:clamp(21px,3vw,27px);margin:0 0 4px}
+  .sec-note{color:var(--ink-soft);font-size:15px;margin:0 0 22px;max-width:70ch}
+
+  /* ---- consensus table ---- */
+  .findings{display:flex;flex-direction:column;gap:10px}
+  .finding{
+    display:grid;grid-template-columns:34px 1fr auto;gap:16px;align-items:start;
+    background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--s,#ccc);
+    border-radius:9px;padding:15px 18px;
+  }
+  .finding .n{font-family:var(--mono);font-size:13px;color:var(--ink-faint);font-weight:600;padding-top:2px;font-variant-numeric:tabular-nums}
+  .finding .b h3{margin:0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .finding .b p{margin:5px 0 0;font-size:13.5px;color:var(--ink-soft);line-height:1.45}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;background:var(--panel-2);border:1px solid var(--border-strong);color:var(--ink-soft);padding:2px 7px;border-radius:5px}
+  .sev{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;padding:4px 9px;border-radius:20px;color:#fff;align-self:start}
+
+  /* ---- pull quote ---- */
+  .move{background:var(--ink);color:var(--ground);border-radius:14px;padding:clamp(24px,4vw,42px);position:relative;overflow:hidden}
+  .move .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--saffron)}
+  .move blockquote{margin:14px 0 0;font-family:var(--serif);font-size:clamp(19px,2.6vw,26px);line-height:1.45;max-width:34ch}
+  .move blockquote b{color:#F6B36A;font-weight:600}
+  .move .sig{position:absolute;right:-14px;bottom:-30px;font-family:var(--serif);font-size:180px;line-height:1;color:rgba(217,118,27,.14);pointer-events:none}
+
+  /* ---- board grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:15px 16px;display:flex;flex-direction:column;gap:7px}
+  .card .role{display:flex;align-items:center;gap:8px}
+  .card .dot{width:8px;height:8px;border-radius:50%;background:var(--saffron);flex:none}
+  .card .rt{font-family:var(--mono);font-size:11px;letter-spacing:.02em;color:var(--ink-faint);text-transform:uppercase}
+  .card h4{margin:0;font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .card p{margin:0;font-size:13px;color:var(--ink-soft);line-height:1.45}
+  .card .file{font-family:var(--mono);font-size:10.5px;color:var(--saffron-deep);margin-top:auto;padding-top:4px}
+  .card.lead{background:linear-gradient(160deg,#22406a,#182f4f);border-color:#1a3350;color:#EAF0F7}
+  .card.lead .rt{color:#9DB6D4}.card.lead p{color:#C6D4E6}.card.lead .dot{background:#F6B36A}.card.lead .file{color:#9DB6D4}
+
+  /* ---- roadmap ---- */
+  .road{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;border:1px solid var(--border);border-radius:11px;overflow:hidden}
+  .ph{padding:16px 18px;border-right:1px solid var(--border);background:var(--panel)}
+  .ph:last-child{border-right:0}
+  .ph .pn{font-family:var(--mono);font-size:12px;color:var(--saffron-deep);font-weight:600;letter-spacing:.04em}
+  .ph h4{margin:6px 0 6px;font-size:15px;font-weight:700}
+  .ph p{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.42}
+  .gates{margin-top:18px;background:var(--panel-2);border:1px dashed var(--border-strong);border-radius:9px;padding:13px 16px;font-size:13px;color:var(--ink-soft)}
+  .gates b{color:var(--indigo);font-family:var(--mono);font-size:11px;letter-spacing:.03em;text-transform:uppercase}
+
+  /* ---- decision menu ---- */
+  .menu{display:flex;flex-direction:column;gap:9px;counter-reset:d}
+  .item{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:baseline;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:14px 17px}
+  .item::before{counter-increment:d;content:counter(d);font-family:var(--mono);font-weight:700;color:var(--saffron-deep);font-size:15px}
+  .item h4{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .item p{margin:4px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.45}
+  .item .rec{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--green);padding:2px 7px;border-radius:20px;margin-left:8px;vertical-align:middle}
+
+  .foot{margin-top:40px;font-family:var(--mono);font-size:12px;color:var(--ink-faint);line-height:1.7}
+  .foot b{color:var(--ink-soft)}
+
+  @media (max-width:560px){
+    .finding{grid-template-columns:26px 1fr}
+    .finding .sev{grid-column:2;justify-self:start;margin-top:4px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(34,27,21,.4);border-color:var(--border-strong)}
+    .item{transition:border-color .18s}.item:hover{border-color:var(--saffron)}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">SahayakAI · Design Review Board</div>
+    <h1>Finish the system you <em>already built.</em></h1>
+    <div class="tricolor"><i></i><i></i><i></i></div>
+    <p class="thesis">Fourteen specialists reviewed the live product independently. The verdict is unusually unanimous — and encouraging. SahayakAI already has the <b>bones of an excellent design system</b>: tokens, primitives, motion variables, Indic fonts, a saffron ramp, an 11-language progress engine. It just isn't wired up. Adoption sits near <b>30%</b>, so the app reads like three design systems stitched at the shell. The redesign isn't invention — it's <b>finishing and enforcing the system that exists, then elevating it.</b></p>
+    <div class="meta">
+      <span><b>14</b> specialists</span>
+      <span><b>47</b> routes audited</span>
+      <span><b>15</b> proposals filed</span>
+      <span>Status · <b>proposals only, app untouched</b></span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <section>
+    <div class="eyebrow muted">Section 01</div>
+    <h2 class="sec">Cross-cutting consensus</h2>
+    <p class="sec-note">Seven findings surfaced independently across multiple lenses. When a UI designer and an accessibility engineer reach the same conclusion from opposite ends, that's not opinion — it's signal.</p>
+
+    <div class="findings">
+      <div class="finding" style="--s:var(--stripe-root)">
+        <div class="n">01</div>
+        <div class="b"><h3>The token system is only half-adopted</h3>
+          <p><code>rounded-surface-*</code> used 6× vs ~200 raw radii · <code>type-h*</code> 5× vs <code>font-headline</code> 129× · <code>PageShell</code> built, used by ~0 pages. The root cause behind everything below.</p>
+          <div class="tags"><span class="tag">Inventory</span><span class="tag">North-Star</span><span class="tag">Taste</span><span class="tag">Frontend</span><span class="tag">UI</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-root)">Root cause</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-p0)">
+        <div class="n">02</div>
+        <div class="b"><h3>Saffron #FF9933 fails contrast — 2.51:1 as text</h3>
+          <p>The primary CTA label is unreadable to many teachers, outdoors especially. Fix: <code>#F08A2E</code>/<code>saffron-700</code> for text, keep flag-saffron for logo only. Flagged by two agents from different disciplines.</p>
+          <div class="tags"><span class="tag">UI</span><span class="tag">Accessibility</span><span class="tag">↳ independently</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-p0)">P0 · ship first</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-lev)">
+        <div class="n">03</div>
+        <div class="b"><h3>~15 tools repeat one state machine in 3 drifting dialects</h3>
+          <p>Unify into a <code>useGenerator</code> hook + a <code>GeneratorPage</code> shell. Fix every bug once; then a full redesign of all fifteen tools becomes a two-file change.</p>
+          <div class="tags"><span class="tag">Frontend</span><span class="tag">UX</span><span class="tag">Taste</span><span class="tag">Inventory</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-lev)">Highest leverage</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-high)">
+        <div class="n">04</div>
+        <div class="b"><h3>i18n is fragmented and script-shallow</h3>
+          <p>A flat 1,495-key dict + per-file translation tables + <code>.indic-text</code> used in only 5 files → tall scripts (Tamil, Malayalam, Bengali) render at Latin line-height and raw English leaks on screen.</p>
+          <div class="tags"><span class="tag">i18n</span><span class="tag">Content</span><span class="tag">UX</span><span class="tag">Frontend</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-high)">High</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-quick)">
+        <div class="n">05</div>
+        <div class="b"><h3>Fully-built assets are orphaned</h3>
+          <p><code>sample-output-section</code> and <code>demo-interaction</code> render nowhere — the strongest trust device sits unused. The SSE streaming routes exist, but the client fakes progress with a hardcoded <code>setTimeout(800)</code>.</p>
+          <div class="tags"><span class="tag">Marketing</span><span class="tag">Perceived-Perf</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-quick)">Quick win</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-high)">
+        <div class="n">06</div>
+        <div class="b"><h3>The dashboard is the flagship problem</h3>
+          <p>Textbook AI-slop: a centered hero over a grid of nine equal, tinted-icon cards. Hierarchy over uniformity — the single most visible screen to redesign.</p>
+          <div class="tags"><span class="tag">Taste</span><span class="tag">Inventory</span><span class="tag">UX</span><span class="tag">North-Star</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-high)">High</div>
+      </div>
+
+      <div class="finding" style="--s:var(--stripe-med)">
+        <div class="n">07</div>
+        <div class="b"><h3>Loading &amp; empty states are inconsistent</h3>
+          <p>A great 11-language progress engine and shape-matched skeletons exist — yet 60 files still render a raw spinner, only 5 of 47 pages use the <code>EmptyState</code>, and there are zero route-level <code>loading.tsx</code> shells.</p>
+          <div class="tags"><span class="tag">Perceived-Perf</span><span class="tag">Motion</span><span class="tag">UX</span></div>
+        </div>
+        <div class="sev" style="background:var(--stripe-med)">Medium</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="move">
+    <div class="k">The unanimous first move</div>
+    <blockquote>Ratify the tokens. Add a CI lint that fails on new raw <b>hex / px / orange-*</b>. Then rebuild the dashboard and one generator as the reference implementation.</blockquote>
+    <div class="sig">›</div>
+  </section>
+
+  <div class="gates" style="margin-top:22px">
+    <b>Why this first</b> &nbsp;It freezes the drift, makes the system self-enforcing, and turns every later redesign into a small, safe change instead of a risky rewrite. Every strategic agent landed here independently.
+  </div>
+
+  <hr class="rule">
+
+  <section>
+    <div class="eyebrow muted">Section 02</div>
+    <h2 class="sec">The board &amp; their headline calls</h2>
+    <p class="sec-note">Each specialist filed a full proposal in <code>docs/design/proposals/</code>. Their sharpest single recommendation:</p>
+
+    <div class="grid">
+      <div class="card lead">
+        <div class="role"><span class="dot"></span><span class="rt">Design Director</span></div>
+        <h4>A calm, competent colleague in your phone</h4>
+        <p>Utility chassis + editorial warmth + rooted-craft illustration. Phased roadmap, a11y/i18n as per-phase gates.</p>
+        <div class="file">00-north-star-and-roadmap.md</div>
+      </div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">UX · Product</span></div><h4>Generate-then-refine</h4><p>Generate immediately, refine with chips; chain tools ("make a quiz from this plan"). Intent-first IA.</p><div class="file">01-ux-product.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">UI · Design System</span></div><h4>A tuned saffron ramp, warm shadows</h4><p>Self-host fonts to kill Indic CLS; demote green/navy to semantic; product-primary <code>#F08A2E</code>.</p><div class="file">02-ui-designsystem.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Motion</span></div><h4>Shimmer, not pulse</h4><p>Directional skeletons, staggered result reveal, honor reduced-motion. No new dependencies.</p><div class="file">03-motion.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Taste Enforcer</span></div><h4>Kill the equal-card grid</h4><p>Adopt the pricing page's editorial voice as house style; one radius scale; a five-item ban-list.</p><div class="file">04-taste-audit.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Frontend Eng</span></div><h4>One primitive to rule the tools</h4><p><code>useGenerator</code> hook + <code>GeneratorPage</code> shell + a <code>TOOLS</code> registry; ESLint token firewall.</p><div class="file">05-frontend-arch.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Marketing Web</span></div><h4>Activate the proof you already have</h4><p>Ship the orphaned sample-output; rebrand the Indic SEO pages onto the real landing shell.</p><div class="file">06-marketing-landing.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Mobile · PWA</span></div><h4>Fix the two-FAB collision</h4><p>Dock the voice orb bottom-center; 48px targets; sticky Generate &amp; export bars; translated offline banner.</p><div class="file">07-mobile-pwa.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Perceived Perf</span></div><h4>Wire the real streaming</h4><p>Consume the live SSE phase events instead of faking them; add <code>loading.tsx</code>; low-bandwidth <code>&lt;ResultImage&gt;</code>.</p><div class="file">08-perceived-performance.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Brand · Illustration</span></div><h4>Warm Chalk-Line Editorial</h4><p>Vectorize the logo first; classroom motifs as decorative accent — never load-bearing instruction; anti-cliché ban-list.</p><div class="file">09-brand-illustration.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Localization</span></div><h4>Make all 11 scripts default-beautiful</h4><p>Per-script line-heights (Malayalam 1.8 → Gurmukhi 1.55); <code>.indic-text</code> on by default; unify the surfaces.</p><div class="file">10-i18n-design.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Accessibility</span></div><h4>Voice is the superpower</h4><p>Fix contrast; announce AI results to screen readers; a <code>ReadAloudButton</code> everywhere; an Assist Mode.</p><div class="file">11-accessibility.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">UX Writer</span></div><h4>Stop calling teachers "Teacher"</h4><p>A warm voice guide; drop "Failed" titles; rename untranslatable "Wizard/Generator" tools.</p><div class="file">12-ux-content.md</div></div>
+      <div class="card"><div class="role"><span class="dot"></span><span class="rt">Design Ops</span></div><h4>The grounding map</h4><p>Page-by-page inventory of 47 routes with hard token-adoption evidence and the ranked top-8 redesign targets.</p><div class="file">13-current-state-inventory.md</div></div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="eyebrow muted">Section 03</div>
+    <h2 class="sec">The redesign, sequenced</h2>
+    <p class="sec-note">Five phases. Accessibility, localization, and illustration ride along as acceptance gates in every phase — never a cleanup phase at the end.</p>
+
+    <div class="road">
+      <div class="ph"><div class="pn">Phase 0</div><h4>Foundations</h4><p>Ratify tokens · fix saffron contrast · self-host fonts · token CI lint · vectorize logo.</p></div>
+      <div class="ph"><div class="pn">Phase 1</div><h4>Core loop</h4><p>Redesign dashboard &amp; teacher home. Generate-then-refine; demote the config form.</p></div>
+      <div class="ph"><div class="pn">Phase 2</div><h4>The tools</h4><p>Collapse ~15 generators onto <code>GeneratorPage</code>; wire real SSE; add tool chaining.</p></div>
+      <div class="ph"><div class="pn">Phase 3</div><h4>Community</h4><p>Feed, library, messages — one consistent social surface on the ratified system.</p></div>
+      <div class="ph"><div class="pn">Phase 4</div><h4>Marketing</h4><p>Activate orphaned proof; rebrand Indic pages; commission the illustration set.</p></div>
+    </div>
+
+    <div class="gates"><b>Woven through every phase</b> &nbsp;· Accessibility (contrast, 48px targets, aria-live results, read-aloud) · Localization (per-script type, <code>.indic-text</code> default) · Illustration (Warm Chalk-Line, decorative accent only). &nbsp;<b>Personality</b> &nbsp;warm · calm · confident · rooted · uncluttered.</div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="eyebrow muted">Section 04</div>
+    <h2 class="sec">Your decisions</h2>
+    <p class="sec-note">Assign any of these and the relevant specialists implement it — with a design-review and visual QA pass before anything ships.</p>
+
+    <div class="menu">
+      <div class="item"><div></div><div><h4>Greenlight Phase 0 <span class="rec">Recommended start</span></h4><p>Foundations + token CI lint + the saffron contrast fix. Lowest risk, unblocks everything else.</p></div></div>
+      <div class="item"><div></div><div><h4>Choose the aesthetic direction</h4><p>The board recommends utility-chassis + editorial-warmth + rooted-craft illustration. Yours to ratify or redirect.</p></div></div>
+      <div class="item"><div></div><div><h4>Approve the <code>GeneratorPage</code> primitive</h4><p>The single highest-leverage structural bet — after it, redesigning all fifteen tools is trivial.</p></div></div>
+      <div class="item"><div></div><div><h4>Prioritize the dashboard redesign</h4><p>The most visible flagship screen, and the clearest current weakness.</p></div></div>
+      <div class="item"><div></div><div><h4>Approve the illustration direction</h4><p>"Warm Chalk-Line Editorial," or request alternative visual routes to compare.</p></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    15 full proposals · <b>docs/design/proposals/</b> &nbsp;|&nbsp; consolidated synthesis · <b>docs/design/proposals/INDEX.md</b><br>
+    Nothing in the application was modified. This is a review packet — hand me a decision and the board builds it.
+  </div>
+
+</div>

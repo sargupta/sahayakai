@@ -1,0 +1,116 @@
+{
+  "lane": "F19",
+  "role": "memory-resource-exhaustion",
+  "date": "2026-06-06",
+  "summary": {
+    "p0": 0,
+    "p1": 1,
+    "p2": 2,
+    "info": 6
+  },
+  "findings": [
+    {
+      "id": "F19-01",
+      "title": "Sidecar memory profile under 50 sequential lesson-plan calls",
+      "severity": "INFO",
+      "state": "deferred-live-load",
+      "evidence": "Static: InMemoryRunner constructed per-request; InMemorySessionService dict scoped to runner local; module-level caches are @lru_cache(maxsize<=2).",
+      "files": [
+        "sahayakai-agents/src/sahayakai_agents/agents/lesson_plan/router.py:125-167",
+        ".venv/.../google/adk/sessions/in_memory_session_service.py:71"
+      ]
+    },
+    {
+      "id": "F19-02",
+      "title": "Next.js dispatcher heap growth across calls",
+      "severity": "INFO",
+      "state": "no-leak-surface-found",
+      "evidence": "Only module-globals are: 18× tokenClientByAudience Map keyed by single env var (constant), TTS_CACHE bounded at 500 entries.",
+      "files": ["sahayakai-main/src/lib/sidecar/*-client.ts", "sahayakai-main/src/lib/cache.ts"]
+    },
+    {
+      "id": "F19-03",
+      "title": "Embedding cache qa/embedding-cache/ unbounded on disk",
+      "severity": "INFO",
+      "state": "directory-does-not-exist",
+      "evidence": "rag/embeddings.embed_query raises NotImplementedError (Phase 4.2 stub). No on-disk cache exists.",
+      "files": ["sahayakai-agents/src/sahayakai_agents/rag/embeddings.py:44"]
+    },
+    {
+      "id": "F19-04",
+      "title": "OIDC tokenClient cache unbounded",
+      "severity": "INFO",
+      "state": "bounded",
+      "evidence": "Cache keyed by SAHAYAKAI_AGENTS_AUDIENCE env var (single value per process); eviction-on-reject prevents poison.",
+      "files": ["sahayakai-main/src/lib/sidecar/lesson-plan-client.ts:110-122"]
+    },
+    {
+      "id": "F19-05",
+      "title": "Notification batch fan-out unbounded array buffer",
+      "severity": "INFO",
+      "state": "bounded",
+      "evidence": "RECIPIENT_CAP=50; Firestore-side limit(100); JS slice(0, 50); single batch under 500/batch ceiling.",
+      "files": ["sahayakai-main/src/lib/notifications/fanout.ts:23,118,129"]
+    },
+    {
+      "id": "F19-06",
+      "title": "Pub/Sub storage-cleanup ack rules",
+      "severity": "INFO",
+      "state": "correct",
+      "evidence": "Returns 200 on success or 404 (idempotent); returns 500 on other errors → Pub/Sub retries.",
+      "files": ["sahayakai-main/src/app/api/jobs/storage-cleanup/route.ts:30-77"]
+    },
+    {
+      "id": "F19-07",
+      "title": "Long-text TTS: unbounded parallel fan-out and transient buffer",
+      "severity": "P1",
+      "state": "confirmed-static",
+      "evidence": "No text-length guard on /api/tts. googleTTS does Promise.all over chunkText(text, 500) with no concurrency cap. 50,000-char input → 100 parallel outbound TTS fetches per request; coordinated abuse can pin >500 MB transient buffer + 8,000 outbound connections at default Cloud Run concurrency 80.",
+      "files": [
+        "sahayakai-main/src/app/api/tts/route.ts:177-186,197-202",
+        "sahayakai-main/src/lib/sarvam.ts:119-153,187"
+      ],
+      "fix": [
+        "Add 'if (text.length > 8000) return 413' before chunking",
+        "Replace Promise.all with p-limit(4) concurrency gate",
+        "Burn voice-quota minutes against text.length before chunking"
+      ],
+      "repro": "qa/forensics/F19-repros/repro-F19-07-long-text-tts.sh"
+    },
+    {
+      "id": "F19-08",
+      "title": "Audio upload: 10 MB cap enforced AFTER full formData() buffer",
+      "severity": "P2",
+      "state": "confirmed-static",
+      "evidence": "request.formData() awaits before size check; 100 MB upload buffers fully into memory before 413 is returned. Coordinated abuse can OOM the 1 Gi container at concurrency 20.",
+      "files": ["sahayakai-main/src/app/api/ai/voice-to-text/route.ts:16-41"],
+      "fix": [
+        "Check Content-Length header first; reject >MAX_AUDIO_BYTES*1.1 pre-parse",
+        "Long-term: stream uploads directly to GCS, pass URI to STT"
+      ],
+      "repro": "qa/forensics/F19-repros/repro-F19-08-large-audio-upload.sh"
+    },
+    {
+      "id": "F19-09",
+      "title": "TTS audio cache: entry count capped, byte size uncapped",
+      "severity": "P2",
+      "state": "confirmed-static",
+      "evidence": "TTS_CACHE bounded at 500 items but each entry is a base64 MP3 of arbitrary size. 500 × ~600 KB = ~300 MB resident, 24 h TTL.",
+      "files": ["sahayakai-main/src/lib/cache.ts:8-33"],
+      "fix": [
+        "Track cumulative byte size; evict on bytes>64 MiB in addition to count",
+        "Or cap per-entry buffer size (skip caching giants)"
+      ],
+      "repro": "qa/forensics/F19-repros/repro-F19-09-tts-cache-flood.sh"
+    }
+  ],
+  "followups": [
+    {
+      "id": "F19-FOLLOWUP-01",
+      "title": "Live sidecar memory profile under 50× lesson-plan load",
+      "blocking_reason": "gcloud impersonation not validated in forensic sandbox; HMAC signing key required for direct sidecar invocation.",
+      "command_template": "gcloud monitoring time-series list --filter='metric.type=\"run.googleapis.com/container/memory/utilizations\" AND resource.labels.service_name=\"sahayakai-agents\"'",
+      "promote_to_p0_if": "memory utilisation grows monotonically past the 10th request"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "role": 2,
+  "lane": "F2-authz-idor",
+  "auditor": "claude-opus-4.7",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "scope": [
+    "src/app/actions/*.ts (14 files)",
+    "src/app/api/**/route.ts (80 routes — sampled)",
+    "storage.rules",
+    "src/lib/db/adapter.ts (filterUserUpdate, getUsers)"
+  ],
+  "findings": [
+    {
+      "id": "F2-01",
+      "severity": "P0",
+      "title": "getProfilesAction returns FULL user docs to any authenticated caller (PII leak)",
+      "file": "src/app/actions/community.ts",
+      "line": "14-17",
+      "supporting_file": "src/lib/db/adapter.ts",
+      "supporting_line": "120-127",
+      "summary": "Action calls dbAdapter.getUsers(uids) and returns the raw Firestore docs. No field allowlist. Leaks phoneNumber, fcmTokens, adminRoles, administrativeRole, planType, razorpaySubscriptionId, razorpayPlanId, monthlyCredits, creditsUsed, planExpiresAt, adminOverride, onboardingChecklistItems, etc. for arbitrary uids the caller chooses.",
+      "exploit": "Any signed-in user POSTs the action with up to 10 target uids per call (Firestore 'in' query limit) and receives full profile docs in the response. Repeat for full directory enumeration. DPDP-grade PII (phoneNumber) + push-token (fcmTokens) + role enumeration (adminRoles → principal phishing targets) + billing state.",
+      "fix": "Apply the same allowlist used in getPublicProfileAction (src/app/actions/profile.ts:53-96), or delete the action and migrate the (currently zero) tsx callers to getPublicProfileAction.",
+      "repro": "qa/forensics/repros/F2-01.mjs"
+    },
+    {
+      "id": "F2-02",
+      "severity": "P1",
+      "title": "markConversationReadAction missing participant check; writes readBy on foreign conversation messages",
+      "file": "src/app/actions/messages.ts",
+      "line": "306-389",
+      "summary": "Function checks callerId === userId but never verifies callerId is in conversations/{conversationId}.participantIds before issuing convRef.update (unreadCount) and a batch update on the messages subcollection (readBy: arrayUnion). Symmetric sendMessageAction on line 197 enforces this check; markConversationReadAction does not.",
+      "exploit": "Attacker calls the action with (foreignConvId, theirOwnUid). The action writes attacker uid into readBy of the 50 most-recent messages in a conversation they're not in, corrupting the read-receipt audit trail visible to participants. Also pollutes unreadCount.{attackerUid} on the foreign doc.",
+      "fix": "Insert `const convDoc = await convRef.get(); if (!convDoc.exists) throw new Error('Conversation not found'); if (!convDoc.data().participantIds.includes(callerId)) throw new Error('Not a participant');` before the first write.",
+      "repro": "qa/forensics/repros/F2-02.sh"
+    },
+    {
+      "id": "F2-03",
+      "severity": "P2",
+      "title": "acknowledgeDeliveryAction missing participant check; stamps deliveredTo on foreign messages",
+      "file": "src/app/actions/messages.ts",
+      "line": "420-439",
+      "summary": "Function reads userId from session but never verifies caller participates in the conversation. Caller can batch-update deliveredTo: arrayUnion(callerUid) on up to 50 messages of any conversation whose id they know.",
+      "exploit": "Pollutes delivery-receipt audit trail. Lower visibility than readBy but still breaks the integrity of per-message delivery accounting.",
+      "fix": "Same as F2-02 — read conversation doc, enforce participantIds membership before the batch write.",
+      "repro": "qa/forensics/repros/F2-03.sh"
+    }
+  ],
+  "verified_safe": [
+    "Profile actions (updateProfileAction, addCertificationAction, markChecklistItemAction) — uid from session, PROFILE_WRITABLE_FIELDS allowlist enforced + dbAdapter.updateUser second filter (filterUserUpdate)",
+    "Attendance actions — every class/student/attendance/outreach action verifies classes/{classId}.teacherUid === uid",
+    "Connections actions — pairId built from (callerId, otherUid); acceptConnectionRequestAction verifies recipient",
+    "Groups actions — getGroupPostsAction uses requireGroupMember; create/like/chat actions check members/{uid}.exists",
+    "Messages.sendMessageAction, getOrCreateDirectConversationAction, createGroupConversationAction — participant/creator checks enforced",
+    "Notifications — markNotificationAsReadAction verifies recipientId === userId",
+    "Content actions — all five derive uid from session and scope adapter calls",
+    "API routes spot-checked — analytics/teacher-health/[userId] (self-or-admin), performance/student/[studentId] (verifyClassOwnership), organizations/[orgId]/analytics (admin/principal-of-this-org), assessment-scanner/[id] PATCH (uid-scoped getContent), content/{save,delete,get,list,download}",
+    "storage.rules — voice-messages/{uid}, users/{uid}/uploads, profile-photos/{uid}, legacy uploads/{uid} all gated on request.auth.uid==userId + size + content-type; default-deny on {allPaths=**}"
+  ],
+  "method_notes": "Static-analysis pass. Runtime exploitation against the preview deployment (Admin SDK custom-token mint + POST) was deferred per the hard rule against prod writes; the static evidence is unambiguous (absent code paths) for all three findings."
+}

@@ -1,0 +1,105 @@
+{
+  "role": 14,
+  "lane": "F7-payment-billing",
+  "auditor": "claude-opus-4.7",
+  "date": "2026-06-06",
+  "branch": "feature/q4c-shadow-diff-in-canary",
+  "scope": [
+    "src/app/api/webhooks/razorpay/route.ts",
+    "src/app/api/billing/create-subscription/route.ts",
+    "src/app/api/billing/create-public-subscription/route.ts",
+    "src/app/api/billing/callback/route.ts",
+    "src/app/api/billing/cancel/route.ts",
+    "src/app/api/jobs/billing-reconciliation/route.ts",
+    "src/lib/razorpay.ts",
+    "src/lib/billing-reconciliation.ts",
+    "src/lib/organization.ts",
+    "src/lib/services/plan-service.ts",
+    "src/app/api/organizations/route.ts"
+  ],
+  "findings": [
+    {
+      "id": "F7-001",
+      "severity": "P0",
+      "title": "Authenticated user grants self gold/premium via POST /api/organizations with no payment",
+      "file": "src/app/api/organizations/route.ts",
+      "line": 32,
+      "supporting_file": "src/lib/organization.ts",
+      "supporting_line": "83-96",
+      "summary": "Endpoint accepts plan in {'gold','premium'} and 1-500 seats, then writes users.planType=plan AND sets custom claim planType=plan. No subscription/payment cross-check, no admin gate.",
+      "exploit": "curl -X POST /api/organizations -H 'authorization: Bearer <free user token>' -d '{\"name\":\"x\",\"type\":\"school\",\"plan\":\"premium\",\"totalSeats\":500}' → 200; refresh ID token; user is now premium across the app.",
+      "money_impact": "Full bypass of monetization on the highest-margin tier (₹4799/yr premium per user × seat count)."
+    },
+    {
+      "id": "F7-002",
+      "severity": "P0",
+      "title": "Billing reconciliation queries non-existent users.plan field; silently disables the entire safety net",
+      "file": "src/lib/billing-reconciliation.ts",
+      "line": "196-209, 217, 296-301, 335-340",
+      "summary": "Webhook writes users.planType; reconciler reads users.plan and writes users.plan. Net: rzp_active_fs_free fires on every paid user (false positives), auto-fix writes a new orphan 'plan' field that nothing reads, terminal-state auto-downgrade never reflects in JWT claim or middleware view of plan.",
+      "exploit": "If a webhook is lost (Firestore outage, Cloud Run cold-start dropped POST), the user paid but stays on free. Reconciliation, the documented safety net, will not detect or fix this in production.",
+      "money_impact": "Paid customers blocked from features they paid for; manual ops required for every missed webhook."
+    },
+    {
+      "id": "F7-003",
+      "severity": "P1",
+      "title": "Webhook resolves planType via substring match on user-controlled notes.planKey",
+      "file": "src/app/api/webhooks/razorpay/route.ts",
+      "line": "85-86",
+      "summary": "subscription.notes.planKey.includes('premium') / .includes('gold'). Notes are echoed verbatim from create-subscription payload.",
+      "exploit": "Once gold/premium plan IDs exist in RAZORPAY_PLANS, attacker calls create-subscription with planKey: 'pro_monthly_premium', pays pro pricing, webhook upgrades them to premium.",
+      "money_impact": "Tier-overshoot fraud once multi-tier plans ship."
+    },
+    {
+      "id": "F7-004",
+      "severity": "P1",
+      "title": "Idempotency event-id derives from payload; missing payment.id+subscription.id falls back to Date.now()",
+      "file": "src/app/api/webhooks/razorpay/route.ts",
+      "line": "37-39",
+      "summary": "Edge-case events (some lifecycle events without payment entity) may dedup correctly today, but the Date.now() fallback is non-deterministic. Use Razorpay envelope event id."
+    },
+    {
+      "id": "F7-005",
+      "severity": "P1",
+      "title": "Public checkout creates Firebase users for unverified emails before any payment",
+      "file": "src/app/api/billing/create-public-subscription/route.ts",
+      "line": "58-72",
+      "summary": "Anonymous attacker enumerates real email addresses; Firebase user is created with emailVerified=false; victim later hits auth/email-already-in-use or gets linked to squat account.",
+      "fix": "Defer Firebase user creation to the webhook; only persist {email, planKey} in subscription notes."
+    },
+    {
+      "id": "F7-006",
+      "severity": "P1",
+      "title": "Reconciliation auto-downgrade writes wrong field (same root cause as F7-002)",
+      "file": "src/lib/billing-reconciliation.ts",
+      "line": "335-340",
+      "summary": "After Razorpay subscription expires, reconciler tries to set users.plan='free' but the live field is users.planType. JWT claim is also not touched."
+    },
+    {
+      "id": "F7-007",
+      "severity": "P2",
+      "title": "subscription.cancelled webhook downgrades immediately, ignoring current_end",
+      "file": "src/app/api/webhooks/razorpay/route.ts",
+      "line": "166-191",
+      "summary": "If Razorpay fires cancelled before current_end (e.g. immediate-cancel via dashboard, or admin action), paid user loses the rest of the cycle. Cancel-at-end-of-cycle UX in /api/billing/cancel is implicitly violated whenever Razorpay sends the cancelled event early."
+    },
+    {
+      "id": "F7-008",
+      "severity": "P2",
+      "title": "CLAIM_SET_FAILED retry re-runs full upgrade branch including magic-link mint, overwriting any previously generated link",
+      "file": "src/app/api/webhooks/razorpay/route.ts",
+      "line": "55-63, 112-118, 129-149",
+      "summary": "Firestore plan is upgraded BEFORE custom-claim set. On claim failure, event marked failed; retry path re-runs the entire branch and regenerates the magic sign-in link, invalidating the previous one stored in pendingSignInLinks."
+    }
+  ],
+  "verified_correct": [
+    "HMAC-SHA256 verification with timingSafeEqual (src/lib/razorpay.ts:46-54)",
+    "Bad-signature returns 401 (not 5xx) preventing Razorpay retry storms — yesterday's fix 9309c25fe present in tree",
+    "Webhook idempotency via Firestore create() (TOCTOU-safe) (src/app/api/webhooks/razorpay/route.ts:46-67)",
+    "Plan + subscription update inside runTransaction — atomic (src/app/api/webhooks/razorpay/route.ts:93-106)",
+    "Provisions access on subscription.charged ONLY (not subscription.activated) — handles UPI mandate registration correctly",
+    "Reconciliation CRON_SECRET gate returns 401 on bad bearer, 503 if secret unconfigured (src/app/api/jobs/billing-reconciliation/route.ts:25-33)",
+    "Reconciliation never auto-refunds; double-charge always flagged for manual review (src/lib/billing-reconciliation.ts:397-410)",
+    "Callback signature verified with timingSafeEqual (src/app/api/billing/callback/route.ts:29-34)"
+  ]
+}

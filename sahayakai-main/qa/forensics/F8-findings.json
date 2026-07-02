@@ -1,0 +1,88 @@
+{
+  "lane": "F8",
+  "role": 15,
+  "specialty": "voice-pipeline",
+  "generatedAt": "2026-06-06",
+  "findings": [
+    {
+      "id": "F8-01",
+      "severity": "P0",
+      "category": "auth-bypass",
+      "title": "Twilio signature check bypassable via Host header",
+      "file": "src/lib/twilio-validate.ts",
+      "lines": [18, 38],
+      "summary": "host.includes('localhost') skips HMAC validation. Attacker-controlled Host header on Cloud Run lets a forged request reach /api/attendance/twiml and /api/attendance/twiml-status.",
+      "impact": "Forge TwiML traffic; advance victim outreach transcripts; burn LLM cost via generateAgentReply/generateCallSummary.",
+      "fix": "Gate on NODE_ENV !== 'production' AND exact host match.",
+      "repro": "qa/forensics/F8-repros/F8-01-twilio-host-bypass.sh"
+    },
+    {
+      "id": "F8-02",
+      "severity": "P0",
+      "category": "language-broken",
+      "title": "Odia parent-call always runs in English",
+      "files": [
+        "src/types/attendance.ts",
+        "src/app/api/attendance/twiml/route.ts"
+      ],
+      "lines": [162, 79],
+      "summary": "TWILIO_LANGUAGE_MAP.Odia=null + nullish-coalesce to 'en-IN' makes every Odia outreach call the parent in English, with Odia text rendered by en-IN-Neural2-A.",
+      "impact": "Voice never works for Odia language — parent-call feature non-functional for the entire language.",
+      "fix": "Either route Odia outreach through Sarvam streaming, or skip the call with a notice — never silently coerce to English.",
+      "repro": "qa/forensics/F8-repros/F8-02-odia-call.sh"
+    },
+    {
+      "id": "F8-03",
+      "severity": "P0",
+      "category": "idempotency",
+      "title": "Call-summary regenerated on every Twilio status retry",
+      "file": "src/app/api/attendance/twiml-status/route.ts",
+      "lines": [62, 67],
+      "summary": "generateAndSaveSummary fires whenever callStatus==='completed' && transcript.length > 1, with no read of existing.callSummary. Twilio retries status callbacks. transcript-sync/route.ts:87 has the correct guard — twiml-status does not.",
+      "impact": "LLM cost amplification per retry; callSummary fields flip between successive runs.",
+      "fix": "Mirror transcript-sync guard or use a Firestore transaction with a generatedAt sentinel.",
+      "repro": "qa/forensics/F8-repros/F8-03-status-replay.sh"
+    },
+    {
+      "id": "F8-04",
+      "severity": "P1",
+      "category": "idempotency",
+      "title": "Gather POST has no (CallSid, turnNumber) dedup",
+      "file": "src/app/api/attendance/twiml/route.ts",
+      "lines": [210, 274],
+      "summary": "Each POST unconditionally appends parent+agent turns to transcript and increments turnCount. Twilio retries on 5xx/timeout — retried Gather double-writes the transcript, fires a second LLM call, and accelerates MAX_TURNS cutoff.",
+      "impact": "Duplicate transcript entries; second LLM cost per retry; possible premature hangup.",
+      "fix": "Dedup on last-seen (CallSid, SpeechResult) within N seconds or use Twilio's RetryCount as an idempotency key.",
+      "repro": "qa/forensics/F8-repros/F8-04-gather-retry.sh"
+    },
+    {
+      "id": "F8-05",
+      "severity": "P2",
+      "category": "language-tag",
+      "title": "Twilio Punjabi speech tag pa-Guru-IN is non-standard",
+      "file": "src/app/api/attendance/twiml/route.ts",
+      "lines": [26],
+      "summary": "Twilio's documented Gather language code for Punjabi is pa-IN. pa-Guru-IN is BCP-47-legal but not in Twilio's published Gather catalog — Gather silently falls back to en-US on unrecognised tags.",
+      "impact": "Punjabi parent speech may be run through an English recognizer.",
+      "fix": "Verify against Twilio's Gather Languages docs and switch to pa-IN if not listed.",
+      "repro": "qa/forensics/F8-repros/F8-05-punjabi-speech.sh"
+    }
+  ],
+  "verifiedSafe": [
+    {"id":"F8-S1","title":"Sarvam skip on Opus MIME","file":"src/app/api/ai/voice-to-text/route.ts","lines":[49,58]},
+    {"id":"F8-S2","title":"Soft-empty STT returns 200 with empty text","file":"src/ai/flows/voice-to-text.ts","lines":[268,269,307,309]},
+    {"id":"F8-S3","title":"ISO normalisation (od→or, pun→pa, mar→mr) at output boundary","file":"src/ai/flows/voice-to-text.ts","lines":[67,99]},
+    {"id":"F8-S4","title":"Script-mismatch retry path catches Sarvam pa→hi Devanagari mis-tag","file":"src/ai/flows/voice-to-text.ts","lines":[144,152]},
+    {"id":"F8-S5","title":"TTS Marathi mr-IN-Standard-A explicit entry","file":"src/app/api/tts/route.ts","lines":[68]},
+    {"id":"F8-S6","title":"Odia TTS fallback or-IN → hi-IN-Standard-A documented and applied pre-call","file":"src/app/api/tts/route.ts","lines":[78,88]},
+    {"id":"F8-S7","title":"TTS secondary 4xx fallback to hi-IN-Standard-A","file":"src/app/api/tts/route.ts","lines":[155,158]},
+    {"id":"F8-S8","title":"STT 10 MB audio cap","file":"src/app/api/ai/voice-to-text/route.ts","lines":[35,41]},
+    {"id":"F8-S9","title":"VIDYA uiLanguage overrides detectedLanguage","file":"src/app/api/assistant/route.ts","lines":[127,132]},
+    {"id":"F8-S10","title":"Intent cache tool-trigger exclusion gated by vidyaIntentCacheGate","file":"src/app/api/assistant/route.ts","lines":[227,232]}
+  ],
+  "scopeNotes": [
+    "Live HTTP repros not executed in this forensic env (no gcloud impersonation credentials wired). All findings are static-trace + cross-reference grounded.",
+    "Sidecar canary-overshoot logic owned by Q4C lane (commit 9c8483b9c) — not re-audited here.",
+    "Pipecat streaming TwiML path treated as alpha (orchestrator URL absent)."
+  ]
+}

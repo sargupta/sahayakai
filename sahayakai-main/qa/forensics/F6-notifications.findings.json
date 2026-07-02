@@ -1,0 +1,182 @@
+{
+  "role": "F6-notifications",
+  "commit_head": "9c8483b9c",
+  "commits_reviewed": ["47e09a700", "164ec1aa5"],
+  "method": "static-code-audit",
+  "findings": [
+    {
+      "id": "F6-01",
+      "severity": "P0",
+      "area": "nearby-teacher",
+      "title": "Recipient ordering biased toward newest teachers — older teachers starved",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "116-119",
+      "detail": "Query is .orderBy('createdAt','desc').limit(50*2) — in any district with >100 matching teachers, the early adopters (oldest createdAt) never appear in the candidate pool.",
+      "repro": "Seed 100 teachers in (Karnataka, Mandya, Mathematics) with createdAt staggered; sign up 101st; assert peers 0..49 receive nothing while peers 50..99 receive."
+    },
+    {
+      "id": "F6-02",
+      "severity": "P1",
+      "area": "nearby-teacher",
+      "title": "Dedup query failure silently zeroes out fanout",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "147-152",
+      "detail": "catch returns hasRecent:true — 'err on the side of NOT notifying'. If composite index is missing in a region, EVERY recipient is skipped and only logger.warn is emitted.",
+      "repro": "Drop the (recipientId,type,createdAt) composite index in a test project; trigger fanout; observe 0 sent + warn-level logs only."
+    },
+    {
+      "id": "F6-03",
+      "severity": "P1",
+      "area": "nearby-teacher",
+      "title": "Conditional state filter creates index/query mismatch",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "110-115",
+      "detail": "Query only adds .where('state','==',state) if state truthy. firestore.indexes.json lists composite (state, district, subjects, createdAt) — a teacher without state has no usable index. Without state the query may either silently fail or hit a different index path.",
+      "repro": "Create new teacher with state='' and district set; observe fanout result reason or error."
+    },
+    {
+      "id": "F6-04",
+      "severity": "P2",
+      "area": "nearby-teacher",
+      "title": "Deep-link ?tab=connect&highlight=<uid> has no consumer",
+      "file": "src/app/community/page.tsx",
+      "lines": "n/a (no searchParams/useSearchParams reference)",
+      "detail": "Notification link goes to /community?tab=connect&highlight=<uid> but the community page does not read query params for tab or highlight. Recipient lands on default tab; no scroll, no highlight UI."
+    },
+    {
+      "id": "F6-05",
+      "severity": "P1",
+      "area": "group-post",
+      "title": "Over-cap members silently dropped — digest fallback is TODO",
+      "file": "src/app/actions/groups.ts",
+      "lines": "791, 845-854",
+      "detail": "GROUP_POST_FANOUT_CAP=200 hits in community_general / popular school groups. Comment promises digest fallback later; current behavior is silent under-delivery + logger.warn."
+    },
+    {
+      "id": "F6-06",
+      "severity": "P1",
+      "area": "group-post",
+      "title": "Cap sampling is alphabetical by uid (no orderBy)",
+      "file": "src/app/actions/groups.ts",
+      "lines": "834-848",
+      "detail": "Firestore .limit(CAP+1) on subcollection without orderBy returns by __name__ (uid). First 200 uids alphabetically always win → bottom-of-alphabet uids are systemically starved in big groups."
+    },
+    {
+      "id": "F6-07",
+      "severity": "P1",
+      "area": "group-post",
+      "title": "Sequential awaited writes for up to 200 recipients",
+      "file": "src/app/actions/groups.ts",
+      "lines": "884-910",
+      "detail": "for(...) { await createNotification(...) } produces ~200 sequential Firestore round-trips. Use db.batch() or Promise.all."
+    },
+    {
+      "id": "F6-08",
+      "severity": "P1",
+      "area": "group-like-dedup",
+      "title": "Dedup probe scans last 20 GROUP_POST_LIKE notifs ignoring postId",
+      "file": "src/app/actions/groups.ts",
+      "lines": "948-964",
+      "detail": "A prolific author with >20 likes/hour across other posts pushes the relevant postId out of the probe window — duplicate like notifications get through."
+    },
+    {
+      "id": "F6-09",
+      "severity": "P0",
+      "area": "message-badge",
+      "title": "markConversationReadAction caps unread scan at 200 docs",
+      "file": "src/app/actions/messages.ts",
+      "lines": "355-368",
+      "detail": "User with >200 unread notifications has the message notification potentially outside the scan window. Badge fails to clear after opening conversation. Index has no orderBy so the kept 200 is non-deterministic."
+    },
+    {
+      "id": "F6-10",
+      "severity": "P2",
+      "area": "message-badge",
+      "title": "readBy stamping capped at last 50 messages",
+      "file": "src/app/actions/messages.ts",
+      "lines": "323-335",
+      "detail": "Older unread messages do not get readBy stamped; cross-device unread state drifts."
+    },
+    {
+      "id": "F6-11",
+      "severity": "P1",
+      "area": "persona-pulse",
+      "title": "No cross-tab guard, no server rate-limit per uid",
+      "file": "src/hooks/use-community-live-pulse.ts + src/app/api/community/persona-pulse/route.ts",
+      "lines": "hook:55-160, route:46-65",
+      "detail": "Two open /community tabs = two timers = ~2× LLM calls and chat writes. /api/community/persona-pulse has no checkServerRateLimit(uid)."
+    },
+    {
+      "id": "F6-12",
+      "severity": "P2",
+      "area": "persona-pulse",
+      "title": "Persona messages create no notification — user not on /community sees nothing",
+      "file": "src/app/api/community/persona-pulse/route.ts",
+      "lines": "112-133",
+      "detail": "Only writes to community_chat; no notification doc, no FCM. Acceptable for demo seeder."
+    },
+    {
+      "id": "F6-13",
+      "severity": "P1",
+      "area": "fcm-coverage",
+      "title": "Non-message notifications never fire FCM push",
+      "file": "src/lib/notifications/fanout.ts, src/app/actions/groups.ts",
+      "lines": "n/a (no sendPushToUser calls)",
+      "detail": "NEW_TEACHER_JOINED, NEW_GROUP_POST, GROUP_POST_LIKE write Firestore docs only. Backgrounded app users get no OS push for these events. Inconsistent with 1:1 messages."
+    },
+    {
+      "id": "F6-14",
+      "severity": "P1",
+      "area": "i18n",
+      "title": "preferredLanguage lookup has no normalization",
+      "file": "src/lib/notifications/i18n.ts",
+      "lines": "75-87",
+      "detail": "Direct dict lookup on the raw string. A user with 'hindi' / 'hi' / 'HINDI' silently falls back to English."
+    },
+    {
+      "id": "F6-15",
+      "severity": "P2",
+      "area": "i18n",
+      "title": "Nearby-teacher i18n uses cast that hides unknown-language bug class",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "43-46",
+      "detail": "(lang as Language) cast — runtime returns undefined and ?? rescues, but the cast hides incorrect intent. Recommend explicit guard."
+    },
+    {
+      "id": "F6-16",
+      "severity": "P2",
+      "area": "test-account-filter",
+      "title": "looksLikeTestAccount regex matches real names like 'Devraj' / 'Testa'",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "50-54",
+      "detail": "\\b(dev|qa|test|...)\\b matches as token-bounded substring. Real teachers named Devraj, Devi, Sampada, Testa silently excluded."
+    },
+    {
+      "id": "F6-17",
+      "severity": "P2",
+      "area": "fanout-reversibility",
+      "title": "No reversal helper if a teacher deletes profile right after fanout",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "162-180",
+      "detail": "Notification docs persist with the deleted teacher's name/school/district stamped. Not a leak (consent implied by feature), but no un-fanout exists."
+    },
+    {
+      "id": "F6-18",
+      "severity": "P2",
+      "area": "dedup-windows",
+      "title": "Three different dedup windows in three different files",
+      "file": "fanout.ts (24h), groups.ts (1h likes, 0 for posts)",
+      "lines": "fanout.ts:24, groups.ts:795",
+      "detail": "Consolidate to a constants module."
+    },
+    {
+      "id": "F6-19",
+      "severity": "P1",
+      "area": "sender-spoofing",
+      "title": "fanoutNewTeacherJoined bypasses createNotification senderId override",
+      "file": "src/lib/notifications/fanout.ts",
+      "lines": "162-180",
+      "detail": "Writes via db.batch() with senderId: newTeacherUid. The 'authenticated session uid override' guard in createNotification is skipped. Direct invocation from a malicious server-action call site could stamp any uid as sender."
+    }
+  ]
+}

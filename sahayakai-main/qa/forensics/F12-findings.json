@@ -1,0 +1,125 @@
+{
+  "lane": "F12",
+  "role": "cron + background jobs forensic investigator",
+  "investigatedAt": "2026-06-06",
+  "anchorCommit": "80d55fba8",
+  "scope": "src/app/api/jobs/*",
+  "routesInventoried": 9,
+  "modelPinningPass": true,
+  "findings": [
+    {
+      "id": "F12-P0-01",
+      "severity": "P0",
+      "title": "storage-cleanup has zero in-route auth and accepts arbitrary storagePath",
+      "file": "src/app/api/jobs/storage-cleanup/route.ts",
+      "lines": "30-77",
+      "impact": "Any unauthenticated POST with {storagePath:'<path>'} deletes the GCS object. Cloud Run does NOT auto-validate OIDC because the Next.js service is publicly reachable.",
+      "repro": "curl -X POST <host>/api/jobs/storage-cleanup -H 'Content-Type: application/json' -d '{\"storagePath\":\"users/<uid>/avatar.jpg\"}' → 200 + file deleted",
+      "fix": "Add CRON_SECRET bearer check + verify Pub/Sub OIDC ID token + validate storagePath prefix against allowlist (lessons/, images/, voice-messages/, exports/)",
+      "category": "auth-bypass-data-loss"
+    },
+    {
+      "id": "F12-P1-02",
+      "severity": "P1",
+      "title": "ai-reactive-reply is open if AI_INTERNAL_SECRET env is unset",
+      "file": "src/app/api/jobs/ai-reactive-reply/route.ts",
+      "lines": "44-50",
+      "impact": "Attacker spams community_chat with AI persona messages and consumes Gemini quota. ~30% post rate per call.",
+      "fix": "Hard-require the secret; return 503 if unset (match other jobs)",
+      "category": "auth-bypass-conditional"
+    },
+    {
+      "id": "F12-P1-03",
+      "severity": "P1",
+      "title": "edu-news forwarder replays all caller headers to daily-briefing",
+      "file": "src/app/api/jobs/edu-news/route.ts",
+      "lines": "21-25",
+      "impact": "Auth-rate-limit laundering; potential host-header confusion. Deprecated route should be deleted.",
+      "fix": "Delete route; migrate Cloud Scheduler",
+      "category": "deprecated-route"
+    },
+    {
+      "id": "F12-P1-04",
+      "severity": "P1",
+      "title": "export-reminder anonymize is non-idempotent and bypassable in non-prod",
+      "file": "src/app/api/jobs/export-reminder/route.ts",
+      "lines": "21-28, 76-98",
+      "impact": "Re-runs rewrite displayName='Former Teacher' on already-anonymised users every tick. In non-prod with CRON_SECRET unset, anyone can trigger mass anonymisation.",
+      "fix": "Add .where('cancellation.anonymized','==',false); require CRON_SECRET unconditionally; return 503 not 500",
+      "category": "idempotency + auth-bypass-conditional"
+    },
+    {
+      "id": "F12-P1-08",
+      "severity": "P1",
+      "title": "community_chat schema split breaks AI cooldown between cron + reactive jobs",
+      "files": [
+        "src/app/api/jobs/ai-community-agent/route.ts:114-120 (writes 'timestamp')",
+        "src/app/api/jobs/ai-reactive-reply/route.ts:82-98 (reads 'createdAt')"
+      ],
+      "impact": "Cron-agent posts are invisible to reactive-reply's cooldown query → AI can post twice within 1 minute.",
+      "fix": "Normalise to createdAt; backfill",
+      "category": "rate-limit-bypass"
+    },
+    {
+      "id": "F12-P2-06",
+      "severity": "P2",
+      "title": "community-chat-cleanup caps at 500 docs/day with no continuation",
+      "file": "src/app/api/jobs/community-chat-cleanup/route.ts",
+      "lines": "44-48",
+      "impact": "If backlog accrues, cleanup never catches up",
+      "fix": "Loop until snapshot.empty within maxDuration budget"
+    },
+    {
+      "id": "F12-P2-07",
+      "severity": "P2",
+      "title": "ai-community-agent has no global rate limit / cooldown",
+      "file": "src/app/api/jobs/ai-community-agent/route.ts",
+      "lines": "399-486",
+      "impact": "Misconfigured scheduler or manual curl bursts post 2-4 AI messages per call with no per-hour cap",
+      "fix": "Read most-recent AI post timestamp; refuse if < 30 min ago"
+    },
+    {
+      "id": "F12-P2-09",
+      "severity": "P2",
+      "title": "grow-persona-pool has no absolute pool size cap",
+      "file": "src/app/api/jobs/grow-persona-pool/route.ts",
+      "lines": "175-249",
+      "impact": "Per-run cap (15) is enforced, but daily cron grows pool unboundedly",
+      "fix": "Read current pool size; refuse if >= TARGET_POOL_SIZE (~300)"
+    },
+    {
+      "id": "F12-P2-10",
+      "severity": "P2",
+      "title": "billing-reconciliation auto-fixes new plan_ids to 'gold' by default",
+      "file": "src/lib/billing-reconciliation.ts",
+      "lines": "292-322, 332-351",
+      "impact": "If PLAN_NAME_MAP not updated when a new Razorpay plan ships, every user on that plan is force-set to 'gold' every 4h. Also D2 downgrade resets monthlyCredits + creditsUsed.",
+      "fix": "If plan_id not in PLAN_NAME_MAP → flag instead of auto-fix; add mutex to prevent parallel runs"
+    },
+    {
+      "id": "F12-P3-05",
+      "severity": "P3",
+      "title": "export-reminder reminder-count guard uses <= (latent off-by-one)",
+      "file": "src/app/api/jobs/export-reminder/route.ts",
+      "lines": "48-55",
+      "impact": "Benign at REMINDER_DAYS=[1,7,21,28] but fragile under schedule edits",
+      "fix": "remindersSent === index"
+    },
+    {
+      "id": "F12-P3-11",
+      "severity": "P3",
+      "title": "daily-briefing URL dedup window is only 200 SYSTEM posts (~40 days)",
+      "file": "src/app/api/jobs/daily-briefing/route.ts",
+      "lines": "680-699",
+      "impact": "Evergreen news can re-post after 40 days",
+      "fix": "Dedicated posted_news_urls collection with longer TTL"
+    }
+  ],
+  "summary": {
+    "P0": 1,
+    "P1": 4,
+    "P2": 4,
+    "P3": 2,
+    "shipBlockers": ["F12-P0-01"]
+  }
+}
