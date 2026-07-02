@@ -12,6 +12,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { getSecret } from '@/lib/secrets';
 import { logger } from '@/lib/logger';
 import { emitBillingMetric } from '@/lib/billing-metrics';
+import { getPlanPaise } from '@/lib/plan-config';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -81,37 +82,49 @@ interface RazorpayPayment {
  * is skipped with a warning — reconciliation will still run for the plans
  * that ARE configured, and flag unmapped plan IDs for manual review.
  */
-type PlanMapEntry = { amount: number; name: string; cadence: 'monthly' | 'annual' };
+type PlanName = 'pro' | 'gold' | 'premium';
+type PlanMapEntry = { name: PlanName; cadence: 'monthly' | 'annual' };
 
 function buildPlanMaps(): {
   amount: Record<string, number>;
   name: Record<string, string>;
   cadence: Record<string, 'monthly' | 'annual'>;
 } {
-  // Pricing in paise, keyed by (plan, cadence). Must match PLAN_PRICING in plan-config.
-  // Extend this table as you add gold/premium Razorpay plans.
-  const PRICING: Record<string, PlanMapEntry> = {
-    RAZORPAY_PLAN_PRO_MONTHLY:   { amount: 14900,  name: 'pro',     cadence: 'monthly' },
-    RAZORPAY_PLAN_PRO_ANNUAL:    { amount: 139900, name: 'pro',     cadence: 'annual'  },
-    RAZORPAY_PLAN_GOLD_MONTHLY:  { amount: 29900,  name: 'gold',    cadence: 'monthly' },
-    RAZORPAY_PLAN_GOLD_ANNUAL:   { amount: 279900, name: 'gold',    cadence: 'annual'  },
-    RAZORPAY_PLAN_PREMIUM_MONTHLY:{ amount: 49900, name: 'premium', cadence: 'monthly' },
-    RAZORPAY_PLAN_PREMIUM_ANNUAL:{ amount: 479900, name: 'premium', cadence: 'annual'  },
+  // Razorpay plan env var → (internal plan name, cadence). The expected billed
+  // AMOUNT is NOT hardcoded here — it is derived from PLAN_PRICING in
+  // plan-config.ts (via getPlanPaise) so this reconciliation table can never
+  // drift away from the prices we actually charge (H18). Extend this table as
+  // you add new Razorpay plan SKUs; the amount comes along for free once the
+  // matching (plan, cadence) exists in PLAN_PRICING.
+  const PLANS: Record<string, PlanMapEntry> = {
+    RAZORPAY_PLAN_PRO_MONTHLY:    { name: 'pro',     cadence: 'monthly' },
+    RAZORPAY_PLAN_PRO_ANNUAL:     { name: 'pro',     cadence: 'annual'  },
+    RAZORPAY_PLAN_GOLD_MONTHLY:   { name: 'gold',    cadence: 'monthly' },
+    RAZORPAY_PLAN_GOLD_ANNUAL:    { name: 'gold',    cadence: 'annual'  },
+    RAZORPAY_PLAN_PREMIUM_MONTHLY:{ name: 'premium', cadence: 'monthly' },
+    RAZORPAY_PLAN_PREMIUM_ANNUAL: { name: 'premium', cadence: 'annual'  },
   };
 
   const amount: Record<string, number> = {};
   const name: Record<string, string> = {};
   const cadence: Record<string, 'monthly' | 'annual'> = {};
 
-  for (const [envKey, entry] of Object.entries(PRICING)) {
+  for (const [envKey, entry] of Object.entries(PLANS)) {
     const planId = process.env[envKey];
     if (!planId) {
       // Silent in prod — we warn lazily on first use if a plan ID shows up unmapped
       continue;
     }
-    amount[planId] = entry.amount;
     name[planId] = entry.name;
     cadence[planId] = entry.cadence;
+    // Single source of truth: canonical paise from plan-config.ts. If this
+    // (plan, cadence) has no fixed price (e.g. premium = custom quote, gold
+    // has no monthly SKU), we leave the amount unset so D7 amount checks are
+    // simply skipped for it rather than compared against a stale literal.
+    const paise = getPlanPaise(entry.name, entry.cadence);
+    if (typeof paise === 'number') {
+      amount[planId] = paise;
+    }
   }
   return { amount, name, cadence };
 }

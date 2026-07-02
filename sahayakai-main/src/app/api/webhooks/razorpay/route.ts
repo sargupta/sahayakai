@@ -229,9 +229,48 @@ export async function POST(request: Request) {
             case 'subscription.halted':
             case 'subscription.cancelled': {
                 const subscription = event.payload.subscription.entity;
-                const userId = subscription.notes?.userId;
+                let userId: string | undefined = subscription.notes?.userId;
 
-                if (!userId) break;
+                // Public-checkout subscriptions never backfill notes.userId, so
+                // resolving from notes alone silently no-ops here and the user
+                // keeps their paid plan after payments stop (H20). Fall back to
+                // the subscription id: the subscription.charged handler links
+                // `subscriptions/{subscription.id}.userId` (and stamps
+                // `users.subscriptionId`), so we can recover the owner from
+                // either side.
+                if (!userId) {
+                    try {
+                        const subSnap = await db.collection('subscriptions').doc(subscription.id).get();
+                        userId = subSnap.exists ? (subSnap.get('userId') as string | undefined) : undefined;
+                    } catch (lookupErr) {
+                        console.error(
+                            `[Webhook] subscriptions lookup failed for ${subscription.id}:`,
+                            lookupErr
+                        );
+                    }
+                }
+                if (!userId) {
+                    try {
+                        const usersSnap = await db
+                            .collection('users')
+                            .where('subscriptionId', '==', subscription.id)
+                            .limit(1)
+                            .get();
+                        userId = usersSnap.empty ? undefined : usersSnap.docs[0].id;
+                    } catch (lookupErr) {
+                        console.error(
+                            `[Webhook] users lookup by subscriptionId failed for ${subscription.id}:`,
+                            lookupErr
+                        );
+                    }
+                }
+
+                if (!userId) {
+                    console.warn(
+                        `[Webhook] ${event.event} for ${subscription.id} — could not resolve userId from notes, subscriptions doc, or users query; skipping downgrade.`
+                    );
+                    break;
+                }
 
                 // F7-006: subscription.cancelled means user opted out for the
                 // NEXT cycle — they've already paid for the current one and

@@ -276,3 +276,22 @@ export const PLAN_PRICING = {
         },
     },
 } as const;
+
+/**
+ * Canonical paise amount for a (plan, cadence) pair, or `undefined` if that
+ * combination is not sold at a fixed price (e.g. premium is a custom quote,
+ * and gold has no monthly SKU).
+ *
+ * This is the SINGLE SOURCE OF TRUTH for billed amounts. Billing
+ * reconciliation (src/lib/billing-reconciliation.ts) derives its expected
+ * amounts from here so the reconciliation price table can never drift away
+ * from the prices we actually charge.
+ */
+export function getPlanPaise(
+    plan: 'pro' | 'gold' | 'premium',
+    cadence: 'monthly' | 'annual'
+): number | undefined {
+    const planPricing = PLAN_PRICING[plan] as Record<string, { paise?: number } | undefined>;
+    const entry = planPricing?.[cadence];
+    return entry && typeof entry.paise === 'number' ? entry.paise : undefined;
+}
