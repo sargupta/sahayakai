@@ -33,10 +33,15 @@ export async function isAdmin(userId: string): Promise<boolean> {
  */
 export async function validateAdmin(userId: string): Promise<void> {
     const authorized = await isAdmin(userId);
+    if (authorized) return;
 
-    // In production, we strictly enforce admin role.
-    // In development, we allow access to aid with setup/testing.
-    if (!authorized && process.env.NODE_ENV === 'production') {
-        throw new Error('Unauthorized: Admin access required.');
-    }
+    // Admin is enforced in ALL environments by default (staging, preview, prod).
+    // A dev convenience bypass exists ONLY when explicitly opted in via
+    // ALLOW_DEV_ADMIN=true AND only for the known mock dev uid. This is NEVER
+    // keyed on NODE_ENV, so a non-production build cannot fail open.
+    const devBypass =
+        process.env.ALLOW_DEV_ADMIN === 'true' && userId === 'dev-user-123';
+    if (devBypass) return;
+
+    throw new Error('Unauthorized: Admin access required.');
 }
