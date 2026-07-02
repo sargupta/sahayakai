@@ -4,7 +4,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import { logger } from '@/lib/logger';
 import { requireAuth, requireGroupMember } from '@/lib/auth-helpers';
-import { createNotification } from './notifications';
+import { createNotification } from '@/lib/notifications/create';
 import { NEW_GROUP_POST, GROUP_POST_LIKE } from '@/lib/notifications/types';
 import { formatNotificationMessage } from '@/lib/notifications/i18n';
 import { sendPushToUser } from '@/lib/fcm-server';
@@ -51,6 +51,7 @@ const VALID_POST_TYPES: PostType[] = ['share', 'ask_help', 'celebrate', 'resourc
 
 export async function ensureUserGroupsAction(): Promise<string[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
     const now = new Date().toISOString();
@@ -271,12 +272,17 @@ export async function ensureUserGroupsAction(): Promise<string[]> {
     const allGroupIds = [...existingGroupIds, ...newGroupIds];
     logger.info(`ensureUserGroups: uid=${uid}, existing=${existingGroupIds.length}, new=${newGroupIds.length}`);
     return allGroupIds;
+    } catch (err) {
+        logger.error('ensureUserGroupsAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 2. getMyGroupsAction ──────────────────────────────────────────────────────
 
 export async function getMyGroupsAction(): Promise<Group[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const userDoc = await db.collection('users').doc(uid).get();
@@ -303,6 +309,10 @@ export async function getMyGroupsAction(): Promise<Group[]> {
     });
 
     return dbAdapter.serialize(groups);
+    } catch (err) {
+        logger.error('getMyGroupsAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 3. getGroupAction ─────────────────────────────────────────────────────────
@@ -318,11 +328,16 @@ export async function getMyGroupsAction(): Promise<Group[]> {
  * add a `requireGroupMember` check here.
  */
 export async function getGroupAction(groupId: string): Promise<Group | null> {
-    await requireAuth();
-    const db = await getDb();
-    const doc = await db.collection('groups').doc(groupId).get();
-    if (!doc.exists) return null;
-    return dbAdapter.serialize({ id: doc.id, ...doc.data() } as Group);
+    const uid = await requireAuth();
+    try {
+        const db = await getDb();
+        const doc = await db.collection('groups').doc(groupId).get();
+        if (!doc.exists) return null;
+        return dbAdapter.serialize({ id: doc.id, ...doc.data() } as Group);
+    } catch (err) {
+        logger.error('getGroupAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 4. joinGroupAction ────────────────────────────────────────────────────────
@@ -374,6 +389,7 @@ export async function joinGroupAction(groupId: string): Promise<{ joined: boolea
             // does, treat as idempotent success.
             joined = false;
         } else {
+            logger.error('joinGroupAction failed', err, 'GROUPS', { userId: uid });
             throw err;
         }
     }
@@ -386,6 +402,7 @@ export async function joinGroupAction(groupId: string): Promise<{ joined: boolea
 
 export async function leaveGroupAction(groupId: string): Promise<void> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -414,6 +431,10 @@ export async function leaveGroupAction(groupId: string): Promise<void> {
     });
 
     logger.info(`leaveGroup: uid=${uid}, groupId=${groupId}`);
+    } catch (err) {
+        logger.error('leaveGroupAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 6. getGroupPostsAction ───────────────────────────────────────────────────
@@ -426,8 +447,8 @@ export async function getGroupPostsAction(
     // Authz: only members of the group may read its posts. Throws ForbiddenError
     // if the caller is signed in but not a member, UnauthorizedError if missing
     // the x-user-id header.
-    await requireGroupMember(groupId);
-
+    const uid = await requireGroupMember(groupId);
+    try {
     const db = await getDb();
 
     let query = db
@@ -456,6 +477,10 @@ export async function getGroupPostsAction(
     } as GroupPost));
 
     return dbAdapter.serialize(posts);
+    } catch (err) {
+        logger.error('getGroupPostsAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 7. createGroupPostAction ─────────────────────────────────────────────────
@@ -467,6 +492,7 @@ export async function createGroupPostAction(
     attachments: PostAttachment[] = [],
 ): Promise<string> {
     const uid = await getAuthUserId();
+    try {
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
 
@@ -535,6 +561,10 @@ export async function createGroupPostAction(
     });
 
     return postRef.id;
+    } catch (err) {
+        logger.error('createGroupPostAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 8. likeGroupPostAction ───────────────────────────────────────────────────
@@ -544,6 +574,7 @@ export async function likeGroupPostAction(
     postId: string,
 ): Promise<{ isLiked: boolean; newCount: number }> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -603,6 +634,10 @@ export async function likeGroupPostAction(
     }
 
     return { isLiked, newCount };
+    } catch (err) {
+        logger.error('likeGroupPostAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 9. sendGroupChatMessageAction ────────────────────────────────────────────
@@ -613,6 +648,7 @@ export async function sendGroupChatMessageAction(
     audioUrl?: string,
 ): Promise<string> {
     const uid = await getAuthUserId();
+    try {
     const { checkServerRateLimit } = await import('@/lib/server-safety');
     await checkServerRateLimit(uid);
 
@@ -667,12 +703,17 @@ export async function sendGroupChatMessageAction(
     }).catch(() => {});
 
     return msgRef.id;
+    } catch (err) {
+        logger.error('sendGroupChatMessageAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 10. discoverGroupsAction ─────────────────────────────────────────────────
 
 export async function discoverGroupsAction(): Promise<Group[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const userDoc = await db.collection('users').doc(uid).get();
@@ -732,6 +773,10 @@ export async function discoverGroupsAction(): Promise<Group[]> {
     const top = candidates.slice(0, 10).map(({ score: _score, ...group }) => group);
 
     return dbAdapter.serialize(top);
+    } catch (err) {
+        logger.error('discoverGroupsAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── 11. getUnifiedFeedAction ─────────────────────────────────────────────────
@@ -741,6 +786,7 @@ export async function getUnifiedFeedAction(
     startAfterTimestamp?: string,
 ): Promise<FeedItem[]> {
     const uid = await getAuthUserId();
+    try {
     const db = await getDb();
 
     const userDoc = await db.collection('users').doc(uid).get();
@@ -792,6 +838,10 @@ export async function getUnifiedFeedAction(
     }));
 
     return dbAdapter.serialize(feedItems);
+    } catch (err) {
+        logger.error('getUnifiedFeedAction failed', err, 'GROUPS', { userId: uid });
+        throw err;
+    }
 }
 
 // ── Notification fanout helpers ──────────────────────────────────────────────

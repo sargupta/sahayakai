@@ -4,7 +4,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { buildDirectConversationId, SharedResource } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
-import { createTypedNotification } from './notifications';
+import { createTypedNotification } from '@/lib/notifications/create';
 import { sendPushToUser } from '@/lib/fcm-server';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
