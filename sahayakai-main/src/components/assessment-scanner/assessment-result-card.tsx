@@ -96,7 +96,7 @@ export function AssessmentResultCard({
     // Re-derive header score from the (possibly overridden) questions so the
     // teacher sees the new percentage instantly as they edit marks.
     const totals = useMemo(
-        () => recomputeTotals(edited.questions, edited.totalMaxMarks),
+        () => recomputeTotals(edited.questions ?? [], edited.totalMaxMarks),
         [edited.questions, edited.totalMaxMarks],
     );
 
@@ -258,7 +258,7 @@ export function AssessmentResultCard({
     }, [edited.assessmentId, pdfBusy, studentName, t, toast]);
 
     const hasOverrides = useMemo(
-        () => edited.questions.some((q) => q.teacherOverrides),
+        () => (edited.questions ?? []).some((q) => q.teacherOverrides),
         [edited.questions],
     );
 
@@ -341,8 +341,9 @@ export function AssessmentResultCard({
         const items: { value: string; label?: string }[] = [];
         if (subject) items.push({ value: subject });
         if (gradeLevel) items.push({ value: gradeLevel });
+        const questionCount = (edited.questions ?? []).length;
         items.push({
-            value: `${edited.questions.length} ${edited.questions.length === 1 ? t("question") : t("questions")}`,
+            value: `${questionCount} ${questionCount === 1 ? t("question") : t("questions")}`,
         });
         items.push({
             value: `${edited.pageCount} ${edited.pageCount === 1 ? t("page") : t("pages")}`,
@@ -351,7 +352,7 @@ export function AssessmentResultCard({
             items.push({ value: t("Edited") });
         }
         return items;
-    }, [edited.pageCount, edited.questions.length, edited.teacherEditedAt, gradeLevel, subject, t]);
+    }, [edited.pageCount, edited.questions, edited.teacherEditedAt, gradeLevel, subject, t]);
 
     return (
         <ResultShell
@@ -402,7 +403,7 @@ export function AssessmentResultCard({
                 )}
 
                 {/* Image quality warnings (hidden from print/PDF). */}
-                {edited.imageQualityWarnings.length > 0 && (
+                {(edited.imageQualityWarnings ?? []).length > 0 && (
                     <Alert
                         variant="default"
                         className="border-amber-500/50 bg-amber-500/5 print:hidden"
@@ -411,7 +412,7 @@ export function AssessmentResultCard({
                         <AlertTitle>{t("Image quality")}</AlertTitle>
                         <AlertDescription>
                             <ul className="list-disc pl-4 space-y-1 text-xs">
-                                {edited.imageQualityWarnings.map((w, i) => (
+                                {(edited.imageQualityWarnings ?? []).map((w, i) => (
                                     <li key={i}>{w}</li>
                                 ))}
                             </ul>
@@ -434,9 +435,9 @@ export function AssessmentResultCard({
                     </Alert>
                 )}
 
-                {edited.questions.length > 0 && (
+                {(edited.questions ?? []).length > 0 && (
                     <Accordion type="multiple" className="w-full">
-                        {edited.questions.map((q, i) => (
+                        {(edited.questions ?? []).map((q, i) => (
                             <QuestionRow
                                 key={q.questionId}
                                 question={q}
@@ -449,26 +450,26 @@ export function AssessmentResultCard({
                     </Accordion>
                 )}
 
-                {edited.recommendedNextSteps.length > 0 && (
+                {(edited.recommendedNextSteps ?? []).length > 0 && (
                     <div className="border-t border-border/30 pt-4 print:hidden">
                         <h3 className="font-headline text-sm font-semibold mb-2">
                             {t("Next steps for the teacher")}
                         </h3>
                         <ul className="list-disc pl-5 text-sm space-y-1">
-                            {edited.recommendedNextSteps.map((step, i) => (
+                            {(edited.recommendedNextSteps ?? []).map((step, i) => (
                                 <li key={i}>{step}</li>
                             ))}
                         </ul>
                     </div>
                 )}
 
-                {edited.studentRecommendations.length > 0 && (
+                {(edited.studentRecommendations ?? []).length > 0 && (
                     <div className="border-t border-border/30 pt-4">
                         <h3 className="font-headline text-sm font-semibold mb-2">
                             {t("For the student")}
                         </h3>
                         <ul className="list-disc pl-5 text-sm space-y-1">
-                            {edited.studentRecommendations.map((step, i) => (
+                            {(edited.studentRecommendations ?? []).map((step, i) => (
                                 <li key={i}>{step}</li>
                             ))}
                         </ul>

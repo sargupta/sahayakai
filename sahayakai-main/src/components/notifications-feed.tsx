@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Notification } from "@/types";
 import { markNotificationAsReadAction, markAllAsReadAction } from "@/app/actions/notifications";
 import { acceptConnectionRequestAction, declineConnectionRequestAction } from "@/app/actions/connections";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, type Locale } from "date-fns";
+import { hi, bn, ta, te, kn, gu, enIN } from "date-fns/locale";
 import { Bell, CheckCircle2, UserPlus, Trophy, Info, ExternalLink, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +14,61 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/language-context";
+
+// Map the active UI language (full-name union from @/types) to a date-fns
+// locale so relative timestamps ("2 days ago") render in the teacher's script
+// instead of always English. date-fns 3.6 ships hi/bn/ta/te/kn/gu; Marathi
+// (Devanagari) falls back to Hindi, and Punjabi/Malayalam/Odia (no date-fns
+// locale yet) fall back to English-India — the best minimal correct fix until
+// those locales land upstream.
+// Coerce a range of possible createdAt shapes (ISO string, epoch millis,
+// Firestore Timestamp {seconds,nanoseconds}, a Timestamp with .toDate(), or a
+// real Date) into a valid Date. Returns null when the value can't be parsed so
+// callers can render a safe fallback instead of crashing formatDistanceToNow.
+function coerceToDate(value: unknown): Date | null {
+    if (value == null) return null;
+    try {
+        if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+        if (typeof value === 'number') {
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        if (typeof value === 'string') {
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        if (typeof value === 'object') {
+            const obj = value as { toDate?: () => Date; seconds?: number; _seconds?: number };
+            if (typeof obj.toDate === 'function') {
+                const d = obj.toDate();
+                return d instanceof Date && !isNaN(d.getTime()) ? d : null;
+            }
+            const secs = typeof obj.seconds === 'number' ? obj.seconds
+                : typeof obj._seconds === 'number' ? obj._seconds : undefined;
+            if (typeof secs === 'number') {
+                const d = new Date(secs * 1000);
+                return isNaN(d.getTime()) ? null : d;
+            }
+        }
+    } catch {
+        return null;
+    }
+    return null;
+}
+
+const DATE_LOCALE_MAP: Record<string, Locale> = {
+    English: enIN,
+    Hindi: hi,
+    Marathi: hi,
+    Bengali: bn,
+    Punjabi: enIN,
+    Gujarati: gu,
+    Odia: enIN,
+    Tamil: ta,
+    Telugu: te,
+    Kannada: kn,
+    Malayalam: enIN,
+};
 
 interface NotificationFeedProps {
     notifications: Notification[];
@@ -29,7 +85,8 @@ interface NotificationFeedProps {
 export function NotificationFeed({ notifications: incomingNotifications, userId, onRefresh }: NotificationFeedProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const dateLocale = DATE_LOCALE_MAP[language] ?? enIN;
     // Mirror the incoming notifications into local state so we can optimistically
     // remove/update cards immediately after Accept/Decline lands, instead of
     // waiting for the parent re-fetch (which Next.js router.refresh() doesn't
@@ -204,7 +261,15 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                 {notification.title}
                                             </h3>
                                             <span className="text-xs text-muted-foreground/60 whitespace-nowrap">
-                                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                                {(() => {
+                                                    const d = coerceToDate(notification.createdAt);
+                                                    if (!d) return '';
+                                                    try {
+                                                        return formatDistanceToNow(d, { addSuffix: true, locale: dateLocale });
+                                                    } catch {
+                                                        return '';
+                                                    }
+                                                })()}
                                             </span>
                                         </div>
                                         <p className={`text-sm text-muted-foreground mt-1 ${notification.isRead ? 'opacity-70' : ''}`}>
@@ -230,6 +295,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                             size="sm"
                                                             className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-full px-4"
                                                             onClick={() => handleAccept(notification)}
+                                                            disabled={aState === 'loading'}
                                                             data-testid={`accept-${notification.id}`}
                                                         >
                                                             {t("Accept")}
@@ -239,6 +305,7 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
                                                             variant="outline"
                                                             className="h-8 text-xs rounded-full px-4 border-border text-muted-foreground hover:text-red-500 hover:border-red-200"
                                                             onClick={() => handleDecline(notification)}
+                                                            disabled={aState === 'loading'}
                                                             data-testid={`decline-${notification.id}`}
                                                         >
                                                             {t("Decline")}

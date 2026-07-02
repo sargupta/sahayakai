@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timestamp } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
+import type { Locale } from "date-fns";
+import { enIN, hi, bn, gu, ta, te, kn } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { LANGUAGE_TO_ISO } from "@/types";
 import {
     BookOpen, ClipboardCheck, FileSignature, Images,
     Globe2, GraduationCap, Wand2, ArrowRight, CheckCheck, Check, Mic,
@@ -29,13 +32,21 @@ const RESOURCE_CONFIG: Record<string, { color: string; icon: React.ElementType; 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatTime(ts: Timestamp | null): string {
+// Map UI language ISO code -> date-fns locale. Languages without a bundled
+// date-fns locale (mr, pa, or, ml) fall back to en-IN.
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+    en: enIN, hi, bn, gu, ta, te, kn,
+};
+
+function formatTime(ts: Timestamp | null, uiLangCode: string): string {
     if (!ts) return "";
-    try { return formatDistanceToNow(ts.toDate(), { addSuffix: true }); } catch { return ""; }
+    const locale = DATE_FNS_LOCALES[uiLangCode] ?? enIN;
+    try { return formatDistanceToNow(ts.toDate(), { addSuffix: true, locale }); } catch { return ""; }
 }
 
-function getInitials(name: string): string {
-    return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+function getInitials(name: string | undefined | null): string {
+    if (!name) return "?";
+    return name.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase() || "?";
 }
 
 // ── Resource Card (inside bubble) ─────────────────────────────────────────────
@@ -199,6 +210,8 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRetry }: MessageBubbleProps) {
+    const { language } = useLanguage();
+    const uiLangCode = LANGUAGE_TO_ISO[language] || "en";
     return (
         <div className={cn("flex items-end gap-2", isOwn && "flex-row-reverse")}>
             {/* Avatar — placeholder space when hidden to keep alignment */}
@@ -248,7 +261,7 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
 
                 {/* Timestamp + read receipt */}
                 <div className={cn("flex items-center gap-1 px-1", isOwn && "flex-row-reverse")}>
-                    <p className="text-[10px] text-muted-foreground">{formatTime(message.createdAt)}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatTime(message.createdAt, uiLangCode)}</p>
                     {isOwn && <DeliveryStatus message={message} participantIds={participantIds} onRetry={onRetry} />}
                 </div>
             </div>

@@ -908,11 +908,11 @@ function SummaryView({ callResult, student, onClose, pollExhausted = false }: { 
                     </div>
 
                     {/* Concerns */}
-                    {summary.parentConcerns.length > 0 && (
+                    {(summary.parentConcerns ?? []).length > 0 && (
                         <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
                             <p className="text-xs font-semibold text-amber-600 mb-1">{t("Concerns Raised")}</p>
                             <ul className="space-y-1">
-                                {summary.parentConcerns.map((c, i) => (
+                                {(summary.parentConcerns ?? []).map((c, i) => (
                                     <li key={i} className="text-xs text-amber-800 flex gap-2">
                                         <span className="shrink-0 mt-0.5">-</span> {c}
                                     </li>
@@ -922,11 +922,11 @@ function SummaryView({ callResult, student, onClose, pollExhausted = false }: { 
                     )}
 
                     {/* Parent commitments */}
-                    {summary.parentCommitments.length > 0 && (
+                    {(summary.parentCommitments ?? []).length > 0 && (
                         <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                             <p className="text-xs font-semibold text-blue-600 mb-1">{t("Parent Commitments")}</p>
                             <ul className="space-y-1">
-                                {summary.parentCommitments.map((c, i) => (
+                                {(summary.parentCommitments ?? []).map((c, i) => (
                                     <li key={i} className="text-xs text-blue-800 flex gap-2">
                                         <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5 text-blue-500" /> {c}
                                     </li>
@@ -941,7 +941,7 @@ function SummaryView({ callResult, student, onClose, pollExhausted = false }: { 
                             <ClipboardList className="h-3 w-3" /> {t("Your Action Items")}
                         </p>
                         <ul className="space-y-1">
-                            {summary.actionItemsForTeacher.map((a, i) => (
+                            {(summary.actionItemsForTeacher ?? []).map((a, i) => (
                                 <li key={i} className="text-xs text-primary flex gap-2">
                                     <ArrowRight className="h-3 w-3 shrink-0 mt-0.5 text-primary" /> {a}
                                 </li>
@@ -950,11 +950,11 @@ function SummaryView({ callResult, student, onClose, pollExhausted = false }: { 
                     </div>
 
                     {/* Guidance given */}
-                    {summary.guidanceGiven.length > 0 && (
+                    {(summary.guidanceGiven ?? []).length > 0 && (
                         <div className="p-3 bg-violet-50 rounded-lg border border-violet-100">
                             <p className="text-xs font-semibold text-violet-600 mb-1">{t("Guidance Shared with Parent")}</p>
                             <ul className="space-y-1">
-                                {summary.guidanceGiven.map((g, i) => (
+                                {(summary.guidanceGiven ?? []).map((g, i) => (
                                     <li key={i} className="text-xs text-violet-800 flex gap-2">
                                         <span className="shrink-0 mt-0.5">-</span> {g}
                                     </li>
