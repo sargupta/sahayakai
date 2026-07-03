@@ -296,7 +296,7 @@ export function QuizGeneratorView({
                                                                     {translate(level)}
                                                                 </Badge>
                                                             </TooltipTrigger>
-                                                            <TooltipContent className="bg-[#1e293b] text-white border-slate-700">
+                                                            <TooltipContent className="bg-popover text-popover-foreground border-border">
                                                                 <p className="text-xs">{translate(`Bloom-hint-${level}`)}</p>
                                                             </TooltipContent>
                                                         </Tooltip>
@@ -306,13 +306,13 @@ export function QuizGeneratorView({
 
                                             {field.value && field.value.length > 0 && (
                                                 <div className="mt-3 p-3 bg-muted/20 rounded-xl border border-border/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <div className="text-[10px] font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
+                                                    <div className="text-xs font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
                                                         <Brain className="w-3 h-3" />
                                                         {translate("Pedagogical Strategy")}
                                                     </div>
                                                     <div className="space-y-2">
                                                         {field.value.map((level: string) => (
-                                                            <div key={level} className="text-[11px] leading-relaxed text-foreground flex items-start gap-2">
+                                                            <div key={level} className="text-xs leading-relaxed text-foreground flex items-start gap-2">
                                                                 <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                                                                 <span>
                                                                     <span className="font-bold text-foreground">{translate(level)}:</span>{" "}

@@ -11,6 +11,10 @@ import type { GroupPost } from '@/types/community';
 
 // Mock useLanguage so we can drive language-dependent paths.
 let currentLanguage = 'English';
+
+jest.mock('@/context/auth-context', () => ({
+    useAuth: () => ({ user: { uid: 'viewer-1' }, loading: false }),
+}));
 jest.mock('@/context/language-context', () => ({
     useLanguage: () => ({ language: currentLanguage, t: (s: string) => s }),
 }));

@@ -127,7 +127,7 @@ export function ReportDialog({ open, onOpenChange, targetType, targetId }: Repor
                             rows={3}
                             className="rounded-md border-border resize-none focus-visible:ring-primary/30"
                         />
-                        <p className="text-right text-[11px] text-muted-foreground">
+                        <p className="text-right text-xs text-muted-foreground">
                             {freeText.length}/{REPORT_FREETEXT_MAX}
                         </p>
                     </div>

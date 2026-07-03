@@ -86,6 +86,7 @@ function scanFile(relPath) {
 const baseSha = process.env.BASE_SHA;
 
 let files;
+let addedLinesByFile = null;
 if (baseSha) {
   files = git(['diff', '--name-only', `${baseSha}...HEAD`], { cwd: repoRoot })
     .split('\n')
@@ -95,6 +96,27 @@ if (baseSha) {
     console.log('OK — no relevant .tsx files changed.');
     process.exit(0);
   }
+  // Ratchet on ADDED LINES only. A whole-file scan would fail PRs that
+  // merely touch files carrying legacy debt (measured: 82 legacy hits in
+  // ~20 files at gate introduction) — the burn-down is a tranche, not a
+  // per-PR toll. Parse `git diff -U0` hunks into per-file added-line sets.
+  addedLinesByFile = new Map();
+  const diff = git(['diff', '-U0', `${baseSha}...HEAD`, '--', ...files.map((f) => f)], { cwd: repoRoot });
+  let current = null;
+  for (const line of diff.split('\n')) {
+    const fileMatch = line.match(/^\+\+\+ b\/(.+)$/);
+    if (fileMatch) {
+      current = fileMatch[1];
+      if (!addedLinesByFile.has(current)) addedLinesByFile.set(current, new Set());
+      continue;
+    }
+    const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
+    if (hunk && current) {
+      const start = Number(hunk[1]);
+      const count = hunk[2] === undefined ? 1 : Number(hunk[2]);
+      for (let i = 0; i < count; i++) addedLinesByFile.get(current).add(start + i);
+    }
+  }
 } else {
   files = git(['ls-files', `${appPrefix}src/**/*.tsx`], { cwd: repoRoot })
     .split('\n')
@@ -102,12 +124,15 @@ if (baseSha) {
     .filter(isTarget);
 }
 
-const hits = files.flatMap(scanFile);
+let hits = files.flatMap(scanFile);
+if (addedLinesByFile) {
+  hits = hits.filter((h) => addedLinesByFile.get(h.file)?.has(h.line));
+}
 
 if (baseSha) {
   if (hits.length > 0) {
     console.error(
-      `::error::Gate 11 — ${hits.length} banned design-token pattern(s) in files this change touches:`
+      `::error::Gate 11 — ${hits.length} banned design-token pattern(s) on lines this change ADDS:`
     );
     for (const h of hits) {
       console.error(`  ${h.file}:${h.line}  [${h.rule}]  "${h.match}"`);
