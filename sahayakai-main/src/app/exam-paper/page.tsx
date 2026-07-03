@@ -8,7 +8,7 @@ import { getAuthToken } from "@/lib/get-auth-token";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
-import { getProfileData } from "@/app/actions/profile";
+import { getProfileData } from "@/lib/api/profile";
 import {
   FileText,
   BookOpen,

@@ -17,7 +17,7 @@ import {
   getLibraryResources,
   likeResourceAction,
   saveResourceToLibraryAction,
-} from '@/app/actions/community';
+} from '@/lib/api/community';
 import {
   Loader2, Search, Library, Bookmark, ArrowRight, Heart,
   Mic, MicOff, LayoutGrid,

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { getNotificationsAction } from "@/app/actions/notifications";
+import { getNotificationsAction } from "@/lib/api/notifications";
 import { NotificationFeed } from "@/components/notifications-feed";
 import { Bell, Loader2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/auth-gate";

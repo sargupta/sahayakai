@@ -16,7 +16,7 @@ jest.mock('@/context/auth-context', () => ({
 const mockGetProfileData = jest.fn();
 const mockUpdateProfileAction = jest.fn();
 
-jest.mock('@/app/actions/profile', () => ({
+jest.mock('@/lib/api/profile', () => ({
     getProfileData: (...args: any[]) => mockGetProfileData(...args),
     updateProfileAction: (...args: any[]) => mockUpdateProfileAction(...args),
 }));

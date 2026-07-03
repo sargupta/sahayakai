@@ -38,7 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { updateProfileAction } from '@/app/actions/profile';
+import { updateProfileAction } from '@/lib/api/profile';
 import { UserCircle, Upload } from 'lucide-react';
 import Link from 'next/link';
 

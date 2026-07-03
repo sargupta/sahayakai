@@ -1,0 +1,49 @@
+[
+  {
+    "label": "Class 5 Mathematics — Fractions, low-resource rural classroom",
+    "input": {
+      "topic": "Fractions",
+      "gradeLevels": ["Class 5"],
+      "language": "English",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Mathematics",
+      "difficultyLevel": "standard",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 10 Social Science — Nationalism in India, medium-resource classroom",
+    "input": {
+      "topic": "Nationalism in India - Non-Cooperation and Civil Disobedience Movements",
+      "gradeLevels": ["Class 10"],
+      "language": "English",
+      "resourceLevel": "medium",
+      "useRuralContext": false,
+      "subject": "Social Science",
+      "difficultyLevel": "standard",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 7 Science — Acids, Bases and Salts with NCERT chapter alignment",
+    "input": {
+      "topic": "Acids, Bases and Salts",
+      "gradeLevels": ["Class 7"],
+      "language": "English",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Science",
+      "ncertChapter": {
+        "title": "Acids, Bases and Salts",
+        "number": 5,
+        "subject": "Science",
+        "learningOutcomes": [
+          "Students will classify substances as acidic, basic, or neutral using indicators",
+          "Students will describe the neutralisation reaction"
+        ]
+      },
+      "userId": ""
+    }
+  }
+]

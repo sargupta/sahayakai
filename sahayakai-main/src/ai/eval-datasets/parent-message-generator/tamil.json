@@ -1,0 +1,68 @@
+[
+  {
+    "label": "class6-attendance-concern-tamil",
+    "input": {
+      "studentName": "Karthik Murugan",
+      "className": "Class 6C",
+      "subject": "Science",
+      "reason": "consecutive_absences",
+      "reasonContext": "The student has been absent for multiple consecutive school days. Express genuine concern for the student's well-being, ask if everything is okay at home, and invite the parent to reach out. Be warm, not accusatory.",
+      "consecutiveAbsentDays": 3,
+      "teacherNote": "கார்த்திக் திங்கட்கிழமையிலிருந்து பள்ளிக்கு வரவில்லை. வகுப்பில் அவரை மிகவும் மிஸ் செய்கிறோம். வீட்டில் எல்லாம் நலமா என்று அறிய விரும்புகிறேன்.",
+      "teacherName": "Revathi Subramanian",
+      "schoolName": "Panchayat Union Middle School, Madurai",
+      "parentLanguage": "Tamil"
+    }
+  },
+  {
+    "label": "class10-exam-results-support-tamil",
+    "input": {
+      "studentName": "Priya Selvam",
+      "className": "Class 10B",
+      "subject": "Mathematics",
+      "reason": "poor_performance",
+      "reasonContext": "The student's academic performance has recently declined. Focus on offering support — mention that you want to work together to help the student succeed. Do NOT blame the student or parent.",
+      "teacherNote": "பிரியா வகுப்பில் கவனமாக இருக்கிறார், ஆனால் சமீபத்திய தேர்வுகளில் மதிப்பெண்கள் குறைந்துள்ளன. மாலை நேர சிறப்பு வகுப்பில் சேர்த்து உதவ விரும்புகிறேன்.",
+      "teacherName": "Senthil Kumar",
+      "schoolName": "Government Higher Secondary School, Villupuram",
+      "parentLanguage": "Tamil",
+      "performanceContext": {
+        "latestPercentage": 36,
+        "isAtRisk": false,
+        "subjectBreakdown": [
+          {
+            "subject": "Mathematics",
+            "name": "Unit Test 3",
+            "marksObtained": 16,
+            "maxMarks": 50,
+            "percentage": 32,
+            "date": "2026-06-25"
+          },
+          {
+            "subject": "Mathematics",
+            "name": "Quarterly Examination",
+            "marksObtained": 40,
+            "maxMarks": 100,
+            "percentage": 40,
+            "date": "2026-06-05"
+          }
+        ]
+      },
+      "performanceSummary": "Mathematics Unit Test 3: 16/50 (32%), Quarterly Examination: 40/100 (40%)"
+    }
+  },
+  {
+    "label": "class3-positive-feedback-kolam-maths-tamil",
+    "input": {
+      "studentName": "Anitha Raj",
+      "className": "Class 3A",
+      "subject": "Mathematics",
+      "reason": "positive_feedback",
+      "reasonContext": "Share a positive achievement or behavior. This message should be warm, celebratory, and brief. Encourage the parent to praise the student at home.",
+      "teacherNote": "அனிதா இன்று கோலம் வடிவங்களைப் பயன்படுத்தி சமச்சீர் (symmetry) பாடத்தை முழு வகுப்புக்கும் விளக்கினார். அவரது தன்னம்பிக்கை இந்த பருவத்தில் அழகாக வளர்ந்துள்ளது.",
+      "teacherName": "Lakshmi Narayanan",
+      "schoolName": "Corporation Primary School, Coimbatore",
+      "parentLanguage": "Tamil"
+    }
+  }
+]

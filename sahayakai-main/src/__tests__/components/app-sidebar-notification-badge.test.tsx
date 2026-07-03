@@ -61,7 +61,7 @@ jest.mock('@/lib/profile-utils', () => ({
     isNewUser: jest.fn(() => false),
 }));
 
-jest.mock('@/app/actions/profile', () => ({
+jest.mock('@/lib/api/profile', () => ({
     updateProfileAction: jest.fn(),
 }));
 

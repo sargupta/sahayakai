@@ -216,9 +216,10 @@ jest.mock('@/lib/firebase-admin', () => ({
     getDb: async () => mockDb,
 }));
 
-import { toggleLikeAction } from '@/app/actions/community';
+// tranche 5: toggleLike migrated to the community service (uid is explicit).
+import { toggleLike } from '@/server/community';
 
-describe('F5-002: toggleLikeAction is TOCTOU-safe under concurrent calls', () => {
+describe('F5-002: toggleLike is TOCTOU-safe under concurrent calls', () => {
     beforeEach(() => {
         store.docs.clear();
         // Seed the post with likesCount=0.
@@ -227,7 +228,7 @@ describe('F5-002: toggleLikeAction is TOCTOU-safe under concurrent calls', () =>
     });
 
     it('10 concurrent toggles from the same user → exactly one like-doc, counter is +1 or 0', async () => {
-        await Promise.all(Array.from({ length: 10 }, () => toggleLikeAction('p1')));
+        await Promise.all(Array.from({ length: 10 }, () => toggleLike('user-x', 'p1')));
 
         // Count like-docs that actually landed.
         let likeDocs = 0;

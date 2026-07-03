@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { getClassesAction, deleteClassAction } from "@/app/actions/attendance";
+import { getClassesAction, deleteClassAction } from "@/lib/api/attendance";
 import type { ClassRecord } from "@/types/attendance";
 import { CreateClassDialog } from "@/components/attendance/create-class-dialog";
 import { useToast } from "@/hooks/use-toast";

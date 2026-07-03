@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/image-uploader";
 import { Loader2, Plus } from "lucide-react";
-import { createPostAction } from "@/app/actions/community";
+import { createPostAction } from "@/lib/api/community";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";

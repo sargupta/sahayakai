@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { getStudentSummariesAction } from "@/app/actions/attendance";
+import { getStudentSummariesAction } from "@/lib/api/attendance";
 import type { StudentAttendanceSummary } from "@/types/attendance";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";

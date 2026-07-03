@@ -1,0 +1,10 @@
+{
+  "module": "src/ai/flows/instant-answer.ts",
+  "export": "instantAnswer",
+  "flowName": "instantAnswerFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "answer"
+  ],
+  "notes": "userId is REQUIRED by the input schema (middleware normally injects x-user-id); the wrapper rejects falsy userId, applies checkServerRateLimit(uid), and persists output to Storage/Firestore for that uid — the runner needs Firebase Admin creds and should use a dedicated eval uid. Uses the google-search Genkit tool (grounding call tracked per request), so runs incur search-grounding cost and may be slower/non-deterministic. videoSuggestionUrl is a YouTube search URL and gradeLevel/subject are metadata — excluded from script checks. All cases supply language+gradeLevel explicitly so the wrapper skips the user-profile fetch. Wrapper also runs validateTopicSafety(question) and caps question at 4000 chars."
+}

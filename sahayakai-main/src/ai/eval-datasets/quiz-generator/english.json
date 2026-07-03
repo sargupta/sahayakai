@@ -1,0 +1,39 @@
+[
+  {
+    "label": "Class 7 Science — Photosynthesis, 5 MCQs",
+    "input": {
+      "topic": "Photosynthesis",
+      "numQuestions": 5,
+      "gradeLevel": "Class 7",
+      "language": "English",
+      "questionTypes": ["multiple_choice"],
+      "subject": "Science",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 10 Social Science — Nationalism in India, mixed question types",
+    "input": {
+      "topic": "Nationalism in India",
+      "numQuestions": 10,
+      "gradeLevel": "Class 10",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "true_false", "short_answer"],
+      "subject": "Social Science",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 9 Mathematics — Linear Equations in Two Variables, hard difficulty",
+    "input": {
+      "topic": "Linear Equations in Two Variables",
+      "numQuestions": 7,
+      "gradeLevel": "Class 9",
+      "language": "English",
+      "questionTypes": ["multiple_choice", "short_answer"],
+      "subject": "Mathematics",
+      "targetDifficulty": "hard",
+      "userId": ""
+    }
+  }
+]

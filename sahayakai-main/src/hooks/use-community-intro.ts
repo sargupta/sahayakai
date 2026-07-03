@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { getProfileData, updateProfileAction } from '@/app/actions/profile';
+import { getProfileData, updateProfileAction } from '@/lib/api/profile';
 import type { UserProfile } from '@/types';
 
 type CommunityIntroState = 'none' | 'ready' | 'visited';

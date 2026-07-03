@@ -66,38 +66,27 @@ const expectUnauthorized = (call: () => Promise<unknown>) =>
     expect(call()).rejects.toThrow(/Unauthorized/i);
 
 // ── notifications.ts ───────────────────────────────────────────────────────
-import * as notifications from '@/app/actions/notifications';
-
-describe('notifications.ts — Wave 1 auth gate', () => {
-    it('getNotificationsAction', () =>
-        expectUnauthorized(() => notifications.getNotificationsAction()));
-    it('markNotificationAsReadAction', () =>
-        expectUnauthorized(() => notifications.markNotificationAsReadAction('notif-1')));
-    it('markAllAsReadAction', () =>
-        expectUnauthorized(() => notifications.markAllAsReadAction()));
-    // createNotification is server-only (stamps caller uid as senderId when
-    // called from a request context). Anonymous callers are allowed because
-    // it's also invoked from cron jobs without a request context. Verified
-    // by inspection rather than by the table test.
-});
+// Migrated to /api/notifications/* (tranche 5). The auth-gate assertions now
+// live in src/__tests__/api/notifications/notifications.test.ts (401 per
+// route with no x-user-id header).
 
 // ── profile.ts ─────────────────────────────────────────────────────────────
-import * as profile from '@/app/actions/profile';
+// Migrated to /api/profile/** (tranche 5); service logic now lives in
+// src/server/profile.ts with the same requireAuth gates. Route-level 401s
+// are asserted in src/__tests__/api/profile/profile-routes-401.test.ts.
+import * as profile from '@/server/profile';
 
-describe('profile.ts — Wave 1 auth gate', () => {
+describe('profile service — Wave 1 auth gate', () => {
     it('getProfileData', () => expectUnauthorized(() => profile.getProfileData()));
     it('updateProfileAction', () =>
         expectUnauthorized(() => profile.updateProfileAction('uid-1', {})));
     it('markChecklistItemAction', () =>
         expectUnauthorized(() => profile.markChecklistItemAction('uid-1', 'item-1')));
-    it('addCertificationAction', () => {
-        const fd = new FormData();
-        fd.set('certName', 'Test Cert');
-        return expectUnauthorized(() => profile.addCertificationAction(fd));
-    });
+    it('addCertificationAction', () =>
+        expectUnauthorized(() => profile.addCertificationAction({ certName: 'Test Cert' })));
 });
 
-describe('profile.ts — cross-user write is forbidden', () => {
+describe('profile service — cross-user write is forbidden', () => {
     it('updateProfileAction rejects another uid', async () => {
         mockHeadersMap.set('x-user-id', 'caller-uid');
         await expect(profile.updateProfileAction('different-uid', { displayName: 'X' }))
@@ -111,9 +100,12 @@ describe('profile.ts — cross-user write is forbidden', () => {
 });
 
 // ── auth.ts ────────────────────────────────────────────────────────────────
-import * as auth from '@/app/actions/auth';
+// Migrated to /api/account/{sync,profile} (tranche 5); service logic (incl.
+// F1-06 / F11-5) now lives in src/server/auth.ts. Route-level 401s are
+// asserted in src/__tests__/api/account/account-routes-401.test.ts.
+import * as auth from '@/server/auth';
 
-describe('auth.ts — Wave 1 auth gate', () => {
+describe('auth service — Wave 1 auth gate', () => {
     it('syncUserAction returns Unauthorized when no session', async () => {
         const result = await auth.syncUserAction({ uid: 'x', email: null, displayName: null, photoURL: null });
         expect(result.success).toBe(false);
@@ -133,24 +125,18 @@ describe('auth.ts — Wave 1 auth gate', () => {
 });
 
 // ── content.ts ─────────────────────────────────────────────────────────────
-import * as content from '@/app/actions/content';
-
-describe('content.ts — Wave 1 auth gate', () => {
-    it('getUserContent', () => expectUnauthorized(() => content.getUserContent()));
-    it('searchContentAction', () =>
-        expectUnauthorized(() => content.searchContentAction('uid-1', 'q')));
-    it('saveToLibrary', () =>
-        expectUnauthorized(() => content.saveToLibrary('uid-1', 'lesson-plan' as any, 'title', {})));
-    it('recordPdfDownload', () =>
-        expectUnauthorized(() => content.recordPdfDownload('uid-1', 'title', 'data:application/pdf;base64,YWJj')));
-    it('testStorageConnection', () =>
-        expectUnauthorized(() => content.testStorageConnection()));
-});
+// Migrated to /api/content/{library,search,pdf-download,storage-test}
+// (tranche 5). The auth-gate assertions (401 before any Firestore/Storage
+// touch) now live in src/__tests__/api/content/content-library-routes.test.ts.
 
 // ── telemetry.ts ───────────────────────────────────────────────────────────
-import * as telemetry from '@/app/actions/telemetry';
+// Migrated to POST /api/telemetry (tranche 5); service in
+// src/server/telemetry.ts. Route 401 asserted in
+// src/__tests__/api/telemetry-route.test.ts (client wrapper converts the
+// 401 back to the historic silent-drop result).
+import * as telemetry from '@/server/telemetry';
 
-describe('telemetry.ts — Wave 1 auth gate', () => {
+describe('telemetry service — Wave 1 auth gate', () => {
     it('syncTelemetryEvents returns success+0 when unauthenticated (silent drop)', async () => {
         const result = await telemetry.syncTelemetryEvents([{ event: 'test' }]);
         expect(result).toEqual({ success: true, count: 0 });
@@ -158,26 +144,11 @@ describe('telemetry.ts — Wave 1 auth gate', () => {
 });
 
 // ── lesson-plan.ts ─────────────────────────────────────────────────────────
-import * as lessonPlan from '@/app/actions/lesson-plan';
-
-describe('lesson-plan.ts — Wave 1 auth gate', () => {
-    it('getCachedLessonPlan returns null on auth failure (graceful)', async () => {
-        // Action wraps requireAuth in try/catch and returns null on any error.
-        const result = await lessonPlan.getCachedLessonPlan('topic', 'Grade 8', 'English');
-        expect(result).toBeNull();
-    });
-    // saveLessonPlanToCache is verified by inspection — its try/catch swallows
-    // the auth error to "fail gracefully" (caching is best-effort), but the
-    // requireAuth() call still gates Firestore writes.
-});
+// Migrated to /api/lesson-plan/cache (tranche 5). The auth gate (401 on both
+// verbs) and the graceful-null client behavior are asserted in
+// src/__tests__/api/lesson-plan/lesson-plan-cache-routes.test.ts.
 
 // ── ncert.ts ───────────────────────────────────────────────────────────────
-import * as ncert from '@/app/actions/ncert';
-
-describe('ncert.ts — Wave 1 auth gate', () => {
-    it('getNCERTChapters returns [] when unauthenticated (graceful)', async () => {
-        // Action wraps requireAuth in try/catch and returns [] on any error.
-        const result = await ncert.getNCERTChapters(8);
-        expect(result).toEqual([]);
-    });
-});
+// Migrated to /api/ncert/chapters (tranche 5). The auth gate (401) and the
+// graceful-[] client behavior are asserted in
+// src/__tests__/api/ncert/ncert-chapters-route.test.ts.

@@ -16,7 +16,7 @@ import {
     Search,
     Activity
 } from 'lucide-react';
-import { getLogsAction } from '@/app/actions/logs';
+import { getLogsAction } from '@/lib/api/logs';
 import { LogEntryDTO } from '@/lib/services/log-service';
 import { format } from 'date-fns';
 

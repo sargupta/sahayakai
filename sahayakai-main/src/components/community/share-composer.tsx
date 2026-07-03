@@ -9,7 +9,7 @@ import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { useClickOutside } from '@/hooks/use-click-outside';
-import { createGroupPostAction } from '@/app/actions/groups';
+import { createGroupPostAction } from '@/lib/api/groups';
 import { SHARE_TEMPLATES, type PostType } from '@/types/community';
 import {
   Lightbulb,

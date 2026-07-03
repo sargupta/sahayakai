@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { getChaptersForGrade, type NCERTChapter } from '@/data/ncert';
-import { getNCERTChapters } from '@/app/actions/ncert';
+import { getNCERTChapters } from '@/lib/api/ncert';
 import { BookOpen, Target, Clock, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/context/language-context';
 

@@ -1,0 +1,44 @@
+[
+  {
+    "label": "CBSE Class 10 Science (Biology chapters) in Tamil — 40-mark unit test",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 10",
+      "subject": "Science",
+      "chapters": ["Life Processes", "How Do Organisms Reproduce", "Heredity and Evolution"],
+      "maxMarks": 40,
+      "language": "Tamil",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  },
+  {
+    "label": "CBSE Class 10 Mathematics in Tamil — 80 marks, mixed difficulty",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 10",
+      "subject": "Mathematics",
+      "chapters": ["Real Numbers", "Polynomials", "Quadratic Equations"],
+      "maxMarks": 80,
+      "language": "Tamil",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  },
+  {
+    "label": "Tamil Nadu State Board (SSLC) Class 10 Science in Tamil — 75 marks, no official blueprint (fallback path)",
+    "input": {
+      "board": "Tamil Nadu State Board (SSLC)",
+      "gradeLevel": "Class 10",
+      "subject": "Science",
+      "chapters": ["Laws of Motion", "Optics", "Types of Chemical Reactions"],
+      "maxMarks": 75,
+      "language": "Tamil",
+      "difficulty": "moderate",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": false
+    }
+  }
+]

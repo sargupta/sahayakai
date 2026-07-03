@@ -11,7 +11,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { GRADE_LEVELS, SUBJECTS } from "@/types";
-import { createClassAction } from "@/app/actions/attendance";
+import { createClassAction } from "@/lib/api/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";

@@ -37,11 +37,11 @@ jest.mock('@/lib/firebase', () => ({
     auth: { currentUser: { uid: 'user-a', displayName: 'Test User', photoURL: null } },
 }));
 
-// Mock server actions
+// Mock the typed API client wrappers (tranche 5: server actions → API routes)
 const mockSendMessage = jest.fn().mockResolvedValue({ messageId: 'new-msg-1' });
 const mockMarkRead = jest.fn().mockResolvedValue(undefined);
 
-jest.mock('@/app/actions/messages', () => ({
+jest.mock('@/lib/api/messages', () => ({
     sendMessageAction: (...args: any[]) => mockSendMessage(...args),
     markConversationReadAction: (...args: any[]) => mockMarkRead(...args),
 }));

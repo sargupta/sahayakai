@@ -30,7 +30,7 @@ jest.mock('firebase/firestore', () => ({
     onSnapshot: jest.fn(() => jest.fn()),
 }));
 
-jest.mock('@/app/actions/messages', () => ({
+jest.mock('@/lib/api/messages', () => ({
     getOrCreateDirectConversationAction: jest.fn(),
 }));
 

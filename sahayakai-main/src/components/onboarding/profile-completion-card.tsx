@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DEPARTMENTS } from "@/types";
-import { updateProfileAction } from "@/app/actions/profile";
+import { updateProfileAction } from "@/lib/api/profile";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { Loader2, X } from "lucide-react";
@@ -48,7 +48,7 @@ export function ProfileCompletionCard({ onComplete, onDismiss, className }: Prof
 
             await updateProfileAction(user.uid, data);
             // Mark onboarding checklist item
-            import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+            import('@/lib/api/profile').then(({ markChecklistItemAction }) =>
                 markChecklistItemAction(user.uid, 'complete-profile')
             ).catch(() => {});
             toast({ title: t("Profile updated"), description: t("Your profile is now complete.") });
