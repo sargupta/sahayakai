@@ -25,11 +25,14 @@ if (!files) {
     process.exit(2);
 }
 let total = 0;
+let gz = 0;
 for (const f of files.filter((f) => f.endsWith('.js'))) {
-    total += fs.statSync(path.join('.next', f)).size;
+    const buf = fs.readFileSync(path.join('.next', f));
+    total += buf.length;
+    gz += zlib.gzipSync(buf).length;
 }
 const kb = Math.round(total / 1024);
-console.log(`first-load JS for ${route}: ${kb} kB (budget ${budgetKb} kB, ${files.length} chunks)`);
+console.log(`first-load JS for ${route}: ${kb} kB raw / ${Math.round(gz / 1024)} kB gzip (budget ${budgetKb} kB raw, ${files.length} chunks)`);
 if (kb > budgetKb) {
     console.error(`::error::first-load JS budget exceeded: ${kb} kB > ${budgetKb} kB for ${route}. Reduce or consciously raise the budget in test.yml with a justification.`);
     process.exit(1);
