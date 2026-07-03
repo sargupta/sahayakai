@@ -7,7 +7,6 @@
  * Docs: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
  */
 
-import { logger } from '@/lib/logger';
 
 const REQUIRED_ENV_VARS: Record<string, string> = {
     GOOGLE_GENAI_API_KEY:         'Gemini AI (lesson plan, visual aid, etc.)',
@@ -46,7 +45,7 @@ export async function register() {
         // Don't throw — Cloud Run health probe would fail and block rollout
         // Log loudly instead so it's visible in startup logs
     } else {
-        logger.info('All required environment variables present.', 'startup');
+        console.info('[startup] All required environment variables present.');
     }
 
     // Warn about optional vars
