@@ -24,7 +24,9 @@ export async function exportElementToPdf({
     const element = document.getElementById(elementId);
     if (!element) return { ok: false, error: "Element not found" };
 
-    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+    // jspdf v4 removed the reliable default export from the ESM build; the
+    // named `jsPDF` export is stable across v2–v4.
+    const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
         import("jspdf"),
         import("html2canvas"),
     ]);
