@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/popover";
 import { useLanguage } from "@/context/language-context";
 import { BackButton } from "@/components/ui/back-button";
+import { ModerationMenu } from "@/components/moderation/moderation-menu";
 
 // ── Resource type picker (what teacher can share) ─────────────────────────────
 
@@ -285,6 +286,16 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                         </p>
                     )}
                 </div>
+                {/* Moderation v1: block/report the other participant (1:1 only) */}
+                {otherUid && (
+                    <ModerationMenu
+                        targetUid={otherUid}
+                        targetName={title}
+                        reportTargetType="message"
+                        reportTargetId={conversation.id}
+                        onBlocked={onBack}
+                    />
+                )}
             </div>
 
             {/* Messages */}

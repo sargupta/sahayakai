@@ -27,6 +27,7 @@ import { checkServerRateLimit } from "@/lib/server-safety";
 import { cachedPerUser, invalidateUserCache } from "@/lib/server-cache";
 import { ForbiddenError } from "@/lib/auth-helpers";
 import { createTypedNotification } from "@/lib/notifications/create";
+import { getBlockedUidSet } from "@/server/moderation";
 import type { TeacherSuggestion } from "@/types/community";
 
 // F2-01 (P0 PII leak): the previous implementation returned raw Firestore
@@ -221,11 +222,16 @@ export async function getPosts(callerId: string, filters: GetPostsFilters = {}) 
         query = query.limit(filters.limit);
     }
 
-    const snapshot = await query.get();
-    return dbAdapter.serialize(snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    })));
+    // Moderation v1: read-time filter — the caller never sees posts authored
+    // by users they have blocked. Filter is one-directional by design (the
+    // blocked author's view of THEIR OWN content is unaffected).
+    const [snapshot, blocked] = await Promise.all([query.get(), getBlockedUidSet(callerId)]);
+    return dbAdapter.serialize(snapshot.docs
+        .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }))
+        .filter((p: any) => !blocked.has(p.authorId)));
     } catch (err) {
         logger.error('getPosts failed', err, 'COMMUNITY', { userId: callerId });
         throw err;
@@ -321,13 +327,19 @@ export async function getFollowingPosts(followerId: string) {
     if (followingIds.length === 0) return [];
 
     // 2. Fetch posts from those IDs
-    const snapshot = await db.collection('posts')
-        .where('authorId', 'in', followingIds.slice(0, 30))
-        .orderBy('createdAt', 'desc')
-        .limit(20)
-        .get();
+    const [snapshot, blocked] = await Promise.all([
+        db.collection('posts')
+            .where('authorId', 'in', followingIds.slice(0, 30))
+            .orderBy('createdAt', 'desc')
+            .limit(20)
+            .get(),
+        // Moderation v1 read-time filter (see getPosts).
+        getBlockedUidSet(followerId),
+    ]);
 
-    return dbAdapter.serialize(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    return dbAdapter.serialize(snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((p: any) => !blocked.has(p.authorId)));
     } catch (err) {
         logger.error('getFollowingPosts failed', err, 'COMMUNITY', { userId: followerId });
         throw err;
@@ -372,10 +384,16 @@ export async function getLibraryResources(callerId: string, filters: LibraryReso
         snapshot = await query.orderBy('stats.likes', 'desc').limit(50).get();
     }
 
-    let resources = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data()
-    }));
+    // Moderation v1 read-time filter (see getPosts): hide resources authored
+    // by users the caller has blocked.
+    const blocked = await getBlockedUidSet(callerId);
+
+    let resources = snapshot.docs
+        .map((doc: any) => ({
+            id: doc.id,
+            ...doc.data()
+        }))
+        .filter((r: any) => !blocked.has(r.authorId));
 
     if (hasFilters) {
         // Sort in memory

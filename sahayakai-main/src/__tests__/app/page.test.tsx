@@ -170,15 +170,27 @@ describe('Home Page', () => {
         expect(screen.getByText(/SahayakAI, your personal AI companion/i)).toBeInTheDocument();
     });
 
-    it('renders quick action cards (spine tools + Labs entry)', () => {
+    it('renders the compact prep-tool row (spine tools + quiet Labs link)', () => {
         render(<Home />);
+        // The six prep-loop tools render once, as a compact secondary row —
+        // not a grid of equal cards (design proposals 01 + 04).
         expect(screen.getByText('Lesson Plan')).toBeInTheDocument();
+        expect(screen.getByText('Worksheet Wizard')).toBeInTheDocument();
         expect(screen.getByText('Quiz Generator')).toBeInTheDocument();
+        expect(screen.getByText('Exam Paper')).toBeInTheDocument();
         expect(screen.getByText('Rubric Generator')).toBeInTheDocument();
-        expect(screen.getByText('Labs')).toBeInTheDocument();
-        // Parked tools (src/lib/labs.ts) must NOT surface as dashboard cards.
+        expect(screen.getByText('Instant Answer')).toBeInTheDocument();
+        // Labs is a tertiary text link, not a peer card.
+        expect(screen.getByText('Explore Labs')).toBeInTheDocument();
+        // Parked tools (src/lib/labs.ts) must NOT surface on the dashboard.
         expect(screen.queryByText('Content Creator')).not.toBeInTheDocument();
         expect(screen.queryByText('Teacher Training')).not.toBeInTheDocument();
+    });
+
+    it('hides the "continue where you left off" strip when the library is empty', () => {
+        render(<Home />);
+        // fetch mock returns no library items, so the recents strip stays hidden.
+        expect(screen.queryByText('Continue where you left off')).not.toBeInTheDocument();
     });
 
     it('navigates on form submission', async () => {

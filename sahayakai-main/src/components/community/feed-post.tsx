@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { ModerationMenu } from "@/components/moderation/moderation-menu";
 import type { GroupPost, PostType, PostAttachment } from "@/types/community";
 import type { ConnectionStatus } from "@/types";
 
@@ -237,6 +238,14 @@ export default function FeedPost({
               <span className="shrink-0 text-muted-foreground/60">{timeAgo}</span>
             </div>
           </div>
+
+          {/* Moderation v1: block author / report post (hides itself on own posts) */}
+          <ModerationMenu
+            targetUid={post.authorUid}
+            targetName={post.authorName}
+            reportTargetType="post"
+            reportTargetId={post.id}
+          />
         </div>
 
         {/* Post type badge */}

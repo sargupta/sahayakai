@@ -51,7 +51,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 28 70% 59%;
+    --primary: 27 90% 37%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 123 37% 25%;
@@ -68,7 +68,7 @@
 
     --border: 220 16% 93%;
     --input: 220 16% 90%;
-    --ring: 28 70% 59%;
+    --ring: 27 90% 37%;
 
     --chart-1: 28 70% 59%;
     --chart-2: 123 37% 25%;
@@ -80,10 +80,10 @@
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 95%;
-    --sidebar-accent-foreground: 28 70% 59%;
+    --sidebar-accent: 28 70% 96%;
+    --sidebar-accent-foreground: 27 90% 37%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 28 70% 59%;
+    --sidebar-ring: 27 90% 37%;
 
     /* Paint this subtree's own surface light too, so any element that
        relies on inherited body background (not an explicit bg-*) reads
@@ -155,11 +155,20 @@
        For Indian Teachers
        ======================================== */
 
-    /* Primary - Saffron Theme (Indian Flag Orange) */
-    --primary: 28 70% 59%;
-    /* #FF9933 - Saffron */
+    /* Primary - Saffron Theme (Indian Flag Orange)
+       Phase 0 contrast fix (design proposal 02, 2026-07-03): the old
+       interactive tone hsl(28 70% 59%) (#E0924D, nominal #FF9933) hit only
+       2.50:1 against white — failing WCAG AA (4.5:1 text, 3:1 UI). The
+       proposal's saffron-600 #F08A2E ALSO measures 2.51:1, so the ramp's
+       text/interactive tone is corrected to hsl(27 90% 37%) = #B35609:
+       4.94:1 vs white, 4.89:1 vs the warm app background — AA-passing in
+       BOTH directions (saffron text on white, white text on saffron).
+       Flag saffron #FF9933 and the bright --saffron-{50..300} shades are
+       DECORATIVE ONLY (gradients, tints, glows) — never text or icons. */
+    --primary: 27 90% 37%;
+    /* #B35609 - Deep saffron, AA-passing interactive/text tone */
     --primary-foreground: 0 0% 100%;
-    /* White text on Saffron */
+    /* White text on Saffron — 4.94:1, passes AA */
 
     /* Saffron scale for landing page — same hue ~28° as --primary, shaded
        across lightness. Used by landing-hero CTAs, landing-pillar-strip
@@ -207,8 +216,8 @@
     /* Warm light gray */
     --input: 220 16% 90%;
     /* Slightly darker for input affordance */
-    --ring: 28 70% 59%;
-    /* Saffron focus ring */
+    --ring: 27 90% 37%;
+    /* Saffron focus ring — matches --primary (AA tone) */
 
     /* Status Colors */
     --destructive: 0 84% 60%;
@@ -260,12 +269,12 @@
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 95%;
+    --sidebar-accent: 28 70% 96%;
     /* Light Saffron Tint */
-    --sidebar-accent-foreground: 28 70% 59%;
-    /* Saffron Text */
+    --sidebar-accent-foreground: 27 90% 37%;
+    /* Saffron Text — AA tone (#B35609), 4.54:1 on the 96% tint */
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 28 70% 59%;
+    --sidebar-ring: 27 90% 37%;
   }
 
   .dark {
@@ -287,8 +296,11 @@
     --popover-foreground: 210 30% 96%;
 
     --primary: 28 80% 60%;
-    /* Saffron, a touch brighter so it pops on the darker base */
-    --primary-foreground: 0 0% 100%;
+    /* Saffron, a touch brighter so it pops on the darker base.
+       7.70:1 against --background — passes AA as text/icon on dark. */
+    --primary-foreground: 222 47% 11%;
+    /* Phase 0 contrast fix: white on the bright dark-mode saffron was only
+       2.37:1. Dark navy label on saffron = 7.54:1 — passes AA. */
 
     --secondary: 123 33% 40%;
     /* Lighter green for dark mode */
@@ -352,6 +364,56 @@
      Elements with explicit Tailwind leading-* still override this. */
   p {
     line-height: 1.6;
+  }
+
+  /* ========================================
+     PHASE 0 — PER-SCRIPT TYPOGRAPHY DEFAULTS (2026-07-03)
+     Design proposal 10 (i18n design). LanguageContext syncs <html lang>
+     (hi-IN, bn-IN, ta-IN, …), so :lang() matches by primary subtag and
+     these become the DEFAULT for body text — no .indic-text opt-in needed.
+
+     Font families are self-hosted via next/font in src/app/layout.tsx and
+     exposed as CSS custom properties (--font-noto-*). Latin stays 1.5;
+     Indic scripts get 1.7 — Devanagari/Kannada/Malayalam/Tamil need
+     >=1.6 to avoid ascender/descender collisions, Bengali matras need
+     the most vertical room (see .indic-text above). Explicit Tailwind
+     leading-* utilities still override per element.
+     ======================================== */
+  :lang(hi), :lang(mr) {
+    font-family: var(--font-inter), var(--font-noto-devanagari), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(bn) {
+    font-family: var(--font-inter), var(--font-noto-bengali), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(ta) {
+    font-family: var(--font-inter), var(--font-noto-tamil), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(te) {
+    font-family: var(--font-inter), var(--font-noto-telugu), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(kn) {
+    font-family: var(--font-inter), var(--font-noto-kannada), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(ml) {
+    font-family: var(--font-inter), var(--font-noto-malayalam), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(gu) {
+    font-family: var(--font-inter), var(--font-noto-gujarati), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(pa) {
+    font-family: var(--font-inter), var(--font-noto-gurmukhi), sans-serif;
+    line-height: 1.7;
+  }
+  :lang(or) {
+    font-family: var(--font-inter), var(--font-noto-oriya), sans-serif;
+    line-height: 1.7;
   }
 }
 

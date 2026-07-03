@@ -131,6 +131,102 @@ async function incrementUserUsage(userId: string, type: UsageMetricType, value: 
     }, { merge: true });
 }
 
+// ═════════════════════════════════════════════════════════════════════════
+// Daily feature-quota gate (video-storyteller — the most expensive flow).
+//
+// Separate from `UsageMetricType` on purpose: metric types feed the
+// cost-service field map (exhaustive Record), while these are pure
+// per-feature daily gates. Counters live in the SAME
+// `daily_user_usage/{uid}_{YYYY-MM-DD}` doc under their own field names,
+// so the existing dashboard/TTL story applies unchanged.
+// ═════════════════════════════════════════════════════════════════════════
+
+/**
+ * FOUNDER-TUNABLE daily caps per plan tier.
+ * `free` is the floor; every paid tier (pro/gold/premium) maps to `pro`
+ * (same mapping as `getUserPlanTier` above).
+ */
+export const DAILY_FEATURE_QUOTAS = {
+    video_storyteller: {
+        free: 3,   // FOUNDER-TUNABLE — free tier: 3 recommendation runs/day
+        pro: 30,   // FOUNDER-TUNABLE — paid tiers: 30 runs/day
+    },
+} as const;
+
+export type GatedDailyFeature = keyof typeof DAILY_FEATURE_QUOTAS;
+
+export type DailyQuotaResult =
+    | { ok: true; used: number; limit: number; plan: 'free' | 'pro' }
+    | { ok: false; used: number; limit: number; plan: 'free' | 'pro' };
+
+/**
+ * Atomically check-and-reserve one unit of a daily feature quota.
+ *
+ * Runs a Firestore transaction (read counter → compare to cap → increment)
+ * so concurrent requests from the same user cannot both pass the check.
+ * Returns { ok: false } when the cap is reached — caller should 429.
+ *
+ * Fails OPEN on infrastructure errors (same policy as `checkUsage` above,
+ * documented there): a Firestore hiccup must not ground the product; cost
+ * stays bounded by the server rate-limiter and Gemini's own quota.
+ */
+export async function reserveDailyQuota(
+    userId: string,
+    feature: GatedDailyFeature
+): Promise<DailyQuotaResult> {
+    const tier = await getUserPlanTier(userId);
+    const limit = DAILY_FEATURE_QUOTAS[feature][tier];
+    try {
+        const { getDb } = await import('./firebase-admin');
+        const { FieldValue } = await import('firebase-admin/firestore');
+        const db = await getDb();
+        const docRef = db.collection(USER_USAGE_COLLECTION).doc(`${userId}_${todayUTC()}`);
+
+        return await db.runTransaction(async (tx) => {
+            const snap = await tx.get(docRef);
+            const used = (snap.exists ? ((snap.data() as any)?.[feature] ?? 0) : 0) as number;
+            if (used >= limit) {
+                return { ok: false as const, used, limit, plan: tier };
+            }
+            tx.set(
+                docRef,
+                {
+                    userId,
+                    date: todayUTC(),
+                    [feature]: FieldValue.increment(1),
+                    updatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+            );
+            return { ok: true as const, used: used + 1, limit, plan: tier };
+        });
+    } catch (error) {
+        logger.error(`reserveDailyQuota failed for ${userId}/${feature} (failing open)`, error as Error, 'USAGE_GUARD');
+        return { ok: true, used: 0, limit, plan: tier };
+    }
+}
+
+/**
+ * Return one reserved unit after a downstream failure, so users aren't
+ * charged quota for calls that never delivered value. Best-effort.
+ */
+export async function rollbackDailyQuota(userId: string, feature: GatedDailyFeature): Promise<void> {
+    try {
+        const { getDb } = await import('./firebase-admin');
+        const { FieldValue } = await import('firebase-admin/firestore');
+        const db = await getDb();
+        await db.collection(USER_USAGE_COLLECTION).doc(`${userId}_${todayUTC()}`).set(
+            {
+                [feature]: FieldValue.increment(-1),
+                updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+        );
+    } catch (error) {
+        logger.error(`rollbackDailyQuota failed for ${userId}/${feature}`, error as Error, 'USAGE_GUARD');
+    }
+}
+
 /**
  * Centralized utility for tracking resource usage and costs.
  * Logs structured data that can be picked up by GCP Logging and aggregated.

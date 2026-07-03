@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { VoiceRecorder } from "@/components/messages/voice-recorder";
 import { useNearBottom } from "@/hooks/use-near-bottom";
+import { listBlockedUsersAction } from "@/lib/api/moderation";
 
 type ChatMessage = {
     id: string;
@@ -94,6 +95,17 @@ export function CommunityChat({
     // Monotonic counter so optimistic ids never collide, even on two sends
     // within the same millisecond (Date.now() alone can repeat).
     const optimisticSeqRef = useRef(0);
+    // Moderation: community chat reads client-side via onSnapshot, so the
+    // server read-filter (src/server/community.ts) can't apply here. Filter
+    // blocked authors locally; the blocks list is owner-readable by rules.
+    const [blockedUids, setBlockedUids] = useState<Set<string>>(new Set());
+    useEffect(() => {
+        let cancelled = false;
+        listBlockedUsersAction()
+            .then((blocks) => { if (!cancelled) setBlockedUids(new Set(blocks.map((b) => b.blockedUid))); })
+            .catch(() => { /* fail open — a moderation hiccup must not blank chat */ });
+        return () => { cancelled = true; };
+    }, []);
 
     // Real-time listener — limitToLast(100) gives the most recent 100 messages
     useEffect(() => {
@@ -113,9 +125,12 @@ export function CommunityChat({
                 // Filter out seeded demo personas when the communityPersonas
                 // flag is disabled. Real-user messages (no isDemoPersona
                 // marker) always render.
-                const visible = personasEnabled
+                let visible = personasEnabled
                     ? all
                     : all.filter((m) => !m.isDemoPersona);
+                if (blockedUids.size > 0) {
+                    visible = visible.filter((m) => !m.authorId || !blockedUids.has(m.authorId));
+                }
                 setLoading(false);
                 setError(null);
                 // Merge server docs with any still-pending optimistic messages.
@@ -139,7 +154,7 @@ export function CommunityChat({
         );
 
         return () => unsubscribe();
-    }, [collectionPath, personasEnabled, t]);
+    }, [collectionPath, personasEnabled, blockedUids, t]);
 
     // Auto-scroll on new messages — but ONLY if the user is already near the
     // bottom. Yanking them back when they're scrolled up reading history is

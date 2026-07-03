@@ -19,6 +19,7 @@ import { buildDirectConversationId, SharedResource } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
 import { createTypedNotification } from '@/lib/notifications/create';
 import { sendPushToUser } from '@/lib/fcm-server';
+import { isBlockedEitherWay } from '@/server/moderation';
 
 // ── getOrCreateDirectConversation ─────────────────────────────────────────────
 // Returns the conversation ID for a 1:1 DM, creating it if it doesn't exist.
@@ -30,6 +31,13 @@ export async function getOrCreateDirectConversation(
 ): Promise<{ conversationId: string }> {
     if (callerId !== myUid) throw new Error('Unauthorized');
     if (myUid === otherUid) throw new Error('Cannot message yourself');
+
+    // Moderation v1: refuse to open a DM when either side has blocked the
+    // other. The message is deliberately direction-neutral — never reveal
+    // WHO blocked WHOM.
+    if (await isBlockedEitherWay(myUid, otherUid)) {
+        throw new Error('Cannot message this user');
+    }
 
     const db = await getDb();
     const { FieldValue } = await import('firebase-admin/firestore');
@@ -188,6 +196,18 @@ export async function sendMessage(
 
     const convData = convDoc.data()!;
     if (!convData.participantIds.includes(senderId)) throw new Error('Not a participant');
+
+    // Moderation v1: block enforcement on the direct-message write path.
+    // Rejects when EITHER side has blocked the other; the error string is
+    // direction-neutral so the sender can't probe who blocked whom. Group
+    // conversations are not gated (a block hides 1:1 contact, not shared
+    // group spaces).
+    if (convData.type === 'direct') {
+        const otherId = (convData.participantIds as string[]).find((id) => id !== senderId);
+        if (otherId && (await isBlockedEitherWay(senderId, otherId))) {
+            throw new Error('Cannot message this user');
+        }
+    }
 
     // Denormalize sender info from conversation snapshot
     const senderSnap = convData.participants?.[senderId];
