@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { usePaginatedMessages } from "@/hooks/use-paginated-messages";
 import { useAuth } from "@/context/auth-context";
 import { Message, Conversation, SharedResource } from "@/types/messages";
-import { markConversationReadAction } from "@/app/actions/messages";
+import { markConversationReadAction } from "@/lib/api/messages";
 import { MessageBubble } from "./message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

@@ -219,3 +219,27 @@ jobs:
 # NOTE: the full unit suite gates PRs via test.yml (Test Suite workflow).
 # Its exit code is only meaningful because the `| tee` pipe was removed
 # there on 2026-07-03 — do not reintroduce pipes on the jest step.
+
+  no-new-server-actions:
+    # Tranche 5: the API-route boundary won (docs/API_MIGRATION_PATTERN.md).
+    # Existing action modules are migrating out; NEW ones are banned.
+    name: 'Gate 10: no new files in src/app/actions'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block newly added server-action files
+        working-directory: .
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -e
+          added=$(git diff --name-only --diff-filter=A "$BASE_SHA"...HEAD -- 'sahayakai-main/src/app/actions/**' || true)
+          if [ -n "$added" ]; then
+            echo "::error::New server-action files are banned (API routes are the boundary — see sahayakai-main/docs/API_MIGRATION_PATTERN.md):"
+            echo "$added"
+            exit 1
+          fi
+          echo "OK — no new server-action files."

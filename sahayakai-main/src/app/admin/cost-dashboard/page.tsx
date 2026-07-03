@@ -15,7 +15,7 @@ import {
     ShieldCheck,
     Coins
 } from "lucide-react";
-import { getDailyCostsAction } from "@/app/actions/profile";
+import { getDailyCostsAction } from "@/lib/api/profile";
 import { cn } from "@/lib/utils";
 
 interface MetricCardProps {

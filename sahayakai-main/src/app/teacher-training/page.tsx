@@ -26,7 +26,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
-import { saveToLibrary } from "@/app/actions/content";
+import { saveToLibrary } from "@/lib/api/content";
 import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Removed (audit 2026-04-27): VoiceAssistant import. The global OmniOrb
 // (mounted in app-shell) already provides voice + chat for every page.

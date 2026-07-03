@@ -15,7 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { AuthGate } from "@/components/auth/auth-gate";
-import { getClassAction, getStudentsAction } from "@/app/actions/attendance";
+import { getClassAction, getStudentsAction } from "@/lib/api/attendance";
 import { getAuthToken } from "@/lib/get-auth-token";
 import type { ClassRecord, Student } from "@/types/attendance";
 import type { BatchMarksInput, StudentMarkEntry, AssessmentType, Term } from "@/types/performance";

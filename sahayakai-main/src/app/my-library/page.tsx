@@ -16,7 +16,7 @@ import { ProfileCard } from '@/components/profile-card';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
-import { getProfileData } from '@/app/actions/profile';
+import { getProfileData } from '@/lib/api/profile';
 import { ContentGallery } from '@/components/library/content-gallery';
 
 export default function MyLibraryPage() {

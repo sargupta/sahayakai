@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { saveAttendanceAction, getAttendanceForDateAction } from "@/app/actions/attendance";
+import { saveAttendanceAction, getAttendanceForDateAction } from "@/lib/api/attendance";
 import type { Student, AttendanceStatus } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";

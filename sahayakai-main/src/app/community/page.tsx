@@ -36,17 +36,17 @@ import {
   discoverGroupsAction,
   joinGroupAction,
   likeGroupPostAction,
-} from '@/app/actions/groups';
+} from '@/lib/api/groups';
 import {
   getMyConnectionDataAction,
   sendConnectionRequestAction,
-} from '@/app/actions/connections';
+} from '@/lib/api/connections';
 import {
   getRecommendedTeachersAction,
   likeResourceAction,
   getLikedItemIdsAction,
-} from '@/app/actions/community';
-import { updateProfileAction } from '@/app/actions/profile';
+} from '@/lib/api/community';
+import { updateProfileAction } from '@/lib/api/profile';
 
 // Types
 import type { Group, FeedItem, TeacherSuggestion } from '@/types/community';

@@ -18,7 +18,7 @@ jest.mock('firebase/firestore', () => ({
 }));
 
 // Mock Server Action
-jest.mock('@/app/actions/feedback', () => ({
+jest.mock('@/lib/api/feedback', () => ({
     submitFeedback: jest.fn().mockResolvedValue({ success: true }),
 }));
 

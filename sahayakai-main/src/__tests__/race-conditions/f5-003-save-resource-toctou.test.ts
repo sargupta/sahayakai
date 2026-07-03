@@ -131,9 +131,10 @@ const mockDb = {
 
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => mockDb }));
 
-import { saveResourceToLibraryAction } from '@/app/actions/community';
+// tranche 5: saveResourceToLibrary migrated to the community service (uid is explicit).
+import { saveResourceToLibrary } from '@/server/community';
 
-describe('F5-003: saveResourceToLibraryAction does not inflate stats.saves', () => {
+describe('F5-003: saveResourceToLibrary does not inflate stats.saves', () => {
     beforeEach(() => {
         store.clear();
         setRec(['library_resources', 'res-1'], { authorId: 'other-author', stats: { saves: 0 } });
@@ -148,7 +149,7 @@ describe('F5-003: saveResourceToLibraryAction does not inflate stats.saves', () 
             authorId: 'other-author',
             language: 'English',
         };
-        await Promise.all(Array.from({ length: 10 }, () => saveResourceToLibraryAction(resource)));
+        await Promise.all(Array.from({ length: 10 }, () => saveResourceToLibrary('saver-1', resource)));
 
         const finalSaves = rec(['library_resources', 'res-1'])?.data?.stats?.saves ?? 0;
         expect(finalSaves).toBe(1);

@@ -27,7 +27,7 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { useNetworkAware } from "@/hooks/use-network-aware";
-import { saveToLibrary } from "@/app/actions/content";
+import { saveToLibrary } from "@/lib/api/content";
 
 
 const translations: Record<string, Record<string, string>> = {

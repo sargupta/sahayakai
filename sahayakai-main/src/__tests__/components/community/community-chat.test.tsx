@@ -18,7 +18,7 @@ jest.mock('@/lib/firebase', () => ({
 
 // Mock sendChatMessageAction
 const mockSendChatMessage = jest.fn().mockResolvedValue(undefined);
-jest.mock('@/app/actions/community', () => ({
+jest.mock('@/lib/api/community', () => ({
     sendChatMessageAction: (...args: any[]) => mockSendChatMessage(...args),
 }));
 

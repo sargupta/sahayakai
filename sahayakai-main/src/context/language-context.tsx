@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, LANGUAGES } from '@/types';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getProfileData, updateProfileAction } from '@/app/actions/profile';
+import { getProfileData, updateProfileAction } from '@/lib/api/profile';
 
 type LanguageContextType = {
     language: Language;

@@ -23,7 +23,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getProfileData, getPublicProfileAction, addCertificationAction } from "@/app/actions/profile";
+import { getProfileData, getPublicProfileAction, addCertificationAction } from "@/lib/api/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +48,7 @@ import {
     declineConnectionRequestAction,
     disconnectAction,
     getMyConnectionDataAction,
-} from "@/app/actions/connections";
+} from "@/lib/api/connections";
 import type { ConnectionStatus } from "@/types";
 
 interface ProfileViewProps {

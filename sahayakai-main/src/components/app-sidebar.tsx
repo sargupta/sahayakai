@@ -43,7 +43,7 @@ import { db, auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 import { isNewUser as checkIsNewUser } from "@/lib/profile-utils"
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight"
-import { updateProfileAction } from "@/app/actions/profile"
+import { updateProfileAction } from "@/lib/api/profile"
 import { useLanguage } from "@/context/language-context"
 import type { UserProfile } from "@/types"
 
