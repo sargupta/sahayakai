@@ -1,0 +1,29 @@
+[
+  {
+    "label": "first-generation-learners-homework",
+    "input": {
+      "question": "আমার স্কুলের বেশিরভাগ শিক্ষার্থী পরিবারের প্রথম প্রজন্মের শিক্ষার্থী — বাড়িতে পড়াশোনায় সাহায্য করার কেউ নেই, তাই বাড়ির কাজ প্রায়ই অসম্পূর্ণ থাকে। আমি কীভাবে এমন বাড়ির কাজ দিতে পারি যা তারা নিজেরাই করতে পারবে?",
+      "language": "Bengali",
+      "subject": "Pedagogy",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "large-class-oral-participation",
+    "input": {
+      "question": "আমার অষ্টম শ্রেণিতে ৬২ জন শিক্ষার্থী। ক্লাসে প্রশ্ন করলে শুধু সামনের সারির পাঁচ-ছয়জনই উত্তর দেয়, বাকিরা চুপ করে থাকে। সবাইকে ক্লাসে অংশগ্রহণ করাতে কী কৌশল নিতে পারি?",
+      "language": "Bengali",
+      "subject": "Classroom Management",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "science-lab-without-equipment",
+    "input": {
+      "question": "আমাদের গ্রামের স্কুলে বিজ্ঞানের কোনো ল্যাবরেটরি নেই, কিন্তু নবম-দশম শ্রেণির পাঠ্যক্রমে অনেক পরীক্ষা-নিরীক্ষা আছে। কম খরচে বা ঘরোয়া জিনিস দিয়ে কীভাবে হাতে-কলমে বিজ্ঞান শেখাতে পারি?",
+      "language": "Bengali",
+      "subject": "Science Pedagogy",
+      "userId": "eval-harness-user"
+    }
+  }
+]

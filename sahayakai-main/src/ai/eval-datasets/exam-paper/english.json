@@ -1,0 +1,44 @@
+[
+  {
+    "label": "CBSE Class 10 Mathematics — 80 marks, mixed difficulty, full paper",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 10",
+      "subject": "Mathematics",
+      "chapters": ["Real Numbers", "Polynomials", "Quadratic Equations"],
+      "maxMarks": 80,
+      "language": "English",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  },
+  {
+    "label": "CBSE Class 10 Science — 80 marks, mixed difficulty",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 10",
+      "subject": "Science",
+      "chapters": ["Chemical Reactions and Equations", "Acids, Bases and Salts", "Life Processes"],
+      "maxMarks": 80,
+      "language": "English",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  },
+  {
+    "label": "CBSE Class 9 Mathematics — 80 marks, moderate difficulty",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 9",
+      "subject": "Mathematics",
+      "chapters": ["Number Systems", "Polynomials", "Coordinate Geometry", "Linear Equations in Two Variables"],
+      "maxMarks": 80,
+      "language": "English",
+      "difficulty": "moderate",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  }
+]

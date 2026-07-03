@@ -1,0 +1,9 @@
+{
+  "module": "src/ai/flows/agent-definitions.ts",
+  "export": "agentRouterFlow",
+  "flowName": "agentRouter",
+  "languageInputPath": "language",
+  "outputScriptFields": [],
+  "expectField": "type",
+  "notes": "Router flow — classifies a teacher utterance to one of AgentTypeSchema: lessonPlan | quiz | visualAid | worksheet | virtualFieldTrip | teacherTraining | rubric | examPaper | instantAnswer | videoStoryteller | unknown. expect.type carries the objectively correct route. outputScriptFields is empty by design: the router extracts params and returns result:null (it does not generate prose), so target-language script checks do not apply to its output — routing correctness on Indic-script INPUT is what these cases test, hence utterances in bengali.json/tamil.json are themselves in Bangla/Tamil script. input.language is an optional hint (BCP-ish code: en/bn/ta); the classifier also detects language from the prompt's dominant script. Output plannedActions[0].flow mirrors type via INTENT_TO_FLOW (kebab-case) and is synthesized even when the model emits an empty list — a secondary assertion candidate but not encoded in expect."
+}

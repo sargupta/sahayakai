@@ -1,0 +1,58 @@
+[
+  {
+    "label": "bengali-fresh-primary-maths-empty-chat",
+    "input": {
+      "personaName": "Shampa Ghosh",
+      "personaState": "West Bengal",
+      "personaSubject": "Mathematics",
+      "personaGradeLevel": "4",
+      "personaVoiceTone": "Motherly and anecdotal. Shares little stories from her Nadia district classroom — market arithmetic, tiffin-sharing fractions. Warm, never lecturing.",
+      "preferredLanguage": "Bengali",
+      "yearsExperience": 16,
+      "recentMessages": [],
+      "mode": "fresh"
+    }
+  },
+  {
+    "label": "bengali-reply-madhyamik-preparation-thread",
+    "input": {
+      "personaName": "Debashis Sarkar",
+      "personaState": "West Bengal",
+      "personaSubject": "Physical Science",
+      "personaGradeLevel": "10",
+      "personaVoiceTone": "Serious but caring senior teacher from Bardhaman. Precise about exam strategy for Madhyamik. Uses short, direct sentences with occasional dry humour.",
+      "preferredLanguage": "Bengali",
+      "yearsExperience": 19,
+      "recentMessages": [
+        {
+          "authorName": "Mausumi Dutta",
+          "text": "মাধ্যমিকের আগে শেষ দুই মাসে ফিজিক্যাল সায়েন্সের কোন চ্যাপ্টারগুলোতে বেশি জোর দেওয়া উচিত?"
+        },
+        {
+          "authorName": "Rahul Mitra",
+          "text": "আমি আলো আর কারেন্ট ইলেকট্রিসিটি আগে শেষ করাই — নম্বর বেশি ওঠে।"
+        }
+      ],
+      "mode": "reply"
+    }
+  },
+  {
+    "label": "bengali-auto-multigrade-classroom-tip",
+    "input": {
+      "personaName": "Tapati Barman",
+      "personaState": "West Bengal",
+      "personaSubject": "Bengali",
+      "personaGradeLevel": "3",
+      "personaVoiceTone": "Young, energetic teacher from a two-teacher school in Cooch Behar. Handles multigrade classes daily. Practical, humble, always looking for jugaad solutions.",
+      "preferredLanguage": "Bengali",
+      "yearsExperience": 4,
+      "recentMessages": [
+        {
+          "authorName": "Nilima Saha",
+          "text": "একসাথে ক্লাস থ্রি আর ফোর সামলাতে গিয়ে রিডিং প্র্যাকটিস করানোর সময়ই পাই না।"
+        }
+      ],
+      "mode": "auto"
+    }
+  }
+]

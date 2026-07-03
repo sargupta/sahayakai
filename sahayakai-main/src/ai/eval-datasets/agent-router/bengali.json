@@ -1,0 +1,42 @@
+[
+  {
+    "label": "bengali-lesson-plan-photosynthesis",
+    "input": {
+      "prompt": "ক্লাস ৭ এর বিজ্ঞানের জন্য সালোকসংশ্লেষণের উপর একটি পাঠ পরিকল্পনা তৈরি করে দাও।",
+      "language": "bn"
+    },
+    "expect": {
+      "type": "lessonPlan"
+    }
+  },
+  {
+    "label": "bengali-quiz-short-questions-fractions",
+    "input": {
+      "prompt": "কাল ক্লাসের শুরুতে জিজ্ঞেস করার জন্য ক্লাস ৫ এর ভগ্নাংশের উপর ১০টি ছোট প্রশ্নের কুইজ বানাও।",
+      "language": "bn"
+    },
+    "expect": {
+      "type": "quiz"
+    }
+  },
+  {
+    "label": "bengali-exam-paper-board-quadratic",
+    "input": {
+      "prompt": "ক্লাস ১০ এর অঙ্কের বোর্ড পরীক্ষার প্রশ্নপত্র তৈরি করো — দ্বিঘাত সমীকরণ অধ্যায় থেকে, সেকশন আর নম্বর বিভাজন সহ।",
+      "language": "bn"
+    },
+    "expect": {
+      "type": "examPaper"
+    }
+  },
+  {
+    "label": "bengali-visual-aid-water-cycle-diagram",
+    "input": {
+      "prompt": "ক্লাস ৬ এর জন্য জলচক্রের একটি সহজ চিত্র বা ডায়াগ্রাম বানিয়ে দাও, ব্ল্যাকবোর্ডে আঁকার জন্য।",
+      "language": "bn"
+    },
+    "expect": {
+      "type": "visualAid"
+    }
+  }
+]

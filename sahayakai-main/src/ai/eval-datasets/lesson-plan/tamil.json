@@ -1,0 +1,41 @@
+[
+  {
+    "label": "Class 3 EVS — Plants Around Us in Tamil, low-resource rural classroom",
+    "input": {
+      "topic": "Our Environment - Plants Around Us",
+      "gradeLevels": ["Class 3"],
+      "language": "Tamil",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "EVS",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 8 Social Science — Resources and Development in Tamil",
+    "input": {
+      "topic": "Resources and Development - Land, Soil, Water",
+      "gradeLevels": ["Class 8"],
+      "language": "Tamil",
+      "resourceLevel": "medium",
+      "useRuralContext": true,
+      "subject": "Social Science",
+      "difficultyLevel": "standard",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 5 Mathematics — Fractions in Tamil with Tamil Nadu locality",
+    "input": {
+      "topic": "Fractions",
+      "gradeLevels": ["Class 5"],
+      "language": "Tamil",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Mathematics",
+      "difficultyLevel": "standard",
+      "state": "Tamil Nadu",
+      "userId": ""
+    }
+  }
+]

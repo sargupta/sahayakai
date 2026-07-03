@@ -1,0 +1,38 @@
+[
+  {
+    "label": "Class 5 Mathematics — Fractions and Decimals in Bengali",
+    "input": {
+      "topic": "Fractions and Decimals",
+      "numQuestions": 8,
+      "gradeLevel": "Class 5",
+      "language": "Bengali",
+      "questionTypes": ["multiple_choice", "fill_in_the_blanks"],
+      "subject": "Mathematics",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 7 Science — Acids, Bases and Salts in Bengali",
+    "input": {
+      "topic": "Acids, Bases and Salts",
+      "numQuestions": 6,
+      "gradeLevel": "Class 7",
+      "language": "Bengali",
+      "questionTypes": ["multiple_choice", "true_false"],
+      "subject": "Science",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 7 Social Science — The Mughal Empire in Bengali, mixed types",
+    "input": {
+      "topic": "The Mughal Empire",
+      "numQuestions": 7,
+      "gradeLevel": "Class 7",
+      "language": "Bengali",
+      "questionTypes": ["multiple_choice", "short_answer", "true_false"],
+      "subject": "Social Science",
+      "userId": ""
+    }
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "label": "class5-science-why-sky-blue",
+    "input": {
+      "question": "Why does the sky look blue during the day but orange at sunset? A student asked me this after our EVS lesson on air.",
+      "language": "English",
+      "gradeLevel": "Class 5",
+      "subject": "Science",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class9-history-salt-march",
+    "input": {
+      "question": "What was the Dandi Salt March and why did Gandhiji choose salt as the issue for civil disobedience in 1930?",
+      "language": "English",
+      "gradeLevel": "Class 9",
+      "subject": "Social Science",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class7-maths-negative-numbers-daily-life",
+    "input": {
+      "question": "Show me how to explain negative numbers to Class 7 students using everyday Indian examples like temperature in Shimla or money borrowed from a shopkeeper.",
+      "language": "English",
+      "gradeLevel": "Class 7",
+      "subject": "Mathematics",
+      "userId": "eval-harness-user"
+    }
+  }
+]

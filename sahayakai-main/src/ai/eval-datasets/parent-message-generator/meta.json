@@ -1,0 +1,10 @@
+{
+  "module": "src/ai/flows/parent-message-generator.ts",
+  "export": "generateParentMessage",
+  "flowName": "parentMessageFlow",
+  "languageInputPath": "parentLanguage",
+  "outputScriptFields": [
+    "message"
+  ],
+  "notes": "parentLanguage is a strict Zod enum of the 11 canonical language names ('English'/'Bengali'/'Tamil' etc.) — the wrapper re-normalizes via normalizeLanguage() but dataset cases use canonical names directly. reasonContext is a REQUIRED schema field; cases carry the exact REASON_CONTEXT[reason] text from the flow file, and the wrapper overwrites it with the same lookup anyway. languageCode in the output is hard-coded from LANGUAGE_TO_BCP47 (en-IN/bn-IN/ta-IN) — do not script-check it. userId is omitted in all cases so the wrapper skips the dbAdapter profile lookup (no Firebase Admin needed); teacherName/schoolName are supplied inline instead. Fee-reminder scenarios are intentionally excluded — the flow only supports consecutive_absences, poor_performance, behavioral_concern, positive_feedback."
+}

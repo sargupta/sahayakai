@@ -1,0 +1,12 @@
+{
+  "module": "src/ai/flows/exam-paper-generator.ts",
+  "export": "generateExamPaper",
+  "flowName": "examPaperGeneratorFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "generalInstructions[]",
+    "sections[].label",
+    "sections[].questions[].text"
+  ],
+  "notes": "ExamPaperInputSchema is a module-private const (only the ExamPaperInput type is exported) — the runner cannot import the Zod schema directly. title is EXCLUDED from script checks: it legitimately contains Latin board acronyms/proper nouns ('CBSE Class 10 ...') even in Bengali/Tamil papers. answerKey/markingScheme are per-question optional and often numeric — excluded. State-board cases (WBBSE, TN SSLC) have no official blueprint in board-blueprints.ts; the flow degrades to a free-form 4-5 section paper by design. PYQ retrieval (Maths/Science Class 9-10) adds latency; generation of a full 80-mark paper is long-running (60s+). userId omitted so no Storage/Firestore persistence."
+}

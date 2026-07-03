@@ -1,0 +1,18 @@
+{
+  "module": "src/ai/flows/quiz-generator.ts",
+  "export": "generateQuiz",
+  "flowName": "quizGeneratorFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "easy.title",
+    "easy.questions[].questionText",
+    "easy.questions[].explanation",
+    "medium.title",
+    "medium.questions[].questionText",
+    "medium.questions[].explanation",
+    "hard.title",
+    "hard.questions[].questionText",
+    "hard.questions[].explanation"
+  ],
+  "notes": "generateQuiz is the public wrapper the app calls (via src/lib/sidecar/quiz-dispatch.ts); it fans out THREE parallel quizGeneratorFlow runs (easy/medium/hard) and returns QuizVariantsOutput — 3x AI spend per case, prod p50 ~30s, budget 60s+. Each variant (easy/medium/hard) is nullable on partial failure: skip script checks on null variants but require at least one non-null variant for the case to pass. userId is required by the schema; cases use '' which short-circuits profile fetch and library persistence. options[]/correctAnswer are excluded from script checks (often numeric or single letters)."
+}
