@@ -13,14 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS, LANGUAGE_CODE_MAP } from "@/types";
 import type { AdministrativeRole, EducationBoard } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
-import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction } from "@/app/actions/profile";
+import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction } from "@/lib/api/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getOnboardingExample, type OnboardingExample } from "@/data/onboarding-examples";
 import { getOnboardingExampleTopic } from "@/lib/contextual-suggestions";
-import { saveToLibrary } from "@/app/actions/content";
+import { saveToLibrary } from "@/lib/api/content";
 import { MicrophoneInput } from "@/components/microphone-input";
 
 import type { Language, ContentType } from "@/types";

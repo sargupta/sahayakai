@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Notification } from "@/types";
-import { markNotificationAsReadAction, markAllAsReadAction } from "@/app/actions/notifications";
-import { acceptConnectionRequestAction, declineConnectionRequestAction } from "@/app/actions/connections";
+import { markNotificationAsReadAction, markAllAsReadAction } from "@/lib/api/notifications";
+import { acceptConnectionRequestAction, declineConnectionRequestAction } from "@/lib/api/connections";
 import { formatDistanceToNow, type Locale } from "date-fns";
 import { hi, bn, ta, te, kn, gu, enIN } from "date-fns/locale";
 import { Bell, CheckCircle2, UserPlus, Trophy, Info, ExternalLink, UserCheck, Loader2 } from "lucide-react";
@@ -144,7 +144,6 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             toast({ title: t('Cannot accept: request reference missing'), variant: 'destructive' });
             return;
         }
-        console.log('[NotificationFeed] Accept', { id: notification.id, requestId, from: notification.senderName });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await acceptConnectionRequestAction(requestId);
@@ -179,7 +178,6 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             toast({ title: t('Cannot decline: request reference missing'), variant: 'destructive' });
             return;
         }
-        console.log('[NotificationFeed] Decline', { id: notification.id, requestId });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await declineConnectionRequestAction(requestId);

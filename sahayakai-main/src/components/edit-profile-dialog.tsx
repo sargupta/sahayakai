@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { updateProfileAction } from "@/app/actions/profile";
+import { updateProfileAction } from "@/lib/api/profile";
 import { useToast } from "@/hooks/use-toast";
 import { ADMINISTRATIVE_ROLES, QUALIFICATIONS, type AdministrativeRole, type Qualification } from '@/types';
 import { useLanguage } from "@/context/language-context";

@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-import { getAllTeachersAction } from "@/app/actions/community";
-import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
-import { sendConnectionRequestAction, getMyConnectionDataAction } from "@/app/actions/connections";
+import { getAllTeachersAction } from "@/lib/api/community";
+import { getOrCreateDirectConversationAction } from "@/lib/api/messages";
+import { sendConnectionRequestAction, getMyConnectionDataAction } from "@/lib/api/connections";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, MessageCircle, GraduationCap, UserPlus, Lock } from "lucide-react";

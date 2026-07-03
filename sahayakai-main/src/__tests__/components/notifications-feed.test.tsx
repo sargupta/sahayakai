@@ -24,14 +24,14 @@ jest.mock('next/navigation', () => ({
 
 const acceptMock = jest.fn();
 const declineMock = jest.fn();
-jest.mock('@/app/actions/connections', () => ({
+jest.mock('@/lib/api/connections', () => ({
     acceptConnectionRequestAction: (...args: any[]) => acceptMock(...args),
     declineConnectionRequestAction: (...args: any[]) => declineMock(...args),
 }));
 
 const markReadMock = jest.fn();
 const markAllReadMock = jest.fn();
-jest.mock('@/app/actions/notifications', () => ({
+jest.mock('@/lib/api/notifications', () => ({
     markNotificationAsReadAction: (...args: any[]) => markReadMock(...args),
     markAllAsReadAction: (...args: any[]) => markAllReadMock(...args),
 }));

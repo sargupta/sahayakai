@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { outboxManager } from '@/lib/message-outbox';
 import { OutboxMessage, Message, MessageType, SharedResource } from '@/types/messages';
-import { sendMessageAction } from '@/app/actions/messages';
+import { sendMessageAction } from '@/lib/api/messages';
 import { useAuth } from '@/context/auth-context';
 import { v4 as uuidv4 } from 'uuid';
 

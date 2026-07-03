@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
 import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } from '@/lib/analytics-events';
-import { syncUserAction } from '@/app/actions/auth';
+import { syncUserAction } from '@/lib/api/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
 import { consumePendingSignIn } from '@/lib/sign-in-with-google';
 

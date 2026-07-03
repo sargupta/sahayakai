@@ -10,10 +10,10 @@ import { type ResourceLevel } from "@/components/resource-selector";
 import { type DifficultyLevel } from "@/components/difficulty-selector";
 import { type QuickTemplate } from "@/data/quick-templates";
 import { offlineLessonPlans } from "@/data/offline-lesson-plans";
-import { getCachedLessonPlan, saveLessonPlanToCache } from "@/app/actions/lesson-plan";
+import { getCachedLessonPlan, saveLessonPlanToCache } from "@/lib/api/lesson-plan";
 import { saveDraft, getDraft, saveCache, getCache, logEvent, getPendingEvents, clearEvent, pruneOldTelemetry } from "@/lib/indexed-db";
 import { logger } from "@/lib/logger";
-import { syncTelemetryEvents } from "@/app/actions/telemetry";
+import { syncTelemetryEvents } from "@/lib/api/telemetry";
 import { formSchema, FormValues, topicPlaceholderTranslations, loadingMessages } from "../types";
 import { checkRateLimit, validateTopicSafety } from "@/lib/safety";
 import { auth } from "@/lib/firebase";
@@ -93,7 +93,6 @@ export function useLessonPlan() {
                     const result = await syncTelemetryEvents(events);
                     if (result.success) {
                         await Promise.all(pending.map(p => clearEvent(p.key)));
-                        console.log(`Synced ${pending.length} telemetry events`);
                     }
                 }
             } catch (e) {
@@ -493,7 +492,7 @@ export function useLessonPlan() {
 
             // Mark onboarding checklist item
             if (auth.currentUser) {
-                import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+                import('@/lib/api/profile').then(({ markChecklistItemAction }) =>
                     markChecklistItemAction(auth.currentUser!.uid, 'first-lesson-plan')
                 ).catch(() => {});
             }

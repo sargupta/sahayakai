@@ -295,7 +295,7 @@ function QuizGeneratorContent() {
 
       // Mark onboarding checklist item
       if (auth.currentUser) {
-        import('@/app/actions/profile').then(({ markChecklistItemAction }) =>
+        import('@/lib/api/profile').then(({ markChecklistItemAction }) =>
           markChecklistItemAction(auth.currentUser!.uid, 'first-quiz')
         ).catch(() => {});
       }

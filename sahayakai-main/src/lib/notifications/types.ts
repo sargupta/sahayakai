@@ -1,7 +1,7 @@
 /**
  * Notification type constants — re-exports the source-of-truth enum from
  * `@/types` and provides string-literal helpers for the group-related
- * notification kinds used by `src/app/actions/groups.ts`.
+ * notification kinds used by `src/server/groups.ts`.
  *
  * Adding a new NotificationType:
  *   1. Add it to the union in `src/types/index.ts`.

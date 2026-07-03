@@ -14,7 +14,7 @@ import { mergeCuratedVideos } from "@/lib/curated-videos";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
-import { getUserProfileAction } from "@/app/actions/auth";
+import { getUserProfileAction } from "@/lib/api/auth";
 import { useNetworkAware } from "@/hooks/use-network-aware";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";

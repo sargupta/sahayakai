@@ -5,7 +5,7 @@
  * apply to existing users.
  *
  * Why we need this: ensureUserGroupsAction() short-circuits on
- * `groupsInitialized === true` (line 58 in src/app/actions/groups.ts).
+ * `groupsInitialized === true` (src/server/groups.ts).
  * Without resetting, existing users never pick up changes to the
  * default group set.
  *

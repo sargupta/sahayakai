@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { tts } from "@/lib/tts";
-import { getProfileData, updateProfileAction } from "@/app/actions/profile";
+import { getProfileData, updateProfileAction } from "@/lib/api/profile";
 import type { Language } from "@/types";
 
 /**

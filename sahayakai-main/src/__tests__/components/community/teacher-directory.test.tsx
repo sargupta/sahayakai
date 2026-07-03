@@ -30,11 +30,11 @@ const mockAcceptConnectionRequest = jest.fn();
 const mockDeclineConnectionRequest = jest.fn();
 const mockDisconnect = jest.fn();
 
-jest.mock('@/app/actions/community', () => ({
+jest.mock('@/lib/api/community', () => ({
     getAllTeachersAction: (...args: any[]) => mockGetAllTeachers(...args),
 }));
 
-jest.mock('@/app/actions/connections', () => ({
+jest.mock('@/lib/api/connections', () => ({
     sendConnectionRequestAction: (...args: any[]) => mockSendConnectionRequest(...args),
     acceptConnectionRequestAction: (...args: any[]) => mockAcceptConnectionRequest(...args),
     declineConnectionRequestAction: (...args: any[]) => mockDeclineConnectionRequest(...args),
