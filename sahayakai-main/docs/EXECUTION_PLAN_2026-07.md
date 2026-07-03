@@ -33,11 +33,12 @@
 - Sidebar/IA reorganized around the prep loop (design board proposal 01).
 - Kill-or-finish decisions surfaced: **dark mode** (finish token-level or remove toggle) and **omni-orb/“Jarvis”** (flagship or freeze) — founder call, then execute.
 
-## Tranche 3 — i18n infrastructure (the 7,467-line fix)
-- Split `language-context.tsx`: per-locale JSON dictionaries, load only the active locale (dynamic import), stable snake_case keys (not English sentences), server-provided initial locale.
-- Migration codemod for `t("English sentence")` call sites; missing-key CI report (extend `scripts/i18n-missing-keys.json` flow).
-- Unblocks design proposal 10 (per-script line-heights, `.indic-text` default).
-- **Budget check:** first-load JS before/after measured and recorded here.
+## Tranche 3 — i18n infrastructure (the 7,467-line fix) — **DONE (PR #75)**
+- [x] Split into `src/locales/<language>.json` × 10, code-split, at most one locale chunk per session; English = zero (key-fallback IS English). Offline chunk failure → English fallback.
+- [x] `isLoaded` waits for the active locale (no English flash); session-lifetime locale cache.
+- [x] `find-missing-i18n-keys.mjs` reads the locale-JSON union.
+- [x] **Measured (prod builds): home first-load 962 kB → 639 kB (−323 kB, −34%) on every page.** ≈6.5 s saved on Fast-3G first load.
+- Deferred (tracked): stable-slug key migration (keys remain English sentences); server-provided initial locale.
 
 ## Tranche 4 — AI eval harness (the moat)
 - Golden datasets for **all 25 flows**, each × English + top-2 Indic languages (Bengali, Tamil first per user base).
