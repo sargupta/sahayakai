@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('writeAgentShadowDiff', () => {
-    it('writes a doc to agent_shadow_diffs/{date}/{agent}/{uid}__{ts}', async () => {
+    it('writes a doc to agent_shadow_diffs/{date}/{agent}/{uid}__{ts}__{rand}', async () => {
         await writeAgentShadowDiff({
             agent: 'vidya',
             uid: 'teacher-uid-1',
@@ -61,9 +61,11 @@ describe('writeAgentShadowDiff', () => {
         expect(dateArg).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         // Subcollection = agent name.
         expect(mockSubcollection).toHaveBeenCalledWith('vidya');
-        // Doc id = `{uid}__{ts}`.
+        // Doc id = `{uid}__{ts}__{8-hex-rand}`. F5-001 (commit c33fcee82)
+        // appended a random suffix so same-millisecond bursts from one
+        // uid don't upsert-overwrite each other and drop parity samples.
         const [docIdArg] = mockDocLeaf.mock.calls[0] as unknown as [string];
-        expect(docIdArg).toMatch(/^teacher-uid-1__\d+$/);
+        expect(docIdArg).toMatch(/^teacher-uid-1__\d+__[0-9a-f]{8}$/);
         // Set called with the sample fields + createdAt.
         expect(mockSet).toHaveBeenCalledTimes(1);
         const [body] = mockSet.mock.calls[0] as unknown as [

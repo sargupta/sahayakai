@@ -123,29 +123,50 @@ jobs:
         run: node scripts/ci/post-deploy-smoke.mjs
 
   no-console-log:
-    name: 'Gate 5: no console.log in src/ (outside tests)'
+    # Ratchet gate: 299 legacy console.log sites predate this gate ever
+    # running (the workflow was inert until 2026-07-03). Blocking on all of
+    # them would freeze every PR, so PRs fail only on console.log in files
+    # they touch; the legacy burn-down (console.log -> lib/logger) is a
+    # tranche in docs/EXECUTION_PLAN_2026-07.md. Full-repo scan stays
+    # available via workflow_dispatch.
+    name: 'Gate 5: no console.log in changed files'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: sahayakai-main/package-lock.json
-      - name: Install deps
-        run: npm ci
-      - name: Scan src/ for stray console.log (excluding tests + scripts)
+          fetch-depth: 0
+      - name: Scan changed files for console.log (excluding tests)
+        working-directory: .
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -e
-          hits=$(grep -rEn 'console\.log\b' src \
-            --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' \
-            --exclude-dir='__tests__' --exclude-dir='__mocks__' || true)
-          if [ -n "$hits" ]; then
-            echo "::error::console.log found outside tests:"
-            echo "$hits"
-            exit 1
+          if [ -n "$BASE_SHA" ]; then
+            files=$(git diff --name-only "$BASE_SHA"...HEAD -- 'sahayakai-main/src/**/*.ts' 'sahayakai-main/src/**/*.tsx' 'sahayakai-main/src/**/*.js' 'sahayakai-main/src/**/*.mjs' \
+              | grep -vE '__tests__|__mocks__' || true)
+            [ -z "$files" ] && { echo "OK — no relevant files changed."; exit 0; }
+            hits=""
+            while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              h=$(grep -En 'console\.log\b' "$f" || true)
+              [ -n "$h" ] && hits="$hits$f:
+            $h
+            "
+            done <<< "$files"
+            if [ -n "$hits" ]; then
+              echo "::error::console.log found in files this change touches (use lib/logger):"
+              echo "$hits"
+              exit 1
+            fi
+            echo "OK — no console.log in changed files."
+          else
+            # push / dispatch: report the legacy backlog without blocking;
+            # the burn-down is tracked in docs/EXECUTION_PLAN_2026-07.md.
+            count=$(grep -rEl 'console\.log\b' sahayakai-main/src \
+              --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' \
+              --exclude-dir='__tests__' --exclude-dir='__mocks__' 2>/dev/null | wc -l | tr -d ' ')
+            echo "::warning::console.log legacy backlog: $count files still contain console.log (target: 0)."
           fi
-          echo "OK — no console.log leaks."
 
   typecheck:
     name: 'Gate 6: typecheck'
@@ -194,3 +215,7 @@ jobs:
         run: npm ci
       - name: Run jest on CI script tests
         run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts --runInBand --coverage=false
+
+# NOTE: the full unit suite gates PRs via test.yml (Test Suite workflow).
+# Its exit code is only meaningful because the `| tee` pipe was removed
+# there on 2026-07-03 — do not reintroduce pipes on the jest step.

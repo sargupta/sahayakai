@@ -78,10 +78,12 @@ describe('F1-06: syncUserAction email spoof', () => {
         expect(writtenProfile.displayName).not.toBe('Victim Name');
     });
 
-    it('falls back to empty string when token has no email claim', async () => {
+    it('omits email/displayName when token has no claims — never writes client copy', async () => {
         // Edge case: phone-auth users may have no email claim on the token.
-        // The middleware therefore doesn't set x-user-email. The action must
-        // still write an empty string rather than trusting the client copy.
+        // The middleware therefore doesn't set x-user-email. Per the F11-5
+        // no-clobber merge, the action OMITS the field entirely (writing ''
+        // would clobber onboarding-set values) — and must never fall back to
+        // the client-supplied copy.
         mockHeadersMap.set('x-user-id', 'phone-user-uid');
         // no x-user-email, no x-user-name
 
@@ -95,10 +97,11 @@ describe('F1-06: syncUserAction email spoof', () => {
         expect(result.success).toBe(true);
         const [, profile] = updateUserMock.mock.calls[0] as [
             string,
-            { email: string; displayName: string },
+            { email?: string; displayName?: string },
         ];
-        expect(profile.email).toBe('');
-        expect(profile.displayName).toBe('');
+        // F1-06 invariant: spoofed client values must never reach Firestore.
+        expect(profile).not.toHaveProperty('email');
+        expect(profile).not.toHaveProperty('displayName');
     });
 
     it('still rejects uid spoof (Wave 1 regression)', async () => {

@@ -30,6 +30,15 @@ jest.mock('@/lib/sidecar/shadow-diff-writer', () => ({
     writeAgentShadowDiff: jest.fn(),
 }));
 
+// F14-001 (commit 4b7aad000) flipped SHADOW_DIFF_IN_CANARY_OBSERVATION
+// to false and added a 5% sample gate, so the real gate never fires in
+// tests. Mock it so the Q4C observation tests can verify the dispatch
+// wiring with the gate force-enabled; default mirrors prod (off).
+const mockShouldRunCanaryShadowDiff = jest.fn((): boolean => false);
+jest.mock('@/lib/sidecar/canary-shadow-diff', () => ({
+    shouldRunCanaryShadowDiff: () => mockShouldRunCanaryShadowDiff(),
+}));
+
 jest.mock('@/lib/server-safety', () => ({
     checkServerRateLimit: jest.fn(),
     checkImageRateLimit: jest.fn(),
@@ -158,6 +167,8 @@ beforeEach(() => {
         contentId: 'test-id',
     });
     mockGate.mockResolvedValue(undefined);
+    // Prod default since F14-001: Q4C observation gate is off.
+    mockShouldRunCanaryShadowDiff.mockReturnValue(false);
 });
 
 afterEach(() => {
@@ -459,6 +470,7 @@ describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
 // gate has a non-zero denominator.
 describe('dispatchInstantAnswer — Q4C canary/full observation', () => {
     it('canary sidecar route: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('canary', 100);
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
@@ -473,6 +485,7 @@ describe('dispatchInstantAnswer — Q4C canary/full observation', () => {
     });
 
     it('canary bucket-overshoot Genkit route: fires sidecar fire-and-forget and writes shadow_diff with sidecar pair', async () => {
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('canary', 0);
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
@@ -487,6 +500,7 @@ describe('dispatchInstantAnswer — Q4C canary/full observation', () => {
     });
 
     it('full mode: fires Genkit fire-and-forget and writes shadow_diff', async () => {
+        mockShouldRunCanaryShadowDiff.mockReturnValue(true);
         setMode('full');
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);

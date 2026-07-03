@@ -140,6 +140,19 @@ const fakeDb: any = {
             async commit() { state.batchCommitted = true; },
         };
     },
+    // F5-004: fanout reads + flips the `newTeacherFanoutCompleted` marker in a
+    // transaction before doing anything else.
+    async runTransaction(fn: (tx: any) => Promise<any>) {
+        const tx = {
+            get: async (ref: any) => ref.get(),
+            update: (_ref: any, patch: any) => {
+                if (state.newTeacher) Object.assign(state.newTeacher.data, patch);
+            },
+            set: (_ref: any, _doc: any) => {},
+            delete: (_ref: any) => {},
+        };
+        return fn(tx);
+    },
 };
 
 jest.mock('@/lib/firebase-admin', () => ({
