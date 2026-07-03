@@ -29,6 +29,11 @@ jobs:
         working-directory: sahayakai-main
     env:
       GOOGLE_GENAI_API_KEY: ${{ secrets.GENKIT_EVAL_API_KEY }}
+      # Flows touch Firebase Admin (feature flags, rate limits, persistence).
+      # Reuses the deploy SA. Datasets minimize writes (falsy userId skips
+      # persistence); the residue is a couple of rate-limit docs for
+      # 'eval-harness-user' per run.
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

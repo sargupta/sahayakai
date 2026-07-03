@@ -214,4 +214,17 @@ async function main() {
     }
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+// Flow internals occasionally reject outside the awaited chain (e.g.
+// fire-and-forget persistence). Log, mark the run failed, but do NOT let
+// the process abort mid-run — per-case accounting stays meaningful.
+let unhandled = 0;
+process.on('unhandledRejection', (reason) => {
+    unhandled += 1;
+    console.error('[unhandledRejection]', reason);
+});
+main().then(() => {
+    if (unhandled > 0) {
+        console.error(`${unhandled} unhandled rejection(s) during the run`);
+        process.exit(1);
+    }
+}).catch((err) => { console.error(err); process.exit(1); });

@@ -28,8 +28,8 @@ export default async function invoke(mod: Record<string, unknown>, input: unknow
         preferredLanguage: flat.preferredLanguage,
         yearsExperience: flat.yearsExperience,
     };
-    const fn = mod.generateCommunityPersonaMessage as (p: unknown, m: unknown[], mode?: string) => Promise<string>;
-    const message = await fn(persona, flat.recentMessages ?? [], flat.mode);
-    // Normalize to an object so outputScriptFields ["message"] resolves.
-    return { message };
+    const fn = mod.generateCommunityPersonaMessage as (p: unknown, m: unknown[], mode?: string) => Promise<unknown>;
+    // The wrapper already returns PersonaMessageOutput ({ message }) — pass
+    // it through untouched so outputScriptFields ["message"] resolves.
+    return fn(persona, flat.recentMessages ?? [], flat.mode);
 }
