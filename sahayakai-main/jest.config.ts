@@ -45,6 +45,13 @@ const config: Config = {
         'src/lib/tts.ts',
         'src/lib/db/adapter.ts',
         'src/types/messages.ts',
+        // Money/auth/security-critical modules (post-API-migration).
+        // Guarded by per-path coverageThreshold entries below.
+        'src/server/payments.ts',
+        'src/server/auth.ts',
+        'src/server/moderation.ts',
+        'src/lib/billing-reconciliation.ts',
+        'src/lib/organization.ts',
     ],
     transformIgnorePatterns: [
         '/node_modules/(?!(jose|firebase-admin|jwks-rsa|@genkit-ai|@google-cloud|lucide-react|uuid|date-fns)/)',
@@ -74,6 +81,52 @@ const config: Config = {
             functions: 40,
             lines: 40,
             statements: 40,
+        },
+        // Per-path bars for money/auth/security-critical modules (post-API
+        // migration). Target is 80% everywhere; where a file is currently
+        // below 80 the bar is pinned to its current floor (rounded down) so
+        // the gate protects against regression WITHOUT failing on the current
+        // tree. Files/metrics below 80 need more tests later — see notes.
+        //
+        // At-target (all metrics >= 80): payments, auth, usage-tracker,
+        // moderation, billing-reconciliation.
+        'src/server/payments.ts': {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+        },
+        'src/server/auth.ts': {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+        },
+        'src/lib/usage-tracker.ts': {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+        },
+        'src/server/moderation.ts': {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+        },
+        'src/lib/billing-reconciliation.ts': {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+        },
+        // organization: all metrics below 80, pinned to floors.
+        // TODO: raise to 80 — needs function coverage on write paths.
+        'src/lib/organization.ts': {
+            branches: 75,
+            functions: 42,
+            lines: 58,
+            statements: 58,
         },
     },
 }

@@ -12,6 +12,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
@@ -74,6 +75,7 @@ const virtualFieldTripPrompt = ai.definePrompt({
   input: { schema: VirtualFieldTripInputSchema },
   output: { schema: VirtualFieldTripOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
 
@@ -91,7 +93,7 @@ You are an expert geography teacher and curriculum designer. Create an immersive
 7.  **Language**: Respond in \`{{{language}}}\`.
 
 **Context:**
-- **Topic**: {{{topic}}}
+- **Topic**: <user_input field="topic">{{{topic}}}</user_input>
 - **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
 
@@ -135,7 +137,10 @@ const virtualFieldTripFlow = ai.defineFlow(
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await virtualFieldTripPrompt(input, resilienceConfig);
+        return await virtualFieldTripPrompt(
+          { ...input, topic: neutralizeUserInput(input.topic) },
+          resilienceConfig
+        );
       }, 'virtualFieldTrip.generate');
 
       if (!output) {

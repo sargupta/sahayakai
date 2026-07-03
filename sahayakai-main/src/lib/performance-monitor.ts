@@ -6,6 +6,7 @@
  */
 
 import { onCLS, onINP, onLCP, onTTFB, onFCP, Metric } from 'web-vitals';
+import { logger } from '@/lib/client-logger';
 
 // ============================================================================
 // TYPES
@@ -293,7 +294,7 @@ class PerformanceMonitor {
 
         // Debug log
         if (CONFIG.debug) {
-            console.log('[Performance]', metric.type, metric);
+            logger.info(metric.type, 'Performance', { metric });
         }
 
         this.queue.push(metric);

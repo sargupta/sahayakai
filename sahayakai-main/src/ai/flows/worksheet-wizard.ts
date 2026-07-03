@@ -100,12 +100,14 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
 }
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
   input: { schema: WorksheetWizardInputSchema },
   output: { schema: WorksheetWizardOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator who creates engaging and effective worksheets for rural Indian classrooms.
@@ -126,7 +128,7 @@ You are an expert educator who creates engaging and effective worksheets for rur
 
 **Context:**
 - **Textbook Image:** {{media url=imageDataUri}}
-- **Request:** {{{prompt}}}
+- **Request:** <user_input field="request">{{{prompt}}}</user_input>
 - **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
 
@@ -180,6 +182,7 @@ const worksheetWizardFlow = ai.defineFlow(
       const { output } = await runResiliently(async (resilienceConfig) => {
         return await worksheetWizardPrompt({
           ...input,
+          prompt: neutralizeUserInput(input.prompt),
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
       }, 'worksheet.generate');

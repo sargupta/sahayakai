@@ -400,8 +400,11 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
                             maxLength={1000}
                         />
 
-                        {/* Voice message */}
+                        {/* Voice message — conversationId marks this as PRIVATE
+                            media (H8): upload lands on the proxy-only storage
+                            prefix and onSend receives the bare storage path. */}
                         <VoiceRecorder
+                            conversationId={conversation.id}
                             onSend={(audioUrl, duration) => handleSend("", "audio", undefined, audioUrl, duration)}
                         />
 

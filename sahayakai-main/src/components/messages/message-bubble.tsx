@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/language-context";
+import { useEffect, useState } from "react";
+import { isPrivateStoragePath, signMediaPath } from "@/lib/api/media";
 
 // ── Resource card config (mirrors community page TYPE_CONFIG) ─────────────────
 
@@ -126,6 +128,28 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
 // ── Audio Bubble ──────────────────────────────────────────────────────────────
 
 function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration?: number; isOwn: boolean }) {
+    // H8: private voice DMs store a bare Storage path (client reads on
+    // voice-messages/** are rules-denied). Exchange it for a short-lived
+    // signed URL via the access-checked proxy before handing it to <audio>.
+    // Legacy messages / community clips store playable URLs — use directly.
+    const needsSigning = isPrivateStoragePath(audioUrl);
+    const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(
+        needsSigning ? undefined : audioUrl,
+    );
+
+    useEffect(() => {
+        if (!isPrivateStoragePath(audioUrl)) {
+            setResolvedSrc(audioUrl);
+            return;
+        }
+        setResolvedSrc(undefined);
+        const controller = new AbortController();
+        signMediaPath(audioUrl, controller.signal)
+            .then((url) => setResolvedSrc(url))
+            .catch(() => { /* leave unplayable; 403/offline — no crash */ });
+        return () => controller.abort();
+    }, [audioUrl]);
+
     const formatDuration = (s?: number) => {
         if (!s) return "";
         return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -142,7 +166,7 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
                 <Mic className={cn("h-3.5 w-3.5", isOwn ? "text-white" : "text-orange-500")} />
             </div>
             <audio
-                src={audioUrl}
+                src={resolvedSrc}
                 controls
                 preload="metadata"
                 className="h-8 flex-1 min-w-0"

@@ -4,6 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { getSecret } from '@/lib/secrets';
+import { logger } from '@/lib/logger';
 
 let firebasePromise: Promise<void> | null = null;
 
@@ -13,12 +14,12 @@ export async function initializeFirebase() {
   firebasePromise = (async () => {
     if (!admin.apps.length) {
       try {
-        console.log("[FirebaseAdmin] Initializing...");
+        logger.info("Initializing...", "FirebaseAdmin");
         const isPlaceholder = (val?: string) => !val || val.startsWith('secrets/');
         let serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
         if (isPlaceholder(serviceAccountString)) {
-          console.log("[FirebaseAdmin] Fetching service account from Secret Manager...");
+          logger.info("Fetching service account from Secret Manager...", "FirebaseAdmin");
           serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY');
         }
 
@@ -35,7 +36,7 @@ export async function initializeFirebase() {
 
         if (isPlaceholder(process.env.GOOGLE_GENAI_API_KEY)) {
           try {
-            console.log("[FirebaseAdmin] Fetching AI keys...");
+            logger.info("Fetching AI keys...", "FirebaseAdmin");
             process.env.GOOGLE_GENAI_API_KEY = await getSecret('GOOGLE_GENAI_API_KEY');
           } catch (e) {
             process.env.GOOGLE_GENAI_API_KEY = await getSecret('GOOGLE_API_KEY').catch(() => "");
@@ -43,13 +44,13 @@ export async function initializeFirebase() {
         }
 
         const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sahayakai-b4248-mumbai';
-        console.log(`[FirebaseAdmin] Using storage bucket: ${storageBucket}`);
+        logger.info("Using storage bucket", "FirebaseAdmin", { storageBucket });
 
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
           storageBucket: storageBucket,
         });
-        console.log("[FirebaseAdmin] Success.");
+        logger.info("Success.", "FirebaseAdmin");
       } catch (error: any) {
         console.error('[FirebaseAdmin] Initialization error:', error.message);
         firebasePromise = null; // Allow retry on failure

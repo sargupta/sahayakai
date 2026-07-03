@@ -16,6 +16,7 @@ import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
+import { logger } from '@/lib/client-logger';
 
 // Known routable flow ids. Mirrors the wire enum in
 // `src/lib/sidecar/types.generated.ts` (`VidyaAction.flow`) and the
@@ -439,8 +440,7 @@ export function OmniOrb() {
             ?? 'en-IN';
 
         try {
-            // eslint-disable-next-line no-console
-            console.log('[VIDYA OmniOrb] POST /api/assistant', {
+            logger.info('POST /api/assistant', 'VIDYA OmniOrb', {
                 transcriptLen: transcript.length,
                 detectedLang: detectedLang ?? null,
                 pathname,
@@ -497,8 +497,7 @@ export function OmniOrb() {
                 throw new Error('Assistant returned malformed response');
             }
             const { response, action, plannedActions } = payload;
-            // eslint-disable-next-line no-console
-            console.log('[VIDYA OmniOrb] /api/assistant response', {
+            logger.info('/api/assistant response', 'VIDYA OmniOrb', {
                 hasResponse: Boolean(response),
                 responseLen: (response ?? '').length,
                 actionType: action?.type ?? null,
@@ -709,8 +708,7 @@ export function OmniOrb() {
         if (normalisedLang) queryParams.set("language", normalisedLang);
 
         const targetUrl = `/${action.flow}?${queryParams.toString()}`;
-        // eslint-disable-next-line no-console
-        console.log('[VIDYA OmniOrb] navigating to', targetUrl);
+        logger.info('navigating to', 'VIDYA OmniOrb', { targetUrl });
 
         // ── Make the navigation VISIBLE ──────────────────────────────────
         // Without this, the orb panel stays mounted on top of the

@@ -30,6 +30,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout, WithTimeoutError } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // NCERT demo hot-fix (2026-05-19): bumped from 15s to 45s after demo run
 // observed Kannada Mysore Palace itineraries completing at ~6s past the
@@ -197,8 +198,7 @@ async function runGenkitWithBudget(
             VFT_TIMEOUT_MS,
             'virtual-field-trip genkit fallback',
         );
-        // eslint-disable-next-line no-console
-        console.log('[vft.dispatch] complete', {
+        logger.info('dispatch complete', 'vft.dispatch', {
             durationMs: Date.now() - startedAt,
             source,
             budgetMs: VFT_TIMEOUT_MS,
@@ -243,8 +243,7 @@ function logDispatch(
     decision: VirtualFieldTripSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
+    console.info(
         JSON.stringify({
             event: 'virtual_field_trip.dispatch',
             mode: decision.mode,

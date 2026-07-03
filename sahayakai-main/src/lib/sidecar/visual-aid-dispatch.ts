@@ -161,8 +161,7 @@ async function runSidecarSafe(request: SidecarVisualAidRequest) {
 }
 
 function logDispatch(decision: VisualAidSidecarDecision, payload: Record<string, unknown>): void {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
+    console.info(JSON.stringify({
         event: 'visual_aid.dispatch',
         mode: decision.mode,
         reason: decision.reason,
@@ -308,8 +307,7 @@ export async function dispatchVisualAid(
                     });
                 });
             } else {
-                // eslint-disable-next-line no-console
-                console.log(JSON.stringify({
+                console.info(JSON.stringify({
                     event: 'visual_aid.dispatch.q4c_skipped_quota',
                     uid: input.userId,
                     reason: 'image_rate_limit_at_cap',

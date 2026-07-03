@@ -16,6 +16,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { generateCallSummary } from '@/ai/flows/parent-call-agent';
 import { timingSafeEqual } from 'crypto';
 import type { TranscriptTurn } from '@/types/attendance';
+import { logger } from '@/lib/logger';
 
 function safeCompare(a: string, b: string): boolean {
     if (a.length !== b.length) return false;
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
                         _summaryGenerating: false,
                         updatedAt: new Date().toISOString(),
                     });
-                    console.log(`[transcript-sync] Summary generated for ${outreachId}`);
+                    logger.info(`Summary generated for ${outreachId}`, 'transcript-sync', { outreachId });
                 }).catch(async (err) => {
                     console.error(`[transcript-sync] Summary generation failed for ${outreachId}:`, err);
                     // Release lock on failure so a future retry/twiml-status can claim it.

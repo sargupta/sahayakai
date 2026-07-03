@@ -176,8 +176,7 @@ function logDispatch(
     decision: VoiceToTextSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
+    console.info(
         JSON.stringify({
             event: 'voice_to_text.dispatch',
             mode: decision.mode,

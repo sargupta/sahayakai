@@ -12,6 +12,7 @@
  */
 
 import { YouTubeVideo } from './youtube';
+import { logger } from '@/lib/logger';
 
 const RSS_BASE = 'https://www.youtube.com/feeds/videos.xml?channel_id=';
 const CHANNEL_CACHE_TTL = 60 * 60 * 1000; // 1 hour in-process
@@ -110,7 +111,7 @@ export async function fetchChannelRSS(
 
         // Store in L1 cache
         rssCache.set(channelId, { videos, expiresAt: now + CHANNEL_CACHE_TTL });
-        console.log(`[RSS] ✅ Loaded ${videos.length} videos from ${channelName}`);
+        logger.info(`Loaded ${videos.length} videos from ${channelName}`, 'RSS', { count: videos.length, channelName });
 
         return videos.slice(0, maxResults);
     } catch (error: any) {

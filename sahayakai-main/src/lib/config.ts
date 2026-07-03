@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const EnvSchema = z.object({
     GOOGLE_GENAI_API_KEY: z.string().min(1, 'GOOGLE_GENAI_API_KEY is required'),
@@ -13,7 +14,7 @@ const EnvSchema = z.object({
 export function validateEnvironment() {
     try {
         EnvSchema.parse(process.env);
-        console.log('[Config] ✅ Environment validation passed');
+        logger.info('Environment validation passed', 'Config');
         return true;
     } catch (error: any) {
         console.error('[Config] ❌ Environment validation failed:');

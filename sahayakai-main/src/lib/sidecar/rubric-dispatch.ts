@@ -22,6 +22,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Bumped from 12s — the Genkit rubric flow legitimately takes 11–13s for the
 // model call alone, and persistContent adds another ~2s. The previous 12s cap
@@ -171,16 +172,12 @@ function logDispatch(
     decision: RubricSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'rubric.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('rubric.dispatch', 'rubric.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 export async function dispatchRubric(
@@ -230,8 +227,7 @@ async function _dispatchRubricInner(
         );
         const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
-        // eslint-disable-next-line no-console
-        console.log('[rubric.dispatch] complete', { durationMs, source: 'genkit' });
+        logger.info('complete', 'rubric.dispatch', { durationMs, source: 'genkit' });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -284,8 +280,7 @@ async function _dispatchRubricInner(
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
-        // eslint-disable-next-line no-console
-        console.log('[rubric.dispatch] complete', {
+        logger.info('complete', 'rubric.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,
             source: 'genkit',
         });
@@ -302,8 +297,7 @@ async function _dispatchRubricInner(
             sidecarVersion: sidecar.res.sidecarVersion,
             durationMs,
         });
-        // eslint-disable-next-line no-console
-        console.log('[rubric.dispatch] complete', { durationMs, source: 'sidecar' });
+        logger.info('complete', 'rubric.dispatch', { durationMs, source: 'sidecar' });
         const dispatched = sidecarToDispatched(sidecar.res, decision);
         // Phase K — persist sidecar output to Storage + Firestore so it
         // shows up in My Library, mirroring the Genkit flow's behaviour.
@@ -387,8 +381,7 @@ async function _dispatchRubricInner(
         FALLBACK_TIMEOUT_MS,
         'rubric genkit fallback',
     );
-    // eslint-disable-next-line no-console
-    console.log('[rubric.dispatch] complete', {
+    logger.info('complete', 'rubric.dispatch', {
         durationMs: Date.now() - dispatchStartedAt,
         source: 'genkit_fallback',
     });

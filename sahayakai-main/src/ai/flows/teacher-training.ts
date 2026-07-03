@@ -12,6 +12,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const TeacherTrainingInputSchema = z.object({
@@ -63,6 +64,7 @@ const teacherTrainingPrompt = ai.definePrompt({
   input: { schema: TeacherTrainingInputSchema },
   output: { schema: TeacherTrainingOutputSchema, format: 'json' },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are an expert pedagogical auditor and coach. Your goal is to provide rigorous, actionable, and truth-speaking advice that is grounded in sound pedagogy and the Bharat-First mission.
 
@@ -77,7 +79,7 @@ You are an expert pedagogical auditor and coach. Your goal is to provide rigorou
 8.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Pedagogy, Classroom Management) and \`gradeLevel\` if not explicitly provided.
 
 **Teacher's Request:**
--   **Question/Concern:** {{{question}}}
+-   **Question/Concern:** <user_input field="question">{{{question}}}</user_input>
 -   **Subject:** {{{subject}}}
 -   **Language:** {{{language}}}
 
@@ -119,7 +121,10 @@ const teacherTrainingFlow = ai.defineFlow(
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await teacherTrainingPrompt(input, resilienceConfig);
+        return await teacherTrainingPrompt(
+          { ...input, question: neutralizeUserInput(input.question) },
+          resilienceConfig
+        );
       }, 'teacherTraining.generate');
 
       if (!output) {

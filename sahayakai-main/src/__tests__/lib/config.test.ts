@@ -1,8 +1,12 @@
 import { validateEnvironment } from '@/lib/config';
+import { logger } from '@/lib/logger';
+
+jest.mock('@/lib/logger', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
 
 describe('validateEnvironment', () => {
   const originalEnv = process.env;
-  let consoleLogSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let processExitSpy: jest.SpyInstance;
 
@@ -13,7 +17,6 @@ describe('validateEnvironment', () => {
     process.env = { ...originalEnv };
 
     // Spy on console and process.exit
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as (code?: number) => never);
   });
@@ -38,7 +41,7 @@ describe('validateEnvironment', () => {
     setValidEnv();
     const result = validateEnvironment();
     expect(result).toBe(true);
-    expect(consoleLogSpy).toHaveBeenCalledWith('[Config] ✅ Environment validation passed');
+    expect(logger.info).toHaveBeenCalledWith('Environment validation passed', 'Config');
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     expect(processExitSpy).not.toHaveBeenCalled();
   });

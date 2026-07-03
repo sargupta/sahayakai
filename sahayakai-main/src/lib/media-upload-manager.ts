@@ -1,4 +1,4 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable } from 'firebase/storage';
 import { storage, auth } from '@/lib/firebase';
 
 export interface MediaUploadJob {
@@ -8,7 +8,12 @@ export interface MediaUploadJob {
     conversationId: string;
     status: 'queued' | 'uploading' | 'done' | 'failed';
     progress: number;     // 0-100
-    downloadUrl?: string;
+    /**
+     * H8: private DM audio is referenced by bare storage PATH (playback goes
+     * through POST /api/media/sign) — client reads on voice-messages/** are
+     * rules-denied, so there is no download URL to fetch here.
+     */
+    storagePath?: string;
     retryCount: number;
 }
 
@@ -78,7 +83,9 @@ class MediaUploadManager {
         this.notify(job);
 
         const ext = job.mimeType.includes('mp4') ? 'mp4' : 'webm';
-        const path = `voice-messages/${user.uid}/${Date.now()}_${job.id.slice(0, 8)}.${ext}`;
+        // H8: conversation-scoped path so /api/media/sign can authorize
+        // playback by conversation membership (legacy flat path is write-denied).
+        const path = `voice-messages/${user.uid}/${job.conversationId}/${Date.now()}_${job.id.slice(0, 8)}.${ext}`;
         const storageRef = ref(storage, path);
 
         try {
@@ -100,9 +107,8 @@ class MediaUploadManager {
                 );
             });
 
-            const url = await getDownloadURL(storageRef);
             job.status = 'done';
-            job.downloadUrl = url;
+            job.storagePath = path;
             job.progress = 100;
             this.notify(job);
             this.notifyComplete(job);
