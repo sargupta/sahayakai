@@ -13,7 +13,7 @@ import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image, RefreshCw, ScanEye } from "lucide-react";
+import { BookOpen, BrainCircuit, ClipboardCheck, FlaskConical, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, RefreshCw } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
@@ -391,11 +391,9 @@ export function DashboardHome() {
               <QuickActionCard title={t("Quiz Generator")} icon={BrainCircuit} href="/quiz-generator" color="" description={t("Instant quizzes & worksheets.")} />
               <QuickActionCard title={t("Exam Paper")} icon={FileText} href="/exam-paper" color="" description={t("Board-aligned papers.")} />
               <QuickActionCard title={t("Worksheet Wizard")} icon={ClipboardList} href="/worksheet-wizard" color="" description={t("Practice worksheets.")} />
-              <QuickActionCard title={t("Assess Work")} icon={ScanEye} href="/assess-assignment" color="" description={t("Grade handwritten work from a photo.")} />
-              <QuickActionCard title={t("Visual Aid")} icon={Image} href="/visual-aid-designer" color="" description={t("Diagrams & illustrations.")} />
-              <QuickActionCard title={t("Content Creator")} icon={PenTool} href="/content-creator" color="" description={t("Stories & visual aids.")} />
+              <QuickActionCard title={t("Rubric Generator")} icon={ClipboardCheck} href="/rubric-generator" color="" description={t("Fair grading criteria.")} />
               <QuickActionCard title={t("Instant Answer")} icon={Lightbulb} href="/instant-answer" color="" description={t("Quick answers to questions.")} />
-              <QuickActionCard title={t("Teacher Training")} icon={GraduationCap} href="/teacher-training" color="" description={t("Professional development.")} />
+              <QuickActionCard title={t("Labs")} icon={FlaskConical} href="/labs" color="" description={t("Experimental tools.")} />
             </div>
           )}
         </div>
@@ -430,25 +428,11 @@ export function DashboardHome() {
             description={t("Practice worksheets.")}
           />
           <QuickActionCard
-            title={t("Assess Work")}
-            icon={ScanEye}
-            href="/assess-assignment"
+            title={t("Rubric Generator")}
+            icon={ClipboardCheck}
+            href="/rubric-generator"
             color=""
-            description={t("Grade handwritten work from a photo.")}
-          />
-          <QuickActionCard
-            title={t("Visual Aid")}
-            icon={Image}
-            href="/visual-aid-designer"
-            color=""
-            description={t("Diagrams & illustrations.")}
-          />
-          <QuickActionCard
-            title={t("Content Creator")}
-            icon={PenTool}
-            href="/content-creator"
-            color=""
-            description={t("Stories & visual aids.")}
+            description={t("Fair grading criteria.")}
           />
           <QuickActionCard
             title={t("Instant Answer")}
@@ -458,11 +442,11 @@ export function DashboardHome() {
             description={t("Quick answers to questions.")}
           />
           <QuickActionCard
-            title={t("Teacher Training")}
-            icon={GraduationCap}
-            href="/teacher-training"
+            title={t("Labs")}
+            icon={FlaskConical}
+            href="/labs"
             color=""
-            description={t("Professional development.")}
+            description={t("Experimental tools.")}
           />
         </div>
       )}

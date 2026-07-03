@@ -44,10 +44,19 @@ SCOPE_DEFAULT=(
 SCOPE=("$@")
 [[ "${#SCOPE[@]}" -eq 0 ]] && SCOPE=("${SCOPE_DEFAULT[@]}")
 
-# Existing scope paths only — silently drop missing.
+# Existing scope paths only — silently drop missing. Test/mock files are
+# exempt: strings inside jest mocks are never user-visible, and flagging
+# them trains people to reach for SKIP_I18N_AUDIT (which then hides real
+# leaks in the same commit).
 EXISTING=()
-for p in "${SCOPE[@]}"; do [[ -e "$p" ]] && EXISTING+=("$p"); done
-[[ "${#EXISTING[@]}" -eq 0 ]] && { echo "no existing scope paths"; exit 0; }
+for p in "${SCOPE[@]}"; do
+    [[ -e "$p" ]] || continue
+    case "$p" in
+        *__tests__*|*__mocks__*|*.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx) continue ;;
+    esac
+    EXISTING+=("$p")
+done
+[[ "${#EXISTING[@]}" -eq 0 ]] && { echo "no existing scope paths (or all test files — exempt)"; exit 0; }
 
 # When all scope paths are individual files (not directories), treat
 # the run as "scoped" — typical for pre-commit-hook invocation. We

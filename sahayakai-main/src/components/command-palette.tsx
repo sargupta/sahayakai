@@ -18,10 +18,12 @@ import {
   ClipboardList,
   FileSignature,
   FileText,
+  FlaskConical,
   Globe2,
   GraduationCap,
   Home,
   Images,
+  ScanLine,
   Library,
   Lightbulb,
   MessageCircle,
@@ -61,8 +63,8 @@ const ROUTES: Route[] = [
   // Create
   { href: "/lesson-plan", label: "Lesson Plan", i18nKey: "Lesson Plan", keywords: "lesson plan create teach class ncert", group: "Create", icon: CalendarDays },
   { href: "/worksheet-wizard", label: "Worksheet Wizard", i18nKey: "Worksheet Wizard", keywords: "worksheet practice homework print", group: "Create", icon: PencilRuler },
-  { href: "/visual-aid-designer", label: "Visual Aid Designer", i18nKey: "Visual Aid Designer", keywords: "visual aid diagram illustration image drawing", group: "Create", icon: Images },
-  { href: "/content-creator", label: "Content Creator", i18nKey: "Content Creator", keywords: "content story creator write", group: "Create", icon: BookOpen },
+  { href: "/visual-aid-designer", label: "Visual Aid Designer", i18nKey: "Visual Aid Designer", keywords: "visual aid diagram illustration image drawing", group: "Labs", icon: Images },
+  { href: "/content-creator", label: "Content Creator", i18nKey: "Content Creator", keywords: "content story creator write", group: "Labs", icon: BookOpen },
 
   // Assess
   { href: "/quiz-generator", label: "Quiz Generator", i18nKey: "Quiz Generator", keywords: "quiz test assessment mcq", group: "Assess", icon: FileSignature },
@@ -71,18 +73,22 @@ const ROUTES: Route[] = [
   { href: "/attendance", label: "Attendance", i18nKey: "Attendance", keywords: "attendance roll call marks", group: "Assess", icon: ClipboardList },
 
   // Engage
-  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Engage", icon: Video },
-  { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit", group: "Engage", icon: Globe2 },
-  { href: "/teacher-training", label: "Teacher Training", i18nKey: "Teacher Training", keywords: "teacher training professional development cpd", group: "Engage", icon: GraduationCap },
+  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
+  { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit", group: "Labs", icon: Globe2 },
+  { href: "/teacher-training", label: "Teacher Training", i18nKey: "Teacher Training", keywords: "teacher training professional development cpd", group: "Labs", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
 
   // Ask
   { href: "/instant-answer", label: "Instant Answer", i18nKey: "Instant Answer", keywords: "instant answer question search knowledge", group: "Ask", icon: Lightbulb },
 
+  // Labs (parked tools stay searchable — registry: src/lib/labs.ts)
+  { href: "/labs", label: "Labs", i18nKey: "Labs", keywords: "labs experimental beta tools", group: "Labs", icon: FlaskConical },
+  { href: "/assessment-scanner", label: "Assessment Scanner", i18nKey: "Assessment Scanner", keywords: "scan grade answer sheet omr", group: "Labs", icon: ScanLine },
+
   // My work
   { href: "/my-library", label: "My Library", i18nKey: "My Library", keywords: "library saved my work folder", group: "My work", icon: Library },
   { href: "/messages", label: "Messages", i18nKey: "Messages", keywords: "messages chat dm", group: "My work", icon: MessageCircle },
-  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard stats usage", group: "My work", icon: BarChart },
+  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard stats usage", group: "Labs", icon: BarChart },
   { href: "/notifications", label: "Notifications", i18nKey: "Notifications", keywords: "notifications alerts", group: "My work", icon: Bell },
 
   // Account

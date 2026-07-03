@@ -170,12 +170,15 @@ describe('Home Page', () => {
         expect(screen.getByText(/SahayakAI, your personal AI companion/i)).toBeInTheDocument();
     });
 
-    it('renders quick action cards', () => {
+    it('renders quick action cards (spine tools + Labs entry)', () => {
         render(<Home />);
         expect(screen.getByText('Lesson Plan')).toBeInTheDocument();
         expect(screen.getByText('Quiz Generator')).toBeInTheDocument();
-        expect(screen.getByText('Content Creator')).toBeInTheDocument();
-        expect(screen.getByText('Teacher Training')).toBeInTheDocument();
+        expect(screen.getByText('Rubric Generator')).toBeInTheDocument();
+        expect(screen.getByText('Labs')).toBeInTheDocument();
+        // Parked tools (src/lib/labs.ts) must NOT surface as dashboard cards.
+        expect(screen.queryByText('Content Creator')).not.toBeInTheDocument();
+        expect(screen.queryByText('Teacher Training')).not.toBeInTheDocument();
     });
 
     it('navigates on form submission', async () => {
