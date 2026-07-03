@@ -93,7 +93,6 @@ export function useLessonPlan() {
                     const result = await syncTelemetryEvents(events);
                     if (result.success) {
                         await Promise.all(pending.map(p => clearEvent(p.key)));
-                        console.log(`Synced ${pending.length} telemetry events`);
                     }
                 }
             } catch (e) {

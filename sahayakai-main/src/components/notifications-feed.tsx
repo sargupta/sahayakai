@@ -144,7 +144,6 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             toast({ title: t('Cannot accept: request reference missing'), variant: 'destructive' });
             return;
         }
-        console.log('[NotificationFeed] Accept', { id: notification.id, requestId, from: notification.senderName });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await acceptConnectionRequestAction(requestId);
@@ -179,7 +178,6 @@ export function NotificationFeed({ notifications: incomingNotifications, userId,
             toast({ title: t('Cannot decline: request reference missing'), variant: 'destructive' });
             return;
         }
-        console.log('[NotificationFeed] Decline', { id: notification.id, requestId });
         setActionState((prev) => ({ ...prev, [notification.id]: 'loading' }));
         try {
             await declineConnectionRequestAction(requestId);
