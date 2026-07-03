@@ -41,7 +41,14 @@ export function sanitizeFieldTripOutput(rawOutput: any): any {
     if (Array.isArray(sanitized.stops)) {
         sanitized.stops = sanitized.stops.map((s: any) => ({
             ...s,
-            // Ensure any string cleaning if needed
+            // Percent-encode the search segment so the URL is transport-safe
+            // even when the model leaves Unicode place names unescaped.
+            googleEarthUrl: typeof s.googleEarthUrl === 'string'
+                ? s.googleEarthUrl.replace(
+                    /(https:\/\/earth\.google\.com\/web\/search\/)(.+)$/,
+                    (_m: string, base: string, q: string) => base + encodeURI(q),
+                  )
+                : s.googleEarthUrl,
         }));
     }
 
