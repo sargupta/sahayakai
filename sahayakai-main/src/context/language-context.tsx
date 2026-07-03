@@ -5900,6 +5900,15 @@ const dictionary: Record<string, Record<Language, string>> = {
     "Add students first to take attendance.": {
         "English": "Add students first to take attendance.", "Hindi": "उपस्थिति लेने के लिए पहले छात्र जोड़ें।", "Kannada": "ಹಾಜರಾತಿ ತೆಗೆದುಕೊಳ್ಳಲು ಮೊದಲು ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಸೇರಿಸಿ.", "Tamil": "வருகையை எடுக்க முதலில் மாணவர்களைச் சேர்க்கவும்.", "Telugu": "హాజరు తీసుకోవడానికి ముందుగా విద్యార్థులను జోడించండి.", "Marathi": "उपस्थिती घेण्यासाठी आधी विद्यार्थी जोडा.", "Bengali": "উপস্থিতি নিতে প্রথমে শিক্ষার্থী যোগ করুন।", "Gujarati": "હાજરી લેવા માટે પહેલા વિદ્યાર્થીઓ ઉમેરો.", "Punjabi": "ਹਾਜ਼ਰੀ ਲੈਣ ਲਈ ਪਹਿਲਾਂ ਵਿਦਿਆਰਥੀ ਸ਼ਾਮਲ ਕਰੋ।", "Malayalam": "ഹാജർ എടുക്കാൻ ആദ്യം വിദ്യാർത്ഥികളെ ചേർക്കുക.", "Odia": "ଉପସ୍ଥାନ ନେବା ପାଇଁ ପ୍ରଥମେ ଛାତ୍ରମାନଙ୍କୁ ଯୋଗ କରନ୍ତୁ।"
     },
+    "Your mobile number": {
+        "English": "Your mobile number", "Hindi": "आपका मोबाइल नंबर", "Kannada": "ನಿಮ್ಮ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ", "Tamil": "உங்கள் மொபைல் எண்", "Telugu": "మీ మొబైల్ నంబర్", "Marathi": "तुमचा मोबाईल नंबर", "Bengali": "আপনার মোবাইল নম্বর", "Gujarati": "તમારો મોબાઇલ નંબર", "Punjabi": "ਤੁਹਾਡਾ ਮੋਬਾਈਲ ਨੰਬਰ", "Malayalam": "നിങ്ങളുടെ മൊബൈൽ നമ്പർ", "Odia": "ଆପଣଙ୍କ ମୋବାଇଲ୍ ନମ୍ବର"
+    },
+    "Language for the call": {
+        "English": "Language for the call", "Hindi": "कॉल की भाषा", "Kannada": "ಕರೆಯ ಭಾಷೆ", "Tamil": "அழைப்பின் மொழி", "Telugu": "కాల్ భాష", "Marathi": "कॉलची भाषा", "Bengali": "কলের ভাষা", "Gujarati": "કૉલની ભાષા", "Punjabi": "ਕਾਲ ਦੀ ਭਾਸ਼ਾ", "Malayalam": "കോളിന്റെ ഭാഷ", "Odia": "କଲ୍‌ର ଭାଷା"
+    },
+    "98XXXXXXXX": {
+        "English": "98XXXXXXXX", "Hindi": "98XXXXXXXX", "Kannada": "98XXXXXXXX", "Tamil": "98XXXXXXXX", "Telugu": "98XXXXXXXX", "Marathi": "98XXXXXXXX", "Bengali": "98XXXXXXXX", "Gujarati": "98XXXXXXXX", "Punjabi": "98XXXXXXXX", "Malayalam": "98XXXXXXXX", "Odia": "98XXXXXXXX"
+    },
     "Adds up to your overall score of": {
         "English": "Adds up to your overall score of", "Hindi": "आपके कुल स्कोर में जुड़ता है", "Kannada": "ನಿಮ್ಮ ಒಟ್ಟಾರೆ ಸ್ಕೋರ್‌ಗೆ ಸೇರುತ್ತದೆ", "Tamil": "உங்கள் ஒட்டுமொத்த மதிப்பெண்ணில் சேர்க்கப்படுகிறது", "Telugu": "మీ మొత్తం స్కోర్‌కు జోడిస్తుంది", "Marathi": "तुमच्या एकूण गुणांमध्ये जोडले जाते", "Bengali": "আপনার সামগ্রিক স্কোরে যোগ হয়", "Gujarati": "તમારા કુલ સ્કોરમાં ઉમેરાય છે", "Punjabi": "ਤੁਹਾਡੇ ਕੁੱਲ ਸਕੋਰ ਵਿੱਚ ਜੋੜਿਆ ਜਾਂਦਾ ਹੈ", "Malayalam": "നിങ്ങളുടെ മൊത്തം സ്കോറിലേക്ക് കൂട്ടുന്നു", "Odia": "ଆପଣଙ୍କ ସମୁଦାୟ ସ୍କୋରରେ ଯୋଗ ହୁଏ"
     },
