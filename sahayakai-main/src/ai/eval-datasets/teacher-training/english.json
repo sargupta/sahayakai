@@ -1,0 +1,29 @@
+[
+  {
+    "label": "multigrade-classroom-management",
+    "input": {
+      "question": "I teach a multigrade classroom with Class 3 and Class 5 students together in a single room in a government primary school. While I teach one group, the other group gets distracted and noisy. How do I keep both groups meaningfully engaged?",
+      "language": "English",
+      "subject": "Classroom Management",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "maths-anxiety-slow-learners",
+    "input": {
+      "question": "Many of my Class 7 students freeze during mental maths and say 'maths is not for me'. Their parents cannot help at home. What evidence-based strategies can I use to reduce maths anxiety and build confidence?",
+      "language": "English",
+      "subject": "Mathematics Pedagogy",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "ncf-competency-based-assessment-shift",
+    "input": {
+      "question": "My school is moving from rote-based unit tests to competency-based assessment as per NEP 2020 and the NCF. I have only ever set recall-type question papers. How do I start designing questions that test application and higher-order thinking?",
+      "language": "English",
+      "subject": "Assessment",
+      "userId": "eval-harness-user"
+    }
+  }
+]

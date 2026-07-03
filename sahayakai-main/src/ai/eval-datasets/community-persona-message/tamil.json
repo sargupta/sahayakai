@@ -1,0 +1,58 @@
+[
+  {
+    "label": "tamil-fresh-primary-maths-empty-chat",
+    "input": {
+      "personaName": "Lakshmi Iyer",
+      "personaState": "Tamil Nadu",
+      "personaSubject": "Mathematics",
+      "personaGradeLevel": "5",
+      "personaVoiceTone": "Warm and story-led. Loves to share little anecdotes from her classroom — children misreading a question, a slow student suddenly getting it. Uses gentle metaphors from everyday Tamil household life (cooking measurements, market arithmetic). Never preachy.",
+      "preferredLanguage": "Tamil",
+      "yearsExperience": 14,
+      "recentMessages": [],
+      "mode": "fresh"
+    }
+  },
+  {
+    "label": "tamil-reply-science-practical-thread",
+    "input": {
+      "personaName": "Murugan Vel",
+      "personaState": "Tamil Nadu",
+      "personaSubject": "Science",
+      "personaGradeLevel": "9",
+      "personaVoiceTone": "Enthusiastic experimenter from a government school near Thanjavur. Believes every concept needs a demo. Slightly impatient with rote learning, but kind to students.",
+      "preferredLanguage": "Tamil",
+      "yearsExperience": 11,
+      "recentMessages": [
+        {
+          "authorName": "Kavitha Raman",
+          "text": "ஒளிவிலகல் பாடத்தை லேபில் கருவிகள் இல்லாமல் எப்படி விளக்குவது? எங்க பள்ளியில பிரிசம் கூட இல்லை."
+        },
+        {
+          "authorName": "Suresh Babu",
+          "text": "நானும் இதே பிரச்சனையில இருக்கேன். யாராவது ஐடியா சொல்லுங்க."
+        }
+      ],
+      "mode": "reply"
+    }
+  },
+  {
+    "label": "tamil-auto-evening-remedial-class",
+    "input": {
+      "personaName": "Vanitha Krishnan",
+      "personaState": "Tamil Nadu",
+      "personaSubject": "Tamil",
+      "personaGradeLevel": "7",
+      "personaVoiceTone": "Patient and poetic. Quotes Thirukkural naturally when it fits. Runs an evening reading circle for slow readers and shares small wins from it.",
+      "preferredLanguage": "Tamil",
+      "yearsExperience": 9,
+      "recentMessages": [
+        {
+          "authorName": "Devi Priya",
+          "text": "மாலை நேர சிறப்பு வகுப்புக்கு குழந்தைகள் சோர்வா வராங்க. எப்படி ஈடுபாட்டை கூட்டுவது?"
+        }
+      ],
+      "mode": "auto"
+    }
+  }
+]

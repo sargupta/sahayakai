@@ -1,0 +1,26 @@
+[
+  {
+    "label": "class7-geography-rivers-of-india",
+    "input": {
+      "topic": "The great rivers of India — following the Ganga from Gangotri glacier to the Sundarbans delta, understanding how rivers shape land, agriculture and cities along the way. NCERT Class 7 Geography 'Our Changing Earth'.",
+      "language": "English",
+      "gradeLevel": "Class 7"
+    }
+  },
+  {
+    "label": "class9-science-volcanoes-earthquakes",
+    "input": {
+      "topic": "Volcanoes and earthquakes around the Pacific Ring of Fire — why plate boundaries produce mountains, tsunamis and eruptions, for Class 9 students studying the structure of the Earth.",
+      "language": "English",
+      "gradeLevel": "Class 9"
+    }
+  },
+  {
+    "label": "class5-evs-wonders-of-ancient-india",
+    "input": {
+      "topic": "A heritage tour of ancient Indian monuments — Ajanta caves, Konark Sun Temple, Hampi ruins and the Sanchi Stupa — to show Class 5 students how people built magnificent structures without modern machines.",
+      "language": "English",
+      "gradeLevel": "Class 5"
+    }
+  }
+]

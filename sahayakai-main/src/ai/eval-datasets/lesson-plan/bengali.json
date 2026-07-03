@@ -1,0 +1,41 @@
+[
+  {
+    "label": "Class 7 Science — Photosynthesis in Bengali, low-resource rural classroom",
+    "input": {
+      "topic": "Photosynthesis",
+      "gradeLevels": ["Class 7"],
+      "language": "Bengali",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Science",
+      "difficultyLevel": "standard",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 5 Science — Water Cycle in Bengali with West Bengal locality (monsoon, paddy farming)",
+    "input": {
+      "topic": "Water Cycle",
+      "gradeLevels": ["Class 5"],
+      "language": "Bengali",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Science",
+      "state": "West Bengal",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 7 Mathematics — Profit and Loss in Bengali, local mandi examples",
+    "input": {
+      "topic": "Profit and Loss - buying and selling at the local market",
+      "gradeLevels": ["Class 7"],
+      "language": "Bengali",
+      "resourceLevel": "low",
+      "useRuralContext": true,
+      "subject": "Mathematics",
+      "difficultyLevel": "standard",
+      "userId": ""
+    }
+  }
+]

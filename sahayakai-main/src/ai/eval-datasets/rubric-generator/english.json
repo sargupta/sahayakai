@@ -1,0 +1,29 @@
+[
+  {
+    "label": "class8-science-solar-system-model",
+    "input": {
+      "assignmentDescription": "Students will build a working model of the solar system using low-cost or waste materials (clay, old newspapers, bottle caps) and present it to the class, explaining the relative sizes of planets and why the planets revolve around the Sun. Based on NCERT Class 8 Science, Chapter 'Stars and the Solar System'.",
+      "gradeLevel": "Class 8",
+      "subject": "Science",
+      "language": "English"
+    }
+  },
+  {
+    "label": "class5-evs-water-conservation-poster",
+    "input": {
+      "assignmentDescription": "Design a poster on 'Every Drop Counts' showing three ways to save water at home and in school, with a slogan in the students' own words. Aligned with NCERT Class 5 EVS chapter 'Every Drop Counts'.",
+      "gradeLevel": "Class 5",
+      "subject": "Environmental Studies",
+      "language": "English"
+    }
+  },
+  {
+    "label": "class10-english-letter-to-editor",
+    "input": {
+      "assignmentDescription": "Write a formal letter to the editor of a national daily about the problem of plastic waste near your school, following the CBSE Class 10 English formal letter format: sender's address, date, receiver's designation, subject line, salutation, three-paragraph body, and complimentary close.",
+      "gradeLevel": "Class 10",
+      "subject": "English",
+      "language": "English"
+    }
+  }
+]

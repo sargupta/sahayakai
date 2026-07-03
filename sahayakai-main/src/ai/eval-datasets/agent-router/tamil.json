@@ -1,0 +1,42 @@
+[
+  {
+    "label": "tamil-lesson-plan-photosynthesis",
+    "input": {
+      "prompt": "வகுப்பு 7 அறிவியலுக்கு ஒளிச்சேர்க்கை பற்றி ஒரு பாடத் திட்டம் தயார் செய்து கொடு.",
+      "language": "ta"
+    },
+    "expect": {
+      "type": "lessonPlan"
+    }
+  },
+  {
+    "label": "tamil-quiz-warmup-fractions",
+    "input": {
+      "prompt": "நாளை பாடத்தின் தொடக்கத்தில் கேட்க வகுப்பு 5 மாணவர்களுக்கு பின்னங்கள் பற்றி 10 சிறிய கேள்விகள் கொண்ட வினாடி வினா வேண்டும்.",
+      "language": "ta"
+    },
+    "expect": {
+      "type": "quiz"
+    }
+  },
+  {
+    "label": "tamil-exam-paper-board-quadratic",
+    "input": {
+      "prompt": "வகுப்பு 10 கணிதத்திற்கு போர்டு தேர்வு மாதிரி வினாத்தாள் தயார் செய் — இருபடி சமன்பாடுகள் அத்தியாயம், பிரிவுகள் மற்றும் மதிப்பெண் பங்கீட்டுடன்.",
+      "language": "ta"
+    },
+    "expect": {
+      "type": "examPaper"
+    }
+  },
+  {
+    "label": "tamil-worksheet-water-cycle-homework",
+    "input": {
+      "prompt": "நீர் சுழற்சி பற்றி வகுப்பு 6 மாணவர்களுக்கு வீட்டுப்பாடமாக கொடுக்க ஒரு பயிற்சித்தாள் (worksheet) உருவாக்கு.",
+      "language": "ta"
+    },
+    "expect": {
+      "type": "worksheet"
+    }
+  }
+]
