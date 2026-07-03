@@ -1,0 +1,44 @@
+[
+  {
+    "label": "CBSE Class 9 Science in Bengali — Motion/Force/Gravitation, answer key only",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 9",
+      "subject": "Science",
+      "chapters": ["Motion", "Force and Laws of Motion", "Gravitation"],
+      "maxMarks": 80,
+      "language": "Bengali",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": false
+    }
+  },
+  {
+    "label": "CBSE Class 10 Mathematics in Bengali — AP/Triangles/Trigonometry/Statistics",
+    "input": {
+      "board": "CBSE",
+      "gradeLevel": "Class 10",
+      "subject": "Mathematics",
+      "chapters": ["Arithmetic Progressions", "Triangles", "Introduction to Trigonometry", "Statistics"],
+      "maxMarks": 80,
+      "language": "Bengali",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  },
+  {
+    "label": "WBBSE (Madhyamik) Class 10 Physical Science in Bengali — 90 marks, no official blueprint (fallback path)",
+    "input": {
+      "board": "West Bengal State Board (WBBSE)",
+      "gradeLevel": "Class 10",
+      "subject": "Physical Science",
+      "chapters": ["Behaviour of Gases", "Light", "Current Electricity"],
+      "maxMarks": 90,
+      "language": "Bengali",
+      "difficulty": "mixed",
+      "includeAnswerKey": true,
+      "includeMarkingScheme": true
+    }
+  }
+]

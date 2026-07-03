@@ -137,7 +137,7 @@ echo "Total flagged: $count"
 echo
 if [[ "$count" -gt 0 ]]; then
     echo "✗ Hard-coded user-visible strings detected. Wrap each in t(\"...\")"
-    echo "  and add the key to src/context/language-context.tsx with values"
+    echo "  and add the key to each src/locales/<language>.json with values"
     echo "  for all 11 languages, then re-run."
     exit 1
 fi

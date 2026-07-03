@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(process.cwd(), 'src');
-const DICT_PATH = path.resolve(process.cwd(), 'src/context/language-context.tsx');
 
 const TFN_RE = /\bt\(\s*(["'])([^"'\n]{1,200})\1\s*\)/g;
 const usedKeys = new Set();
@@ -30,11 +29,16 @@ function walk(dir) {
 }
 walk(ROOT);
 
-const dictSrc = fs.readFileSync(DICT_PATH, 'utf8');
+// Dictionary keys = union across src/locales/*.json (tranche 3 split the
+// inline dictionary out of language-context.tsx). A key present in ANY
+// locale counts as defined; per-locale gaps are a translation-completeness
+// question, not a missing-key error (English fallback is by design).
+const LOCALES_DIR = path.resolve(process.cwd(), 'src/locales');
 const dictKeys = new Set();
-const KEY_RE = /^    "([^"]+)":\s*\{$/gm;
-let km;
-while ((km = KEY_RE.exec(dictSrc)) !== null) dictKeys.add(km[1]);
+for (const f of fs.readdirSync(LOCALES_DIR).filter((n) => n.endsWith('.json'))) {
+    const data = JSON.parse(fs.readFileSync(path.join(LOCALES_DIR, f), 'utf8'));
+    for (const k of Object.keys(data)) dictKeys.add(k);
+}
 
 const missing = [...usedKeys].filter(k => !dictKeys.has(k)).sort();
 const orphan = [...dictKeys].filter(k => !usedKeys.has(k)).sort();

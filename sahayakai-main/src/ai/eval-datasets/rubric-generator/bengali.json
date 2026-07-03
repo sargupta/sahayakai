@@ -1,0 +1,29 @@
+[
+  {
+    "label": "class7-science-photosynthesis-chart",
+    "input": {
+      "assignmentDescription": "শিক্ষার্থীরা সালোকসংশ্লেষণ প্রক্রিয়ার একটি রঙিন চার্ট তৈরি করবে — কাঁচামাল (জল, কার্বন ডাই-অক্সাইড, সূর্যালোক), ক্লোরোফিলের ভূমিকা এবং উৎপন্ন পদার্থ (গ্লুকোজ, অক্সিজেন) চিহ্নিত করে শ্রেণিকক্ষে উপস্থাপন করবে। NCERT সপ্তম শ্রেণির বিজ্ঞান অধ্যায় 'উদ্ভিদের পুষ্টি' অনুযায়ী।",
+      "gradeLevel": "Class 7",
+      "subject": "Science",
+      "language": "Bengali"
+    }
+  },
+  {
+    "label": "class6-bengali-essay-favourite-festival",
+    "input": {
+      "assignmentDescription": "শিক্ষার্থীরা 'আমার প্রিয় উৎসব' বিষয়ে ২০০ শব্দের একটি রচনা লিখবে — ভূমিকা, উৎসবের বর্ণনা, পরিবারের সঙ্গে উদযাপন এবং উপসংহার সহ। ষষ্ঠ শ্রেণির বাংলা ভাষা শিক্ষার জন্য।",
+      "gradeLevel": "Class 6",
+      "subject": "Bengali",
+      "language": "Bengali"
+    }
+  },
+  {
+    "label": "class9-history-freedom-movement-project",
+    "input": {
+      "assignmentDescription": "ভারতের স্বাধীনতা আন্দোলনে বাংলার ভূমিকা নিয়ে একটি প্রকল্প প্রতিবেদন তৈরি করা — ক্ষুদিরাম বসু, মাতঙ্গিনী হাজরা প্রমুখ বিপ্লবীদের অবদান, ছবি ও সময়রেখা সহ, এবং শ্রেণিকক্ষে পাঁচ মিনিটের মৌখিক উপস্থাপনা। নবম শ্রেণির ইতিহাসের জন্য।",
+      "gradeLevel": "Class 9",
+      "subject": "History",
+      "language": "Bengali"
+    }
+  }
+]

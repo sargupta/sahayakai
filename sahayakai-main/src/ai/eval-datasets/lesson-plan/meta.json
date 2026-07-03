@@ -1,0 +1,16 @@
+{
+  "module": "src/ai/flows/lesson-plan-generator.ts",
+  "export": "generateLessonPlan",
+  "flowName": "lessonPlanFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "title",
+    "objectives[]",
+    "materials[]",
+    "activities[].name",
+    "activities[].description",
+    "assessment",
+    "homework"
+  ],
+  "notes": "userId is required by the input schema; cases use '' so the flow treats the caller as anonymous (skips Firestore rate-limit + profile fetch) and skips library persistence. activities[].phase is an English enum (Engage/Explore/...) by design — never script-check it. assessment/homework/keyVocabulary are nullable-optional: skip script check when absent. Identical inputs may be served from the lesson-plan cache. Long-running: main generation plus a secondary materials-audit AI call (expect 20-60s)."
+}

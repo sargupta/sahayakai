@@ -69,3 +69,7 @@ firestore-debug.log
 public/sw.js
 public/sw.js.map
 public/workbox-*.js
+
+# eval runner artifacts
+eval-results/
+live-eval.log

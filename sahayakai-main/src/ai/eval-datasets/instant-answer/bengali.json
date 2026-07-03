@@ -1,0 +1,32 @@
+[
+  {
+    "label": "class6-science-rainbow-formation",
+    "input": {
+      "question": "বৃষ্টির পরে আকাশে রামধনু কীভাবে তৈরি হয়? ষষ্ঠ শ্রেণির শিক্ষার্থীদের সহজ ভাষায় বোঝাতে চাই।",
+      "language": "Bengali",
+      "gradeLevel": "Class 6",
+      "subject": "Science",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class8-geography-sundarbans-mangrove",
+    "input": {
+      "question": "সুন্দরবনের ম্যানগ্রোভ গাছের শ্বাসমূল কেন মাটির উপরে উঠে আসে? অষ্টম শ্রেণির ভূগোল ক্লাসের জন্য।",
+      "language": "Bengali",
+      "gradeLevel": "Class 8",
+      "subject": "Geography",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class4-maths-fraction-roti-example",
+    "input": {
+      "question": "ভগ্নাংশ কী, তা রুটি ভাগ করার উদাহরণ দিয়ে চতুর্থ শ্রেণির বাচ্চাদের কীভাবে বোঝাব?",
+      "language": "Bengali",
+      "gradeLevel": "Class 4",
+      "subject": "Mathematics",
+      "userId": "eval-harness-user"
+    }
+  }
+]

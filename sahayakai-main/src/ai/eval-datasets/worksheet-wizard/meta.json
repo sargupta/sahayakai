@@ -1,0 +1,14 @@
+{
+  "module": "src/ai/flows/worksheet-wizard.ts",
+  "export": "generateWorksheet",
+  "flowName": "worksheetWizardFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "title",
+    "studentInstructions",
+    "learningObjectives[]",
+    "activities[].content",
+    "activities[].explanation"
+  ],
+  "notes": "imageDataUri is REQUIRED (multimodal flow: the textbook photo is the primary context). Each case embeds a small synthetic textbook-page PNG (English text, rendered offline — teachers commonly photograph English-medium textbooks even when requesting Bengali/Tamil output; the 'language' field drives output language). activities[].content may contain LaTeX wrapped in $...$ — the script check must tolerate Latin math notation and digits alongside the target script. activities[].chalkboardNote and answerKey[].answer are excluded (optional / often numeric). worksheetContent is a legacy Markdown field auto-filled by the flow — do not script-check it separately. userId omitted so no Storage/Firestore persistence."
+}

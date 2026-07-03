@@ -1,0 +1,68 @@
+[
+  {
+    "label": "class7-attendance-concern-bengali",
+    "input": {
+      "studentName": "Ritaja Das",
+      "className": "Class 7B",
+      "subject": "Mathematics",
+      "reason": "consecutive_absences",
+      "reasonContext": "The student has been absent for multiple consecutive school days. Express genuine concern for the student's well-being, ask if everything is okay at home, and invite the parent to reach out. Be warm, not accusatory.",
+      "consecutiveAbsentDays": 5,
+      "teacherNote": "রিতাজা গত সোমবার থেকে স্কুলে আসছে না। ওর বন্ধুরা জানিয়েছে ও অসুস্থ ছিল। ক্লাসে ওকে খুব মিস করছি — সব ঠিক আছে কিনা জানতে চাই।",
+      "teacherName": "Sanchita Bhattacharya",
+      "schoolName": "Baranagar Rajkumari Memorial Girls' High School, Kolkata",
+      "parentLanguage": "Bengali"
+    }
+  },
+  {
+    "label": "class9-exam-results-support-bengali",
+    "input": {
+      "studentName": "Sayan Mondal",
+      "className": "Class 9A",
+      "subject": "Physical Science",
+      "reason": "poor_performance",
+      "reasonContext": "The student's academic performance has recently declined. Focus on offering support — mention that you want to work together to help the student succeed. Do NOT blame the student or parent.",
+      "teacherNote": "সায়ন ক্লাসে মনোযোগী, কিন্তু সাম্প্রতিক ইউনিট টেস্টে নম্বর কমেছে। আমি ওর জন্য সপ্তাহে একদিন আলাদা ডাউট-ক্লিয়ারিং ক্লাসের ব্যবস্থা করতে চাই।",
+      "teacherName": "Arindam Chakraborty",
+      "schoolName": "Krishnanagar Collegiate School, Nadia",
+      "parentLanguage": "Bengali",
+      "performanceContext": {
+        "latestPercentage": 38,
+        "isAtRisk": false,
+        "subjectBreakdown": [
+          {
+            "subject": "Physical Science",
+            "name": "Unit Test 2",
+            "marksObtained": 13,
+            "maxMarks": 40,
+            "percentage": 32.5,
+            "date": "2026-06-18"
+          },
+          {
+            "subject": "Physical Science",
+            "name": "First Summative Evaluation",
+            "marksObtained": 22,
+            "maxMarks": 50,
+            "percentage": 44,
+            "date": "2026-05-22"
+          }
+        ]
+      },
+      "performanceSummary": "Physical Science Unit Test 2: 13/40 (32.5%), First Summative Evaluation: 22/50 (44%)"
+    }
+  },
+  {
+    "label": "class4-positive-feedback-recitation-bengali",
+    "input": {
+      "studentName": "Anwesha Roy",
+      "className": "Class 4A",
+      "subject": "Bengali",
+      "reason": "positive_feedback",
+      "reasonContext": "Share a positive achievement or behavior. This message should be warm, celebratory, and brief. Encourage the parent to praise the student at home.",
+      "teacherNote": "অন্বেষা আজ রবীন্দ্রজয়ন্তীর অনুষ্ঠানে পুরো স্কুলের সামনে আবৃত্তি করেছে — সবাই মুগ্ধ। ক্লাসেও ও নতুন বন্ধুদের খুব সাহায্য করে।",
+      "teacherName": "Madhumita Sen",
+      "schoolName": "Siliguri Girls' Primary School, Darjeeling",
+      "parentLanguage": "Bengali"
+    }
+  }
+]
