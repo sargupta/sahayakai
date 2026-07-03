@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Validate dataset structure (no API spend)
-        run: npx tsx scripts/eval/run-evals.mts --all --dry
+        run: npx tsx --import ./scripts/eval/register-shims.mjs scripts/eval/run-evals.mts --all --dry
       - name: Require eval API key
         run: |
           if [ -z "$GOOGLE_GENAI_API_KEY" ]; then
@@ -53,7 +53,7 @@ jobs:
             exit 1
           fi
       - name: Run live evals (blocking)
-        run: npx tsx scripts/eval/run-evals.mts --all
+        run: npx tsx --import ./scripts/eval/register-shims.mjs scripts/eval/run-evals.mts --all
       - name: Upload eval report
         uses: actions/upload-artifact@v4
         if: always()

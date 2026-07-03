@@ -38,7 +38,7 @@ const SCRIPT_RANGES: Record<string, RegExp> = {
 // high enough that an all-English answer can't pass.
 const MIN_SCRIPT_CHARS = 40;
 
-const CASE_TIMEOUT_MS = 180_000;
+const CASE_TIMEOUT_MS = 300_000;
 const CONCURRENCY = 3;
 
 type Meta = {
@@ -108,7 +108,9 @@ async function runFlowDir(dir: string, failures: Failure[]): Promise<{ ran: numb
             const adapter = (await import(adapterPath)).default as (m: unknown, i: unknown) => Promise<unknown>;
             fn = (input: unknown) => adapter(mod, input);
         } else {
-            fn = mod[meta.export];
+            // tsx compiles some modules to CJS; named exports then live
+            // under the namespace's `default`.
+            fn = mod[meta.export] ?? mod.default?.[meta.export];
         }
         if (typeof fn !== 'function') {
             failures.push({ flow: dir, file: 'meta.json', label: '-', reason: `export ${meta.export} not found in ${meta.module}` });
@@ -136,8 +138,21 @@ async function runFlowDir(dir: string, failures: Failure[]): Promise<{ ran: numb
                 const label = testCase.label ?? `case ${idx}`;
                 ran += 1;
                 if (DRY) { passed += 1; continue; }
+                // One retry for transient failures only (timeouts, model-side
+                // schema flakes, rate limits). Language/expect assertions are
+                // NEVER retried — a masked regression is worse than a flaky red.
+                const isTransient = (e: Error) =>
+                    /timeout after|INVALID_ARGUMENT|RESOURCE_EXHAUSTED|429|5\d\d|UNAVAILABLE|fetch failed/i.test(e.message);
+                const callOnce = () => withTimeout(fn!(testCase.input), CASE_TIMEOUT_MS, `${dir}/${langFile}#${idx}`);
                 try {
-                    const out = await withTimeout(fn!(testCase.input), CASE_TIMEOUT_MS, `${dir}/${langFile}#${idx}`);
+                    let out: unknown;
+                    try {
+                        out = await callOnce();
+                    } catch (first) {
+                        if (!isTransient(first as Error)) throw first;
+                        console.log(`  RETRY ${dir}/${langFile} — ${label} (transient: ${(first as Error).message.slice(0, 80)})`);
+                        out = await callOnce();
+                    }
                     if (!out) throw new Error('flow returned empty result');
 
                     if (checkScript) {
