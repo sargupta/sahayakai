@@ -1,5 +1,114 @@
 import type { Metadata, Viewport } from 'next';
+import {
+  Inter,
+  Outfit,
+  Noto_Sans_Devanagari,
+  Noto_Sans_Bengali,
+  Noto_Sans_Tamil,
+  Noto_Sans_Telugu,
+  Noto_Sans_Kannada,
+  Noto_Sans_Malayalam,
+  Noto_Sans_Gujarati,
+  Noto_Sans_Gurmukhi,
+  Noto_Sans_Oriya,
+} from 'next/font/google';
 import './globals.css';
+
+// ========================================
+// PHASE 0 — SELF-HOSTED FONTS (2026-07-03)
+// Design proposals 00/02/10. next/font/google downloads each family at
+// BUILD time and serves the woff2 from our own origin — no runtime
+// fonts.googleapis.com round-trip, no Google-Fonts CSS injection, no
+// Indic-script CLS/tofu flash (the old public/indic-font-preload.js +
+// ensureIndicFontLoaded() runtime injection are retired).
+//
+// Each family is emitted as @font-face + a CSS custom property only;
+// browsers fetch a family's woff2 lazily when text actually uses it, so
+// bundling all 10 Indic families does not bloat English-only sessions.
+// Per-language application: LanguageContext syncs <html lang>, and
+// globals.css maps :lang() -> the right --font-noto-* variable.
+// ========================================
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+// 800 kept: landing headlines use font-extrabold with font-headline.
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+const notoDevanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-devanagari',
+  display: 'swap',
+});
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ['bengali'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-bengali',
+  display: 'swap',
+});
+const notoTamil = Noto_Sans_Tamil({
+  subsets: ['tamil'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-tamil',
+  display: 'swap',
+});
+const notoTelugu = Noto_Sans_Telugu({
+  subsets: ['telugu'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-telugu',
+  display: 'swap',
+});
+const notoKannada = Noto_Sans_Kannada({
+  subsets: ['kannada'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-kannada',
+  display: 'swap',
+});
+const notoMalayalam = Noto_Sans_Malayalam({
+  subsets: ['malayalam'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-malayalam',
+  display: 'swap',
+});
+const notoGujarati = Noto_Sans_Gujarati({
+  subsets: ['gujarati'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-gujarati',
+  display: 'swap',
+});
+const notoGurmukhi = Noto_Sans_Gurmukhi({
+  subsets: ['gurmukhi'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-gurmukhi',
+  display: 'swap',
+});
+const notoOriya = Noto_Sans_Oriya({
+  subsets: ['oriya'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-oriya',
+  display: 'swap',
+});
+
+const fontVariables = [
+  inter.variable,
+  outfit.variable,
+  notoDevanagari.variable,
+  notoBengali.variable,
+  notoTamil.variable,
+  notoTelugu.variable,
+  notoKannada.variable,
+  notoMalayalam.variable,
+  notoGujarati.variable,
+  notoGurmukhi.variable,
+  notoOriya.variable,
+].join(' ');
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -105,7 +214,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#f97316',
+  // Next's metadata API needs a literal hex; mirrors --primary in globals.css.
+  themeColor: '#b35609', // design-token-allow
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -118,22 +228,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-        {/*
-          2026-12 Indic font FOUC fix: synchronous external script that reads
-          localStorage 'sahayakai-lang' and injects the matching Noto Sans
-          stylesheet link BEFORE React hydrates. Without this, the dynamic
-          ensureIndicFontLoaded() in LanguageContext only ran after mount,
-          so Bengali/Tamil/Telugu/Kannada/Malayalam/Odia/Gujarati/Punjabi/
-          Marathi/Hindi teachers saw 200-500ms of tofu boxes (▢▢▢) on initial
-          paint. External file (vs inline) keeps the layout tree clean and
-          avoids dangerouslySetInnerHTML.
-        */}
-        <script src="/indic-font-preload.js" />
+        {/* Fonts are self-hosted via next/font (see top of file) — the old
+            fonts.googleapis.com stylesheet links and the
+            public/indic-font-preload.js runtime injector are retired. */}
         <StructuredData />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>

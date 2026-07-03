@@ -108,6 +108,8 @@ export async function createOrganization(params: {
     // caller derives it from the mere *presence* of a payment id, which is not
     // proof of payment. Fail closed to the webhook path on any doubt.
     let paymentVerified = false;
+    let capturedAmountPaise = 0;
+    let capturedCurrency = '';
     if (params.grantPlanToAdmin && params.razorpayPaymentId) {
         try {
             const { getRazorpay } = await import('./razorpay');
@@ -115,6 +117,8 @@ export async function createOrganization(params: {
             const amount = typeof payment?.amount === 'string'
                 ? parseInt(payment.amount, 10)
                 : (payment?.amount ?? 0);
+            capturedAmountPaise = amount;
+            capturedCurrency = String(payment?.currency ?? '');
             paymentVerified = payment?.status === 'captured' && amount > 0;
             if (!paymentVerified) {
                 console.warn(
@@ -131,16 +135,71 @@ export async function createOrganization(params: {
         }
     }
 
-    if (paymentVerified) {
-        // Update user profile with org ID and grant the plan
-        await db.collection('users').doc(params.adminUserId).update({
-            organizationId: orgRef.id,
-            planType: params.plan,
-            planSource: 'organization',
-            updatedAt: new Date(),
+    // H21: bind the captured amount to the plan being granted, and apply the
+    // payment exactly once via the payments_ledger transaction. A replayed
+    // payment id, or a captured-but-wrong-amount payment, must NOT grant.
+    let planGranted = false;
+    if (paymentVerified && params.razorpayPaymentId) {
+        const {
+            validateOrgPaymentAmount,
+            applyPaymentOnce,
+            recordRejectedPayment,
+        } = await import('@/server/payments');
+
+        const check = validateOrgPaymentAmount({
+            plan: params.plan,
+            totalSeats: params.totalSeats,
+            amountPaise: capturedAmountPaise,
+            currency: capturedCurrency,
         });
 
-        // Set custom claim
+        const ledgerEntry = {
+            uid: params.adminUserId,
+            orgId: orgRef.id,
+            amountPaise: capturedAmountPaise,
+            currency: capturedCurrency,
+            planType: params.plan,
+            source: 'org-creation' as const,
+            amountVerified: check.verified,
+            expectedPaise: check.expectedPaise,
+        };
+
+        if (!check.ok) {
+            // Amount/currency mismatch — log + NO grant (fail closed to webhook).
+            console.error(
+                `[Org] AMOUNT MISMATCH — refusing plan grant for ${params.adminUserId}: payment ${params.razorpayPaymentId} paid ${capturedAmountPaise} ${capturedCurrency}, expected ${check.expectedPaise ?? 'n/a'} paise for ${params.plan}×${params.totalSeats} seats (${check.reason})`
+            );
+            await recordRejectedPayment(params.razorpayPaymentId, ledgerEntry, check.reason ?? 'AMOUNT_MISMATCH');
+        } else {
+            try {
+                const result = await applyPaymentOnce({
+                    paymentId: params.razorpayPaymentId,
+                    entry: ledgerEntry,
+                    grant: (tx) => {
+                        // Plan grant written in the SAME transaction as the ledger doc.
+                        tx.update(db.collection('users').doc(params.adminUserId), {
+                            organizationId: orgRef.id,
+                            planType: params.plan,
+                            planSource: 'organization',
+                            updatedAt: new Date(),
+                        });
+                    },
+                });
+                planGranted = result === 'applied';
+                // result === 'replay' → applyPaymentOnce already audit-logged;
+                // fall through to the link-only path with no plan flip.
+            } catch (err) {
+                console.error(
+                    `[Org] Ledger transaction failed for payment ${params.razorpayPaymentId}; deferring plan grant to webhook:`,
+                    err
+                );
+                planGranted = false;
+            }
+        }
+    }
+
+    if (planGranted) {
+        // Set custom claim (profile already updated inside the ledger transaction)
         const { getAuth } = await import('firebase-admin/auth');
         await getAuth().setCustomUserClaims(params.adminUserId, {
             planType: params.plan,

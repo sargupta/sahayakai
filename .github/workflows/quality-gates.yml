@@ -243,3 +243,21 @@ jobs:
             exit 1
           fi
           echo "OK — no new server-action files."
+
+  design-tokens:
+    # Design-system Phase 0 ratchet: changed .tsx files must use tokens —
+    # no raw hex colors, no orange-* Tailwind classes, no text-[NNpx]
+    # arbitrary font sizes. Legacy backlog never blocks unrelated PRs
+    # (same ratchet model as Gate 5). Script: scripts/ci/check-design-tokens.mjs.
+    name: 'Gate 11: design tokens (changed files)'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan changed .tsx files for banned design-token patterns
+        working-directory: .
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node sahayakai-main/scripts/ci/check-design-tokens.mjs

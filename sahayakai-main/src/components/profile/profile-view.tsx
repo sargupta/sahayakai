@@ -42,6 +42,8 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { PlanBadge } from "@/components/plan-badge";
+import { ModerationMenu } from "@/components/moderation/moderation-menu";
+import { BlockedUsersCard } from "@/components/moderation/blocked-users-card";
 import {
     sendConnectionRequestAction,
     acceptConnectionRequestAction,
@@ -389,6 +391,18 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                                 {t("Message")}
                             </Button>
                         )}
+                        {/* Moderation v1: block / report this teacher */}
+                        {targetUid && (
+                            <div className="flex justify-center">
+                                <ModerationMenu
+                                    targetUid={targetUid}
+                                    targetName={profile?.displayName}
+                                    reportTargetType="profile"
+                                    reportTargetId={targetUid}
+                                    onBlocked={() => router.push('/community')}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -527,6 +541,9 @@ export function ProfileView({ uid: targetUid, isOwnProfileManual }: ProfileViewP
                             </Button>
                         </Card>
                     )}
+
+                    {/* Moderation v1: blocked-users management (owner only) */}
+                    {isOwnProfile && firebaseUser && <BlockedUsersCard />}
                 </div>
             </div>
         </div>

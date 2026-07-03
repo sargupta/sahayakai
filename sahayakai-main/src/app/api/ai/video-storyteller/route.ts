@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { dispatchVideoStoryteller } from '@/lib/sidecar/video-storyteller-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
+import { reserveDailyQuota, rollbackDailyQuota } from '@/lib/usage-tracker';
 
 // Allow up to 120s for video storyteller generation (multi-step orchestration)
 export const maxDuration = 120;
@@ -40,16 +41,37 @@ export const maxDuration = 120;
  *         description: Failed
  */
 export async function POST(request: Request) {
-    try {
-        // Require authentication. Middleware already 401s unauthenticated
-        // /api/ai/* calls; we assert it here too so this expensive endpoint
-        // (Gemini categorization + YouTube fan-out) can never be driven
-        // anonymously even if the route were ever moved to the public list.
-        const userId = request.headers.get('x-user-id');
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    // Require authentication. Middleware already 401s unauthenticated
+    // /api/ai/* calls; we assert it here too so this expensive endpoint
+    // (Gemini categorization + YouTube fan-out) can never be driven
+    // anonymously even if the route were ever moved to the public list.
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
+    // SERVER-SIDE daily quota gate — the most expensive flow in the product
+    // (Gemini categorization + YouTube fan-out) previously had no cap.
+    // Atomic check-and-reserve; free = 3/day, paid = 30/day (FOUNDER-TUNABLE
+    // in DAILY_FEATURE_QUOTAS, src/lib/usage-tracker.ts). Response contract
+    // matches the plan-guard 429 shape so useLimitGuard/UpgradePrompt work
+    // unchanged on the client.
+    const quota = await reserveDailyQuota(userId, 'video_storyteller');
+    if (!quota.ok) {
+        return NextResponse.json(
+            {
+                error: 'DAILY_LIMIT_REACHED',
+                message: `You've used all ${quota.limit} video recommendation runs for today. Try again tomorrow.`,
+                used: quota.used,
+                limit: quota.limit,
+                feature: 'video-storyteller',
+                currentPlan: quota.plan,
+            },
+            { status: 429 }
+        );
+    }
+
+    try {
         const body = await request.json();
 
         // Phase F.1: dispatcher routes Genkit vs ADK sidecar based on
@@ -69,9 +91,12 @@ export async function POST(request: Request) {
             latencyScore: dispatched.latencyScore,
         });
     } catch (error) {
+        // Return the reserved quota unit — the call delivered no value.
+        await rollbackDailyQuota(userId, 'video_storyteller');
+
         logAIError(error, 'VIDEO_STORYTELLER', {
             message: 'Video Storyteller API Failed',
-            userId: request.headers.get('x-user-id'),
+            userId,
         });
 
         // Do not leak internal error detail (model IDs, endpoints, stack) to

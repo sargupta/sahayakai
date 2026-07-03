@@ -7461,6 +7461,123 @@ const dictionary: Record<string, Record<Language, string>> = {
         "Malayalam": "നിങ്ങളുടെ ഉപയോഗവും ലാഭിച്ച സമയവും.",
         "Odia": "ଆପଣଙ୍କ ବ୍ୟବହାର ଏବଂ ବଞ୍ଚିଥିବା ସମୟ।",
     },
+    // Dashboard-home redesign (tranche 6/7): recents strip + compact prep-tool row.
+    "Continue where you left off": {
+        "English": "Continue where you left off",
+        "Hindi": "जहाँ छोड़ा था वहीं से जारी रखें",
+        "Kannada": "ನೀವು ನಿಲ್ಲಿಸಿದ ಸ್ಥಳದಿಂದ ಮುಂದುವರಿಸಿ",
+        "Tamil": "நிறுத்திய இடத்திலிருந்து தொடருங்கள்",
+        "Telugu": "మీరు ఆపిన చోటు నుండి కొనసాగించండి",
+        "Marathi": "जिथे थांबलात तिथून पुढे सुरू ठेवा",
+        "Bengali": "যেখানে থেমেছিলেন সেখান থেকে চালিয়ে যান",
+        "Gujarati": "જ્યાં અટક્યા હતા ત્યાંથી આગળ વધો",
+        "Punjabi": "ਜਿੱਥੇ ਛੱਡਿਆ ਸੀ ਉੱਥੋਂ ਜਾਰੀ ਰੱਖੋ",
+        "Malayalam": "നിർത്തിയിടത്തു നിന്ന് തുടരുക",
+        "Odia": "ଯେଉଁଠି ଛାଡିଥିଲେ ସେଠାରୁ ଜାରି ରଖନ୍ତୁ",
+    },
+    "Prep tools": {
+        "English": "Prep tools",
+        "Hindi": "तैयारी के टूल",
+        "Kannada": "ತಯಾರಿ ಟೂಲ್‌ಗಳು",
+        "Tamil": "தயாரிப்புக் கருவிகள்",
+        "Telugu": "సిద్ధత సాధనాలు",
+        "Marathi": "तयारीची साधने",
+        "Bengali": "প্রস্তুতির টুল",
+        "Gujarati": "તૈયારીનાં સાધનો",
+        "Punjabi": "ਤਿਆਰੀ ਦੇ ਟੂਲ",
+        "Malayalam": "തയ്യാറെടുപ്പ് ടൂളുകൾ",
+        "Odia": "ପ୍ରସ୍ତୁତି ଉପକରଣ",
+    },
+    "Explore Labs": {
+        "English": "Explore Labs",
+        "Hindi": "लैब्स देखें",
+        "Kannada": "ಲ್ಯಾಬ್ಸ್ ಅನ್ವೇಷಿಸಿ",
+        "Tamil": "லேப்ஸ் ஆராயுங்கள்",
+        "Telugu": "ల్యాబ్స్ అన్వేషించండి",
+        "Marathi": "लॅब्स एक्सप्लोर करा",
+        "Bengali": "ল্যাবস ঘুরে দেখুন",
+        "Gujarati": "લેબ્સ જુઓ",
+        "Punjabi": "ਲੈਬਜ਼ ਦੇਖੋ",
+        "Malayalam": "ലാബ്സ് പര്യവേക്ഷണം ചെയ്യുക",
+        "Odia": "ଲ୍ୟାବ୍ସ ଦେଖନ୍ତୁ",
+    },
+    // === Moderation v1 (tranche 6/7): block / report / blocked-users management ===
+    "Block": {
+        "English": "Block", "Hindi": "ब्लॉक करें", "Kannada": "ನಿರ್ಬಂಧಿಸಿ", "Tamil": "தடு", "Telugu": "బ్లాక్ చేయండి", "Marathi": "ब्लॉक करा", "Bengali": "ব্লক করুন", "Gujarati": "બ્લોક કરો", "Punjabi": "ਬਲਾਕ ਕਰੋ", "Malayalam": "ബ്ലോക്ക് ചെയ്യുക", "Odia": "ବ୍ଲକ୍ କରନ୍ତୁ"
+    },
+    "Unblock": {
+        "English": "Unblock", "Hindi": "अनब्लॉक करें", "Kannada": "ನಿರ್ಬಂಧ ತೆಗೆಯಿರಿ", "Tamil": "தடை நீக்கு", "Telugu": "అన్‌బ్లాక్ చేయండి", "Marathi": "अनब्लॉक करा", "Bengali": "আনব্লক করুন", "Gujarati": "અનબ્લોક કરો", "Punjabi": "ਅਨਬਲਾਕ ਕਰੋ", "Malayalam": "അൺബ്ലോക്ക് ചെയ്യുക", "Odia": "ଅନବ୍ଲକ୍ କରନ୍ତୁ"
+    },
+    "Report": {
+        "English": "Report", "Hindi": "रिपोर्ट करें", "Kannada": "ವರದಿ ಮಾಡಿ", "Tamil": "புகார் அளி", "Telugu": "నివేదించండి", "Marathi": "तक्रार नोंदवा", "Bengali": "রিপোর্ট করুন", "Gujarati": "જાણ કરો", "Punjabi": "ਰਿਪੋਰਟ ਕਰੋ", "Malayalam": "റിപ്പോർട്ട് ചെയ്യുക", "Odia": "ରିପୋର୍ଟ କରନ୍ତୁ"
+    },
+    "More options": {
+        "English": "More options", "Hindi": "अधिक विकल्प", "Kannada": "ಇನ್ನಷ್ಟು ಆಯ್ಕೆಗಳು", "Tamil": "மேலும் விருப்பங்கள்", "Telugu": "మరిన్ని ఎంపికలు", "Marathi": "अधिक पर्याय", "Bengali": "আরও বিকল্প", "Gujarati": "વધુ વિકલ્પો", "Punjabi": "ਹੋਰ ਵਿਕਲਪ", "Malayalam": "കൂടുതൽ ഓപ്ഷനുകൾ", "Odia": "ଅଧିକ ବିକଳ୍ପ"
+    },
+    "Block this teacher?": {
+        "English": "Block this teacher?", "Hindi": "इस शिक्षक को ब्लॉक करें?", "Kannada": "ಈ ಶಿಕ್ಷಕರನ್ನು ನಿರ್ಬಂಧಿಸುವುದೇ?", "Tamil": "இந்த ஆசிரியரைத் தடுக்கவா?", "Telugu": "ఈ ఉపాధ్యాయుడిని బ్లాక్ చేయాలా?", "Marathi": "या शिक्षकांना ब्लॉक करायचे का?", "Bengali": "এই শিক্ষককে ব্লক করবেন?", "Gujarati": "આ શિક્ષકને બ્લોક કરવા છે?", "Punjabi": "ਕੀ ਇਸ ਅਧਿਆਪਕ ਨੂੰ ਬਲਾਕ ਕਰਨਾ ਹੈ?", "Malayalam": "ഈ അധ്യാപകനെ ബ്ലോക്ക് ചെയ്യണോ?", "Odia": "ଏହି ଶିକ୍ଷକଙ୍କୁ ବ୍ଲକ୍ କରିବେ କି?"
+    },
+    "They will not be able to message you, and you will not see their posts or shared resources. They will not be notified.": {
+        "English": "They will not be able to message you, and you will not see their posts or shared resources. They will not be notified.",
+        "Hindi": "वे आपको संदेश नहीं भेज पाएँगे, और आपको उनकी पोस्ट या साझा सामग्री नहीं दिखेगी। उन्हें इसकी सूचना नहीं दी जाएगी।",
+        "Kannada": "ಅವರು ನಿಮಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗುವುದಿಲ್ಲ, ಮತ್ತು ಅವರ ಪೋಸ್ಟ್‌ಗಳು ಅಥವಾ ಹಂಚಿದ ಸಂಪನ್ಮೂಲಗಳು ನಿಮಗೆ ಕಾಣಿಸುವುದಿಲ್ಲ. ಅವರಿಗೆ ಈ ಬಗ್ಗೆ ತಿಳಿಸಲಾಗುವುದಿಲ್ಲ.",
+        "Tamil": "அவர்கள் உங்களுக்குச் செய்தி அனுப்ப முடியாது, மேலும் அவர்களின் பதிவுகள் அல்லது பகிர்ந்த வளங்கள் உங்களுக்குத் தெரியாது. அவர்களுக்கு இது குறித்து அறிவிக்கப்படாது.",
+        "Telugu": "వారు మీకు సందేశం పంపలేరు, మరియు వారి పోస్టులు లేదా పంచుకున్న వనరులు మీకు కనిపించవు. వారికి దీని గురించి తెలియజేయబడదు.",
+        "Marathi": "ते तुम्हाला संदेश पाठवू शकणार नाहीत, आणि त्यांच्या पोस्ट किंवा शेअर केलेली साधने तुम्हाला दिसणार नाहीत. त्यांना याची सूचना दिली जाणार नाही.",
+        "Bengali": "তাঁরা আপনাকে বার্তা পাঠাতে পারবেন না, এবং তাঁদের পোস্ট বা শেয়ার করা সামগ্রী আপনি দেখতে পাবেন না। তাঁদের এ বিষয়ে জানানো হবে না।",
+        "Gujarati": "તેઓ તમને સંદેશ મોકલી શકશે નહીં, અને તેમની પોસ્ટ કે શેર કરેલી સામગ્રી તમને દેખાશે નહીં. તેમને આની જાણ કરવામાં આવશે નહીં.",
+        "Punjabi": "ਉਹ ਤੁਹਾਨੂੰ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜ ਸਕਣਗੇ, ਅਤੇ ਉਨ੍ਹਾਂ ਦੀਆਂ ਪੋਸਟਾਂ ਜਾਂ ਸਾਂਝੇ ਕੀਤੇ ਸਰੋਤ ਤੁਹਾਨੂੰ ਨਹੀਂ ਦਿਖਣਗੇ। ਉਨ੍ਹਾਂ ਨੂੰ ਇਸ ਬਾਰੇ ਸੂਚਿਤ ਨਹੀਂ ਕੀਤਾ ਜਾਵੇਗਾ।",
+        "Malayalam": "അവർക്ക് നിങ്ങൾക്ക് സന്ദേശം അയയ്ക്കാൻ കഴിയില്ല, അവരുടെ പോസ്റ്റുകളോ പങ്കിട്ട ഉറവിടങ്ങളോ നിങ്ങൾ കാണില്ല. അവരെ ഇതേക്കുറിച്ച് അറിയിക്കില്ല.",
+        "Odia": "ସେମାନେ ଆପଣଙ୍କୁ ବାର୍ତ୍ତା ପଠାଇପାରିବେ ନାହିଁ, ଏବଂ ସେମାନଙ୍କ ପୋଷ୍ଟ କିମ୍ବା ସହଭାଗ କରାଯାଇଥିବା ସାମଗ୍ରୀ ଆପଣ ଦେଖିପାରିବେ ନାହିଁ। ସେମାନଙ୍କୁ ଏ ବିଷୟରେ ସୂଚନା ଦିଆଯିବ ନାହିଁ।"
+    },
+    "User blocked": {
+        "English": "User blocked", "Hindi": "उपयोगकर्ता ब्लॉक किया गया", "Kannada": "ಬಳಕೆದಾರರನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ", "Tamil": "பயனர் தடுக்கப்பட்டார்", "Telugu": "వినియోగదారు బ్లాక్ చేయబడ్డారు", "Marathi": "वापरकर्ता ब्लॉक केला", "Bengali": "ব্যবহারকারীকে ব্লক করা হয়েছে", "Gujarati": "વપરાશકર્તા બ્લોક થયા", "Punjabi": "ਵਰਤੋਂਕਾਰ ਬਲਾਕ ਕੀਤਾ ਗਿਆ", "Malayalam": "ഉപയോക്താവിനെ ബ്ലോക്ക് ചെയ്തു", "Odia": "ବ୍ୟବହାରକାରୀଙ୍କୁ ବ୍ଲକ୍ କରାଗଲା"
+    },
+    "User unblocked": {
+        "English": "User unblocked", "Hindi": "उपयोगकर्ता अनब्लॉक किया गया", "Kannada": "ಬಳಕೆದಾರರ ನಿರ್ಬಂಧ ತೆಗೆಯಲಾಗಿದೆ", "Tamil": "பயனர் தடை நீக்கப்பட்டார்", "Telugu": "వినియోగదారు అన్‌బ్లాక్ చేయబడ్డారు", "Marathi": "वापरकर्ता अनब्लॉक केला", "Bengali": "ব্যবহারকারীকে আনব্লক করা হয়েছে", "Gujarati": "વપરાશકર્તા અનબ્લોક થયા", "Punjabi": "ਵਰਤੋਂਕਾਰ ਅਨਬਲਾਕ ਕੀਤਾ ਗਿਆ", "Malayalam": "ഉപയോക്താവിനെ അൺബ്ലോക്ക് ചെയ്തു", "Odia": "ବ୍ୟବହାରକାରୀଙ୍କୁ ଅନବ୍ଲକ୍ କରାଗଲା"
+    },
+    "Blocked users": {
+        "English": "Blocked users", "Hindi": "ब्लॉक किए गए उपयोगकर्ता", "Kannada": "ನಿರ್ಬಂಧಿಸಿದ ಬಳಕೆದಾರರು", "Tamil": "தடுக்கப்பட்ட பயனர்கள்", "Telugu": "బ్లాక్ చేసిన వినియోగదారులు", "Marathi": "ब्लॉक केलेले वापरकर्ते", "Bengali": "ব্লক করা ব্যবহারকারী", "Gujarati": "બ્લોક કરેલા વપરાશકર્તાઓ", "Punjabi": "ਬਲਾਕ ਕੀਤੇ ਵਰਤੋਂਕਾਰ", "Malayalam": "ബ്ലോക്ക് ചെയ്ത ഉപയോക്താക്കൾ", "Odia": "ବ୍ଲକ୍ କରାଯାଇଥିବା ବ୍ୟବହାରକାରୀ"
+    },
+    "You have not blocked anyone.": {
+        "English": "You have not blocked anyone.", "Hindi": "आपने किसी को ब्लॉक नहीं किया है।", "Kannada": "ನೀವು ಯಾರನ್ನೂ ನಿರ್ಬಂಧಿಸಿಲ್ಲ.", "Tamil": "நீங்கள் யாரையும் தடுக்கவில்லை.", "Telugu": "మీరు ఎవరినీ బ్లాక్ చేయలేదు.", "Marathi": "तुम्ही कोणालाही ब्लॉक केलेले नाही.", "Bengali": "আপনি কাউকে ব্লক করেননি।", "Gujarati": "તમે કોઈને બ્લોક કર્યા નથી.", "Punjabi": "ਤੁਸੀਂ ਕਿਸੇ ਨੂੰ ਬਲਾਕ ਨਹੀਂ ਕੀਤਾ।", "Malayalam": "നിങ്ങൾ ആരെയും ബ്ലോക്ക് ചെയ്തിട്ടില്ല.", "Odia": "ଆପଣ କାହାରିକୁ ବ୍ଲକ୍ କରିନାହାଁନ୍ତି।"
+    },
+    "Report content": {
+        "English": "Report content", "Hindi": "सामग्री की रिपोर्ट करें", "Kannada": "ವಿಷಯವನ್ನು ವರದಿ ಮಾಡಿ", "Tamil": "உள்ளடக்கத்தைப் புகாரளி", "Telugu": "కంటెంట్‌ను నివేదించండి", "Marathi": "मजकुराची तक्रार करा", "Bengali": "সামগ্রীর রিপোর্ট করুন", "Gujarati": "સામગ્રીની જાણ કરો", "Punjabi": "ਸਮੱਗਰੀ ਦੀ ਰਿਪੋਰਟ ਕਰੋ", "Malayalam": "ഉള്ളടക്കം റിപ്പോർട്ട് ചെയ്യുക", "Odia": "ବିଷୟବସ୍ତୁ ରିପୋର୍ଟ କରନ୍ତୁ"
+    },
+    "Why are you reporting this?": {
+        "English": "Why are you reporting this?", "Hindi": "आप इसकी रिपोर्ट क्यों कर रहे हैं?", "Kannada": "ನೀವು ಇದನ್ನು ಏಕೆ ವರದಿ ಮಾಡುತ್ತಿದ್ದೀರಿ?", "Tamil": "நீங்கள் ஏன் இதைப் புகாரளிக்கிறீர்கள்?", "Telugu": "మీరు దీన్ని ఎందుకు నివేదిస్తున్నారు?", "Marathi": "तुम्ही याची तक्रार का करत आहात?", "Bengali": "আপনি কেন এটির রিপোর্ট করছেন?", "Gujarati": "તમે આની જાણ કેમ કરી રહ્યા છો?", "Punjabi": "ਤੁਸੀਂ ਇਸ ਦੀ ਰਿਪੋਰਟ ਕਿਉਂ ਕਰ ਰਹੇ ਹੋ?", "Malayalam": "നിങ്ങൾ എന്തുകൊണ്ട് ഇത് റിപ്പോർട്ട് ചെയ്യുന്നു?", "Odia": "ଆପଣ ଏହାକୁ କାହିଁକି ରିପୋର୍ଟ କରୁଛନ୍ତି?"
+    },
+    "Harassment": {
+        "English": "Harassment", "Hindi": "उत्पीड़न", "Kannada": "ಕಿರುಕುಳ", "Tamil": "துன்புறுத்தல்", "Telugu": "వేధింపు", "Marathi": "छळ", "Bengali": "হয়রানি", "Gujarati": "હેરાનગતિ", "Punjabi": "ਪਰੇਸ਼ਾਨੀ", "Malayalam": "പീഡനം", "Odia": "ହଇରାଣ"
+    },
+    "Inappropriate content": {
+        "English": "Inappropriate content", "Hindi": "अनुचित सामग्री", "Kannada": "ಅನುಚಿತ ವಿಷಯ", "Tamil": "பொருத்தமற்ற உள்ளடக்கம்", "Telugu": "అనుచిత కంటెంట్", "Marathi": "अयोग्य मजकूर", "Bengali": "অনুপযুক্ত সামগ্রী", "Gujarati": "અયોગ્ય સામગ્રી", "Punjabi": "ਅਣਉਚਿਤ ਸਮੱਗਰੀ", "Malayalam": "അനുചിതമായ ഉള്ളടക്കം", "Odia": "ଅନୁପଯୁକ୍ତ ବିଷୟବସ୍ତୁ"
+    },
+    "Spam": {
+        "English": "Spam", "Hindi": "स्पैम", "Kannada": "ಸ್ಪ್ಯಾಮ್", "Tamil": "ஸ்பேம்", "Telugu": "స్పామ్", "Marathi": "स्पॅम", "Bengali": "স্প্যাম", "Gujarati": "સ્પામ", "Punjabi": "ਸਪੈਮ", "Malayalam": "സ്പാം", "Odia": "ସ୍ପାମ୍"
+    },
+    "Other": {
+        "English": "Other", "Hindi": "अन्य", "Kannada": "ಇತರೆ", "Tamil": "மற்றவை", "Telugu": "ఇతర", "Marathi": "इतर", "Bengali": "অন্যান্য", "Gujarati": "અન્ય", "Punjabi": "ਹੋਰ", "Malayalam": "മറ്റുള്ളവ", "Odia": "ଅନ୍ୟାନ୍ୟ"
+    },
+    "Add details (optional)": {
+        "English": "Add details (optional)", "Hindi": "विवरण जोड़ें (वैकल्पिक)", "Kannada": "ವಿವರ ಸೇರಿಸಿ (ಐಚ್ಛಿಕ)", "Tamil": "விவரங்களைச் சேர்க்கவும் (விருப்பத்திற்குரியது)", "Telugu": "వివరాలు జోడించండి (ఐచ్ఛికం)", "Marathi": "तपशील जोडा (ऐच्छिक)", "Bengali": "বিবরণ যোগ করুন (ঐচ্ছিক)", "Gujarati": "વિગતો ઉમેરો (વૈકલ્પિક)", "Punjabi": "ਵੇਰਵੇ ਜੋੜੋ (ਵਿਕਲਪਿਕ)", "Malayalam": "വിശദാംശങ്ങൾ ചേർക്കുക (ഐച്ഛികം)", "Odia": "ବିବରଣୀ ଯୋଡନ୍ତୁ (ଇଚ୍ଛାଧୀନ)"
+    },
+    "Submit report": {
+        "English": "Submit report", "Hindi": "रिपोर्ट सबमिट करें", "Kannada": "ವರದಿ ಸಲ್ಲಿಸಿ", "Tamil": "புகாரைச் சமர்ப்பிக்கவும்", "Telugu": "నివేదికను సమర్పించండి", "Marathi": "तक्रार सबमिट करा", "Bengali": "রিপোর্ট জমা দিন", "Gujarati": "રિપોર્ટ સબમિટ કરો", "Punjabi": "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", "Malayalam": "റിപ്പോർട്ട് സമർപ്പിക്കുക", "Odia": "ରିପୋର୍ଟ ଦାଖଲ କରନ୍ତୁ"
+    },
+    "Report submitted": {
+        "English": "Report submitted", "Hindi": "रिपोर्ट सबमिट हो गई", "Kannada": "ವರದಿ ಸಲ್ಲಿಸಲಾಗಿದೆ", "Tamil": "புகார் சமர்ப்பிக்கப்பட்டது", "Telugu": "నివేదిక సమర్పించబడింది", "Marathi": "तक्रार सबमिट झाली", "Bengali": "রিপোর্ট জমা হয়েছে", "Gujarati": "રિપોર્ટ સબમિટ થયો", "Punjabi": "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਹੋ ਗਈ", "Malayalam": "റിപ്പോർട്ട് സമർപ്പിച്ചു", "Odia": "ରିପୋର୍ଟ ଦାଖଲ ହୋଇଛି"
+    },
+    "Thank you. Our team will review this report.": {
+        "English": "Thank you. Our team will review this report.", "Hindi": "धन्यवाद। हमारी टीम इस रिपोर्ट की समीक्षा करेगी।", "Kannada": "ಧನ್ಯವಾದಗಳು. ನಮ್ಮ ತಂಡ ಈ ವರದಿಯನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ.", "Tamil": "நன்றி. எங்கள் குழு இந்தப் புகாரை ஆய்வு செய்யும்.", "Telugu": "ధన్యవాదాలు. మా బృందం ఈ నివేదికను సమీక్షిస్తుంది.", "Marathi": "धन्यवाद. आमची टीम या तक्रारीचे पुनरावलोकन करेल.", "Bengali": "ধন্যবাদ। আমাদের দল এই রিপোর্টটি পর্যালোচনা করবে।", "Gujarati": "આભાર. અમારી ટીમ આ રિપોર્ટની સમીક્ષા કરશે.", "Punjabi": "ਧੰਨਵਾਦ। ਸਾਡੀ ਟੀਮ ਇਸ ਰਿਪੋਰਟ ਦੀ ਸਮੀਖਿਆ ਕਰੇਗੀ।", "Malayalam": "നന്ദി. ഞങ്ങളുടെ ടീം ഈ റിപ്പോർട്ട് പരിശോധിക്കും.", "Odia": "ଧନ୍ୟବାଦ। ଆମ ଦଳ ଏହି ରିପୋର୍ଟର ସମୀକ୍ଷା କରିବେ।"
+    },
+    "Could not complete this action. Please try again.": {
+        "English": "Could not complete this action. Please try again.", "Hindi": "यह कार्रवाई पूरी नहीं हो सकी। कृपया फिर से प्रयास करें।", "Kannada": "ಈ ಕ್ರಿಯೆಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "Tamil": "இந்தச் செயலை நிறைவேற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", "Telugu": "ఈ చర్యను పూర్తి చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.", "Marathi": "ही क्रिया पूर्ण होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.", "Bengali": "এই কাজটি সম্পূর্ণ করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।", "Gujarati": "આ ક્રિયા પૂર્ણ થઈ શકી નથી. કૃપા કરીને ફરી પ્રયાસ કરો.", "Punjabi": "ਇਹ ਕਾਰਵਾਈ ਪੂਰੀ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", "Malayalam": "ഈ പ്രവർത്തനം പൂർത്തിയാക്കാനായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.", "Odia": "ଏହି କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
+    },
+    "Cannot message this user": {
+        "English": "Cannot message this user", "Hindi": "इस उपयोगकर्ता को संदेश नहीं भेजा जा सकता", "Kannada": "ಈ ಬಳಕೆದಾರರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ", "Tamil": "இந்தப் பயனருக்குச் செய்தி அனுப்ப முடியாது", "Telugu": "ఈ వినియోగదారుకు సందేశం పంపడం సాధ్యం కాదు", "Marathi": "या वापरकर्त्याला संदेश पाठवता येणार नाही", "Bengali": "এই ব্যবহারকারীকে বার্তা পাঠানো যাবে না", "Gujarati": "આ વપરાશકર્તાને સંદેશ મોકલી શકાતો નથી", "Punjabi": "ਇਸ ਵਰਤੋਂਕਾਰ ਨੂੰ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਦਾ", "Malayalam": "ഈ ഉപയോക്താവിന് സന്ദേശം അയയ്ക്കാൻ കഴിയില്ല", "Odia": "ଏହି ବ୍ୟବହାରକାରୀଙ୍କୁ ବାର୍ତ୍ତା ପଠାଯାଇପାରିବ ନାହିଁ"
+    },
 
 };
 
@@ -7491,38 +7608,12 @@ function syncHtmlLang(lang: Language) {
     document.documentElement.lang = BCP47_MAP[lang];
 }
 
-// Google Fonts families for each Indic script. English uses Inter already
-// loaded in layout.tsx — no extra fetch needed. When the user picks a
-// non-English language we inject the matching Noto Sans family so
-// Devanagari/Tamil/etc. render with real glyph metrics instead of a jagged
-// OEM fallback on low-end Androids.
-const INDIC_FONT_URL: Partial<Record<Language, string>> = {
-    Hindi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap',
-    Marathi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap',
-    Kannada: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap',
-    Tamil: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap',
-    Telugu: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap',
-    Bengali: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap',
-    Gujarati: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700&display=swap',
-    Punjabi: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Gurmukhi:wght@400;500;600;700&display=swap',
-    Malayalam: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap',
-    Odia: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap',
-};
-
-// Inject the Noto Sans family for the active language if not already loaded.
-// English-only sessions pay nothing. Each non-English session downloads ~30 KB
-// for its script. Idempotent: re-injecting the same URL is a no-op.
-function ensureIndicFontLoaded(lang: Language) {
-    if (typeof document === 'undefined') return;
-    const url = INDIC_FONT_URL[lang];
-    if (!url) return;
-    if (document.querySelector(`link[data-indic-font="${lang}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = url;
-    link.dataset.indicFont = lang;
-    document.head.appendChild(link);
-}
+// Indic fonts are SELF-HOSTED via next/font in src/app/layout.tsx (Phase 0,
+// 2026-07-03) — every Noto Sans family ships as a build-time @font-face with
+// a CSS variable, and globals.css maps :lang() to the right family. Syncing
+// <html lang> (syncHtmlLang above) is therefore all this provider needs to
+// do; the old runtime Google-Fonts injection (INDIC_FONT_URL +
+// ensureIndicFontLoaded) is retired.
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [language, setLanguageState] = useState<Language>('English');
@@ -7535,7 +7626,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
             if (cached && LANGUAGES.includes(cached as Language)) {
                 setLanguageState(cached as Language);
                 syncHtmlLang(cached as Language);
-                ensureIndicFontLoaded(cached as Language);
             }
         } catch { /* localStorage unavailable (restricted WebView) */ }
 
@@ -7545,7 +7635,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
                 if (profile?.preferredLanguage) {
                     setLanguageState(profile.preferredLanguage as Language);
                     syncHtmlLang(profile.preferredLanguage as Language);
-                    ensureIndicFontLoaded(profile.preferredLanguage as Language);
                     try { localStorage.setItem('sahayakai-lang', profile.preferredLanguage); } catch {}
                 }
             }
@@ -7557,7 +7646,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const setLanguage = async (lang: Language, persist: boolean = true) => {
         setLanguageState(lang);
         syncHtmlLang(lang);
-        ensureIndicFontLoaded(lang);
         try { localStorage.setItem('sahayakai-lang', lang); } catch {}
         if (!persist) return;
 

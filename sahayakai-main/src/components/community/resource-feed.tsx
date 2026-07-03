@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ModerationMenu } from '@/components/moderation/moderation-menu';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -229,6 +230,14 @@ const ResourceCard = ({
               </span>
             </div>
           </div>
+
+          {/* Moderation v1: block author / report resource (hidden on own resources) */}
+          <ModerationMenu
+            targetUid={resource.authorId}
+            targetName={resource.author}
+            reportTargetType="resource"
+            reportTargetId={resource.id}
+          />
         </div>
       </CardHeader>
 
